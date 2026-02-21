@@ -1,4 +1,4 @@
-import { SidebarProvider } from '@/shared/ui/sidebar'
+import { SidebarProvider, SidebarTrigger } from '@/shared/ui/sidebar'
 import MainSidebar from './MainSidebar'
 
 function MainLayout(): React.JSX.Element {
@@ -6,7 +6,9 @@ function MainLayout(): React.JSX.Element {
     <SidebarProvider>
       <MainSidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
-        <main className="flex-1 overflow-hidden">Rally</main>
+        <main className="flex-1 overflow-hidden">
+          <SidebarTrigger />
+        </main>
       </div>
     </SidebarProvider>
   )

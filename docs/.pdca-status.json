@@ -1,0 +1,41 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-02-21T22:19:42.353Z",
+  "activeFeatures": [
+    "ui"
+  ],
+  "primaryFeature": "ui",
+  "features": {
+    "ui": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-21T22:19:42.353Z",
+        "lastUpdated": "2026-02-21T22:19:42.353Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/ui/sidebar.tsx"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Dynamic",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-02-21T22:18:14.791Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-02-21T22:19:42.353Z"
+  },
+  "history": [
+    {
+      "timestamp": "2026-02-21T22:19:42.353Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    }
+  ]
+}
