@@ -5,9 +5,10 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   test: {
+    globals: true,
     environment: 'happy-dom',
     include: ['src/renderer/**/*.{test,spec}.{ts,tsx}'],
-    setupFiles: ['./src/renderer/src/test/setup.ts']
+    setupFiles: ['./src/renderer/src/test/setup.ts'],
   },
   resolve: {
     alias: {
@@ -17,7 +18,7 @@ export default defineConfig({
       '@widgets': resolve('src/renderer/src/widgets'),
       '@features': resolve('src/renderer/src/features'),
       '@entities': resolve('src/renderer/src/entities'),
-      '@shared': resolve('src/renderer/src/shared')
-    }
-  }
+      '@shared': resolve('src/renderer/src/shared'),
+    },
+  },
 })

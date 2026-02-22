@@ -89,13 +89,21 @@ describe('workspaceService', () => {
 
   describe('delete', () => {
     it('워크스페이스를 삭제한다', () => {
+      const other = { ...mockWorkspace, id: 'other-id' }
       vi.mocked(workspaceRepository.findById).mockReturnValue(mockWorkspace)
+      vi.mocked(workspaceRepository.findAll).mockReturnValue([mockWorkspace, other])
       expect(() => workspaceService.delete('mocked-id')).not.toThrow()
     })
 
     it('존재하지 않으면 NotFoundError를 던진다', () => {
       vi.mocked(workspaceRepository.findById).mockReturnValue(undefined)
       expect(() => workspaceService.delete('non-existent')).toThrow(NotFoundError)
+    })
+
+    it('마지막 워크스페이스면 ValidationError를 던진다', () => {
+      vi.mocked(workspaceRepository.findById).mockReturnValue(mockWorkspace)
+      vi.mocked(workspaceRepository.findAll).mockReturnValue([mockWorkspace])
+      expect(() => workspaceService.delete('mocked-id')).toThrow(ValidationError)
     })
   })
 })

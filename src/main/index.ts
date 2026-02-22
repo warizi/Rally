@@ -1,8 +1,25 @@
 import { app, shell, BrowserWindow, ipcMain } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import icon from '../../resources/icon.png?asset'
+import { db } from './db'
 import { registerWorkspaceHandlers } from './ipc/workspace'
+import { workspaceService } from './services/workspace'
+
+function runMigrations(): void {
+  const migrationsFolder = is.dev
+    ? join(process.cwd(), 'src/main/db/migrations')
+    : join(__dirname, '../../resources/migrations')
+  migrate(db, { migrationsFolder })
+}
+
+function initializeDatabase(): void {
+  const workspaces = workspaceService.getAll()
+  if (workspaces.length === 0) {
+    workspaceService.create('기본 워크스페이스')
+  }
+}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -42,6 +59,8 @@ app.whenReady().then(() => {
 
   ipcMain.on('ping', () => console.log('pong'))
 
+  runMigrations()
+  initializeDatabase()
   registerWorkspaceHandlers()
 
   createWindow()

@@ -39,6 +39,8 @@ export const workspaceService = {
   delete(id: string) {
     const workspace = workspaceRepository.findById(id)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${id}`)
+    const all = workspaceRepository.findAll()
+    if (all.length <= 1) throw new ValidationError('Cannot delete the last workspace')
     workspaceRepository.delete(id)
   }
 }

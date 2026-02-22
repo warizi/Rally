@@ -1,3 +1,4 @@
+import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
 import {
   Sidebar,
   SidebarContent,
@@ -38,7 +39,9 @@ const items: SidebarItem[] = [
 function MainSidebar(): React.JSX.Element {
   return (
     <Sidebar collapsible="icon">
-      <SidebarHeader>Header</SidebarHeader>
+      <SidebarHeader>
+        <WorkspaceSwitcher />
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>기능</SidebarGroupLabel>
@@ -46,7 +49,7 @@ function MainSidebar(): React.JSX.Element {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.pathname}>
-                  <SidebarMenuButton>
+                  <SidebarMenuButton tooltip={item.title}>
                     <item.icon />
                     <span>{item.title}</span>
                   </SidebarMenuButton>
