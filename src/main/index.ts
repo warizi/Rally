@@ -5,6 +5,7 @@ import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import icon from '../../resources/icon.png?asset'
 import { db } from './db'
 import { registerWorkspaceHandlers } from './ipc/workspace'
+import { registerTabSessionHandlers } from './ipc/tab-session'
 import { workspaceService } from './services/workspace'
 
 function runMigrations(): void {
@@ -62,6 +63,7 @@ app.whenReady().then(() => {
   runMigrations()
   initializeDatabase()
   registerWorkspaceHandlers()
+  registerTabSessionHandlers()
 
   createWindow()
 
