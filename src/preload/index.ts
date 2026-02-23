@@ -10,6 +10,7 @@ const api = {
       ipcRenderer.invoke('tabSession:create', data),
     update: (data: Omit<TabSession, 'updatedAt'>) => ipcRenderer.invoke('tabSession:update', data)
   },
+
   workspace: {
     getAll: () => ipcRenderer.invoke('workspace:getAll'),
     getById: (id: string) => ipcRenderer.invoke('workspace:getById', id),

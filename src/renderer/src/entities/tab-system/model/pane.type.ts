@@ -2,7 +2,6 @@
 // 구역의 tab들을 관리하는 역할을 한다.
 export interface Pane {
   id: string
-  workspaceId: string
   tabIds: string[]
   activeTabId: string | null
   size: number

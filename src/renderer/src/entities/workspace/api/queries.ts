@@ -13,7 +13,6 @@ const QUERY_KEY = 'workspaces'
 
 type UpdateWorkspaceInput = { id: string; name: string }
 
-
 export function useWorkspaces(): UseQueryResult<Workspace[]> {
   return useQuery({
     queryKey: [QUERY_KEY],
