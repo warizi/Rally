@@ -37,6 +37,9 @@ function createWindow(): void {
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
+    if (is.dev) {
+      mainWindow.webContents.openDevTools({ mode: 'right' })
+    }
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

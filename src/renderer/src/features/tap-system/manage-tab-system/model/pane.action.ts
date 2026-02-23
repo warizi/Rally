@@ -43,7 +43,7 @@ export const createPaneActions = (
     const emptySourcePane = Object.values(updatedPanes).find(
       (p) => p.id !== newPane.id && p.tabIds.length === 0
     )
-    if (emptySourcePane && Object.keys(updatedPanes).length > 2) {
+    if (emptySourcePane && Object.keys(updatedPanes).length > 1) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [emptySourcePane.id]: _removed, ...remainingPanes } = updatedPanes
       updatedPanes = remainingPanes
@@ -87,7 +87,9 @@ export const createPaneActions = (
     if (!tab || !sourcePane || !targetPane || sourcePaneId === targetPaneId) return
 
     const newSourceTabIds = sourcePane.tabIds.filter((id) => id !== tabId)
-    const newTargetTabIds = [...targetPane.tabIds, tabId]
+    const newTargetTabIds = targetPane.tabIds.includes(tabId)
+      ? targetPane.tabIds
+      : [...targetPane.tabIds, tabId]
 
     // 소스 패인이 비면 제거
     if (newSourceTabIds.length === 0) {

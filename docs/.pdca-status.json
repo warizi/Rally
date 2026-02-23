@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-22T15:32:00.422Z",
+  "lastUpdated": "2026-02-23T13:43:17.429Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -11,7 +11,8 @@
     "tab-session.ts",
     "ipc",
     "main",
-    "preload"
+    "preload",
+    "tap-system"
   ],
   "primaryFeature": "ui",
   "features": {
@@ -128,7 +129,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:01.950Z",
-        "lastUpdated": "2026-02-22T15:26:11.132Z"
+        "lastUpdated": "2026-02-23T12:59:48.127Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
     },
@@ -144,6 +145,19 @@
         "lastUpdated": "2026-02-22T15:28:20.979Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.ts"
+    },
+    "tap-system": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-23T12:55:37.864Z",
+        "lastUpdated": "2026-02-23T13:43:17.429Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/tap-system/manage-tab-system/api/__tests__/queries.test.ts"
     }
   },
   "pipeline": {
@@ -154,7 +168,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-22T15:32:00.422Z"
+    "lastActivity": "2026-02-23T13:43:17.429Z"
   },
   "history": [
     {
@@ -400,6 +414,348 @@
     {
       "timestamp": "2026-02-22T15:32:00.422Z",
       "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T12:55:37.864Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T12:56:16.323Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T12:56:59.542Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T12:58:39.206Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T12:59:48.127Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:10:41.928Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:11:11.254Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:12:00.336Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:12:41.562Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:13:12.418Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:13:37.351Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:13:59.906Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:20:21.958Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:20:52.544Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:21:02.361Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:21:14.916Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:21:23.753Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:21:49.381Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:22:18.735Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:22:30.796Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:22:47.337Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:23:24.879Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:23:38.577Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:23:51.293Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:27:58.324Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:28:26.763Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:28:31.971Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:28:40.276Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:28:58.592Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:29:11.472Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:38:42.095Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:38:50.867Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:00.319Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:06.746Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:14.988Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:25.256Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:37.427Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:44.043Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:39:48.530Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:40:05.049Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:40:19.549Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:40:30.179Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:40:51.472Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:00.240Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:07.124Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:16.842Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:26.474Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:35.258Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:44.742Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:41:59.475Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:42:08.897Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:42:23.871Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:42:37.385Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:42:46.935Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:42:55.811Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:43:05.590Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-23T13:43:17.429Z",
+      "feature": "tap-system",
       "phase": "do",
       "action": "updated"
     }

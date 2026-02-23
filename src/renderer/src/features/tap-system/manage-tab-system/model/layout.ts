@@ -4,13 +4,13 @@ import { createPaneNode, createSplitContainerNode } from '../lib/factory'
 
 // ----------------------------------- 레이아웃 탐색 ----------------------------------- //
 // 특정 paneId를 가진 PaneNode를 레이아웃에서 찾는다.
-export function findPaneNodeInLayout(layout: LayoutNode, painId: string): PaneNode | null {
+export function findPaneNodeInLayout(layout: LayoutNode, paneId: string): PaneNode | null {
   if (isPaneNode(layout)) {
-    return layout.paneId === painId ? layout : null
+    return layout.paneId === paneId ? layout : null
   }
 
   for (const child of layout.children) {
-    const result = findPaneNodeInLayout(child, painId)
+    const result = findPaneNodeInLayout(child, paneId)
     if (result) return result
   }
   return null
@@ -94,7 +94,7 @@ export function replaceNodeInLayout(
   }
 }
 
-// 레이아웃에서 targetNodeId를 제거한다. 제거된 노드가 속한 SplitNode는 자식 노드가 1개 남으면 제거한다.
+// 특정 SplitNode의 sizes를 업데이트한다.
 export function updateSizesInLayout(
   layout: LayoutNode,
   targetNodeId: string,
@@ -108,7 +108,7 @@ export function updateSizesInLayout(
   }
 }
 
-// 레이아웃에서 targetNodeId를 제거한다. 제거된 노드가 속한 SplitNode는 자식 노드가 1개 남으면 제거한다.
+// sizes 배열에서 특정 인덱스를 제거하고 합이 100이 되도록 정규화한다.
 export function removeAndNormalizeSizes(sizes: number[], indexToRemove: number): number[] {
   const newSizes = sizes.filter((_, i) => i !== indexToRemove)
   const sum = newSizes.reduce((a, b) => a + b, 0)

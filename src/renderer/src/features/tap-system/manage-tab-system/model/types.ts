@@ -32,7 +32,7 @@ export interface TabState {
 export interface TabActions {
   // Tab 액션
   openTab: (options: TabOptions, targetPaneId?: string) => string
-  openRightTab: (options: TabOptions, sourceTabId: string) => string
+  openRightTab: (options: TabOptions, sourcePaneId: string) => string
   closeTab: (tabId: string) => void
   activateTab: (tabId: string, paneId?: string) => void
   pinTab: (tabId: string) => void
@@ -46,11 +46,14 @@ export interface TabActions {
   splitPane: (paneId: string, position: SplitPosition, tabId?: string) => string
   closePane: (paneId: string) => void
   moveTabToPane: (tabId: string, sourcePaneId: string, targetPaneId: string) => void
-  updateLayoutSize: (paneId: string, size: number[]) => void
+  updateLayoutSizes: (nodeId: string, sizes: number[]) => void
 
+  // 편의 셀렉터 (store에서 직접 사용 가능한 래퍼)
+  getTabById: (tabId: string) => Tab | undefined
+  getPaneById: (paneId: string) => Pane | undefined
+  getActiveTab: (paneId?: string) => Tab | undefined
   findPaneByTabId: (tabId: string) => Pane | undefined
   findTabByPathname: (pathname: string) => Tab | undefined
-  updateLayoutSizes: (paneId: string, size: number[]) => void
 
   // 상태 초기화
   reset: () => void

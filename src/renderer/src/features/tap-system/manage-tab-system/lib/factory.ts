@@ -1,6 +1,6 @@
 import { Pane, PaneNode, SplitDirection, SplitNode, Tab } from '@/entities/tab-system'
 import { TabOptions, TabState } from '../model/types'
-import { LAYOUT_DEFAULTS, PANE_DEFAULTS } from './contants'
+import { LAYOUT_DEFAULTS, PANE_DEFAULTS } from './constants'
 import { nanoid } from 'nanoid'
 
 // ID 생성

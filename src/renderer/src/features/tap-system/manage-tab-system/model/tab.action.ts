@@ -46,7 +46,7 @@ export const createTabActions = (
     // 새로운 탭 생성
     const paneId = targetPaneId ?? activePaneId
     const pane = panes[paneId]
-    if (!pane) return tabId
+    if (!pane) return ''
 
     const newTab = createTab(options)
 
@@ -69,8 +69,8 @@ export const createTabActions = (
     return newTab.id
   },
 
-  openRightTab: (options: TabOptions, sourceTabId: string): string => {
-    const { tabs, panes, layout, activePaneId } = get()
+  openRightTab: (options: TabOptions, sourcePaneId: string): string => {
+    const { tabs, panes, layout } = get()
     const tabId = createTabId(options.pathname)
 
     // 이미 존재하는 탭이면 활성화만
@@ -86,8 +86,7 @@ export const createTabActions = (
       }
     }
 
-    const paneId = sourceTabId ?? activePaneId
-    const paneNode = findPaneNodeInLayout(layout, paneId)
+    const paneNode = findPaneNodeInLayout(layout, sourcePaneId)
     if (!paneNode) return get().openTab(options)
 
     const rightPaneId = findRightPaneInHorizontalSplit(layout, paneNode.id)
@@ -95,7 +94,7 @@ export const createTabActions = (
       return get().openTab(options, rightPaneId)
     }
 
-    const newPaneId = get().splitPane(paneId, 'right')
+    const newPaneId = get().splitPane(sourcePaneId, 'right')
     return get().openTab(options, newPaneId)
   },
 
@@ -158,7 +157,7 @@ export const createTabActions = (
       activePaneId: targetPaneId
     })
   },
-  navigateInTab: (tabId: string, options: NavigateOptions): void => {
+  navigateTab: (tabId: string, options: NavigateOptions): void => {
     const { tabs, panes } = get()
     const tab = tabs[tabId]
     if (!tab) return

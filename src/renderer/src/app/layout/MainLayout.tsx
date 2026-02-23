@@ -1,6 +1,11 @@
 import { SidebarProvider } from '@/shared/ui/sidebar'
 import MainSidebar from './MainSidebar'
-import { TAB_ICON, useTabDnd, useTabStore } from '@/features/tap-system/manage-tab-system'
+import {
+  TAB_ICON,
+  useSessionPersistence,
+  useTabDnd,
+  useTabStore
+} from '@/features/tap-system/manage-tab-system'
 import { useState } from 'react'
 import {
   DndContext,
@@ -29,6 +34,8 @@ function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactEle
 }
 
 function MainLayout(): React.JSX.Element {
+  // 세션 영속성 활성화
+  useSessionPersistence()
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   // 드래그 활성화 조건: 8px 이상 이동해야 드래그 시작
