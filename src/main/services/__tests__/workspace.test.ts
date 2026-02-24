@@ -20,6 +20,7 @@ vi.mock('nanoid', () => ({
 const mockWorkspace = {
   id: 'mocked-id',
   name: 'Test Workspace',
+  path: '/test/path',
   createdAt: new Date(),
   updatedAt: new Date()
 }
@@ -53,16 +54,16 @@ describe('workspaceService', () => {
   describe('create', () => {
     it('워크스페이스를 생성한다', () => {
       vi.mocked(workspaceRepository.create).mockReturnValue(mockWorkspace)
-      const result = workspaceService.create('Test Workspace')
+      const result = workspaceService.create('Test Workspace', '/test/path')
       expect(result.name).toBe('Test Workspace')
     })
 
     it('빈 이름이면 ValidationError를 던진다', () => {
-      expect(() => workspaceService.create('')).toThrow(ValidationError)
+      expect(() => workspaceService.create('', '/test/path')).toThrow(ValidationError)
     })
 
     it('공백만 있는 이름이면 ValidationError를 던진다', () => {
-      expect(() => workspaceService.create('   ')).toThrow(ValidationError)
+      expect(() => workspaceService.create('   ', '/test/path')).toThrow(ValidationError)
     })
   })
 

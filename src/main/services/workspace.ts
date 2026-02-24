@@ -14,11 +14,13 @@ export const workspaceService = {
     return workspace
   },
 
-  create(name: string) {
+  create(name: string, path: string) {
     if (!name.trim()) throw new ValidationError('Workspace name is required')
+    if (!path.trim()) throw new ValidationError('Workspace path is required')
     return workspaceRepository.create({
       id: nanoid(),
       name: name.trim(),
+      path: path.trim(),
       createdAt: new Date(),
       updatedAt: new Date()
     })

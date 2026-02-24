@@ -4,7 +4,7 @@ import { workspaces } from '../db/schema'
 
 export type Workspace = typeof workspaces.$inferSelect
 export type WorkspaceInsert = typeof workspaces.$inferInsert
-export type WorkspaceUpdate = Partial<Pick<Workspace, 'name' | 'updatedAt'>>
+export type WorkspaceUpdate = Partial<Pick<Workspace, 'name' | 'path' | 'updatedAt'>>
 
 export const workspaceRepository = {
   findAll(): Workspace[] {

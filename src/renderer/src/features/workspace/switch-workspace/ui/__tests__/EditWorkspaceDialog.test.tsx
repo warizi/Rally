@@ -16,6 +16,7 @@ const mockReturn = (isPending: boolean): any => ({ mutate: mockMutate, isPending
 const mockWorkspace: Workspace = {
   id: 'ws-1',
   name: 'My Workspace',
+  path: '/test/path',
   createdAt: new Date(),
   updatedAt: new Date()
 }
@@ -54,7 +55,7 @@ describe('EditWorkspaceDialog', () => {
 
     await waitFor(() => {
       expect(mockMutate).toHaveBeenCalledWith(
-        { id: 'ws-1', name: 'Updated Name' },
+        { id: 'ws-1', name: 'Updated Name', path: '/test/path' },
         expect.any(Object)
       )
     })

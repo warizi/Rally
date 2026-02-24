@@ -6,6 +6,7 @@ import { workspaces } from '../../db/schema'
 const mockWorkspace = {
   id: '1',
   name: 'Test Workspace',
+  path: '/test/path',
   createdAt: new Date(),
   updatedAt: new Date()
 }

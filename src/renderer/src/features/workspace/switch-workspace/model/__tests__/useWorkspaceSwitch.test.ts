@@ -12,8 +12,8 @@ vi.mock('@entities/workspace', () => ({
 
 import { useWorkspaces } from '@entities/workspace'
 
-const ws1 = { id: 'ws-1', name: 'Workspace 1', createdAt: new Date(), updatedAt: new Date() }
-const ws2 = { id: 'ws-2', name: 'Workspace 2', createdAt: new Date(), updatedAt: new Date() }
+const ws1 = { id: 'ws-1', name: 'Workspace 1', path: '/path/1', createdAt: new Date(), updatedAt: new Date() }
+const ws2 = { id: 'ws-2', name: 'Workspace 2', path: '/path/2', createdAt: new Date(), updatedAt: new Date() }
 
 function createWrapper() {
   const queryClient = new QueryClient()
@@ -112,7 +112,7 @@ describe('useWorkspaceSwitch', () => {
     })
 
     it('워크스페이스가 없으면 true이다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [] } as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [] } as unknown as ReturnType<typeof useWorkspaces>)
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
       expect(result.current.isLastWorkspace).toBe(true)

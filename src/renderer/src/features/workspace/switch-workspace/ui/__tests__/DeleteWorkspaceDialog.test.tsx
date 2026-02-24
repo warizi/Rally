@@ -16,6 +16,7 @@ const mockReturn = (isPending: boolean): any => ({ mutate: mockMutate, isPending
 const mockWorkspace: Workspace = {
   id: 'ws-1',
   name: 'My Workspace',
+  path: '/test/path',
   createdAt: new Date(),
   updatedAt: new Date()
 }

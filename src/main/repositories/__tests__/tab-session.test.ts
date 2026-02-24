@@ -6,6 +6,7 @@ import { workspaces, tabSessions } from '../../db/schema'
 const mockWorkspace = {
   id: 'workspace-1',
   name: 'Test Workspace',
+  path: '/test/path',
   createdAt: new Date(),
   updatedAt: new Date()
 }

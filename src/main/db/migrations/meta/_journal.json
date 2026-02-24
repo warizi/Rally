@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "6",
-      "when": 1771713043945,
-      "tag": "0000_bright_slyde",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "6",
-      "when": 1771774151021,
-      "tag": "0001_reflective_skullbuster",
+      "when": 1771916858798,
+      "tag": "0000_serious_firelord",
       "breakpoints": true
     }
   ]

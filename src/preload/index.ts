@@ -14,9 +14,10 @@ const api = {
   workspace: {
     getAll: () => ipcRenderer.invoke('workspace:getAll'),
     getById: (id: string) => ipcRenderer.invoke('workspace:getById', id),
-    create: (name: string) => ipcRenderer.invoke('workspace:create', name),
+    create: (name: string, path: string) => ipcRenderer.invoke('workspace:create', name, path),
     update: (id: string, data: unknown) => ipcRenderer.invoke('workspace:update', id, data),
-    delete: (id: string) => ipcRenderer.invoke('workspace:delete', id)
+    delete: (id: string) => ipcRenderer.invoke('workspace:delete', id),
+    selectDirectory: () => ipcRenderer.invoke('workspace:selectDirectory')
   }
 }
 

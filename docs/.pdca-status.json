@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-23T13:43:17.429Z",
+  "lastUpdated": "2026-02-24T07:18:04.085Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -12,7 +12,10 @@
     "ipc",
     "main",
     "preload",
-    "tap-system"
+    "tap-system",
+    "repositories",
+    "model",
+    "api"
   ],
   "primaryFeature": "ui",
   "features": {
@@ -38,9 +41,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:43:07.402Z",
-        "lastUpdated": "2026-02-22T03:23:49.909Z"
+        "lastUpdated": "2026-02-24T07:18:04.085Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/__tests__/WorkspaceSwitcher.test.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/CreateWorkspaceDialog.tsx"
     },
     "workspace.ts": {
       "phase": "do",
@@ -51,7 +54,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:48:41.526Z",
-        "lastUpdated": "2026-02-22T02:48:41.526Z"
+        "lastUpdated": "2026-02-24T07:07:58.802Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/workspace.ts"
     },
@@ -64,9 +67,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:49:14.086Z",
-        "lastUpdated": "2026-02-22T15:32:00.422Z"
+        "lastUpdated": "2026-02-24T07:10:48.952Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/tab-session.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/workspace/api/__tests__/queries.test.ts"
     },
     "tab-system": {
       "phase": "do",
@@ -90,9 +93,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:08:13.116Z",
-        "lastUpdated": "2026-02-22T15:28:55.610Z"
+        "lastUpdated": "2026-02-24T07:07:24.686Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/db/schema/index.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/db/schema/workspace.ts"
     },
     "tab-session.ts": {
       "phase": "do",
@@ -116,9 +119,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:25:36.051Z",
-        "lastUpdated": "2026-02-22T15:25:36.051Z"
+        "lastUpdated": "2026-02-24T07:08:28.337Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/tab-session.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/workspace.ts"
     },
     "main": {
       "phase": "do",
@@ -129,7 +132,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:01.950Z",
-        "lastUpdated": "2026-02-23T12:59:48.127Z"
+        "lastUpdated": "2026-02-24T07:08:14.534Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
     },
@@ -142,9 +145,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:20.139Z",
-        "lastUpdated": "2026-02-22T15:28:20.979Z"
+        "lastUpdated": "2026-02-24T07:08:40.382Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
     },
     "tap-system": {
       "phase": "do",
@@ -158,6 +161,45 @@
         "lastUpdated": "2026-02-23T13:43:17.429Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/tap-system/manage-tab-system/api/__tests__/queries.test.ts"
+    },
+    "repositories": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T07:07:54.661Z",
+        "lastUpdated": "2026-02-24T07:07:54.661Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/workspace.ts"
+    },
+    "model": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T07:08:45.193Z",
+        "lastUpdated": "2026-02-24T07:08:45.193Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/workspace/model/types.ts"
+    },
+    "api": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T07:08:48.681Z",
+        "lastUpdated": "2026-02-24T07:12:12.649Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/workspace/api/queries.ts"
     }
   },
   "pipeline": {
@@ -168,7 +210,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-23T13:43:17.429Z"
+    "lastActivity": "2026-02-24T07:18:04.085Z"
   },
   "history": [
     {
@@ -756,6 +798,192 @@
     {
       "timestamp": "2026-02-23T13:43:17.429Z",
       "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:07:24.686Z",
+      "feature": "schema",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:07:54.661Z",
+      "feature": "repositories",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:07:58.802Z",
+      "feature": "workspace.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:03.616Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:11.116Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:14.534Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:19.517Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:23.802Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:28.337Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:32.326Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:40.382Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:45.193Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:48.681Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:53.981Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:08:57.920Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:10.022Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:13.726Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:24.827Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:43.661Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:46.957Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:50.479Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:09:56.525Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:10:40.919Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:10:48.952Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:10:54.091Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:10:57.525Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:11:01.578Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:11:04.856Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:11:09.964Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:12:12.649Z",
+      "feature": "api",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:18:04.085Z",
+      "feature": "workspace",
       "phase": "do",
       "action": "updated"
     }

@@ -12,12 +12,13 @@ interface TabSessionAPI {
 interface WorkspaceAPI {
   getAll: () => Promise<IpcResponse<Workspace[]>>
   getById: (id: string) => Promise<IpcResponse<Workspace>>
-  create: (name: string) => Promise<IpcResponse<Workspace>>
+  create: (name: string, path: string) => Promise<IpcResponse<Workspace>>
   update: (
     id: string,
-    data: Partial<Pick<Workspace, 'name' | 'updatedAt'>>
+    data: Partial<Pick<Workspace, 'name' | 'path' | 'updatedAt'>>
   ) => Promise<IpcResponse<Workspace>>
   delete: (id: string) => Promise<IpcResponse<void>>
+  selectDirectory: () => Promise<string | null>
 }
 
 interface API {

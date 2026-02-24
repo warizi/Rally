@@ -13,6 +13,7 @@ import {
 const mockWorkspace = {
   id: 'ws-1',
   name: 'Test Workspace',
+  path: '/test/path',
   createdAt: new Date(),
   updatedAt: new Date()
 }
@@ -74,12 +75,12 @@ describe('useCreateWorkspace', () => {
 
     const { result } = renderHook(() => useCreateWorkspace(), { wrapper: createWrapper() })
     await act(async () => {
-      result.current.mutate('Test Workspace')
+      result.current.mutate({ name: 'Test Workspace', path: '/test/path' })
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
 
     expect(result.current.data?.name).toBe('Test Workspace')
-    expect(mockApi.workspace.create).toHaveBeenCalledWith('Test Workspace')
+    expect(mockApi.workspace.create).toHaveBeenCalledWith('Test Workspace', '/test/path')
   })
 
   it('IPC 실패 시 에러를 던진다', async () => {
@@ -91,7 +92,7 @@ describe('useCreateWorkspace', () => {
 
     const { result } = renderHook(() => useCreateWorkspace(), { wrapper: createWrapper() })
     await act(async () => {
-      result.current.mutate('')
+      result.current.mutate({ name: '', path: '' })
     })
     await waitFor(() => expect(result.current.isError).toBe(true))
   })

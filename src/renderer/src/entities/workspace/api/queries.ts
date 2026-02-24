@@ -11,7 +11,7 @@ import type { Workspace } from '../model/types'
 
 const QUERY_KEY = 'workspaces'
 
-type UpdateWorkspaceInput = { id: string; name: string }
+type UpdateWorkspaceInput = { id: string; name?: string; path?: string }
 
 export function useWorkspaces(): UseQueryResult<Workspace[]> {
   return useQuery({
@@ -35,11 +35,21 @@ export function useWorkspace(id: string): UseQueryResult<Workspace | undefined> 
   })
 }
 
-export function useCreateWorkspace(): UseMutationResult<Workspace | undefined, Error, string> {
+export function useCreateWorkspace(): UseMutationResult<
+  Workspace | undefined,
+  Error,
+  { name: string; path: string }
+> {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (name: string): Promise<Workspace | undefined> => {
-      const res: IpcResponse<Workspace> = await window.api.workspace.create(name)
+    mutationFn: async ({
+      name,
+      path
+    }: {
+      name: string
+      path: string
+    }): Promise<Workspace | undefined> => {
+      const res: IpcResponse<Workspace> = await window.api.workspace.create(name, path)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -56,8 +66,12 @@ export function useUpdateWorkspace(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, name }: UpdateWorkspaceInput): Promise<Workspace | undefined> => {
-      const res: IpcResponse<Workspace> = await window.api.workspace.update(id, { name })
+    mutationFn: async ({
+      id,
+      name,
+      path
+    }: UpdateWorkspaceInput): Promise<Workspace | undefined> => {
+      const res: IpcResponse<Workspace> = await window.api.workspace.update(id, { name, path })
       if (!res.success) throwIpcError(res)
       return res.data
     },

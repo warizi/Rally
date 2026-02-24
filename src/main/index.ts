@@ -18,7 +18,8 @@ function runMigrations(): void {
 function initializeDatabase(): void {
   const workspaces = workspaceService.getAll()
   if (workspaces.length === 0) {
-    workspaceService.create('기본 워크스페이스')
+    const defaultPath = join(app.getPath('documents'), 'Rally', '기본 워크스페이스')
+    workspaceService.create('기본 워크스페이스', defaultPath)
   }
 }
 
