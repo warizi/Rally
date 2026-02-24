@@ -7,6 +7,8 @@ import { db } from './db'
 import { registerWorkspaceHandlers } from './ipc/workspace'
 import { registerTabSessionHandlers } from './ipc/tab-session'
 import { registerTabSnapshotHandlers } from './ipc/tab-snapshot'
+import { registerFolderHandlers } from './ipc/folder'
+import { folderWatcher } from './services/folder-watcher'
 import { workspaceService } from './services/workspace'
 
 function runMigrations(): void {
@@ -72,6 +74,7 @@ app.whenReady().then(() => {
   registerWorkspaceHandlers()
   registerTabSessionHandlers()
   registerTabSnapshotHandlers()
+  registerFolderHandlers()
 
   createWindow()
 
@@ -84,4 +87,15 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+// snapshot 저장은 async이므로 preventDefault + 1초 타임아웃으로 완료를 기다림
+// isQuitting 가드: app.quit() 재호출 시 무한 루프 방지
+let isQuitting = false
+app.on('before-quit', (event) => {
+  if (isQuitting) return
+  event.preventDefault()
+  isQuitting = true
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
+  Promise.race([folderWatcher.stop(), timeout]).finally(() => app.quit())
 })

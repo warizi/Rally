@@ -17,10 +17,10 @@ SQLite (folders 테이블)          → DB 관계용 stable id + 메타데이터
 
 ### 이중 식별자 전략
 
-| 필드 | 역할 | 안정성 |
-|------|------|--------|
-| `id` (nanoid) | DB 관계용 stable identifier | 항상 불변 |
-| `relativePath` | 파일시스템 위치 | rename/move 시 변경됨 |
+| 필드           | 역할                        | 안정성                |
+| -------------- | --------------------------- | --------------------- |
+| `id` (nanoid)  | DB 관계용 stable identifier | 항상 불변             |
+| `relativePath` | 파일시스템 위치             | rename/move 시 변경됨 |
 
 ```
 todos.folderId  → folders.id  ← relativePath가 바뀌어도 링크 유지
@@ -37,15 +37,15 @@ notes.folderId  → folders.id  ← 동일
 
 SQLite `folders` 테이블:
 
-| 필드 | 타입 | 설명 |
-|------|------|------|
-| `id` | text (PK) | nanoid — DB 관계 전용 stable key |
-| `workspaceId` | text NOT NULL | `workspaces.id` 참조 (onDelete: cascade) |
-| `relativePath` | text NOT NULL | 워크스페이스 루트 기준 상대경로 (`"a/b/c"`) |
-| `color` | text NULL | 폴더 색상 |
-| `order` | integer NOT NULL DEFAULT 0 | 같은 부모 내 정렬 순서 |
-| `createdAt` | integer (timestamp_ms) | |
-| `updatedAt` | integer (timestamp_ms) | |
+| 필드           | 타입                       | 설명                                        |
+| -------------- | -------------------------- | ------------------------------------------- |
+| `id`           | text (PK)                  | nanoid — DB 관계 전용 stable key            |
+| `workspaceId`  | text NOT NULL              | `workspaces.id` 참조 (onDelete: cascade)    |
+| `relativePath` | text NOT NULL              | 워크스페이스 루트 기준 상대경로 (`"a/b/c"`) |
+| `color`        | text NULL                  | 폴더 색상                                   |
+| `order`        | integer NOT NULL DEFAULT 0 | 같은 부모 내 정렬 순서                      |
+| `createdAt`    | integer (timestamp_ms)     |                                             |
+| `updatedAt`    | integer (timestamp_ms)     |                                             |
 
 - unique constraint: `(workspaceId, relativePath)`
 - `relativePath`는 항상 `/` 구분자로 정규화해서 저장 (Windows `\` 변환 포함)
@@ -66,12 +66,14 @@ SQLite `folders` 테이블:
 ## IPC 인터페이스
 
 ### 읽기
+
 ```
 window.api.folder.readTree(workspaceId)
   → FolderNode[]  // fs 트리 + DB 메타데이터 merge
 ```
 
 ### 파일시스템 조작 (disk I/O + DB 동기화)
+
 ```
 window.api.folder.create(workspaceId, parentFolderId | null, name)
   → FolderNode
@@ -92,18 +94,21 @@ window.api.folder.move(workspaceId, folderId, parentFolderId | null, index)
 ```
 
 ### 메타데이터 전용
+
 ```
 window.api.folder.updateMeta(workspaceId, folderId, { color?, order? })
   → FolderNode
 ```
 
 ### Push 구독 등록
+
 ```
 window.api.folder.onChanged(callback: (workspaceId: string) => void)
   → unsubscribe 함수 반환
 ```
 
 ### Push 이벤트 (Main → Renderer)
+
 ```
 'folder:changed' (workspaceId)
   // @parcel/watcher 감지 → DB 동기화 완료 후 → renderer에서 readTree 재요청
@@ -115,7 +120,7 @@ window.api.folder.onChanged(callback: (workspaceId: string) => void)
 
 ```typescript
 // src/renderer/src/app/layout/MainLayout.tsx
-useFolderWatcher()  // push 이벤트 구독 + React Query invalidation
+useFolderWatcher() // push 이벤트 구독 + React Query invalidation
 
 // src/renderer/src/entities/folder/model/use-folder-watcher.ts
 function useFolderWatcher() {
@@ -235,6 +240,7 @@ ROLLBACK ← 하나라도 실패 시 전체 취소
 ```
 
 fs 작업(fs.rename)과 DB 작업이 순서상 분리되므로:
+
 - fs 성공 → DB transaction 실패 → fs는 이미 변경됨 (감수, 재시작 시 reconciliation으로 복구)
 - fs 실패 → DB transaction 시작 안 함
 
@@ -340,9 +346,9 @@ watcher rename 이벤트 수신 → DB에서 A 조회 → 이미 B로 변경됨 
 
 ```typescript
 interface FolderNode {
-  id: string              // DB id (없으면 relativePath를 임시 id로 사용) — react-arborist node id로 사용
-  name: string            // 마지막 path segment
-  relativePath: string    // 워크스페이스 기준 상대경로 (항상 '/' 구분자)
+  id: string // DB id (없으면 relativePath를 임시 id로 사용) — react-arborist node id로 사용
+  name: string // 마지막 path segment
+  relativePath: string // 워크스페이스 기준 상대경로 (항상 '/' 구분자)
   color: string | null
   order: number
   children: FolderNode[]
@@ -387,6 +393,7 @@ window.api.folder.updateMeta(workspaceId, folderId, { color?, order? })
 ## 외부 변경 처리 시나리오
 
 ### 외부 rename (완전히 처리)
+
 ```
 Finder에서 "a" → "a2" rename
 → @parcel/watcher: { type: 'rename', oldPath: 'a', path: 'a2' }
@@ -397,6 +404,7 @@ Finder에서 "a" → "a2" rename
 ```
 
 ### 외부 create / delete (처리)
+
 ```
 → @parcel/watcher: { type: 'create' | 'delete', path }
 → create: 트리 새로고침 (메타데이터 없이 기본값으로 표시)
@@ -404,6 +412,7 @@ Finder에서 "a" → "a2" rename
 ```
 
 ### 볼륨 간 이동 (감수)
+
 ```
 외장하드 등 다른 볼륨으로 이동 = copy + delete
 → rename 이벤트 없음 → 메타데이터 초기화
@@ -413,6 +422,7 @@ Finder에서 "a" → "a2" rename
 ## Implementation Scope
 
 ### Main Process
+
 1. `src/main/db/schema/folder.ts` — Drizzle 스키마
 2. `src/main/db/schema/index.ts` — export 추가
 3. DB migration
@@ -437,14 +447,17 @@ Finder에서 "a" → "a2" rename
 8. `src/main/index.ts` — IPC 등록 + app 종료 시 writeSnapshot 훅
 
 ### Preload
+
 9. `src/preload/index.d.ts` — folder IPC 타입 추가
 
 ### Renderer
+
 10. `src/renderer/src/entities/folder/` — FolderNode 타입, React Query hooks
 11. `src/renderer/src/features/folder/manage-folder/` — mutations + FolderTree 컴포넌트
 12. `src/renderer/src/pages/folder/ui/FolderPage.tsx` — 트리 통합
 
 ## Dependencies
+
 - `@parcel/watcher` — 설치 필요 (`npm install @parcel/watcher`)
   - macOS: FSEvents / Windows: ReadDirectoryChangesW / Linux: inotify
   - rename 이벤트를 네이티브 수준에서 감지 (VS Code 동일 사용)
@@ -457,10 +470,12 @@ Finder에서 "a" → "a2" rename
 - `useCurrentWorkspaceStore`
 
 ## Future Links (Out of Scope, 설계 고려)
+
 - `todos.folderId TEXT REFERENCES folders(id)` — 추후 추가
 - `notes.folderId TEXT REFERENCES folders(id)` — 추후 추가
 
 ## Success Criteria
+
 - [ ] 워크스페이스 path의 실제 폴더 트리가 UI에 표시됨
 - [ ] 생성/이름변경/삭제/이동이 실제 디스크에 반영됨
 - [ ] 앱 내 rename/move 시 메타데이터 + 하위 폴더 DB 일괄 업데이트

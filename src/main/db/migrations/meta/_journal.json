@@ -15,6 +15,13 @@
       "when": 1771918331527,
       "tag": "0001_peaceful_logan",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1771942806678,
+      "tag": "0002_fast_tomorrow_man",
+      "breakpoints": true
     }
   ]
 }

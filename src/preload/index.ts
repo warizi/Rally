@@ -12,6 +12,29 @@ type TabSnapshotCreateInput = {
 }
 
 const api = {
+  folder: {
+    readTree: (workspaceId: string) => ipcRenderer.invoke('folder:readTree', workspaceId),
+    create: (workspaceId: string, parentFolderId: string | null, name: string) =>
+      ipcRenderer.invoke('folder:create', workspaceId, parentFolderId, name),
+    rename: (workspaceId: string, folderId: string, newName: string) =>
+      ipcRenderer.invoke('folder:rename', workspaceId, folderId, newName),
+    remove: (workspaceId: string, folderId: string) =>
+      ipcRenderer.invoke('folder:remove', workspaceId, folderId),
+    move: (workspaceId: string, folderId: string, parentFolderId: string | null, index: number) =>
+      ipcRenderer.invoke('folder:move', workspaceId, folderId, parentFolderId, index),
+    updateMeta: (
+      workspaceId: string,
+      folderId: string,
+      data: { color?: string | null; order?: number }
+    ) => ipcRenderer.invoke('folder:updateMeta', workspaceId, folderId, data),
+    onChanged: (callback: (workspaceId: string) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, workspaceId: string): void =>
+        callback(workspaceId)
+      ipcRenderer.on('folder:changed', handler)
+      return () => ipcRenderer.removeListener('folder:changed', handler)
+    }
+  },
+
   tabSession: {
     getByWorkspaceId: (workspaceId: string) =>
       ipcRenderer.invoke('tabSession:getByWorkspaceId', workspaceId),

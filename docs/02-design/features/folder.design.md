@@ -80,7 +80,10 @@ export const folderRepository = {
     db.insert(folders).values(items).onConflictDoNothing().run()
   },
 
-  update(id: string, data: Partial<Pick<Folder, 'relativePath' | 'color' | 'order' | 'updatedAt'>>): Folder | undefined {
+  update(
+    id: string,
+    data: Partial<Pick<Folder, 'relativePath' | 'color' | 'order' | 'updatedAt'>>
+  ): Folder | undefined {
     return db.update(folders).set(data).where(eq(folders.id, id)).returning().get()
   },
 
@@ -359,8 +362,10 @@ export const folderService = {
     const siblings = folderRepository.findByWorkspaceId(workspaceId).filter((f) => {
       const parts = f.relativePath.split('/')
       const parentParts = parentRelPath ? parentRelPath.split('/') : []
-      return parts.length === parentParts.length + 1 &&
+      return (
+        parts.length === parentParts.length + 1 &&
         (parentRelPath === null || f.relativePath.startsWith(`${parentRelPath}/`))
+      )
     })
     const maxOrder = siblings.length > 0 ? Math.max(...siblings.map((s) => s.order)) : -1
     const now = new Date()
@@ -401,7 +406,15 @@ export const folderService = {
 
     // 같은 이름이면 no-op (resolveNameConflict 호출 전에 먼저 체크)
     const oldName = oldRel.split('/').at(-1)!
-    if (newName.trim() === oldName) return { id: folder.id, name: oldName, relativePath: oldRel, color: folder.color, order: folder.order, children: [] }
+    if (newName.trim() === oldName)
+      return {
+        id: folder.id,
+        name: oldName,
+        relativePath: oldRel,
+        color: folder.color,
+        order: folder.order,
+        children: []
+      }
 
     const finalName = resolveNameConflict(parentAbs, newName.trim())
 
@@ -413,7 +426,14 @@ export const folderService = {
     folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
 
     const updated = folderRepository.findById(folderId)!
-    return { id: updated.id, name: finalName, relativePath: updated.relativePath, color: updated.color, order: updated.order, children: [] }
+    return {
+      id: updated.id,
+      name: finalName,
+      relativePath: updated.relativePath,
+      color: updated.color,
+      order: updated.order,
+      children: []
+    }
   },
 
   /**
@@ -481,19 +501,25 @@ export const folderService = {
     }
 
     // siblings reindex
-    const siblings = folderRepository.findByWorkspaceId(workspaceId).filter((f) => {
-      const parts = f.relativePath.split('/')
-      const parentParts = targetParentRel ? targetParentRel.split('/') : []
-      return (
-        parts.length === parentParts.length + 1 &&
-        (targetParentRel === null || f.relativePath.startsWith(`${targetParentRel}/`))
-      )
-    }).sort((a, b) => a.order - b.order)
+    const siblings = folderRepository
+      .findByWorkspaceId(workspaceId)
+      .filter((f) => {
+        const parts = f.relativePath.split('/')
+        const parentParts = targetParentRel ? targetParentRel.split('/') : []
+        return (
+          parts.length === parentParts.length + 1 &&
+          (targetParentRel === null || f.relativePath.startsWith(`${targetParentRel}/`))
+        )
+      })
+      .sort((a, b) => a.order - b.order)
 
     // 현재 폴더를 목록에서 제거 후 index 위치에 삽입
     const withoutSelf = siblings.filter((s) => s.id !== folderId)
     withoutSelf.splice(index, 0, { ...folder, relativePath: finalRel })
-    folderRepository.reindexSiblings(workspaceId, withoutSelf.map((s) => s.id))
+    folderRepository.reindexSiblings(
+      workspaceId,
+      withoutSelf.map((s) => s.id)
+    )
 
     const updated = folderRepository.findById(folderId)!
     return {
@@ -599,7 +625,9 @@ class FolderWatcherService {
           this.activeWorkspacePath,
           this.getSnapshotPath(this.activeWorkspaceId!)
         )
-      } catch { /* ignore */ }
+      } catch {
+        /* ignore */
+      }
     }
     this.activeWorkspaceId = null
     this.activeWorkspacePath = null
@@ -630,7 +658,9 @@ class FolderWatcherService {
     // 새 snapshot 저장
     try {
       await parcelWatcher.writeSnapshot(workspacePath, snapshotPath)
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   /** 실시간 이벤트 debounce 처리 */
@@ -665,8 +695,13 @@ class FolderWatcherService {
       const rel = path.relative(workspacePath, absPath).replace(/\\/g, '/')
 
       // getEventsSince가 런타임에 rename + oldPath를 제공하는 경우 (플랫폼 의존적)
-      if ('oldPath' in event && typeof (event as unknown as { oldPath: string }).oldPath === 'string') {
-        const oldRel = path.relative(workspacePath, (event as unknown as { oldPath: string }).oldPath).replace(/\\/g, '/')
+      if (
+        'oldPath' in event &&
+        typeof (event as unknown as { oldPath: string }).oldPath === 'string'
+      ) {
+        const oldRel = path
+          .relative(workspacePath, (event as unknown as { oldPath: string }).oldPath)
+          .replace(/\\/g, '/')
         folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         continue
       }
@@ -675,7 +710,9 @@ class FolderWatcherService {
         try {
           const stat = await fs.promises.stat(absPath)
           if (!stat.isDirectory()) continue
-        } catch { continue }
+        } catch {
+          continue
+        }
         const existing = folderRepository.findByRelativePath(workspaceId, rel)
         if (!existing) {
           const now = new Date()
@@ -747,6 +784,7 @@ export const folderWatcher = new FolderWatcherService()
 ```
 
 > 의존성 방향 (단방향):
+>
 > - `ipc/folder.ts` → `services/folder.ts`, `services/folder-watcher.ts` (각각 독립)
 > - `services/folder-watcher.ts` → `services/folder.ts` (readDirRecursive)
 > - `services/folder.ts` → `services/folder-watcher.ts` ❌ (import 없음, 순환 방지)
@@ -766,15 +804,12 @@ import { folderWatcher } from '../services/folder-watcher'
 import { workspaceRepository } from '../repositories/workspace'
 
 export function registerFolderHandlers(): void {
-  ipcMain.handle(
-    'folder:readTree',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse => {
-      // watcher 활성화 (순환 의존성 방지를 위해 IPC 핸들러에서 담당)
-      const workspace = workspaceRepository.findById(workspaceId)
-      if (workspace) void folderWatcher.ensureWatching(workspaceId, workspace.path)
-      return handle(() => folderService.readTree(workspaceId))
-    }
-  )
+  ipcMain.handle('folder:readTree', (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse => {
+    // watcher 활성화 (순환 의존성 방지를 위해 IPC 핸들러에서 담당)
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (workspace) void folderWatcher.ensureWatching(workspaceId, workspace.path)
+    return handle(() => folderService.readTree(workspaceId))
+  })
 
   ipcMain.handle(
     'folder:create',
@@ -788,12 +823,8 @@ export function registerFolderHandlers(): void {
 
   ipcMain.handle(
     'folder:rename',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      folderId: string,
-      newName: string
-    ): IpcResponse => handle(() => folderService.rename(workspaceId, folderId, newName))
+    (_: IpcMainInvokeEvent, workspaceId: string, folderId: string, newName: string): IpcResponse =>
+      handle(() => folderService.rename(workspaceId, folderId, newName))
   )
 
   ipcMain.handle(
@@ -810,8 +841,7 @@ export function registerFolderHandlers(): void {
       folderId: string,
       parentFolderId: string | null,
       index: number
-    ): IpcResponse =>
-      handle(() => folderService.move(workspaceId, folderId, parentFolderId, index))
+    ): IpcResponse => handle(() => folderService.move(workspaceId, folderId, parentFolderId, index))
   )
 
   ipcMain.handle(
@@ -1421,25 +1451,25 @@ npm run db:generate   # src/main/db/migrations/ 에 새 파일 생성
 
 ## 12. 파일 목록 요약
 
-| 파일 | 작업 |
-|------|------|
-| `src/main/db/schema/folder.ts` | 신규 생성 |
-| `src/main/db/schema/index.ts` | folders export 추가 |
-| `src/main/repositories/folder.ts` | 신규 생성 |
-| `src/main/services/folder.ts` | 신규 생성 |
-| `src/main/services/folder-watcher.ts` | 신규 생성 |
-| `src/main/ipc/folder.ts` | 신규 생성 |
-| `src/main/index.ts` | registerFolderHandlers + before-quit hook 추가 |
-| `src/preload/index.ts` | folder API 추가 |
-| `src/preload/index.d.ts` | FolderNode + FolderAPI 타입 추가 |
-| `src/renderer/src/entities/folder/model/types.ts` | 신규 생성 |
-| `src/renderer/src/entities/folder/api/queries.ts` | 신규 생성 |
-| `src/renderer/src/entities/folder/model/use-folder-watcher.ts` | 신규 생성 |
-| `src/renderer/src/entities/folder/index.ts` | 신규 생성 |
-| `src/renderer/src/features/folder/manage-folder/ui/FolderTree.tsx` | 신규 생성 |
-| `src/renderer/src/features/folder/manage-folder/ui/FolderNodeRenderer.tsx` | 신규 생성 |
-| `src/renderer/src/features/folder/manage-folder/ui/DeleteFolderDialog.tsx` | 신규 생성 |
-| `src/renderer/src/features/folder/manage-folder/index.ts` | 신규 생성 |
-| `src/renderer/src/pages/folder/ui/FolderPage.tsx` | FolderTree 연결 |
-| `src/renderer/src/app/layout/MainLayout.tsx` | useFolderWatcher 추가 |
-| DB migrations (자동 생성) | db:generate 실행 |
+| 파일                                                                       | 작업                                           |
+| -------------------------------------------------------------------------- | ---------------------------------------------- |
+| `src/main/db/schema/folder.ts`                                             | 신규 생성                                      |
+| `src/main/db/schema/index.ts`                                              | folders export 추가                            |
+| `src/main/repositories/folder.ts`                                          | 신규 생성                                      |
+| `src/main/services/folder.ts`                                              | 신규 생성                                      |
+| `src/main/services/folder-watcher.ts`                                      | 신규 생성                                      |
+| `src/main/ipc/folder.ts`                                                   | 신규 생성                                      |
+| `src/main/index.ts`                                                        | registerFolderHandlers + before-quit hook 추가 |
+| `src/preload/index.ts`                                                     | folder API 추가                                |
+| `src/preload/index.d.ts`                                                   | FolderNode + FolderAPI 타입 추가               |
+| `src/renderer/src/entities/folder/model/types.ts`                          | 신규 생성                                      |
+| `src/renderer/src/entities/folder/api/queries.ts`                          | 신규 생성                                      |
+| `src/renderer/src/entities/folder/model/use-folder-watcher.ts`             | 신규 생성                                      |
+| `src/renderer/src/entities/folder/index.ts`                                | 신규 생성                                      |
+| `src/renderer/src/features/folder/manage-folder/ui/FolderTree.tsx`         | 신규 생성                                      |
+| `src/renderer/src/features/folder/manage-folder/ui/FolderNodeRenderer.tsx` | 신규 생성                                      |
+| `src/renderer/src/features/folder/manage-folder/ui/DeleteFolderDialog.tsx` | 신규 생성                                      |
+| `src/renderer/src/features/folder/manage-folder/index.ts`                  | 신규 생성                                      |
+| `src/renderer/src/pages/folder/ui/FolderPage.tsx`                          | FolderTree 연결                                |
+| `src/renderer/src/app/layout/MainLayout.tsx`                               | useFolderWatcher 추가                          |
+| DB migrations (자동 생성)                                                  | db:generate 실행                               |

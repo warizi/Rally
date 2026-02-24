@@ -33,6 +33,42 @@ interface TabSnapshotAPI {
   delete: (id: string) => Promise<IpcResponse<void>>
 }
 
+interface FolderNode {
+  id: string
+  name: string
+  relativePath: string
+  color: string | null
+  order: number
+  children: FolderNode[]
+}
+
+interface FolderAPI {
+  readTree: (workspaceId: string) => Promise<IpcResponse<FolderNode[]>>
+  create: (
+    workspaceId: string,
+    parentFolderId: string | null,
+    name: string
+  ) => Promise<IpcResponse<FolderNode>>
+  rename: (
+    workspaceId: string,
+    folderId: string,
+    newName: string
+  ) => Promise<IpcResponse<FolderNode>>
+  remove: (workspaceId: string, folderId: string) => Promise<IpcResponse<void>>
+  move: (
+    workspaceId: string,
+    folderId: string,
+    parentFolderId: string | null,
+    index: number
+  ) => Promise<IpcResponse<FolderNode>>
+  updateMeta: (
+    workspaceId: string,
+    folderId: string,
+    data: { color?: string | null; order?: number }
+  ) => Promise<IpcResponse<FolderNode>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
+}
+
 interface WorkspaceAPI {
   getAll: () => Promise<IpcResponse<Workspace[]>>
   getById: (id: string) => Promise<IpcResponse<Workspace>>
@@ -46,6 +82,7 @@ interface WorkspaceAPI {
 }
 
 interface API {
+  folder: FolderAPI
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI
   workspace: WorkspaceAPI
