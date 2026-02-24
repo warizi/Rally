@@ -1,5 +1,5 @@
 import { lazy, type ComponentType } from 'react'
-import { ROUTES } from '@shared/constants/url'
+import { ROUTES } from '@/shared/constants/tab-url'
 
 // 라우트 파라미터 타입
 export interface RouteParams {
@@ -21,7 +21,7 @@ export interface PaneRoute {
 
 const DashboardPage = lazy(() => import('@pages/dashboard'))
 const TodoPage = lazy(() => import('@pages/todo'))
-const NoteFolderPage = lazy(() => import('@pages/note-folder'))
+const FolderPage = lazy(() => import('@/pages/folder'))
 
 export const PANE_ROUTES: PaneRoute[] = [
   {
@@ -33,7 +33,7 @@ export const PANE_ROUTES: PaneRoute[] = [
     component: TodoPage
   },
   {
-    pattern: ROUTES.NOTE_FOLDER,
-    component: NoteFolderPage
+    pattern: ROUTES.FOLDER,
+    component: FolderPage
   }
 ]

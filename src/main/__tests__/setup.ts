@@ -17,6 +17,7 @@ vi.mock('../db', () => ({
 }))
 
 beforeEach(() => {
+  testDb.delete(schema.tabSnapshots).run()
   testDb.delete(schema.tabSessions).run()
   testDb.delete(schema.workspaces).run()
 })

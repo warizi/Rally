@@ -1,4 +1,4 @@
-export type { Tab, TabType, TabIcon } from './model/tab.type'
+export type { Tab } from './model/tab.type'
 export type { Pane } from './model/pane.type'
 export type {
   LayoutNode,

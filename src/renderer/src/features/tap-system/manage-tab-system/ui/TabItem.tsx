@@ -5,7 +5,7 @@ import { motion } from 'framer-motion'
 import { X, Pin } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { Tab } from '@/entities/tab-system'
-import { TAB_ICON } from './TabIcons'
+import { TAB_ICON } from '@/shared/constants/tab-url'
 
 interface TabItemProps {
   tab: Tab

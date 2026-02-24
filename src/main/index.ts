@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
@@ -6,6 +6,7 @@ import icon from '../../resources/icon.png?asset'
 import { db } from './db'
 import { registerWorkspaceHandlers } from './ipc/workspace'
 import { registerTabSessionHandlers } from './ipc/tab-session'
+import { registerTabSnapshotHandlers } from './ipc/tab-snapshot'
 import { workspaceService } from './services/workspace'
 
 function runMigrations(): void {
@@ -24,9 +25,11 @@ function initializeDatabase(): void {
 }
 
 function createWindow(): void {
+  const { width, height } = screen.getPrimaryDisplay().workAreaSize
+
   const mainWindow = new BrowserWindow({
-    width: 900,
-    height: 670,
+    width,
+    height,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
@@ -68,6 +71,7 @@ app.whenReady().then(() => {
   initializeDatabase()
   registerWorkspaceHandlers()
   registerTabSessionHandlers()
+  registerTabSnapshotHandlers()
 
   createWindow()
 

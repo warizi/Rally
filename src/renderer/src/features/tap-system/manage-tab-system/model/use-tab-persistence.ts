@@ -55,7 +55,7 @@ function createSaveSessionData(): SessionData {
 }
 
 // SessionData → 탭 스토어 적용
-function applySessionToStore(sessionData: SessionData | null): void {
+export function applySessionToStore(sessionData: SessionData | null): void {
   if (sessionData) {
     const restoredTabs: Record<string, Tab> = {}
     Object.entries(sessionData.tabs).forEach(([id, serialized]) => {

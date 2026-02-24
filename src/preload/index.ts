@@ -2,6 +2,15 @@ import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
 import type { TabSession, TabSessionInsert } from '../main/repositories/tab-session'
 
+type TabSnapshotCreateInput = {
+  name: string
+  description?: string
+  workspaceId: string
+  tabsJson: string
+  panesJson: string
+  layoutJson: string
+}
+
 const api = {
   tabSession: {
     getByWorkspaceId: (workspaceId: string) =>
@@ -9,6 +18,15 @@ const api = {
     create: (data: Omit<TabSessionInsert, 'updatedAt'>) =>
       ipcRenderer.invoke('tabSession:create', data),
     update: (data: Omit<TabSession, 'updatedAt'>) => ipcRenderer.invoke('tabSession:update', data)
+  },
+
+  tabSnapshot: {
+    getByWorkspaceId: (workspaceId: string) =>
+      ipcRenderer.invoke('tabSnapshot:getByWorkspaceId', workspaceId),
+    create: (data: TabSnapshotCreateInput) => ipcRenderer.invoke('tabSnapshot:create', data),
+    update: (id: string, data: { name?: string; description?: string }) =>
+      ipcRenderer.invoke('tabSnapshot:update', id, data),
+    delete: (id: string) => ipcRenderer.invoke('tabSnapshot:delete', id)
   },
 
   workspace: {

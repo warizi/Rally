@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { CreateWorkspaceDialog } from '../CreateWorkspaceDialog'
 import { useCreateWorkspace } from '@entities/workspace'
 
@@ -8,6 +8,7 @@ vi.mock('@entities/workspace', () => ({
 }))
 
 const mockMutate = vi.fn()
+const mockSelectDirectory = vi.fn()
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockReturn = (isPending: boolean): any => ({ mutate: mockMutate, isPending })
@@ -15,6 +16,13 @@ const mockReturn = (isPending: boolean): any => ({ mutate: mockMutate, isPending
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(useCreateWorkspace).mockReturnValue(mockReturn(false))
+  ;(window as unknown as Record<string, unknown>).api = {
+    workspace: { selectDirectory: mockSelectDirectory }
+  }
+})
+
+afterEach(() => {
+  delete (window as unknown as Record<string, unknown>).api
 })
 
 const defaultProps = {
@@ -43,16 +51,23 @@ describe('CreateWorkspaceDialog', () => {
     expect(mockMutate).not.toHaveBeenCalled()
   })
 
-  it('이름 입력 후 제출하면 createWorkspace가 호출된다', async () => {
+  it('이름과 경로 입력 후 제출하면 createWorkspace가 호출된다', async () => {
+    mockSelectDirectory.mockResolvedValue('/selected/path')
     render(<CreateWorkspaceDialog {...defaultProps} />)
 
     fireEvent.change(screen.getByPlaceholderText('워크스페이스 이름'), {
       target: { value: 'New Workspace' }
     })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '폴더 선택' }))
+    })
     fireEvent.click(screen.getByRole('button', { name: '생성' }))
 
     await waitFor(() => {
-      expect(mockMutate).toHaveBeenCalledWith('New Workspace', expect.any(Object))
+      expect(mockMutate).toHaveBeenCalledWith(
+        { name: 'New Workspace', path: '/selected/path' },
+        expect.any(Object)
+      )
     })
   })
 

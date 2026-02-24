@@ -1,7 +1,6 @@
 import { SidebarProvider } from '@/shared/ui/sidebar'
 import MainSidebar from './MainSidebar'
 import {
-  TAB_ICON,
   useSessionPersistence,
   useTabDnd,
   useTabStore
@@ -17,6 +16,7 @@ import {
 } from '@dnd-kit/core'
 import { PaneLayout } from '@/widgets/tab-system'
 import { PANE_ROUTES } from './model/pane-routes'
+import { TAB_ICON } from '@/shared/constants/tab-url'
 
 function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactElement | null {
   const tab = useTabStore((state) => (tabId ? state.tabs[tabId] : null))

@@ -1,7 +1,11 @@
-import { TabType } from '@/entities/tab-system'
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore, applySessionToStore } from '@/features/tap-system/manage-tab-system'
+import type { SerializedTab, SessionData } from '@/features/tap-system/manage-tab-system'
+import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
+import type { TabSnapshot } from '@/entities/tab-snapshot'
+import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
-import { ROUTES } from '@/shared/constants/url'
+import { sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
+import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import {
   Sidebar,
   SidebarContent,
@@ -13,41 +17,14 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/shared/ui/sidebar'
-import { FolderOpen, Home, ListTodo } from 'lucide-react'
-
-interface SidebarItem {
-  title: string
-  tabType: TabType
-  pathname: string
-  icon: typeof Home
-}
-
-const items: SidebarItem[] = [
-  {
-    title: '대시보드',
-    tabType: 'dashboard',
-    pathname: ROUTES.DASHBOARD,
-    icon: Home
-  },
-  {
-    title: '할 일',
-    tabType: 'todo',
-    pathname: ROUTES.TODO,
-    icon: ListTodo
-  },
-  {
-    title: '노트 폴더',
-    tabType: 'note-folder',
-    pathname: ROUTES.NOTE_FOLDER,
-    icon: FolderOpen
-  }
-]
 
 function MainSidebar(): React.JSX.Element {
   const openTab = useTabStore((state) => state.openTab)
+  const { mutate: updateSnapshot } = useUpdateTabSnapshot()
   const tabs = useTabStore((state) => state.tabs)
   const panes = useTabStore((state) => state.panes)
   const activePaneId = useTabStore((state) => state.activePaneId)
+  const currentWorkspaceId = useCurrentWorkspaceStore((state) => state.currentWorkspaceId)
 
   // 현재 활성 탭의 pathname 확인
   const activePane = panes[activePaneId]
@@ -56,6 +33,27 @@ function MainSidebar(): React.JSX.Element {
 
   const handleOpenStaticTab = (item: SidebarItem): void => {
     openTab({ type: item.tabType, pathname: item.pathname, title: item.title })
+  }
+
+  const handleOverwrite = (snapshot: TabSnapshot): void => {
+    const { tabs, panes, layout } = useTabStore.getState()
+    updateSnapshot({
+      id: snapshot.id,
+      tabsJson: JSON.stringify(tabs),
+      panesJson: JSON.stringify(panes),
+      layoutJson: JSON.stringify(layout)
+    })
+  }
+
+  const handleRestore = (snapshot: TabSnapshot): void => {
+    const panes = JSON.parse(snapshot.panesJson) as SessionData['panes']
+    const sessionData: SessionData = {
+      tabs: JSON.parse(snapshot.tabsJson) as Record<string, SerializedTab>,
+      panes,
+      layout: JSON.parse(snapshot.layoutJson) as SessionData['layout'],
+      activePaneId: Object.keys(panes)[0] ?? ''
+    }
+    applySessionToStore(sessionData)
   }
 
   return (
@@ -68,7 +66,7 @@ function MainSidebar(): React.JSX.Element {
           <SidebarGroupLabel>기능</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {items.map((item) => (
+              {sidebar_items.map((item) => (
                 <SidebarMenuItem key={item.pathname}>
                   <SidebarMenuButton
                     className="cursor-pointer"
@@ -84,12 +82,13 @@ function MainSidebar(): React.JSX.Element {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-        <SidebarGroup>
-          <SidebarGroupLabel>탭 스냅샷</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu></SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {currentWorkspaceId && (
+          <TabSnapshotSection
+            workspaceId={currentWorkspaceId}
+            onRestoreSnapshot={handleRestore}
+            onOverwriteSnapshot={handleOverwrite}
+          />
+        )}
         <SidebarGroup>
           <SidebarGroupLabel>기타</SidebarGroupLabel>
           <SidebarGroupContent>
