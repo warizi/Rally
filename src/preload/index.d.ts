@@ -22,7 +22,13 @@ interface TabSnapshotAPI {
   }) => Promise<IpcResponse<TabSnapshot>>
   update: (
     id: string,
-    data: { name?: string; description?: string; tabsJson?: string; panesJson?: string; layoutJson?: string }
+    data: {
+      name?: string
+      description?: string
+      tabsJson?: string
+      panesJson?: string
+      layoutJson?: string
+    }
   ) => Promise<IpcResponse<TabSnapshot>>
   delete: (id: string) => Promise<IpcResponse<void>>
 }

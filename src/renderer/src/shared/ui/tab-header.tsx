@@ -54,9 +54,7 @@ function TabHeader({
     return (
       <div className="w-full pb-2">
         <div className="flex items-center gap-3 mb-2">
-          {Icon && (
-            <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />
-          )}
+          {Icon && <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />}
           <div className="flex-1">
             <input
               ref={titleRef}
@@ -80,9 +78,7 @@ function TabHeader({
               )}
               placeholder="제목을 입력해주세요"
             />
-            {titleError && (
-              <p className="text-xs text-destructive mt-1">{titleError}</p>
-            )}
+            {titleError && <p className="text-xs text-destructive mt-1">{titleError}</p>}
           </div>
         </div>
         <input
@@ -96,7 +92,7 @@ function TabHeader({
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-              (e.target as HTMLInputElement).blur()
+              ;(e.target as HTMLInputElement).blur()
             }
           }}
           className="text-sm text-muted-foreground bg-transparent border-b-2 border-transparent outline-none w-full focus:border-primary transition-colors"

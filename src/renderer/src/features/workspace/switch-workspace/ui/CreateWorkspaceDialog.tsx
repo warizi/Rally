@@ -87,7 +87,9 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreated }: Props):
                     </Button>
                   </div>
                   <FormMessage />
-                  <p className="text-xs text-muted-foreground">생성 후 경로는 변경할 수 없습니다.</p>
+                  <p className="text-xs text-muted-foreground">
+                    생성 후 경로는 변경할 수 없습니다.
+                  </p>
                 </FormItem>
               )}
             />

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { tabSessionRepository } from '../tab-session'
+import { TabSession, tabSessionRepository } from '../tab-session'
 import { testDb } from '../../__tests__/setup'
 import { workspaces, tabSessions } from '../../db/schema'
 
@@ -20,11 +20,11 @@ const mockTabSession = {
   updatedAt: new Date()
 }
 
-function seedWorkspace() {
+function seedWorkspace(): void {
   testDb.insert(workspaces).values(mockWorkspace).run()
 }
 
-function seedTabSession() {
+function seedTabSession(): TabSession {
   seedWorkspace()
   return testDb.insert(tabSessions).values(mockTabSession).returning().get()
 }

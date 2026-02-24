@@ -1,6 +1,7 @@
 # Design: Tab Snapshot Restore (탭 스냅샷 복구)
 
 ## Overview
+
 사이드바 탭 스냅샷 항목 클릭 → 저장된 탭 세션을 TabStore에 즉시 복구한다.
 
 **[Plan] → [Design] ← 현재**
@@ -9,13 +10,13 @@
 
 ## 변경 파일 목록 (5개)
 
-| # | 파일 | 변경 유형 |
-|---|------|-----------|
-| 1 | `src/renderer/src/features/tap-system/manage-tab-system/model/use-tab-persistence.ts` | `applySessionToStore` function export 추가 |
-| 2 | `src/renderer/src/features/tap-system/manage-tab-system/index.ts` | `applySessionToStore`, `SerializedTab`, `SessionData` re-export 추가 |
-| 3 | `src/renderer/src/app/layout/MainSidebar.tsx` | `handleRestore` + `onRestoreSnapshot` prop 전달 |
-| 4 | `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotSection.tsx` | `onRestoreSnapshot` prop 수신 + `TabSnapshotItem`에 전달 |
-| 5 | `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotItem.tsx` | `onRestore` prop + `SidebarMenuButton` onClick 연결 |
+| #   | 파일                                                                                   | 변경 유형                                                            |
+| --- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 1   | `src/renderer/src/features/tap-system/manage-tab-system/model/use-tab-persistence.ts`  | `applySessionToStore` function export 추가                           |
+| 2   | `src/renderer/src/features/tap-system/manage-tab-system/index.ts`                      | `applySessionToStore`, `SerializedTab`, `SessionData` re-export 추가 |
+| 3   | `src/renderer/src/app/layout/MainSidebar.tsx`                                          | `handleRestore` + `onRestoreSnapshot` prop 전달                      |
+| 4   | `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotSection.tsx` | `onRestoreSnapshot` prop 수신 + `TabSnapshotItem`에 전달             |
+| 5   | `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotItem.tsx`    | `onRestore` prop + `SidebarMenuButton` onClick 연결                  |
 
 ---
 
@@ -62,7 +63,11 @@ export function applySessionToStore(sessionData: SessionData | null): void {
 export { useSessionPersistence, sessionKeys } from './model/use-tab-persistence'
 
 // 변경 후
-export { useSessionPersistence, sessionKeys, applySessionToStore } from './model/use-tab-persistence'
+export {
+  useSessionPersistence,
+  sessionKeys,
+  applySessionToStore
+} from './model/use-tab-persistence'
 export type { SerializedTab, SessionData } from './model/api/queries'
 ```
 
@@ -99,15 +104,16 @@ const handleRestore = (snapshot: TabSnapshot): void => {
 
 ```tsx
 // Before
-{currentWorkspaceId && <TabSnapshotSection workspaceId={currentWorkspaceId} />}
+{
+  currentWorkspaceId && <TabSnapshotSection workspaceId={currentWorkspaceId} />
+}
 
 // After
-{currentWorkspaceId && (
-  <TabSnapshotSection
-    workspaceId={currentWorkspaceId}
-    onRestoreSnapshot={handleRestore}
-  />
-)}
+{
+  currentWorkspaceId && (
+    <TabSnapshotSection workspaceId={currentWorkspaceId} onRestoreSnapshot={handleRestore} />
+  )
+}
 ```
 
 ---
@@ -238,6 +244,7 @@ export function TabSnapshotItem({ snapshot, onRestore, onEdit, onDelete }: Props
 ---
 
 ## Non-Goals
+
 - 복구 전 확인 다이얼로그 없음 (즉시 복구)
 - 복구 완료 toast 없음 (탭 UI 변경으로 확인 가능)
 - `activePaneId` DB 저장 없음 (파싱된 첫 번째 pane key 사용)
@@ -246,6 +253,7 @@ export function TabSnapshotItem({ snapshot, onRestore, onEdit, onDelete }: Props
 ---
 
 ## 검증 체크리스트
+
 - [ ] 스냅샷 저장 → 다른 탭 열기 → 스냅샷 클릭 → 저장 시점 탭 상태 복귀
 - [ ] 복구 후 탭 조작 → throttle 지연 후 DB 저장 확인
 - [ ] `npm run typecheck` 에러 없음

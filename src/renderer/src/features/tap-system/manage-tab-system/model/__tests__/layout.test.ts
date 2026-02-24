@@ -47,7 +47,10 @@ describe('findPaneNodeInLayout', () => {
   })
 
   it('SplitNode 안에서 중첩 탐색한다', () => {
-    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'pane-1'), paneNode('n2', 'pane-2')])
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'pane-1'),
+      paneNode('n2', 'pane-2')
+    ])
     expect(findPaneNodeInLayout(layout, 'pane-2')?.paneId).toBe('pane-2')
   })
 
@@ -145,7 +148,10 @@ describe('insertPaneIntoLayout', () => {
 // ─── removePaneFromLayout ─────────────────────────────
 describe('removePaneFromLayout', () => {
   it('SplitNode에서 패인 제거 후 자식이 1개 남으면 SplitNode를 풀어 PaneNode를 반환한다', () => {
-    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'pane-1'), paneNode('n2', 'pane-2')])
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'pane-1'),
+      paneNode('n2', 'pane-2')
+    ])
     const newLayout = removePaneFromLayout(layout, 'pane-1')
 
     expect(newLayout.type).toBe('pane')
@@ -230,7 +236,10 @@ describe('findRightPaneInHorizontalSplit', () => {
   })
 
   it('가장 오른쪽 노드이면 null을 반환한다', () => {
-    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'pane-1'), paneNode('n2', 'pane-2')])
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'pane-1'),
+      paneNode('n2', 'pane-2')
+    ])
     expect(findRightPaneInHorizontalSplit(layout, 'n2')).toBeNull()
   })
 
@@ -281,7 +290,10 @@ describe('findFirstPaneId', () => {
   })
 
   it('SplitNode에서 가장 첫 번째 PaneNode의 paneId를 반환한다', () => {
-    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'pane-1'), paneNode('n2', 'pane-2')])
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'pane-1'),
+      paneNode('n2', 'pane-2')
+    ])
     expect(findFirstPaneId(layout)).toBe('pane-1')
   })
 
@@ -300,7 +312,10 @@ describe('isContainsNode', () => {
   })
 
   it('자식 노드 id를 포함한다', () => {
-    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'pane-1'), paneNode('n2', 'pane-2')])
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'pane-1'),
+      paneNode('n2', 'pane-2')
+    ])
     expect(isContainsNode(layout, 'n1')).toBe(true)
     expect(isContainsNode(layout, 'n2')).toBe(true)
   })

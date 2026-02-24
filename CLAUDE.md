@@ -106,12 +106,13 @@ All page elements rendered inside a tab **must use container queries**, not view
 **Breakpoints (container-based):**
 
 | Breakpoint | Container width | Tailwind class prefix |
-|------------|----------------|-----------------------|
-| Small      | < 400px        | (default, no prefix)  |
-| Medium     | ≥ 400px        | `@[400px]:` |
-| Large      | ≥ 800px        | `@[800px]:` |
+| ---------- | --------------- | --------------------- |
+| Small      | < 400px         | (default, no prefix)  |
+| Medium     | ≥ 400px         | `@[400px]:`           |
+| Large      | ≥ 800px         | `@[800px]:`           |
 
 **Rules:**
+
 - Use `@[400px]:` and `@[800px]:` container query variants instead of `sm:` / `md:` / `lg:` viewport breakpoints for tab content
 - Every tab page component must be a descendant of `<TabContainer>` to inherit the `@container` context
 - Example: `className="grid grid-cols-1 @[400px]:grid-cols-2 @[800px]:grid-cols-3"`
@@ -125,6 +126,7 @@ All page elements rendered inside a tab **must use container queries**, not view
 ## Code Style
 
 Enforced by Prettier (`.prettierrc.yaml`):
+
 - Single quotes
 - No semicolons
 - Print width: 100

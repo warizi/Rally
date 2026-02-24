@@ -1,6 +1,7 @@
 # Testing Patterns
 
 ## Vitest Config Split
+
 - **web**: `vitest.config.web.mts` — `environment: 'happy-dom'`, includes `src/renderer/**`
 - **node**: `vitest.config.node.mts` — `environment: 'node'`, includes `src/main/**`
 - Setup files:
@@ -8,12 +9,13 @@
   - node: `src/main/__tests__/setup.ts` → in-memory SQLite + migrations + vi.mock
 
 ## Store Test Pattern
+
 ```typescript
-const MAIN_PANE = 'main'               // initial pane ID constant
-const DASHBOARD_TAB = 'tab-dashboard'  // initial tab ID constant
+const MAIN_PANE = 'main' // initial pane ID constant
+const DASHBOARD_TAB = 'tab-dashboard' // initial tab ID constant
 
 beforeEach(() => {
-  useTabStore.getState().reset()        // reset store before each test
+  useTabStore.getState().reset() // reset store before each test
 })
 
 it('새 탭을 추가한다', () => {
@@ -23,23 +25,25 @@ it('새 탭을 추가한다', () => {
   expect(state.panes[MAIN_PANE].activeTabId).toBe(tabId)
 })
 ```
+
 - Test store directly (no React, no renderHook)
 - Always reset store in beforeEach
 
 ## IPC Mock Pattern
+
 ```typescript
 const mockGetAll = vi.fn()
 const mockCreate = vi.fn()
 
 beforeEach(() => {
-  (window as unknown as Record<string, unknown>).api = {
+  ;(window as unknown as Record<string, unknown>).api = {
     workspace: { getAll: mockGetAll, create: mockCreate }
   }
   vi.clearAllMocks()
 })
 
 afterEach(() => {
-  delete (window as unknown as Record<string, unknown>).api  // cleanup
+  delete (window as unknown as Record<string, unknown>).api // cleanup
 })
 
 // Mock return value
@@ -48,6 +52,7 @@ mockCreate.mockResolvedValue({ success: false, errorType: 'UnknownError', messag
 ```
 
 ## React Query Hook Test Pattern
+
 ```typescript
 function createWrapper() {
   const queryClient = new QueryClient({
@@ -66,6 +71,7 @@ it('워크스페이스를 생성한다', async () => {
 ```
 
 ## UI Component Test Pattern
+
 ```typescript
 function setup(props: Partial<Props> = {}) {
   const defaultProps = { open: true, onOpenChange: vi.fn(), onCreated: vi.fn() }
@@ -84,6 +90,7 @@ it('이름 입력 후 제출하면 createWorkspace가 호출된다', async () =>
 ```
 
 ## Fixture Helper Pattern
+
 ```typescript
 // Local helper functions (not extracted to separate file)
 function makeTab(overrides?: Partial<Tab>): Tab {
@@ -96,10 +103,12 @@ function makeState(overrides?: Partial<TabState>): TabState {
   return { tabs: { 'tab-dashboard': makeTab() }, panes: { 'pane-main': makePane() }, ... }
 }
 ```
+
 - Naming: `makeXxx(overrides?)`
 - Declared locally in test file (no shared fixtures)
 
 ## Time Mock Pattern
+
 ```typescript
 it('lastAccessedAt이 갱신된다', () => {
   vi.useFakeTimers()
@@ -108,12 +117,13 @@ it('lastAccessedAt이 갱신된다', () => {
     useTabStore.getState().activateTab(DASHBOARD_TAB)
     expect(useTabStore.getState().tabs[DASHBOARD_TAB].lastAccessedAt).toBe(5000)
   } finally {
-    vi.useRealTimers()  // always restore in finally
+    vi.useRealTimers() // always restore in finally
   }
 })
 ```
 
 ## Module-level Cache Isolation (sessionIdCache)
+
 ```typescript
 // Avoid cache collision by using unique IDs per test
 const wsId = `ws-create-${Date.now()}-${Math.random()}`
@@ -121,6 +131,7 @@ const wsId = `ws-create-${Date.now()}-${Math.random()}`
 ```
 
 ## Test File Location
+
 ```
 model/__tests__/tab.action.test.ts
 model/__tests__/pane.action.test.ts

@@ -37,7 +37,13 @@ const SESSION_ROW = {
     }
   }),
   panesJson: JSON.stringify({
-    main: { id: 'main', tabIds: ['tab-dashboard'], activeTabId: 'tab-dashboard', size: 50, minSize: 200 }
+    main: {
+      id: 'main',
+      tabIds: ['tab-dashboard'],
+      activeTabId: 'tab-dashboard',
+      size: 50,
+      minSize: 200
+    }
   }),
   layoutJson: JSON.stringify({ id: 'l1', type: 'pane', paneId: 'main' }),
   activePaneId: 'main'
@@ -110,8 +116,8 @@ describe('loadSession', () => {
     })
     mockCreate.mockResolvedValue({ success: true, data: { id: 200 } })
 
-    await loadSession(wsId)          // null 반환, 캐시 저장 없어야 함
-    await saveSession(wsId, SAMPLE_SESSION_DATA)  // create 경로여야 함
+    await loadSession(wsId) // null 반환, 캐시 저장 없어야 함
+    await saveSession(wsId, SAMPLE_SESSION_DATA) // create 경로여야 함
 
     expect(mockCreate).toHaveBeenCalledOnce()
     expect(mockUpdate).not.toHaveBeenCalled()
@@ -171,7 +177,11 @@ describe('saveSession', () => {
 
   it('create 실패 시 throw한다', async () => {
     const wsId = `ws-create-fail-${Date.now()}-${Math.random()}`
-    mockCreate.mockResolvedValue({ success: false, errorType: 'UnknownError', message: '저장 실패' })
+    mockCreate.mockResolvedValue({
+      success: false,
+      errorType: 'UnknownError',
+      message: '저장 실패'
+    })
 
     await expect(saveSession(wsId, SAMPLE_SESSION_DATA)).rejects.toThrow()
   })
@@ -179,7 +189,11 @@ describe('saveSession', () => {
   it('update 실패 시 throw한다', async () => {
     const wsId = `ws-update-fail-${Date.now()}-${Math.random()}`
     mockGetByWorkspaceId.mockResolvedValue({ success: true, data: { ...SESSION_ROW, id: 55 } })
-    mockUpdate.mockResolvedValue({ success: false, errorType: 'UnknownError', message: '업데이트 실패' })
+    mockUpdate.mockResolvedValue({
+      success: false,
+      errorType: 'UnknownError',
+      message: '업데이트 실패'
+    })
 
     await loadSession(wsId)
     await expect(saveSession(wsId, SAMPLE_SESSION_DATA)).rejects.toThrow()
@@ -191,8 +205,8 @@ describe('saveSession', () => {
     mockCreate.mockResolvedValue({ success: true, data: { id: 300 } })
     mockUpdate.mockResolvedValue({ success: true })
 
-    await saveSession(wsId, SAMPLE_SESSION_DATA)  // create
-    await saveSession(wsId, SAMPLE_SESSION_DATA)  // update (id=300 캐시)
+    await saveSession(wsId, SAMPLE_SESSION_DATA) // create
+    await saveSession(wsId, SAMPLE_SESSION_DATA) // update (id=300 캐시)
 
     expect(mockCreate).toHaveBeenCalledOnce()
     expect(mockUpdate).toHaveBeenCalledOnce()

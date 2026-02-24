@@ -55,7 +55,7 @@ export function TabItem({
       <div
         ref={(node) => {
           setNodeRef(node)
-            ; (itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+          ;(itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node
         }}
         style={style}
         {...attributes}

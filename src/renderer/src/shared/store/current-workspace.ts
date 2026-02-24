@@ -16,11 +16,11 @@ export const useCurrentWorkspaceStore = create<CurrentWorkspaceStore>()(
       },
       clearCurrentWorkspaceId: (): void => {
         set({ currentWorkspaceId: null })
-      },
+      }
     }),
     {
       name: 'current-workspace',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => localStorage)
     }
   )
 )

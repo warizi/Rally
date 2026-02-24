@@ -12,11 +12,24 @@ vi.mock('@entities/workspace', () => ({
 
 import { useWorkspaces } from '@entities/workspace'
 
-const ws1 = { id: 'ws-1', name: 'Workspace 1', path: '/path/1', createdAt: new Date(), updatedAt: new Date() }
-const ws2 = { id: 'ws-2', name: 'Workspace 2', path: '/path/2', createdAt: new Date(), updatedAt: new Date() }
+const ws1 = {
+  id: 'ws-1',
+  name: 'Workspace 1',
+  path: '/path/1',
+  createdAt: new Date(),
+  updatedAt: new Date()
+}
+const ws2 = {
+  id: 'ws-2',
+  name: 'Workspace 2',
+  path: '/path/2',
+  createdAt: new Date(),
+  updatedAt: new Date()
+}
 
 function createWrapper() {
   const queryClient = new QueryClient()
+  // eslint-disable-next-line react/display-name
   return ({ children }: { children: ReactNode }) =>
     createElement(QueryClientProvider, { client: queryClient }, children)
 }
@@ -29,7 +42,9 @@ beforeEach(() => {
 describe('useWorkspaceSwitch', () => {
   describe('currentWorkspace', () => {
     it('currentWorkspaceId에 해당하는 워크스페이스를 반환한다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<
+        typeof useWorkspaces
+      >)
       useCurrentWorkspaceStore.setState({ currentWorkspaceId: 'ws-1' })
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
@@ -46,7 +61,9 @@ describe('useWorkspaceSwitch', () => {
 
   describe('handleSwitch', () => {
     it('currentWorkspaceId를 업데이트한다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<
+        typeof useWorkspaces
+      >)
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
       act(() => {
@@ -59,7 +76,9 @@ describe('useWorkspaceSwitch', () => {
 
   describe('handleCreated', () => {
     it('생성된 워크스페이스로 전환한다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<
+        typeof useWorkspaces
+      >)
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
       act(() => {
@@ -72,7 +91,9 @@ describe('useWorkspaceSwitch', () => {
 
   describe('handleDeleted', () => {
     it('삭제 후 남은 첫 번째 워크스페이스로 전환한다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<
+        typeof useWorkspaces
+      >)
       useCurrentWorkspaceStore.setState({ currentWorkspaceId: 'ws-1' })
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
@@ -105,14 +126,18 @@ describe('useWorkspaceSwitch', () => {
     })
 
     it('워크스페이스가 2개 이상이면 false이다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [ws1, ws2] } as ReturnType<
+        typeof useWorkspaces
+      >)
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
       expect(result.current.isLastWorkspace).toBe(false)
     })
 
     it('워크스페이스가 없으면 true이다', () => {
-      vi.mocked(useWorkspaces).mockReturnValue({ data: [] } as unknown as ReturnType<typeof useWorkspaces>)
+      vi.mocked(useWorkspaces).mockReturnValue({ data: [] } as unknown as ReturnType<
+        typeof useWorkspaces
+      >)
 
       const { result } = renderHook(() => useWorkspaceSwitch(), { wrapper: createWrapper() })
       expect(result.current.isLastWorkspace).toBe(true)

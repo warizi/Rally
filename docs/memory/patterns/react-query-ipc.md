@@ -1,6 +1,7 @@
 # React Query & IPC Patterns
 
 ## IPC Communication Chain
+
 ```
 Renderer (window.api.xxx())
   → Preload Bridge (ipcRenderer.invoke)
@@ -11,30 +12,39 @@ Renderer (window.api.xxx())
 ```
 
 ## IpcResponse<T> Type
+
 ```typescript
 // success: { success: true, data: T }
 // failure: { success: false, message: string, errorType: string }
-type IpcResponse<T> = { success: true; data?: T } | { success: false; message?: string; errorType?: string }
+type IpcResponse<T> =
+  | { success: true; data?: T }
+  | { success: false; message?: string; errorType?: string }
 ```
 
 ## throwIpcError Pattern
+
 ```typescript
 // shared/lib/ipc-error.ts
 export function throwIpcError(res: IpcResponse): never {
   switch (res.errorType) {
-    case 'NotFoundError': throw new NotFoundError(res.message ?? '...')
-    case 'ValidationError': throw new ValidationError(res.message ?? '...')
-    default: throw new Error(res.message ?? '...')
+    case 'NotFoundError':
+      throw new NotFoundError(res.message ?? '...')
+    case 'ValidationError':
+      throw new ValidationError(res.message ?? '...')
+    default:
+      throw new Error(res.message ?? '...')
   }
 }
 ```
 
 ## Error Classes (mirrored main ↔ renderer)
+
 - `src/main/lib/errors.ts`: NotFoundError, ValidationError, ConflictError
 - `src/renderer/src/shared/lib/errors.ts`: same classes redefined
 - IPC boundary loses Error instances → use errorType string to reconstruct
 
 ## React Query in entities/ layer
+
 ```typescript
 // entities/workspace/api/queries.ts
 const QUERY_KEY = 'workspaces'
@@ -58,7 +68,7 @@ export function useCreateWorkspace(): UseMutationResult<Workspace | undefined, E
       if (!res.success) throwIpcError(res)
       return res.data
     },
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
     // update also invalidates single item:
     // onSuccess: (_, { id }) => queryClient.invalidateQueries({ queryKey: [QUERY_KEY, id] })
   })
@@ -66,6 +76,7 @@ export function useCreateWorkspace(): UseMutationResult<Workspace | undefined, E
 ```
 
 ## queryKeys Style
+
 ```typescript
 // Simple: string constant
 const QUERY_KEY = 'workspaces'
@@ -80,6 +91,7 @@ export const sessionKeys = {
 ```
 
 ## Raw IPC (no React Query) — features/ layer
+
 ```typescript
 // features/tap-system/manage-tab-system/api/queries.ts
 // Pure async functions, not hooks
@@ -99,11 +111,12 @@ export function clearSessionIdCache(): void { sessionIdCache.clear() }  // for t
 ```
 
 ## QueryClient Default Config
+
 ```typescript
 // app/providers/query-client-provider.tsx
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: { retry: 1, staleTime: 1000 * 60 * 5 },  // 5분 stale
+    queries: { retry: 1, staleTime: 1000 * 60 * 5 }, // 5분 stale
     mutations: {
       onSuccess: () => toast.success('성공'),
       onError: (error) => toast.error(error.message)
@@ -111,18 +124,23 @@ const queryClient = new QueryClient({
   }
 })
 ```
+
 - 테스트에서는 `retry: false` 명시 (무한 재시도 방지)
 
 ## Main Process handle() wrapper
+
 ```typescript
 // src/main/lib/handle.ts
 export function handle<T>(fn: () => T): IpcResponse<T> {
-  try { return successResponse(fn()) }
-  catch (e) { return errorResponse(e) }
+  try {
+    return successResponse(fn())
+  } catch (e) {
+    return errorResponse(e)
+  }
 }
 
 // Usage in ipc/workspace.ts
-ipcMain.handle('workspace:create', (_, name: string) =>
-  handle(() => workspaceService.create(name)))
+ipcMain.handle('workspace:create', (_, name: string) => handle(() => workspaceService.create(name)))
 ```
+
 - Channel naming: `'domain:action'` (camelCase action)

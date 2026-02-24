@@ -1,25 +1,28 @@
 # State Management (Zustand) Patterns
 
 ## store.ts Composition Pattern
+
 ```typescript
 // model/store.ts
 export const useTabStore = create<TabStoreState>()(
   devtools((set, get) => ({
-    ...createInitialState(),           // initial state from factory
+    ...createInitialState(), // initial state from factory
     ...createTabActions(set, get),
     ...createPaneActions(set, get),
     ...createLayoutActions(set, get),
     reset: () => set(createInitialState()),
     // selector wrappers for convenience
     getTabById: (id) => selectTab(id)(get()),
-    findPaneByTabId: (id) => selectPaneByTabId(id)(get()),
+    findPaneByTabId: (id) => selectPaneByTabId(id)(get())
   }))
 )
 ```
+
 - `devtools` middleware only (no combine, no persist in tab store)
 - `persist` only in `shared/store/current-workspace.ts` (localStorage)
 
 ## Action Factory Pattern
+
 ```typescript
 // model/tab.action.ts
 export const createTabActions = (
@@ -35,10 +38,12 @@ export const createTabActions = (
   }
 })
 ```
+
 - Return type: `ReturnType<typeof createFn>` self-reference
 - Files: `tab.action.ts`, `pane.action.ts`, `layout.action.ts`
 
 ## types.ts Pattern
+
 ```typescript
 export type SetState = StoreApi<TabStoreState>['setState']
 export type GetState = StoreApi<TabStoreState>['getState']
@@ -57,13 +62,17 @@ export function isPaneNode(node: LayoutNode): node is PaneNode { return node.typ
 ```
 
 ## Selector Pattern (Curried)
+
 ```typescript
 // model/selectors.ts — accept TabState (data-only), not TabStoreState
 export const selectTab =
-  (tabId: string) => (s: TabState): Tab | undefined => s.tabs[tabId]
+  (tabId: string) =>
+  (s: TabState): Tab | undefined =>
+    s.tabs[tabId]
 
 export const selectActiveTab =
-  (paneId?: string) => (s: TabState): Tab | undefined => {
+  (paneId?: string) =>
+  (s: TabState): Tab | undefined => {
     const id = paneId ?? s.activePaneId
     return s.tabs[s.panes[id]?.activeTabId ?? '']
   }
@@ -71,20 +80,25 @@ export const selectActiveTab =
 // Non-curried for simple selectors
 export const selectActivePane = (s: TabState): Pane | undefined => s.panes[s.activePaneId]
 ```
+
 - In actions: `selectTab(id)(get())`
 - In components: `useTabStore(selectActiveTab())`
 
 ## persist Store (shared)
+
 ```typescript
 // shared/store/current-workspace.ts
 export const useCurrentWorkspaceStore = create<CurrentWorkspaceStore>()(
-  persist((set) => ({
-    currentWorkspaceId: null,
-    setCurrentWorkspaceId: (id) => set({ currentWorkspaceId: id }),
-    clearCurrentWorkspaceId: () => set({ currentWorkspaceId: null })
-  }), {
-    name: 'current-workspace',
-    storage: createJSONStorage(() => localStorage)
-  })
+  persist(
+    (set) => ({
+      currentWorkspaceId: null,
+      setCurrentWorkspaceId: (id) => set({ currentWorkspaceId: id }),
+      clearCurrentWorkspaceId: () => set({ currentWorkspaceId: null })
+    }),
+    {
+      name: 'current-workspace',
+      storage: createJSONStorage(() => localStorage)
+    }
+  )
 )
 ```

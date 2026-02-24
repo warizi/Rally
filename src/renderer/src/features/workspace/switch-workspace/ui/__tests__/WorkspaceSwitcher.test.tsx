@@ -20,10 +20,10 @@ vi.mock('../DeleteWorkspaceDialog', () => ({
   DeleteWorkspaceDialog: ({ open, disabled }: { open: boolean; disabled: boolean }) =>
     open
       ? createElement(
-        'div',
-        { 'data-testid': 'delete-dialog', 'data-disabled': disabled },
-        'DeleteDialog'
-      )
+          'div',
+          { 'data-testid': 'delete-dialog', 'data-disabled': disabled },
+          'DeleteDialog'
+        )
       : null
 }))
 

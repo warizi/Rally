@@ -184,8 +184,7 @@ export function registerTabSnapshotHandlers(): void {
 
   ipcMain.handle(
     'tabSnapshot:delete',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
-      handle(() => tabSnapshotService.delete(id))
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => tabSnapshotService.delete(id))
   )
 }
 ```
@@ -343,7 +342,11 @@ export function useUpdateTabSnapshot(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, name, description }: UpdateInput): Promise<TabSnapshot | undefined> => {
+    mutationFn: async ({
+      id,
+      name,
+      description
+    }: UpdateInput): Promise<TabSnapshot | undefined> => {
       const res: IpcResponse<TabSnapshot> = await window.api.tabSnapshot.update(id, {
         name,
         description
@@ -866,23 +869,23 @@ npm run db:generate   # 새 migration 파일 생성
 
 ## 10. 파일 목록 요약
 
-| 파일 | 작업 |
-|---|---|
-| `src/main/db/schema/tab-snapshot.ts` | 신규 생성 |
-| `src/main/db/schema/index.ts` | tabSnapshots export 추가 |
-| `src/main/repositories/tab-snapshot.ts` | 신규 생성 |
-| `src/main/services/tab-snapshot.ts` | 신규 생성 |
-| `src/main/ipc/tab-snapshot.ts` | 신규 생성 |
-| `src/main/index.ts` | registerTabSnapshotHandlers() 추가 |
-| `src/preload/index.ts` | tabSnapshot API 추가 |
-| `src/preload/index.d.ts` | TabSnapshotAPI 타입 추가 |
-| `src/renderer/src/entities/tab-snapshot/model/types.ts` | 신규 생성 |
-| `src/renderer/src/entities/tab-snapshot/api/queries.ts` | 신규 생성 |
-| `src/renderer/src/entities/tab-snapshot/index.ts` | 신규 생성 |
-| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotSection.tsx` | 신규 생성 |
-| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotItem.tsx` | 신규 생성 |
-| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/SaveSnapshotDialog.tsx` | 신규 생성 |
-| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/EditSnapshotDialog.tsx` | 신규 생성 |
-| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/DeleteSnapshotDialog.tsx` | 신규 생성 |
-| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/index.ts` | 신규 생성 |
-| `src/renderer/src/app/layout/MainSidebar.tsx` | TabSnapshotSection 연결 |
+| 파일                                                                                     | 작업                               |
+| ---------------------------------------------------------------------------------------- | ---------------------------------- |
+| `src/main/db/schema/tab-snapshot.ts`                                                     | 신규 생성                          |
+| `src/main/db/schema/index.ts`                                                            | tabSnapshots export 추가           |
+| `src/main/repositories/tab-snapshot.ts`                                                  | 신규 생성                          |
+| `src/main/services/tab-snapshot.ts`                                                      | 신규 생성                          |
+| `src/main/ipc/tab-snapshot.ts`                                                           | 신규 생성                          |
+| `src/main/index.ts`                                                                      | registerTabSnapshotHandlers() 추가 |
+| `src/preload/index.ts`                                                                   | tabSnapshot API 추가               |
+| `src/preload/index.d.ts`                                                                 | TabSnapshotAPI 타입 추가           |
+| `src/renderer/src/entities/tab-snapshot/model/types.ts`                                  | 신규 생성                          |
+| `src/renderer/src/entities/tab-snapshot/api/queries.ts`                                  | 신규 생성                          |
+| `src/renderer/src/entities/tab-snapshot/index.ts`                                        | 신규 생성                          |
+| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotSection.tsx`   | 신규 생성                          |
+| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotItem.tsx`      | 신규 생성                          |
+| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/SaveSnapshotDialog.tsx`   | 신규 생성                          |
+| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/EditSnapshotDialog.tsx`   | 신규 생성                          |
+| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/DeleteSnapshotDialog.tsx` | 신규 생성                          |
+| `src/renderer/src/features/tab-snapshot/manage-tab-snapshot/index.ts`                    | 신규 생성                          |
+| `src/renderer/src/app/layout/MainSidebar.tsx`                                            | TabSnapshotSection 연결            |

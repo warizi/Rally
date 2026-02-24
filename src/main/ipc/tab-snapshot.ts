@@ -41,7 +41,6 @@ export function registerTabSnapshotHandlers(): void {
 
   ipcMain.handle(
     'tabSnapshot:delete',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
-      handle(() => tabSnapshotService.delete(id))
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => tabSnapshotService.delete(id))
   )
 }

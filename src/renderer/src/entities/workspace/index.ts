@@ -5,5 +5,5 @@ export {
   useWorkspace,
   useCreateWorkspace,
   useUpdateWorkspace,
-  useDeleteWorkspace,
+  useDeleteWorkspace
 } from './api/queries'

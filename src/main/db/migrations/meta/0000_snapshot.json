@@ -63,12 +63,8 @@
           "name": "tab_sessions_workspace_id_workspaces_id_fk",
           "tableFrom": "tab_sessions",
           "tableTo": "workspaces",
-          "columnsFrom": [
-            "workspace_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["workspace_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

@@ -11,8 +11,6 @@ beforeEach(() => {
 // ─── setActivePane ────────────────────────────────────
 describe('setActivePane', () => {
   it('activePaneId를 변경한다', () => {
-    const store = useTabStore.getState()
-    const newPaneId = store.splitPane(MAIN_PANE, 'right')
     // splitPane 후 activePaneId = newPaneId
 
     useTabStore.getState().setActivePane(MAIN_PANE)
@@ -180,9 +178,7 @@ describe('moveTabToPane', () => {
     const store = useTabStore.getState()
     const newPaneId = store.splitPane(MAIN_PANE, 'right')
 
-    expect(() =>
-      useTabStore.getState().moveTabToPane('tab-x', MAIN_PANE, newPaneId)
-    ).not.toThrow()
+    expect(() => useTabStore.getState().moveTabToPane('tab-x', MAIN_PANE, newPaneId)).not.toThrow()
   })
 
   it('타깃 패인에 이미 같은 탭이 있으면 중복 추가되지 않는다', () => {
@@ -195,9 +191,9 @@ describe('moveTabToPane', () => {
     // 한 번 더 이동 시도 (이미 newPane에 있음) — 중복 추가 없어야 함
     store.moveTabToPane(DASHBOARD_TAB, MAIN_PANE, newPaneId)
 
-    const dashboardCount = useTabStore.getState().panes[newPaneId].tabIds.filter(
-      (id) => id === DASHBOARD_TAB
-    ).length
+    const dashboardCount = useTabStore
+      .getState()
+      .panes[newPaneId].tabIds.filter((id) => id === DASHBOARD_TAB).length
     expect(dashboardCount).toBe(1)
   })
 

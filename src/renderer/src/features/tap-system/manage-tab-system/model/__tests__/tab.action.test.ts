@@ -26,7 +26,9 @@ describe('openTab', () => {
     const id2 = store.openTab({ type: 'todo', pathname: '/todo', title: '할일' })
 
     expect(id1).toBe(id2)
-    const todoTabs = Object.values(useTabStore.getState().tabs).filter((t) => t.pathname === '/todo')
+    const todoTabs = Object.values(useTabStore.getState().tabs).filter(
+      (t) => t.pathname === '/todo'
+    )
     expect(todoTabs).toHaveLength(1)
   })
 
@@ -55,10 +57,9 @@ describe('openTab', () => {
   })
 
   it('존재하지 않는 paneId면 tabs에 탭이 추가되지 않고 빈 ID를 반환한다', () => {
-    const returnedId = useTabStore.getState().openTab(
-      { type: 'todo', pathname: '/todo', title: '할일' },
-      'non-existent-pane'
-    )
+    const returnedId = useTabStore
+      .getState()
+      .openTab({ type: 'todo', pathname: '/todo', title: '할일' }, 'non-existent-pane')
     expect(useTabStore.getState().tabs['tab-todo']).toBeUndefined()
     expect(returnedId).toBe('')
   })
@@ -171,9 +172,7 @@ describe('navigateTab', () => {
   })
 
   it('존재하지 않는 tabId면 무시한다', () => {
-    expect(() =>
-      useTabStore.getState().navigateTab('tab-x', { pathname: '/todo' })
-    ).not.toThrow()
+    expect(() => useTabStore.getState().navigateTab('tab-x', { pathname: '/todo' })).not.toThrow()
   })
 
   it('같은 pathname으로 navigate하면 상태가 변경되지 않는다', () => {
@@ -191,15 +190,16 @@ describe('openRightTab', () => {
     const id2 = store.openRightTab({ type: 'todo', pathname: '/todo', title: '할일' }, MAIN_PANE)
 
     expect(id1).toBe(id2)
-    const todoTabs = Object.values(useTabStore.getState().tabs).filter((t) => t.pathname === '/todo')
+    const todoTabs = Object.values(useTabStore.getState().tabs).filter(
+      (t) => t.pathname === '/todo'
+    )
     expect(todoTabs).toHaveLength(1)
   })
 
   it('오른쪽 패인이 없으면 새 분할 패인을 만들어 탭을 연다', () => {
-    const tabId = useTabStore.getState().openRightTab(
-      { type: 'todo', pathname: '/todo', title: '할일' },
-      MAIN_PANE
-    )
+    const tabId = useTabStore
+      .getState()
+      .openRightTab({ type: 'todo', pathname: '/todo', title: '할일' }, MAIN_PANE)
 
     const state = useTabStore.getState()
     expect(Object.keys(state.panes)).toHaveLength(2)
@@ -213,10 +213,9 @@ describe('openRightTab', () => {
     // 먼저 오른쪽 패인을 만들어 둠
     const rightPaneId = store.splitPane(MAIN_PANE, 'right')
 
-    const tabId = useTabStore.getState().openRightTab(
-      { type: 'todo', pathname: '/todo', title: '할일' },
-      MAIN_PANE
-    )
+    const tabId = useTabStore
+      .getState()
+      .openRightTab({ type: 'todo', pathname: '/todo', title: '할일' }, MAIN_PANE)
 
     expect(useTabStore.getState().panes[rightPaneId].tabIds).toContain(tabId)
     // 불필요한 추가 패인이 생기지 않아야 함
@@ -224,10 +223,9 @@ describe('openRightTab', () => {
   })
 
   it('유효하지 않은 sourcePaneId면 활성 패인에 탭을 연다', () => {
-    const tabId = useTabStore.getState().openRightTab(
-      { type: 'todo', pathname: '/todo', title: '할일' },
-      'non-existent-pane'
-    )
+    const tabId = useTabStore
+      .getState()
+      .openRightTab({ type: 'todo', pathname: '/todo', title: '할일' }, 'non-existent-pane')
 
     const state = useTabStore.getState()
     expect(state.tabs[tabId]).toBeDefined()

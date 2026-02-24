@@ -3,6 +3,7 @@
 ## Dialog Components (Create/Edit/Delete)
 
 ### Create Dialog Pattern
+
 ```typescript
 const schema = z.object({ name: z.string().min(1, '이름을 입력해주세요') })
 type FormValues = z.infer<typeof schema>
@@ -10,7 +11,7 @@ type FormValues = z.infer<typeof schema>
 interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onCreated: (id: string) => void   // success callback
+  onCreated: (id: string) => void // success callback
 }
 
 export function CreateXxxDialog({ open, onOpenChange, onCreated }: Props): JSX.Element {
@@ -20,7 +21,11 @@ export function CreateXxxDialog({ open, onOpenChange, onCreated }: Props): JSX.E
   const handleSubmit = (values: FormValues) => {
     createXxx(values.name, {
       onSuccess: (data) => {
-        if (data?.id) { onCreated(data.id); onOpenChange(false); form.reset() }
+        if (data?.id) {
+          onCreated(data.id)
+          onOpenChange(false)
+          form.reset()
+        }
       }
     })
   }
@@ -28,13 +33,15 @@ export function CreateXxxDialog({ open, onOpenChange, onCreated }: Props): JSX.E
 ```
 
 ### Edit Dialog Pattern (pre-fill via useEffect)
+
 ```typescript
 useEffect(() => {
-  if (workspace) form.reset({ name: workspace.name })  // sync on open
+  if (workspace) form.reset({ name: workspace.name }) // sync on open
 }, [workspace, form])
 ```
 
 ### Delete Dialog Pattern (AlertDialog, not Dialog)
+
 ```typescript
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, ... } from '@shared/ui/alert-dialog'
 
@@ -48,6 +55,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, ... } from '@shared/
 ```
 
 ## Form Pattern (react-hook-form + zod)
+
 ```typescript
 // 1. Schema at top of file
 const schema = z.object({ ... })
@@ -84,16 +92,19 @@ const form = useForm<FormValues>({
 ```
 
 ## Loading/Error State Patterns
+
 - Button text: `{isPending ? '생성 중...' : '생성'}`
 - Button disabled: `disabled={isPending}`
 - No global error handler — use mutation `onSuccess`/`onError` callbacks
 - Error messages shown via FormMessage (zod validation) or toast
 
 ## shadcn/ui Components Location
+
 - All shadcn components in: `src/renderer/src/shared/ui/`
 - Style: `new-york`, icons: Lucide
 
 ## TabBar Component Pattern (DnD + Animation)
+
 ```typescript
 // features/tap-system/manage-tab-system/ui/TabBar.tsx
 import { useDroppable } from '@dnd-kit/core'
@@ -126,17 +137,22 @@ export function TabBar({ paneId, showSidebarTrigger = false }: TabBarProps) {
   )
 }
 ```
+
 - Droppable: `useDroppable({ id: 'tab-list:paneId' })`
 - Sortable: `SortableContext` + `horizontalListSortingStrategy`
 - Animation: `AnimatePresence mode="popLayout"` (탭 추가/제거 애니메이션)
 
 ## Null-returning Side Effect Component
+
 ```typescript
 // app/providers/workspace-initializer.tsx
 export function WorkspaceInitializer(): null {
   // Only side effects, no UI
-  useEffect(() => { /* validate & switch workspace */ }, [])
+  useEffect(() => {
+    /* validate & switch workspace */
+  }, [])
   return null
 }
 ```
+
 Used in Provider tree for initialization logic without UI.

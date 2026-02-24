@@ -1,7 +1,17 @@
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useWorkspaces } from '@entities/workspace'
 
-export function useWorkspaceSwitch() {
+type Workspace = Exclude<ReturnType<typeof useWorkspaces>['data'], undefined>[number]
+
+export function useWorkspaceSwitch(): {
+  workspaces: ReturnType<typeof useWorkspaces>['data']
+  currentWorkspaceId: string | null
+  currentWorkspace: Workspace | undefined
+  handleSwitch: (id: string) => void
+  handleCreated: (id: string) => void
+  handleDeleted: () => void
+  isLastWorkspace: boolean
+} {
   const { data: workspaces = [] } = useWorkspaces()
   const currentWorkspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
   const setCurrentWorkspaceId = useCurrentWorkspaceStore((s) => s.setCurrentWorkspaceId)
@@ -31,6 +41,6 @@ export function useWorkspaceSwitch() {
     handleSwitch,
     handleCreated,
     handleDeleted,
-    isLastWorkspace,
+    isLastWorkspace
   }
 }
