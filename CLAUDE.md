@@ -99,6 +99,23 @@ React Router v7 using **hash-based routing** (required for Electron file protoco
 - Sidebar color tokens: `--sidebar`, `--sidebar-foreground`, `--sidebar-border`, etc. — must be referenced with `border-sidebar-border` (not bare `border-r`) or the border inherits `currentColor`
 - **shadcn/ui** components live in `src/shared/ui/` — style: `new-york`, icons: Lucide
 
+### Tab Page Responsive Layout
+
+All page elements rendered inside a tab **must use container queries**, not viewport queries. The `@container` context is provided by `TabContainer` (`src/renderer/src/shared/ui/tab-container.tsx`), which applies `@container` to the outermost div.
+
+**Breakpoints (container-based):**
+
+| Breakpoint | Container width | Tailwind class prefix |
+|------------|----------------|-----------------------|
+| Small      | < 400px        | (default, no prefix)  |
+| Medium     | ≥ 400px        | `@[400px]:` |
+| Large      | ≥ 800px        | `@[800px]:` |
+
+**Rules:**
+- Use `@[400px]:` and `@[800px]:` container query variants instead of `sm:` / `md:` / `lg:` viewport breakpoints for tab content
+- Every tab page component must be a descendant of `<TabContainer>` to inherit the `@container` context
+- Example: `className="grid grid-cols-1 @[400px]:grid-cols-2 @[800px]:grid-cols-3"`
+
 ### State Management
 
 - **Zustand v5** — client/UI state

@@ -71,6 +71,7 @@ function MainSidebar(): React.JSX.Element {
               {items.map((item) => (
                 <SidebarMenuItem key={item.pathname}>
                   <SidebarMenuButton
+                    className="cursor-pointer"
                     isActive={activePathname === item.pathname}
                     tooltip={item.title}
                     onClick={() => handleOpenStaticTab(item)}
