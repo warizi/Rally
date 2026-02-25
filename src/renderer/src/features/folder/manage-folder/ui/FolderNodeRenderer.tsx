@@ -17,7 +17,7 @@ export function FolderNodeRenderer({
       className="flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer hover:bg-accent select-none"
       onClick={() => node.toggle()}
     >
-      <Icon className="size-4 shrink-0" style={{ color: node.data.color ?? undefined }} />
+      <Icon className="ml-1 size-4 shrink-0" style={{ color: node.data.color ?? undefined }} />
       <span className="text-sm truncate">{node.data.name}</span>
     </div>
   )

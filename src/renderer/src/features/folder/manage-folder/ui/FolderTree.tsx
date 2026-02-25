@@ -96,7 +96,7 @@ export function FolderTree({ workspaceId }: Props): JSX.Element {
             setDeleteTarget({ id: ids[0], name: nodes[0].data.name })
           }}
           width="100%"
-          className="flex-1 overflow-auto"
+          className="flex-1 overflow-auto px-2"
         >
           {NodeRenderer}
         </Tree>
