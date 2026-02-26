@@ -205,6 +205,7 @@ function Sidebar({
           'relative w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
+          'h-9 drag-region bg-muted',
           variant === 'floating' || variant === 'inset'
             ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'
             : 'group-data-[collapsible=icon]:w-(--sidebar-width-icon)'
@@ -241,21 +242,23 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
   const { toggleSidebar } = useSidebar()
 
   return (
-    <Button
-      data-sidebar="trigger"
-      data-slot="sidebar-trigger"
-      variant="ghost"
-      size="icon"
-      className={cn('size-7', className)}
-      onClick={(event) => {
-        onClick?.(event)
-        toggleSidebar()
-      }}
-      {...props}
-    >
-      <PanelLeftIcon />
-      <span className="sr-only">Toggle Sidebar</span>
-    </Button>
+    <div className='shrink-0 sticky left-0 z-10 bg-muted no-drag-region h-9 flex items-center'>
+      <Button
+        data-sidebar="trigger"
+        data-slot="sidebar-trigger"
+        variant="ghost"
+        size="icon"
+        className={cn('size-7', className)}
+        onClick={(event) => {
+          onClick?.(event)
+          toggleSidebar()
+        }}
+        {...props}
+      >
+        <PanelLeftIcon />
+        <span className="sr-only">Toggle Sidebar</span>
+      </Button>
+    </div>
   )
 }
 
@@ -540,7 +543,7 @@ function SidebarMenuAction({
         'peer-data-[size=lg]/menu-button:top-2.5',
         'group-data-[collapsible=icon]:hidden',
         showOnHover &&
-          'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
+        'peer-data-[active=true]/menu-button:text-sidebar-accent-foreground group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 md:opacity-0',
         className
       )}
       {...props}

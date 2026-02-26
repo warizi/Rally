@@ -7,9 +7,9 @@ interface TabContainerProps {
 
 export function TabContainer({ header, children }: TabContainerProps): React.ReactElement {
   return (
-    <div className="flex-1 h-full pt-6 px-6 pb-2 @container flex flex-col max-w-300 mx-auto">
-      <div className="w-full shrink-0">{header}</div>
-      <ScrollArea className="flex-1 min-h-0">
+    <div className="flex-1 h-full @container flex flex-col max-w-300 mx-auto">
+      <div className="w-full shrink-0 pt-6 px-6">{header}</div>
+      <ScrollArea className="flex-1 min-h-0 px-6 pb-2">
         <div className="h-full">{children}</div>
       </ScrollArea>
     </div>

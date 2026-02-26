@@ -55,7 +55,7 @@ export function TabItem({
       <div
         ref={(node) => {
           setNodeRef(node)
-          ;(itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+            ; (itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node
         }}
         style={style}
         {...attributes}
@@ -69,7 +69,8 @@ export function TabItem({
           'min-w-45 max-w-45',
           isActive && 'bg-background',
           isDragging && 'opacity-50 z-50',
-          !isActive && 'bg-muted/30'
+          !isActive && 'bg-muted/30',
+          'no-drag-region'
         )}
       >
         {/* 아이콘 */}

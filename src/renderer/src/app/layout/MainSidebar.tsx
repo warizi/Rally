@@ -57,7 +57,7 @@ function MainSidebar(): React.JSX.Element {
   }
 
   return (
-    <Sidebar collapsible="icon">
+    <Sidebar collapsible="icon" className="mt-9">
       <SidebarHeader>
         <WorkspaceSwitcher />
       </SidebarHeader>
