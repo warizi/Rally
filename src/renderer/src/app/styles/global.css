@@ -43,6 +43,7 @@
 }
 
 :root {
+  --crepe-color-inline-area: oklch(0.922 0 0);
   --header-height: 35px;
   --main-height: calc(100vh - var(--header-height));
   --background: oklch(1 0 0);
@@ -81,6 +82,7 @@
 }
 
 .dark {
+  --crepe-color-inline-area: oklch(0.145 0 0);
   --background: oklch(0.145 0 0);
   /* --background: oklch(39.091% 0.08592 21.793); */
   --foreground: oklch(0.985 0 0);

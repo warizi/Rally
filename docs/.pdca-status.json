@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-26T07:23:45.480Z",
+  "lastUpdated": "2026-02-26T08:09:47.941Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -286,9 +286,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T14:23:23.726Z",
-        "lastUpdated": "2026-02-26T05:03:51.836Z"
+        "lastUpdated": "2026-02-26T08:09:47.941Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/folder/manage-folder/model/__tests__/use-tree-open-state.test.ts",
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/folder/manage-folder/ui/FolderTree.tsx",
       "previousPhase": "check",
       "autoAdvanced": true
     },
@@ -370,7 +370,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-26T07:23:45.480Z"
+    "lastActivity": "2026-02-26T08:09:47.941Z"
   },
   "history": [
     {
@@ -2914,6 +2914,66 @@
     {
       "timestamp": "2026-02-26T07:23:45.480Z",
       "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:02:52.292Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:03:03.560Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:04:03.296Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:04:13.219Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:04:44.628Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:04:50.970Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:09:08.624Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:09:32.932Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:09:38.125Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-26T08:09:47.941Z",
+      "feature": "folder",
       "phase": "do",
       "action": "updated"
     }

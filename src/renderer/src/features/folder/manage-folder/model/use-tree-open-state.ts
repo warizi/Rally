@@ -25,6 +25,7 @@ function save(workspaceId: string, state: Record<string, boolean>): void {
 export function useTreeOpenState(workspaceId: string): {
   openState: Record<string, boolean>
   toggle: (id: string, isOpen: boolean) => void
+  collapseAll: () => void
 } {
   const [openState, setOpenState] = useState<Record<string, boolean>>(() => load(workspaceId))
 
@@ -39,5 +40,10 @@ export function useTreeOpenState(workspaceId: string): {
     [workspaceId]
   )
 
-  return { openState, toggle }
+  const collapseAll = useCallback(() => {
+    setOpenState({})
+    save(workspaceId, {})
+  }, [workspaceId])
+
+  return { openState, toggle, collapseAll }
 }

@@ -1,7 +1,7 @@
 import { JSX, useCallback, useRef, useState } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
-import { FolderPlus } from 'lucide-react'
+import { ChevronsDownUp, FilePlus, FolderPlus } from 'lucide-react'
 import {
   useCreateFolder,
   useRenameFolder,
@@ -11,6 +11,7 @@ import {
 } from '@entities/folder'
 import { useCreateNote, useMoveNote, useRemoveNote } from '@entities/note'
 import { Button } from '@shared/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
@@ -31,7 +32,7 @@ interface Props {
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
-  const { openState, toggle } = useTreeOpenState(workspaceId)
+  const { openState, toggle, collapseAll } = useTreeOpenState(workspaceId)
 
   // Folder mutations
   const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()
@@ -139,21 +140,56 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   )
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
       {/* 툴바 */}
-      <div className="flex items-center justify-between py-2 shrink-0">
-        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-          파일
+      <div className="flex items-center justify-between py-1 shrink-0 border-b mb-2 sticky top-0 bg-background z-10">
+        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+          탐색기
         </span>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="size-6"
-          onClick={() => setCreateTarget({ parentFolderId: null })}
-          title="루트 폴더 추가"
-        >
-          <FolderPlus className="size-3.5" />
-        </Button>
+        <div className="flex items-center gap-0.5">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 cursor-pointer"
+                onClick={() => {
+                  treeRef.current?.closeAll()
+                  collapseAll()
+                }}
+              >
+                <ChevronsDownUp className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>모두 접기</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 cursor-pointer"
+                onClick={() => handleCreateNote(null)}
+              >
+                <FilePlus className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>노트 추가</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 cursor-pointer"
+                onClick={() => setCreateTarget({ parentFolderId: null })}
+              >
+                <FolderPlus className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>폴더 추가</TooltipContent>
+          </Tooltip>
+        </div>
       </div>
 
       {/* 트리 또는 빈 상태 */}
