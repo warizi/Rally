@@ -2,14 +2,14 @@ import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
 import { folderService } from '../services/folder'
-import { folderWatcher } from '../services/folder-watcher'
+import { workspaceWatcher } from '../services/workspace-watcher'
 import { workspaceRepository } from '../repositories/workspace'
 
 export function registerFolderHandlers(): void {
   ipcMain.handle('folder:readTree', (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse => {
     // watcher 활성화 (순환 의존성 방지를 위해 IPC 핸들러에서 담당)
     const workspace = workspaceRepository.findById(workspaceId)
-    if (workspace) void folderWatcher.ensureWatching(workspaceId, workspace.path)
+    if (workspace) void workspaceWatcher.ensureWatching(workspaceId, workspace.path)
     return handle(() => folderService.readTree(workspaceId))
   })
 

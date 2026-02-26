@@ -22,6 +22,13 @@
       "when": 1771942806678,
       "tag": "0002_fast_tomorrow_man",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1772059112086,
+      "tag": "0003_chunky_morlocks",
+      "breakpoints": true
     }
   ]
 }

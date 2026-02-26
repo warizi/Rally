@@ -6,6 +6,7 @@ import {
   useTabStore
 } from '@/features/tap-system/manage-tab-system'
 import { useFolderWatcher } from '@entities/folder'
+import { useNoteWatcher } from '@entities/note'
 import { useState } from 'react'
 import {
   DndContext,
@@ -37,8 +38,9 @@ function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactEle
 function MainLayout(): React.JSX.Element {
   // 세션 영속성 활성화
   useSessionPersistence()
-  // 폴더 변경 push 이벤트 구독
+  // 폴더/노트 변경 push 이벤트 구독
   useFolderWatcher()
+  useNoteWatcher()
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   // 드래그 활성화 조건: 8px 이상 이동해야 드래그 시작

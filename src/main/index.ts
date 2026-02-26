@@ -8,7 +8,8 @@ import { registerWorkspaceHandlers } from './ipc/workspace'
 import { registerTabSessionHandlers } from './ipc/tab-session'
 import { registerTabSnapshotHandlers } from './ipc/tab-snapshot'
 import { registerFolderHandlers } from './ipc/folder'
-import { folderWatcher } from './services/folder-watcher'
+import { registerNoteHandlers } from './ipc/note'
+import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 
 function runMigrations(): void {
@@ -75,6 +76,7 @@ app.whenReady().then(() => {
   registerTabSessionHandlers()
   registerTabSnapshotHandlers()
   registerFolderHandlers()
+  registerNoteHandlers()
 
   createWindow()
 
@@ -97,5 +99,5 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   isQuitting = true
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
-  Promise.race([folderWatcher.stop(), timeout]).finally(() => app.quit())
+  Promise.race([workspaceWatcher.stop(), timeout]).finally(() => app.quit())
 })

@@ -1,3 +1,4 @@
+import '@milkdown/crepe/theme/common/style.css'
 import './styles/global.css'
 import './styles/base.css'
 import { TooltipProvider } from '@shared/ui/tooltip'

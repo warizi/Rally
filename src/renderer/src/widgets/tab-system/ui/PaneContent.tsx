@@ -49,7 +49,7 @@ export function PaneContent({ tab, routes, className }: PaneContentProps): React
   return (
     <div className={cn('flex-1 overflow-auto bg-background', className)}>
       <Suspense fallback={<LoadingFallback />}>
-        <Component tabId={tab.id} params={params} search={tab.searchParams} />
+        <Component key={tab.id} tabId={tab.id} params={params} search={tab.searchParams} />
       </Suspense>
     </div>
   )

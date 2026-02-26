@@ -33,6 +33,43 @@ interface TabSnapshotAPI {
   delete: (id: string) => Promise<IpcResponse<void>>
 }
 
+interface NoteNode {
+  id: string
+  title: string
+  relativePath: string
+  description: string
+  preview: string
+  folderId: string | null
+  order: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface NoteAPI {
+  readByWorkspace: (workspaceId: string) => Promise<IpcResponse<NoteNode[]>>
+  create: (
+    workspaceId: string,
+    folderId: string | null,
+    name: string
+  ) => Promise<IpcResponse<NoteNode>>
+  rename: (workspaceId: string, noteId: string, newName: string) => Promise<IpcResponse<NoteNode>>
+  remove: (workspaceId: string, noteId: string) => Promise<IpcResponse<void>>
+  readContent: (workspaceId: string, noteId: string) => Promise<IpcResponse<string>>
+  writeContent: (workspaceId: string, noteId: string, content: string) => Promise<IpcResponse<void>>
+  move: (
+    workspaceId: string,
+    noteId: string,
+    folderId: string | null,
+    index: number
+  ) => Promise<IpcResponse<NoteNode>>
+  updateMeta: (
+    workspaceId: string,
+    noteId: string,
+    data: { description?: string }
+  ) => Promise<IpcResponse<NoteNode>>
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
+}
+
 interface FolderNode {
   id: string
   name: string
@@ -82,6 +119,7 @@ interface WorkspaceAPI {
 }
 
 interface API {
+  note: NoteAPI
   folder: FolderAPI
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI

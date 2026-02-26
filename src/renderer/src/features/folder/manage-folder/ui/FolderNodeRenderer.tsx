@@ -1,15 +1,14 @@
 import { JSX } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
-import { Folder, FolderOpen } from 'lucide-react'
-import type { FolderNode } from '@entities/folder'
+import { ChevronRight, Folder } from 'lucide-react'
+import type { FolderTreeNode } from '../model/types'
+import { cn } from '@/shared/lib/utils'
 
 export function FolderNodeRenderer({
   node,
   style,
   dragHandle
-}: NodeRendererProps<FolderNode>): JSX.Element {
-  const Icon = node.isOpen ? FolderOpen : Folder
-
+}: NodeRendererProps<FolderTreeNode>): JSX.Element {
   return (
     <div
       ref={dragHandle}
@@ -17,7 +16,13 @@ export function FolderNodeRenderer({
       className="flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer hover:bg-accent select-none"
       onClick={() => node.toggle()}
     >
-      <Icon className="ml-1 size-4 shrink-0" style={{ color: node.data.color ?? undefined }} />
+      <ChevronRight
+        className={cn(
+          'size-4 shrink-0 text-muted-foreground transition-transform',
+          node.isOpen && 'rotate-90'
+        )}
+      />
+      <Folder className="size-4 shrink-0" style={{ color: node.data.color ?? undefined }} />
       <span className="text-sm truncate">{node.data.name}</span>
     </div>
   )

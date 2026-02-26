@@ -12,6 +12,34 @@ type TabSnapshotCreateInput = {
 }
 
 const api = {
+  note: {
+    readByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('note:readByWorkspace', workspaceId),
+    create: (workspaceId: string, folderId: string | null, name: string) =>
+      ipcRenderer.invoke('note:create', workspaceId, folderId, name),
+    rename: (workspaceId: string, noteId: string, newName: string) =>
+      ipcRenderer.invoke('note:rename', workspaceId, noteId, newName),
+    remove: (workspaceId: string, noteId: string) =>
+      ipcRenderer.invoke('note:remove', workspaceId, noteId),
+    readContent: (workspaceId: string, noteId: string) =>
+      ipcRenderer.invoke('note:readContent', workspaceId, noteId),
+    writeContent: (workspaceId: string, noteId: string, content: string) =>
+      ipcRenderer.invoke('note:writeContent', workspaceId, noteId, content),
+    move: (workspaceId: string, noteId: string, folderId: string | null, index: number) =>
+      ipcRenderer.invoke('note:move', workspaceId, noteId, folderId, index),
+    updateMeta: (workspaceId: string, noteId: string, data: { description?: string }) =>
+      ipcRenderer.invoke('note:updateMeta', workspaceId, noteId, data),
+    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
+      const handler = (
+        _: Electron.IpcRendererEvent,
+        workspaceId: string,
+        changedRelPaths: string[]
+      ): void => callback(workspaceId, changedRelPaths)
+      ipcRenderer.on('note:changed', handler)
+      return () => ipcRenderer.removeListener('note:changed', handler)
+    }
+  },
+
   folder: {
     readTree: (workspaceId: string) => ipcRenderer.invoke('folder:readTree', workspaceId),
     create: (workspaceId: string, parentFolderId: string | null, name: string) =>

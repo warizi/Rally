@@ -1,4 +1,4 @@
-import { Calendar, Check, FolderOpen, LayoutDashboard, Notebook } from 'lucide-react'
+import { Calendar, Check, FileText, FolderOpen, LayoutDashboard } from 'lucide-react'
 
 export type TabType = 'dashboard' | 'todo' | 'todo-detail' | 'folder' | 'note' | 'calendar'
 
@@ -9,7 +9,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   todo: Check,
   'todo-detail': Check,
   folder: FolderOpen,
-  note: Notebook,
+  note: FileText,
   calendar: Calendar
 }
 

@@ -3,6 +3,7 @@ import fs from 'fs'
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { folderRepository } from '../repositories/folder'
+import { noteRepository } from '../repositories/note'
 import { workspaceRepository } from '../repositories/workspace'
 // ⚠️ folder-watcher.ts를 import하지 않음 — 순환 의존성 방지
 //    folderWatcher.ensureWatching 호출은 ipc/folder.ts에서 담당
@@ -38,28 +39,13 @@ export function readDirRecursive(absBase: string, parentRel: string): FsEntry[] 
   return result
 }
 
+import { resolveNameConflict } from '../lib/fs-utils'
+
 // ─── 파일 내 private 헬퍼 ────────────────────────────────────
 
 /** Windows '\' → '/' 정규화 */
 function normalizePath(p: string): string {
   return p.replace(/\\/g, '/')
-}
-
-/** 이름 충돌 해결: "name (1)", "name (2)", ... */
-function resolveNameConflict(parentAbs: string, desiredName: string): string {
-  let name = desiredName
-  let n = 1
-  while (true) {
-    try {
-      fs.accessSync(path.join(parentAbs, name))
-      // 존재함 → suffix 증가
-      name = `${desiredName} (${n})`
-      n++
-    } catch {
-      // 접근 불가 = 존재하지 않음 → 사용 가능
-      return name
-    }
-  }
 }
 
 /** 부모의 절대 경로 계산 (parentRelPath null = 워크스페이스 루트) */
@@ -251,6 +237,7 @@ export const folderService = {
 
     fs.renameSync(oldAbs, newAbs)
     folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+    noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
 
     const updated = folderRepository.findById(folderId)!
     return {
@@ -324,6 +311,7 @@ export const folderService = {
     if (oldAbs !== finalAbs) {
       fs.renameSync(oldAbs, finalAbs)
       folderRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
+      noteRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
     }
 
     // siblings reindex
