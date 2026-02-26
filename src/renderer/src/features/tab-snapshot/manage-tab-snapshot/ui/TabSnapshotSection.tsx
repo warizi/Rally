@@ -6,7 +6,8 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarMenu
+  SidebarMenu,
+  SidebarMenuButton
 } from '@shared/ui/sidebar'
 import { ScrollArea } from '@shared/ui/scroll-area'
 import { useTabSnapshots } from '@entities/tab-snapshot'
@@ -64,16 +65,16 @@ export function TabSnapshotSection({
                 </ScrollArea>
               </SidebarMenu>
 
-              <div className="sticky bottom-0 px-2 py-1">
-                <Button
-                  variant="ghost"
+              <div className="sticky bottom-0 py-1">
+                <SidebarMenuButton
                   size="sm"
                   className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
                   onClick={() => setSaveDialogOpen(true)}
+                  tooltip={'현재 탭 저장'}
                 >
                   <Plus className="h-4 w-4" />
                   현재 탭 저장
-                </Button>
+                </SidebarMenuButton>
               </div>
             </SidebarGroupContent>
           </CollapsibleContent>
