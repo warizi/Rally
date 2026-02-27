@@ -13,6 +13,7 @@ type TabHeaderProps = {
   onTitleChange?: (title: string) => void
   onDescriptionChange?: (desc: string) => void
   titleError?: string
+  buttons?: React.JSX.Element
 }
 
 function TabHeader({
@@ -24,7 +25,8 @@ function TabHeader({
   editable,
   onTitleChange,
   onDescriptionChange,
-  titleError
+  titleError,
+  buttons
 }: TabHeaderProps) {
   const [localTitle, setLocalTitle] = useState(title ?? '')
   const [localDesc, setLocalDesc] = useState(description ?? '')
@@ -54,8 +56,9 @@ function TabHeader({
     return (
       <div className="w-full pb-2">
         <div className="flex items-center gap-3 mb-2">
-          {Icon && <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />}
-          <div className="flex-1">
+          <div className="flex items-center gap-3 flex-1">
+            {Icon && <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />}
+            {/* <div className="flex-1"> */}
             <input
               ref={titleRef}
               type="text"
@@ -64,6 +67,8 @@ function TabHeader({
               onBlur={() => {
                 if (localTitle.trim() && localTitle !== title) {
                   onTitleChange?.(localTitle)
+                } else if (!localTitle.trim()) {
+                  setLocalTitle(title ?? '')
                 }
               }}
               onKeyDown={(e) => {
@@ -74,12 +79,14 @@ function TabHeader({
               className={cn(
                 'text-2xl font-bold bg-transparent border-b-2 border-transparent outline-none w-full',
                 'focus:border-primary transition-colors',
-                titleError && 'border-destructive focus:border-destructive'
+                titleError && 'border-destructive focus:border-destructive',
               )}
               placeholder="제목을 입력해주세요"
             />
             {titleError && <p className="text-xs text-destructive mt-1">{titleError}</p>}
+            {/* </div> */}
           </div>
+          {buttons && <div className="ml-auto">{buttons}</div>}
         </div>
         <input
           type="text"
@@ -92,7 +99,7 @@ function TabHeader({
           }}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
-              ;(e.target as HTMLInputElement).blur()
+              ; (e.target as HTMLInputElement).blur()
             }
           }}
           className="text-sm text-muted-foreground bg-transparent border-b-2 border-transparent outline-none w-full focus:border-primary transition-colors"
@@ -105,8 +112,11 @@ function TabHeader({
   return (
     <div className="w-full pb-2">
       <div className="flex items-center gap-3 mb-2">
-        {Icon && <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />}
-        <h1 className="text-2xl font-bold">{title}</h1>
+        <div className="flex items-center gap-3">
+          {Icon && <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />}
+          <h1 className="text-2xl font-bold">{title}</h1>
+        </div>
+        {buttons && <div className="ml-auto">{buttons}</div>}
       </div>
       <p className="text-sm text-muted-foreground">{description}</p>
     </div>

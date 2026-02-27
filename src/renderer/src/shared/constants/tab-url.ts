@@ -17,6 +17,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
 export const ROUTES = {
   DASHBOARD: '/dashboard',
   TODO: '/todo',
+  TODO_DETAIL: '/todo/:todoId',
   FOLDER: '/folder',
   SETTINGS: '/settings',
   // 노트 상세

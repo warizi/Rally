@@ -58,38 +58,24 @@ describe('tabSessionRepository', () => {
     })
   })
 
-  describe('createTabSession', () => {
-    it('탭 세션을 생성한다', () => {
+  describe('upsertTabSession', () => {
+    it('세션이 없으면 생성한다', () => {
       seedWorkspace()
-      const result = tabSessionRepository.createTabSession(mockTabSession)
+      const result = tabSessionRepository.upsertTabSession(mockTabSession)
       expect(result).toBeDefined()
-      expect(result?.workspaceId).toBe('workspace-1')
-      expect(result?.activePaneId).toBe('pane-1')
-    })
-  })
-
-  describe('updateTabSession', () => {
-    it('탭 세션을 수정한다', () => {
-      const inserted = seedTabSession()
-      const result = tabSessionRepository.updateTabSession({
-        ...inserted!,
-        activePaneId: 'pane-2',
-        updatedAt: new Date()
-      })
-      expect(result?.activePaneId).toBe('pane-2')
+      expect(result.workspaceId).toBe('workspace-1')
+      expect(result.activePaneId).toBe('pane-1')
     })
 
-    it('존재하지 않는 workspaceId면 undefined를 반환한다', () => {
-      const result = tabSessionRepository.updateTabSession({
-        id: 9999,
-        workspaceId: 'non-existent',
-        tabsJson: '{}',
-        panesJson: '{}',
-        layoutJson: '{}',
-        activePaneId: 'pane-1',
-        updatedAt: new Date()
+    it('세션이 있으면 업데이트한다', () => {
+      seedTabSession()
+      const result = tabSessionRepository.upsertTabSession({
+        ...mockTabSession,
+        activePaneId: 'pane-2'
       })
-      expect(result).toBeUndefined()
+      expect(result.activePaneId).toBe('pane-2')
+      const all = testDb.select().from(tabSessions).all()
+      expect(all).toHaveLength(1)
     })
   })
 })

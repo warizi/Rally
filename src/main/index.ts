@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, ipcMain, screen } from 'electron'
+import { app, shell, BrowserWindow, ipcMain, screen, session } from 'electron'
 import { join } from 'path'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
@@ -9,6 +9,8 @@ import { registerTabSessionHandlers } from './ipc/tab-session'
 import { registerTabSnapshotHandlers } from './ipc/tab-snapshot'
 import { registerFolderHandlers } from './ipc/folder'
 import { registerNoteHandlers } from './ipc/note'
+import { registerTodoHandlers } from './ipc/todo'
+import { registerAppSettingsHandlers } from './ipc/app-settings'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 
@@ -80,6 +82,8 @@ app.whenReady().then(() => {
   registerTabSnapshotHandlers()
   registerFolderHandlers()
   registerNoteHandlers()
+  registerTodoHandlers()
+  registerAppSettingsHandlers()
 
   createWindow()
 
@@ -102,5 +106,7 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   isQuitting = true
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
+  // localStorage 등 Web Storage를 디스크에 flush한 뒤 종료
+  session.defaultSession.flushStorageData()
   Promise.race([workspaceWatcher.stop(), timeout]).finally(() => app.quit())
 })

@@ -6,8 +6,7 @@ import type { IpcResponse } from '../main/lib/ipc-response'
 
 interface TabSessionAPI {
   getByWorkspaceId: (workspaceId: string) => Promise<IpcResponse<TabSession>>
-  create: (data: Omit<TabSessionInsert, 'updatedAt'>) => Promise<IpcResponse<TabSession>>
-  update: (data: Omit<TabSession, 'updatedAt'>) => Promise<IpcResponse<TabSession>>
+  upsert: (data: Omit<TabSessionInsert, 'updatedAt'>) => Promise<IpcResponse<TabSession>>
 }
 
 interface TabSnapshotAPI {
@@ -118,12 +117,76 @@ interface WorkspaceAPI {
   selectDirectory: () => Promise<string | null>
 }
 
+interface TodoItem {
+  id: string
+  workspaceId: string
+  parentId: string | null
+  title: string
+  description: string
+  status: '할일' | '진행중' | '완료' | '보류'
+  priority: 'high' | 'medium' | 'low'
+  isDone: boolean
+  listOrder: number
+  kanbanOrder: number
+  subOrder: number
+  createdAt: Date
+  updatedAt: Date
+  doneAt: Date | null
+  dueDate: Date | null
+}
+
+interface CreateTodoData {
+  title: string
+  description?: string
+  status?: '할일' | '진행중' | '완료' | '보류'
+  priority?: 'high' | 'medium' | 'low'
+  parentId?: string | null
+  dueDate?: Date | null
+}
+
+interface UpdateTodoData {
+  title?: string
+  description?: string
+  status?: '할일' | '진행중' | '완료' | '보류'
+  priority?: 'high' | 'medium' | 'low'
+  isDone?: boolean
+  dueDate?: Date | null
+}
+
+interface TodoOrderUpdate {
+  id: string
+  order: number
+  status?: '할일' | '진행중' | '완료' | '보류'
+}
+
+type TodoFindFilter = 'all' | 'active' | 'completed'
+
+interface TodoAPI {
+  findByWorkspace: (
+    workspaceId: string,
+    options?: { filter?: TodoFindFilter }
+  ) => Promise<IpcResponse<TodoItem[]>>
+  create: (workspaceId: string, data: CreateTodoData) => Promise<IpcResponse<TodoItem>>
+  update: (todoId: string, data: UpdateTodoData) => Promise<IpcResponse<TodoItem>>
+  remove: (todoId: string) => Promise<IpcResponse<void>>
+  reorderList: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
+  reorderKanban: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
+  reorderSub: (parentId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
+}
+
+interface SettingsAPI {
+  get: (key: string) => Promise<IpcResponse<string | null>>
+  set: (key: string, value: string) => Promise<IpcResponse<void>>
+}
+
 interface API {
   note: NoteAPI
   folder: FolderAPI
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI
   workspace: WorkspaceAPI
+  todo: TodoAPI
+  settings: SettingsAPI
 }
 
 declare global {

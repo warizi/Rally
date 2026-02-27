@@ -1,7 +1,6 @@
 import { JSX, useState } from 'react'
 import { ChevronDown, ChevronRight, Plus } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shared/ui/collapsible'
-import { Button } from '@shared/ui/button'
 import {
   SidebarGroup,
   SidebarGroupContent,

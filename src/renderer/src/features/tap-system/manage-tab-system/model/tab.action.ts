@@ -138,6 +138,12 @@ export const createTabActions = (
     })
   },
 
+  closeTabByPathname: (pathname: string): void => {
+    const tab = selectTabByPathname(pathname)(get())
+    if (!tab) return
+    get().closeTab(tab.id)
+  },
+
   activateTab: (tabId: string, paneId?: string): void => {
     const { tabs, panes } = get()
     const tab = tabs[tabId]

@@ -1,5 +1,8 @@
 import { NotFoundError, ValidationError } from '../lib/errors'
-import { TabSession, TabSessionInsert, tabSessionRepository } from '../repositories/tab-session'
+import { tabSessionRepository } from '../repositories/tab-session'
+import type { TabSession, TabSessionInsert } from '../repositories/tab-session'
+
+export type { TabSession, TabSessionInsert }
 
 export const tabSessionService = {
   getByWorkspaceId(workspaceId: string) {
@@ -8,23 +11,10 @@ export const tabSessionService = {
     return session
   },
 
-  create(data: Omit<TabSessionInsert, 'updatedAt'>) {
+  upsert(data: Omit<TabSessionInsert, 'updatedAt'>) {
     if (!data.tabsJson || !data.panesJson || !data.layoutJson || !data.activePaneId) {
       throw new ValidationError('Invalid tab session data')
     }
-    return tabSessionRepository.createTabSession({
-      ...data,
-      updatedAt: new Date()
-    })
-  },
-
-  update(data: Omit<TabSession, 'updatedAt'>) {
-    if (!data.tabsJson || !data.panesJson || !data.layoutJson || !data.activePaneId) {
-      throw new ValidationError('Invalid tab session data')
-    }
-    return tabSessionRepository.updateTabSession({
-      ...data,
-      updatedAt: new Date()
-    })
+    return tabSessionRepository.upsertTabSession({ ...data, updatedAt: new Date() })
   }
 }

@@ -32,7 +32,7 @@ interface Props {
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
-  const { openState, toggle, collapseAll } = useTreeOpenState(workspaceId)
+  const { openState, toggle, collapseAll } = useTreeOpenState(tabId)
 
   // Folder mutations
   const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()

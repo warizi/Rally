@@ -3,15 +3,13 @@ import { loadSession, saveSession } from '../queries'
 
 // ─── window.api mock ──────────────────────────────────
 const mockGetByWorkspaceId = vi.fn()
-const mockCreate = vi.fn()
-const mockUpdate = vi.fn()
+const mockUpsert = vi.fn()
 
 beforeEach(() => {
   ;(window as unknown as Record<string, unknown>).api = {
     tabSession: {
       getByWorkspaceId: mockGetByWorkspaceId,
-      create: mockCreate,
-      update: mockUpdate
+      upsert: mockUpsert
     }
   }
   vi.clearAllMocks()
@@ -106,110 +104,38 @@ describe('loadSession', () => {
     // layout
     expect(result?.layout.type).toBe('pane')
   })
-
-  it('NotFoundError는 sessionIdCache에 저장하지 않는다 (이후 save 시 create 경로 유지)', async () => {
-    const wsId = `ws-notfound-cache-${Date.now()}-${Math.random()}`
-    mockGetByWorkspaceId.mockResolvedValue({
-      success: false,
-      errorType: 'NotFoundError',
-      message: '세션 없음'
-    })
-    mockCreate.mockResolvedValue({ success: true, data: { id: 200 } })
-
-    await loadSession(wsId) // null 반환, 캐시 저장 없어야 함
-    await saveSession(wsId, SAMPLE_SESSION_DATA) // create 경로여야 함
-
-    expect(mockCreate).toHaveBeenCalledOnce()
-    expect(mockUpdate).not.toHaveBeenCalled()
-  })
 })
 
 // ─── saveSession ──────────────────────────────────────
 describe('saveSession', () => {
-  it('캐시에 없는 workspaceId면 create를 호출한다', async () => {
-    // 고유 wsId 사용 (캐시 충돌 방지)
-    const wsId = `ws-create-${Date.now()}-${Math.random()}`
-    mockCreate.mockResolvedValue({ success: true, data: { id: 99 } })
+  it('upsert를 호출한다', async () => {
+    mockUpsert.mockResolvedValue({ success: true, data: SESSION_ROW })
 
-    await saveSession(wsId, SAMPLE_SESSION_DATA)
+    await saveSession('ws-upsert', SAMPLE_SESSION_DATA)
 
-    expect(mockCreate).toHaveBeenCalledOnce()
-    expect(mockUpdate).not.toHaveBeenCalled()
+    expect(mockUpsert).toHaveBeenCalledOnce()
   })
 
-  it('create 시 올바른 payload를 전달한다', async () => {
-    const wsId = `ws-payload-${Date.now()}-${Math.random()}`
-    mockCreate.mockResolvedValue({ success: true, data: { id: 100 } })
+  it('upsert 시 올바른 payload를 전달한다', async () => {
+    mockUpsert.mockResolvedValue({ success: true, data: SESSION_ROW })
 
-    await saveSession(wsId, SAMPLE_SESSION_DATA)
+    await saveSession('ws-payload', SAMPLE_SESSION_DATA)
 
-    const payload = mockCreate.mock.calls[0][0]
-    expect(payload.workspaceId).toBe(wsId)
+    const payload = mockUpsert.mock.calls[0][0]
+    expect(payload.workspaceId).toBe('ws-payload')
     expect(typeof payload.tabsJson).toBe('string')
     expect(typeof payload.panesJson).toBe('string')
     expect(typeof payload.layoutJson).toBe('string')
     expect(payload.activePaneId).toBe('main')
   })
 
-  it('loadSession 후 동일 workspaceId로 saveSession하면 update를 호출한다', async () => {
-    const wsId = `ws-update-${Date.now()}-${Math.random()}`
-    mockGetByWorkspaceId.mockResolvedValue({ success: true, data: { ...SESSION_ROW, id: 42 } })
-    mockUpdate.mockResolvedValue({ success: true })
-
-    await loadSession(wsId)
-    await saveSession(wsId, SAMPLE_SESSION_DATA)
-
-    expect(mockUpdate).toHaveBeenCalledOnce()
-    expect(mockCreate).not.toHaveBeenCalled()
-  })
-
-  it('update payload에 id가 포함된다', async () => {
-    const wsId = `ws-update-id-${Date.now()}-${Math.random()}`
-    mockGetByWorkspaceId.mockResolvedValue({ success: true, data: { ...SESSION_ROW, id: 77 } })
-    mockUpdate.mockResolvedValue({ success: true })
-
-    await loadSession(wsId)
-    await saveSession(wsId, SAMPLE_SESSION_DATA)
-
-    const payload = mockUpdate.mock.calls[0][0]
-    expect(payload.id).toBe(77)
-  })
-
-  it('create 실패 시 throw한다', async () => {
-    const wsId = `ws-create-fail-${Date.now()}-${Math.random()}`
-    mockCreate.mockResolvedValue({
+  it('upsert 실패 시 throw한다', async () => {
+    mockUpsert.mockResolvedValue({
       success: false,
       errorType: 'UnknownError',
       message: '저장 실패'
     })
 
-    await expect(saveSession(wsId, SAMPLE_SESSION_DATA)).rejects.toThrow()
-  })
-
-  it('update 실패 시 throw한다', async () => {
-    const wsId = `ws-update-fail-${Date.now()}-${Math.random()}`
-    mockGetByWorkspaceId.mockResolvedValue({ success: true, data: { ...SESSION_ROW, id: 55 } })
-    mockUpdate.mockResolvedValue({
-      success: false,
-      errorType: 'UnknownError',
-      message: '업데이트 실패'
-    })
-
-    await loadSession(wsId)
-    await expect(saveSession(wsId, SAMPLE_SESSION_DATA)).rejects.toThrow()
-  })
-
-  it('create 성공 후 재호출하면 update 경로를 사용한다', async () => {
-    // create 시 응답에서 받은 id가 캐시에 저장되어 두 번째 save에서 update를 사용해야 함
-    const wsId = `ws-create-then-update-${Date.now()}-${Math.random()}`
-    mockCreate.mockResolvedValue({ success: true, data: { id: 300 } })
-    mockUpdate.mockResolvedValue({ success: true })
-
-    await saveSession(wsId, SAMPLE_SESSION_DATA) // create
-    await saveSession(wsId, SAMPLE_SESSION_DATA) // update (id=300 캐시)
-
-    expect(mockCreate).toHaveBeenCalledOnce()
-    expect(mockUpdate).toHaveBeenCalledOnce()
-    expect(mockUpdate.mock.calls[0][0].id).toBe(300)
+    await expect(saveSession('ws-fail', SAMPLE_SESSION_DATA)).rejects.toThrow()
   })
 })

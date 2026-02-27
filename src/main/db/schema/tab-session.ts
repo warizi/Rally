@@ -5,6 +5,7 @@ export const tabSessions = sqliteTable('tab_sessions', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   workspaceId: text('workspace_id')
     .notNull()
+    .unique()
     .references(() => workspaces.id, { onDelete: 'cascade' }),
   tabsJson: text('tabs_json').notNull(), // Record<string, tab>
   panesJson: text('panes_json').notNull(), // Record<string, Pane>

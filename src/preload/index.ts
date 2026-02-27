@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { TabSession, TabSessionInsert } from '../main/repositories/tab-session'
+import type { TabSessionInsert } from '../main/repositories/tab-session'
 
 type TabSnapshotCreateInput = {
   name: string
@@ -66,9 +66,8 @@ const api = {
   tabSession: {
     getByWorkspaceId: (workspaceId: string) =>
       ipcRenderer.invoke('tabSession:getByWorkspaceId', workspaceId),
-    create: (data: Omit<TabSessionInsert, 'updatedAt'>) =>
-      ipcRenderer.invoke('tabSession:create', data),
-    update: (data: Omit<TabSession, 'updatedAt'>) => ipcRenderer.invoke('tabSession:update', data)
+    upsert: (data: Omit<TabSessionInsert, 'updatedAt'>) =>
+      ipcRenderer.invoke('tabSession:upsert', data)
   },
 
   tabSnapshot: {
@@ -87,6 +86,26 @@ const api = {
     update: (id: string, data: unknown) => ipcRenderer.invoke('workspace:update', id, data),
     delete: (id: string) => ipcRenderer.invoke('workspace:delete', id),
     selectDirectory: () => ipcRenderer.invoke('workspace:selectDirectory')
+  },
+
+  todo: {
+    findByWorkspace: (workspaceId: string, options?: { filter?: 'all' | 'active' | 'completed' }) =>
+      ipcRenderer.invoke('todo:findByWorkspace', workspaceId, options),
+    create: (workspaceId: string, data: unknown) =>
+      ipcRenderer.invoke('todo:create', workspaceId, data),
+    update: (todoId: string, data: unknown) => ipcRenderer.invoke('todo:update', todoId, data),
+    remove: (todoId: string) => ipcRenderer.invoke('todo:remove', todoId),
+    reorderList: (workspaceId: string, updates: unknown[]) =>
+      ipcRenderer.invoke('todo:reorderList', workspaceId, updates),
+    reorderKanban: (workspaceId: string, updates: unknown[]) =>
+      ipcRenderer.invoke('todo:reorderKanban', workspaceId, updates),
+    reorderSub: (parentId: string, updates: unknown[]) =>
+      ipcRenderer.invoke('todo:reorderSub', parentId, updates)
+  },
+
+  settings: {
+    get: (key: string) => ipcRenderer.invoke('settings:get', key),
+    set: (key: string, value: string) => ipcRenderer.invoke('settings:set', key, value)
   }
 }
 

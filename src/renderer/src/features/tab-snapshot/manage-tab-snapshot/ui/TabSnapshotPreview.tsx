@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/error-boundaries */
 import { JSX } from 'react'
 import { cn } from '@shared/lib/utils'
 import type { LayoutNode, Pane } from '@entities/tab-system'
@@ -37,8 +38,10 @@ export function TabSnapshotPreview({ snapshot }: Props): JSX.Element | null {
     const layout = JSON.parse(snapshot.layoutJson) as LayoutNode
     const panes = JSON.parse(snapshot.panesJson) as PaneMap
     return (
-      // eslint-disable-next-line react-hooks/error-boundaries
-      <div className="flex h-24 gap-1 rounded-sm">{renderLayoutNode(layout, panes)}</div>
+      <div className="flex flex-col h-24 gap-1 rounded-sm">
+        <span>{snapshot.name}</span>
+        {renderLayoutNode(layout, panes)}
+      </div>
     )
   } catch {
     return null

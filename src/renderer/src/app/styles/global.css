@@ -151,3 +151,20 @@
   -webkit-app-region: no-drag;
   app-region: no-drag;
 }
+
+.milkdown ::selection {
+  background-color: var(--muted-foreground);
+  color: #ffffff;
+}
+
+/* scroll area 내부 동작중 컨텐츠가 커지면 부모 넓이에 넘치는 걸 방지함 */
+.scroll-area-w-content-fit [data-slot="scroll-area-viewport"]>div {
+  display: block !important;
+}
+
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}

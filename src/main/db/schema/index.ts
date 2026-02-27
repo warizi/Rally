@@ -3,5 +3,7 @@ import { tabSessions } from './tab-session'
 import { tabSnapshots } from './tab-snapshot'
 import { folders } from './folder'
 import { notes } from './note'
+import { todos } from './todo'
+import { appSettings } from './app-settings'
 
-export { workspaces, tabSessions, tabSnapshots, folders, notes }
+export { workspaces, tabSessions, tabSnapshots, folders, notes, todos, appSettings }

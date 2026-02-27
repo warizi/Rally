@@ -14,15 +14,20 @@ export const tabSessionRepository = {
     return db.select().from(tabSessions).where(eq(tabSessions.workspaceId, workspaceId)).get()
   },
 
-  createTabSession(data: TabSessionInsert): TabSession | undefined {
-    return db.insert(tabSessions).values(data).returning().get()
-  },
-
-  updateTabSession(data: TabSession): TabSession | undefined {
+  upsertTabSession(data: TabSessionInsert): TabSession {
     return db
-      .update(tabSessions)
-      .set(data)
-      .where(eq(tabSessions.workspaceId, data.workspaceId))
+      .insert(tabSessions)
+      .values(data)
+      .onConflictDoUpdate({
+        target: tabSessions.workspaceId,
+        set: {
+          tabsJson: data.tabsJson,
+          panesJson: data.panesJson,
+          layoutJson: data.layoutJson,
+          activePaneId: data.activePaneId,
+          updatedAt: data.updatedAt
+        }
+      })
       .returning()
       .get()
   }

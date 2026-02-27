@@ -1,4 +1,5 @@
-import { LayoutNode, Pane, PaneNode, SplitNode, Tab, TabType } from '@/entities/tab-system'
+import { LayoutNode, Pane, PaneNode, SplitNode, Tab } from '@/entities/tab-system'
+import { TabType } from '@/shared/constants/tab-url'
 
 import type { StoreApi } from 'zustand'
 
@@ -34,6 +35,7 @@ export interface TabActions {
   openTab: (options: TabOptions, targetPaneId?: string) => string
   openRightTab: (options: TabOptions, sourcePaneId: string) => string
   closeTab: (tabId: string) => void
+  closeTabByPathname: (pathname: string) => void
   activateTab: (tabId: string, paneId?: string) => void
   pinTab: (tabId: string) => void
   unpinTab: (tabId: string) => void

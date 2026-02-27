@@ -22,14 +22,6 @@ export interface SessionData {
   activePaneId: string
 }
 
-// workspaceId → DB session id 캐시 (create/update 분기에 사용)
-const sessionIdCache = new Map<string, number>()
-
-/** @internal 테스트·HMR 리셋용 */
-export function clearSessionIdCache(): void {
-  sessionIdCache.clear()
-}
-
 export async function loadSession(workspaceId: string): Promise<SessionData | null> {
   const res = await window.api.tabSession.getByWorkspaceId(workspaceId)
 
@@ -40,7 +32,6 @@ export async function loadSession(workspaceId: string): Promise<SessionData | nu
 
   if (!res.data) throw new Error('Unexpected: missing data in successful response')
   const session = res.data
-  sessionIdCache.set(workspaceId, session.id)
 
   const rawTabs = JSON.parse(session.tabsJson) as Record<string, SerializedTab>
   const tabs = Object.fromEntries(
@@ -56,22 +47,12 @@ export async function loadSession(workspaceId: string): Promise<SessionData | nu
 }
 
 export async function saveSession(workspaceId: string, data: SessionData): Promise<void> {
-  const payload = {
+  const res = await window.api.tabSession.upsert({
     workspaceId,
     tabsJson: JSON.stringify(data.tabs),
     panesJson: JSON.stringify(data.panes),
     layoutJson: JSON.stringify(data.layout),
     activePaneId: data.activePaneId
-  }
-
-  const existingId = sessionIdCache.get(workspaceId)
-
-  if (existingId != null) {
-    const res = await window.api.tabSession.update({ id: existingId, ...payload })
-    if (!res.success) throwIpcError(res as IpcResponse)
-  } else {
-    const res = await window.api.tabSession.create(payload)
-    if (!res.success) throwIpcError(res as IpcResponse)
-    if (res.data) sessionIdCache.set(workspaceId, res.data.id)
-  }
+  })
+  if (!res.success) throwIpcError(res as IpcResponse)
 }

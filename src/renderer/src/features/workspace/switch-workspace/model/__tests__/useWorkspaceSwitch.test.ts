@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement } from 'react'
@@ -37,6 +37,15 @@ function createWrapper() {
 beforeEach(() => {
   vi.clearAllMocks()
   useCurrentWorkspaceStore.setState({ currentWorkspaceId: null })
+  ;(window as unknown as Record<string, unknown>).api = {
+    settings: {
+      set: vi.fn().mockResolvedValue({ success: true })
+    }
+  }
+})
+
+afterEach(() => {
+  delete (window as unknown as Record<string, unknown>).api
 })
 
 describe('useWorkspaceSwitch', () => {

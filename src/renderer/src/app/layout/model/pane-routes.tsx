@@ -21,6 +21,7 @@ export interface PaneRoute {
 
 const DashboardPage = lazy(() => import('@pages/dashboard'))
 const TodoPage = lazy(() => import('@pages/todo'))
+const TodoDetailPage = lazy(() => import('@pages/todo-detail'))
 const FolderPage = lazy(() => import('@/pages/folder'))
 const NotePage = lazy(() => import('@pages/note'))
 
@@ -32,6 +33,10 @@ export const PANE_ROUTES: PaneRoute[] = [
   {
     pattern: ROUTES.TODO,
     component: TodoPage
+  },
+  {
+    pattern: ROUTES.TODO_DETAIL,
+    component: TodoDetailPage
   },
   {
     pattern: ROUTES.FOLDER,

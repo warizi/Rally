@@ -1,49 +1,48 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { useTabStore } from '@features/tap-system/manage-tab-system'
 
-const STORAGE_KEY = 'folder-tree-open-state'
+const OPEN_STATE_KEY = 'folderOpenState'
 
-function load(workspaceId: string): Record<string, boolean> {
+function parseOpenState(raw: string | undefined): Record<string, boolean> {
+  if (!raw) return {}
   try {
-    const raw = localStorage.getItem(`${STORAGE_KEY}-${workspaceId}`)
-    return raw ? (JSON.parse(raw) as Record<string, boolean>) : {}
+    return JSON.parse(raw) as Record<string, boolean>
   } catch {
     return {}
   }
 }
 
-function save(workspaceId: string, state: Record<string, boolean>): void {
-  try {
-    localStorage.setItem(`${STORAGE_KEY}-${workspaceId}`, JSON.stringify(state))
-  } catch {
-    /* ignore */
-  }
-}
-
 /**
- * workspace별 폴더 트리 열림/닫힘 상태를 localStorage에 영속
+ * 폴더 트리 열림/닫힘 상태를 탭 searchParams에 영속
  */
-export function useTreeOpenState(workspaceId: string): {
+export function useTreeOpenState(tabId: string | undefined): {
   openState: Record<string, boolean>
   toggle: (id: string, isOpen: boolean) => void
   collapseAll: () => void
 } {
-  const [openState, setOpenState] = useState<Record<string, boolean>>(() => load(workspaceId))
+  const searchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
+  const navigateTab = useTabStore((s) => s.navigateTab)
+
+  const openState = useMemo(() => parseOpenState(searchParams?.[OPEN_STATE_KEY]), [searchParams])
 
   const toggle = useCallback(
     (id: string, isOpen: boolean) => {
-      setOpenState((prev) => {
-        const next = { ...prev, [id]: isOpen }
-        save(workspaceId, next)
-        return next
+      if (!tabId) return
+      const current = parseOpenState(searchParams?.[OPEN_STATE_KEY])
+      const next = { ...current, [id]: isOpen }
+      navigateTab(tabId, {
+        searchParams: { ...searchParams, [OPEN_STATE_KEY]: JSON.stringify(next) }
       })
     },
-    [workspaceId]
+    [tabId, searchParams, navigateTab]
   )
 
   const collapseAll = useCallback(() => {
-    setOpenState({})
-    save(workspaceId, {})
-  }, [workspaceId])
+    if (!tabId) return
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { [OPEN_STATE_KEY]: _, ...rest } = searchParams ?? {}
+    navigateTab(tabId, { searchParams: rest })
+  }, [tabId, searchParams, navigateTab])
 
   return { openState, toggle, collapseAll }
 }
