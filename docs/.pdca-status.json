@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-28T22:10:32.661Z",
+  "lastUpdated": "2026-02-28T22:31:17.726Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -90,9 +90,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:49:14.086Z",
-        "lastUpdated": "2026-02-28T22:10:32.661Z"
+        "lastUpdated": "2026-02-28T22:31:17.726Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/csv-file.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/csv-viewer/model/__tests__/use-csv-column-resize.test.ts"
     },
     "tab-system": {
       "phase": "do",
@@ -539,7 +539,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-28T22:10:32.661Z"
+    "lastActivity": "2026-02-28T22:31:17.726Z"
   },
   "history": [
     {
@@ -8206,6 +8206,30 @@
     },
     {
       "timestamp": "2026-02-28T22:10:32.661Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-28T22:29:32.521Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-28T22:30:01.784Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-28T22:30:50.385Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-28T22:31:17.726Z",
       "feature": "__tests__",
       "phase": "do",
       "action": "updated"
