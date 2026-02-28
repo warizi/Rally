@@ -65,6 +65,7 @@ export const todoRepository = {
         | 'subOrder'
         | 'doneAt'
         | 'dueDate'
+        | 'startDate'
         | 'updatedAt'
       >
     >

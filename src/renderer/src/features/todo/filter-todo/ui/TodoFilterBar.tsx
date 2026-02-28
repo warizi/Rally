@@ -33,7 +33,6 @@ export function TodoFilterBar({
               <SelectItem value="all">전체 상태</SelectItem>
               <SelectItem value="할일">할일</SelectItem>
               <SelectItem value="진행중">진행중</SelectItem>
-              <SelectItem value="보류">보류</SelectItem>
             </SelectContent>
           </Select>
         )}
@@ -54,6 +53,21 @@ export function TodoFilterBar({
             <SelectItem value="low">낮음</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+      <div className="flex flex-row gap-2">
+        <DatePickerButton
+          value={filter.startDateFrom}
+          onChange={(date) => onFilterChange({ ...filter, startDateFrom: date })}
+          placeholder="시작일 시작"
+          className="w-[120px]"
+        />
+
+        <DatePickerButton
+          value={filter.startDateTo}
+          onChange={(date) => onFilterChange({ ...filter, startDateTo: date })}
+          placeholder="시작일 종료"
+          className="w-[120px]"
+        />
       </div>
       <div className="flex flex-row gap-2">
         <DatePickerButton

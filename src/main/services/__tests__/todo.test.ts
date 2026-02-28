@@ -40,7 +40,8 @@ const MOCK_TODO_ROW = {
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   doneAt: null,
-  dueDate: null
+  dueDate: null,
+  startDate: null
 }
 
 beforeEach(() => {

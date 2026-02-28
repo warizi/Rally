@@ -11,6 +11,7 @@ import {
 import { useTabStore, selectPaneByTabId } from '@features/tap-system/manage-tab-system'
 import { useTodoList } from '@features/todo/todo-list/model/use-todo-list'
 import { useCompletedTodoList } from '@features/todo/todo-list/model/use-completed-todo-list'
+import { useHoldingOnTodoList } from '@features/todo/todo-list/model/use-holding-on-todo-list'
 import { useTodoKanban } from '@features/todo/todo-kanban/model/use-todo-kanban'
 import {
   filterToParams,
@@ -22,6 +23,7 @@ import {
   TodoFilterSection,
   TodoListSection,
   TodoCompletedSection,
+  TodoHoldingOnSection,
   TodoKanbanSection
 } from '@widgets/todo'
 
@@ -89,6 +91,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
   const initialKanbanFilter = filterFromParams(tabSearchParams, 'kanban')
 
   const listState = useTodoList(activeTodos, initialListFilter)
+  const holdingOnState = useHoldingOnTodoList(activeTodos, listState.filter)
   const completedState = useCompletedTodoList(completedTodos, listState.filter)
   const kanbanState = useTodoKanban(todos, initialKanbanColumn, initialKanbanFilter)
 
@@ -96,6 +99,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
   const kanbanViewOpen = tabSearchParams?.kanbanViewOpen !== 'false'
   const listFilterOpen = tabSearchParams?.listFilterOpen !== 'false'
   const listViewOpen = tabSearchParams?.listViewOpen !== 'false'
+  const holdingOnOpen = tabSearchParams?.holdingOnOpen === 'true'
   const completedOpen = tabSearchParams?.completedOpen === 'true'
 
   function handleSectionToggle(key: string, open: boolean): void {
@@ -193,6 +197,16 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
             onItemDeleted={handleItemDeleted}
             open={listViewOpen}
             onOpenChange={(o) => handleSectionToggle('listViewOpen', o)}
+          />
+          <TodoHoldingOnSection
+            todos={holdingOnState.filteredHoldingOn}
+            workspaceId={workspaceId}
+            filterActive={holdingOnState.filterActive}
+            onItemClick={handleItemClick}
+            onItemRightClick={handleItemRightClick}
+            onItemDeleted={handleItemDeleted}
+            open={holdingOnOpen}
+            onOpenChange={(o) => handleSectionToggle('holdingOnOpen', o)}
           />
           <TodoCompletedSection
             todos={completedState.filteredCompleted}

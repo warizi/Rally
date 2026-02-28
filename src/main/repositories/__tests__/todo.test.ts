@@ -35,6 +35,7 @@ function makeTodo(overrides?: Partial<TodoInsert>): TodoInsert {
     updatedAt: new Date(),
     doneAt: null,
     dueDate: null,
+    startDate: null,
     ...overrides
   }
 }

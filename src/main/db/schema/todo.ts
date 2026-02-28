@@ -26,5 +26,6 @@ export const todos = sqliteTable('todos', {
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
   doneAt: integer('done_at', { mode: 'timestamp_ms' }),
-  dueDate: integer('due_date', { mode: 'timestamp_ms' })
+  dueDate: integer('due_date', { mode: 'timestamp_ms' }),
+  startDate: integer('start_date', { mode: 'timestamp_ms' })
 })

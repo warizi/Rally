@@ -34,6 +34,7 @@ export function CreateTodoDialog({
 }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [dueDate, setDueDate] = useState<Date | null>(null)
+  const [startDate, setStartDate] = useState<Date | null>(null)
   const createTodo = useCreateTodo()
   const titleOnly = !!parentId
 
@@ -51,6 +52,7 @@ export function CreateTodoDialog({
     setOpen(next)
     if (next) {
       setDueDate(null)
+      setStartDate(null)
       form.reset({
         title: '',
         description: '',
@@ -70,13 +72,15 @@ export function CreateTodoDialog({
           status: values.status,
           priority: values.priority,
           parentId: parentId ?? null,
-          dueDate
+          dueDate,
+          startDate
         }
       },
       {
         onSuccess: () => {
           setOpen(false)
           setDueDate(null)
+          setStartDate(null)
           form.reset({
             title: '',
             description: '',
@@ -103,6 +107,18 @@ export function CreateTodoDialog({
                 errors={form.formState.errors}
                 titleOnly={titleOnly}
               />
+
+              {!titleOnly && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">시작일</span>
+                  <DatePickerButton
+                    value={startDate}
+                    onChange={setStartDate}
+                    placeholder="날짜 없음 (선택)"
+                    className="w-full"
+                  />
+                </div>
+              )}
 
               {!titleOnly && (
                 <div className="flex flex-col gap-1.5">

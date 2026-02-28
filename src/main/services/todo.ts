@@ -19,6 +19,7 @@ export interface TodoItem {
   updatedAt: Date
   doneAt: Date | null
   dueDate: Date | null
+  startDate: Date | null
 }
 
 export interface CreateTodoData {
@@ -28,6 +29,7 @@ export interface CreateTodoData {
   priority?: 'high' | 'medium' | 'low'
   parentId?: string | null
   dueDate?: Date | null
+  startDate?: Date | null
 }
 
 export interface UpdateTodoData {
@@ -37,6 +39,7 @@ export interface UpdateTodoData {
   priority?: 'high' | 'medium' | 'low'
   isDone?: boolean
   dueDate?: Date | null
+  startDate?: Date | null
 }
 
 export interface TodoOrderUpdate {
@@ -70,6 +73,11 @@ function toTodoItem(todo: ReturnType<typeof todoRepository.findById>): TodoItem 
       ? todo.dueDate instanceof Date
         ? todo.dueDate
         : new Date(todo.dueDate as number)
+      : null,
+    startDate: todo.startDate
+      ? todo.startDate instanceof Date
+        ? todo.startDate
+        : new Date(todo.startDate as number)
       : null
   }
 }
@@ -144,7 +152,8 @@ export const todoService = {
       createdAt: now,
       updatedAt: now,
       doneAt: isDone ? now : null,
-      dueDate: data.dueDate ?? null
+      dueDate: data.dueDate ?? null,
+      startDate: data.startDate ?? null
     })
 
     return toTodoItem(row)
@@ -162,6 +171,7 @@ export const todoService = {
       ...(data.description !== undefined ? { description: data.description.trim() } : {}),
       ...(data.priority !== undefined ? { priority: data.priority } : {}),
       ...(data.dueDate !== undefined ? { dueDate: data.dueDate } : {}),
+      ...(data.startDate !== undefined ? { startDate: data.startDate } : {}),
       ...doneFields,
       updatedAt: new Date(now)
     })

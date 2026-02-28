@@ -33,7 +33,25 @@ export function TodoDetailFields({ todo, workspaceId }: Props): React.JSX.Elemen
       <div className="grid grid-cols-1 gap-4 @[550px]:grid-cols-2 w-fit">
         {/* isDone */}
         <Label title="완료">
-          <TodoCheckbox todoId={todo.id} workspaceId={workspaceId} checked={todo.isDone} title={todo.title} />
+          <TodoCheckbox
+            todoId={todo.id}
+            workspaceId={workspaceId}
+            checked={todo.isDone}
+            title={todo.title}
+          />
+        </Label>
+      </div>
+      <div className="grid grid-cols-1 gap-4 @[550px]:grid-cols-2 w-fit">
+        {/* startDate */}
+        <Label title="시작일">
+          <DatePickerButton
+            value={todo.startDate ? new Date(todo.startDate) : null}
+            onChange={(date) =>
+              updateTodo.mutate({ workspaceId, todoId: todo.id, data: { startDate: date } })
+            }
+            placeholder="날짜 없음"
+            className="min-w-[140px]"
+          />
         </Label>
 
         {/* dueDate */}

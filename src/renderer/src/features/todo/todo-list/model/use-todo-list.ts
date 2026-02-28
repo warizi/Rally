@@ -19,7 +19,10 @@ export function useTodoList(
 } {
   const [filter, setFilter] = useState<TodoFilter>(initialFilter)
 
-  const topLevel = useMemo(() => allTodos.filter((t) => t.parentId === null), [allTodos])
+  const topLevel = useMemo(
+    () => allTodos.filter((t) => t.parentId === null && t.status !== '보류'),
+    [allTodos]
+  )
 
   const subTodoMap = useMemo(() => {
     const map = new Map<string, TodoItem[]>()

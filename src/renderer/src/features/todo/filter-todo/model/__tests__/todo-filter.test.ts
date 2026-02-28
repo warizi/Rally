@@ -26,6 +26,7 @@ function makeTodoItem(overrides?: Partial<TodoItem>): TodoItem {
     updatedAt: new Date(),
     doneAt: null,
     dueDate: null,
+    startDate: null,
     ...overrides
   }
 }
@@ -56,13 +57,15 @@ describe('filterFromParams', () => {
 
 describe('roundtrip filterToParams → filterFromParams', () => {
   it('날짜 없는 필터 roundtrip', () => {
-    const filter: TodoFilter = { status: '할일', priority: 'high', dueDateFrom: null, dueDateTo: null }
+    const filter: TodoFilter = { status: '할일', priority: 'high', startDateFrom: null, startDateTo: null, dueDateFrom: null, dueDateTo: null }
     expect(filterFromParams(filterToParams(filter, 'k'), 'k')).toEqual(filter)
   })
   it('날짜 포함 필터 roundtrip', () => {
     const filter: TodoFilter = {
       status: 'all',
       priority: 'all',
+      startDateFrom: null,
+      startDateTo: null,
       dueDateFrom: new Date('2026-01-01'),
       dueDateTo: new Date('2026-01-31')
     }

@@ -20,6 +20,7 @@ export interface TodoItem {
   updatedAt: Date
   doneAt: Date | null
   dueDate: Date | null
+  startDate: Date | null
 }
 
 export interface CreateTodoData {
@@ -29,6 +30,7 @@ export interface CreateTodoData {
   priority?: TodoPriority
   parentId?: string | null
   dueDate?: Date | null
+  startDate?: Date | null
 }
 
 export interface UpdateTodoData {
@@ -38,6 +40,7 @@ export interface UpdateTodoData {
   priority?: TodoPriority
   isDone?: boolean
   dueDate?: Date | null
+  startDate?: Date | null
 }
 
 export interface TodoOrderUpdate {

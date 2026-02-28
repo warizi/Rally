@@ -182,6 +182,7 @@ interface TodoItem {
   updatedAt: Date
   doneAt: Date | null
   dueDate: Date | null
+  startDate: Date | null
 }
 
 interface CreateTodoData {
@@ -191,6 +192,7 @@ interface CreateTodoData {
   priority?: 'high' | 'medium' | 'low'
   parentId?: string | null
   dueDate?: Date | null
+  startDate?: Date | null
 }
 
 interface UpdateTodoData {
@@ -200,6 +202,7 @@ interface UpdateTodoData {
   priority?: 'high' | 'medium' | 'low'
   isDone?: boolean
   dueDate?: Date | null
+  startDate?: Date | null
 }
 
 interface TodoOrderUpdate {

@@ -19,7 +19,8 @@ const BASE_TODO: TodoItem = {
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   doneAt: null,
-  dueDate: null
+  dueDate: null,
+  startDate: null
 }
 
 function makeTodoItem(overrides?: Partial<TodoItem>): TodoItem {

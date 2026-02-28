@@ -1,4 +1,3 @@
-import { TabContainer } from '@shared/ui/tab-container'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { FolderTree } from '@features/folder/manage-folder'
 
@@ -6,13 +5,13 @@ import { FolderTree } from '@features/folder/manage-folder'
 export function FolderPage({ tabId }: { tabId?: string }): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
 
-  return (
-    <TabContainer header={<></>}>
-      {workspaceId ? (
-        <FolderTree workspaceId={workspaceId} tabId={tabId} />
-      ) : (
-        <div className="text-sm text-muted-foreground">워크스페이스를 선택해주세요.</div>
-      )}
-    </TabContainer>
-  )
+  if (!workspaceId) {
+    return (
+      <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+        워크스페이스를 선택해주세요.
+      </div>
+    )
+  }
+
+  return <FolderTree workspaceId={workspaceId} tabId={tabId} />
 }

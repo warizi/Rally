@@ -1,4 +1,4 @@
-import { JSX, useCallback, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
 import { ChevronsDownUp, FilePlus, FolderPlus } from 'lucide-react'
@@ -35,7 +35,19 @@ interface Props {
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
+  const treeContainerRef = useRef<HTMLDivElement>(null)
+  const [treeHeight, setTreeHeight] = useState(400)
   const { openState, toggle, collapseAll } = useTreeOpenState(tabId)
+
+  useEffect(() => {
+    const el = treeContainerRef.current
+    if (!el) return
+    const observer = new ResizeObserver(([entry]) => {
+      setTreeHeight(entry.contentRect.height)
+    })
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
 
   // Folder mutations
   const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()
@@ -200,7 +212,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   )
 
   return (
-    <div className="flex flex-col h-full relative">
+    <div className="flex flex-col h-full relative px-6 pt-6 pb-2">
       {/* 툴바 */}
       <div className="flex items-center justify-between py-1 shrink-0 border-b mb-2 sticky top-0 bg-background z-10">
         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -260,53 +272,56 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <p className="text-xs text-center opacity-70">위의 + 버튼으로 폴더를 추가하세요.</p>
         </div>
       ) : (
-        <Tree<WorkspaceTreeNode>
-          key={workspaceId}
-          ref={treeRef}
-          data={tree}
-          idAccessor="id"
-          initialOpenState={openState}
-          openByDefault={false}
-          childrenAccessor={(n) => (n.kind === 'folder' ? n.children : null)}
-          disableDrop={({ parentNode }) =>
-            parentNode?.data.kind === 'note' || parentNode?.data.kind === 'csv'
-          }
-          disableEdit={(n) => n.kind === 'note' || n.kind === 'csv'}
-          onToggle={(id) => toggle(id, treeRef.current?.isOpen(id) ?? false)}
-          onCreate={({ parentId }) => {
-            setCreateTarget({ parentFolderId: parentId ?? null })
-            return null
-          }}
-          onRename={({ id, name }) => {
-            // react-arborist 인라인 rename은 폴더 전용 (disableEdit으로 노트 진입 차단)
-            rename({ workspaceId, folderId: id, newName: name })
-          }}
-          onMove={({ dragIds, dragNodes, parentId, index }) => {
-            const kind = dragNodes[0]?.data.kind
-            if (kind === 'note') {
-              moveNote({ workspaceId, noteId: dragIds[0], folderId: parentId ?? null, index })
-            } else if (kind === 'csv') {
-              moveCsvFile({ workspaceId, csvId: dragIds[0], folderId: parentId ?? null, index })
-            } else {
-              move({ workspaceId, folderId: dragIds[0], parentFolderId: parentId ?? null, index })
+        <div ref={treeContainerRef} className="flex-1 min-h-0">
+          <Tree<WorkspaceTreeNode>
+            key={workspaceId}
+            ref={treeRef}
+            data={tree}
+            idAccessor="id"
+            initialOpenState={openState}
+            openByDefault={false}
+            childrenAccessor={(n) => (n.kind === 'folder' ? n.children : null)}
+            disableDrop={({ parentNode }) =>
+              parentNode?.data.kind === 'note' || parentNode?.data.kind === 'csv'
             }
-          }}
-          onDelete={({ ids, nodes }: { ids: string[]; nodes: NodeApi<WorkspaceTreeNode>[] }) => {
-            if (nodes.length === 0) return
-            const firstNode = nodes[0]
-            if (firstNode.data.kind === 'note') {
-              setNoteDeleteTarget({ id: ids[0], name: firstNode.data.name })
-            } else if (firstNode.data.kind === 'csv') {
-              setCsvDeleteTarget({ id: ids[0], name: firstNode.data.name })
-            } else {
-              setDeleteTarget({ id: ids[0], name: firstNode.data.name })
-            }
-          }}
-          width="100%"
-          className="flex-1 overflow-auto px-2"
-        >
-          {NodeRenderer}
-        </Tree>
+            disableEdit={(n) => n.kind === 'note' || n.kind === 'csv'}
+            onToggle={(id) => toggle(id, treeRef.current?.isOpen(id) ?? false)}
+            onCreate={({ parentId }) => {
+              setCreateTarget({ parentFolderId: parentId ?? null })
+              return null
+            }}
+            onRename={({ id, name }) => {
+              // react-arborist 인라인 rename은 폴더 전용 (disableEdit으로 노트 진입 차단)
+              rename({ workspaceId, folderId: id, newName: name })
+            }}
+            onMove={({ dragIds, dragNodes, parentId, index }) => {
+              const kind = dragNodes[0]?.data.kind
+              if (kind === 'note') {
+                moveNote({ workspaceId, noteId: dragIds[0], folderId: parentId ?? null, index })
+              } else if (kind === 'csv') {
+                moveCsvFile({ workspaceId, csvId: dragIds[0], folderId: parentId ?? null, index })
+              } else {
+                move({ workspaceId, folderId: dragIds[0], parentFolderId: parentId ?? null, index })
+              }
+            }}
+            onDelete={({ ids, nodes }: { ids: string[]; nodes: NodeApi<WorkspaceTreeNode>[] }) => {
+              if (nodes.length === 0) return
+              const firstNode = nodes[0]
+              if (firstNode.data.kind === 'note') {
+                setNoteDeleteTarget({ id: ids[0], name: firstNode.data.name })
+              } else if (firstNode.data.kind === 'csv') {
+                setCsvDeleteTarget({ id: ids[0], name: firstNode.data.name })
+              } else {
+                setDeleteTarget({ id: ids[0], name: firstNode.data.name })
+              }
+            }}
+            height={treeHeight}
+            width="100%"
+            className="px-2"
+          >
+            {NodeRenderer}
+          </Tree>
+        </div>
       )}
 
       {/* 폴더 생성 다이얼로그 */}
