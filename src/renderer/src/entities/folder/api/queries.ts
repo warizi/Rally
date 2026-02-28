@@ -8,6 +8,7 @@ import {
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
 import type { FolderNode } from '../model/types'
+import { markWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 
 const TREE_KEY = 'folder'
 
@@ -30,6 +31,9 @@ export function useCreateFolder(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, parentFolderId, name }) => {
       const res: IpcResponse<FolderNode> = await window.api.folder.create(
         workspaceId,
@@ -52,6 +56,9 @@ export function useRenameFolder(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, folderId, newName }) => {
       const res: IpcResponse<FolderNode> = await window.api.folder.rename(
         workspaceId,
@@ -74,6 +81,9 @@ export function useRemoveFolder(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, folderId }) => {
       const res: IpcResponse<void> = await window.api.folder.remove(workspaceId, folderId)
       if (!res.success) throwIpcError(res)
@@ -91,6 +101,9 @@ export function useMoveFolder(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, folderId, parentFolderId, index }) => {
       const res: IpcResponse<FolderNode> = await window.api.folder.move(
         workspaceId,

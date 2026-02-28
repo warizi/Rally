@@ -40,6 +40,37 @@ const api = {
     }
   },
 
+  csv: {
+    readByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('csv:readByWorkspace', workspaceId),
+    create: (workspaceId: string, folderId: string | null, name: string) =>
+      ipcRenderer.invoke('csv:create', workspaceId, folderId, name),
+    rename: (workspaceId: string, csvId: string, newName: string) =>
+      ipcRenderer.invoke('csv:rename', workspaceId, csvId, newName),
+    remove: (workspaceId: string, csvId: string) =>
+      ipcRenderer.invoke('csv:remove', workspaceId, csvId),
+    readContent: (workspaceId: string, csvId: string) =>
+      ipcRenderer.invoke('csv:readContent', workspaceId, csvId),
+    writeContent: (workspaceId: string, csvId: string, content: string) =>
+      ipcRenderer.invoke('csv:writeContent', workspaceId, csvId, content),
+    move: (workspaceId: string, csvId: string, folderId: string | null, index: number) =>
+      ipcRenderer.invoke('csv:move', workspaceId, csvId, folderId, index),
+    updateMeta: (
+      workspaceId: string,
+      csvId: string,
+      data: { description?: string; columnWidths?: string }
+    ) => ipcRenderer.invoke('csv:updateMeta', workspaceId, csvId, data),
+    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
+      const handler = (
+        _: Electron.IpcRendererEvent,
+        workspaceId: string,
+        changedRelPaths: string[]
+      ): void => callback(workspaceId, changedRelPaths)
+      ipcRenderer.on('csv:changed', handler)
+      return () => ipcRenderer.removeListener('csv:changed', handler)
+    }
+  },
+
   folder: {
     readTree: (workspaceId: string) => ipcRenderer.invoke('folder:readTree', workspaceId),
     create: (workspaceId: string, parentFolderId: string | null, name: string) =>
@@ -55,9 +86,12 @@ const api = {
       folderId: string,
       data: { color?: string | null; order?: number }
     ) => ipcRenderer.invoke('folder:updateMeta', workspaceId, folderId, data),
-    onChanged: (callback: (workspaceId: string) => void) => {
-      const handler = (_: Electron.IpcRendererEvent, workspaceId: string): void =>
-        callback(workspaceId)
+    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
+      const handler = (
+        _: Electron.IpcRendererEvent,
+        workspaceId: string,
+        changedRelPaths: string[]
+      ): void => callback(workspaceId, changedRelPaths)
       ipcRenderer.on('folder:changed', handler)
       return () => ipcRenderer.removeListener('folder:changed', handler)
     }

@@ -30,7 +30,7 @@ function makeNote(overrides: Partial<NoteNode> & { id: string; title: string }):
 // ─── 빈 입력 ──────────────────────────────────────────────────
 describe('빈 입력', () => {
   it('폴더와 노트 모두 없으면 빈 배열을 반환한다', () => {
-    expect(buildWorkspaceTree([], [])).toEqual([])
+    expect(buildWorkspaceTree([], [], [])).toEqual([])
   })
 })
 
@@ -44,7 +44,7 @@ describe('폴더만 (노트 없음)', () => {
       color: '#ff0000',
       order: 1
     })
-    const result = buildWorkspaceTree([folder], [])
+    const result = buildWorkspaceTree([folder], [], [])
 
     expect(result).toEqual([
       {
@@ -63,7 +63,7 @@ describe('폴더만 (노트 없음)', () => {
     const child = makeFolder({ id: 'f2', name: 'components', relativePath: 'src/components' })
     const parent = makeFolder({ id: 'f1', name: 'src', relativePath: 'src', children: [child] })
 
-    const result = buildWorkspaceTree([parent], [])
+    const result = buildWorkspaceTree([parent], [], [])
 
     expect(result).toHaveLength(1)
     expect(result[0].kind).toBe('folder')
@@ -96,7 +96,7 @@ describe('노트만 (폴더 없음)', () => {
       order: 2
     })
 
-    const result = buildWorkspaceTree([], [note])
+    const result = buildWorkspaceTree([], [note], [])
 
     expect(result).toEqual([
       {
@@ -114,7 +114,7 @@ describe('노트만 (폴더 없음)', () => {
 
   it('NoteNode.title이 NoteTreeNode.name으로 매핑된다', () => {
     const note = makeNote({ id: 'n1', title: 'Hello World' })
-    const result = buildWorkspaceTree([], [note])
+    const result = buildWorkspaceTree([], [note], [])
     expect(result[0]).toMatchObject({ name: 'Hello World' })
   })
 })
@@ -125,7 +125,7 @@ describe('폴더 + 노트 혼합', () => {
     const folder = makeFolder({ id: 'f1', name: 'docs' })
     const note = makeNote({ id: 'n1', title: 'Readme', folderId: 'f1' })
 
-    const result = buildWorkspaceTree([folder], [note])
+    const result = buildWorkspaceTree([folder], [note], [])
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
@@ -139,7 +139,7 @@ describe('폴더 + 노트 혼합', () => {
     const folder = makeFolder({ id: 'f1', name: 'docs' })
     const rootNote = makeNote({ id: 'n1', title: 'Root Note', folderId: null })
 
-    const result = buildWorkspaceTree([folder], [rootNote])
+    const result = buildWorkspaceTree([folder], [rootNote], [])
 
     expect(result).toHaveLength(2)
     expect(result[0]).toMatchObject({ kind: 'folder', id: 'f1' })
@@ -150,7 +150,7 @@ describe('폴더 + 노트 혼합', () => {
     const folder = makeFolder({ id: 'f1', name: 'docs' })
     const orphanNote = makeNote({ id: 'n1', title: 'Orphan', folderId: 'non-existent-id' })
 
-    const result = buildWorkspaceTree([folder], [orphanNote])
+    const result = buildWorkspaceTree([folder], [orphanNote], [])
 
     expect(result).toHaveLength(1) // 폴더만
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -169,7 +169,7 @@ describe('크로스 타입 정렬 (kind 우선)', () => {
     })
     const note = makeNote({ id: 'n1', title: 'child-note', folderId: 'p1', order: 0 })
 
-    const result = buildWorkspaceTree([parent], [note])
+    const result = buildWorkspaceTree([parent], [note], [])
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error
     const children = result[0].children
@@ -181,7 +181,7 @@ describe('크로스 타입 정렬 (kind 우선)', () => {
     const folder = makeFolder({ id: 'f1', name: 'folder', order: 5 })
     const note = makeNote({ id: 'n1', title: 'note', folderId: null, order: 0 })
 
-    const result = buildWorkspaceTree([folder], [note])
+    const result = buildWorkspaceTree([folder], [note], [])
 
     expect(result[0]).toMatchObject({ kind: 'folder', order: 5 })
     expect(result[1]).toMatchObject({ kind: 'note', order: 0 })
@@ -194,7 +194,7 @@ describe('within-kind 정렬', () => {
     const f1 = makeFolder({ id: 'f1', name: 'b-folder', order: 2 })
     const f2 = makeFolder({ id: 'f2', name: 'a-folder', order: 1 })
 
-    const result = buildWorkspaceTree([f1, f2], [])
+    const result = buildWorkspaceTree([f1, f2], [], [])
 
     expect(result[0]).toMatchObject({ id: 'f2', order: 1 })
     expect(result[1]).toMatchObject({ id: 'f1', order: 2 })
@@ -204,7 +204,7 @@ describe('within-kind 정렬', () => {
     const f1 = makeFolder({ id: 'f1', name: 'zebra', order: 0 })
     const f2 = makeFolder({ id: 'f2', name: 'apple', order: 0 })
 
-    const result = buildWorkspaceTree([f1, f2], [])
+    const result = buildWorkspaceTree([f1, f2], [], [])
 
     expect(result[0]).toMatchObject({ id: 'f2', name: 'apple' })
     expect(result[1]).toMatchObject({ id: 'f1', name: 'zebra' })
@@ -214,7 +214,7 @@ describe('within-kind 정렬', () => {
     const n1 = makeNote({ id: 'n1', title: 'b-note', order: 2 })
     const n2 = makeNote({ id: 'n2', title: 'a-note', order: 1 })
 
-    const result = buildWorkspaceTree([], [n1, n2])
+    const result = buildWorkspaceTree([], [n1, n2], [])
 
     expect(result[0]).toMatchObject({ id: 'n2', order: 1 })
     expect(result[1]).toMatchObject({ id: 'n1', order: 2 })
@@ -224,7 +224,7 @@ describe('within-kind 정렬', () => {
     const n1 = makeNote({ id: 'n1', title: 'zebra', order: 0 })
     const n2 = makeNote({ id: 'n2', title: 'apple', order: 0 })
 
-    const result = buildWorkspaceTree([], [n1, n2])
+    const result = buildWorkspaceTree([], [n1, n2], [])
 
     expect(result[0]).toMatchObject({ id: 'n2', name: 'apple' })
     expect(result[1]).toMatchObject({ id: 'n1', name: 'zebra' })
@@ -235,7 +235,7 @@ describe('within-kind 정렬', () => {
     const child2 = makeFolder({ id: 'c2', name: 'apple', order: 0 })
     const parent = makeFolder({ id: 'p1', name: 'parent', children: [child1, child2] })
 
-    const result = buildWorkspaceTree([parent], [])
+    const result = buildWorkspaceTree([parent], [], [])
 
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-expect-error

@@ -69,6 +69,55 @@ interface NoteAPI {
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
+interface CsvFileNode {
+  id: string
+  title: string
+  relativePath: string
+  description: string
+  preview: string
+  columnWidths: string | null
+  folderId: string | null
+  order: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CsvAPI {
+  readByWorkspace: (workspaceId: string) => Promise<IpcResponse<CsvFileNode[]>>
+  create: (
+    workspaceId: string,
+    folderId: string | null,
+    name: string
+  ) => Promise<IpcResponse<CsvFileNode>>
+  rename: (
+    workspaceId: string,
+    csvId: string,
+    newName: string
+  ) => Promise<IpcResponse<CsvFileNode>>
+  remove: (workspaceId: string, csvId: string) => Promise<IpcResponse<void>>
+  readContent: (
+    workspaceId: string,
+    csvId: string
+  ) => Promise<IpcResponse<{ content: string; encoding: string; columnWidths: string | null }>>
+  writeContent: (
+    workspaceId: string,
+    csvId: string,
+    content: string
+  ) => Promise<IpcResponse<void>>
+  move: (
+    workspaceId: string,
+    csvId: string,
+    folderId: string | null,
+    index: number
+  ) => Promise<IpcResponse<CsvFileNode>>
+  updateMeta: (
+    workspaceId: string,
+    csvId: string,
+    data: { description?: string; columnWidths?: string }
+  ) => Promise<IpcResponse<CsvFileNode>>
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
+}
+
 interface FolderNode {
   id: string
   name: string
@@ -102,7 +151,7 @@ interface FolderAPI {
     folderId: string,
     data: { color?: string | null; order?: number }
   ) => Promise<IpcResponse<FolderNode>>
-  onChanged: (callback: (workspaceId: string) => void) => () => void
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
 interface WorkspaceAPI {
@@ -181,6 +230,7 @@ interface SettingsAPI {
 
 interface API {
   note: NoteAPI
+  csv: CsvAPI
   folder: FolderAPI
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI

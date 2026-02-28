@@ -6,6 +6,7 @@ import { noteRepository } from '../repositories/note'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
+import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 
 export interface NoteNode {
   id: string
@@ -169,9 +170,8 @@ export const noteService = {
 
     fs.writeFileSync(newAbs, '', 'utf-8')
 
-    const siblings = noteRepository
-      .findByWorkspaceId(workspaceId)
-      .filter((n) => n.folderId === folderId)
+    // maxOrder: note + csv 혼합 siblings에서 최대값
+    const siblings = getLeafSiblings(workspaceId, folderId)
     const maxOrder = siblings.length > 0 ? Math.max(...siblings.map((s) => s.order)) : -1
     const now = new Date()
 
@@ -330,17 +330,13 @@ export const noteService = {
       })
     }
 
-    // siblings reindex (항상 실행)
-    const siblings = noteRepository
-      .findByWorkspaceId(workspaceId)
-      .filter((n) => n.folderId === targetFolderId)
-      .sort((a, b) => a.order - b.order)
-
-    const withoutSelf = siblings.filter((n) => n.id !== noteId)
-    withoutSelf.splice(index, 0, { ...note, folderId: targetFolderId, relativePath: finalRel })
-    noteRepository.reindexSiblings(
+    // 혼합 siblings reindex (note + csv)
+    const siblings = getLeafSiblings(workspaceId, targetFolderId)
+    const withoutSelf = siblings.filter((s) => s.id !== noteId)
+    withoutSelf.splice(index, 0, { id: noteId, kind: 'note', order: 0 })
+    reindexLeafSiblings(
       workspaceId,
-      withoutSelf.map((n) => n.id)
+      withoutSelf.map((s) => ({ id: s.id, kind: s.kind }))
     )
 
     const updated = noteRepository.findById(noteId)!

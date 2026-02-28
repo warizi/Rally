@@ -19,4 +19,15 @@ export interface NoteTreeNode {
   order: number
 }
 
-export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode
+export interface CsvTreeNode {
+  kind: 'csv'
+  id: string
+  name: string // CsvFileNode.title에서 매핑
+  relativePath: string
+  description: string
+  preview: string
+  folderId: string | null
+  order: number
+}
+
+export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode | CsvTreeNode

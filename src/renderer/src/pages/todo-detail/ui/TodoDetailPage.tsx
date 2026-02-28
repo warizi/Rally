@@ -1,6 +1,13 @@
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { Button } from '@shared/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@shared/ui/dropdown-menu'
+import { MoreHorizontal, Trash2 } from 'lucide-react'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTodosByWorkspace, useUpdateTodo } from '@entities/todo'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
@@ -75,19 +82,32 @@ export function TodoDetailPage({ tabId, params }: Props): React.JSX.Element {
             })
           }
           buttons={
-            <DeleteTodoDialog
-              todoId={todo.id}
-              workspaceId={workspaceId!}
-              hasSubTodos={subTodos.length > 0}
-              trigger={
-                <Button variant="destructive" size="sm">
-                  삭제
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-7">
+                  <MoreHorizontal className="size-4" />
                 </Button>
-              }
-              onDeleted={() => {
-                if (tabId) closeTab(tabId)
-              }}
-            />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DeleteTodoDialog
+                  todoId={todo.id}
+                  workspaceId={workspaceId!}
+                  hasSubTodos={subTodos.length > 0}
+                  trigger={
+                    <DropdownMenuItem
+                      variant="destructive"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      <Trash2 className="size-4" />
+                      삭제
+                    </DropdownMenuItem>
+                  }
+                  onDeleted={() => {
+                    if (tabId) closeTab(tabId)
+                  }}
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
           }
         />
       }

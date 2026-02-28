@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-02-28T02:16:13.100Z",
+  "timestamp": "2026-02-28T16:43:39.057Z",
   "reason": "compaction",
   "status": {
     "version": "2.0",
-    "lastUpdated": "2026-02-28T02:16:12.878Z",
+    "lastUpdated": "2026-02-28T16:43:32.959Z",
     "activeFeatures": [
       "ui",
       "workspace",
@@ -36,7 +36,8 @@
       "constants",
       "providers",
       "store",
-      "large-workspace-freeze-v2"
+      "large-workspace-freeze-v2",
+      "csv-file.ts"
     ],
     "primaryFeature": "ui",
     "features": {
@@ -88,9 +89,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T02:49:14.086Z",
-          "lastUpdated": "2026-02-27T20:05:02.935Z"
+          "lastUpdated": "2026-02-28T15:20:38.103Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/todo/model/__tests__/queries.test.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/workspace-watcher.test.ts"
       },
       "tab-system": {
         "phase": "do",
@@ -114,9 +115,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:08:13.116Z",
-          "lastUpdated": "2026-02-27T02:00:17.688Z"
+          "lastUpdated": "2026-02-28T16:42:09.029Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/db/schema/tab-session.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/db/schema/index.ts"
       },
       "tab-session.ts": {
         "phase": "do",
@@ -140,7 +141,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:25:36.051Z",
-          "lastUpdated": "2026-02-28T01:48:33.392Z"
+          "lastUpdated": "2026-02-28T02:29:11.791Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/note.ts"
       },
@@ -153,9 +154,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:26:01.950Z",
-          "lastUpdated": "2026-02-28T01:47:06.102Z"
+          "lastUpdated": "2026-02-28T16:41:47.206Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/lib/fs-utils.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/lib/leaf-reindex.ts"
       },
       "preload": {
         "phase": "do",
@@ -192,9 +193,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:07:54.661Z",
-          "lastUpdated": "2026-02-28T01:46:57.527Z"
+          "lastUpdated": "2026-02-28T16:42:36.992Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/note.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/csv-file.ts"
       },
       "model": {
         "phase": "do",
@@ -270,7 +271,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T14:21:19.975Z",
-          "lastUpdated": "2026-02-28T01:47:12.460Z"
+          "lastUpdated": "2026-02-28T14:54:33.652Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/folder.ts"
       },
@@ -325,7 +326,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:39:22.268Z",
-          "lastUpdated": "2026-02-28T01:48:27.925Z"
+          "lastUpdated": "2026-02-28T14:54:20.553Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/note.ts"
       },
@@ -338,7 +339,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:39:57.455Z",
-          "lastUpdated": "2026-02-28T02:16:12.878Z"
+          "lastUpdated": "2026-02-28T14:54:15.458Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/workspace-watcher.ts"
       },
@@ -351,9 +352,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:42:49.354Z",
-          "lastUpdated": "2026-02-26T03:27:54.131Z"
+          "lastUpdated": "2026-02-28T14:54:09.123Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/note/index.ts",
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx",
         "previousPhase": "check",
         "autoAdvanced": true
       },
@@ -450,18 +451,31 @@
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/store/current-workspace.ts"
       },
       "large-workspace-freeze-v2": {
-        "phase": "act",
+        "phase": "check",
         "phaseNumber": 5,
-        "matchRate": null,
+        "matchRate": 100,
         "iterationCount": 0,
         "requirements": [],
         "documents": {},
         "timestamps": {
           "started": "2026-02-28T02:04:20.857Z",
-          "lastUpdated": "2026-02-28T02:04:20.857Z"
+          "lastUpdated": "2026-02-28T14:49:56.753Z"
         },
         "previousPhase": "check",
         "autoAdvanced": true
+      },
+      "csv-file.ts": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-02-28T16:43:32.959Z",
+          "lastUpdated": "2026-02-28T16:43:32.959Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/csv-file.ts"
       }
     },
     "pipeline": {
@@ -472,7 +486,7 @@
     "session": {
       "startedAt": "2026-02-21T22:18:14.791Z",
       "onboardingCompleted": false,
-      "lastActivity": "2026-02-28T02:16:12.878Z"
+      "lastActivity": "2026-02-28T16:43:32.959Z"
     },
     "history": [
       {
@@ -5584,6 +5598,246 @@
       {
         "timestamp": "2026-02-28T02:16:12.878Z",
         "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:23:41.793Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:23:51.800Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:24:00.796Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:24:05.459Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:24:10.559Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:24:20.525Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:24:24.742Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:27:14.091Z",
+        "feature": "folder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:28:21.061Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:28:31.142Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:28:35.219Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:28:39.947Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:28:49.014Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:28:59.279Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:29:08.038Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T02:29:11.791Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:43:59.874Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:44:12.851Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:54:09.123Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:54:15.458Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:54:20.553Z",
+        "feature": "note.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:54:33.652Z",
+        "feature": "folder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:58:50.274Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:59:01.073Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:59:09.429Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:59:13.663Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T14:59:31.611Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:00:13.696Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:20:07.757Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:20:14.522Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:20:22.138Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:20:27.444Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:20:33.793Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T15:20:38.103Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T16:41:21.175Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T16:41:47.206Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T16:41:57.155Z",
+        "feature": "schema",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T16:42:09.029Z",
+        "feature": "schema",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T16:42:36.992Z",
+        "feature": "repositories",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-02-28T16:43:32.959Z",
+        "feature": "csv-file.ts",
         "phase": "do",
         "action": "updated"
       }

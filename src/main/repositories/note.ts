@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, like } from 'drizzle-orm'
 import { db } from '../db'
 import { notes } from '../db/schema'
 
@@ -70,6 +70,15 @@ export const noteRepository = {
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
       db.delete(notes).where(inArray(notes.id, orphanIds.slice(i, i + CHUNK))).run()
     }
+  },
+
+  /**
+   * 폴더 삭제 시 해당 폴더 하위 note들을 일괄 삭제
+   */
+  bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
+    db.delete(notes)
+      .where(and(eq(notes.workspaceId, workspaceId), like(notes.relativePath, `${prefix}/%`)))
+      .run()
   },
 
   /**

@@ -72,6 +72,66 @@ export async function readMdFilesRecursiveAsync(
   return result
 }
 
+// ── CSV ──────────────────────────────────────────
+
+export interface CsvFileEntry {
+  name: string
+  relativePath: string
+}
+
+export function readCsvFilesRecursive(absBase: string, parentRel: string): CsvFileEntry[] {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = fs.readdirSync(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: CsvFileEntry[] = []
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+    if (entry.isDirectory()) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push(...readCsvFilesRecursive(absBase, rel))
+    } else if (entry.isFile() && entry.name.endsWith('.csv')) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+  return result
+}
+
+export async function readCsvFilesRecursiveAsync(
+  absBase: string,
+  parentRel: string
+): Promise<CsvFileEntry[]> {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: CsvFileEntry[] = []
+  const subDirPromises: Promise<CsvFileEntry[]>[] = []
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+    if (entry.isDirectory()) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      subDirPromises.push(readCsvFilesRecursiveAsync(absBase, rel))
+    } else if (entry.isFile() && entry.name.endsWith('.csv')) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+  const subResults = await Promise.all(subDirPromises)
+  return result.concat(...subResults)
+}
+
 /**
  * 이름 충돌 해결: "name (1)", "name (2)", ...
  * 노트의 경우 desiredName에 .md 포함하여 전달:

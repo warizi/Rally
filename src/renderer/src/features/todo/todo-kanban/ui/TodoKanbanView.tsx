@@ -72,7 +72,9 @@ export function TodoKanbanView({
   }, [columnMap, activeId])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: isCarouselMode ? Infinity : 5 }
+    }),
     useSensor(KeyboardSensor)
   )
 
@@ -248,7 +250,7 @@ export function TodoKanbanView({
   return (
     <div ref={containerRef} className="h-full">
       <DndContext
-        sensors={isCarouselMode ? [] : sensors}
+        sensors={sensors}
         collisionDetection={closestCenter}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}

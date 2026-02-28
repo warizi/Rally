@@ -24,6 +24,7 @@ const TodoPage = lazy(() => import('@pages/todo'))
 const TodoDetailPage = lazy(() => import('@pages/todo-detail'))
 const FolderPage = lazy(() => import('@/pages/folder'))
 const NotePage = lazy(() => import('@pages/note'))
+const CsvPage = lazy(() => import('@pages/csv'))
 
 export const PANE_ROUTES: PaneRoute[] = [
   {
@@ -45,5 +46,9 @@ export const PANE_ROUTES: PaneRoute[] = [
   {
     pattern: ROUTES.NOTE_DETAIL,
     component: NotePage
+  },
+  {
+    pattern: ROUTES.CSV_DETAIL,
+    component: CsvPage
   }
 ]

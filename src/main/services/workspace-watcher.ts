@@ -4,8 +4,9 @@ import path from 'path'
 import fs from 'fs'
 import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
+import { csvFileRepository } from '../repositories/csv-file'
 import { readDirRecursiveAsync } from './folder'
-import { readMdFilesRecursiveAsync } from '../lib/fs-utils'
+import { readMdFilesRecursiveAsync, readCsvFilesRecursiveAsync } from '../lib/fs-utils'
 import { nanoid } from 'nanoid'
 
 class WorkspaceWatcherService {
@@ -27,16 +28,22 @@ class WorkspaceWatcherService {
   async start(workspaceId: string, workspacePath: string): Promise<void> {
     await this.syncOfflineChanges(workspaceId, workspacePath)
 
-    // note 초기 동기화 — try/catch: 실패해도 watcher는 정상 시작
+    // note + csv 초기 동기화 — try/catch: 실패해도 watcher는 정상 시작
     try {
       await this.noteReconciliation(workspaceId, workspacePath)
     } catch {
       /* ignore — watcher continues without initial note sync */
     }
+    try {
+      await this.csvReconciliation(workspaceId, workspacePath)
+    } catch {
+      /* ignore — watcher continues without initial csv sync */
+    }
 
     // 초기 동기화 완료 → renderer re-fetch
-    this.pushFolderChanged(workspaceId)
+    this.pushFolderChanged(workspaceId, [])
     this.pushNoteChanged(workspaceId, [])
+    this.pushCsvChanged(workspaceId, [])
 
     try {
       this.subscription = await parcelWatcher.subscribe(workspacePath, (err, events) => {
@@ -117,13 +124,28 @@ class WorkspaceWatcherService {
     this.debounceTimer = setTimeout(async () => {
       try {
         const eventsToProcess = this.pendingEvents.splice(0)
-        await this.applyEvents(workspaceId, workspacePath, eventsToProcess)
-        this.pushFolderChanged(workspaceId)
-        // 변경된 .md 파일 경로 수집 → note:changed push
-        const changedRelPaths = eventsToProcess
-          .filter((e) => e.path.endsWith('.md') && !path.basename(e.path).startsWith('.'))
-          .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/'))
+        const { folderPaths, orphanNotePaths, orphanCsvPaths } = await this.applyEvents(
+          workspaceId,
+          workspacePath,
+          eventsToProcess
+        )
+        this.pushFolderChanged(workspaceId, folderPaths)
+        // 변경된 .md 파일 경로 수집 + 폴더 삭제로 함께 삭제된 노트 경로 병합
+        const changedRelPaths = [
+          ...eventsToProcess
+            .filter((e) => e.path.endsWith('.md') && !path.basename(e.path).startsWith('.'))
+            .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
+          ...orphanNotePaths
+        ]
         this.pushNoteChanged(workspaceId, changedRelPaths)
+        // 변경된 .csv 파일 경로 수집 + 폴더 삭제로 함께 삭제된 CSV 경로 병합
+        const changedCsvRelPaths = [
+          ...eventsToProcess
+            .filter((e) => e.path.endsWith('.csv') && !path.basename(e.path).startsWith('.'))
+            .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
+          ...orphanCsvPaths
+        ]
+        this.pushCsvChanged(workspaceId, changedCsvRelPaths)
       } catch {
         /* applyEvents 실패 시 무시 — watcher 지속 유지 */
       }
@@ -143,7 +165,16 @@ class WorkspaceWatcherService {
     workspaceId: string,
     workspacePath: string,
     events: parcelWatcher.Event[]
-  ): Promise<void> {
+  ): Promise<{
+    folderPaths: string[]
+    orphanNotePaths: string[]
+    orphanCsvPaths: string[]
+  }> {
+    /** 실제 폴더 변경이 발생한 relative path 수집 (toast용) */
+    const changedFolderPaths: string[] = []
+    /** 폴더 삭제로 함께 삭제된 노트/CSV 경로 (watcher 이벤트 보완용) */
+    const orphanNotePaths: string[] = []
+    const orphanCsvPaths: string[] = []
     // ─── Step 1: 폴더 rename/move 감지 ───────────────────────────
     // 같은 부모(이름 변경) 또는 같은 폴더명(위치 이동)의 delete+create 쌍
     const nonMdDeletes = events.filter(
@@ -174,8 +205,10 @@ class WorkspaceWatcherService {
         if (existingFolder) {
           folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+          csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           pairedFolderDeletePaths.add(matchingDelete.path)
           pairedFolderCreatePaths.add(createEvent.path)
+          changedFolderPaths.push(newRel)
         }
       }
     }
@@ -187,6 +220,7 @@ class WorkspaceWatcherService {
       const basename = path.basename(absPath)
 
       if (absPath.endsWith('.md')) continue
+      if (absPath.endsWith('.csv')) continue
       if (pairedFolderDeletePaths.has(absPath) || pairedFolderCreatePaths.has(absPath)) continue
 
       // getEventsSince rename + oldPath (플랫폼 의존적)
@@ -199,6 +233,8 @@ class WorkspaceWatcherService {
           .replace(/\\/g, '/')
         folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
+        csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
+        changedFolderPaths.push(rel)
         continue
       }
 
@@ -222,6 +258,7 @@ class WorkspaceWatcherService {
             createdAt: now,
             updatedAt: now
           })
+          changedFolderPaths.push(rel)
         }
         continue
       }
@@ -229,7 +266,20 @@ class WorkspaceWatcherService {
       if (event.type === 'delete') {
         const existing = folderRepository.findByRelativePath(workspaceId, rel)
         if (existing) {
+          // 삭제 전 하위 노트/CSV 경로 수집 → changed 이벤트에 포함
+          const childNotes = noteRepository
+            .findByWorkspaceId(workspaceId)
+            .filter((n) => n.relativePath.startsWith(rel + '/'))
+          const childCsvs = csvFileRepository
+            .findByWorkspaceId(workspaceId)
+            .filter((c) => c.relativePath.startsWith(rel + '/'))
+          orphanNotePaths.push(...childNotes.map((n) => n.relativePath))
+          orphanCsvPaths.push(...childCsvs.map((c) => c.relativePath))
+
+          noteRepository.bulkDeleteByPrefix(workspaceId, rel)
+          csvFileRepository.bulkDeleteByPrefix(workspaceId, rel)
           folderRepository.bulkDeleteByPrefix(workspaceId, rel)
+          changedFolderPaths.push(rel)
         }
         continue
       }
@@ -323,6 +373,94 @@ class WorkspaceWatcherService {
         noteRepository.delete(existing.id)
       }
     }
+
+    // ─── Step 6: .csv 파일 rename/move 감지 ──────────────────────
+    const csvDeletes = events.filter(
+      (e) =>
+        e.type === 'delete' && e.path.endsWith('.csv') && !path.basename(e.path).startsWith('.')
+    )
+    const csvCreates = events.filter(
+      (e) =>
+        e.type === 'create' && e.path.endsWith('.csv') && !path.basename(e.path).startsWith('.')
+    )
+    const pairedCsvDeletePaths = new Set<string>()
+    const pairedCsvCreatePaths = new Set<string>()
+    for (const createEvent of csvCreates) {
+      const createDir = path.dirname(createEvent.path)
+      const createBasename = path.basename(createEvent.path)
+      const matchingDelete =
+        csvDeletes.find(
+          (d) => !pairedCsvDeletePaths.has(d.path) && path.dirname(d.path) === createDir
+        ) ??
+        csvDeletes.find(
+          (d) => !pairedCsvDeletePaths.has(d.path) && path.basename(d.path) === createBasename
+        )
+      if (matchingDelete) {
+        const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
+        const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+        const existing = csvFileRepository.findByRelativePath(workspaceId, oldRel)
+        if (existing) {
+          const newParentRel = newRel.includes('/')
+            ? newRel.split('/').slice(0, -1).join('/')
+            : null
+          const newFolder = newParentRel
+            ? folderRepository.findByRelativePath(workspaceId, newParentRel)
+            : null
+          csvFileRepository.update(existing.id, {
+            relativePath: newRel,
+            folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
+            title: path.basename(createEvent.path, '.csv'),
+            updatedAt: new Date()
+          })
+          pairedCsvDeletePaths.add(matchingDelete.path)
+          pairedCsvCreatePaths.add(createEvent.path)
+        }
+      }
+    }
+
+    // ─── Step 7: standalone CSV create → DB에 csv 추가 ──────────
+    for (const createEvent of csvCreates) {
+      if (pairedCsvCreatePaths.has(createEvent.path)) continue
+      const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+      const existing = csvFileRepository.findByRelativePath(workspaceId, rel)
+      if (!existing) {
+        try {
+          const stat = await fs.promises.stat(createEvent.path)
+          if (!stat.isFile()) continue
+        } catch {
+          continue
+        }
+        const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        const now = new Date()
+        csvFileRepository.create({
+          id: nanoid(),
+          workspaceId,
+          relativePath: rel,
+          folderId: folder?.id ?? null,
+          title: path.basename(createEvent.path, '.csv'),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+    }
+
+    // ─── Step 8: standalone CSV delete → DB에서 csv 삭제 ────────
+    for (const deleteEvent of csvDeletes) {
+      if (pairedCsvDeletePaths.has(deleteEvent.path)) continue
+      const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
+      const existing = csvFileRepository.findByRelativePath(workspaceId, rel)
+      if (existing) {
+        csvFileRepository.delete(existing.id)
+      }
+    }
+
+    return { folderPaths: changedFolderPaths, orphanNotePaths, orphanCsvPaths }
   }
 
   private async fullReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
@@ -383,21 +521,62 @@ class WorkspaceWatcherService {
     noteRepository.deleteOrphans(workspaceId, fsPaths)
   }
 
+  private async csvReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
+    const fsEntries = await readCsvFilesRecursiveAsync(workspacePath, '')
+    const fsPaths = fsEntries.map((e) => e.relativePath)
+
+    const dbCsvs = csvFileRepository.findByWorkspaceId(workspaceId)
+    const dbPathSet = new Set(dbCsvs.map((c) => c.relativePath))
+
+    const now = new Date()
+    const toInsert = fsEntries
+      .filter((e) => !dbPathSet.has(e.relativePath))
+      .map((e) => {
+        const parentRel = e.relativePath.includes('/')
+          ? e.relativePath.split('/').slice(0, -1).join('/')
+          : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        return {
+          id: nanoid(),
+          workspaceId,
+          relativePath: e.relativePath,
+          folderId: folder?.id ?? null,
+          title: e.name.replace(/\.csv$/, ''),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+
+    csvFileRepository.createMany(toInsert)
+    csvFileRepository.deleteOrphans(workspaceId, fsPaths)
+  }
+
   private getSnapshotPath(workspaceId: string): string {
     const snapshotsDir = path.join(app.getPath('userData'), 'workspace-snapshots')
     fs.mkdirSync(snapshotsDir, { recursive: true })
     return path.join(snapshotsDir, `${workspaceId}.snapshot`)
   }
 
-  private pushFolderChanged(workspaceId: string): void {
+  private pushFolderChanged(workspaceId: string, changedRelPaths: string[]): void {
     BrowserWindow.getAllWindows().forEach((win) => {
-      win.webContents.send('folder:changed', workspaceId)
+      win.webContents.send('folder:changed', workspaceId, changedRelPaths)
     })
   }
 
   private pushNoteChanged(workspaceId: string, changedRelPaths: string[]): void {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('note:changed', workspaceId, changedRelPaths)
+    })
+  }
+
+  private pushCsvChanged(workspaceId: string, changedRelPaths: string[]): void {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('csv:changed', workspaceId, changedRelPaths)
     })
   }
 }

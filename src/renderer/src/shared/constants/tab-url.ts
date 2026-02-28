@@ -1,6 +1,6 @@
-import { Calendar, Check, FileText, FolderOpen, LayoutDashboard } from 'lucide-react'
+import { Calendar, Check, FileText, FolderOpen, LayoutDashboard, Sheet } from 'lucide-react'
 
-export type TabType = 'dashboard' | 'todo' | 'todo-detail' | 'folder' | 'note' | 'calendar'
+export type TabType = 'dashboard' | 'todo' | 'todo-detail' | 'folder' | 'note' | 'csv' | 'calendar'
 
 export type TabIcon = TabType
 
@@ -10,6 +10,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   'todo-detail': Check,
   folder: FolderOpen,
   note: FileText,
+  csv: Sheet,
   calendar: Calendar
 }
 
@@ -22,6 +23,8 @@ export const ROUTES = {
   SETTINGS: '/settings',
   // 노트 상세
   NOTE_DETAIL: '/folder/note/:noteId',
+  // CSV 상세
+  CSV_DETAIL: '/folder/csv/:csvId',
   CALENDAR: '/calendar'
 } as const
 

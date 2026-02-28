@@ -7,6 +7,7 @@ import {
 } from '@/features/tap-system/manage-tab-system'
 import { useFolderWatcher } from '@entities/folder'
 import { useNoteWatcher } from '@entities/note'
+import { useCsvWatcher } from '@entities/csv-file'
 import { useState } from 'react'
 import {
   DndContext,
@@ -41,6 +42,7 @@ function MainLayout(): React.JSX.Element {
   // 폴더/노트 변경 push 이벤트 구독
   useFolderWatcher()
   useNoteWatcher()
+  useCsvWatcher()
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   // 드래그 활성화 조건: 8px 이상 이동해야 드래그 시작

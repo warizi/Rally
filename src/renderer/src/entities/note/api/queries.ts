@@ -8,6 +8,7 @@ import {
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
 import type { NoteNode } from '../model/types'
+import { markWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { markAsOwnWrite } from '../model/own-write-tracker'
 
 const NOTE_KEY = 'note'
@@ -31,6 +32,9 @@ export function useCreateNote(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, folderId, name }) => {
       const res: IpcResponse<NoteNode> = await window.api.note.create(workspaceId, folderId, name)
       if (!res.success) throwIpcError(res)
@@ -49,6 +53,9 @@ export function useRenameNote(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, noteId, newName }) => {
       const res: IpcResponse<NoteNode> = await window.api.note.rename(workspaceId, noteId, newName)
       if (!res.success) throwIpcError(res)
@@ -67,6 +74,9 @@ export function useRemoveNote(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, noteId }) => {
       const res: IpcResponse<void> = await window.api.note.remove(workspaceId, noteId)
       if (!res.success) throwIpcError(res)
@@ -97,7 +107,8 @@ export function useWriteNoteContent(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
-    onMutate: ({ noteId }) => {
+    onMutate: ({ workspaceId, noteId }) => {
+      markWorkspaceOwnWrite(workspaceId)
       // 파일 쓰기 전에 미리 표시 → watcher 이벤트 수신 시 자체 저장으로 식별
       markAsOwnWrite(noteId)
     },
@@ -123,6 +134,9 @@ export function useMoveNote(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
     mutationFn: async ({ workspaceId, noteId, folderId, index }) => {
       const res: IpcResponse<NoteNode> = await window.api.note.move(
         workspaceId,

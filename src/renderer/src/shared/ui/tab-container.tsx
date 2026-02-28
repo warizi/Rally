@@ -4,15 +4,20 @@ interface TabContainerProps {
   header: React.ReactNode
   children: React.ReactNode
   scrollable?: boolean
+  maxWidth?: number | 'full'
 }
 
 export function TabContainer({
   header,
   children,
-  scrollable = true
+  scrollable = true,
+  maxWidth = 1200
 }: TabContainerProps): React.ReactElement {
   return (
-    <div className="flex-1 h-full @container flex flex-col max-w-300 mx-auto">
+    <div
+      className="flex-1 h-full @container flex flex-col mx-auto"
+      style={{ maxWidth: maxWidth === 'full' ? undefined : maxWidth }}
+    >
       <div className="w-full shrink-0 pt-6 px-6">{header}</div>
       {scrollable ? (
         <ScrollArea className="flex-1 min-h-0 px-6 pb-2">

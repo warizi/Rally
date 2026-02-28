@@ -10,18 +10,21 @@ import {
   useUpdateFolderMeta
 } from '@entities/folder'
 import { useCreateNote, useMoveNote, useRemoveNote } from '@entities/note'
+import { useCreateCsvFile, useMoveCsvFile, useRemoveCsvFile } from '@entities/csv-file'
 import { Button } from '@shared/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
-import type { WorkspaceTreeNode, FolderTreeNode, NoteTreeNode } from '../model/types'
+import type { WorkspaceTreeNode, FolderTreeNode, NoteTreeNode, CsvTreeNode } from '../model/types'
 import { FolderColorDialog } from './FolderColorDialog'
 import { FolderContextMenu } from './FolderContextMenu'
 import { FolderNameDialog } from './FolderNameDialog'
 import { FolderNodeRenderer } from './FolderNodeRenderer'
 import { NoteContextMenu } from './NoteContextMenu'
 import { NoteNodeRenderer } from './NoteNodeRenderer'
+import { CsvContextMenu } from './CsvContextMenu'
+import { CsvNodeRenderer } from './CsvNodeRenderer'
 import { DeleteFolderDialog } from './DeleteFolderDialog'
 
 interface Props {
@@ -42,10 +45,14 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { mutate: updateMeta, isPending: isUpdatingMeta } = useUpdateFolderMeta()
 
   // Note mutations
-  // isCreatingNote: 노트 생성은 dialog 없이 즉시 실행이므로 isPending UI 불필요
   const { mutate: createNote } = useCreateNote()
   const { mutate: moveNote } = useMoveNote()
   const { mutate: removeNote, isPending: isRemovingNote } = useRemoveNote()
+
+  // CSV mutations
+  const { mutate: createCsvFile } = useCreateCsvFile()
+  const { mutate: moveCsvFile } = useMoveCsvFile()
+  const { mutate: removeCsvFile, isPending: isRemovingCsv } = useRemoveCsvFile()
 
   // Tab store
   const openRightTab = useTabStore((s) => s.openRightTab)
@@ -62,6 +69,9 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const [noteDeleteTarget, setNoteDeleteTarget] = useState<{ id: string; name: string } | null>(
     null
   )
+
+  // CSV dialog states
+  const [csvDeleteTarget, setCsvDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   /** 노트 생성 → 성공 시 오른쪽 탭에 자동 오픈 */
   const handleCreateNote = useCallback(
@@ -84,6 +94,29 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       )
     },
     [workspaceId, sourcePaneId, createNote, openRightTab]
+  )
+
+  /** CSV 생성 → 성공 시 오른쪽 탭에 자동 오픈 */
+  const handleCreateCsv = useCallback(
+    (folderId: string | null) => {
+      createCsvFile(
+        { workspaceId, folderId, name: '새로운 테이블' },
+        {
+          onSuccess: (csv) => {
+            if (!csv) return
+            openRightTab(
+              {
+                type: 'csv',
+                title: csv.title,
+                pathname: `/folder/csv/${csv.id}`
+              },
+              sourcePaneId
+            )
+          }
+        }
+      )
+    },
+    [workspaceId, sourcePaneId, createCsvFile, openRightTab]
   )
 
   const NodeRenderer = useCallback(
@@ -114,11 +147,38 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
         )
       }
 
+      if (props.node.data.kind === 'csv') {
+        return (
+          <CsvContextMenu
+            onDelete={() =>
+              setCsvDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
+            }
+          >
+            <div>
+              <CsvNodeRenderer
+                {...(props as unknown as NodeRendererProps<CsvTreeNode>)}
+                onOpen={() =>
+                  openRightTab(
+                    {
+                      type: 'csv',
+                      title: props.node.data.name,
+                      pathname: `/folder/csv/${props.node.data.id}`
+                    },
+                    sourcePaneId
+                  )
+                }
+              />
+            </div>
+          </CsvContextMenu>
+        )
+      }
+
       // kind === 'folder'
       return (
         <FolderContextMenu
           onCreateChild={() => setCreateTarget({ parentFolderId: props.node.id })}
           onCreateNote={() => handleCreateNote(props.node.id)}
+          onCreateCsv={() => handleCreateCsv(props.node.id)}
           onRename={() => setRenameTarget({ id: props.node.id, name: props.node.data.name })}
           onEditColor={() =>
             setColorTarget({
@@ -136,7 +196,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     },
     // workspaceId는 NodeRenderer 내부에서 직접 참조하지 않음
     // (handleCreateNote가 이미 workspaceId를 capture하고 있어 deps에서 제외)
-    [sourcePaneId, handleCreateNote, openRightTab]
+    [sourcePaneId, handleCreateNote, handleCreateCsv, openRightTab]
   )
 
   return (
@@ -208,8 +268,10 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           initialOpenState={openState}
           openByDefault={false}
           childrenAccessor={(n) => (n.kind === 'folder' ? n.children : null)}
-          disableDrop={({ parentNode }) => parentNode?.data.kind === 'note'}
-          disableEdit={(n) => n.kind === 'note'}
+          disableDrop={({ parentNode }) =>
+            parentNode?.data.kind === 'note' || parentNode?.data.kind === 'csv'
+          }
+          disableEdit={(n) => n.kind === 'note' || n.kind === 'csv'}
           onToggle={(id) => toggle(id, treeRef.current?.isOpen(id) ?? false)}
           onCreate={({ parentId }) => {
             setCreateTarget({ parentFolderId: parentId ?? null })
@@ -220,8 +282,11 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             rename({ workspaceId, folderId: id, newName: name })
           }}
           onMove={({ dragIds, dragNodes, parentId, index }) => {
-            if (dragNodes[0]?.data.kind === 'note') {
+            const kind = dragNodes[0]?.data.kind
+            if (kind === 'note') {
               moveNote({ workspaceId, noteId: dragIds[0], folderId: parentId ?? null, index })
+            } else if (kind === 'csv') {
+              moveCsvFile({ workspaceId, csvId: dragIds[0], folderId: parentId ?? null, index })
             } else {
               move({ workspaceId, folderId: dragIds[0], parentFolderId: parentId ?? null, index })
             }
@@ -231,6 +296,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             const firstNode = nodes[0]
             if (firstNode.data.kind === 'note') {
               setNoteDeleteTarget({ id: ids[0], name: firstNode.data.name })
+            } else if (firstNode.data.kind === 'csv') {
+              setCsvDeleteTarget({ id: ids[0], name: firstNode.data.name })
             } else {
               setDeleteTarget({ id: ids[0], name: firstNode.data.name })
             }
@@ -331,6 +398,24 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             removeNote(
               { workspaceId, noteId: noteDeleteTarget.id },
               { onSuccess: () => setNoteDeleteTarget(null) }
+            )
+          }
+        }}
+      />
+
+      {/* CSV 삭제 다이얼로그 */}
+      <DeleteFolderDialog
+        open={csvDeleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setCsvDeleteTarget(null)
+        }}
+        folderName={csvDeleteTarget?.name ?? ''}
+        isPending={isRemovingCsv}
+        onConfirm={() => {
+          if (csvDeleteTarget) {
+            removeCsvFile(
+              { workspaceId, csvId: csvDeleteTarget.id },
+              { onSuccess: () => setCsvDeleteTarget(null) }
             )
           }
         }}

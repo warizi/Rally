@@ -10,6 +10,7 @@ import { registerTabSnapshotHandlers } from './ipc/tab-snapshot'
 import { registerFolderHandlers } from './ipc/folder'
 import { registerNoteHandlers } from './ipc/note'
 import { registerTodoHandlers } from './ipc/todo'
+import { registerCsvFileHandlers } from './ipc/csv-file'
 import { registerAppSettingsHandlers } from './ipc/app-settings'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
@@ -83,6 +84,7 @@ app.whenReady().then(() => {
   registerFolderHandlers()
   registerNoteHandlers()
   registerTodoHandlers()
+  registerCsvFileHandlers()
   registerAppSettingsHandlers()
 
   createWindow()

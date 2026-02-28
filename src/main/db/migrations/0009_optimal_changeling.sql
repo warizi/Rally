@@ -1,0 +1,1 @@
+ALTER TABLE `csv_files` ADD `column_widths` text;
