@@ -53,7 +53,13 @@ export function useCreateWorkspace(): UseMutationResult<
       if (!res.success) throwIpcError(res)
       return res.data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      // Append to cache immediately so WorkspaceInitializer sees the new workspace
+      // before the async invalidation refetch completes — prevents race condition
+      // where it would override setCurrentWorkspaceId with the old workspace.
+      if (data) {
+        queryClient.setQueryData<Workspace[]>([QUERY_KEY], (old) => [...(old ?? []), data])
+      }
       queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
     }
   })

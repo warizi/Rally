@@ -116,6 +116,26 @@ function insertTestNote(
     .run()
 }
 
+// ─── readByWorkspaceFromDb ────────────────────────────────────
+describe('readByWorkspaceFromDb', () => {
+  it('workspace not found → NotFoundError (fs 스캔 없음)', () => {
+    vi.mocked(workspaceRepository.findById).mockReturnValue(undefined)
+    expect(() => noteService.readByWorkspaceFromDb('ws-missing')).toThrow(NotFoundError)
+    // readdirSync는 한 번도 호출되지 않아야 함
+    expect(vi.mocked(fs.readdirSync)).not.toHaveBeenCalled()
+  })
+
+  it('DB rows만 반환 — fs.readdirSync 미호출', () => {
+    insertTestWorkspace()
+    insertTestNote('n1', 'a.md')
+    insertTestNote('n2', 'b.md')
+    const result = noteService.readByWorkspaceFromDb('ws-1')
+    expect(result).toHaveLength(2)
+    expect(result.map((n) => n.relativePath).sort()).toEqual(['a.md', 'b.md'])
+    expect(vi.mocked(fs.readdirSync)).not.toHaveBeenCalled()
+  })
+})
+
 // ─── readByWorkspace ─────────────────────────────────────────
 describe('readByWorkspace', () => {
   it('workspace not found → NotFoundError', () => {

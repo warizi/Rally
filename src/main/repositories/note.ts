@@ -1,4 +1,4 @@
-import { and, eq, inArray, not } from 'drizzle-orm'
+import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '../db'
 import { notes } from '../db/schema'
 
@@ -28,7 +28,10 @@ export const noteRepository = {
 
   createMany(items: NoteInsert[]): void {
     if (items.length === 0) return
-    db.insert(notes).values(items).onConflictDoNothing().run()
+    const CHUNK = 99 // 10 columns × 99 = 990 variables < SQLite 999 limit
+    for (let i = 0; i < items.length; i += CHUNK) {
+      db.insert(notes).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+    }
   },
 
   update(
@@ -52,11 +55,21 @@ export const noteRepository = {
       db.delete(notes).where(eq(notes.workspaceId, workspaceId)).run()
       return
     }
-    db.delete(notes)
-      .where(
-        and(eq(notes.workspaceId, workspaceId), not(inArray(notes.relativePath, existingPaths)))
-      )
-      .run()
+    const existingSet = new Set(existingPaths)
+    const dbRows = db
+      .select({ id: notes.id, relativePath: notes.relativePath })
+      .from(notes)
+      .where(eq(notes.workspaceId, workspaceId))
+      .all()
+    const orphanIds = dbRows
+      .filter((r) => !existingSet.has(r.relativePath))
+      .map((r) => r.id)
+    if (orphanIds.length === 0) return
+    // inArray also has the 999-variable limit; chunk at 900 to stay safe
+    const CHUNK = 900
+    for (let i = 0; i < orphanIds.length; i += CHUNK) {
+      db.delete(notes).where(inArray(notes.id, orphanIds.slice(i, i + CHUNK))).run()
+    }
   },
 
   /**

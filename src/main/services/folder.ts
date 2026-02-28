@@ -2,6 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
+import { resolveNameConflict } from '../lib/fs-utils'
 import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
 import { workspaceRepository } from '../repositories/workspace'
@@ -39,7 +40,39 @@ export function readDirRecursive(absBase: string, parentRel: string): FsEntry[] 
   return result
 }
 
-import { resolveNameConflict } from '../lib/fs-utils'
+/**
+ * fs 비동기 재귀 탐색 — 심볼릭 링크·숨김 폴더 제외
+ * fs.promises.readdir 사용 → 이벤트 루프를 블로킹하지 않음
+ * workspace-watcher의 fullReconciliation에서 사용
+ */
+export async function readDirRecursiveAsync(
+  absBase: string,
+  parentRel: string
+): Promise<FsEntry[]> {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: FsEntry[] = []
+  const subdirPromises: Promise<FsEntry[]>[] = []
+
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (!entry.isDirectory()) continue
+    if (entry.name.startsWith('.')) continue
+    const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+    result.push({ name: entry.name, relativePath: rel })
+    subdirPromises.push(readDirRecursiveAsync(absBase, rel))
+  }
+
+  const subResults = await Promise.all(subdirPromises)
+  for (const sub of subResults) result.push(...sub)
+  return result
+}
 
 // ─── 파일 내 private 헬퍼 ────────────────────────────────────
 
@@ -70,16 +103,22 @@ function buildTree(
   dbFoldersByPath: Map<string, { id: string; color: string | null; order: number }>,
   fsEntries: FsEntry[]
 ): FolderNode[] {
+  // 부모 경로별로 자식 목록을 미리 그룹핑 → O(n) 전처리로 재귀 시 O(1) 조회
+  const childrenByParent = new Map<string, FsEntry[]>()
+  for (const entry of fsEntries) {
+    const lastSlash = entry.relativePath.lastIndexOf('/')
+    const parentRel = lastSlash === -1 ? '' : entry.relativePath.slice(0, lastSlash)
+    let bucket = childrenByParent.get(parentRel)
+    if (!bucket) {
+      bucket = []
+      childrenByParent.set(parentRel, bucket)
+    }
+    bucket.push(entry)
+  }
+
   function buildChildren(parentRel: string): FolderNode[] {
-    return fsEntries
-      .filter((e) => {
-        const parts = e.relativePath.split('/')
-        const parentParts = parentRel ? parentRel.split('/') : []
-        return (
-          parts.length === parentParts.length + 1 &&
-          (parentRel === '' || e.relativePath.startsWith(`${parentRel}/`))
-        )
-      })
+    const children = childrenByParent.get(parentRel) ?? []
+    return children
       .map((e) => {
         const meta = dbFoldersByPath.get(e.relativePath)!
         return {
@@ -101,7 +140,28 @@ function buildTree(
 
 export const folderService = {
   /**
+   * DB만 읽어 즉시 트리 반환 — fs 스캔 없음, IPC 핸들러용 (non-blocking)
+   * reconciliation은 workspaceWatcher가 백그라운드에서 수행하고
+   * 완료 후 'folder:changed' push → renderer re-fetch
+   */
+  readTreeFromDb(workspaceId: string): FolderNode[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const dbFolders = folderRepository.findByWorkspaceId(workspaceId)
+    const metaByPath = new Map(
+      dbFolders.map((r) => [r.relativePath, { id: r.id, color: r.color, order: r.order }])
+    )
+    const fsEntries = dbFolders.map((f) => ({
+      name: f.relativePath.split('/').at(-1)!,
+      relativePath: f.relativePath
+    }))
+    return buildTree(metaByPath, fsEntries)
+  },
+
+  /**
    * fs 트리 읽기 + lazy upsert + DB 동기화 → FolderNode 트리 반환
+   * (테스트 및 직접 동기화 용도)
    */
   readTree(workspaceId: string): FolderNode[] {
     const workspace = workspaceRepository.findById(workspaceId)

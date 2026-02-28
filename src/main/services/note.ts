@@ -79,8 +79,9 @@ export const noteService = {
     const dbPathSet = new Set(dbNotes.map((n) => n.relativePath))
 
     // 3. 새 경로(fs에만 있음) vs orphan(DB에만 있음) 분류
+    const fsPathSet = new Set(fsPaths)
     const newFsEntries = fsEntries.filter((e) => !dbPathSet.has(e.relativePath))
-    const orphanedNotes = dbNotes.filter((n) => !fsPaths.includes(n.relativePath))
+    const orphanedNotes = dbNotes.filter((n) => !fsPathSet.has(n.relativePath))
 
     // 4. 이동 감지: 새 경로와 orphan의 파일명이 같으면 이동으로 간주 → ID 보존
     // orphan은 basename 기준으로 첫 번째만 매칭 (동명 파일 중복 시 첫 번째 우선)
@@ -127,6 +128,17 @@ export const noteService = {
     noteRepository.deleteOrphans(workspaceId, fsPaths)
 
     // 6. 최신 DB rows 반환
+    return noteRepository.findByWorkspaceId(workspaceId).map(toNoteNode)
+  },
+
+  /**
+   * DB만 읽어 즉시 반환 — fs 스캔 없음, IPC 핸들러용 (non-blocking)
+   * reconciliation은 workspaceWatcher가 백그라운드에서 수행하고
+   * 완료 후 'note:changed' push([], empty) → renderer re-fetch
+   */
+  readByWorkspaceFromDb(workspaceId: string): NoteNode[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
     return noteRepository.findByWorkspaceId(workspaceId).map(toNoteNode)
   },
 

@@ -7,10 +7,11 @@ import { workspaceRepository } from '../repositories/workspace'
 
 export function registerFolderHandlers(): void {
   ipcMain.handle('folder:readTree', (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse => {
-    // watcher 활성화 (순환 의존성 방지를 위해 IPC 핸들러에서 담당)
+    // watcher 활성화 — 백그라운드에서 fs 스캔 + DB 동기화 후 'folder:changed' push
     const workspace = workspaceRepository.findById(workspaceId)
     if (workspace) void workspaceWatcher.ensureWatching(workspaceId, workspace.path)
-    return handle(() => folderService.readTree(workspaceId))
+    // DB만 읽어 즉시 반환 — 메인 스레드 블로킹 없음
+    return handle(() => folderService.readTreeFromDb(workspaceId))
   })
 
   ipcMain.handle(

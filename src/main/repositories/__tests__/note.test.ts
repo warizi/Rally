@@ -112,6 +112,14 @@ describe('createMany', () => {
     ])
     expect(noteRepository.findByWorkspaceId(WS_ID)).toHaveLength(3)
   })
+
+  it('100개 초과 items — SQLite 999 변수 한도 내 청킹으로 crash 없이 전체 insert', () => {
+    const items = Array.from({ length: 150 }, (_, i) =>
+      makeNote({ id: `n${i}`, relativePath: `note-${i}.md` })
+    )
+    expect(() => noteRepository.createMany(items)).not.toThrow()
+    expect(noteRepository.findByWorkspaceId(WS_ID)).toHaveLength(150)
+  })
 })
 
 // ─── update ──────────────────────────────────────────────────
@@ -156,6 +164,18 @@ describe('deleteOrphans', () => {
     ])
     noteRepository.deleteOrphans(WS_ID, [])
     expect(noteRepository.findByWorkspaceId(WS_ID)).toHaveLength(0)
+  })
+
+  it('1000개 초과 paths — SQLite 999 변수 한도 내 청킹으로 crash 없이 orphan 삭제', () => {
+    // DB에 1100개 insert (청킹 필요)
+    const items = Array.from({ length: 1100 }, (_, i) =>
+      makeNote({ id: `n${i}`, relativePath: `note-${i}.md` })
+    )
+    noteRepository.createMany(items)
+    // 짝수 인덱스만 fs에 남아있음 → 홀수는 orphan
+    const existingPaths = Array.from({ length: 550 }, (_, i) => `note-${i * 2}.md`)
+    expect(() => noteRepository.deleteOrphans(WS_ID, existingPaths)).not.toThrow()
+    expect(noteRepository.findByWorkspaceId(WS_ID)).toHaveLength(550)
   })
 })
 

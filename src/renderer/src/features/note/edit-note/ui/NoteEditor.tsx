@@ -35,7 +35,7 @@ interface NoteEditorProps {
 
 export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorProps): JSX.Element {
   const { mutate: writeContent } = useWriteNoteContent()
-  const { editorKey } = useNoteExternalSync(noteId)
+  const { editorKey, latestContent } = useNoteExternalSync(noteId)
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const handleSave = useCallback(
@@ -54,12 +54,15 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
     }
   }, [])
 
+  // 외부 변경 시: 캐시에서 직접 읽은 latestContent 사용 (race condition 방지)
+  // 초기 마운트 시: NotePage에서 전달된 initialContent 사용
+  const contentToMount = latestContent ?? initialContent
+
   return (
     <div className="h-full">
       <MilkdownProvider key={editorKey}>
-        <MilkdownEditor initialContent={initialContent} onSave={handleSave} />
+        <MilkdownEditor initialContent={contentToMount} onSave={handleSave} />
       </MilkdownProvider>
-      <div className="h-full bg-red-500" />
     </div>
   )
 }

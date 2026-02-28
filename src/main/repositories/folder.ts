@@ -1,4 +1,4 @@
-import { and, eq, inArray, like, not, or } from 'drizzle-orm'
+import { and, eq, inArray, like, or } from 'drizzle-orm'
 import { db } from '../db'
 import { folders } from '../db/schema'
 
@@ -28,7 +28,12 @@ export const folderRepository = {
 
   createMany(items: FolderInsert[]): void {
     if (items.length === 0) return
-    db.insert(folders).values(items).onConflictDoNothing().run()
+    // SQLite bind parameter limit: 999. folders has 7 columns → max 142 rows per statement.
+    // Chunk at 100 rows to stay well under the limit.
+    const CHUNK = 100
+    for (let i = 0; i < items.length; i += CHUNK) {
+      db.insert(folders).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+    }
   },
 
   update(
@@ -76,17 +81,27 @@ export const folderRepository = {
    * existingPaths 가 빈 배열인 경우 = 워크스페이스에 폴더가 전혀 없음
    *   → 해당 워크스페이스의 모든 folder row 삭제 (의도적 all-delete)
    *   → 서비스 레이어에서 미리 accessSync 체크 후 ValidationError를 던지므로 안전
+   *
+   * NOT IN (huge list) 대신 JS-side diff → id 배치 DELETE 로 SQLite 변수 한도 우회
    */
   deleteOrphans(workspaceId: string, existingPaths: string[]): void {
     if (existingPaths.length === 0) {
       db.delete(folders).where(eq(folders.workspaceId, workspaceId)).run()
       return
     }
-    db.delete(folders)
-      .where(
-        and(eq(folders.workspaceId, workspaceId), not(inArray(folders.relativePath, existingPaths)))
-      )
-      .run()
+    const existingSet = new Set(existingPaths)
+    const dbRows = db
+      .select({ id: folders.id, relativePath: folders.relativePath })
+      .from(folders)
+      .where(eq(folders.workspaceId, workspaceId))
+      .all()
+    const orphanIds = dbRows.filter((r) => !existingSet.has(r.relativePath)).map((r) => r.id)
+    if (orphanIds.length === 0) return
+    // inArray also has the 999-variable limit; chunk at 900 to stay safe
+    const CHUNK = 900
+    for (let i = 0; i < orphanIds.length; i += CHUNK) {
+      db.delete(folders).where(inArray(folders.id, orphanIds.slice(i, i + CHUNK))).run()
+    }
   },
 
   /**

@@ -4,7 +4,8 @@ import path from 'path'
 import fs from 'fs'
 import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
-import { readDirRecursive } from './folder'
+import { readDirRecursiveAsync } from './folder'
+import { readMdFilesRecursiveAsync } from '../lib/fs-utils'
 import { nanoid } from 'nanoid'
 
 class WorkspaceWatcherService {
@@ -12,6 +13,7 @@ class WorkspaceWatcherService {
   private activeWorkspaceId: string | null = null
   private activeWorkspacePath: string | null = null
   private debounceTimer: NodeJS.Timeout | null = null
+  private pendingEvents: parcelWatcher.Event[] = []
 
   /**
    * watcher 없거나 다른 workspace → 전환
@@ -24,6 +26,17 @@ class WorkspaceWatcherService {
 
   async start(workspaceId: string, workspacePath: string): Promise<void> {
     await this.syncOfflineChanges(workspaceId, workspacePath)
+
+    // note 초기 동기화 — try/catch: 실패해도 watcher는 정상 시작
+    try {
+      await this.noteReconciliation(workspaceId, workspacePath)
+    } catch {
+      /* ignore — watcher continues without initial note sync */
+    }
+
+    // 초기 동기화 완료 → renderer re-fetch
+    this.pushFolderChanged(workspaceId)
+    this.pushNoteChanged(workspaceId, [])
 
     try {
       this.subscription = await parcelWatcher.subscribe(workspacePath, (err, events) => {
@@ -38,6 +51,7 @@ class WorkspaceWatcherService {
   }
 
   async stop(): Promise<void> {
+    this.pendingEvents = []
     if (this.debounceTimer) {
       clearTimeout(this.debounceTimer)
       this.debounceTimer = null
@@ -68,11 +82,19 @@ class WorkspaceWatcherService {
       try {
         events = await parcelWatcher.getEventsSince(workspacePath, snapshotPath)
       } catch {
-        await this.fullReconciliation(workspaceId, workspacePath)
+        try {
+          await this.fullReconciliation(workspaceId, workspacePath)
+        } catch {
+          /* ignore — watcher continues without initial sync */
+        }
         return
       }
     } else {
-      await this.fullReconciliation(workspaceId, workspacePath)
+      try {
+        await this.fullReconciliation(workspaceId, workspacePath)
+      } catch {
+        /* ignore — watcher continues without initial sync */
+      }
       return
     }
 
@@ -90,15 +112,21 @@ class WorkspaceWatcherService {
     workspacePath: string,
     events: parcelWatcher.Event[]
   ): void {
+    this.pendingEvents.push(...events)
     if (this.debounceTimer) clearTimeout(this.debounceTimer)
     this.debounceTimer = setTimeout(async () => {
-      await this.applyEvents(workspaceId, workspacePath, events)
-      this.pushFolderChanged(workspaceId)
-      // 변경된 .md 파일 경로 수집 → note:changed push
-      const changedRelPaths = events
-        .filter((e) => e.path.endsWith('.md') && !path.basename(e.path).startsWith('.'))
-        .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/'))
-      this.pushNoteChanged(workspaceId, changedRelPaths)
+      try {
+        const eventsToProcess = this.pendingEvents.splice(0)
+        await this.applyEvents(workspaceId, workspacePath, eventsToProcess)
+        this.pushFolderChanged(workspaceId)
+        // 변경된 .md 파일 경로 수집 → note:changed push
+        const changedRelPaths = eventsToProcess
+          .filter((e) => e.path.endsWith('.md') && !path.basename(e.path).startsWith('.'))
+          .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/'))
+        this.pushNoteChanged(workspaceId, changedRelPaths)
+      } catch {
+        /* applyEvents 실패 시 무시 — watcher 지속 유지 */
+      }
     }, 50)
   }
 
@@ -217,6 +245,7 @@ class WorkspaceWatcherService {
       (e) => e.type === 'create' && e.path.endsWith('.md') && !path.basename(e.path).startsWith('.')
     )
     const pairedMdDeletePaths = new Set<string>()
+    const pairedMdCreatePaths = new Set<string>()
     for (const createEvent of mdCreates) {
       const createDir = path.dirname(createEvent.path)
       const createBasename = path.basename(createEvent.path)
@@ -247,13 +276,57 @@ class WorkspaceWatcherService {
             updatedAt: new Date()
           })
           pairedMdDeletePaths.add(matchingDelete.path)
+          pairedMdCreatePaths.add(createEvent.path)
         }
+      }
+    }
+
+    // ─── Step 4: standalone MD create → DB에 note 추가 ──────────
+    for (const createEvent of mdCreates) {
+      if (pairedMdCreatePaths.has(createEvent.path)) continue
+      const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+      const existing = noteRepository.findByRelativePath(workspaceId, rel)
+      if (!existing) {
+        // 50ms 디바운스 윈도우 내에 create → delete/rename이 발생하면 파일이 사라질 수 있음
+        try {
+          const stat = await fs.promises.stat(createEvent.path)
+          if (!stat.isFile()) continue
+        } catch {
+          continue // 파일이 이미 없음 (디바운스 윈도우 내 삭제/이름 변경)
+        }
+        const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        const now = new Date()
+        noteRepository.create({
+          id: nanoid(),
+          workspaceId,
+          relativePath: rel,
+          folderId: folder?.id ?? null,
+          title: path.basename(createEvent.path, '.md'),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+    }
+
+    // ─── Step 5: standalone MD delete → DB에서 note 삭제 ────────
+    for (const deleteEvent of mdDeletes) {
+      if (pairedMdDeletePaths.has(deleteEvent.path)) continue
+      const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
+      const existing = noteRepository.findByRelativePath(workspaceId, rel)
+      if (existing) {
+        noteRepository.delete(existing.id)
       }
     }
   }
 
   private async fullReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
-    const fsEntries = readDirRecursive(workspacePath, '')
+    const fsEntries = await readDirRecursiveAsync(workspacePath, '')
     const fsPaths = fsEntries.map((e) => e.relativePath)
 
     const dbFolders = folderRepository.findByWorkspaceId(workspaceId)
@@ -273,6 +346,41 @@ class WorkspaceWatcherService {
       }))
     folderRepository.createMany(toInsert)
     folderRepository.deleteOrphans(workspaceId, fsPaths)
+  }
+
+  private async noteReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
+    const fsEntries = await readMdFilesRecursiveAsync(workspacePath, '')
+    const fsPaths = fsEntries.map((e) => e.relativePath)
+
+    const dbNotes = noteRepository.findByWorkspaceId(workspaceId)
+    const dbPathSet = new Set(dbNotes.map((n) => n.relativePath))
+
+    const now = new Date()
+    const toInsert = fsEntries
+      .filter((e) => !dbPathSet.has(e.relativePath))
+      .map((e) => {
+        const parentRel = e.relativePath.includes('/')
+          ? e.relativePath.split('/').slice(0, -1).join('/')
+          : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        return {
+          id: nanoid(),
+          workspaceId,
+          relativePath: e.relativePath,
+          folderId: folder?.id ?? null,
+          title: e.name.replace(/\.md$/, ''),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+
+    noteRepository.createMany(toInsert)
+    noteRepository.deleteOrphans(workspaceId, fsPaths)
   }
 
   private getSnapshotPath(workspaceId: string): string {

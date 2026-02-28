@@ -11,6 +11,7 @@
 
 - **note** (2026-02-26): 93% match rate. Key gaps: NoteContextMenu missing onRename (tree-level rename). Key improvements: FSD extraction of features/note/edit-note, granular changedRelPaths in watcher, useNoteExternalSync for editor remount.
 - **note-test** (2026-02-26): 100% match rate (88/88 cases). All 6 test files perfectly match plan. No gaps, no additions, no changes.
+- **large-workspace-freeze-v2** (2026-02-28): 100% match rate (120/120 design items). 7 Fixes across 6 files match exactly. 2 Added fixes not in design: Fix 8 (buildTree O(n) optimization in folder.ts), Fix 9 (useNoteExternalSync race condition fix in renderer).
 
 ## Analysis Patterns
 

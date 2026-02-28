@@ -7,7 +7,7 @@ export function registerNoteHandlers(): void {
   ipcMain.handle(
     'note:readByWorkspace',
     (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => noteService.readByWorkspace(workspaceId))
+      handle(() => noteService.readByWorkspaceFromDb(workspaceId))
   )
 
   ipcMain.handle(

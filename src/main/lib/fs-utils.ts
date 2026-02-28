@@ -36,6 +36,43 @@ export function readMdFilesRecursive(absBase: string, parentRel: string): MdFile
 }
 
 /**
+ * .md 파일 비동기 재귀 탐색
+ * fs.promises.readdir 사용 → 이벤트 루프를 블로킹하지 않음
+ * workspace-watcher의 reconciliation에서 사용
+ */
+export async function readMdFilesRecursiveAsync(
+  absBase: string,
+  parentRel: string
+): Promise<MdFileEntry[]> {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: MdFileEntry[] = []
+  const subdirPromises: Promise<MdFileEntry[]>[] = []
+
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+
+    const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+    if (entry.isDirectory()) {
+      subdirPromises.push(readMdFilesRecursiveAsync(absBase, rel))
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+
+  const subResults = await Promise.all(subdirPromises)
+  for (const sub of subResults) result.push(...sub)
+  return result
+}
+
+/**
  * 이름 충돌 해결: "name (1)", "name (2)", ...
  * 노트의 경우 desiredName에 .md 포함하여 전달:
  *   resolveNameConflict(parentAbs, '새로운 노트.md') → '새로운 노트 (1).md'
