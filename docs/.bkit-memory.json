@@ -1,11 +1,25 @@
 {
-  "sessionCount": 104,
+  "sessionCount": 114,
   "lastSession": {
-    "startedAt": "2026-03-01T07:45:49.483Z",
+    "startedAt": "2026-03-01T20:22:26.733Z",
     "platform": "claude",
     "level": "Dynamic"
   },
-  "currentFeature": "calendar-dayview-todo-dnd",
-  "phase": "do",
-  "matchRate": null
+  "currentFeature": null,
+  "phase": "archived",
+  "matchRate": 100,
+  "archivedFeatures": {
+    "calendar-refactor": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-02T04:30:00Z",
+      "archivedTo": "docs/archive/2026-03/calendar-refactor/"
+    },
+    "schedule-test": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-02T05:10:00Z",
+      "archivedTo": "docs/archive/2026-03/schedule-test/"
+    }
+  }
 }

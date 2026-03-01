@@ -1,18 +1,10 @@
-import React, { useMemo, useState } from 'react'
-import {
-  DndContext,
-  PointerSensor,
-  pointerWithin,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-  type DragMoveEvent,
-  type DragStartEvent
-} from '@dnd-kit/core'
+import React, { useMemo } from 'react'
+import { DndContext, PointerSensor, pointerWithin, useSensor, useSensors } from '@dnd-kit/core'
 import { differenceInCalendarDays } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import { useMoveSchedule } from '@entities/schedule'
 import { useUpdateTodo } from '@entities/todo'
+import { HOUR_HEIGHT, DND_ACTIVATION_CONSTRAINT } from '../model/calendar-constants'
 import {
   isScheduleOnDate,
   layoutOverlappingSchedules,
@@ -21,10 +13,13 @@ import {
   isTodoItem
 } from '../model/calendar-utils'
 import { getScheduleColor } from '../model/schedule-color'
+import { getItemStyle } from '../model/schedule-style'
+import { useDayDnd } from '../model/use-day-dnd'
+import { useScheduleResize } from '../model/use-schedule-resize'
 import { ScheduleBlock } from './ScheduleBlock'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 import { TimeGrid } from './TimeGrid'
-import { ScheduleDragOverlay, type DragItemType } from './ScheduleDragOverlay'
+import { ScheduleDragOverlay } from './ScheduleDragOverlay'
 
 interface Props {
   schedules: ScheduleItem[]
@@ -35,15 +30,6 @@ interface Props {
 export function DayView({ schedules, currentDate, workspaceId }: Props): React.JSX.Element {
   const moveSchedule = useMoveSchedule()
   const updateTodo = useUpdateTodo()
-  const [activeSchedule, setActiveSchedule] = useState<ScheduleItem | null>(null)
-  const [activeType, setActiveType] = useState<DragItemType>('block')
-  const [previewDelta, setPreviewDelta] = useState(0)
-  const [activeSize, setActiveSize] = useState<{ width: number; height: number } | undefined>()
-  const [resizing, setResizing] = useState<{
-    schedule: ScheduleItem
-    edge: 'top' | 'bottom'
-  } | null>(null)
-  const [resizeDelta, setResizeDelta] = useState(0)
 
   const { allDay, timed } = useMemo(() => {
     const ad: ScheduleItem[] = []
@@ -59,7 +45,6 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
     return { allDay: ad, timed: t }
   }, [schedules, currentDate])
 
-  // 기간 스케줄: startAt/endAt의 시간(time-of-day)으로 당일 블록 생성
   const clampMap = useMemo(() => {
     const map = new Map<string, { start: Date; end: Date }>()
 
@@ -76,7 +61,6 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
     return map
   }, [timed, currentDate])
 
-  // 레이아웃 계산용 클램프된 스케줄
   const layoutInput = useMemo(() => {
     return timed.map((s) => {
       const clamp = clampMap.get(s.id)
@@ -87,137 +71,41 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
 
   const layouted = useMemo(() => layoutOverlappingSchedules(layoutInput), [layoutInput])
 
+  const mutationCallbacks = {
+    onMoveSchedule: (p: { scheduleId: string; startAt: Date; endAt: Date; workspaceId: string }) =>
+      moveSchedule.mutate(p),
+    onMoveTodo: (p: {
+      workspaceId: string
+      todoId: string
+      data: { startDate: Date; dueDate: Date }
+    }) => updateTodo.mutate(p)
+  }
+
+  const dnd = useDayDnd({
+    workspaceId,
+    hourHeight: HOUR_HEIGHT,
+    clampMap,
+    ...mutationCallbacks
+  })
+
+  const resize = useScheduleResize({
+    workspaceId,
+    hourHeight: HOUR_HEIGHT,
+    clampMap,
+    ...mutationCallbacks
+  })
+
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: DND_ACTIVATION_CONSTRAINT })
   )
-
-  function handleDragStart(event: DragStartEvent): void {
-    const schedule = event.active.data.current?.schedule as ScheduleItem | undefined
-    setActiveSchedule(schedule ?? null)
-    setActiveType((event.active.data.current?.type as DragItemType) ?? 'block')
-
-    const el = (event.activatorEvent.target as HTMLElement)?.closest?.(
-      '[data-block-id]'
-    ) as HTMLElement | null
-    if (el) {
-      setActiveSize({ width: el.offsetWidth, height: el.offsetHeight })
-    }
-  }
-
-  function handleDragMove(event: DragMoveEvent): void {
-    const minutesDelta = Math.round(((event.delta.y / hourHeight) * 60) / 15) * 15
-    setPreviewDelta(minutesDelta)
-  }
-
-  function handleDragEnd(event: DragEndEvent): void {
-    setActiveSchedule(null)
-    setPreviewDelta(0)
-    const schedule = event.active.data.current?.schedule as ScheduleItem | undefined
-    if (!schedule) return
-
-    const hourHeight = 60
-    const minutesDelta = Math.round(((event.delta.y / hourHeight) * 60) / 15) * 15
-    if (minutesDelta === 0) return
-
-    const msOffset = minutesDelta * 60 * 1000
-
-    if (isTodoItem(schedule)) {
-      // 시간만 변경하고 원래 날짜는 유지
-      const clamp = clampMap.get(schedule.id)
-      const baseStart = clamp?.start ?? schedule.startAt
-      const baseEnd = clamp?.end ?? schedule.endAt
-      const movedStart = new Date(baseStart.getTime() + msOffset)
-      const movedEnd = new Date(baseEnd.getTime() + msOffset)
-
-      const newStart = new Date(schedule.startAt)
-      newStart.setHours(movedStart.getHours(), movedStart.getMinutes(), 0, 0)
-      const newEnd = new Date(schedule.endAt)
-      newEnd.setHours(movedEnd.getHours(), movedEnd.getMinutes(), 0, 0)
-
-      updateTodo.mutate({
-        workspaceId,
-        todoId: schedule.id.slice(5),
-        data: { startDate: newStart, dueDate: newEnd }
-      })
-    } else {
-      moveSchedule.mutate({
-        scheduleId: schedule.id,
-        startAt: new Date(schedule.startAt.getTime() + msOffset),
-        endAt: new Date(schedule.endAt.getTime() + msOffset),
-        workspaceId
-      })
-    }
-  }
-
-  function handleResizeStart(
-    e: React.PointerEvent,
-    schedule: ScheduleItem,
-    edge: 'top' | 'bottom'
-  ): void {
-    e.preventDefault()
-    const startY = e.clientY
-    setResizing({ schedule, edge })
-    setResizeDelta(0)
-
-    function onMove(ev: PointerEvent): void {
-      const delta = Math.round((((ev.clientY - startY) / hourHeight) * 60) / 15) * 15
-      setResizeDelta(delta)
-    }
-
-    function onUp(ev: PointerEvent): void {
-      const delta = Math.round((((ev.clientY - startY) / hourHeight) * 60) / 15) * 15
-
-      if (delta !== 0) {
-        const msOffset = delta * 60 * 1000
-
-        if (isTodoItem(schedule)) {
-          const clamp = clampMap.get(schedule.id)
-          const baseStart = clamp?.start ?? schedule.startAt
-          const baseEnd = clamp?.end ?? schedule.endAt
-          const movedStart = edge === 'top' ? new Date(baseStart.getTime() + msOffset) : baseStart
-          const movedEnd = edge === 'bottom' ? new Date(baseEnd.getTime() + msOffset) : baseEnd
-
-          const newStart = new Date(schedule.startAt)
-          newStart.setHours(movedStart.getHours(), movedStart.getMinutes(), 0, 0)
-          const newEnd = new Date(schedule.endAt)
-          newEnd.setHours(movedEnd.getHours(), movedEnd.getMinutes(), 0, 0)
-
-          updateTodo.mutate({
-            workspaceId,
-            todoId: schedule.id.slice(5),
-            data: { startDate: newStart, dueDate: newEnd }
-          })
-        } else {
-          moveSchedule.mutate({
-            scheduleId: schedule.id,
-            startAt:
-              edge === 'top' ? new Date(schedule.startAt.getTime() + msOffset) : schedule.startAt,
-            endAt:
-              edge === 'bottom' ? new Date(schedule.endAt.getTime() + msOffset) : schedule.endAt,
-            workspaceId
-          })
-        }
-      }
-
-      setResizing(null)
-      setResizeDelta(0)
-      document.removeEventListener('pointermove', onMove)
-      document.removeEventListener('pointerup', onUp)
-    }
-
-    document.addEventListener('pointermove', onMove)
-    document.addEventListener('pointerup', onUp)
-  }
-
-  const hourHeight = 60
 
   return (
     <DndContext
       sensors={sensors}
       collisionDetection={pointerWithin}
-      onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
+      onDragStart={dnd.handleDragStart}
+      onDragMove={dnd.handleDragMove}
+      onDragEnd={dnd.handleDragEnd}
     >
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* 종일 일정 */}
@@ -228,11 +116,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
               <ScheduleDetailPopover key={s.id} schedule={s} workspaceId={workspaceId}>
                 <div
                   className="text-xs truncate rounded px-1.5 py-0.5 cursor-pointer"
-                  style={{
-                    backgroundColor: isTodoItem(s) ? 'transparent' : `${getScheduleColor(s)}20`,
-                    border: isTodoItem(s) ? `1px solid ${getScheduleColor(s)}50` : undefined,
-                    color: getScheduleColor(s)
-                  }}
+                  style={getItemStyle(s)}
                 >
                   {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
                   {s.title}
@@ -244,7 +128,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
 
         {/* 타임그리드 */}
         <TimeGrid
-          hourHeight={hourHeight}
+          hourHeight={HOUR_HEIGHT}
           labelWidth="auto"
           labelClass="w-8 text-[9px] @[400px]:w-10 @[400px]:text-[10px] @[800px]:w-14 @[800px]:text-xs"
         >
@@ -256,7 +140,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                 key={l.schedule.id}
                 schedule={original}
                 workspaceId={workspaceId}
-                hourHeight={hourHeight}
+                hourHeight={HOUR_HEIGHT}
                 column={l.column}
                 totalColumns={l.totalColumns}
                 span={l.span}
@@ -265,26 +149,26 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                 displayStartAt={clamp?.start}
                 displayEndAt={clamp?.end}
                 resizable
-                onResizeStart={handleResizeStart}
+                onResizeStart={resize.handleResizeStart}
               />
             )
           })}
 
           {/* DnD drop preview */}
-          {activeSchedule &&
-            previewDelta !== 0 &&
+          {dnd.activeSchedule &&
+            dnd.previewDelta !== 0 &&
             (() => {
-              const color = getScheduleColor(activeSchedule)
-              const clamp = clampMap.get(activeSchedule.id)
-              const baseStart = clamp?.start ?? activeSchedule.startAt
-              const baseEnd = clamp?.end ?? activeSchedule.endAt
-              const previewStart = new Date(baseStart.getTime() + previewDelta * 60 * 1000)
+              const color = getScheduleColor(dnd.activeSchedule)
+              const clamp = clampMap.get(dnd.activeSchedule.id)
+              const baseStart = clamp?.start ?? dnd.activeSchedule.startAt
+              const baseEnd = clamp?.end ?? dnd.activeSchedule.endAt
+              const previewStart = new Date(baseStart.getTime() + dnd.previewDelta * 60 * 1000)
               return (
                 <div
                   className="absolute left-0 right-0 rounded-sm px-1 py-0.5 pointer-events-none"
                   style={{
-                    top: timeToPosition(previewStart, hourHeight),
-                    height: scheduleHeight(baseStart, baseEnd, hourHeight),
+                    top: timeToPosition(previewStart, HOUR_HEIGHT),
+                    height: scheduleHeight(baseStart, baseEnd, HOUR_HEIGHT),
                     backgroundColor: `${color}15`,
                     border: `1.5px dashed ${color}60`,
                     borderLeftWidth: 2,
@@ -293,34 +177,34 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                   }}
                 >
                   <div className="text-[11px] font-medium truncate leading-tight" style={{ color }}>
-                    {activeSchedule.title}
+                    {dnd.activeSchedule.title}
                   </div>
                 </div>
               )
             })()}
 
           {/* 리사이즈 프리뷰 */}
-          {resizing &&
-            resizeDelta !== 0 &&
+          {resize.resizing &&
+            resize.resizeDelta !== 0 &&
             (() => {
-              const color = getScheduleColor(resizing.schedule)
-              const clamp = clampMap.get(resizing.schedule.id)
-              const baseStart = clamp?.start ?? resizing.schedule.startAt
-              const baseEnd = clamp?.end ?? resizing.schedule.endAt
+              const color = getScheduleColor(resize.resizing.schedule)
+              const clamp = clampMap.get(resize.resizing.schedule.id)
+              const baseStart = clamp?.start ?? resize.resizing.schedule.startAt
+              const baseEnd = clamp?.end ?? resize.resizing.schedule.endAt
               const previewStart =
-                resizing.edge === 'top'
-                  ? new Date(baseStart.getTime() + resizeDelta * 60 * 1000)
+                resize.resizing.edge === 'top'
+                  ? new Date(baseStart.getTime() + resize.resizeDelta * 60 * 1000)
                   : baseStart
               const previewEnd =
-                resizing.edge === 'bottom'
-                  ? new Date(baseEnd.getTime() + resizeDelta * 60 * 1000)
+                resize.resizing.edge === 'bottom'
+                  ? new Date(baseEnd.getTime() + resize.resizeDelta * 60 * 1000)
                   : baseEnd
               return (
                 <div
                   className="absolute left-0 right-0 rounded-sm pointer-events-none flex"
                   style={{
-                    top: timeToPosition(previewStart, hourHeight),
-                    height: scheduleHeight(previewStart, previewEnd, hourHeight),
+                    top: timeToPosition(previewStart, HOUR_HEIGHT),
+                    height: scheduleHeight(previewStart, previewEnd, HOUR_HEIGHT),
                     backgroundColor: `${color}15`,
                     border: `1.5px dashed ${color}60`
                   }}
@@ -334,7 +218,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                       className="text-[11px] font-medium truncate leading-tight"
                       style={{ color }}
                     >
-                      {resizing.schedule.title}
+                      {resize.resizing.schedule.title}
                     </div>
                   </div>
                 </div>
@@ -344,10 +228,10 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
       </div>
 
       <ScheduleDragOverlay
-        activeSchedule={activeSchedule}
-        activeType={activeType}
-        activeWidth={activeSize?.width}
-        activeHeight={activeSize?.height}
+        activeSchedule={dnd.activeSchedule}
+        activeType={dnd.activeType}
+        activeWidth={dnd.activeSize?.width}
+        activeHeight={dnd.activeSize?.height}
       />
     </DndContext>
   )

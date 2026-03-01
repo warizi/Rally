@@ -15,18 +15,27 @@ import type { ScheduleItem } from '@entities/schedule'
 import { useMoveSchedule } from '@entities/schedule'
 import { useUpdateTodo } from '@entities/todo'
 import {
+  WEEKDAY_LABELS,
+  MONTH_BAR_HEIGHT,
+  BAR_GAP,
+  DND_ACTIVATION_CONSTRAINT
+} from '../model/calendar-constants'
+import {
   getMonthGrid,
   isScheduleOnDate,
   splitBarByWeeks,
   isTodoItem,
-  type MonthGridDay,
-  type WeekBarSegment
+  type MonthGridDay
 } from '../model/calendar-utils'
+import { assignLanes } from '../model/calendar-layout'
+import { applyDaysDelta } from '../model/calendar-move'
 import { getScheduleColor } from '../model/schedule-color'
+import { getItemStyle, getItemDotStyle } from '../model/schedule-style'
 import { MonthDayCell } from './MonthDayCell'
 import { ScheduleDot } from './ScheduleDot'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 import { ScheduleDragOverlay, type DragItemType } from './ScheduleDragOverlay'
+import { ScheduleBarItem } from './ScheduleBarItem'
 
 interface Props {
   schedules: ScheduleItem[]
@@ -34,45 +43,6 @@ interface Props {
   selectedDate: Date | null
   onSelectDate: (date: Date) => void
   workspaceId: string
-}
-
-const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토']
-const BAR_HEIGHT = 18
-const BAR_GAP = 2
-
-interface LanedSegment extends WeekBarSegment {
-  schedule: ScheduleItem
-  lane: number
-}
-
-function assignLanes(
-  segments: { schedule: ScheduleItem; segment: WeekBarSegment }[]
-): LanedSegment[] {
-  const lanes: { endCol: number }[] = []
-  const result: LanedSegment[] = []
-
-  const sorted = [...segments].sort((a, b) => {
-    if (a.segment.startCol !== b.segment.startCol) return a.segment.startCol - b.segment.startCol
-    return b.segment.span - a.segment.span
-  })
-
-  for (const { schedule, segment } of sorted) {
-    let lane = -1
-    for (let i = 0; i < lanes.length; i++) {
-      if (lanes[i].endCol <= segment.startCol) {
-        lane = i
-        lanes[i].endCol = segment.startCol + segment.span
-        break
-      }
-    }
-    if (lane === -1) {
-      lane = lanes.length
-      lanes.push({ endCol: segment.startCol + segment.span })
-    }
-    result.push({ ...segment, schedule, lane })
-  }
-
-  return result
 }
 
 export function MonthView({
@@ -108,12 +78,18 @@ export function MonthView({
   }, [schedules])
 
   const weekLanes = useMemo(() => {
-    const result: { schedule: ScheduleItem; segment: WeekBarSegment }[][] = grid.map(() => [])
+    const result: {
+      schedule: ScheduleItem
+      startCol: number
+      span: number
+      isStart: boolean
+      isEnd: boolean
+    }[][] = grid.map(() => [])
 
     for (const schedule of multiDay) {
       const segments = splitBarByWeeks(schedule, grid)
       for (const segment of segments) {
-        result[segment.weekIndex].push({ schedule, segment })
+        result[segment.weekIndex].push({ schedule, ...segment })
       }
     }
 
@@ -121,7 +97,7 @@ export function MonthView({
   }, [multiDay, grid])
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { delay: 200, tolerance: 5 } })
+    useSensor(PointerSensor, { activationConstraint: DND_ACTIVATION_CONSTRAINT })
   )
 
   function handleDragStart(event: DragStartEvent): void {
@@ -153,25 +129,13 @@ export function MonthView({
 
     const daysDelta =
       differenceInCalendarDays(targetDate, startOfDay(schedule.startAt)) - grabDayOffset
-    if (daysDelta === 0) return
 
-    if (isTodoItem(schedule)) {
-      updateTodo.mutate({
-        workspaceId,
-        todoId: schedule.id.slice(5),
-        data: {
-          startDate: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
-          dueDate: new Date(schedule.endAt.getTime() + daysDelta * 86400000)
-        }
-      })
-    } else {
-      moveSchedule.mutate({
-        scheduleId: schedule.id,
-        startAt: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
-        endAt: new Date(schedule.endAt.getTime() + daysDelta * 86400000),
-        workspaceId
-      })
-    }
+    applyDaysDelta(schedule, daysDelta, {
+      onMoveSchedule: (id, start, end) =>
+        moveSchedule.mutate({ scheduleId: id, startAt: start, endAt: end, workspaceId }),
+      onMoveTodo: (id, start, end) =>
+        updateTodo.mutate({ workspaceId, todoId: id, data: { startDate: start, dueDate: end } })
+    })
   }
 
   return (
@@ -206,7 +170,7 @@ export function MonthView({
             {grid.map((week, weekIdx) => {
               const lanes = weekLanes[weekIdx]
               const laneCount = lanes.length > 0 ? Math.max(...lanes.map((l) => l.lane)) + 1 : 0
-              const barAreaHeight = laneCount * (BAR_HEIGHT + BAR_GAP)
+              const barAreaHeight = laneCount * (MONTH_BAR_HEIGHT + BAR_GAP)
 
               // 기간 바 드래그 프리뷰 세그먼트
               const previewSegs =
@@ -236,7 +200,7 @@ export function MonthView({
                       style={{ top: 22 }}
                     >
                       {lanes.map((ls) => (
-                        <MonthBarItem
+                        <ScheduleBarItem
                           key={`${ls.schedule.id}-w${weekIdx}`}
                           schedule={ls.schedule}
                           workspaceId={workspaceId}
@@ -245,7 +209,8 @@ export function MonthView({
                           lane={ls.lane}
                           isStart={ls.isStart}
                           isEnd={ls.isEnd}
-                          weekIdx={weekIdx}
+                          barHeight={MONTH_BAR_HEIGHT}
+                          draggableId={`bar-${ls.schedule.id}-w${weekIdx}`}
                           onGrab={(offset) => {
                             const segDate = week[ls.startCol].date
                             setGrabDayOffset(
@@ -253,6 +218,7 @@ export function MonthView({
                                 offset
                             )
                           }}
+                          wrapperClassName="pointer-events-auto"
                         />
                       ))}
 
@@ -266,12 +232,13 @@ export function MonthView({
                         return (
                           <div
                             key={`preview-${i}`}
-                            className="absolute rounded-sm text-[10px] leading-[18px] px-1 truncate pointer-events-none"
+                            className="absolute rounded-sm text-[10px] px-1 truncate pointer-events-none"
                             style={{
-                              top: previewLane * (BAR_HEIGHT + BAR_GAP),
+                              lineHeight: `${MONTH_BAR_HEIGHT}px`,
+                              top: previewLane * (MONTH_BAR_HEIGHT + BAR_GAP),
                               left: `${(seg.startCol / 7) * 100}%`,
                               width: `${(seg.span / 7) * 100}%`,
-                              height: BAR_HEIGHT,
+                              height: MONTH_BAR_HEIGHT,
                               backgroundColor: `${color}15`,
                               border: `1.5px dashed ${color}60`,
                               color
@@ -316,74 +283,6 @@ export function MonthView({
 
       <ScheduleDragOverlay activeSchedule={activeSchedule} activeType={activeType} />
     </DndContext>
-  )
-}
-
-// 월간 기간 바 아이템
-function MonthBarItem({
-  schedule,
-  workspaceId,
-  startCol,
-  span,
-  lane,
-  isStart,
-  isEnd,
-  weekIdx,
-  onGrab
-}: {
-  schedule: ScheduleItem
-  workspaceId: string
-  startCol: number
-  span: number
-  lane: number
-  isStart: boolean
-  isEnd: boolean
-  weekIdx: number
-  onGrab: (offset: number) => void
-}): React.JSX.Element {
-  const color = getScheduleColor(schedule)
-
-  const isTodo = isTodoItem(schedule)
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
-    id: `bar-${schedule.id}-w${weekIdx}`,
-    data: { schedule, type: 'bar' }
-  })
-
-  function handlePointerDown(e: React.PointerEvent): void {
-    const rect = e.currentTarget.getBoundingClientRect()
-    const clickX = e.clientX - rect.left
-    const colWidth = rect.width / span
-    const offset = Math.floor(clickX / colWidth)
-    onGrab(offset)
-    ;(listeners as Record<string, (e: React.PointerEvent) => void>)?.onPointerDown?.(e)
-  }
-
-  return (
-    <div className="pointer-events-auto">
-      <ScheduleDetailPopover schedule={schedule} workspaceId={workspaceId}>
-        <div
-          ref={setNodeRef}
-          {...attributes}
-          onPointerDown={handlePointerDown}
-          className={`absolute cursor-pointer text-[10px] leading-[18px] px-1 truncate ${
-            isStart ? 'rounded-l-sm' : ''
-          } ${isEnd ? 'rounded-r-sm' : ''}`}
-          style={{
-            top: lane * (BAR_HEIGHT + BAR_GAP),
-            left: `${(startCol / 7) * 100}%`,
-            width: `${(span / 7) * 100}%`,
-            height: BAR_HEIGHT,
-            backgroundColor: isTodo ? 'transparent' : `${color}20`,
-            border: isTodo ? `1px solid ${color}50` : undefined,
-            color,
-            opacity: isDragging ? 0.4 : 1
-          }}
-        >
-          {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
-          {schedule.title}
-        </div>
-      </ScheduleDetailPopover>
-    </div>
   )
 }
 
@@ -460,11 +359,7 @@ function CellContent({
             <ScheduleDetailPopover schedule={s} workspaceId={workspaceId}>
               <div
                 className="text-[10px] @[800px]:text-[11px] truncate rounded px-0.5 py-px cursor-pointer"
-                style={{
-                  backgroundColor: isTodoItem(s) ? 'transparent' : `${getScheduleColor(s)}20`,
-                  border: isTodoItem(s) ? `1px solid ${getScheduleColor(s)}50` : undefined,
-                  color: getScheduleColor(s)
-                }}
+                style={getItemStyle(s)}
               >
                 {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
                 <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
@@ -499,13 +394,7 @@ function SelectedDateList({
       {daySchedules.map((s) => (
         <ScheduleDetailPopover key={s.id} schedule={s} workspaceId={workspaceId}>
           <div className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-accent rounded px-1 py-0.5">
-            <div
-              className="size-2 rounded-full shrink-0"
-              style={{
-                backgroundColor: isTodoItem(s) ? 'transparent' : getScheduleColor(s),
-                border: isTodoItem(s) ? `1.5px solid ${getScheduleColor(s)}` : undefined
-              }}
-            />
+            <div className="size-2 rounded-full shrink-0" style={getItemDotStyle(s)} />
             <span className="truncate">
               {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
               {s.title}

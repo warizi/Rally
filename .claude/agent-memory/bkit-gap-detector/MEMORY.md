@@ -15,6 +15,8 @@
 - **csv-test** (2026-03-01): 100% match rate (55/55 cases). 2 test files (repository 21 cases, service 34 cases) perfectly match plan. No gaps, no additions, no changes.
 - **csv-renderer-refactor** (2026-03-01): 100% match rate (77/78 items). 4 hooks + types extracted from 620-line CsvTable.tsx. All 12 functionalities preserved. Clipboard/delete duplication eliminated. Only deviation: line count estimates (325 vs ~250 for CsvTable, 394 vs ~280 for hooks) -- structural boilerplate, not functional gaps.
 - **pdf-test** (2026-03-01): 100% match rate (47/47 cases). 2 test files (repository 21 cases, service 26 cases) perfectly match design. No gaps, no additions. One cosmetic wording diff: createMany case says "중복 relativePath" instead of "중복 id" -- more precise, not a functional gap.
+- **calendar-refactor** (2026-03-02): 100% match rate (131/131 items). 11 new files + 4 modified files across 4 phases. 11 cosmetic diffs (type names, variable names, code reuse improvements). Key: assignLanes generic more constrained than design, computeWeekBars inlines lane logic instead of calling assignLanes, calendar-utils barrel uses named exports instead of wildcard. All functional -- zero gaps.
+- **schedule-test** (2026-03-02): 100% match rate (162/162 cases). 10 test files + helpers.ts across 11 modules. 27/27 tagged edge cases ([G-1]~[X-2]) all covered. 3 added tests (layout tiebreaker, lane reuse, DnD DOM activeSize). 4 cosmetic diffs (G-2 date choice, makeWeek inlined, layout helpers localized, removeEventListener behavioral vs spy). All test strategies match: vi.useFakeTimers, DnD plain-object mocking, PointerEvent simulation.
 
 ## Analysis Patterns
 
