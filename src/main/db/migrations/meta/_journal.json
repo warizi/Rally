@@ -78,6 +78,13 @@
       "when": 1772314142220,
       "tag": "0010_rich_mephistopheles",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "6",
+      "when": 1772322953212,
+      "tag": "0011_little_trish_tilby",
+      "breakpoints": true
     }
   ]
 }

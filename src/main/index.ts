@@ -11,6 +11,7 @@ import { registerFolderHandlers } from './ipc/folder'
 import { registerNoteHandlers } from './ipc/note'
 import { registerTodoHandlers } from './ipc/todo'
 import { registerCsvFileHandlers } from './ipc/csv-file'
+import { registerPdfFileHandlers } from './ipc/pdf-file'
 import { registerAppSettingsHandlers } from './ipc/app-settings'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
@@ -85,6 +86,7 @@ app.whenReady().then(() => {
   registerNoteHandlers()
   registerTodoHandlers()
   registerCsvFileHandlers()
+  registerPdfFileHandlers()
   registerAppSettingsHandlers()
 
   createWindow()

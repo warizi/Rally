@@ -5,8 +5,13 @@ import fs from 'fs'
 import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
 import { csvFileRepository } from '../repositories/csv-file'
+import { pdfFileRepository } from '../repositories/pdf-file'
 import { readDirRecursiveAsync } from './folder'
-import { readMdFilesRecursiveAsync, readCsvFilesRecursiveAsync } from '../lib/fs-utils'
+import {
+  readMdFilesRecursiveAsync,
+  readCsvFilesRecursiveAsync,
+  readPdfFilesRecursiveAsync
+} from '../lib/fs-utils'
 import { nanoid } from 'nanoid'
 
 class WorkspaceWatcherService {
@@ -39,11 +44,17 @@ class WorkspaceWatcherService {
     } catch {
       /* ignore — watcher continues without initial csv sync */
     }
+    try {
+      await this.pdfReconciliation(workspaceId, workspacePath)
+    } catch {
+      /* ignore — watcher continues without initial pdf sync */
+    }
 
     // 초기 동기화 완료 → renderer re-fetch
     this.pushFolderChanged(workspaceId, [])
     this.pushNoteChanged(workspaceId, [])
     this.pushCsvChanged(workspaceId, [])
+    this.pushPdfChanged(workspaceId, [])
 
     try {
       this.subscription = await parcelWatcher.subscribe(workspacePath, (err, events) => {
@@ -124,7 +135,7 @@ class WorkspaceWatcherService {
     this.debounceTimer = setTimeout(async () => {
       try {
         const eventsToProcess = this.pendingEvents.splice(0)
-        const { folderPaths, orphanNotePaths, orphanCsvPaths } = await this.applyEvents(
+        const { folderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths } = await this.applyEvents(
           workspaceId,
           workspacePath,
           eventsToProcess
@@ -146,6 +157,14 @@ class WorkspaceWatcherService {
           ...orphanCsvPaths
         ]
         this.pushCsvChanged(workspaceId, changedCsvRelPaths)
+        // 변경된 .pdf 파일 경로 수집 + 폴더 삭제로 함께 삭제된 PDF 경로 병합
+        const changedPdfRelPaths = [
+          ...eventsToProcess
+            .filter((e) => e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.'))
+            .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
+          ...orphanPdfPaths
+        ]
+        this.pushPdfChanged(workspaceId, changedPdfRelPaths)
       } catch {
         /* applyEvents 실패 시 무시 — watcher 지속 유지 */
       }
@@ -169,12 +188,14 @@ class WorkspaceWatcherService {
     folderPaths: string[]
     orphanNotePaths: string[]
     orphanCsvPaths: string[]
+    orphanPdfPaths: string[]
   }> {
     /** 실제 폴더 변경이 발생한 relative path 수집 (toast용) */
     const changedFolderPaths: string[] = []
-    /** 폴더 삭제로 함께 삭제된 노트/CSV 경로 (watcher 이벤트 보완용) */
+    /** 폴더 삭제로 함께 삭제된 노트/CSV/PDF 경로 (watcher 이벤트 보완용) */
     const orphanNotePaths: string[] = []
     const orphanCsvPaths: string[] = []
+    const orphanPdfPaths: string[] = []
     // ─── Step 1: 폴더 rename/move 감지 ───────────────────────────
     // 같은 부모(이름 변경) 또는 같은 폴더명(위치 이동)의 delete+create 쌍
     const nonMdDeletes = events.filter(
@@ -206,6 +227,7 @@ class WorkspaceWatcherService {
           folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+          pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           pairedFolderDeletePaths.add(matchingDelete.path)
           pairedFolderCreatePaths.add(createEvent.path)
           changedFolderPaths.push(newRel)
@@ -221,6 +243,7 @@ class WorkspaceWatcherService {
 
       if (absPath.endsWith('.md')) continue
       if (absPath.endsWith('.csv')) continue
+      if (absPath.endsWith('.pdf')) continue
       if (pairedFolderDeletePaths.has(absPath) || pairedFolderCreatePaths.has(absPath)) continue
 
       // getEventsSince rename + oldPath (플랫폼 의존적)
@@ -234,6 +257,7 @@ class WorkspaceWatcherService {
         folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
+        pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         changedFolderPaths.push(rel)
         continue
       }
@@ -273,11 +297,16 @@ class WorkspaceWatcherService {
           const childCsvs = csvFileRepository
             .findByWorkspaceId(workspaceId)
             .filter((c) => c.relativePath.startsWith(rel + '/'))
+          const childPdfs = pdfFileRepository
+            .findByWorkspaceId(workspaceId)
+            .filter((p) => p.relativePath.startsWith(rel + '/'))
           orphanNotePaths.push(...childNotes.map((n) => n.relativePath))
           orphanCsvPaths.push(...childCsvs.map((c) => c.relativePath))
+          orphanPdfPaths.push(...childPdfs.map((p) => p.relativePath))
 
           noteRepository.bulkDeleteByPrefix(workspaceId, rel)
           csvFileRepository.bulkDeleteByPrefix(workspaceId, rel)
+          pdfFileRepository.bulkDeleteByPrefix(workspaceId, rel)
           folderRepository.bulkDeleteByPrefix(workspaceId, rel)
           changedFolderPaths.push(rel)
         }
@@ -460,7 +489,93 @@ class WorkspaceWatcherService {
       }
     }
 
-    return { folderPaths: changedFolderPaths, orphanNotePaths, orphanCsvPaths }
+    // ─── Step 9: .pdf 파일 rename/move 감지 ──────────────────────
+    const pdfDeletes = events.filter(
+      (e) =>
+        e.type === 'delete' && e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.')
+    )
+    const pdfCreates = events.filter(
+      (e) =>
+        e.type === 'create' && e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.')
+    )
+    const pairedPdfDeletePaths = new Set<string>()
+    const pairedPdfCreatePaths = new Set<string>()
+    for (const createEvent of pdfCreates) {
+      const createDir = path.dirname(createEvent.path)
+      const createBasename = path.basename(createEvent.path)
+      const matchingDelete =
+        pdfDeletes.find(
+          (d) => !pairedPdfDeletePaths.has(d.path) && path.dirname(d.path) === createDir
+        ) ??
+        pdfDeletes.find(
+          (d) => !pairedPdfDeletePaths.has(d.path) && path.basename(d.path) === createBasename
+        )
+      if (matchingDelete) {
+        const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
+        const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+        const existing = pdfFileRepository.findByRelativePath(workspaceId, oldRel)
+        if (existing) {
+          const newParentRel = newRel.includes('/')
+            ? newRel.split('/').slice(0, -1).join('/')
+            : null
+          const newFolder = newParentRel
+            ? folderRepository.findByRelativePath(workspaceId, newParentRel)
+            : null
+          pdfFileRepository.update(existing.id, {
+            relativePath: newRel,
+            folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
+            title: path.basename(createEvent.path, '.pdf'),
+            updatedAt: new Date()
+          })
+          pairedPdfDeletePaths.add(matchingDelete.path)
+          pairedPdfCreatePaths.add(createEvent.path)
+        }
+      }
+    }
+
+    // ─── Step 10: standalone PDF create → DB에 pdf 추가 ──────────
+    for (const createEvent of pdfCreates) {
+      if (pairedPdfCreatePaths.has(createEvent.path)) continue
+      const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+      const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
+      if (!existing) {
+        try {
+          const stat = await fs.promises.stat(createEvent.path)
+          if (!stat.isFile()) continue
+        } catch {
+          continue
+        }
+        const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        const now = new Date()
+        pdfFileRepository.create({
+          id: nanoid(),
+          workspaceId,
+          relativePath: rel,
+          folderId: folder?.id ?? null,
+          title: path.basename(createEvent.path, '.pdf'),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+    }
+
+    // ─── Step 11: standalone PDF delete → DB에서 pdf 삭제 ────────
+    for (const deleteEvent of pdfDeletes) {
+      if (pairedPdfDeletePaths.has(deleteEvent.path)) continue
+      const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
+      const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
+      if (existing) {
+        pdfFileRepository.delete(existing.id)
+      }
+    }
+
+    return { folderPaths: changedFolderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths }
   }
 
   private async fullReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
@@ -577,6 +692,47 @@ class WorkspaceWatcherService {
   private pushCsvChanged(workspaceId: string, changedRelPaths: string[]): void {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('csv:changed', workspaceId, changedRelPaths)
+    })
+  }
+
+  private async pdfReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
+    const fsEntries = await readPdfFilesRecursiveAsync(workspacePath, '')
+    const fsPaths = fsEntries.map((e) => e.relativePath)
+
+    const dbPdfs = pdfFileRepository.findByWorkspaceId(workspaceId)
+    const dbPathSet = new Set(dbPdfs.map((p) => p.relativePath))
+
+    const now = new Date()
+    const toInsert = fsEntries
+      .filter((e) => !dbPathSet.has(e.relativePath))
+      .map((e) => {
+        const parentRel = e.relativePath.includes('/')
+          ? e.relativePath.split('/').slice(0, -1).join('/')
+          : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        return {
+          id: nanoid(),
+          workspaceId,
+          relativePath: e.relativePath,
+          folderId: folder?.id ?? null,
+          title: e.name.replace(/\.pdf$/, ''),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+
+    pdfFileRepository.createMany(toInsert)
+    pdfFileRepository.deleteOrphans(workspaceId, fsPaths)
+  }
+
+  private pushPdfChanged(workspaceId: string, changedRelPaths: string[]): void {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('pdf:changed', workspaceId, changedRelPaths)
     })
   }
 }

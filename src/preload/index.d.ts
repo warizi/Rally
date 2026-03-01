@@ -118,6 +118,50 @@ interface CsvAPI {
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
+interface PdfFileNode {
+  id: string
+  title: string
+  relativePath: string
+  description: string
+  preview: string
+  folderId: string | null
+  order: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface PdfAPI {
+  readByWorkspace: (workspaceId: string) => Promise<IpcResponse<PdfFileNode[]>>
+  import: (
+    workspaceId: string,
+    folderId: string | null,
+    sourcePath: string
+  ) => Promise<IpcResponse<PdfFileNode>>
+  rename: (
+    workspaceId: string,
+    pdfId: string,
+    newName: string
+  ) => Promise<IpcResponse<PdfFileNode>>
+  remove: (workspaceId: string, pdfId: string) => Promise<IpcResponse<void>>
+  readContent: (
+    workspaceId: string,
+    pdfId: string
+  ) => Promise<IpcResponse<{ data: ArrayBuffer }>>
+  move: (
+    workspaceId: string,
+    pdfId: string,
+    folderId: string | null,
+    index: number
+  ) => Promise<IpcResponse<PdfFileNode>>
+  updateMeta: (
+    workspaceId: string,
+    pdfId: string,
+    data: { description?: string }
+  ) => Promise<IpcResponse<PdfFileNode>>
+  selectFile: () => Promise<string | null>
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
+}
+
 interface FolderNode {
   id: string
   name: string
@@ -234,6 +278,7 @@ interface SettingsAPI {
 interface API {
   note: NoteAPI
   csv: CsvAPI
+  pdf: PdfAPI
   folder: FolderAPI
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI

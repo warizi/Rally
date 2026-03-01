@@ -1,2 +1,2 @@
 export { FolderTree } from './ui/FolderTree'
-export type { WorkspaceTreeNode, FolderTreeNode, NoteTreeNode } from './model/types'
+export type { WorkspaceTreeNode, FolderTreeNode, NoteTreeNode, PdfTreeNode } from './model/types'

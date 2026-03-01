@@ -8,6 +8,7 @@ import {
 import { useFolderWatcher } from '@entities/folder'
 import { useNoteWatcher } from '@entities/note'
 import { useCsvWatcher } from '@entities/csv-file'
+import { usePdfWatcher } from '@entities/pdf-file'
 import { useState } from 'react'
 import {
   DndContext,
@@ -43,6 +44,7 @@ function MainLayout(): React.JSX.Element {
   useFolderWatcher()
   useNoteWatcher()
   useCsvWatcher()
+  usePdfWatcher()
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   // 드래그 활성화 조건: 8px 이상 이동해야 드래그 시작

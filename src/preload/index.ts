@@ -71,6 +71,33 @@ const api = {
     }
   },
 
+  pdf: {
+    readByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('pdf:readByWorkspace', workspaceId),
+    import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
+      ipcRenderer.invoke('pdf:import', workspaceId, folderId, sourcePath),
+    rename: (workspaceId: string, pdfId: string, newName: string) =>
+      ipcRenderer.invoke('pdf:rename', workspaceId, pdfId, newName),
+    remove: (workspaceId: string, pdfId: string) =>
+      ipcRenderer.invoke('pdf:remove', workspaceId, pdfId),
+    readContent: (workspaceId: string, pdfId: string) =>
+      ipcRenderer.invoke('pdf:readContent', workspaceId, pdfId),
+    move: (workspaceId: string, pdfId: string, folderId: string | null, index: number) =>
+      ipcRenderer.invoke('pdf:move', workspaceId, pdfId, folderId, index),
+    updateMeta: (workspaceId: string, pdfId: string, data: { description?: string }) =>
+      ipcRenderer.invoke('pdf:updateMeta', workspaceId, pdfId, data),
+    selectFile: () => ipcRenderer.invoke('pdf:selectFile'),
+    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
+      const handler = (
+        _: Electron.IpcRendererEvent,
+        workspaceId: string,
+        changedRelPaths: string[]
+      ): void => callback(workspaceId, changedRelPaths)
+      ipcRenderer.on('pdf:changed', handler)
+      return () => ipcRenderer.removeListener('pdf:changed', handler)
+    }
+  },
+
   folder: {
     readTree: (workspaceId: string) => ipcRenderer.invoke('folder:readTree', workspaceId),
     create: (workspaceId: string, parentFolderId: string | null, name: string) =>

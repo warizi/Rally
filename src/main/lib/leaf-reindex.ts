@@ -1,10 +1,11 @@
 import { db } from '../db'
 import { noteRepository } from '../repositories/note'
 import { csvFileRepository } from '../repositories/csv-file'
+import { pdfFileRepository } from '../repositories/pdf-file'
 
 export interface LeafSibling {
   id: string
-  kind: 'note' | 'csv'
+  kind: 'note' | 'csv' | 'pdf'
   order: number
 }
 
@@ -23,7 +24,11 @@ export function getLeafSiblings(
     .findByWorkspaceId(workspaceId)
     .filter((c) => c.folderId === folderId)
     .map((c) => ({ id: c.id, kind: 'csv' as const, order: c.order }))
-  return [...notes, ...csvs].sort((a, b) => a.order - b.order)
+  const pdfs = pdfFileRepository
+    .findByWorkspaceId(workspaceId)
+    .filter((p) => p.folderId === folderId)
+    .map((p) => ({ id: p.id, kind: 'pdf' as const, order: p.order }))
+  return [...notes, ...csvs, ...pdfs].sort((a, b) => a.order - b.order)
 }
 
 /**
@@ -32,7 +37,7 @@ export function getLeafSiblings(
  */
 export function reindexLeafSiblings(
   workspaceId: string,
-  orderedItems: Array<{ id: string; kind: 'note' | 'csv' }>
+  orderedItems: Array<{ id: string; kind: 'note' | 'csv' | 'pdf' }>
 ): void {
   const now = Date.now()
   const noteStmt = db.$client.prepare(
@@ -41,12 +46,17 @@ export function reindexLeafSiblings(
   const csvStmt = db.$client.prepare(
     `UPDATE csv_files SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
   )
+  const pdfStmt = db.$client.prepare(
+    `UPDATE pdf_files SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
+  )
   db.$client.transaction(() => {
     orderedItems.forEach((item, i) => {
       if (item.kind === 'note') {
         noteStmt.run(i, now, workspaceId, item.id)
-      } else {
+      } else if (item.kind === 'csv') {
         csvStmt.run(i, now, workspaceId, item.id)
+      } else {
+        pdfStmt.run(i, now, workspaceId, item.id)
       }
     })
   })()

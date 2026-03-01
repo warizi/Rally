@@ -30,4 +30,15 @@ export interface CsvTreeNode {
   order: number
 }
 
-export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode | CsvTreeNode
+export interface PdfTreeNode {
+  kind: 'pdf'
+  id: string
+  name: string // PdfFileNode.title에서 매핑
+  relativePath: string
+  description: string
+  preview: string
+  folderId: string | null
+  order: number
+}
+
+export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode | CsvTreeNode | PdfTreeNode

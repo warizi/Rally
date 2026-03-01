@@ -132,6 +132,66 @@ export async function readCsvFilesRecursiveAsync(
   return result.concat(...subResults)
 }
 
+// ── PDF ─────────────────────────────────────────
+
+export interface PdfFileEntry {
+  name: string
+  relativePath: string
+}
+
+export function readPdfFilesRecursive(absBase: string, parentRel: string): PdfFileEntry[] {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = fs.readdirSync(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: PdfFileEntry[] = []
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+    if (entry.isDirectory()) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push(...readPdfFilesRecursive(absBase, rel))
+    } else if (entry.isFile() && entry.name.endsWith('.pdf')) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+  return result
+}
+
+export async function readPdfFilesRecursiveAsync(
+  absBase: string,
+  parentRel: string
+): Promise<PdfFileEntry[]> {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: PdfFileEntry[] = []
+  const subDirPromises: Promise<PdfFileEntry[]>[] = []
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+    if (entry.isDirectory()) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      subDirPromises.push(readPdfFilesRecursiveAsync(absBase, rel))
+    } else if (entry.isFile() && entry.name.endsWith('.pdf')) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+  const subResults = await Promise.all(subDirPromises)
+  return result.concat(...subResults)
+}
+
 /**
  * 이름 충돌 해결: "name (1)", "name (2)", ...
  * 노트의 경우 desiredName에 .md 포함하여 전달:

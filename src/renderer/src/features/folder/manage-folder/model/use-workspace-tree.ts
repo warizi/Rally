@@ -4,7 +4,15 @@ import { useNotesByWorkspace } from '@entities/note'
 import type { NoteNode } from '@entities/note'
 import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import type { CsvFileNode } from '@entities/csv-file'
-import type { WorkspaceTreeNode, FolderTreeNode, NoteTreeNode, CsvTreeNode } from './types'
+import { usePdfFilesByWorkspace } from '@entities/pdf-file'
+import type { PdfFileNode } from '@entities/pdf-file'
+import type {
+  WorkspaceTreeNode,
+  FolderTreeNode,
+  NoteTreeNode,
+  CsvTreeNode,
+  PdfTreeNode
+} from './types'
 
 /**
  * FolderNode[] + NoteNode[] → WorkspaceTreeNode[] 병합
@@ -18,7 +26,8 @@ import type { WorkspaceTreeNode, FolderTreeNode, NoteTreeNode, CsvTreeNode } fro
 export function buildWorkspaceTree(
   folders: FolderNode[], // useFolderTree가 반환하는 nested tree (root 폴더만 top-level)
   notes: NoteNode[],
-  csvFiles: CsvFileNode[]
+  csvFiles: CsvFileNode[],
+  pdfFiles: PdfFileNode[]
 ): WorkspaceTreeNode[] {
   function convertNote(note: NoteNode): NoteTreeNode {
     return {
@@ -46,7 +55,20 @@ export function buildWorkspaceTree(
     }
   }
 
-  // leaf 항목(note + csv)을 order 기준으로 혼합 정렬
+  function convertPdf(pdf: PdfFileNode): PdfTreeNode {
+    return {
+      kind: 'pdf',
+      id: pdf.id,
+      name: pdf.title,
+      relativePath: pdf.relativePath,
+      description: pdf.description,
+      preview: pdf.preview,
+      folderId: pdf.folderId,
+      order: pdf.order
+    }
+  }
+
+  // leaf 항목(note + csv + pdf)을 order 기준으로 혼합 정렬
   function getLeafChildren(folderId: string | null): WorkspaceTreeNode[] {
     const childNotes = notes
       .filter((n) => n.folderId === folderId)
@@ -54,7 +76,10 @@ export function buildWorkspaceTree(
     const childCsvs = csvFiles
       .filter((c) => c.folderId === folderId)
       .map(convertCsv)
-    return [...childNotes, ...childCsvs].sort(
+    const childPdfs = pdfFiles
+      .filter((p) => p.folderId === folderId)
+      .map(convertPdf)
+    return [...childNotes, ...childCsvs, ...childPdfs].sort(
       (a, b) => a.order - b.order || a.name.localeCompare(b.name)
     )
   }
@@ -90,11 +115,12 @@ export function useWorkspaceTree(workspaceId: string): {
   const { data: folders = [], isLoading: isFoldersLoading } = useFolderTree(workspaceId)
   const { data: notes = [], isLoading: isNotesLoading } = useNotesByWorkspace(workspaceId)
   const { data: csvFiles = [], isLoading: isCsvsLoading } = useCsvFilesByWorkspace(workspaceId)
+  const { data: pdfFiles = [], isLoading: isPdfsLoading } = usePdfFilesByWorkspace(workspaceId)
 
-  const tree = buildWorkspaceTree(folders, notes, csvFiles)
+  const tree = buildWorkspaceTree(folders, notes, csvFiles, pdfFiles)
 
   return {
     tree,
-    isLoading: isFoldersLoading || isNotesLoading || isCsvsLoading
+    isLoading: isFoldersLoading || isNotesLoading || isCsvsLoading || isPdfsLoading
   }
 }

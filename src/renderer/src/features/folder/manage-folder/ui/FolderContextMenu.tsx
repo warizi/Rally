@@ -1,5 +1,5 @@
 import { JSX } from 'react'
-import { FileText, FolderPlus, Palette, Pencil, Sheet, Trash2 } from 'lucide-react'
+import { FileText, FolderPlus, Palette, Pencil, Sheet, FileUp, Trash2 } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -13,6 +13,7 @@ interface Props {
   onCreateChild: () => void
   onCreateNote: () => void
   onCreateCsv: () => void
+  onImportPdf: () => void
   onRename: () => void
   onEditColor: () => void
   onDelete: () => void
@@ -23,6 +24,7 @@ export function FolderContextMenu({
   onCreateChild,
   onCreateNote,
   onCreateCsv,
+  onImportPdf,
   onRename,
   onEditColor,
   onDelete
@@ -42,6 +44,10 @@ export function FolderContextMenu({
         <ContextMenuItem onClick={onCreateCsv}>
           <Sheet className="size-4 mr-2" />
           테이블 추가하기
+        </ContextMenuItem>
+        <ContextMenuItem onClick={onImportPdf}>
+          <FileUp className="size-4 mr-2" />
+          PDF 가져오기
         </ContextMenuItem>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={onRename}>

@@ -4,7 +4,8 @@ import { tabSnapshots } from './tab-snapshot'
 import { folders } from './folder'
 import { notes } from './note'
 import { csvFiles } from './csv-file'
+import { pdfFiles } from './pdf-file'
 import { todos } from './todo'
 import { appSettings } from './app-settings'
 
-export { workspaces, tabSessions, tabSnapshots, folders, notes, csvFiles, todos, appSettings }
+export { workspaces, tabSessions, tabSnapshots, folders, notes, csvFiles, pdfFiles, todos, appSettings }
