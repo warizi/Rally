@@ -7,6 +7,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
+import { entityLinkService } from './entity-link'
 
 export interface NoteNode {
   id: string
@@ -241,6 +242,7 @@ export const noteService = {
     } catch {
       // 이미 외부에서 삭제된 경우 무시 (DB만 정리)
     }
+    entityLinkService.removeAllLinks('note', noteId)
     noteRepository.delete(noteId)
   },
 

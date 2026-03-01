@@ -21,6 +21,15 @@ export const scheduleRepository = {
       .all()
   },
 
+  findAllByWorkspaceId(workspaceId: string): Schedule[] {
+    return db
+      .select()
+      .from(schedules)
+      .where(eq(schedules.workspaceId, workspaceId))
+      .orderBy(schedules.startAt)
+      .all()
+  },
+
   findById(id: string): Schedule | undefined {
     return db.select().from(schedules).where(eq(schedules.id, id)).get()
   },

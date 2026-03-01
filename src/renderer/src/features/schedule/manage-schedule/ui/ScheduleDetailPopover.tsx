@@ -1,14 +1,20 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Calendar, Clock, MapPin, FileText, Pencil, Trash2, CheckSquare } from 'lucide-react'
+import { Calendar, Clock, MapPin, FileText, Link, Pencil, Trash2, CheckSquare } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
 import type { ScheduleItem } from '@entities/schedule'
+import { useLinkedEntities } from '@entities/entity-link'
+import { ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
+import type { LinkableEntityType } from '@shared/lib/entity-link'
+import { useTabStore } from '@features/tap-system/manage-tab-system'
+import type { TabType } from '@shared/constants/tab-url'
 import { getScheduleColor } from '../model/schedule-color'
 import { isTodoItem } from '../model/calendar-utils'
 import { ScheduleFormDialog } from './ScheduleFormDialog'
 import { DeleteScheduleDialog } from './DeleteScheduleDialog'
+import { LinkEntityPopover, OpenAllSubmenu } from '@features/entity-link/manage-link'
 
 interface Props {
   schedule: ScheduleItem
@@ -19,13 +25,30 @@ interface Props {
 export function ScheduleDetailPopover({
   schedule,
   workspaceId,
-  children,
+  children
 }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const color = getScheduleColor(schedule)
   const isTodo = isTodoItem(schedule)
+  const { data: linked = [] } = useLinkedEntities('schedule', schedule.id)
+  const openTab = useTabStore((s) => s.openTab)
+
+  const handleNavigateLinked = useCallback(
+    (linkedType: LinkableEntityType, linkedId: string, title: string) => {
+      const map: Record<LinkableEntityType, { type: TabType; pathname: string } | null> = {
+        todo: { type: 'todo-detail', pathname: `/todo/${linkedId}` },
+        note: { type: 'note', pathname: `/folder/note/${linkedId}` },
+        pdf: { type: 'pdf', pathname: `/folder/pdf/${linkedId}` },
+        csv: { type: 'csv', pathname: `/folder/csv/${linkedId}` },
+        schedule: null
+      }
+      const opts = map[linkedType]
+      if (opts) openTab({ ...opts, title })
+    },
+    [openTab]
+  )
 
   function formatDateRange(): string {
     if (schedule.allDay) {
@@ -58,8 +81,7 @@ export function ScheduleDetailPopover({
                 <span className="font-semibold text-sm leading-snug">{schedule.title}</span>
                 {isTodo && (
                   <span className="inline-flex items-center gap-0.5 ml-1.5 text-[10px] text-muted-foreground bg-muted rounded px-1 py-px align-middle">
-                    <CheckSquare className="size-2.5" />
-                    할 일
+                    <CheckSquare className="size-2.5" />할 일
                   </span>
                 )}
               </div>
@@ -92,8 +114,45 @@ export function ScheduleDetailPopover({
               )}
             </div>
 
+            {linked.length > 0 && (
+              <div className="space-y-1 text-xs text-muted-foreground border-t pt-1.5">
+                <div className="flex items-center gap-1">
+                  <Link className="size-3" />
+                  <span className="font-medium">연결된 항목</span>
+                </div>
+                {linked.map((item) => {
+                  const ItemIcon = ENTITY_TYPE_ICON[item.entityType]
+                  return (
+                    <button
+                      key={`${item.entityType}-${item.entityId}`}
+                      type="button"
+                      className="flex items-center gap-1.5 w-full pl-4 truncate text-left hover:underline cursor-pointer"
+                      onClick={() =>
+                        handleNavigateLinked(item.entityType, item.entityId, item.title)
+                      }
+                    >
+                      <ItemIcon className="size-3 shrink-0" />
+                      <span>{item.title}</span>
+                    </button>
+                  )
+                })}
+                {linked.length > 1 && (
+                  <OpenAllSubmenu linked={linked} onDone={() => setOpen(false)} />
+                )}
+              </div>
+            )}
+
             {!isTodo && (
               <div className="flex justify-end gap-1 pt-1 border-t">
+                <LinkEntityPopover
+                  entityType="schedule"
+                  entityId={schedule.id}
+                  workspaceId={workspaceId}
+                >
+                  <Button variant="ghost" size="icon-xs">
+                    <Link className="size-3.5" />
+                  </Button>
+                </LinkEntityPopover>
                 <Button
                   variant="ghost"
                   size="icon-xs"

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,7 +12,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@shared/ui/switch'
 import { DatePickerButton } from '@shared/ui/date-picker-button'
 import { useCreateSchedule, useUpdateSchedule } from '@entities/schedule'
+import { useLinkEntity } from '@entities/entity-link'
 import type { ScheduleItem } from '@entities/schedule'
+import { PendingLinkPicker } from '@features/entity-link/manage-link'
+import type { PendingLink } from '@features/entity-link/manage-link'
 import { ColorPicker } from './ColorPicker'
 
 const scheduleSchema = z.object({
@@ -55,6 +58,18 @@ export function ScheduleFormDialog({
   const isEdit = !!initialData
   const createSchedule = useCreateSchedule()
   const updateSchedule = useUpdateSchedule()
+  const linkEntity = useLinkEntity()
+  const [pendingLinks, setPendingLinks] = useState<PendingLink[]>([])
+
+  const handleAddLink = useCallback(
+    (link: PendingLink) => setPendingLinks((prev) => [...prev, link]),
+    []
+  )
+  const handleRemoveLink = useCallback(
+    (link: PendingLink) =>
+      setPendingLinks((prev) => prev.filter((l) => !(l.type === link.type && l.id === link.id))),
+    []
+  )
 
   const [allDay, setAllDay] = useState(initialData?.allDay ?? false)
   const [startDate, setStartDate] = useState<Date | null>(
@@ -110,6 +125,7 @@ export function ScheduleFormDialog({
         color: null
       })
       setAllDay(false)
+      setPendingLinks([])
       setStartDate(defaultStartDate ?? new Date())
       setEndDate(defaultEndDate ?? new Date())
       setStartHour(defaultStartDate?.getHours() ?? 9)
@@ -170,8 +186,20 @@ export function ScheduleFormDialog({
           }
         },
         {
-          onSuccess: () => {
+          onSuccess: (created) => {
+            if (created && pendingLinks.length > 0) {
+              for (const link of pendingLinks) {
+                linkEntity.mutate({
+                  typeA: 'schedule',
+                  idA: created.id,
+                  typeB: link.type,
+                  idB: link.id,
+                  workspaceId
+                })
+              }
+            }
             setOpen(false)
+            setPendingLinks([])
             form.reset()
           }
         }
@@ -363,6 +391,16 @@ export function ScheduleFormDialog({
                   )}
                 />
               </div>
+
+              {!isEdit && (
+                <PendingLinkPicker
+                  workspaceId={workspaceId}
+                  excludeType="schedule"
+                  selected={pendingLinks}
+                  onAdd={handleAddLink}
+                  onRemove={handleRemoveLink}
+                />
+              )}
 
               <DialogFooter>
                 <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>

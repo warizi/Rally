@@ -2,6 +2,7 @@ import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
 import { useRenameNote, useUpdateNoteMeta, useNotesByWorkspace } from '@entities/note'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 
 interface NoteHeaderProps {
   workspaceId: string
@@ -22,6 +23,13 @@ export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX
       editable
       title={note?.title ?? ''}
       description={note?.description ?? ''}
+      buttons={
+        <LinkedEntityPopoverButton
+          entityType="note"
+          entityId={noteId}
+          workspaceId={workspaceId}
+        />
+      }
       onTitleChange={(title) => {
         renameNote({ workspaceId, noteId, newName: title })
         if (tabId) setTabTitle(tabId, title)

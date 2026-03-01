@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -7,6 +7,9 @@ import { Button } from '@shared/ui/button'
 import { Form } from '@shared/ui/form'
 import { DatePickerButton } from '@shared/ui/date-picker-button'
 import { useCreateTodo } from '@entities/todo'
+import { useLinkEntity } from '@entities/entity-link'
+import { PendingLinkPicker } from '@features/entity-link/manage-link'
+import type { PendingLink } from '@features/entity-link/manage-link'
 import { TodoFormFields } from './TodoFormFields'
 import type { TodoStatus } from '@entities/todo'
 
@@ -35,8 +38,20 @@ export function CreateTodoDialog({
   const [open, setOpen] = useState(false)
   const [dueDate, setDueDate] = useState<Date | null>(null)
   const [startDate, setStartDate] = useState<Date | null>(null)
+  const [pendingLinks, setPendingLinks] = useState<PendingLink[]>([])
   const createTodo = useCreateTodo()
+  const linkEntity = useLinkEntity()
   const titleOnly = !!parentId
+
+  const handleAddLink = useCallback(
+    (link: PendingLink) => setPendingLinks((prev) => [...prev, link]),
+    []
+  )
+  const handleRemoveLink = useCallback(
+    (link: PendingLink) =>
+      setPendingLinks((prev) => prev.filter((l) => !(l.type === link.type && l.id === link.id))),
+    []
+  )
 
   const form = useForm<FormValues>({
     resolver: zodResolver(createTodoSchema),
@@ -53,6 +68,7 @@ export function CreateTodoDialog({
     if (next) {
       setDueDate(null)
       setStartDate(null)
+      setPendingLinks([])
       form.reset({
         title: '',
         description: '',
@@ -79,9 +95,7 @@ export function CreateTodoDialog({
           finalStart = new Date(finalStart)
           finalStart.setHours(9, 0, 0, 0)
         }
-        if (
-          finalDue.getHours() === 0 && finalDue.getMinutes() === 0
-        ) {
+        if (finalDue.getHours() === 0 && finalDue.getMinutes() === 0) {
           finalDue = new Date(finalDue)
           finalDue.setHours(10, 0, 0, 0)
         }
@@ -118,10 +132,22 @@ export function CreateTodoDialog({
         }
       },
       {
-        onSuccess: () => {
+        onSuccess: (created) => {
+          if (created && pendingLinks.length > 0) {
+            for (const link of pendingLinks) {
+              linkEntity.mutate({
+                typeA: 'todo',
+                idA: created.id,
+                typeB: link.type,
+                idB: link.id,
+                workspaceId
+              })
+            }
+          }
           setOpen(false)
           setDueDate(null)
           setStartDate(null)
+          setPendingLinks([])
           form.reset({
             title: '',
             description: '',
@@ -171,6 +197,16 @@ export function CreateTodoDialog({
                     className="w-full"
                   />
                 </div>
+              )}
+
+              {!titleOnly && (
+                <PendingLinkPicker
+                  workspaceId={workspaceId}
+                  excludeType="todo"
+                  selected={pendingLinks}
+                  onAdd={handleAddLink}
+                  onRemove={handleRemoveLink}
+                />
               )}
 
               <DialogFooter>

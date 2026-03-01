@@ -6,6 +6,12 @@ import type { CreateScheduleData, UpdateScheduleData, ScheduleDateRange } from '
 
 export function registerScheduleHandlers(): void {
   ipcMain.handle(
+    'schedule:findAllByWorkspace',
+    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
+      handle(() => scheduleService.findAllByWorkspace(workspaceId))
+  )
+
+  ipcMain.handle(
     'schedule:findByWorkspace',
     (_: IpcMainInvokeEvent, workspaceId: string, range: ScheduleDateRange): IpcResponse =>
       handle(() => scheduleService.findByWorkspace(workspaceId, range))

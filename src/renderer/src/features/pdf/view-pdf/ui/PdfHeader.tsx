@@ -3,6 +3,7 @@ import TabHeader from '@shared/ui/tab-header'
 import { useRenamePdfFile, useUpdatePdfMeta, usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 
 interface PdfHeaderProps {
   workspaceId: string
@@ -25,6 +26,13 @@ export function PdfHeader({ workspaceId, pdfId, tabId }: PdfHeaderProps): JSX.El
       iconColor="#ef4444"
       title={pdf?.title ?? ''}
       description={pdf?.description ?? ''}
+      buttons={
+        <LinkedEntityPopoverButton
+          entityType="pdf"
+          entityId={pdfId}
+          workspaceId={workspaceId}
+        />
+      }
       onTitleChange={(title) => {
         renamePdf({ workspaceId, pdfId, newName: title })
         if (tabId) setTabTitle(tabId, title)

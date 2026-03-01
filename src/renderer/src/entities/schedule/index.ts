@@ -6,6 +6,7 @@ export type {
   SchedulePriority,
 } from './model/types'
 export {
+  useAllSchedulesByWorkspace,
   useSchedulesByWorkspace,
   useScheduleById,
   useLinkedTodos,

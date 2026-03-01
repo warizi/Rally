@@ -6,6 +6,7 @@ import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
 import { csvFileRepository } from '../repositories/csv-file'
 import { pdfFileRepository } from '../repositories/pdf-file'
+import { entityLinkRepository } from '../repositories/entity-link'
 import { readDirRecursiveAsync } from './folder'
 import {
   readMdFilesRecursiveAsync,
@@ -304,6 +305,9 @@ class WorkspaceWatcherService {
           orphanCsvPaths.push(...childCsvs.map((c) => c.relativePath))
           orphanPdfPaths.push(...childPdfs.map((p) => p.relativePath))
 
+          for (const n of childNotes) entityLinkRepository.removeAllByEntity('note', n.id)
+          for (const c of childCsvs) entityLinkRepository.removeAllByEntity('csv', c.id)
+          for (const p of childPdfs) entityLinkRepository.removeAllByEntity('pdf', p.id)
           noteRepository.bulkDeleteByPrefix(workspaceId, rel)
           csvFileRepository.bulkDeleteByPrefix(workspaceId, rel)
           pdfFileRepository.bulkDeleteByPrefix(workspaceId, rel)
@@ -399,6 +403,7 @@ class WorkspaceWatcherService {
       const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
       const existing = noteRepository.findByRelativePath(workspaceId, rel)
       if (existing) {
+        entityLinkRepository.removeAllByEntity('note', existing.id)
         noteRepository.delete(existing.id)
       }
     }
@@ -485,6 +490,7 @@ class WorkspaceWatcherService {
       const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
       const existing = csvFileRepository.findByRelativePath(workspaceId, rel)
       if (existing) {
+        entityLinkRepository.removeAllByEntity('csv', existing.id)
         csvFileRepository.delete(existing.id)
       }
     }
@@ -571,6 +577,7 @@ class WorkspaceWatcherService {
       const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
       const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
       if (existing) {
+        entityLinkRepository.removeAllByEntity('pdf', existing.id)
         pdfFileRepository.delete(existing.id)
       }
     }

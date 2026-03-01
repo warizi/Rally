@@ -9,6 +9,7 @@ import { todos } from './todo'
 import { appSettings } from './app-settings'
 import { schedules } from './schedule'
 import { scheduleTodos } from './schedule-todo'
+import { entityLinks } from './entity-link'
 
 export {
   workspaces,
@@ -22,4 +23,5 @@ export {
   appSettings,
   schedules,
   scheduleTodos,
+  entityLinks,
 }

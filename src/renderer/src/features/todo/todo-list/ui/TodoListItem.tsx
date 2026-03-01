@@ -33,6 +33,7 @@ import { useUpdateTodo, useReorderTodoSub } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { EditSubTodoDialog } from '@features/todo/todo-field/ui/EditSubTodoDialog'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 
 const PRIORITY_CLASS: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
@@ -75,7 +76,11 @@ function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
           onCheckedChange={(checked) =>
             updateTodo.mutate(
               { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
-              { onSuccess: () => { if (checked) toast.success(`"${todo.title}" 완료!`) } }
+              {
+                onSuccess: () => {
+                  if (checked) toast.success(`"${todo.title}" 완료!`)
+                }
+              }
             )
           }
         />
@@ -206,7 +211,11 @@ export function TodoListItem({
             onCheckedChange={(checked) =>
               updateTodo.mutate(
                 { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
-                { onSuccess: () => { if (checked) toast.success(`"${todo.title}" 완료!`) } }
+                {
+                  onSuccess: () => {
+                    if (checked) toast.success(`"${todo.title}" 완료!`)
+                  }
+                }
               )
             }
           />
@@ -257,38 +266,45 @@ export function TodoListItem({
           {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString('ko-KR') : '—'}
         </TableCell>
 
-        {/* 더보기 메뉴 */}
-        <TableCell className="w-8 py-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-6 w-6">
-                <MoreHorizontal className="h-3.5 w-3.5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>상세 보기</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onClick={onTitleClick}>현재 탭 열기</DropdownMenuItem>
-                  <DropdownMenuItem onClick={onRightPaneClick}>오른쪽 탭 열기</DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DeleteTodoDialog
-                todoId={todo.id}
-                workspaceId={workspaceId}
-                hasSubTodos={subTodos.length > 0}
-                onDeleted={onDeleted}
-                trigger={
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    삭제
-                  </DropdownMenuItem>
-                }
-              />
-            </DropdownMenuContent>
-          </DropdownMenu>
+        {/* 연결 + 더보기 메뉴 */}
+        <TableCell className="py-2">
+          <div className="flex items-center justify-end gap-0.5">
+            <LinkedEntityPopoverButton
+              entityType="todo"
+              entityId={todo.id}
+              workspaceId={workspaceId}
+            />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>상세 보기</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={onTitleClick}>현재 탭 열기</DropdownMenuItem>
+                    <DropdownMenuItem onClick={onRightPaneClick}>오른쪽 탭 열기</DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DeleteTodoDialog
+                  todoId={todo.id}
+                  workspaceId={workspaceId}
+                  hasSubTodos={subTodos.length > 0}
+                  onDeleted={onDeleted}
+                  trigger={
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => e.preventDefault()}
+                    >
+                      삭제
+                    </DropdownMenuItem>
+                  }
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </TableCell>
       </tr>
 

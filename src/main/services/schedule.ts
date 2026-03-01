@@ -4,6 +4,7 @@ import { scheduleRepository } from '../repositories/schedule'
 import { scheduleTodoRepository } from '../repositories/schedule-todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { todoRepository } from '../repositories/todo'
+import { entityLinkService } from './entity-link'
 import type { Schedule } from '../repositories/schedule'
 import type { Todo } from '../repositories/todo'
 
@@ -127,6 +128,11 @@ function toTodoItem(todo: Todo): TodoItem {
 // === Service ===
 
 export const scheduleService = {
+  findAllByWorkspace(workspaceId: string): ScheduleItem[] {
+    const rows = scheduleRepository.findAllByWorkspaceId(workspaceId)
+    return rows.map(toScheduleItem)
+  },
+
   findByWorkspace(workspaceId: string, range: ScheduleDateRange): ScheduleItem[] {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError('워크스페이스를 찾을 수 없습니다')
@@ -239,6 +245,7 @@ export const scheduleService = {
   remove(scheduleId: string): void {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
+    entityLinkService.removeAllLinks('schedule', scheduleId)
     scheduleRepository.delete(scheduleId)
   },
 

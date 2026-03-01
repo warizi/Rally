@@ -19,6 +19,21 @@ const SCHEDULE_KEY = 'schedule'
 
 // --- Queries ---
 
+export function useAllSchedulesByWorkspace(
+  workspaceId: string | null | undefined
+): UseQueryResult<ScheduleItem[]> {
+  return useQuery({
+    queryKey: [SCHEDULE_KEY, 'workspace', workspaceId, 'all'],
+    queryFn: async (): Promise<ScheduleItem[]> => {
+      const res: IpcResponse<ScheduleItem[]> =
+        await window.api.schedule.findAllByWorkspace(workspaceId!)
+      if (!res.success) throwIpcError(res)
+      return res.data ?? []
+    },
+    enabled: !!workspaceId,
+  })
+}
+
 export function useSchedulesByWorkspace(
   workspaceId: string | null | undefined,
   range: ScheduleDateRange

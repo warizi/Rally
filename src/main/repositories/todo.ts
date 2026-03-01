@@ -116,6 +116,26 @@ export const todoRepository = {
     })()
   },
 
+  findAllDescendantIds(parentId: string): string[] {
+    const result: string[] = []
+    const queue = [parentId]
+
+    while (queue.length > 0) {
+      const currentId = queue.shift()!
+      const children = db
+        .select({ id: todos.id })
+        .from(todos)
+        .where(eq(todos.parentId, currentId))
+        .all()
+      for (const child of children) {
+        result.push(child.id)
+        queue.push(child.id)
+      }
+    }
+
+    return result
+  },
+
   bulkUpdateSubOrder(updates: { id: string; order: number }[]): void {
     if (updates.length === 0) return
     const now = Date.now()

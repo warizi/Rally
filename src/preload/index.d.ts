@@ -317,7 +317,37 @@ interface ScheduleDateRange {
   end: Date
 }
 
+type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv'
+
+interface LinkedEntity {
+  entityType: LinkableEntityType
+  entityId: string
+  title: string
+  linkedAt: Date
+}
+
+interface EntityLinkAPI {
+  link: (
+    typeA: LinkableEntityType,
+    idA: string,
+    typeB: LinkableEntityType,
+    idB: string,
+    workspaceId: string
+  ) => Promise<IpcResponse<void>>
+  unlink: (
+    typeA: LinkableEntityType,
+    idA: string,
+    typeB: LinkableEntityType,
+    idB: string
+  ) => Promise<IpcResponse<void>>
+  getLinked: (
+    entityType: LinkableEntityType,
+    entityId: string
+  ) => Promise<IpcResponse<LinkedEntity[]>>
+}
+
 interface ScheduleAPI {
+  findAllByWorkspace: (workspaceId: string) => Promise<IpcResponse<ScheduleItem[]>>
   findByWorkspace: (
     workspaceId: string,
     range: ScheduleDateRange
@@ -353,6 +383,7 @@ interface API {
   todo: TodoAPI
   settings: SettingsAPI
   schedule: ScheduleAPI
+  entityLink: EntityLinkAPI
 }
 
 declare global {

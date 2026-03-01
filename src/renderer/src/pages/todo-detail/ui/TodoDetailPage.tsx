@@ -13,6 +13,7 @@ import { useTodosByWorkspace, useUpdateTodo } from '@entities/todo'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { TodoDetailFields, SubTodoSection } from '@widgets/todo'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 
 interface Props {
   tabId?: string
@@ -82,6 +83,12 @@ export function TodoDetailPage({ tabId, params }: Props): React.JSX.Element {
             })
           }
           buttons={
+            <div className="flex items-center gap-1">
+            <LinkedEntityPopoverButton
+              entityType="todo"
+              entityId={todo.id}
+              workspaceId={workspaceId!}
+            />
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="size-7">
@@ -108,6 +115,7 @@ export function TodoDetailPage({ tabId, params }: Props): React.JSX.Element {
                 />
               </DropdownMenuContent>
             </DropdownMenu>
+            </div>
           }
         />
       }

@@ -15,6 +15,7 @@ import {
 import { useUpdateTodo, TODO_STATUS } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 
 const PRIORITY_DOT: Record<string, string> = {
   high: 'bg-red-500',
@@ -158,25 +159,32 @@ export function TodoKanbanCard({
         </p>
       )}
 
-      {/* 푸터: 마감일 + sub-todo 토글 */}
+      {/* 푸터: 마감일 + 연결 + sub-todo 토글 */}
       <div className="flex items-center gap-2 mt-2 pl-10">
         {todo.dueDate && (
           <span className="text-xs text-muted-foreground">{formatDueDate(todo.dueDate)}</span>
         )}
+        <span
+          className="ml-auto flex items-center gap-1"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <LinkedEntityPopoverButton
+            entityType="todo"
+            entityId={todo.id}
+            workspaceId={workspaceId}
+          />
+        </span>
         {subTodos.length > 0 && (
           <button
-            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground ml-auto"
+            className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => {
               e.stopPropagation()
               setIsOpen((v) => !v)
             }}
           >
-            {isOpen ? (
-              <ChevronDown className="w-3 h-3" />
-            ) : (
-              <ChevronRight className="w-3 h-3" />
-            )}
+            {isOpen ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
             {doneCount}/{subTodos.length}
           </button>
         )}

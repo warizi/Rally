@@ -169,7 +169,23 @@ const api = {
     set: (key: string, value: string) => ipcRenderer.invoke('settings:set', key, value)
   },
 
+  entityLink: {
+    link: (
+      typeA: string,
+      idA: string,
+      typeB: string,
+      idB: string,
+      workspaceId: string
+    ) => ipcRenderer.invoke('entityLink:link', typeA, idA, typeB, idB, workspaceId),
+    unlink: (typeA: string, idA: string, typeB: string, idB: string) =>
+      ipcRenderer.invoke('entityLink:unlink', typeA, idA, typeB, idB),
+    getLinked: (entityType: string, entityId: string) =>
+      ipcRenderer.invoke('entityLink:getLinked', entityType, entityId),
+  },
+
   schedule: {
+    findAllByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('schedule:findAllByWorkspace', workspaceId),
     findByWorkspace: (workspaceId: string, range: unknown) =>
       ipcRenderer.invoke('schedule:findByWorkspace', workspaceId, range),
     findById: (scheduleId: string) => ipcRenderer.invoke('schedule:findById', scheduleId),

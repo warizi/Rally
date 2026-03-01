@@ -7,6 +7,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readPdfFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
+import { entityLinkService } from './entity-link'
 
 export interface PdfFileNode {
   id: string
@@ -215,6 +216,7 @@ export const pdfFileService = {
     } catch {
       // 이미 외부에서 삭제된 경우 무시
     }
+    entityLinkService.removeAllLinks('pdf', pdfId)
     pdfFileRepository.delete(pdfId)
   },
 

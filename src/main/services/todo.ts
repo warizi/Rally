@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { NotFoundError } from '../lib/errors'
 import { todoRepository } from '../repositories/todo'
 import { workspaceRepository } from '../repositories/workspace'
+import { entityLinkService } from './entity-link'
 
 export interface TodoItem {
   id: string
@@ -200,6 +201,10 @@ export const todoService = {
   remove(todoId: string): void {
     const todo = todoRepository.findById(todoId)
     if (!todo) throw new NotFoundError(`Todo not found: ${todoId}`)
+
+    const subtodoIds = todoRepository.findAllDescendantIds(todoId)
+    entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])
+
     todoRepository.delete(todoId)
   },
 
