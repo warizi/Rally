@@ -2,7 +2,7 @@ import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
 import { useRenamePdfFile, useUpdatePdfMeta, usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
-import { FileText } from 'lucide-react'
+import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 
 interface PdfHeaderProps {
   workspaceId: string
@@ -21,7 +21,7 @@ export function PdfHeader({ workspaceId, pdfId, tabId }: PdfHeaderProps): JSX.El
   return (
     <TabHeader
       editable
-      icon={FileText}
+      icon={PdfIcon}
       iconColor="#ef4444"
       title={pdf?.title ?? ''}
       description={pdf?.description ?? ''}

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-01T00:24:28.448Z",
+  "lastUpdated": "2026-03-01T00:31:16.656Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -42,7 +42,8 @@
     "pdf-viewer",
     "pdf-file.ts",
     "pdf-file",
-    "pdf"
+    "pdf",
+    "icons"
   ],
   "primaryFeature": "pdf-viewer",
   "features": {
@@ -211,9 +212,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T07:08:45.193Z",
-        "lastUpdated": "2026-03-01T00:01:15.190Z"
+        "lastUpdated": "2026-03-01T00:31:16.656Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/model/pane-routes.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/pdf-file/model/use-pdf-watcher.ts"
     },
     "api": {
       "phase": "do",
@@ -302,9 +303,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T14:23:23.726Z",
-        "lastUpdated": "2026-03-01T00:07:07.920Z"
+        "lastUpdated": "2026-03-01T00:31:02.572Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/folder/manage-folder/model/__tests__/use-workspace-tree.test.ts",
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/folder/manage-folder/ui/PdfNodeRenderer.tsx",
       "previousPhase": "check",
       "autoAdvanced": true
     },
@@ -425,7 +426,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T13:07:34.206Z",
-        "lastUpdated": "2026-03-01T00:00:56.492Z"
+        "lastUpdated": "2026-03-01T00:31:00.232Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/tab-url.ts"
     },
@@ -585,9 +586,22 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-01T00:05:31.969Z",
-        "lastUpdated": "2026-03-01T00:05:45.195Z"
+        "lastUpdated": "2026-03-01T00:31:04.641Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/pages/pdf/index.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/pdf/view-pdf/ui/PdfHeader.tsx"
+    },
+    "icons": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-01T00:30:54.122Z",
+        "lastUpdated": "2026-03-01T00:30:54.122Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/ui/icons/PdfIcon.tsx"
     }
   },
   "pipeline": {
@@ -598,7 +612,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-01T00:24:28.448Z"
+    "lastActivity": "2026-03-01T00:31:16.656Z"
   },
   "history": [
     {
@@ -8806,6 +8820,60 @@
     {
       "timestamp": "2026-03-01T00:24:28.448Z",
       "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:30:54.122Z",
+      "feature": "icons",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:30:59.235Z",
+      "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:00.232Z",
+      "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:01.310Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:02.572Z",
+      "feature": "folder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:03.540Z",
+      "feature": "pdf",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:04.641Z",
+      "feature": "pdf",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:15.341Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:31:16.656Z",
+      "feature": "model",
       "phase": "do",
       "action": "updated"
     }

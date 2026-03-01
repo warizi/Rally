@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   Sheet
 } from 'lucide-react'
+import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 
 export type TabType =
   | 'dashboard'
@@ -26,7 +27,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   folder: FolderOpen,
   note: FileText,
   csv: Sheet,
-  pdf: FileText,
+  pdf: PdfIcon,
   calendar: Calendar
 }
 

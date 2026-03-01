@@ -1,6 +1,6 @@
 import { createElement, useEffect, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { FileText } from 'lucide-react'
+import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { toast } from 'sonner'
 import type { PdfFileNode } from './types'
 import { isWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
@@ -37,7 +37,7 @@ export function usePdfWatcher(): void {
                 createElement(
                   'li',
                   { key: p.id, className: 'flex items-center gap-1.5' },
-                  createElement(FileText, { className: 'size-3.5 shrink-0' }),
+                  createElement(PdfIcon, { className: 'size-3.5 shrink-0' }),
                   p.title
                 )
               )
