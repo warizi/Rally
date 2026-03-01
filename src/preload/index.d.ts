@@ -275,6 +275,73 @@ interface SettingsAPI {
   set: (key: string, value: string) => Promise<IpcResponse<void>>
 }
 
+interface ScheduleItem {
+  id: string
+  workspaceId: string | null
+  title: string
+  description: string | null
+  location: string | null
+  allDay: boolean
+  startAt: Date
+  endAt: Date
+  color: string | null
+  priority: 'low' | 'medium' | 'high'
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CreateScheduleData {
+  title: string
+  description?: string | null
+  location?: string | null
+  allDay?: boolean
+  startAt: Date
+  endAt: Date
+  color?: string | null
+  priority?: 'low' | 'medium' | 'high'
+}
+
+interface UpdateScheduleData {
+  title?: string
+  description?: string | null
+  location?: string | null
+  allDay?: boolean
+  startAt?: Date
+  endAt?: Date
+  color?: string | null
+  priority?: 'low' | 'medium' | 'high'
+}
+
+interface ScheduleDateRange {
+  start: Date
+  end: Date
+}
+
+interface ScheduleAPI {
+  findByWorkspace: (
+    workspaceId: string,
+    range: ScheduleDateRange
+  ) => Promise<IpcResponse<ScheduleItem[]>>
+  findById: (scheduleId: string) => Promise<IpcResponse<ScheduleItem>>
+  create: (
+    workspaceId: string,
+    data: CreateScheduleData
+  ) => Promise<IpcResponse<ScheduleItem>>
+  update: (
+    scheduleId: string,
+    data: UpdateScheduleData
+  ) => Promise<IpcResponse<ScheduleItem>>
+  remove: (scheduleId: string) => Promise<IpcResponse<void>>
+  move: (
+    scheduleId: string,
+    startAt: Date,
+    endAt: Date
+  ) => Promise<IpcResponse<ScheduleItem>>
+  linkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
+  unlinkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
+  getLinkedTodos: (scheduleId: string) => Promise<IpcResponse<TodoItem[]>>
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -285,6 +352,7 @@ interface API {
   workspace: WorkspaceAPI
   todo: TodoAPI
   settings: SettingsAPI
+  schedule: ScheduleAPI
 }
 
 declare global {

@@ -26,6 +26,7 @@ const FolderPage = lazy(() => import('@/pages/folder'))
 const NotePage = lazy(() => import('@pages/note'))
 const CsvPage = lazy(() => import('@pages/csv'))
 const PdfPage = lazy(() => import('@pages/pdf'))
+const CalendarPage = lazy(() => import('@pages/calendar'))
 
 export const PANE_ROUTES: PaneRoute[] = [
   {
@@ -55,5 +56,9 @@ export const PANE_ROUTES: PaneRoute[] = [
   {
     pattern: ROUTES.PDF_DETAIL,
     component: PdfPage
+  },
+  {
+    pattern: ROUTES.CALENDAR,
+    component: CalendarPage
   }
 ]
