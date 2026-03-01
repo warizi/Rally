@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-01T00:12:26.750Z",
+  "lastUpdated": "2026-03-01T00:24:28.448Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -94,9 +94,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:49:14.086Z",
-        "lastUpdated": "2026-02-28T22:31:17.726Z"
+        "lastUpdated": "2026-03-01T00:24:28.448Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/csv-viewer/model/__tests__/use-csv-column-resize.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/pdf-file.test.ts"
     },
     "tab-system": {
       "phase": "do",
@@ -598,7 +598,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-01T00:12:26.750Z"
+    "lastActivity": "2026-03-01T00:24:28.448Z"
   },
   "history": [
     {
@@ -8794,6 +8794,18 @@
     {
       "timestamp": "2026-03-01T00:12:26.750Z",
       "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:23:41.744Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-01T00:24:28.448Z",
+      "feature": "__tests__",
       "phase": "do",
       "action": "updated"
     }
