@@ -63,6 +63,47 @@ export function CreateTodoDialog({
   }
 
   function onSubmit(values: FormValues): void {
+    // 시작일/마감일 시간 기본값 설정
+    let finalStart = startDate
+    let finalDue = dueDate
+
+    if (finalStart && finalDue) {
+      const sameDay =
+        finalStart.getFullYear() === finalDue.getFullYear() &&
+        finalStart.getMonth() === finalDue.getMonth() &&
+        finalStart.getDate() === finalDue.getDate()
+
+      if (sameDay) {
+        // 같은 날: 시간 미설정(00:00)이면 09:00-10:00 기본값
+        if (finalStart.getHours() === 0 && finalStart.getMinutes() === 0) {
+          finalStart = new Date(finalStart)
+          finalStart.setHours(9, 0, 0, 0)
+        }
+        if (
+          finalDue.getHours() === 0 && finalDue.getMinutes() === 0
+        ) {
+          finalDue = new Date(finalDue)
+          finalDue.setHours(10, 0, 0, 0)
+        }
+      }
+    } else if (finalStart && !finalDue) {
+      // 시작일만 있으면 마감일 = 시작일 + 1시간
+      if (finalStart.getHours() === 0 && finalStart.getMinutes() === 0) {
+        finalStart = new Date(finalStart)
+        finalStart.setHours(9, 0, 0, 0)
+      }
+      finalDue = new Date(finalStart)
+      finalDue.setHours(finalStart.getHours() + 1, finalStart.getMinutes(), 0, 0)
+    } else if (!finalStart && finalDue) {
+      // 마감일만 있으면 시작일 = 마감일 - 1시간
+      if (finalDue.getHours() === 0 && finalDue.getMinutes() === 0) {
+        finalDue = new Date(finalDue)
+        finalDue.setHours(10, 0, 0, 0)
+      }
+      finalStart = new Date(finalDue)
+      finalStart.setHours(finalDue.getHours() - 1, finalDue.getMinutes(), 0, 0)
+    }
+
     createTodo.mutate(
       {
         workspaceId,
@@ -72,8 +113,8 @@ export function CreateTodoDialog({
           status: values.status,
           priority: values.priority,
           parentId: parentId ?? null,
-          dueDate,
-          startDate
+          dueDate: finalDue,
+          startDate: finalStart
         }
       },
       {

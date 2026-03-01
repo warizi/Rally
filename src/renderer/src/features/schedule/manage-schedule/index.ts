@@ -10,6 +10,7 @@ export {
   layoutOverlappingSchedules,
   moveScheduleByDays,
   moveScheduleByMinutes,
+  isTodoItem,
   type MonthGridDay,
   type TimeSlot,
   type LayoutedSchedule,

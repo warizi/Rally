@@ -1,6 +1,7 @@
 import { useDraggable } from '@dnd-kit/core'
 import type { ScheduleItem } from '@entities/schedule'
 import { getScheduleColor } from '../model/schedule-color'
+import { isTodoItem } from '../model/calendar-utils'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 
 interface Props {
@@ -28,9 +29,10 @@ export function ScheduleBar({
 }: Props): React.JSX.Element {
   const color = getScheduleColor(schedule)
 
+  const isTodo = isTodoItem(schedule)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `bar-${schedule.id}`,
-    data: { schedule, type: 'bar' },
+    data: { schedule, type: 'bar' }
   })
 
   const style: React.CSSProperties = {
@@ -39,7 +41,8 @@ export function ScheduleBar({
     left: `${(startCol / 7) * 100}%`,
     width: `${(span / 7) * 100}%`,
     height: barHeight,
-    backgroundColor: `${color}20`,
+    backgroundColor: isTodo ? 'transparent' : `${color}20`,
+    border: isTodo ? `1px solid ${color}50` : undefined,
     color,
     opacity: isDragging ? 0.4 : 1,
   }
@@ -57,6 +60,7 @@ export function ScheduleBar({
         `}
         style={style}
       >
+        {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
         {schedule.title}
       </div>
     </ScheduleDetailPopover>

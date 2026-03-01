@@ -12,11 +12,13 @@ import {
 import { differenceInCalendarDays } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import { useMoveSchedule } from '@entities/schedule'
+import { useUpdateTodo } from '@entities/todo'
 import {
   isScheduleOnDate,
   layoutOverlappingSchedules,
   timeToPosition,
-  scheduleHeight
+  scheduleHeight,
+  isTodoItem
 } from '../model/calendar-utils'
 import { getScheduleColor } from '../model/schedule-color'
 import { ScheduleBlock } from './ScheduleBlock'
@@ -32,6 +34,7 @@ interface Props {
 
 export function DayView({ schedules, currentDate, workspaceId }: Props): React.JSX.Element {
   const moveSchedule = useMoveSchedule()
+  const updateTodo = useUpdateTodo()
   const [activeSchedule, setActiveSchedule] = useState<ScheduleItem | null>(null)
   const [activeType, setActiveType] = useState<DragItemType>('block')
   const [previewDelta, setPreviewDelta] = useState(0)
@@ -117,12 +120,33 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
     if (minutesDelta === 0) return
 
     const msOffset = minutesDelta * 60 * 1000
-    moveSchedule.mutate({
-      scheduleId: schedule.id,
-      startAt: new Date(schedule.startAt.getTime() + msOffset),
-      endAt: new Date(schedule.endAt.getTime() + msOffset),
-      workspaceId
-    })
+
+    if (isTodoItem(schedule)) {
+      // 시간만 변경하고 원래 날짜는 유지
+      const clamp = clampMap.get(schedule.id)
+      const baseStart = clamp?.start ?? schedule.startAt
+      const baseEnd = clamp?.end ?? schedule.endAt
+      const movedStart = new Date(baseStart.getTime() + msOffset)
+      const movedEnd = new Date(baseEnd.getTime() + msOffset)
+
+      const newStart = new Date(schedule.startAt)
+      newStart.setHours(movedStart.getHours(), movedStart.getMinutes(), 0, 0)
+      const newEnd = new Date(schedule.endAt)
+      newEnd.setHours(movedEnd.getHours(), movedEnd.getMinutes(), 0, 0)
+
+      updateTodo.mutate({
+        workspaceId,
+        todoId: schedule.id.slice(5),
+        data: { startDate: newStart, dueDate: newEnd }
+      })
+    } else {
+      moveSchedule.mutate({
+        scheduleId: schedule.id,
+        startAt: new Date(schedule.startAt.getTime() + msOffset),
+        endAt: new Date(schedule.endAt.getTime() + msOffset),
+        workspaceId
+      })
+    }
   }
 
   function handleResizeStart(
@@ -145,13 +169,34 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
 
       if (delta !== 0) {
         const msOffset = delta * 60 * 1000
-        moveSchedule.mutate({
-          scheduleId: schedule.id,
-          startAt:
-            edge === 'top' ? new Date(schedule.startAt.getTime() + msOffset) : schedule.startAt,
-          endAt: edge === 'bottom' ? new Date(schedule.endAt.getTime() + msOffset) : schedule.endAt,
-          workspaceId
-        })
+
+        if (isTodoItem(schedule)) {
+          const clamp = clampMap.get(schedule.id)
+          const baseStart = clamp?.start ?? schedule.startAt
+          const baseEnd = clamp?.end ?? schedule.endAt
+          const movedStart = edge === 'top' ? new Date(baseStart.getTime() + msOffset) : baseStart
+          const movedEnd = edge === 'bottom' ? new Date(baseEnd.getTime() + msOffset) : baseEnd
+
+          const newStart = new Date(schedule.startAt)
+          newStart.setHours(movedStart.getHours(), movedStart.getMinutes(), 0, 0)
+          const newEnd = new Date(schedule.endAt)
+          newEnd.setHours(movedEnd.getHours(), movedEnd.getMinutes(), 0, 0)
+
+          updateTodo.mutate({
+            workspaceId,
+            todoId: schedule.id.slice(5),
+            data: { startDate: newStart, dueDate: newEnd }
+          })
+        } else {
+          moveSchedule.mutate({
+            scheduleId: schedule.id,
+            startAt:
+              edge === 'top' ? new Date(schedule.startAt.getTime() + msOffset) : schedule.startAt,
+            endAt:
+              edge === 'bottom' ? new Date(schedule.endAt.getTime() + msOffset) : schedule.endAt,
+            workspaceId
+          })
+        }
       }
 
       setResizing(null)
@@ -184,10 +229,12 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                 <div
                   className="text-xs truncate rounded px-1.5 py-0.5 cursor-pointer"
                   style={{
-                    backgroundColor: `${getScheduleColor(s)}20`,
+                    backgroundColor: isTodoItem(s) ? 'transparent' : `${getScheduleColor(s)}20`,
+                    border: isTodoItem(s) ? `1px solid ${getScheduleColor(s)}50` : undefined,
                     color: getScheduleColor(s)
                   }}
                 >
+                  {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
                   {s.title}
                 </div>
               </ScheduleDetailPopover>

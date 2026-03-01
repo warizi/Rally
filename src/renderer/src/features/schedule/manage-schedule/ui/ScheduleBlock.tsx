@@ -2,7 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { format } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import { getScheduleColor } from '../model/schedule-color'
-import { timeToPosition, scheduleHeight } from '../model/calendar-utils'
+import { timeToPosition, scheduleHeight, isTodoItem } from '../model/calendar-utils'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 
 interface Props {
@@ -40,6 +40,7 @@ export function ScheduleBlock({
   const top = timeToPosition(effectiveStart, hourHeight)
   const height = scheduleHeight(effectiveStart, effectiveEnd, hourHeight)
 
+  const isTodo = isTodoItem(schedule)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `block-${schedule.id}`,
     data: { schedule, type: 'block' }
@@ -68,12 +69,18 @@ export function ScheduleBlock({
         className="absolute cursor-pointer rounded-sm flex overflow-hidden"
         style={{
           ...style,
-          backgroundColor: `${color}20`
+          backgroundColor: isTodo ? 'transparent' : `${color}20`,
+          border: isTodo ? `1px solid ${color}50` : undefined
         }}
       >
-        <div className="shrink-0 w-[4px] rounded-l-sm" style={{ backgroundColor: color }} />
+        {!isTodo && (
+          <div className="shrink-0 w-[4px] rounded-l-sm" style={{ backgroundColor: color }} />
+        )}
         <div className="flex-1 min-w-0 px-1 py-0.5">
-          <div className="text-[11px] font-medium truncate leading-tight">{schedule.title}</div>
+          <div className="text-[11px] font-medium truncate leading-tight">
+            {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
+            {schedule.title}
+          </div>
           {showTime && (
             <div className="text-[10px] text-muted-foreground truncate">
               {format(schedule.startAt, 'HH:mm')} ~ {format(schedule.endAt, 'HH:mm')}

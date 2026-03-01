@@ -220,6 +220,12 @@ export function layoutOverlappingSchedules(
   })
 }
 
+// === Todo 판별 ===
+
+export function isTodoItem(schedule: ScheduleItem): boolean {
+  return schedule.id.startsWith('todo:')
+}
+
 // === DnD 유틸 ===
 
 export function moveScheduleByDays(

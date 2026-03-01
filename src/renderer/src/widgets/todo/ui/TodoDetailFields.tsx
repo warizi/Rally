@@ -46,9 +46,13 @@ export function TodoDetailFields({ todo, workspaceId }: Props): React.JSX.Elemen
         <Label title="시작일">
           <DatePickerButton
             value={todo.startDate ? new Date(todo.startDate) : null}
-            onChange={(date) =>
+            onChange={(date) => {
+              if (date && todo.startDate) {
+                const prev = new Date(todo.startDate)
+                date.setHours(prev.getHours(), prev.getMinutes(), prev.getSeconds(), 0)
+              }
               updateTodo.mutate({ workspaceId, todoId: todo.id, data: { startDate: date } })
-            }
+            }}
             placeholder="날짜 없음"
             className="min-w-[140px]"
           />
@@ -58,9 +62,13 @@ export function TodoDetailFields({ todo, workspaceId }: Props): React.JSX.Elemen
         <Label title="마감일">
           <DatePickerButton
             value={todo.dueDate ? new Date(todo.dueDate) : null}
-            onChange={(date) =>
+            onChange={(date) => {
+              if (date && todo.dueDate) {
+                const prev = new Date(todo.dueDate)
+                date.setHours(prev.getHours(), prev.getMinutes(), prev.getSeconds(), 0)
+              }
               updateTodo.mutate({ workspaceId, todoId: todo.id, data: { dueDate: date } })
-            }
+            }}
             placeholder="날짜 없음"
             className="min-w-[140px]"
           />

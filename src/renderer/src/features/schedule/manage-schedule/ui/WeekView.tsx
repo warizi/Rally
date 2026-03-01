@@ -14,8 +14,9 @@ import {
 import { format, isSameDay, differenceInCalendarDays, startOfDay, endOfDay, getDay } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import { useMoveSchedule } from '@entities/schedule'
+import { useUpdateTodo } from '@entities/todo'
 import { ScrollArea } from '@shared/ui/scroll-area'
-import { getWeekDates, isScheduleOnDate } from '../model/calendar-utils'
+import { getWeekDates, isScheduleOnDate, isTodoItem } from '../model/calendar-utils'
 import { getScheduleColor } from '../model/schedule-color'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 import { ScheduleDragOverlay, type DragItemType } from './ScheduleDragOverlay'
@@ -100,6 +101,7 @@ export function WeekView({
   workspaceId
 }: Props): React.JSX.Element {
   const moveSchedule = useMoveSchedule()
+  const updateTodo = useUpdateTodo()
   const [activeSchedule, setActiveSchedule] = useState<ScheduleItem | null>(null)
   const [activeType, setActiveType] = useState<DragItemType>('single')
   const [activeWidth, setActiveWidth] = useState<number | undefined>(undefined)
@@ -166,12 +168,23 @@ export function WeekView({
       differenceInCalendarDays(targetDate, startOfDay(schedule.startAt)) - grabDayOffsetRef.current
     if (daysDelta === 0) return
 
-    moveSchedule.mutate({
-      scheduleId: schedule.id,
-      startAt: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
-      endAt: new Date(schedule.endAt.getTime() + daysDelta * 86400000),
-      workspaceId
-    })
+    if (isTodoItem(schedule)) {
+      updateTodo.mutate({
+        workspaceId,
+        todoId: schedule.id.slice(5),
+        data: {
+          startDate: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
+          dueDate: new Date(schedule.endAt.getTime() + daysDelta * 86400000)
+        }
+      })
+    } else {
+      moveSchedule.mutate({
+        scheduleId: schedule.id,
+        startAt: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
+        endAt: new Date(schedule.endAt.getTime() + daysDelta * 86400000),
+        workspaceId
+      })
+    }
   }
 
   return (
@@ -359,6 +372,7 @@ function WeekBarItem({
 }): React.JSX.Element {
   const color = getScheduleColor(schedule)
 
+  const isTodo = isTodoItem(schedule)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `week-bar-${schedule.id}`,
     data: { schedule, type: 'bar', span }
@@ -387,11 +401,13 @@ function WeekBarItem({
           left: `${(startCol / 7) * 100}%`,
           width: `${(span / 7) * 100}%`,
           height: BAR_HEIGHT,
-          backgroundColor: `${color}20`,
+          backgroundColor: isTodo ? 'transparent' : `${color}20`,
+          border: isTodo ? `1px solid ${color}50` : undefined,
           color,
           opacity: isDragging ? 0.4 : 1
         }}
       >
+        {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
         {schedule.title}
       </div>
     </ScheduleDetailPopover>
@@ -433,10 +449,12 @@ function WeekDayCell({
             <div
               className="text-[10px] @[800px]:text-[11px] truncate rounded px-1 py-px cursor-pointer"
               style={{
-                backgroundColor: `${getScheduleColor(s)}20`,
+                backgroundColor: isTodoItem(s) ? 'transparent' : `${getScheduleColor(s)}20`,
+                border: isTodoItem(s) ? `1px solid ${getScheduleColor(s)}50` : undefined,
                 color: getScheduleColor(s)
               }}
             >
+              {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
               {!s.allDay && (
                 <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
               )}
@@ -511,9 +529,15 @@ function SmallDayList({
             <div className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-accent rounded px-1 py-0.5">
               <div
                 className="size-2 rounded-full shrink-0"
-                style={{ backgroundColor: getScheduleColor(s) }}
+                style={{
+                  backgroundColor: isTodoItem(s) ? 'transparent' : getScheduleColor(s),
+                  border: isTodoItem(s) ? `1.5px solid ${getScheduleColor(s)}` : undefined
+                }}
               />
-              <span className="truncate">{s.title}</span>
+              <span className="truncate">
+                {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
+                {s.title}
+              </span>
               {!s.allDay && (
                 <span className="text-muted-foreground shrink-0 ml-auto">
                   {format(s.startAt, 'HH:mm')}

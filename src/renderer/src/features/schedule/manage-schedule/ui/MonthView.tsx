@@ -13,10 +13,12 @@ import { format, isSameDay, differenceInCalendarDays, startOfDay } from 'date-fn
 import { useDraggable } from '@dnd-kit/core'
 import type { ScheduleItem } from '@entities/schedule'
 import { useMoveSchedule } from '@entities/schedule'
+import { useUpdateTodo } from '@entities/todo'
 import {
   getMonthGrid,
   isScheduleOnDate,
   splitBarByWeeks,
+  isTodoItem,
   type MonthGridDay,
   type WeekBarSegment
 } from '../model/calendar-utils'
@@ -81,6 +83,7 @@ export function MonthView({
   workspaceId
 }: Props): React.JSX.Element {
   const moveSchedule = useMoveSchedule()
+  const updateTodo = useUpdateTodo()
   const [activeSchedule, setActiveSchedule] = useState<ScheduleItem | null>(null)
   const [activeType, setActiveType] = useState<DragItemType>('bar')
   const [overDate, setOverDate] = useState<Date | null>(null)
@@ -152,12 +155,23 @@ export function MonthView({
       differenceInCalendarDays(targetDate, startOfDay(schedule.startAt)) - grabDayOffset
     if (daysDelta === 0) return
 
-    moveSchedule.mutate({
-      scheduleId: schedule.id,
-      startAt: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
-      endAt: new Date(schedule.endAt.getTime() + daysDelta * 86400000),
-      workspaceId
-    })
+    if (isTodoItem(schedule)) {
+      updateTodo.mutate({
+        workspaceId,
+        todoId: schedule.id.slice(5),
+        data: {
+          startDate: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
+          dueDate: new Date(schedule.endAt.getTime() + daysDelta * 86400000)
+        }
+      })
+    } else {
+      moveSchedule.mutate({
+        scheduleId: schedule.id,
+        startAt: new Date(schedule.startAt.getTime() + daysDelta * 86400000),
+        endAt: new Date(schedule.endAt.getTime() + daysDelta * 86400000),
+        workspaceId
+      })
+    }
   }
 
   return (
@@ -169,7 +183,7 @@ export function MonthView({
       onDragEnd={handleDragEnd}
     >
       <div className="flex flex-col flex-1 overflow-auto items-center">
-        <div className="w-full" style={{ aspectRatio: '8 / 10' }}>
+        <div className="w-full">
           {/* 요일 헤더 */}
           <div className="grid grid-cols-7 border-b border-border">
             {WEEKDAY_LABELS.map((label, i) => (
@@ -186,8 +200,7 @@ export function MonthView({
           <div
             className="grid border-l border-t border-border"
             style={{
-              gridTemplateRows: `repeat(${grid.length}, 1fr)`,
-              height: 'calc(100% - 28px)'
+              gridTemplateRows: `repeat(${grid.length}, minmax(80px, auto))`
             }}
           >
             {grid.map((week, weekIdx) => {
@@ -330,6 +343,7 @@ function MonthBarItem({
 }): React.JSX.Element {
   const color = getScheduleColor(schedule)
 
+  const isTodo = isTodoItem(schedule)
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `bar-${schedule.id}-w${weekIdx}`,
     data: { schedule, type: 'bar' }
@@ -359,11 +373,13 @@ function MonthBarItem({
             left: `${(startCol / 7) * 100}%`,
             width: `${(span / 7) * 100}%`,
             height: BAR_HEIGHT,
-            backgroundColor: `${color}20`,
+            backgroundColor: isTodo ? 'transparent' : `${color}20`,
+            border: isTodo ? `1px solid ${color}50` : undefined,
             color,
             opacity: isDragging ? 0.4 : 1
           }}
         >
+          {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
           {schedule.title}
         </div>
       </ScheduleDetailPopover>
@@ -439,30 +455,24 @@ function CellContent({
         className="hidden @[400px]:block space-y-px"
         style={{ marginTop: barPadding > 0 ? barPadding + 2 : 4 }}
       >
-        {daySchedules.slice(0, 4).map((s, idx) => (
+        {daySchedules.map((s) => (
           <DraggableScheduleItem key={s.id} schedule={s} dayKey={dayKey}>
-            <div className={idx >= 3 ? 'hidden @[800px]:block' : ''}>
-              <ScheduleDetailPopover schedule={s} workspaceId={workspaceId}>
-                <div
-                  className="text-[10px] @[800px]:text-[11px] truncate rounded px-0.5 py-px cursor-pointer"
-                  style={{
-                    backgroundColor: `${getScheduleColor(s)}20`,
-                    color: getScheduleColor(s)
-                  }}
-                >
-                  <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
-                  {s.title}
-                </div>
-              </ScheduleDetailPopover>
-            </div>
+            <ScheduleDetailPopover schedule={s} workspaceId={workspaceId}>
+              <div
+                className="text-[10px] @[800px]:text-[11px] truncate rounded px-0.5 py-px cursor-pointer"
+                style={{
+                  backgroundColor: isTodoItem(s) ? 'transparent' : `${getScheduleColor(s)}20`,
+                  border: isTodoItem(s) ? `1px solid ${getScheduleColor(s)}50` : undefined,
+                  color: getScheduleColor(s)
+                }}
+              >
+                {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
+                <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
+                {s.title}
+              </div>
+            </ScheduleDetailPopover>
           </DraggableScheduleItem>
         ))}
-        {daySchedules.length > 3 && (
-          <div className="text-[10px] text-muted-foreground px-0.5 @[800px]:hidden">...</div>
-        )}
-        {daySchedules.length > 4 && (
-          <div className="hidden @[800px]:block text-[10px] text-muted-foreground px-0.5">...</div>
-        )}
       </div>
     </div>
   )
@@ -491,9 +501,15 @@ function SelectedDateList({
           <div className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-accent rounded px-1 py-0.5">
             <div
               className="size-2 rounded-full shrink-0"
-              style={{ backgroundColor: getScheduleColor(s) }}
+              style={{
+                backgroundColor: isTodoItem(s) ? 'transparent' : getScheduleColor(s),
+                border: isTodoItem(s) ? `1.5px solid ${getScheduleColor(s)}` : undefined
+              }}
             />
-            <span className="truncate">{s.title}</span>
+            <span className="truncate">
+              {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
+              {s.title}
+            </span>
             {!s.allDay && (
               <span className="text-muted-foreground shrink-0 ml-auto">
                 {format(s.startAt, 'HH:mm')}

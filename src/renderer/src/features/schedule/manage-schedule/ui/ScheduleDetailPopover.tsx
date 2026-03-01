@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Calendar, Clock, MapPin, FileText, Pencil, Trash2 } from 'lucide-react'
+import { Calendar, Clock, MapPin, FileText, Pencil, Trash2, CheckSquare } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
 import type { ScheduleItem } from '@entities/schedule'
 import { getScheduleColor } from '../model/schedule-color'
+import { isTodoItem } from '../model/calendar-utils'
 import { ScheduleFormDialog } from './ScheduleFormDialog'
 import { DeleteScheduleDialog } from './DeleteScheduleDialog'
 
@@ -24,6 +25,7 @@ export function ScheduleDetailPopover({
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const color = getScheduleColor(schedule)
+  const isTodo = isTodoItem(schedule)
 
   function formatDateRange(): string {
     if (schedule.allDay) {
@@ -52,7 +54,15 @@ export function ScheduleDetailPopover({
                 className="size-3 rounded-full mt-1 shrink-0"
                 style={{ backgroundColor: color }}
               />
-              <span className="font-semibold text-sm leading-snug">{schedule.title}</span>
+              <div className="flex-1 min-w-0">
+                <span className="font-semibold text-sm leading-snug">{schedule.title}</span>
+                {isTodo && (
+                  <span className="inline-flex items-center gap-0.5 ml-1.5 text-[10px] text-muted-foreground bg-muted rounded px-1 py-px align-middle">
+                    <CheckSquare className="size-2.5" />
+                    할 일
+                  </span>
+                )}
+              </div>
             </div>
 
             <div className="space-y-1.5 text-xs text-muted-foreground">
@@ -82,44 +92,50 @@ export function ScheduleDetailPopover({
               )}
             </div>
 
-            <div className="flex justify-end gap-1 pt-1 border-t">
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => {
-                  setOpen(false)
-                  setEditOpen(true)
-                }}
-              >
-                <Pencil className="size-3.5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={() => {
-                  setOpen(false)
-                  setDeleteOpen(true)
-                }}
-              >
-                <Trash2 className="size-3.5" />
-              </Button>
-            </div>
+            {!isTodo && (
+              <div className="flex justify-end gap-1 pt-1 border-t">
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    setOpen(false)
+                    setEditOpen(true)
+                  }}
+                >
+                  <Pencil className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon-xs"
+                  onClick={() => {
+                    setOpen(false)
+                    setDeleteOpen(true)
+                  }}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            )}
           </div>
         </PopoverContent>
       </Popover>
 
-      <ScheduleFormDialog
-        workspaceId={workspaceId}
-        initialData={schedule}
-        open={editOpen}
-        onOpenChange={setEditOpen}
-      />
-      <DeleteScheduleDialog
-        scheduleId={schedule.id}
-        workspaceId={workspaceId}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      {!isTodo && (
+        <>
+          <ScheduleFormDialog
+            workspaceId={workspaceId}
+            initialData={schedule}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+          />
+          <DeleteScheduleDialog
+            scheduleId={schedule.id}
+            workspaceId={workspaceId}
+            open={deleteOpen}
+            onOpenChange={setDeleteOpen}
+          />
+        </>
+      )}
     </>
   )
 }

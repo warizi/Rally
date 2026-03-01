@@ -1,7 +1,16 @@
-import { addDays, addMonths, addWeeks, subDays, subMonths, subWeeks } from 'date-fns'
+import { useMemo } from 'react'
+import {
+  addDays,
+  addMonths,
+  addWeeks,
+  subDays,
+  subMonths,
+  subWeeks
+} from 'date-fns'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
-import { useSchedulesByWorkspace } from '@entities/schedule'
+import { useSchedulesByWorkspace, type ScheduleItem } from '@entities/schedule'
+import { useTodosByWorkspace, type TodoItem } from '@entities/todo'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { Button } from '@shared/ui/button'
@@ -15,6 +24,40 @@ import {
   useCalendar,
   type CalendarViewType
 } from '@features/schedule/manage-schedule'
+
+function todoToScheduleItem(todo: TodoItem): ScheduleItem {
+  const start = todo.startDate ?? todo.dueDate!
+  const end = todo.dueDate ?? todo.startDate!
+
+  // 시간이 00:00인 경우(기존 데이터) → 09:00 기본값
+  const startAt = new Date(start)
+  const endAt = new Date(end)
+
+  if (startAt.getHours() === 0 && startAt.getMinutes() === 0) {
+    startAt.setHours(9, 0, 0, 0)
+  }
+  if (
+    (endAt.getHours() === 0 && endAt.getMinutes() === 0) ||
+    (endAt.getHours() === 23 && endAt.getMinutes() === 59)
+  ) {
+    endAt.setHours(10, 0, 0, 0)
+  }
+
+  return {
+    id: `todo:${todo.id}`,
+    workspaceId: todo.workspaceId,
+    title: todo.title,
+    description: todo.description || null,
+    location: null,
+    allDay: false,
+    startAt,
+    endAt,
+    color: null,
+    priority: todo.priority,
+    createdAt: todo.createdAt,
+    updatedAt: todo.updatedAt
+  }
+}
 
 interface Props {
   tabId?: string
@@ -31,6 +74,14 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
   })
 
   const { data: schedules = [] } = useSchedulesByWorkspace(workspaceId, calendar.dateRange)
+  const { data: todos = [] } = useTodosByWorkspace(workspaceId, { filter: 'active' })
+
+  const allSchedules = useMemo(() => {
+    const todoSchedules = todos
+      .filter((t) => t.startDate || t.dueDate)
+      .map((t) => todoToScheduleItem(t))
+    return [...schedules, ...todoSchedules]
+  }, [schedules, todos])
 
   function handleViewTypeChange(type: CalendarViewType): void {
     calendar.setViewType(type)
@@ -123,7 +174,7 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
           </div>
           {calendar.viewType === 'month' && (
             <MonthView
-              schedules={schedules}
+              schedules={allSchedules}
               currentDate={calendar.currentDate}
               selectedDate={calendar.selectedDate}
               onSelectDate={handleSelectDate}
@@ -132,7 +183,7 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
           )}
           {calendar.viewType === 'week' && (
             <WeekView
-              schedules={schedules}
+              schedules={allSchedules}
               currentDate={calendar.currentDate}
               selectedDate={calendar.selectedDate}
               onSelectDate={handleSelectDate}
@@ -141,7 +192,7 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
           )}
           {calendar.viewType === 'day' && (
             <DayView
-              schedules={schedules}
+              schedules={allSchedules}
               currentDate={calendar.currentDate}
               workspaceId={workspaceId}
             />
