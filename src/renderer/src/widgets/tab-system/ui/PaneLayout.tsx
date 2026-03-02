@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useMemo } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef } from 'react'
 import { PaneContainer } from './PaneContainer'
 import { LayoutNode, SplitDirection, SplitNode } from '@/entities/tab-system'
 import {
@@ -49,17 +49,29 @@ function SplitContainerRenderer({
   const updateLayoutSizes = useTabStore((state) => state.updateLayoutSizes)
   const orientation = toOrientation(node.direction)
 
+  const rafRef = useRef(0)
+  const nodeRef = useRef(node)
+  nodeRef.current = node
+
+  useEffect(() => {
+    return () => cancelAnimationFrame(rafRef.current)
+  }, [])
+
   const handleLayoutChanged = useCallback(
     (layout: { [id: string]: number }) => {
-      const newSizes = node.children.map(
-        (child) => layout[child.id] ?? node.sizes[node.children.indexOf(child)]
-      )
-      const hasChanged = newSizes.some((size, i) => size !== node.sizes[i])
-      if (hasChanged) {
-        updateLayoutSizes(node.id, newSizes)
-      }
+      cancelAnimationFrame(rafRef.current)
+      rafRef.current = requestAnimationFrame(() => {
+        const cur = nodeRef.current
+        const newSizes = cur.children.map(
+          (child) => layout[child.id] ?? cur.sizes[cur.children.indexOf(child)]
+        )
+        const hasChanged = newSizes.some((size, i) => Math.abs(size - cur.sizes[i]) > 0.01)
+        if (hasChanged) {
+          updateLayoutSizes(cur.id, newSizes)
+        }
+      })
     },
-    [node.id, node.children, node.sizes, updateLayoutSizes]
+    [updateLayoutSizes]
   )
 
   return (
