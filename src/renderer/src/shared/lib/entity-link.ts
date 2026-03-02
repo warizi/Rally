@@ -1,7 +1,7 @@
-import { Check, Calendar, FileText, Sheet } from 'lucide-react'
+import { Check, Calendar, FileText, ImageIcon, Sheet } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 
-export type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv'
+export type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv' | 'image'
 
 export interface LinkedEntity {
   entityType: LinkableEntityType
@@ -15,7 +15,8 @@ export const ENTITY_TYPE_LABEL: Record<LinkableEntityType, string> = {
   schedule: '일정',
   note: '노트',
   pdf: 'PDF',
-  csv: 'CSV'
+  csv: 'CSV',
+  image: '이미지'
 }
 
 export const ENTITY_TYPE_ICON: Record<LinkableEntityType, React.ElementType> = {
@@ -23,5 +24,6 @@ export const ENTITY_TYPE_ICON: Record<LinkableEntityType, React.ElementType> = {
   schedule: Calendar,
   note: FileText,
   pdf: PdfIcon,
-  csv: Sheet
+  csv: Sheet,
+  image: ImageIcon
 }

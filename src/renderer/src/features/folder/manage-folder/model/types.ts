@@ -41,4 +41,15 @@ export interface PdfTreeNode {
   order: number
 }
 
-export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode | CsvTreeNode | PdfTreeNode
+export interface ImageTreeNode {
+  kind: 'image'
+  id: string
+  name: string
+  relativePath: string
+  description: string
+  preview: string
+  folderId: string | null
+  order: number
+}
+
+export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode | CsvTreeNode | PdfTreeNode | ImageTreeNode

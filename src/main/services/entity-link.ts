@@ -3,6 +3,7 @@ import { todoRepository } from '../repositories/todo'
 import { scheduleRepository } from '../repositories/schedule'
 import { noteRepository } from '../repositories/note'
 import { pdfFileRepository } from '../repositories/pdf-file'
+import { imageFileRepository } from '../repositories/image-file'
 import { csvFileRepository } from '../repositories/csv-file'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import type { LinkableEntityType } from '../db/schema/entity-link'
@@ -29,6 +30,8 @@ function findEntity(
       return pdfFileRepository.findById(id)
     case 'csv':
       return csvFileRepository.findById(id)
+    case 'image':
+      return imageFileRepository.findById(id)
   }
 }
 

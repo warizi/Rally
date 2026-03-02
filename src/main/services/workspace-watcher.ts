@@ -6,12 +6,15 @@ import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
 import { csvFileRepository } from '../repositories/csv-file'
 import { pdfFileRepository } from '../repositories/pdf-file'
+import { imageFileRepository } from '../repositories/image-file'
 import { entityLinkRepository } from '../repositories/entity-link'
 import { readDirRecursiveAsync } from './folder'
 import {
   readMdFilesRecursiveAsync,
   readCsvFilesRecursiveAsync,
-  readPdfFilesRecursiveAsync
+  readPdfFilesRecursiveAsync,
+  readImageFilesRecursiveAsync,
+  isImageFile
 } from '../lib/fs-utils'
 import { nanoid } from 'nanoid'
 
@@ -50,12 +53,18 @@ class WorkspaceWatcherService {
     } catch {
       /* ignore — watcher continues without initial pdf sync */
     }
+    try {
+      await this.imageReconciliation(workspaceId, workspacePath)
+    } catch {
+      /* ignore — watcher continues without initial image sync */
+    }
 
     // 초기 동기화 완료 → renderer re-fetch
     this.pushFolderChanged(workspaceId, [])
     this.pushNoteChanged(workspaceId, [])
     this.pushCsvChanged(workspaceId, [])
     this.pushPdfChanged(workspaceId, [])
+    this.pushImageChanged(workspaceId, [])
 
     try {
       this.subscription = await parcelWatcher.subscribe(workspacePath, (err, events) => {
@@ -136,7 +145,7 @@ class WorkspaceWatcherService {
     this.debounceTimer = setTimeout(async () => {
       try {
         const eventsToProcess = this.pendingEvents.splice(0)
-        const { folderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths } = await this.applyEvents(
+        const { folderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths, orphanImagePaths } = await this.applyEvents(
           workspaceId,
           workspacePath,
           eventsToProcess
@@ -166,6 +175,14 @@ class WorkspaceWatcherService {
           ...orphanPdfPaths
         ]
         this.pushPdfChanged(workspaceId, changedPdfRelPaths)
+        // 변경된 이미지 파일 경로 수집 + 폴더 삭제로 함께 삭제된 Image 경로 병합
+        const changedImageRelPaths = [
+          ...eventsToProcess
+            .filter((e) => isImageFile(e.path) && !path.basename(e.path).startsWith('.'))
+            .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
+          ...orphanImagePaths
+        ]
+        this.pushImageChanged(workspaceId, changedImageRelPaths)
       } catch {
         /* applyEvents 실패 시 무시 — watcher 지속 유지 */
       }
@@ -190,13 +207,15 @@ class WorkspaceWatcherService {
     orphanNotePaths: string[]
     orphanCsvPaths: string[]
     orphanPdfPaths: string[]
+    orphanImagePaths: string[]
   }> {
     /** 실제 폴더 변경이 발생한 relative path 수집 (toast용) */
     const changedFolderPaths: string[] = []
-    /** 폴더 삭제로 함께 삭제된 노트/CSV/PDF 경로 (watcher 이벤트 보완용) */
+    /** 폴더 삭제로 함께 삭제된 노트/CSV/PDF/Image 경로 (watcher 이벤트 보완용) */
     const orphanNotePaths: string[] = []
     const orphanCsvPaths: string[] = []
     const orphanPdfPaths: string[] = []
+    const orphanImagePaths: string[] = []
     // ─── Step 1: 폴더 rename/move 감지 ───────────────────────────
     // 같은 부모(이름 변경) 또는 같은 폴더명(위치 이동)의 delete+create 쌍
     const nonMdDeletes = events.filter(
@@ -229,6 +248,7 @@ class WorkspaceWatcherService {
           noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+          imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
           pairedFolderDeletePaths.add(matchingDelete.path)
           pairedFolderCreatePaths.add(createEvent.path)
           changedFolderPaths.push(newRel)
@@ -245,6 +265,7 @@ class WorkspaceWatcherService {
       if (absPath.endsWith('.md')) continue
       if (absPath.endsWith('.csv')) continue
       if (absPath.endsWith('.pdf')) continue
+      if (isImageFile(absPath)) continue
       if (pairedFolderDeletePaths.has(absPath) || pairedFolderCreatePaths.has(absPath)) continue
 
       // getEventsSince rename + oldPath (플랫폼 의존적)
@@ -259,6 +280,7 @@ class WorkspaceWatcherService {
         noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
+        imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
         changedFolderPaths.push(rel)
         continue
       }
@@ -301,16 +323,22 @@ class WorkspaceWatcherService {
           const childPdfs = pdfFileRepository
             .findByWorkspaceId(workspaceId)
             .filter((p) => p.relativePath.startsWith(rel + '/'))
+          const childImages = imageFileRepository
+            .findByWorkspaceId(workspaceId)
+            .filter((i) => i.relativePath.startsWith(rel + '/'))
           orphanNotePaths.push(...childNotes.map((n) => n.relativePath))
           orphanCsvPaths.push(...childCsvs.map((c) => c.relativePath))
           orphanPdfPaths.push(...childPdfs.map((p) => p.relativePath))
+          orphanImagePaths.push(...childImages.map((i) => i.relativePath))
 
           for (const n of childNotes) entityLinkRepository.removeAllByEntity('note', n.id)
           for (const c of childCsvs) entityLinkRepository.removeAllByEntity('csv', c.id)
           for (const p of childPdfs) entityLinkRepository.removeAllByEntity('pdf', p.id)
+          for (const img of childImages) entityLinkRepository.removeAllByEntity('image', img.id)
           noteRepository.bulkDeleteByPrefix(workspaceId, rel)
           csvFileRepository.bulkDeleteByPrefix(workspaceId, rel)
           pdfFileRepository.bulkDeleteByPrefix(workspaceId, rel)
+          imageFileRepository.bulkDeleteByPrefix(workspaceId, rel)
           folderRepository.bulkDeleteByPrefix(workspaceId, rel)
           changedFolderPaths.push(rel)
         }
@@ -582,7 +610,94 @@ class WorkspaceWatcherService {
       }
     }
 
-    return { folderPaths: changedFolderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths }
+    // ─── Step 12: 이미지 파일 rename/move 감지 ──────────────────────
+    const imageDeletes = events.filter(
+      (e) =>
+        e.type === 'delete' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+    )
+    const imageCreates = events.filter(
+      (e) =>
+        e.type === 'create' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+    )
+    const pairedImageDeletePaths = new Set<string>()
+    const pairedImageCreatePaths = new Set<string>()
+    for (const createEvent of imageCreates) {
+      const createDir = path.dirname(createEvent.path)
+      const createBasename = path.basename(createEvent.path)
+      const matchingDelete =
+        imageDeletes.find(
+          (d) => !pairedImageDeletePaths.has(d.path) && path.dirname(d.path) === createDir
+        ) ??
+        imageDeletes.find(
+          (d) => !pairedImageDeletePaths.has(d.path) && path.basename(d.path) === createBasename
+        )
+      if (matchingDelete) {
+        const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
+        const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+        const existing = imageFileRepository.findByRelativePath(workspaceId, oldRel)
+        if (existing) {
+          const newParentRel = newRel.includes('/')
+            ? newRel.split('/').slice(0, -1).join('/')
+            : null
+          const newFolder = newParentRel
+            ? folderRepository.findByRelativePath(workspaceId, newParentRel)
+            : null
+          imageFileRepository.update(existing.id, {
+            relativePath: newRel,
+            folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
+            title: path.basename(createEvent.path, path.extname(createEvent.path)),
+            updatedAt: new Date()
+          })
+          pairedImageDeletePaths.add(matchingDelete.path)
+          pairedImageCreatePaths.add(createEvent.path)
+        }
+      }
+    }
+
+    // ─── Step 13: standalone Image create → DB에 이미지 추가 ────────
+    for (const createEvent of imageCreates) {
+      if (pairedImageCreatePaths.has(createEvent.path)) continue
+      const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+      const existing = imageFileRepository.findByRelativePath(workspaceId, rel)
+      if (!existing) {
+        try {
+          const stat = await fs.promises.stat(createEvent.path)
+          if (!stat.isFile()) continue
+        } catch {
+          continue
+        }
+        const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        const now = new Date()
+        imageFileRepository.create({
+          id: nanoid(),
+          workspaceId,
+          relativePath: rel,
+          folderId: folder?.id ?? null,
+          title: path.basename(createEvent.path, path.extname(createEvent.path)),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        })
+      }
+    }
+
+    // ─── Step 14: standalone Image delete → DB에서 이미지 삭제 ──────
+    for (const deleteEvent of imageDeletes) {
+      if (pairedImageDeletePaths.has(deleteEvent.path)) continue
+      const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
+      const existing = imageFileRepository.findByRelativePath(workspaceId, rel)
+      if (existing) {
+        entityLinkRepository.removeAllByEntity('image', existing.id)
+        imageFileRepository.delete(existing.id)
+      }
+    }
+
+    return { folderPaths: changedFolderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths, orphanImagePaths }
   }
 
   private async fullReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
@@ -740,6 +855,47 @@ class WorkspaceWatcherService {
   private pushPdfChanged(workspaceId: string, changedRelPaths: string[]): void {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('pdf:changed', workspaceId, changedRelPaths)
+    })
+  }
+
+  private async imageReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
+    const fsEntries = await readImageFilesRecursiveAsync(workspacePath, '')
+    const fsPaths = fsEntries.map((e) => e.relativePath)
+
+    const dbImages = imageFileRepository.findByWorkspaceId(workspaceId)
+    const dbPathSet = new Set(dbImages.map((i) => i.relativePath))
+
+    const now = new Date()
+    const toInsert = fsEntries
+      .filter((e) => !dbPathSet.has(e.relativePath))
+      .map((e) => {
+        const parentRel = e.relativePath.includes('/')
+          ? e.relativePath.split('/').slice(0, -1).join('/')
+          : null
+        const folder = parentRel
+          ? folderRepository.findByRelativePath(workspaceId, parentRel)
+          : null
+        return {
+          id: nanoid(),
+          workspaceId,
+          relativePath: e.relativePath,
+          folderId: folder?.id ?? null,
+          title: path.basename(e.name, path.extname(e.name)),
+          description: '',
+          preview: '',
+          order: 0,
+          createdAt: now,
+          updatedAt: now
+        }
+      })
+
+    imageFileRepository.createMany(toInsert)
+    imageFileRepository.deleteOrphans(workspaceId, fsPaths)
+  }
+
+  private pushImageChanged(workspaceId: string, changedRelPaths: string[]): void {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('image:changed', workspaceId, changedRelPaths)
     })
   }
 }

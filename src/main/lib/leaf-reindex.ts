@@ -2,10 +2,11 @@ import { db } from '../db'
 import { noteRepository } from '../repositories/note'
 import { csvFileRepository } from '../repositories/csv-file'
 import { pdfFileRepository } from '../repositories/pdf-file'
+import { imageFileRepository } from '../repositories/image-file'
 
 export interface LeafSibling {
   id: string
-  kind: 'note' | 'csv' | 'pdf'
+  kind: 'note' | 'csv' | 'pdf' | 'image'
   order: number
 }
 
@@ -28,7 +29,11 @@ export function getLeafSiblings(
     .findByWorkspaceId(workspaceId)
     .filter((p) => p.folderId === folderId)
     .map((p) => ({ id: p.id, kind: 'pdf' as const, order: p.order }))
-  return [...notes, ...csvs, ...pdfs].sort((a, b) => a.order - b.order)
+  const images = imageFileRepository
+    .findByWorkspaceId(workspaceId)
+    .filter((i) => i.folderId === folderId)
+    .map((i) => ({ id: i.id, kind: 'image' as const, order: i.order }))
+  return [...notes, ...csvs, ...pdfs, ...images].sort((a, b) => a.order - b.order)
 }
 
 /**
@@ -37,7 +42,7 @@ export function getLeafSiblings(
  */
 export function reindexLeafSiblings(
   workspaceId: string,
-  orderedItems: Array<{ id: string; kind: 'note' | 'csv' | 'pdf' }>
+  orderedItems: Array<{ id: string; kind: 'note' | 'csv' | 'pdf' | 'image' }>
 ): void {
   const now = Date.now()
   const noteStmt = db.$client.prepare(
@@ -49,14 +54,19 @@ export function reindexLeafSiblings(
   const pdfStmt = db.$client.prepare(
     `UPDATE pdf_files SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
   )
+  const imageStmt = db.$client.prepare(
+    `UPDATE image_files SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
+  )
   db.$client.transaction(() => {
     orderedItems.forEach((item, i) => {
       if (item.kind === 'note') {
         noteStmt.run(i, now, workspaceId, item.id)
       } else if (item.kind === 'csv') {
         csvStmt.run(i, now, workspaceId, item.id)
-      } else {
+      } else if (item.kind === 'pdf') {
         pdfStmt.run(i, now, workspaceId, item.id)
+      } else {
+        imageStmt.run(i, now, workspaceId, item.id)
       }
     })
   })()

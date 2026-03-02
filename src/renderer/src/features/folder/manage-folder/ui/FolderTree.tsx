@@ -12,6 +12,8 @@ import {
 import { useCreateNote, useMoveNote, useRemoveNote } from '@entities/note'
 import { useCreateCsvFile, useMoveCsvFile, useRemoveCsvFile } from '@entities/csv-file'
 import { useImportPdfFile, useMovePdfFile, useRemovePdfFile } from '@entities/pdf-file'
+import { useImportImageFile, useMoveImageFile, useRemoveImageFile } from '@entities/image-file'
+import type { ImageFileNode } from '@entities/image-file'
 import { Button } from '@shared/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
@@ -22,7 +24,8 @@ import type {
   FolderTreeNode,
   NoteTreeNode,
   CsvTreeNode,
-  PdfTreeNode
+  PdfTreeNode,
+  ImageTreeNode
 } from '../model/types'
 import { FolderColorDialog } from './FolderColorDialog'
 import { FolderContextMenu } from './FolderContextMenu'
@@ -34,6 +37,8 @@ import { CsvContextMenu } from './CsvContextMenu'
 import { CsvNodeRenderer } from './CsvNodeRenderer'
 import { PdfContextMenu } from './PdfContextMenu'
 import { PdfNodeRenderer } from './PdfNodeRenderer'
+import { ImageContextMenu } from './ImageContextMenu'
+import { ImageNodeRenderer } from './ImageNodeRenderer'
 import { DeleteFolderDialog } from './DeleteFolderDialog'
 
 interface Props {
@@ -80,6 +85,11 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { mutate: movePdfFile } = useMovePdfFile()
   const { mutate: removePdfFile, isPending: isRemovingPdf } = useRemovePdfFile()
 
+  // Image mutations — mutateAsync for multi-file import loop
+  const { mutateAsync: importImageFile } = useImportImageFile()
+  const { mutate: moveImageFile } = useMoveImageFile()
+  const { mutate: removeImageFile, isPending: isRemovingImage } = useRemoveImageFile()
+
   // Tab store
   const openRightTab = useTabStore((s) => s.openRightTab)
   const findPaneByTabId = useTabStore((s) => s.findPaneByTabId)
@@ -101,6 +111,9 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
 
   // PDF dialog states
   const [pdfDeleteTarget, setPdfDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+
+  // Image dialog states
+  const [imageDeleteTarget, setImageDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   /** 노트 생성 → 성공 시 오른쪽 탭에 자동 오픈 */
   const handleCreateNote = useCallback(
@@ -171,6 +184,29 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       )
     },
     [workspaceId, sourcePaneId, importPdfFile, openRightTab]
+  )
+
+  /** 이미지 가져오기 → selectFile 다이얼로그 (다중 선택) → import × N → 마지막 이미지만 탭 열기 */
+  const handleImportImage = useCallback(
+    async (folderId: string | null) => {
+      const filePaths = await window.api.image.selectFile()
+      if (!filePaths || filePaths.length === 0) return
+      let lastImported: ImageFileNode | undefined
+      for (const sourcePath of filePaths) {
+        lastImported = await importImageFile({ workspaceId, folderId, sourcePath })
+      }
+      if (lastImported) {
+        openRightTab(
+          {
+            type: 'image',
+            title: lastImported.title,
+            pathname: `/folder/image/${lastImported.id}`
+          },
+          sourcePaneId
+        )
+      }
+    },
+    [workspaceId, sourcePaneId, importImageFile, openRightTab]
   )
 
   const NodeRenderer = useCallback(
@@ -253,6 +289,32 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
         )
       }
 
+      if (props.node.data.kind === 'image') {
+        return (
+          <ImageContextMenu
+            onDelete={() =>
+              setImageDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
+            }
+          >
+            <div>
+              <ImageNodeRenderer
+                {...(props as unknown as NodeRendererProps<ImageTreeNode>)}
+                onOpen={() =>
+                  openRightTab(
+                    {
+                      type: 'image',
+                      title: props.node.data.name,
+                      pathname: `/folder/image/${props.node.data.id}`
+                    },
+                    sourcePaneId
+                  )
+                }
+              />
+            </div>
+          </ImageContextMenu>
+        )
+      }
+
       // kind === 'folder'
       return (
         <FolderContextMenu
@@ -260,6 +322,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           onCreateNote={() => handleCreateNote(props.node.id)}
           onCreateCsv={() => handleCreateCsv(props.node.id)}
           onImportPdf={() => handleImportPdf(props.node.id)}
+          onImportImage={() => handleImportImage(props.node.id)}
           onRename={() => setRenameTarget({ id: props.node.id, name: props.node.data.name })}
           onEditColor={() =>
             setColorTarget({
@@ -277,7 +340,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     },
     // workspaceId는 NodeRenderer 내부에서 직접 참조하지 않음
     // (handleCreateNote가 이미 workspaceId를 capture하고 있어 deps에서 제외)
-    [sourcePaneId, handleCreateNote, handleCreateCsv, handleImportPdf, openRightTab]
+    [sourcePaneId, handleCreateNote, handleCreateCsv, handleImportPdf, handleImportImage, openRightTab]
   )
 
   return (
@@ -353,9 +416,10 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             disableDrop={({ parentNode }) =>
               parentNode?.data.kind === 'note' ||
               parentNode?.data.kind === 'csv' ||
-              parentNode?.data.kind === 'pdf'
+              parentNode?.data.kind === 'pdf' ||
+              parentNode?.data.kind === 'image'
             }
-            disableEdit={(n) => n.kind === 'note' || n.kind === 'csv' || n.kind === 'pdf'}
+            disableEdit={(n) => n.kind === 'note' || n.kind === 'csv' || n.kind === 'pdf' || n.kind === 'image'}
             onToggle={(id) => toggle(id, treeRef.current?.isOpen(id) ?? false)}
             onCreate={({ parentId }) => {
               setCreateTarget({ parentFolderId: parentId ?? null })
@@ -373,6 +437,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
                 moveCsvFile({ workspaceId, csvId: dragIds[0], folderId: parentId ?? null, index })
               } else if (kind === 'pdf') {
                 movePdfFile({ workspaceId, pdfId: dragIds[0], folderId: parentId ?? null, index })
+              } else if (kind === 'image') {
+                moveImageFile({ workspaceId, imageId: dragIds[0], folderId: parentId ?? null, index })
               } else {
                 move({ workspaceId, folderId: dragIds[0], parentFolderId: parentId ?? null, index })
               }
@@ -386,6 +452,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
                 setCsvDeleteTarget({ id: ids[0], name: firstNode.data.name })
               } else if (firstNode.data.kind === 'pdf') {
                 setPdfDeleteTarget({ id: ids[0], name: firstNode.data.name })
+              } else if (firstNode.data.kind === 'image') {
+                setImageDeleteTarget({ id: ids[0], name: firstNode.data.name })
               } else {
                 setDeleteTarget({ id: ids[0], name: firstNode.data.name })
               }
@@ -524,6 +592,24 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             removePdfFile(
               { workspaceId, pdfId: pdfDeleteTarget.id },
               { onSuccess: () => setPdfDeleteTarget(null) }
+            )
+          }
+        }}
+      />
+
+      {/* Image 삭제 다이얼로그 */}
+      <DeleteFolderDialog
+        open={imageDeleteTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) setImageDeleteTarget(null)
+        }}
+        folderName={imageDeleteTarget?.name ?? ''}
+        isPending={isRemovingImage}
+        onConfirm={() => {
+          if (imageDeleteTarget) {
+            removeImageFile(
+              { workspaceId, imageId: imageDeleteTarget.id },
+              { onSuccess: () => setImageDeleteTarget(null) }
             )
           }
         }}

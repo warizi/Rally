@@ -98,6 +98,33 @@ const api = {
     }
   },
 
+  image: {
+    readByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('image:readByWorkspace', workspaceId),
+    import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
+      ipcRenderer.invoke('image:import', workspaceId, folderId, sourcePath),
+    rename: (workspaceId: string, imageId: string, newName: string) =>
+      ipcRenderer.invoke('image:rename', workspaceId, imageId, newName),
+    remove: (workspaceId: string, imageId: string) =>
+      ipcRenderer.invoke('image:remove', workspaceId, imageId),
+    readContent: (workspaceId: string, imageId: string) =>
+      ipcRenderer.invoke('image:readContent', workspaceId, imageId),
+    move: (workspaceId: string, imageId: string, folderId: string | null, index: number) =>
+      ipcRenderer.invoke('image:move', workspaceId, imageId, folderId, index),
+    updateMeta: (workspaceId: string, imageId: string, data: { description?: string }) =>
+      ipcRenderer.invoke('image:updateMeta', workspaceId, imageId, data),
+    selectFile: () => ipcRenderer.invoke('image:selectFile'),
+    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
+      const handler = (
+        _: Electron.IpcRendererEvent,
+        workspaceId: string,
+        changedRelPaths: string[]
+      ): void => callback(workspaceId, changedRelPaths)
+      ipcRenderer.on('image:changed', handler)
+      return () => ipcRenderer.removeListener('image:changed', handler)
+    }
+  },
+
   folder: {
     readTree: (workspaceId: string) => ipcRenderer.invoke('folder:readTree', workspaceId),
     create: (workspaceId: string, parentFolderId: string | null, name: string) =>

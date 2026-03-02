@@ -5,6 +5,7 @@ import { folders } from './folder'
 import { notes } from './note'
 import { csvFiles } from './csv-file'
 import { pdfFiles } from './pdf-file'
+import { imageFiles } from './image-file'
 import { todos } from './todo'
 import { appSettings } from './app-settings'
 import { schedules } from './schedule'
@@ -19,6 +20,7 @@ export {
   notes,
   csvFiles,
   pdfFiles,
+  imageFiles,
   todos,
   appSettings,
   schedules,

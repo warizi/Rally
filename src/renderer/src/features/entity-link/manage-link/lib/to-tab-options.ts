@@ -15,6 +15,8 @@ export function toTabOptions(
       return { type: 'pdf', pathname: `/folder/pdf/${linkedId}`, title }
     case 'csv':
       return { type: 'csv', pathname: `/folder/csv/${linkedId}`, title }
+    case 'image':
+      return { type: 'image', pathname: `/folder/image/${linkedId}`, title }
     case 'schedule':
       return { type: 'calendar', pathname: '/calendar', title: '캘린더' }
   }

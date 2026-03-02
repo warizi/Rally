@@ -8,6 +8,7 @@ import { useAllSchedulesByWorkspace } from '@entities/schedule'
 import { useNotesByWorkspace } from '@entities/note'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useCsvFilesByWorkspace } from '@entities/csv-file'
+import { useImageFilesByWorkspace } from '@entities/image-file'
 import { useLinkedEntities, useLinkEntity } from '@entities/entity-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
@@ -26,7 +27,7 @@ interface EntityOption {
   title: string
 }
 
-const LINKABLE_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv']
+const LINKABLE_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv', 'image']
 
 export function LinkEntityPopover({
   entityType,
@@ -55,6 +56,7 @@ export function LinkEntityPopover({
   const { data: notes = [] } = useNotesByWorkspace(workspaceId)
   const { data: pdfs = [] } = usePdfFilesByWorkspace(workspaceId)
   const { data: csvs = [] } = useCsvFilesByWorkspace(workspaceId)
+  const { data: images = [] } = useImageFilesByWorkspace(workspaceId)
 
   const linkedSet = useMemo(() => {
     const s = new Set<string>()
@@ -72,9 +74,10 @@ export function LinkEntityPopover({
       schedule: schedules.map((s) => ({ type: 'schedule', id: s.id, title: s.title })),
       note: notes.map((n) => ({ type: 'note', id: n.id, title: n.title })),
       pdf: pdfs.map((p) => ({ type: 'pdf', id: p.id, title: p.title })),
-      csv: csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title }))
+      csv: csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title })),
+      image: images.map((i) => ({ type: 'image', id: i.id, title: i.title }))
     }
-  }, [todos, schedules, notes, pdfs, csvs])
+  }, [todos, schedules, notes, pdfs, csvs, images])
 
   const filtered = useMemo(() => {
     const items = optionsByType[activeTab] ?? []

@@ -6,12 +6,15 @@ import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import type { CsvFileNode } from '@entities/csv-file'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import type { PdfFileNode } from '@entities/pdf-file'
+import { useImageFilesByWorkspace } from '@entities/image-file'
+import type { ImageFileNode } from '@entities/image-file'
 import type {
   WorkspaceTreeNode,
   FolderTreeNode,
   NoteTreeNode,
   CsvTreeNode,
-  PdfTreeNode
+  PdfTreeNode,
+  ImageTreeNode
 } from './types'
 
 /**
@@ -27,7 +30,8 @@ export function buildWorkspaceTree(
   folders: FolderNode[], // useFolderTree가 반환하는 nested tree (root 폴더만 top-level)
   notes: NoteNode[],
   csvFiles: CsvFileNode[],
-  pdfFiles: PdfFileNode[]
+  pdfFiles: PdfFileNode[],
+  imageFiles: ImageFileNode[]
 ): WorkspaceTreeNode[] {
   function convertNote(note: NoteNode): NoteTreeNode {
     return {
@@ -68,7 +72,20 @@ export function buildWorkspaceTree(
     }
   }
 
-  // leaf 항목(note + csv + pdf)을 order 기준으로 혼합 정렬
+  function convertImage(img: ImageFileNode): ImageTreeNode {
+    return {
+      kind: 'image',
+      id: img.id,
+      name: img.title,
+      relativePath: img.relativePath,
+      description: img.description,
+      preview: img.preview,
+      folderId: img.folderId,
+      order: img.order
+    }
+  }
+
+  // leaf 항목(note + csv + pdf + image)을 order 기준으로 혼합 정렬
   function getLeafChildren(folderId: string | null): WorkspaceTreeNode[] {
     const childNotes = notes
       .filter((n) => n.folderId === folderId)
@@ -79,7 +96,10 @@ export function buildWorkspaceTree(
     const childPdfs = pdfFiles
       .filter((p) => p.folderId === folderId)
       .map(convertPdf)
-    return [...childNotes, ...childCsvs, ...childPdfs].sort(
+    const childImages = imageFiles
+      .filter((i) => i.folderId === folderId)
+      .map(convertImage)
+    return [...childNotes, ...childCsvs, ...childPdfs, ...childImages].sort(
       (a, b) => a.order - b.order || a.name.localeCompare(b.name)
     )
   }
@@ -116,11 +136,12 @@ export function useWorkspaceTree(workspaceId: string): {
   const { data: notes = [], isLoading: isNotesLoading } = useNotesByWorkspace(workspaceId)
   const { data: csvFiles = [], isLoading: isCsvsLoading } = useCsvFilesByWorkspace(workspaceId)
   const { data: pdfFiles = [], isLoading: isPdfsLoading } = usePdfFilesByWorkspace(workspaceId)
+  const { data: imageFiles = [], isLoading: isImagesLoading } = useImageFilesByWorkspace(workspaceId)
 
-  const tree = buildWorkspaceTree(folders, notes, csvFiles, pdfFiles)
+  const tree = buildWorkspaceTree(folders, notes, csvFiles, pdfFiles, imageFiles)
 
   return {
     tree,
-    isLoading: isFoldersLoading || isNotesLoading || isCsvsLoading || isPdfsLoading
+    isLoading: isFoldersLoading || isNotesLoading || isCsvsLoading || isPdfsLoading || isImagesLoading
   }
 }

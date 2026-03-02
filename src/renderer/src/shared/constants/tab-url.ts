@@ -3,6 +3,7 @@ import {
   Check,
   FileText,
   FolderOpen,
+  ImageIcon,
   LayoutDashboard,
   Sheet
 } from 'lucide-react'
@@ -16,6 +17,7 @@ export type TabType =
   | 'note'
   | 'csv'
   | 'pdf'
+  | 'image'
   | 'calendar'
 
 export type TabIcon = TabType
@@ -28,6 +30,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   note: FileText,
   csv: Sheet,
   pdf: PdfIcon,
+  image: ImageIcon,
   calendar: Calendar
 }
 
@@ -44,6 +47,8 @@ export const ROUTES = {
   CSV_DETAIL: '/folder/csv/:csvId',
   // PDF 상세
   PDF_DETAIL: '/folder/pdf/:pdfId',
+  // Image 상세
+  IMAGE_DETAIL: '/folder/image/:imageId',
   CALENDAR: '/calendar'
 } as const
 

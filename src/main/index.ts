@@ -12,6 +12,7 @@ import { registerNoteHandlers } from './ipc/note'
 import { registerTodoHandlers } from './ipc/todo'
 import { registerCsvFileHandlers } from './ipc/csv-file'
 import { registerPdfFileHandlers } from './ipc/pdf-file'
+import { registerImageFileHandlers } from './ipc/image-file'
 import { registerAppSettingsHandlers } from './ipc/app-settings'
 import { registerScheduleHandlers } from './ipc/schedule'
 import { registerEntityLinkHandlers } from './ipc/entity-link'
@@ -89,6 +90,7 @@ app.whenReady().then(() => {
   registerTodoHandlers()
   registerCsvFileHandlers()
   registerPdfFileHandlers()
+  registerImageFileHandlers()
   registerAppSettingsHandlers()
   registerScheduleHandlers()
   registerEntityLinkHandlers()

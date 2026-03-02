@@ -192,6 +192,73 @@ export async function readPdfFilesRecursiveAsync(
   return result.concat(...subResults)
 }
 
+// ─── Image ────────────────────────────────────
+
+export const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.bmp', '.svg']
+
+export function isImageFile(filePath: string): boolean {
+  const ext = path.extname(filePath).toLowerCase()
+  return IMAGE_EXTENSIONS.includes(ext)
+}
+
+export interface ImageFileEntry {
+  name: string
+  relativePath: string
+}
+
+export function readImageFilesRecursive(absBase: string, parentRel: string): ImageFileEntry[] {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = fs.readdirSync(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: ImageFileEntry[] = []
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+    if (entry.isDirectory()) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push(...readImageFilesRecursive(absBase, rel))
+    } else if (entry.isFile() && isImageFile(entry.name)) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+  return result
+}
+
+export async function readImageFilesRecursiveAsync(
+  absBase: string,
+  parentRel: string
+): Promise<ImageFileEntry[]> {
+  const absDir = parentRel ? path.join(absBase, parentRel) : absBase
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(absDir, { withFileTypes: true })
+  } catch {
+    return []
+  }
+
+  const result: ImageFileEntry[] = []
+  const subDirPromises: Promise<ImageFileEntry[]>[] = []
+  for (const entry of entries) {
+    if (entry.isSymbolicLink()) continue
+    if (entry.name.startsWith('.')) continue
+    if (entry.isDirectory()) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      subDirPromises.push(readImageFilesRecursiveAsync(absBase, rel))
+    } else if (entry.isFile() && isImageFile(entry.name)) {
+      const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
+      result.push({ name: entry.name, relativePath: rel })
+    }
+  }
+  const subResults = await Promise.all(subDirPromises)
+  return result.concat(...subResults)
+}
+
 /**
  * 이름 충돌 해결: "name (1)", "name (2)", ...
  * 노트의 경우 desiredName에 .md 포함하여 전달:
