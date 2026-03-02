@@ -1,17 +1,24 @@
-import { X } from 'lucide-react'
+import { ExternalLink, X } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@shared/ui/tooltip'
 import { useLinkedEntities, useUnlinkEntity } from '@entities/entity-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
+import { PanePickerSubmenu } from './PanePickerSubmenu'
 
 interface Props {
   entityType: LinkableEntityType
   entityId: string
   onNavigate?: (linkedType: LinkableEntityType, linkedId: string) => void
+  onOpenInPane?: (linkedType: LinkableEntityType, linkedId: string, paneId: string) => void
 }
 
-export function LinkedEntityList({ entityType, entityId, onNavigate }: Props): React.JSX.Element {
+export function LinkedEntityList({
+  entityType,
+  entityId,
+  onNavigate,
+  onOpenInPane
+}: Props): React.JSX.Element {
   const { data: linked = [] } = useLinkedEntities(entityType, entityId)
   const unlinkEntity = useUnlinkEntity()
 
@@ -46,6 +53,21 @@ export function LinkedEntityList({ entityType, entityId, onNavigate }: Props): R
           >
             {item.title}
           </button>
+          <PanePickerSubmenu
+            onPaneSelect={(paneId) => onOpenInPane?.(item.entityType, item.entityId, paneId)}
+            className="shrink-0"
+          >
+            {({ onClick }) => (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-5 opacity-0 group-hover:opacity-100 shrink-0"
+                onClick={onClick}
+              >
+                <ExternalLink className="size-3" />
+              </Button>
+            )}
+          </PanePickerSubmenu>
           <Button
             variant="ghost"
             size="icon"

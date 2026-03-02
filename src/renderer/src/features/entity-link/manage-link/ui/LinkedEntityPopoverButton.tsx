@@ -25,6 +25,7 @@ export function LinkedEntityPopoverButton({
   const [open, setOpen] = useState(false)
   const { data: linked = [] } = useLinkedEntities(entityType, entityId)
   const openTab = useTabStore((s) => s.openTab)
+  const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
 
   const handleNavigate = useCallback(
     (linkedType: LinkableEntityType, linkedId: string) => {
@@ -33,6 +34,19 @@ export function LinkedEntityPopoverButton({
       if (options) openTab(options)
     },
     [linked, openTab]
+  )
+
+  const handleOpenInPane = useCallback(
+    (linkedType: LinkableEntityType, linkedId: string, paneId: string) => {
+      const item = linked.find((l) => l.entityType === linkedType && l.entityId === linkedId)
+      const options = toTabOptions(linkedType, linkedId, item?.title ?? '')
+      if (options) {
+        closeTabByPathname(options.pathname)
+        openTab(options, paneId)
+      }
+      setOpen(false)
+    },
+    [linked, openTab, closeTabByPathname]
   )
 
   return (
@@ -66,7 +80,12 @@ export function LinkedEntityPopoverButton({
             </Button>
           </LinkEntityPopover>
         </div>
-        <LinkedEntityList entityType={entityType} entityId={entityId} onNavigate={handleNavigate} />
+        <LinkedEntityList
+          entityType={entityType}
+          entityId={entityId}
+          onNavigate={handleNavigate}
+          onOpenInPane={handleOpenInPane}
+        />
         {linked.length > 1 && (
           <div className="border-t mt-2 pt-1">
             <OpenAllSubmenu linked={linked} onDone={() => setOpen(false)} />

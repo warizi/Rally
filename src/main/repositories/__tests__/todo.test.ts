@@ -209,6 +209,37 @@ describe('bulkUpdateKanbanOrder', () => {
   })
 })
 
+describe('findAllDescendantIds', () => {
+  it('자식 없는 todo → 빈 배열', () => {
+    testDb.insert(schema.todos).values(makeTodo({ id: 'leaf' })).run()
+    expect(todoRepository.findAllDescendantIds('leaf')).toEqual([])
+  })
+
+  it('1단계 자식 → 자식 ID 배열', () => {
+    testDb.insert(schema.todos).values(makeTodo({ id: 'parent' })).run()
+    testDb.insert(schema.todos).values(makeTodo({ id: 'child-1', parentId: 'parent' })).run()
+    testDb.insert(schema.todos).values(makeTodo({ id: 'child-2', parentId: 'parent' })).run()
+    const result = todoRepository.findAllDescendantIds('parent')
+    expect(result).toHaveLength(2)
+    expect(result).toContain('child-1')
+    expect(result).toContain('child-2')
+  })
+
+  it('다단계 (parent→child→grandchild) → 모든 하위 ID', () => {
+    testDb.insert(schema.todos).values(makeTodo({ id: 'p' })).run()
+    testDb.insert(schema.todos).values(makeTodo({ id: 'c', parentId: 'p' })).run()
+    testDb.insert(schema.todos).values(makeTodo({ id: 'gc', parentId: 'c' })).run()
+    const result = todoRepository.findAllDescendantIds('p')
+    expect(result).toHaveLength(2)
+    expect(result).toContain('c')
+    expect(result).toContain('gc')
+  })
+
+  it('존재하지 않는 parentId → 빈 배열', () => {
+    expect(todoRepository.findAllDescendantIds('non-exist')).toEqual([])
+  })
+})
+
 describe('bulkUpdateSubOrder', () => {
   it('빈 배열 → no-op', () => {
     testDb.insert(schema.todos).values(makeTodo({ id: 's1', subOrder: 0 })).run()

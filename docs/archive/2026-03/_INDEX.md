@@ -4,6 +4,7 @@
 |---------|-------|------------|----------|
 | calendar-refactor | completed | 100% | 2026-03-02 |
 | schedule-test | completed | 100% | 2026-03-02 |
+| link-test | completed | 100% | 2026-03-02 |
 
 ## calendar-refactor
 
@@ -16,3 +17,9 @@
 - **Description**: Unit tests for schedule model (manage-schedule/model/) with 100% coverage target
 - **Key Results**: 165 tests (162 planned + 3 extra), 27/27 edge cases, 100% Stmt/Branch/Func/Line coverage, 0 iterations needed
 - **Documents**: [plan](schedule-test/schedule-test.plan.md) | [analysis](schedule-test/schedule-test.analysis.md) | [report](schedule-test/schedule-test.report.md)
+
+## link-test
+
+- **Description**: Entity-link feature test code — Repository integration, Service unit, Renderer pure function, todo mock enhancement
+- **Key Results**: 55 tests across 5 files, normalize 4-branch 100% coverage, orphan cleanup 3 scenarios, JS default parameter bug discovery, 0 iterations needed
+- **Documents**: [plan](link-test/link-test.plan.md) | [design](link-test/link-test.design.md) | [analysis](link-test/link-test.analysis.md) | [report](link-test/link-test.report.md)

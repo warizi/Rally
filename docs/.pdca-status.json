@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-01T23:08:56.233Z",
+  "lastUpdated": "2026-03-02T00:34:42.832Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -101,9 +101,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:49:14.086Z",
-        "lastUpdated": "2026-03-01T00:24:28.448Z"
+        "lastUpdated": "2026-03-02T00:17:03.382Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/pdf-file.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/entity-link.test.ts"
     },
     "tab-system": {
       "phase": "do",
@@ -684,9 +684,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-01T21:46:47.580Z",
-        "lastUpdated": "2026-03-01T23:08:56.233Z"
+        "lastUpdated": "2026-03-02T00:34:42.832Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/entity-link/manage-link/ui/OpenAllSubmenu.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/entity-link/manage-link/index.ts"
     }
   },
   "pipeline": {
@@ -697,7 +697,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-01T23:08:56.233Z"
+    "lastActivity": "2026-03-02T00:34:42.832Z"
   },
   "history": [
     {
@@ -12198,6 +12198,126 @@
     },
     {
       "timestamp": "2026-03-01T23:08:56.233Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:01:09.464Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:01:16.499Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:01:20.793Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:01:30.719Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:01:55.481Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:02:24.059Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:03:21.121Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:03:43.559Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:11:18.380Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:12:05.182Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:12:39.355Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:13:58.285Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:14:37.249Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:14:44.121Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:17:03.382Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:34:00.405Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:34:09.476Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:34:21.926Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:34:37.260Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-02T00:34:42.832Z",
       "feature": "entity-link",
       "phase": "do",
       "action": "updated"

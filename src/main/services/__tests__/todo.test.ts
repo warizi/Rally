@@ -2,6 +2,7 @@ import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { todoService } from '../todo'
 import { todoRepository } from '../../repositories/todo'
 import { workspaceRepository } from '../../repositories/workspace'
+import { entityLinkService } from '../entity-link'
 import { NotFoundError } from '../../lib/errors'
 
 vi.mock('../../repositories/workspace', () => ({
@@ -14,12 +15,19 @@ vi.mock('../../repositories/todo', () => ({
     findById: vi.fn(),
     findByParentId: vi.fn(),
     findTopLevelByWorkspaceId: vi.fn(),
+    findAllDescendantIds: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
     bulkUpdateListOrder: vi.fn(),
     bulkUpdateKanbanOrder: vi.fn(),
     bulkUpdateSubOrder: vi.fn()
+  }
+}))
+
+vi.mock('../entity-link', () => ({
+  entityLinkService: {
+    removeAllLinksForTodos: vi.fn()
   }
 }))
 
@@ -53,6 +61,7 @@ beforeEach(() => {
   vi.mocked(todoRepository.findById).mockReturnValue(MOCK_TODO_ROW)
   vi.mocked(todoRepository.findTopLevelByWorkspaceId).mockReturnValue([])
   vi.mocked(todoRepository.findByParentId).mockReturnValue([])
+  vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue([])
 })
 
 describe('findByWorkspace', () => {
@@ -292,6 +301,23 @@ describe('remove', () => {
   it('없는 todoId → NotFoundError', () => {
     vi.mocked(todoRepository.findById).mockReturnValue(undefined)
     expect(() => todoService.remove('ghost')).toThrow(NotFoundError)
+  })
+  it('삭제 시 findAllDescendantIds(todoId) 호출', () => {
+    todoService.remove('todo-1')
+    expect(todoRepository.findAllDescendantIds).toHaveBeenCalledWith('todo-1')
+  })
+  it('삭제 시 entityLinkService.removeAllLinksForTodos 호출', () => {
+    todoService.remove('todo-1')
+    expect(entityLinkService.removeAllLinksForTodos).toHaveBeenCalledWith(['todo-1'])
+  })
+  it('subtodo 있을 때 → 본인+subtodo ID 모두 전달', () => {
+    vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue(['sub-1', 'sub-2'])
+    todoService.remove('todo-1')
+    expect(entityLinkService.removeAllLinksForTodos).toHaveBeenCalledWith([
+      'todo-1',
+      'sub-1',
+      'sub-2'
+    ])
   })
 })
 
