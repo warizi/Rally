@@ -9,6 +9,7 @@
 | canvas-visualization | completed | 93%        | 2026-03-03 |
 | note-image           | completed | 100%       | 2026-03-03 |
 | note-image-test      | completed | 100%       | 2026-03-03 |
+| reminder             | completed | 100%       | 2026-03-03 |
 
 ## calendar-refactor
 
@@ -51,3 +52,9 @@
 - **Description**: noteImageService + noteService 이미지 통합 테스트 — 7 methods, 36 test cases, path traversal security validation
 - **Key Results**: 32 cases (note-image.test.ts) + 4 cases (note.test.ts), 100% match rate, 0 iterations, title attribute regex limitation discovered
 - **Documents**: [plan](note-image-test/note-image-test.plan.md) | [design](note-image-test/note-image-test.design.md) | [analysis](note-image-test/note-image-test.analysis.md) | [report](note-image-test/note-image-test.report.md)
+
+## reminder
+
+- **Description**: Todo/Schedule 알림 시스템 — Electron Notification, 1분 간격 폴링 스케줄러, 5개 프리셋 오프셋, polymorphic entity 참조, 완료/날짜변경/삭제 자동 연동
+- **Key Results**: 13 new files + 11 modified, 100% match rate (151/151), 0 iterations, 9-stage implementation (schema → repo → service → IPC → scheduler → entities → features → todo/schedule integration → service wiring)
+- **Documents**: [plan](reminder/reminder.plan.md) | [design](reminder/reminder.design.md) | [analysis](reminder/reminder.analysis.md) | [report](reminder/reminder.report.md)

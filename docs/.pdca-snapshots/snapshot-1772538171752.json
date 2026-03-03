@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-03-03T06:36:15.357Z",
+  "timestamp": "2026-03-03T11:42:51.752Z",
   "reason": "compaction",
   "status": {
     "version": "2.0",
-    "lastUpdated": "2026-03-03T06:34:58.776Z",
+    "lastUpdated": "2026-03-03T11:33:44.386Z",
     "activeFeatures": [
       "ui",
       "workspace",
@@ -65,7 +65,12 @@
       "canvas-visualization",
       "node-content",
       "canvas-test: Gap 분석 완료",
-      "settings"
+      "settings",
+      "note-image.ts",
+      "reminder.ts",
+      "reminder-scheduler.ts",
+      "reminder",
+      "reminder — Gap Analysis"
     ],
     "primaryFeature": "pdf-viewer",
     "features": {
@@ -78,9 +83,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-21T22:19:42.353Z",
-          "lastUpdated": "2026-03-03T06:34:58.776Z"
+          "lastUpdated": "2026-03-03T11:17:57.991Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/canvas/ui/CanvasBoardInner.tsx"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/todo/ui/TodoDetailFields.tsx"
       },
       "workspace": {
         "phase": "do",
@@ -117,9 +122,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T02:49:14.086Z",
-          "lastUpdated": "2026-03-03T02:05:24.698Z"
+          "lastUpdated": "2026-03-03T09:09:03.809Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/__tests__/canvas.test.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/note-image.test.ts"
       },
       "tab-system": {
         "phase": "do",
@@ -143,7 +148,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:08:13.116Z",
-          "lastUpdated": "2026-03-02T10:28:23.964Z"
+          "lastUpdated": "2026-03-03T11:11:42.986Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/db/schema/index.ts"
       },
@@ -169,9 +174,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:25:36.051Z",
-          "lastUpdated": "2026-03-02T10:31:27.819Z"
+          "lastUpdated": "2026-03-03T11:24:14.707Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/canvas-edge.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/reminder.ts"
       },
       "main": {
         "phase": "do",
@@ -182,7 +187,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:26:01.950Z",
-          "lastUpdated": "2026-03-02T10:33:17.273Z"
+          "lastUpdated": "2026-03-03T11:13:15.958Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
       },
@@ -195,7 +200,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:26:20.139Z",
-          "lastUpdated": "2026-03-02T20:54:41.314Z"
+          "lastUpdated": "2026-03-03T11:13:41.835Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
       },
@@ -221,9 +226,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:07:54.661Z",
-          "lastUpdated": "2026-03-02T22:33:48.204Z"
+          "lastUpdated": "2026-03-03T11:23:19.222Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/canvas-node.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/reminder.ts"
       },
       "model": {
         "phase": "do",
@@ -234,9 +239,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:08:45.193Z",
-          "lastUpdated": "2026-03-03T00:50:18.597Z"
+          "lastUpdated": "2026-03-03T11:14:20.520Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/canvas/model/canvas-layout.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/reminder/model/queries.ts"
       },
       "api": {
         "phase": "do",
@@ -286,9 +291,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:34:47.807Z",
-          "lastUpdated": "2026-03-03T06:29:51.411Z"
+          "lastUpdated": "2026-03-03T11:21:33.034Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainSidebar.tsx"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainLayout.tsx"
       },
       "folder.ts": {
         "phase": "do",
@@ -325,7 +330,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T14:23:23.726Z",
-          "lastUpdated": "2026-03-03T04:09:45.343Z"
+          "lastUpdated": "2026-03-03T08:27:47.779Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/folder/manage-folder/ui/FolderTree.tsx",
         "previousPhase": "check",
@@ -354,7 +359,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:39:22.268Z",
-          "lastUpdated": "2026-03-02T22:33:04.124Z"
+          "lastUpdated": "2026-03-03T08:33:10.049Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/note.ts"
       },
@@ -367,7 +372,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:39:57.455Z",
-          "lastUpdated": "2026-03-02T04:27:31.926Z"
+          "lastUpdated": "2026-03-03T07:52:49.514Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/workspace-watcher.ts"
       },
@@ -380,9 +385,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:42:49.354Z",
-          "lastUpdated": "2026-03-03T06:05:42.596Z"
+          "lastUpdated": "2026-03-03T08:53:17.196Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx",
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/model/note-image-node-view.ts",
         "previousPhase": "check",
         "autoAdvanced": true
       },
@@ -409,7 +414,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-26T13:01:02.919Z",
-          "lastUpdated": "2026-03-02T22:33:07.986Z"
+          "lastUpdated": "2026-03-03T11:22:33.494Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/todo.ts"
       },
@@ -422,9 +427,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-26T13:02:22.456Z",
-          "lastUpdated": "2026-03-03T03:56:36.434Z"
+          "lastUpdated": "2026-03-03T11:17:45.283Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/todo/todo-kanban/ui/TodoKanbanView.tsx"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/todo/create-todo/ui/CreateTodoDialog.tsx"
       },
       "todo-detail": {
         "phase": "do",
@@ -634,7 +639,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-03-01T02:57:56.795Z",
-          "lastUpdated": "2026-03-02T22:33:12.503Z"
+          "lastUpdated": "2026-03-03T11:22:57.876Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/schedule.ts"
       },
@@ -647,9 +652,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-03-01T03:00:15.939Z",
-          "lastUpdated": "2026-03-03T05:02:37.569Z"
+          "lastUpdated": "2026-03-03T11:21:24.569Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/schedule/manage-schedule/model/__tests__/schedule-style.test.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/schedule/manage-schedule/ui/ScheduleDetailPopover.tsx"
       },
       "calendar": {
         "phase": "do",
@@ -700,7 +705,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-03-01T21:46:47.580Z",
-          "lastUpdated": "2026-03-03T03:58:02.916Z"
+          "lastUpdated": "2026-03-03T06:51:13.492Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/entity-link/manage-link/ui/PanePickerSubmenu.tsx"
       },
@@ -874,6 +879,72 @@
           "lastUpdated": "2026-03-03T06:29:20.599Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/index.ts"
+      },
+      "note-image.ts": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-03T07:50:39.306Z",
+          "lastUpdated": "2026-03-03T08:52:56.098Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/note-image.ts"
+      },
+      "reminder.ts": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-03T11:12:50.657Z",
+          "lastUpdated": "2026-03-03T11:23:55.617Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/reminder.ts"
+      },
+      "reminder-scheduler.ts": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-03T11:13:58.839Z",
+          "lastUpdated": "2026-03-03T11:13:58.839Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/reminder-scheduler.ts"
+      },
+      "reminder": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-03T11:14:21.502Z",
+          "lastUpdated": "2026-03-03T11:17:03.818Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/reminder/index.ts"
+      },
+      "reminder — Gap Analysis": {
+        "phase": "act",
+        "phaseNumber": 5,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-03T11:33:44.385Z",
+          "lastUpdated": "2026-03-03T11:33:44.385Z"
+        },
+        "previousPhase": "check",
+        "autoAdvanced": true
       }
     },
     "pipeline": {
@@ -884,7 +955,7 @@
     "session": {
       "startedAt": "2026-02-21T22:18:14.791Z",
       "onboardingCompleted": false,
-      "lastActivity": "2026-03-03T06:34:58.776Z"
+      "lastActivity": "2026-03-03T11:33:44.386Z"
     },
     "history": [
       {
@@ -17067,6 +17138,636 @@
         "timestamp": "2026-03-03T06:34:58.776Z",
         "feature": "ui",
         "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T06:39:00.094Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T06:46:44.210Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T06:46:45.425Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T06:51:03.365Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T06:51:09.239Z",
+        "feature": "entity-link",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T06:51:13.492Z",
+        "feature": "entity-link",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:50:39.306Z",
+        "feature": "note-image.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:42.037Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:43.142Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:44.206Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:46.621Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:49.514Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:51.573Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:53.574Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:52:54.846Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:54:14.554Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:54:18.676Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:54:34.666Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T07:54:39.425Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:00:33.718Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:02:21.775Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:06:31.278Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:06:36.762Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:11:38.667Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:13:33.556Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:13:55.401Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:14:13.201Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:14:17.702Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:17:04.675Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:19:08.695Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:19:13.984Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:19:15.862Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:27:42.879Z",
+        "feature": "folder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:27:47.779Z",
+        "feature": "folder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:32:40.235Z",
+        "feature": "note-image.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:32:49.781Z",
+        "feature": "note.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:33:01.645Z",
+        "feature": "note.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:33:10.049Z",
+        "feature": "note.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:52:56.098Z",
+        "feature": "note-image.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:53:03.941Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:53:12.035Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T08:53:17.196Z",
+        "feature": "note",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T09:05:53.618Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T09:06:06.863Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T09:07:45.823Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T09:07:54.488Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T09:09:03.810Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:11:36.919Z",
+        "feature": "schema",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:11:38.010Z",
+        "feature": "schema",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:11:42.986Z",
+        "feature": "schema",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:12:30.050Z",
+        "feature": "repositories",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:12:50.657Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:07.677Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:13.770Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:15.154Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:15.958Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:27.629Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:40.778Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:41.835Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:13:58.839Z",
+        "feature": "reminder-scheduler.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:14:12.976Z",
+        "feature": "model",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:14:20.520Z",
+        "feature": "model",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:14:21.502Z",
+        "feature": "reminder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:16:51.991Z",
+        "feature": "reminder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:16:56.938Z",
+        "feature": "reminder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:02.734Z",
+        "feature": "reminder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:03.818Z",
+        "feature": "reminder",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:19.670Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:21.923Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:23.335Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:31.630Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:37.425Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:38.912Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:45.283Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:54.946Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:17:57.991Z",
+        "feature": "ui",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:16.801Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:19.043Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:20.216Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:26.401Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:33.556Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:44.299Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:18:46.263Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:21:17.116Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:21:24.570Z",
+        "feature": "schedule",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:21:28.867Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:21:33.034Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:01.814Z",
+        "feature": "todo.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:17.402Z",
+        "feature": "todo.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:23.626Z",
+        "feature": "todo.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:33.494Z",
+        "feature": "todo.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:37.442Z",
+        "feature": "schedule.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:45.449Z",
+        "feature": "schedule.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:50.194Z",
+        "feature": "schedule.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:22:57.876Z",
+        "feature": "schedule.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:19.222Z",
+        "feature": "repositories",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:36.330Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:40.046Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:43.608Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:47.542Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:51.467Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:23:55.617Z",
+        "feature": "reminder.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:24:09.868Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:24:14.707Z",
+        "feature": "ipc",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-03T11:33:44.385Z",
+        "feature": "reminder — Gap Analysis",
+        "phase": "act",
         "action": "updated"
       }
     ]

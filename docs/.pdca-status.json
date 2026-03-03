@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-03T11:24:14.707Z",
+  "lastUpdated": "2026-03-03T12:02:48.225Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -66,7 +66,8 @@
     "note-image.ts",
     "reminder.ts",
     "reminder-scheduler.ts",
-    "reminder"
+    "reminder",
+    "reminder — Gap Analysis"
   ],
   "primaryFeature": "pdf-viewer",
   "features": {
@@ -118,9 +119,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:49:14.086Z",
-        "lastUpdated": "2026-03-03T09:09:03.809Z"
+        "lastUpdated": "2026-03-03T12:02:48.225Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/note-image.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/schedule.test.ts"
     },
     "tab-system": {
       "phase": "do",
@@ -927,6 +928,20 @@
         "lastUpdated": "2026-03-03T11:17:03.818Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/reminder/index.ts"
+    },
+    "reminder — Gap Analysis": {
+      "phase": "act",
+      "phaseNumber": 5,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-03T11:33:44.385Z",
+        "lastUpdated": "2026-03-03T11:33:44.385Z"
+      },
+      "previousPhase": "check",
+      "autoAdvanced": true
     }
   },
   "pipeline": {
@@ -937,7 +952,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-03T11:24:14.707Z"
+    "lastActivity": "2026-03-03T12:02:48.225Z"
   },
   "history": [
     {
@@ -17743,6 +17758,54 @@
     {
       "timestamp": "2026-03-03T11:24:14.707Z",
       "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T11:33:44.385Z",
+      "feature": "reminder — Gap Analysis",
+      "phase": "act",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T11:57:51.407Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T11:58:38.440Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T11:58:49.241Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T12:01:18.211Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T12:01:40.984Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T12:01:59.100Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T12:02:48.225Z",
+      "feature": "__tests__",
       "phase": "do",
       "action": "updated"
     }

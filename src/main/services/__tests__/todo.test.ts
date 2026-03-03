@@ -3,6 +3,7 @@ import { todoService } from '../todo'
 import { todoRepository } from '../../repositories/todo'
 import { workspaceRepository } from '../../repositories/workspace'
 import { entityLinkService } from '../entity-link'
+import { reminderService } from '../reminder'
 import { NotFoundError } from '../../lib/errors'
 
 vi.mock('../../repositories/workspace', () => ({
@@ -28,6 +29,21 @@ vi.mock('../../repositories/todo', () => ({
 vi.mock('../entity-link', () => ({
   entityLinkService: {
     removeAllLinksForTodos: vi.fn()
+  }
+}))
+
+vi.mock('../reminder', () => ({
+  reminderService: {
+    removeUnfiredByEntity: vi.fn(),
+    removeByEntity: vi.fn(),
+    removeByEntities: vi.fn(),
+    recalculate: vi.fn()
+  }
+}))
+
+vi.mock('../../repositories/canvas-node', () => ({
+  canvasNodeRepository: {
+    deleteByRef: vi.fn()
   }
 }))
 
@@ -384,5 +400,99 @@ describe('toTodoItem Date 변환', () => {
     vi.mocked(todoRepository.update).mockReturnValue(undoneRow)
     const result = todoService.update('todo-1', { isDone: false })
     expect(result.doneAt).toBeNull()
+  })
+})
+
+describe('update — reminder 연동', () => {
+  it('isDone=true → removeUnfiredByEntity 호출', () => {
+    todoService.update('todo-1', { isDone: true })
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'todo-1')
+  })
+
+  it('dueDate 변경 → recalculate 호출', () => {
+    const newDate = new Date('2026-12-01')
+    vi.mocked(todoRepository.findById).mockReturnValue({
+      ...MOCK_TODO_ROW,
+      dueDate: newDate
+    })
+    vi.mocked(todoRepository.update).mockReturnValue({
+      ...MOCK_TODO_ROW,
+      dueDate: newDate
+    })
+    todoService.update('todo-1', { dueDate: newDate })
+    expect(reminderService.recalculate).toHaveBeenCalledWith('todo', 'todo-1')
+  })
+
+  it('dueDate+startDate 모두 null → removeByEntity 호출', () => {
+    vi.mocked(todoRepository.findById)
+      .mockReturnValueOnce(MOCK_TODO_ROW) // 첫 findById (존재 확인)
+      .mockReturnValueOnce({ ...MOCK_TODO_ROW, dueDate: null, startDate: null }) // refreshed
+    todoService.update('todo-1', { dueDate: null })
+    expect(reminderService.removeByEntity).toHaveBeenCalledWith('todo', 'todo-1')
+  })
+
+  it('isDone=true + dueDate 변경 → recalculate 미호출 (isDone 가드)', () => {
+    todoService.update('todo-1', { isDone: true, dueDate: new Date('2026-12-01') })
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalled()
+    expect(reminderService.recalculate).not.toHaveBeenCalled()
+  })
+
+  it('부모 자동완료 → removeUnfiredByEntity(parentId) 호출', () => {
+    const subTodo = { ...MOCK_TODO_ROW, id: 'sub-1', parentId: 'par-1' }
+    vi.mocked(todoRepository.findById).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.update).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.findByParentId).mockReturnValue([
+      { ...subTodo, isDone: false }
+    ])
+    todoService.update('sub-1', { isDone: true })
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'sub-1')
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'par-1')
+  })
+
+  it('startDate만 변경 (dueDate 미변경) → recalculate 호출', () => {
+    const newStart = new Date('2026-11-01')
+    vi.mocked(todoRepository.findById).mockReturnValue({
+      ...MOCK_TODO_ROW,
+      startDate: newStart
+    })
+    vi.mocked(todoRepository.update).mockReturnValue({
+      ...MOCK_TODO_ROW,
+      startDate: newStart
+    })
+    todoService.update('todo-1', { startDate: newStart })
+    expect(reminderService.recalculate).toHaveBeenCalledWith('todo', 'todo-1')
+  })
+
+  it("status='완료' → removeUnfiredByEntity 호출", () => {
+    todoService.update('todo-1', { status: '완료' })
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'todo-1')
+  })
+})
+
+describe('reorderKanban — reminder 연동', () => {
+  it('완료 이동 → removeUnfiredByEntity 호출', () => {
+    todoService.reorderKanban('ws-1', [{ id: 'todo-1', order: 0, status: '완료' }])
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'todo-1')
+  })
+
+  it('혼합 status → 완료만 알림 삭제', () => {
+    todoService.reorderKanban('ws-1', [
+      { id: 't1', order: 0, status: '완료' },
+      { id: 't2', order: 1, status: '할일' },
+      { id: 't3', order: 2 }
+    ])
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledTimes(1)
+    expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 't1')
+  })
+})
+
+describe('remove — reminder 연동', () => {
+  it('removeByEntities 호출 (본인 + 하위)', () => {
+    vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue(['sub-1', 'sub-2'])
+    todoService.remove('todo-1')
+    expect(reminderService.removeByEntities).toHaveBeenCalledWith(
+      'todo',
+      ['todo-1', 'sub-1', 'sub-2']
+    )
   })
 })

@@ -1,14 +1,20 @@
 {
-  "sessionCount": 176,
+  "sessionCount": 178,
   "lastSession": {
-    "startedAt": "2026-03-03T11:20:44.017Z",
+    "startedAt": "2026-03-03T12:00:09.916Z",
     "platform": "claude",
     "level": "Dynamic"
   },
-  "currentFeature": "reminder",
+  "currentFeature": "reminder-test",
   "phase": "do",
   "matchRate": null,
   "archivedFeatures": {
+    "reminder": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-03T20:30:00Z",
+      "archivedTo": "docs/archive/2026-03/reminder/"
+    },
     "note-image-test": {
       "phase": "archived",
       "matchRate": 100,
