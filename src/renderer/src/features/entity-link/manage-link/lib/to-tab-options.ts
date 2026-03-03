@@ -4,11 +4,12 @@ import type { TabType } from '@shared/constants/tab-url'
 export function toTabOptions(
   linkedType: LinkableEntityType,
   linkedId: string,
-  title: string
+  title: string,
+  parentId?: string | null
 ): { type: TabType; pathname: string; title: string } | null {
   switch (linkedType) {
     case 'todo':
-      return { type: 'todo-detail', pathname: `/todo/${linkedId}`, title }
+      return { type: 'todo-detail', pathname: `/todo/${parentId ?? linkedId}`, title }
     case 'note':
       return { type: 'note', pathname: `/folder/note/${linkedId}`, title }
     case 'pdf':

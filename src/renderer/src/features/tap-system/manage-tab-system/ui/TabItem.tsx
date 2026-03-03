@@ -10,6 +10,7 @@ import { TAB_ICON } from '@/shared/constants/tab-url'
 interface TabItemProps {
   tab: Tab
   isActive: boolean
+  isPaneActive?: boolean
   onActivate: () => void
   onClose: () => void
   onContextMenu?: (event: React.MouseEvent) => void
@@ -18,6 +19,7 @@ interface TabItemProps {
 export function TabItem({
   tab,
   isActive,
+  isPaneActive,
   onActivate,
   onClose,
   onContextMenu
@@ -31,7 +33,7 @@ export function TabItem({
     if (isActive && itemRef.current) {
       itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
     }
-  }, [isActive])
+  }, [isActive, isPaneActive])
 
   const style = {
     transform: CSS.Transform.toString(transform),

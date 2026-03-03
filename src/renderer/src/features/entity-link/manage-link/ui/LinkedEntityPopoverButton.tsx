@@ -4,6 +4,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@shared/ui/tooltip'
 import { useLinkedEntities } from '@entities/entity-link'
+import { useTodosByWorkspace } from '@entities/todo'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { toTabOptions } from '../lib/to-tab-options'
@@ -23,34 +24,49 @@ export function LinkedEntityPopoverButton({
   workspaceId
 }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
+  const [linkOpen, setLinkOpen] = useState(false)
   const { data: linked = [] } = useLinkedEntities(entityType, entityId)
+  const { data: todos = [] } = useTodosByWorkspace(workspaceId)
   const openTab = useTabStore((s) => s.openTab)
   const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
 
-  const handleNavigate = useCallback(
+  const resolveTabOptions = useCallback(
     (linkedType: LinkableEntityType, linkedId: string) => {
       const item = linked.find((l) => l.entityType === linkedType && l.entityId === linkedId)
-      const options = toTabOptions(linkedType, linkedId, item?.title ?? '')
+      const parentId = linkedType === 'todo' ? todos.find((t) => t.id === linkedId)?.parentId : null
+      return toTabOptions(linkedType, linkedId, item?.title ?? '', parentId)
+    },
+    [linked, todos]
+  )
+
+  const handleNavigate = useCallback(
+    (linkedType: LinkableEntityType, linkedId: string) => {
+      const options = resolveTabOptions(linkedType, linkedId)
       if (options) openTab(options)
     },
-    [linked, openTab]
+    [resolveTabOptions, openTab]
   )
 
   const handleOpenInPane = useCallback(
     (linkedType: LinkableEntityType, linkedId: string, paneId: string) => {
-      const item = linked.find((l) => l.entityType === linkedType && l.entityId === linkedId)
-      const options = toTabOptions(linkedType, linkedId, item?.title ?? '')
+      const options = resolveTabOptions(linkedType, linkedId)
       if (options) {
         closeTabByPathname(options.pathname)
         openTab(options, paneId)
       }
       setOpen(false)
     },
-    [linked, openTab, closeTabByPathname]
+    [resolveTabOptions, openTab, closeTabByPathname]
   )
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next)
+        if (!next) setLinkOpen(false)
+      }}
+    >
       <Tooltip>
         <TooltipTrigger asChild>
           <PopoverTrigger asChild>
@@ -73,10 +89,11 @@ export function LinkedEntityPopoverButton({
             entityType={entityType}
             entityId={entityId}
             workspaceId={workspaceId}
-            onClose={() => setOpen(false)}
+            open={linkOpen}
+            onOpenChange={setLinkOpen}
           >
             <Button variant="ghost" size="sm" className="h-6 text-xs px-2">
-              + 연결 추가
+              {linkOpen ? '닫기' : '+ 연결 추가'}
             </Button>
           </LinkEntityPopover>
         </div>
@@ -88,7 +105,7 @@ export function LinkedEntityPopoverButton({
         />
         {linked.length > 1 && (
           <div className="border-t mt-2 pt-1">
-            <OpenAllSubmenu linked={linked} onDone={() => setOpen(false)} />
+            <OpenAllSubmenu linked={linked} todos={todos} onDone={() => setOpen(false)} />
           </div>
         )}
       </PopoverContent>

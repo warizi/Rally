@@ -1,5 +1,6 @@
 import { MoreHorizontal, Dot } from 'lucide-react'
 import { Checkbox } from '@shared/ui/checkbox'
+import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
 import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@shared/ui/table'
@@ -7,14 +8,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
 import { useUpdateTodo } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
+import { PanePickerSubmenu } from '@features/entity-link/manage-link'
 
 const PRIORITY_CLASS: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
@@ -33,7 +32,7 @@ interface RowProps {
   todo: TodoItem
   workspaceId: string
   onTitleClick: () => void
-  onRightPaneClick?: () => void
+  onOpenInPane?: (paneId: string) => void
   onDeleted?: () => void
 }
 
@@ -41,7 +40,7 @@ function CompletedRow({
   todo,
   workspaceId,
   onTitleClick,
-  onRightPaneClick,
+  onOpenInPane,
   onDeleted
 }: RowProps): React.JSX.Element {
   const updateTodo = useUpdateTodo()
@@ -60,12 +59,14 @@ function CompletedRow({
 
       {/* 제목 */}
       <TableCell className="py-2 max-w-0 w-full whitespace-normal">
-        <button
-          className="text-left text-sm truncate min-w-0 w-full line-through text-muted-foreground"
-          onClick={onTitleClick}
-        >
-          {todo.title}
-        </button>
+        <TruncateTooltip content={todo.title}>
+          <button
+            className="text-left text-sm truncate min-w-0 w-full line-through text-muted-foreground"
+            onClick={onTitleClick}
+          >
+            {todo.title}
+          </button>
+        </TruncateTooltip>
       </TableCell>
 
       {/* 중요도 */}
@@ -86,20 +87,22 @@ function CompletedRow({
 
       {/* 더보기 메뉴 */}
       <TableCell className="w-8 py-2">
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-6 w-6">
               <MoreHorizontal className="h-3.5 w-3.5" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>상세 보기</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={onTitleClick}>현재 탭 열기</DropdownMenuItem>
-                <DropdownMenuItem onClick={onRightPaneClick}>오른쪽 탭 열기</DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <PanePickerSubmenu
+              onPaneSelect={(paneId) => onOpenInPane?.(paneId)}
+            >
+              {({ onClick }) => (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
+                  상세 보기
+                </DropdownMenuItem>
+              )}
+            </PanePickerSubmenu>
             <DeleteTodoDialog
               todoId={todo.id}
               workspaceId={workspaceId}
@@ -126,7 +129,7 @@ interface Props {
   workspaceId: string
   filterActive: boolean
   onItemClick: (todoId: string) => void
-  onItemRightClick?: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDeleted?: (todoId: string) => void
 }
 
@@ -135,7 +138,7 @@ export function TodoCompletedView({
   workspaceId,
   filterActive,
   onItemClick,
-  onItemRightClick,
+  onOpenInPane,
   onItemDeleted
 }: Props): React.JSX.Element {
   if (todos.length === 0) {
@@ -169,7 +172,7 @@ export function TodoCompletedView({
               todo={todo}
               workspaceId={workspaceId}
               onTitleClick={() => onItemClick(todo.id)}
-              onRightPaneClick={onItemRightClick ? () => onItemRightClick(todo.id) : undefined}
+              onOpenInPane={onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined}
               onDeleted={() => onItemDeleted?.(todo.id)}
             />
           ))}

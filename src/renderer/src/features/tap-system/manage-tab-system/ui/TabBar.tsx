@@ -1,11 +1,18 @@
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { AnimatePresence } from 'framer-motion'
+import { Ellipsis } from 'lucide-react'
 import { TabItem } from './TabItem'
 import { TabContextMenu } from './TabContextMenu'
 import { useTabStore } from '../model/store'
 import { ScrollArea, ScrollBar } from '@/shared/ui/scroll-area'
 import { SidebarTrigger, useSidebar } from '@/shared/ui/sidebar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/shared/ui/dropdown-menu'
 import { cn } from '@/shared/lib/utils'
 
 interface TabBarProps {
@@ -16,8 +23,10 @@ interface TabBarProps {
 export function TabBar({ paneId, showSidebarTrigger = false }: TabBarProps): React.ReactElement {
   const pane = useTabStore((state) => state.panes[paneId])
   const tabs = useTabStore((state) => state.tabs)
+  const isPaneActive = useTabStore((state) => state.activePaneId === paneId)
   const activateTab = useTabStore((state) => state.activateTab)
   const closeTab = useTabStore((state) => state.closeTab)
+  const closeAllTabs = useTabStore((state) => state.closeAllTabs)
   const { state: sidebarState } = useSidebar()
 
   const { setNodeRef, isOver } = useDroppable({
@@ -51,6 +60,7 @@ export function TabBar({ paneId, showSidebarTrigger = false }: TabBarProps): Rea
                     <TabItem
                       tab={tab}
                       isActive={pane.activeTabId === tab.id}
+                      isPaneActive={isPaneActive}
                       onActivate={() => activateTab(tab.id, paneId)}
                       onClose={() => closeTab(tab.id)}
                     />
@@ -62,6 +72,16 @@ export function TabBar({ paneId, showSidebarTrigger = false }: TabBarProps): Rea
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="shrink-0 flex items-center justify-center size-9 bg-muted text-muted-foreground hover:text-foreground no-drag-region">
+            <Ellipsis className="size-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => closeAllTabs(paneId)}>모두 닫기</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   )
 }

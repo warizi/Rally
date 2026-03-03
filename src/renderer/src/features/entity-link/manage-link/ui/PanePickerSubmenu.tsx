@@ -66,6 +66,8 @@ export function PanePickerSubmenu({ onPaneSelect, className, children }: Props):
   function handlePaneClick(paneId: string): void {
     onPaneSelect(paneId)
     setVisible(false)
+    // 부모 DropdownMenu 닫기
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
   }
 
   function renderLayoutNode(node: LayoutNode, paneMap: Record<string, Pane>): React.JSX.Element {

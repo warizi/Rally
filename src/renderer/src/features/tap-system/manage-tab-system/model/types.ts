@@ -35,6 +35,8 @@ export interface TabActions {
   openTab: (options: TabOptions, targetPaneId?: string) => string
   openRightTab: (options: TabOptions, sourcePaneId: string) => string
   closeTab: (tabId: string) => void
+  closeAllTabs: (paneId: string) => void
+  closeOtherTabs: (paneId: string, keepTabId: string) => void
   closeTabByPathname: (pathname: string) => void
   activateTab: (tabId: string, paneId?: string) => void
   pinTab: (tabId: string) => void

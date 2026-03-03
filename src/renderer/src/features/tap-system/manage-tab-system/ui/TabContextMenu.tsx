@@ -6,7 +6,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger
 } from '@shared/ui/context-menu'
-import { Pin, PinOff, SplitSquareHorizontal, SplitSquareVertical, X } from 'lucide-react'
+import { Pin, PinOff, SplitSquareHorizontal, SplitSquareVertical, X, XCircle } from 'lucide-react'
 import { useTabStore } from '../model/store'
 
 interface TabContextMenuProps {
@@ -16,7 +16,7 @@ interface TabContextMenuProps {
 }
 
 export function TabContextMenu({ tab, paneId, children }: TabContextMenuProps): React.ReactElement {
-  const { closeTab, pinTab, unpinTab, splitPane } = useTabStore.getState()
+  const { closeTab, closeOtherTabs, pinTab, unpinTab, splitPane } = useTabStore.getState()
 
   const handlePin = (): void => {
     if (tab.pinned) {
@@ -28,6 +28,10 @@ export function TabContextMenu({ tab, paneId, children }: TabContextMenuProps): 
 
   const handleClose = (): void => {
     closeTab(tab.id)
+  }
+
+  const handleCloseOthers = (): void => {
+    closeOtherTabs(paneId, tab.id)
   }
 
   const handleSplitRight = (): void => {
@@ -70,13 +74,15 @@ export function TabContextMenu({ tab, paneId, children }: TabContextMenuProps): 
         </ContextMenuItem>
 
         {/* 닫기 */}
+        <ContextMenuSeparator />
+        <ContextMenuItem onClick={handleCloseOthers}>
+          <XCircle className="size-4 mr-2" />
+          현재 탭 제외 모두 닫기
+        </ContextMenuItem>
         {!tab.pinned && (
-          <>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={handleClose} variant="destructive">
-              <X className="size-4 mr-2" />탭 닫기
-            </ContextMenuItem>
-          </>
+          <ContextMenuItem onClick={handleClose} variant="destructive">
+            <X className="size-4 mr-2" />탭 닫기
+          </ContextMenuItem>
         )}
       </ContextMenuContent>
     </ContextMenu>

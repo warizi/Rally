@@ -15,7 +15,7 @@ import {
 import { useUpdateTodo, TODO_STATUS } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
-import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
 
 const PRIORITY_DOT: Record<string, string> = {
   high: 'bg-red-500',
@@ -32,7 +32,7 @@ interface Props {
   subTodos: TodoItem[]
   workspaceId: string
   onTitleClick: () => void
-  onRightTabClick: () => void
+  onOpenInPane?: (paneId: string) => void
   onDelete: () => void
 }
 
@@ -41,7 +41,7 @@ export function TodoKanbanCard({
   subTodos,
   workspaceId,
   onTitleClick,
-  onRightTabClick,
+  onOpenInPane,
   onDelete
 }: Props): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -100,7 +100,7 @@ export function TodoKanbanCard({
         >
           {todo.title}
         </span>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <button
               className="shrink-0 p-0.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -111,13 +111,15 @@ export function TodoKanbanCard({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <DropdownMenuSub>
-              <DropdownMenuSubTrigger>상세 보기</DropdownMenuSubTrigger>
-              <DropdownMenuSubContent>
-                <DropdownMenuItem onSelect={onTitleClick}>현재 탭 열기</DropdownMenuItem>
-                <DropdownMenuItem onSelect={onRightTabClick}>오른쪽 탭 열기</DropdownMenuItem>
-              </DropdownMenuSubContent>
-            </DropdownMenuSub>
+            <PanePickerSubmenu
+              onPaneSelect={(paneId) => onOpenInPane?.(paneId)}
+            >
+              {({ onClick }) => (
+                <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
+                  상세 보기
+                </DropdownMenuItem>
+              )}
+            </PanePickerSubmenu>
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>상태 변경</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>

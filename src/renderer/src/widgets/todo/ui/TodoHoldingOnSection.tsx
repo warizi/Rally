@@ -7,7 +7,7 @@ interface Props {
   workspaceId: string
   filterActive: boolean
   onItemClick: (todoId: string) => void
-  onItemRightClick?: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDeleted?: (todoId: string) => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -18,7 +18,7 @@ export function TodoHoldingOnSection({
   workspaceId,
   filterActive,
   onItemClick,
-  onItemRightClick,
+  onOpenInPane,
   onItemDeleted,
   open,
   onOpenChange
@@ -34,7 +34,7 @@ export function TodoHoldingOnSection({
         workspaceId={workspaceId}
         filterActive={filterActive}
         onItemClick={onItemClick}
-        onItemRightClick={onItemRightClick}
+        onOpenInPane={onOpenInPane}
         onItemDeleted={onItemDeleted}
       />
     </CollapsibleSection>

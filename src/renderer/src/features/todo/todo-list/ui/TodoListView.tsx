@@ -24,7 +24,7 @@ interface Props {
   workspaceId: string
   filterActive: boolean
   onItemClick: (todoId: string) => void
-  onItemRightClick?: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDeleted?: (todoId: string) => void
 }
 
@@ -45,7 +45,7 @@ export function TodoListView({
   workspaceId,
   filterActive,
   onItemClick,
-  onItemRightClick,
+  onOpenInPane,
   onItemDeleted
 }: Props): React.JSX.Element {
   const reorderList = useReorderTodoList()
@@ -122,7 +122,7 @@ export function TodoListView({
                   workspaceId={workspaceId}
                   filterActive={filterActive}
                   onTitleClick={() => onItemClick(todo.id)}
-                  onRightPaneClick={onItemRightClick ? () => onItemRightClick(todo.id) : undefined}
+                  onOpenInPane={onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined}
                   onDeleted={() => onItemDeleted?.(todo.id)}
                 />
               ))}

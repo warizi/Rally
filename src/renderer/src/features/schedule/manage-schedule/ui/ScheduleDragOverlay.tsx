@@ -30,8 +30,9 @@ export function ScheduleDragOverlay({
         <div
           className="rounded-sm px-1 text-[10px] leading-[20px] font-medium truncate cursor-grabbing shadow-lg"
           style={{
-            backgroundColor: isTodo ? 'transparent' : `${color}20`,
-            border: isTodo ? `1px solid ${color}50` : undefined,
+            backgroundColor: `${color}${isTodo ? '08' : '20'}`,
+            border: isTodo ? `1.5px dashed ${color}40` : undefined,
+            borderLeft: isTodo ? undefined : `3px solid ${color}`,
             color,
             height: 20,
             width: activeWidth
@@ -44,8 +45,9 @@ export function ScheduleDragOverlay({
         <div
           className="rounded px-1 py-px text-[10px] font-medium truncate max-w-48 cursor-grabbing shadow-lg"
           style={{
-            backgroundColor: isTodo ? 'transparent' : `${color}20`,
-            border: isTodo ? `1px solid ${color}50` : undefined,
+            backgroundColor: `${color}${isTodo ? '08' : '20'}`,
+            border: isTodo ? `1.5px dashed ${color}40` : undefined,
+            borderLeft: isTodo ? undefined : `3px solid ${color}`,
             color
           }}
         >
@@ -56,15 +58,13 @@ export function ScheduleDragOverlay({
         <div
           className="rounded-sm flex cursor-grabbing shadow-lg overflow-hidden"
           style={{
-            backgroundColor: isTodo ? 'transparent' : `${color}20`,
-            border: isTodo ? `1px solid ${color}50` : undefined,
+            backgroundColor: `${color}${isTodo ? '08' : '20'}`,
+            border: isTodo ? `1.5px dashed ${color}40` : undefined,
+            borderLeft: isTodo ? undefined : `4px solid ${color}`,
             width: activeWidth,
             height: activeHeight
           }}
         >
-          {!isTodo && (
-            <div className="shrink-0 w-[4px] rounded-l-sm" style={{ backgroundColor: color }} />
-          )}
           <div className="flex-1 min-w-0 px-1 py-0.5">
             <div className="text-[11px] font-medium truncate">
               {isTodo && <span className="opacity-60 mr-0.5">☑</span>}

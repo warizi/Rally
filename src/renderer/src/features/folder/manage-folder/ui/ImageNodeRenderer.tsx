@@ -1,23 +1,36 @@
-import { JSX } from 'react'
+import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ImageIcon } from 'lucide-react'
 import type { ImageTreeNode } from '../model/types'
 
 interface ImageNodeRendererProps extends NodeRendererProps<ImageTreeNode> {
   onOpen: () => void
+  isActive?: boolean
 }
 
 export function ImageNodeRenderer({
   node,
   style,
   dragHandle,
-  onOpen
+  onOpen,
+  isActive
 }: ImageNodeRendererProps): JSX.Element {
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (isActive && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    }
+  }, [isActive])
+
   return (
     <div
-      ref={dragHandle}
+      ref={(el) => {
+        ref.current = el
+        if (typeof dragHandle === 'function') dragHandle(el)
+      }}
       style={style}
-      className="flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer hover:bg-accent select-none"
+      className={`flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer select-none ${isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent'}`}
       onClick={onOpen}
     >
       <ImageIcon className="ml-1 size-4 shrink-0 text-sky-500" />

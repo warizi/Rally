@@ -159,25 +159,30 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
             dnd.previewDelta !== 0 &&
             (() => {
               const color = getScheduleColor(dnd.activeSchedule)
+              const isTodo = isTodoItem(dnd.activeSchedule)
               const clamp = clampMap.get(dnd.activeSchedule.id)
               const baseStart = clamp?.start ?? dnd.activeSchedule.startAt
               const baseEnd = clamp?.end ?? dnd.activeSchedule.endAt
               const previewStart = new Date(baseStart.getTime() + dnd.previewDelta * 60 * 1000)
               return (
                 <div
-                  className="absolute left-0 right-0 rounded-sm px-1 py-0.5 pointer-events-none"
+                  className="absolute left-0 right-0 rounded-sm pointer-events-none"
                   style={{
                     top: timeToPosition(previewStart, HOUR_HEIGHT),
                     height: scheduleHeight(baseStart, baseEnd, HOUR_HEIGHT),
-                    backgroundColor: `${color}15`,
-                    border: `1.5px dashed ${color}60`,
-                    borderLeftWidth: 2,
-                    borderLeftColor: color,
-                    borderLeftStyle: 'solid'
+                    backgroundColor: `${color}${isTodo ? '06' : '15'}`,
+                    border: `1.5px dashed ${color}${isTodo ? '40' : '60'}`,
+                    borderLeft: isTodo ? undefined : `3px solid ${color}60`
                   }}
                 >
-                  <div className="text-[11px] font-medium truncate leading-tight" style={{ color }}>
-                    {dnd.activeSchedule.title}
+                  <div className="px-1 py-0.5">
+                    <div
+                      className="text-[11px] font-medium truncate leading-tight"
+                      style={{ color }}
+                    >
+                      {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
+                      {dnd.activeSchedule.title}
+                    </div>
                   </div>
                 </div>
               )
@@ -188,6 +193,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
             resize.resizeDelta !== 0 &&
             (() => {
               const color = getScheduleColor(resize.resizing.schedule)
+              const isTodo = isTodoItem(resize.resizing.schedule)
               const clamp = clampMap.get(resize.resizing.schedule.id)
               const baseStart = clamp?.start ?? resize.resizing.schedule.startAt
               const baseEnd = clamp?.end ?? resize.resizing.schedule.endAt
@@ -201,23 +207,21 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                   : baseEnd
               return (
                 <div
-                  className="absolute left-0 right-0 rounded-sm pointer-events-none flex"
+                  className="absolute left-0 right-0 rounded-sm pointer-events-none"
                   style={{
                     top: timeToPosition(previewStart, HOUR_HEIGHT),
                     height: scheduleHeight(previewStart, previewEnd, HOUR_HEIGHT),
-                    backgroundColor: `${color}15`,
-                    border: `1.5px dashed ${color}60`
+                    backgroundColor: `${color}${isTodo ? '06' : '15'}`,
+                    border: `1.5px dashed ${color}${isTodo ? '40' : '60'}`,
+                    borderLeft: isTodo ? undefined : `3px solid ${color}60`
                   }}
                 >
-                  <div
-                    className="shrink-0 w-[4px] rounded-l-sm"
-                    style={{ backgroundColor: `${color}60` }}
-                  />
-                  <div className="flex-1 min-w-0 px-1 py-0.5">
+                  <div className="px-1 py-0.5">
                     <div
                       className="text-[11px] font-medium truncate leading-tight"
                       style={{ color }}
                     >
+                      {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
                       {resize.resizing.schedule.title}
                     </div>
                   </div>

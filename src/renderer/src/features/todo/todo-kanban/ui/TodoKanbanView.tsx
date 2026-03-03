@@ -29,7 +29,7 @@ interface Props {
   activeColumn: number
   onColumnChange: (i: number) => void
   onItemClick: (todoId: string) => void
-  onItemRightClick: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDelete: (todoId: string) => void
 }
 
@@ -42,7 +42,7 @@ export function TodoKanbanView({
   activeColumn,
   onColumnChange,
   onItemClick,
-  onItemRightClick,
+  onOpenInPane,
   onItemDelete
 }: Props): React.JSX.Element {
   const reorderKanban = useReorderTodoKanban()
@@ -297,7 +297,7 @@ export function TodoKanbanView({
               subTodoMap={subTodoMap}
               workspaceId={workspaceId}
               onItemClick={onItemClick}
-              onItemRightClick={onItemRightClick}
+              onOpenInPane={onOpenInPane}
               onItemDelete={onItemDelete}
               className="w-full"
             />
@@ -321,7 +321,7 @@ export function TodoKanbanView({
               subTodoMap={subTodoMap}
               workspaceId={workspaceId}
               onItemClick={onItemClick}
-              onItemRightClick={onItemRightClick}
+              onOpenInPane={onOpenInPane}
               onItemDelete={onItemDelete}
             />
           ))}

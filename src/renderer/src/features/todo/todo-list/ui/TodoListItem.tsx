@@ -15,25 +15,27 @@ import {
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, MoreHorizontal, ChevronDown, ChevronRight, Dot } from 'lucide-react'
+import { GripVertical, MoreHorizontal, ChevronDown, ChevronRight, Dot, X } from 'lucide-react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
 import { Checkbox } from '@shared/ui/checkbox'
+import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
 import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
 import { TableCell } from '@shared/ui/table'
+import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
+import { Calendar } from '@shared/ui/calendar'
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
-import { useUpdateTodo, useReorderTodoSub } from '@entities/todo'
-import type { TodoItem } from '@entities/todo'
+import { useUpdateTodo, useReorderTodoSub, TODO_STATUS, TODO_PRIORITY } from '@entities/todo'
+import type { TodoItem, TodoStatus } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { EditSubTodoDialog } from '@features/todo/todo-field/ui/EditSubTodoDialog'
-import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
 
 const PRIORITY_CLASS: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
@@ -66,7 +68,7 @@ function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
       <div
         ref={setNodeRef}
         style={{ transform: CSS.Transform.toString(transform), transition }}
-        className="flex items-center gap-2 py-1.5 px-2"
+        className="flex items-center gap-2 py-1.5 px-2 min-w-0"
       >
         <span {...attributes} {...listeners} className="cursor-grab text-muted-foreground shrink-0">
           <GripVertical className="h-3.5 w-3.5" />
@@ -84,11 +86,13 @@ function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
             )
           }
         />
-        <span
-          className={`flex-1 text-sm ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
-        >
-          {todo.title}
-        </span>
+        <TruncateTooltip content={todo.title}>
+          <span
+            className={`flex-1 text-sm truncate min-w-0 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+          >
+            {todo.title}
+          </span>
+        </TruncateTooltip>
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
@@ -140,7 +144,7 @@ interface Props {
   workspaceId: string
   filterActive: boolean
   onTitleClick: () => void
-  onRightPaneClick?: () => void
+  onOpenInPane?: (paneId: string) => void
   onDeleted?: () => void
 }
 
@@ -150,7 +154,7 @@ export function TodoListItem({
   workspaceId,
   filterActive,
   onTitleClick,
-  onRightPaneClick,
+  onOpenInPane,
   onDeleted
 }: Props): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -236,34 +240,120 @@ export function TodoListItem({
                 )}
               </button>
             )}
-            <button
-              className={`text-left text-sm truncate min-w-0 flex-1 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
-              onClick={onTitleClick}
-            >
-              {todo.title}
-            </button>
+            <TruncateTooltip content={todo.title}>
+              <button
+                className={`text-left text-sm truncate min-w-0 flex-1 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+                onClick={onTitleClick}
+              >
+                {todo.title}
+              </button>
+            </TruncateTooltip>
           </div>
         </TableCell>
 
         {/* 중요도 */}
         <TableCell className="w-4 p-0 @[400px]:w-20 text-center">
-          <Badge
-            variant="outline"
-            className={`hidden @[400px]:inline-flex border ${PRIORITY_CLASS[todo.priority]}`}
-          >
-            {PRIORITY_LABEL[todo.priority]}
-          </Badge>
-          <Dot className={`h-4 w-4 scale-200 ${PRIORITY_DOT[todo.priority]} @[400px]:hidden`} />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="cursor-pointer">
+                <Badge
+                  variant="outline"
+                  className={`hidden @[400px]:inline-flex border ${PRIORITY_CLASS[todo.priority]}`}
+                >
+                  {PRIORITY_LABEL[todo.priority]}
+                </Badge>
+                <Dot
+                  className={`h-4 w-4 scale-200 ${PRIORITY_DOT[todo.priority]} @[400px]:hidden`}
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {TODO_PRIORITY.map((p) => (
+                <DropdownMenuItem
+                  key={p}
+                  onClick={() =>
+                    updateTodo.mutate({ workspaceId, todoId: todo.id, data: { priority: p } })
+                  }
+                  className={todo.priority === p ? 'font-semibold' : ''}
+                >
+                  <Dot className={`h-4 w-4 scale-200 ${PRIORITY_DOT[p]}`} />
+                  {PRIORITY_LABEL[p]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </TableCell>
 
         {/* 상태 — @[400px]+ */}
         <TableCell className="hidden @[400px]:table-cell w-24 py-2">
-          <Badge variant="outline">{todo.status}</Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="cursor-pointer">
+                <Badge variant="outline">{todo.status}</Badge>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {TODO_STATUS.map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  onClick={() =>
+                    updateTodo.mutate({
+                      workspaceId,
+                      todoId: todo.id,
+                      data: { status: s as TodoStatus }
+                    })
+                  }
+                  className={todo.status === s ? 'font-semibold' : ''}
+                >
+                  {s}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </TableCell>
 
         {/* 마감일 — @[600px]+ */}
-        <TableCell className="hidden @[600px]:table-cell w-28 py-2 text-xs text-muted-foreground text-center">
-          {todo.dueDate ? new Date(todo.dueDate).toLocaleDateString('ko-KR') : '—'}
+        <TableCell className="hidden @[600px]:table-cell w-28 py-2 text-center">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">
+                {todo.dueDate ? format(new Date(todo.dueDate), 'yyyy.MM.dd') : '—'}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                locale={ko}
+                selected={todo.dueDate ? new Date(todo.dueDate) : undefined}
+                onSelect={(date) =>
+                  updateTodo.mutate({
+                    workspaceId,
+                    todoId: todo.id,
+                    data: { dueDate: date ?? null }
+                  })
+                }
+              />
+              {todo.dueDate && (
+                <div className="border-t px-3 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs w-full text-destructive hover:text-destructive"
+                    onClick={() =>
+                      updateTodo.mutate({
+                        workspaceId,
+                        todoId: todo.id,
+                        data: { dueDate: null }
+                      })
+                    }
+                  >
+                    <X className="size-3 mr-1" />
+                    마감일 삭제
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
         </TableCell>
 
         {/* 연결 + 더보기 메뉴 */}
@@ -274,20 +364,22 @@ export function TodoListItem({
               entityId={todo.id}
               workspaceId={workspaceId}
             />
-            <DropdownMenu>
+            <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-6 w-6">
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuSub>
-                  <DropdownMenuSubTrigger>상세 보기</DropdownMenuSubTrigger>
-                  <DropdownMenuSubContent>
-                    <DropdownMenuItem onClick={onTitleClick}>현재 탭 열기</DropdownMenuItem>
-                    <DropdownMenuItem onClick={onRightPaneClick}>오른쪽 탭 열기</DropdownMenuItem>
-                  </DropdownMenuSubContent>
-                </DropdownMenuSub>
+                <PanePickerSubmenu
+                  onPaneSelect={(paneId) => onOpenInPane?.(paneId)}
+                >
+                  {({ onClick }) => (
+                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
+                      상세 보기
+                    </DropdownMenuItem>
+                  )}
+                </PanePickerSubmenu>
                 <DeleteTodoDialog
                   todoId={todo.id}
                   workspaceId={workspaceId}
@@ -311,7 +403,7 @@ export function TodoListItem({
       {/* 하위 할 일 확장 행 */}
       {isOpen && subTodos.length > 0 && (
         <tr className="border-b border-border bg-muted/20">
-          <td colSpan={7} className="p-0">
+          <td colSpan={7} className="p-0 max-w-0">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}

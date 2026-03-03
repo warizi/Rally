@@ -138,6 +138,77 @@ export const createTabActions = (
     })
   },
 
+  closeAllTabs: (paneId: string): void => {
+    const { tabs, panes, layout, activePaneId } = get()
+    const pane = panes[paneId]
+    if (!pane) return
+
+    // 핀 고정 탭 유지, 나머지 닫기
+    const pinnedTabIds = pane.tabIds.filter((id) => tabs[id]?.pinned)
+    const closedTabIds = pane.tabIds.filter((id) => !tabs[id]?.pinned)
+    if (closedTabIds.length === 0) return
+
+    const remainingTabs = { ...tabs }
+    for (const id of closedTabIds) {
+      delete remainingTabs[id]
+    }
+
+    // 핀 탭이 없고 다른 패인이 있으면 패인 닫기
+    if (pinnedTabIds.length === 0 && Object.keys(panes).length > 1) {
+      const { [paneId]: _removedPane, ...remainingPanes } = panes
+      const newLayout = removePaneFromLayout(layout, paneId)
+      const newActivePaneId =
+        activePaneId === paneId ? Object.keys(remainingPanes)[0] : activePaneId
+
+      set({
+        tabs: remainingTabs,
+        panes: remainingPanes,
+        layout: newLayout,
+        activePaneId: newActivePaneId
+      })
+      return
+    }
+
+    set({
+      tabs: remainingTabs,
+      panes: {
+        ...panes,
+        [paneId]: {
+          ...pane,
+          tabIds: pinnedTabIds,
+          activeTabId: pinnedTabIds[0] ?? null
+        }
+      }
+    })
+  },
+
+  closeOtherTabs: (paneId: string, keepTabId: string): void => {
+    const { tabs, panes } = get()
+    const pane = panes[paneId]
+    if (!pane) return
+
+    const keepTabIds = pane.tabIds.filter((id) => id === keepTabId || tabs[id]?.pinned)
+    const closedTabIds = pane.tabIds.filter((id) => id !== keepTabId && !tabs[id]?.pinned)
+    if (closedTabIds.length === 0) return
+
+    const remainingTabs = { ...tabs }
+    for (const id of closedTabIds) {
+      delete remainingTabs[id]
+    }
+
+    set({
+      tabs: remainingTabs,
+      panes: {
+        ...panes,
+        [paneId]: {
+          ...pane,
+          tabIds: keepTabIds,
+          activeTabId: keepTabId
+        }
+      }
+    })
+  },
+
   closeTabByPathname: (pathname: string): void => {
     const tab = selectTabByPathname(pathname)(get())
     if (!tab) return

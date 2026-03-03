@@ -134,10 +134,10 @@ export function CsvTable({
   return (
     <div className="flex flex-col h-full">
       {/* ── Header ── */}
-      <div className="flex shrink-0 bg-muted border-b" style={{ height: HEADER_HEIGHT }}>
+      <div className="flex shrink-0" style={{ height: HEADER_HEIGHT }}>
         {/* Corner */}
         <div
-          className="shrink-0 flex items-center justify-center border-r text-xs text-muted-foreground"
+          className="shrink-0 flex items-center justify-center border-r border-b bg-muted text-xs text-muted-foreground"
           style={{ width: ROW_NUM_WIDTH }}
         >
           #
@@ -156,7 +156,7 @@ export function CsvTable({
               return (
                 <div
                   key={`h_${ci}`}
-                  className="absolute top-0 flex items-center px-2 text-sm font-medium border-r hover:bg-muted-foreground/10"
+                  className="absolute top-0 flex items-center px-2 text-sm font-medium border-r border-b bg-muted hover:bg-muted-foreground/10"
                   style={{ left: vc.start, width: vc.size, height: HEADER_HEIGHT }}
                 >
                   <ContextMenu>
@@ -212,14 +212,14 @@ export function CsvTable({
         {/* Row numbers */}
         <div
           ref={rowNumRef}
-          className="shrink-0 overflow-hidden border-r bg-muted/30"
+          className="shrink-0 overflow-hidden"
           style={{ width: ROW_NUM_WIDTH }}
         >
           <div style={{ height: rowTotalSize, position: 'relative' }}>
             {virtualRows.map((vr) => (
               <div
                 key={`rn_${vr.index}`}
-                className="absolute flex items-center justify-center text-xs text-muted-foreground border-b group"
+                className="absolute flex items-center justify-center text-xs text-muted-foreground border-b border-r bg-muted/30 group"
                 style={{ top: vr.start, height: vr.size, width: ROW_NUM_WIDTH }}
               >
                 <ContextMenu>

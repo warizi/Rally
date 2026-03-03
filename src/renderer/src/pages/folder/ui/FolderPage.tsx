@@ -1,4 +1,5 @@
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { FolderTree } from '@features/folder/manage-folder'
 
 // PageProps 대신 tabId만 인라인 타입으로 선언 (FSD 위반 방지: pages → app 금지)
@@ -13,5 +14,9 @@ export function FolderPage({ tabId }: { tabId?: string }): React.JSX.Element {
     )
   }
 
-  return <FolderTree workspaceId={workspaceId} tabId={tabId} />
+  return (
+    <ScrollArea className="h-full">
+      <FolderTree workspaceId={workspaceId} tabId={tabId} />
+    </ScrollArea>
+  )
 }

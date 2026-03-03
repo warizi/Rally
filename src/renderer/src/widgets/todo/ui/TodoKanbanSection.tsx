@@ -11,7 +11,7 @@ interface Props {
   activeColumn: number
   onColumnChange: (i: number) => void
   onItemClick: (todoId: string) => void
-  onItemRightClick: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDelete: (todoId: string) => void
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -26,7 +26,7 @@ export function TodoKanbanSection({
   activeColumn,
   onColumnChange,
   onItemClick,
-  onItemRightClick,
+  onOpenInPane,
   onItemDelete,
   open,
   onOpenChange
@@ -48,7 +48,7 @@ export function TodoKanbanSection({
         activeColumn={activeColumn}
         onColumnChange={onColumnChange}
         onItemClick={onItemClick}
-        onItemRightClick={onItemRightClick}
+        onOpenInPane={onOpenInPane}
         onItemDelete={onItemDelete}
       />
     </CollapsibleSection>

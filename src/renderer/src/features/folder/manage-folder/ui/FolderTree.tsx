@@ -1,4 +1,4 @@
-import { JSX, useCallback, useEffect, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
 import { ChevronsDownUp, FilePlus, FolderPlus } from 'lucide-react'
@@ -46,22 +46,60 @@ interface Props {
   tabId?: string // sourcePaneId 계산용 (FolderPage에서 전달)
 }
 
+const ROW_HEIGHT = 36
+
+const KIND_TO_PREFIX: Record<string, string> = {
+  note: '/folder/note/',
+  csv: '/folder/csv/',
+  pdf: '/folder/pdf/',
+  image: '/folder/image/'
+}
+
+function collectDescendantPathnames(nodes: WorkspaceTreeNode[]): string[] {
+  const result: string[] = []
+  for (const node of nodes) {
+    const prefix = KIND_TO_PREFIX[node.kind]
+    if (prefix) {
+      result.push(prefix + node.id)
+    } else if (node.kind === 'folder') {
+      result.push(...collectDescendantPathnames(node.children))
+    }
+  }
+  return result
+}
+
+function findFolderNode(nodes: WorkspaceTreeNode[], id: string): FolderTreeNode | null {
+  for (const node of nodes) {
+    if (node.id === id && node.kind === 'folder') return node as FolderTreeNode
+    if (node.kind === 'folder') {
+      const found = findFolderNode(node.children, id)
+      if (found) return found
+    }
+  }
+  return null
+}
+
+function countVisibleNodes(
+  nodes: WorkspaceTreeNode[],
+  openState: Record<string, boolean>
+): number {
+  let count = 0
+  for (const node of nodes) {
+    count++
+    if (node.kind === 'folder' && openState[node.id]) {
+      count += countVisibleNodes(node.children, openState)
+    }
+  }
+  return count
+}
+
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
-  const treeContainerRef = useRef<HTMLDivElement>(null)
-  const [treeHeight, setTreeHeight] = useState(400)
-  const { openState, toggle, collapseAll } = useTreeOpenState(tabId)
+  const { openState, toggle, collapseAll, expandToItem } = useTreeOpenState(tabId)
 
-  useEffect(() => {
-    const el = treeContainerRef.current
-    if (!el) return
-    const observer = new ResizeObserver(([entry]) => {
-      setTreeHeight(entry.contentRect.height)
-    })
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
+  const visibleCount = useMemo(() => countVisibleNodes(tree, openState), [tree, openState])
+  const treeHeight = visibleCount * ROW_HEIGHT
 
   // Folder mutations
   const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()
@@ -92,8 +130,19 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
 
   // Tab store
   const openRightTab = useTabStore((s) => s.openRightTab)
+  const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
   const findPaneByTabId = useTabStore((s) => s.findPaneByTabId)
+  const activeTab = useTabStore((s) => s.getActiveTab())
   const sourcePaneId = tabId ? (findPaneByTabId(tabId)?.id ?? '') : ''
+  const activePathname = activeTab?.pathname ?? ''
+
+  // 활성 탭 아이템이 폴더 내부에 있으면 상위 폴더를 자동 펼침
+  useEffect(() => {
+    const match = activePathname.match(/^\/folder\/(?:note|csv|pdf|image)\/(.+)$/)
+    if (!match) return
+    const itemId = match[1]
+    expandToItem(tree, itemId, treeRef.current)
+  }, [activePathname, tree, expandToItem])
 
   // Folder dialog states
   const [createTarget, setCreateTarget] = useState<{ parentFolderId: string | null } | null>(null)
@@ -223,6 +272,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div>
               <NoteNodeRenderer
                 {...(props as unknown as NodeRendererProps<NoteTreeNode>)}
+                isActive={activePathname === `/folder/note/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
                     {
@@ -249,6 +299,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div>
               <CsvNodeRenderer
                 {...(props as unknown as NodeRendererProps<CsvTreeNode>)}
+                isActive={activePathname === `/folder/csv/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
                     {
@@ -275,6 +326,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div>
               <PdfNodeRenderer
                 {...(props as unknown as NodeRendererProps<PdfTreeNode>)}
+                isActive={activePathname === `/folder/pdf/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
                     {
@@ -301,6 +353,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div>
               <ImageNodeRenderer
                 {...(props as unknown as NodeRendererProps<ImageTreeNode>)}
+                isActive={activePathname === `/folder/image/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
                     {
@@ -344,6 +397,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     // (handleCreateNote가 이미 workspaceId를 capture하고 있어 deps에서 제외)
     [
       sourcePaneId,
+      activePathname,
       handleCreateNote,
       handleCreateCsv,
       handleImportPdf,
@@ -353,7 +407,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   )
 
   return (
-    <div className="flex flex-col h-full relative px-6 pt-6 pb-2">
+    <div className="flex flex-col relative px-6 pt-6 pb-2">
       {/* 툴바 */}
       <div className="flex items-center justify-between py-1 shrink-0 border-b mb-2 sticky top-0 bg-background z-10">
         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
@@ -413,7 +467,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <p className="text-xs text-center opacity-70">위의 + 버튼으로 폴더를 추가하세요.</p>
         </div>
       ) : (
-        <div ref={treeContainerRef} className="flex-1 min-h-0">
+        <div>
           <Tree<WorkspaceTreeNode>
             key={workspaceId}
             ref={treeRef}
@@ -551,9 +605,16 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
         isPending={isRemoving}
         onConfirm={() => {
           if (deleteTarget) {
+            const folder = findFolderNode(tree, deleteTarget.id)
+            const childPathnames = folder ? collectDescendantPathnames(folder.children) : []
             remove(
               { workspaceId, folderId: deleteTarget.id },
-              { onSuccess: () => setDeleteTarget(null) }
+              {
+                onSuccess: () => {
+                  childPathnames.forEach((p) => closeTabByPathname(p))
+                  setDeleteTarget(null)
+                }
+              }
             )
           }
         }}
@@ -571,7 +632,12 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           if (noteDeleteTarget) {
             removeNote(
               { workspaceId, noteId: noteDeleteTarget.id },
-              { onSuccess: () => setNoteDeleteTarget(null) }
+              {
+                onSuccess: () => {
+                  closeTabByPathname(`/folder/note/${noteDeleteTarget.id}`)
+                  setNoteDeleteTarget(null)
+                }
+              }
             )
           }
         }}
@@ -589,7 +655,12 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           if (csvDeleteTarget) {
             removeCsvFile(
               { workspaceId, csvId: csvDeleteTarget.id },
-              { onSuccess: () => setCsvDeleteTarget(null) }
+              {
+                onSuccess: () => {
+                  closeTabByPathname(`/folder/csv/${csvDeleteTarget.id}`)
+                  setCsvDeleteTarget(null)
+                }
+              }
             )
           }
         }}
@@ -607,7 +678,12 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           if (pdfDeleteTarget) {
             removePdfFile(
               { workspaceId, pdfId: pdfDeleteTarget.id },
-              { onSuccess: () => setPdfDeleteTarget(null) }
+              {
+                onSuccess: () => {
+                  closeTabByPathname(`/folder/pdf/${pdfDeleteTarget.id}`)
+                  setPdfDeleteTarget(null)
+                }
+              }
             )
           }
         }}
@@ -625,7 +701,12 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           if (imageDeleteTarget) {
             removeImageFile(
               { workspaceId, imageId: imageDeleteTarget.id },
-              { onSuccess: () => setImageDeleteTarget(null) }
+              {
+                onSuccess: () => {
+                  closeTabByPathname(`/folder/image/${imageDeleteTarget.id}`)
+                  setImageDeleteTarget(null)
+                }
+              }
             )
           }
         }}

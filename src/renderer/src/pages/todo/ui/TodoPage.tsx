@@ -43,7 +43,6 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
   const { data: completedTodos = [] } = useCompletedTodosByWorkspace(workspaceId)
 
   const openTab = useTabStore((s) => s.openTab)
-  const openRightTab = useTabStore((s) => s.openRightTab)
   const closeTab = useTabStore((s) => s.closeTab)
   const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
   const findTabByPathname = useTabStore((s) => s.findTabByPathname)
@@ -76,11 +75,11 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
     return openTab(options, pane?.id)
   }
 
-  const handleItemRightClick = (todoId: string): void => {
+  const handleOpenInPane = (todoId: string, paneId: string): void => {
     const options = makeTodoTabOptions(todoId)
     const existing = findTabByPathname(options.pathname)
     if (existing) closeTab(existing.id)
-    openRightTab(options, pane?.id ?? '')
+    openTab(options, paneId)
   }
 
   const handleItemDeleted = (todoId: string): void =>
@@ -172,7 +171,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
               }
             }}
             onItemClick={handleItemClick}
-            onItemRightClick={handleItemRightClick}
+            onOpenInPane={handleOpenInPane}
             onItemDelete={handleItemDeleted}
             open={kanbanViewOpen}
             onOpenChange={(o) => handleSectionToggle('kanbanViewOpen', o)}
@@ -193,7 +192,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
             workspaceId={workspaceId}
             filterActive={listState.filterActive}
             onItemClick={handleItemClick}
-            onItemRightClick={handleItemRightClick}
+            onOpenInPane={handleOpenInPane}
             onItemDeleted={handleItemDeleted}
             open={listViewOpen}
             onOpenChange={(o) => handleSectionToggle('listViewOpen', o)}
@@ -203,7 +202,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
             workspaceId={workspaceId}
             filterActive={holdingOnState.filterActive}
             onItemClick={handleItemClick}
-            onItemRightClick={handleItemRightClick}
+            onOpenInPane={handleOpenInPane}
             onItemDeleted={handleItemDeleted}
             open={holdingOnOpen}
             onOpenChange={(o) => handleSectionToggle('holdingOnOpen', o)}
@@ -213,7 +212,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
             workspaceId={workspaceId}
             filterActive={completedState.filterActive}
             onItemClick={handleItemClick}
-            onItemRightClick={handleItemRightClick}
+            onOpenInPane={handleOpenInPane}
             onItemDeleted={handleItemDeleted}
             open={completedOpen}
             onOpenChange={(o) => handleSectionToggle('completedOpen', o)}

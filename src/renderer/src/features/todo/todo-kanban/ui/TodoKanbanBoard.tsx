@@ -12,7 +12,7 @@ interface Props {
   subTodoMap: Map<string, TodoItem[]>
   workspaceId: string
   onItemClick: (todoId: string) => void
-  onItemRightClick: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDelete: (todoId: string) => void
   className?: string
 }
@@ -30,7 +30,7 @@ export function TodoKanbanBoard({
   subTodoMap,
   workspaceId,
   onItemClick,
-  onItemRightClick,
+  onOpenInPane,
   onItemDelete,
   className
 }: Props): React.JSX.Element {
@@ -67,7 +67,7 @@ export function TodoKanbanBoard({
                     subTodos={subTodoMap.get(todo.id) ?? []}
                     workspaceId={workspaceId}
                     onTitleClick={() => onItemClick(todo.id)}
-                    onRightTabClick={() => onItemRightClick(todo.id)}
+                    onOpenInPane={onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined}
                     onDelete={() => onItemDelete(todo.id)}
                   />
                 ))}

@@ -14,8 +14,8 @@ describe('getItemStyle', () => {
   it('todo 아이템 → transparent bg, border with alpha', () => {
     const schedule = makeScheduleItem({ id: 'todo:xxx', color: null })
     const style = getItemStyle(schedule)
-    expect(style.backgroundColor).toBe('transparent')
-    expect(style.border).toBe('1px solid #3b82f650')
+    expect(style.backgroundColor).toBe('#3b82f608')
+    expect(style.border).toBe('1.5px dashed #3b82f640')
     expect(style.color).toBe('#3b82f6')
   })
 
@@ -33,7 +33,7 @@ describe('getItemStyle', () => {
 
     const todoSchedule = makeScheduleItem({ id: 'todo:x', color: '#ff0000' })
     const todoStyle = getItemStyle(todoSchedule)
-    expect(todoStyle.border).toBe('1px solid #ff000050')
+    expect(todoStyle.border).toBe('1.5px dashed #ff000040')
   })
 })
 

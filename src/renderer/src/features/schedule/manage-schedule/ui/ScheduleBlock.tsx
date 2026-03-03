@@ -69,13 +69,11 @@ export function ScheduleBlock({
         className="absolute cursor-pointer rounded-sm flex overflow-hidden"
         style={{
           ...style,
-          backgroundColor: isTodo ? 'transparent' : `${color}20`,
-          border: isTodo ? `1px solid ${color}50` : undefined
+          backgroundColor: `${color}${isTodo ? '08' : '20'}`,
+          border: isTodo ? `1.5px dashed ${color}40` : undefined,
+          borderLeft: isTodo ? undefined : `4px solid ${color}`
         }}
       >
-        {!isTodo && (
-          <div className="shrink-0 w-[4px] rounded-l-sm" style={{ backgroundColor: color }} />
-        )}
         <div className="flex-1 min-w-0 px-1 py-0.5">
           <div className="text-[11px] font-medium truncate leading-tight">
             {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
