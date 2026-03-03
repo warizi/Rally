@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-03T08:33:10.049Z",
+  "lastUpdated": "2026-03-03T09:09:03.810Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -115,9 +115,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:49:14.086Z",
-        "lastUpdated": "2026-03-03T02:05:24.698Z"
+        "lastUpdated": "2026-03-03T09:09:03.809Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/__tests__/canvas.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/note-image.test.ts"
     },
     "tab-system": {
       "phase": "do",
@@ -378,9 +378,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-25T22:42:49.354Z",
-        "lastUpdated": "2026-03-03T08:19:15.862Z"
+        "lastUpdated": "2026-03-03T08:53:17.196Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx",
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/model/note-image-node-view.ts",
       "previousPhase": "check",
       "autoAdvanced": true
     },
@@ -882,7 +882,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T07:50:39.306Z",
-        "lastUpdated": "2026-03-03T08:32:40.235Z"
+        "lastUpdated": "2026-03-03T08:52:56.098Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/note-image.ts"
     }
@@ -895,7 +895,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-03T08:33:10.049Z"
+    "lastActivity": "2026-03-03T09:09:03.810Z"
   },
   "history": [
     {
@@ -17305,6 +17305,60 @@
     {
       "timestamp": "2026-03-03T08:33:10.049Z",
       "feature": "note.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T08:52:56.098Z",
+      "feature": "note-image.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T08:53:03.941Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T08:53:12.035Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T08:53:17.196Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T09:05:53.618Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T09:06:06.863Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T09:07:45.823Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T09:07:54.488Z",
+      "feature": "__tests__",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T09:09:03.810Z",
+      "feature": "__tests__",
       "phase": "do",
       "action": "updated"
     }

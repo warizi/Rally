@@ -13,6 +13,8 @@ class NoteImageNodeView implements NodeView {
   private blobUrl: string | null = null
   private img: HTMLImageElement
   private currentSrc: string = ''
+  private destroyed = false
+  private loadId = 0
 
   constructor(
     node: Node,
@@ -46,8 +48,10 @@ class NoteImageNodeView implements NodeView {
   }
 
   private async loadBlobUrl(src: string): Promise<void> {
+    const id = ++this.loadId
     try {
       const res = await window.api.noteImage.readImage(this.workspaceId, src)
+      if (this.destroyed || this.loadId !== id) return
       if (res.success && res.data) {
         const blob = new Blob([res.data.data])
         this.blobUrl = URL.createObjectURL(blob)
@@ -87,6 +91,7 @@ class NoteImageNodeView implements NodeView {
   }
 
   destroy(): void {
+    this.destroyed = true
     if (this.blobUrl) {
       URL.revokeObjectURL(this.blobUrl)
       this.blobUrl = null

@@ -8,6 +8,7 @@ import { NotFoundError, ValidationError } from '../../lib/errors'
 import { testDb } from '../../__tests__/setup'
 import * as schema from '../../db/schema'
 import { noteRepository } from '../../repositories/note'
+import { noteImageService } from '../note-image'
 
 // ─── Mock 선언 (vitest 자동 호이스팅) ─────────────────────────
 vi.mock('fs')
@@ -20,6 +21,13 @@ vi.mock('../../repositories/folder', () => ({
   folderRepository: {
     findById: vi.fn(),
     findByRelativePath: vi.fn()
+  }
+}))
+
+vi.mock('../note-image', () => ({
+  noteImageService: {
+    cleanupRemovedImages: vi.fn(),
+    deleteAllImages: vi.fn()
   }
 }))
 
@@ -365,6 +373,23 @@ describe('remove', () => {
     expect(() => noteService.remove('ws-1', 'n1')).not.toThrow()
     expect(noteRepository.findById('n1')).toBeUndefined()
   })
+
+  it('노트 삭제 시 deleteAllImages 호출', () => {
+    insertTestNote('n1', 'note.md')
+    const content = '![img](.images/photo.png)'
+    vi.mocked(fs.readFileSync).mockReturnValueOnce(content as never)
+    noteService.remove('ws-1', 'n1')
+    expect(noteImageService.deleteAllImages).toHaveBeenCalledWith('ws-1', content)
+  })
+
+  it('파일 읽기 실패 시 deleteAllImages 미호출, throw 없음', () => {
+    insertTestNote('n1', 'note.md')
+    vi.mocked(fs.readFileSync).mockImplementationOnce(() => {
+      throw new Error('ENOENT')
+    })
+    expect(() => noteService.remove('ws-1', 'n1')).not.toThrow()
+    expect(noteImageService.deleteAllImages).not.toHaveBeenCalled()
+  })
 })
 
 // ─── readContent ─────────────────────────────────────────────
@@ -417,6 +442,28 @@ describe('writeContent', () => {
     insertTestNote('n1', 'note.md')
     noteService.writeContent('ws-1', 'n1', 'hello\nworld')
     expect(noteRepository.findById('n1')?.preview).toBe('hello world')
+  })
+
+  it('이미지 제거 시 cleanupRemovedImages 호출', () => {
+    insertTestNote('n1', 'note.md')
+    const oldContent = '![img](.images/old.png)'
+    const newContent = 'no image'
+    vi.mocked(fs.readFileSync).mockReturnValueOnce(oldContent as never)
+    noteService.writeContent('ws-1', 'n1', newContent)
+    expect(noteImageService.cleanupRemovedImages).toHaveBeenCalledWith(
+      'ws-1',
+      oldContent,
+      newContent
+    )
+  })
+
+  it('파일 미존재 시 (최초 작성) cleanupRemovedImages 미호출', () => {
+    insertTestNote('n1', 'note.md')
+    vi.mocked(fs.readFileSync).mockImplementationOnce(() => {
+      throw new Error('ENOENT')
+    })
+    noteService.writeContent('ws-1', 'n1', 'new content')
+    expect(noteImageService.cleanupRemovedImages).not.toHaveBeenCalled()
   })
 })
 

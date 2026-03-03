@@ -61,7 +61,7 @@ export const noteImageService = {
 
   /** 마크다운에서 .images/ 참조 경로 추출 */
   extractImagePaths(markdown: string): string[] {
-    const regex = /!\[.*?\]\((.images\/[^)]+)\)/g
+    const regex = /!\[.*?\]\((\.images\/[^)"\s]+)\)/g
     const paths: string[] = []
     let match: RegExpExecArray | null
     while ((match = regex.exec(markdown)) !== null) {

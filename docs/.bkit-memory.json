@@ -1,7 +1,7 @@
 {
-  "sessionCount": 170,
+  "sessionCount": 172,
   "lastSession": {
-    "startedAt": "2026-03-03T08:22:02.675Z",
+    "startedAt": "2026-03-03T09:07:25.575Z",
     "platform": "claude",
     "level": "Dynamic"
   },
@@ -9,6 +9,12 @@
   "phase": null,
   "matchRate": null,
   "archivedFeatures": {
+    "note-image-test": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-03T18:15:00Z",
+      "archivedTo": "docs/archive/2026-03/note-image-test/"
+    },
     "note-image": {
       "phase": "archived",
       "matchRate": 100,

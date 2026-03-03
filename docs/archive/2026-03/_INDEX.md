@@ -8,6 +8,7 @@
 | image-viewer-test    | completed | 100%       | 2026-03-02 |
 | canvas-visualization | completed | 93%        | 2026-03-03 |
 | note-image           | completed | 100%       | 2026-03-03 |
+| note-image-test      | completed | 100%       | 2026-03-03 |
 
 ## calendar-refactor
 
@@ -44,3 +45,9 @@
 - **Description**: Milkdown MD editor image DnD/Paste — .images/ folder storage, blob URL rendering, auto-cleanup on delete
 - **Key Results**: 3 new files + 6 modified, 100% match rate, 0 iterations, 12 enhancements beyond design (image garbage collection)
 - **Documents**: [plan](note-image/note-image.plan.md) | [design](note-image/note-image.design.md) | [analysis](note-image/note-image.analysis.md) | [report](note-image/note-image.report.md)
+
+## note-image-test
+
+- **Description**: noteImageService + noteService 이미지 통합 테스트 — 7 methods, 36 test cases, path traversal security validation
+- **Key Results**: 32 cases (note-image.test.ts) + 4 cases (note.test.ts), 100% match rate, 0 iterations, title attribute regex limitation discovered
+- **Documents**: [plan](note-image-test/note-image-test.plan.md) | [design](note-image-test/note-image-test.design.md) | [analysis](note-image-test/note-image-test.analysis.md) | [report](note-image-test/note-image-test.report.md)

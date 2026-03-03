@@ -139,6 +139,7 @@ export function CanvasBoardInner({
         snapGrid={[20, 20]}
         minZoom={0.1}
         maxZoom={4}
+        proOptions={{ hideAttribution: true }}
       >
         <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
         <Controls showInteractive={false} />
