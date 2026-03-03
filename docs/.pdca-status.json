@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-03T06:05:42.596Z",
+  "lastUpdated": "2026-03-03T06:51:13.492Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -61,7 +61,8 @@
     "canvas-detail",
     "canvas-visualization",
     "node-content",
-    "canvas-test: Gap 분석 완료"
+    "canvas-test: Gap 분석 완료",
+    "settings"
   ],
   "primaryFeature": "pdf-viewer",
   "features": {
@@ -74,9 +75,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-21T22:19:42.353Z",
-        "lastUpdated": "2026-03-03T05:07:59.960Z"
+        "lastUpdated": "2026-03-03T06:51:03.365Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/tab-system/ui/PaneContainer.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/canvas/ui/CanvasBoardInner.tsx"
     },
     "workspace": {
       "phase": "do",
@@ -282,9 +283,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T07:34:47.807Z",
-        "lastUpdated": "2026-03-02T04:30:57.103Z"
+        "lastUpdated": "2026-03-03T06:29:51.411Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainLayout.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainSidebar.tsx"
     },
     "folder.ts": {
       "phase": "do",
@@ -457,9 +458,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-27T01:28:10.041Z",
-        "lastUpdated": "2026-03-02T10:43:25.569Z"
+        "lastUpdated": "2026-03-03T06:29:58.027Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/providers/query-client-provider.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/providers/theme-initializer.tsx"
     },
     "store": {
       "phase": "do",
@@ -549,9 +550,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-28T20:31:05.836Z",
-        "lastUpdated": "2026-03-02T04:29:39.584Z"
+        "lastUpdated": "2026-03-03T06:30:13.163Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/lib/entity-link.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/App.tsx"
     },
     "pdf-viewer": {
       "phase": "do",
@@ -696,7 +697,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-01T21:46:47.580Z",
-        "lastUpdated": "2026-03-03T03:58:02.916Z"
+        "lastUpdated": "2026-03-03T06:51:13.492Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/entity-link/manage-link/ui/PanePickerSubmenu.tsx"
     },
@@ -857,6 +858,19 @@
       },
       "previousPhase": "check",
       "autoAdvanced": true
+    },
+    "settings": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-03T06:28:58.636Z",
+        "lastUpdated": "2026-03-03T06:29:20.599Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/index.ts"
     }
   },
   "pipeline": {
@@ -867,7 +881,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-03T06:05:42.596Z"
+    "lastActivity": "2026-03-03T06:51:13.492Z"
   },
   "history": [
     {
@@ -16965,6 +16979,126 @@
     {
       "timestamp": "2026-03-03T06:05:42.596Z",
       "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:28:25.880Z",
+      "feature": "renderer",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:28:37.452Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:28:58.636Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:15.243Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:19.849Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:20.599Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:34.269Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:39.207Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:43.995Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:51.411Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:29:58.027Z",
+      "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:30:08.980Z",
+      "feature": "renderer",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:30:13.163Z",
+      "feature": "renderer",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:34:58.776Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:39:00.094Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:46:44.210Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:46:45.425Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:51:03.365Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:51:09.239Z",
+      "feature": "entity-link",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T06:51:13.492Z",
+      "feature": "entity-link",
       "phase": "do",
       "action": "updated"
     }

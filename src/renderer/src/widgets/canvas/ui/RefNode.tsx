@@ -50,8 +50,7 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
         minWidth={160}
         minHeight={80}
         isVisible={selected && resizable}
-        lineClassName="!border-primary"
-        handleClassName="!size-2 !bg-primary !border-primary"
+        handleClassName="!size-2.5 !bg-primary !border-primary"
         onResizeStart={() => setResizing(true)}
         onResizeEnd={() => setResizing(false)}
       />

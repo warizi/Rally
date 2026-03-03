@@ -53,14 +53,14 @@ export function PanePickerSubmenu({ onPaneSelect, className, children }: Props):
 
   useEffect(() => {
     if (!visible) return
-    function handleOutsideClick(e: MouseEvent): void {
+    function handleOutsideClick(e: PointerEvent): void {
       const target = e.target as Node
       if (triggerRef.current?.contains(target)) return
       if (submenuRef.current?.contains(target)) return
       setVisible(false)
     }
-    document.addEventListener('mousedown', handleOutsideClick)
-    return () => document.removeEventListener('mousedown', handleOutsideClick)
+    document.addEventListener('pointerdown', handleOutsideClick, true)
+    return () => document.removeEventListener('pointerdown', handleOutsideClick, true)
   }, [visible])
 
   function handlePaneClick(paneId: string): void {

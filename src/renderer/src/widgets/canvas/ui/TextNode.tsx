@@ -31,8 +31,7 @@ function TextNodeComponent({ id, data, selected }: NodeProps<TextNodeType>): Rea
         minWidth={160}
         minHeight={80}
         isVisible={selected}
-        lineClassName="!border-primary"
-        handleClassName="!size-2 !bg-primary !border-primary"
+        handleClassName="!size-2.5 !bg-primary !border-primary"
       />
       <Handle type="source" position={Position.Top} id="top" className="!w-2 !h-2" />
       <Handle type="source" position={Position.Right} id="right" className="!w-2 !h-2" />

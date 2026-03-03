@@ -190,6 +190,27 @@
   display: none;
 }
 
+/* React Flow 다크모드 오버라이드 */
+.dark .react-flow__background {
+  background-color: var(--muted);
+}
+
+.dark .react-flow__controls {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.dark .react-flow__controls-button {
+  background-color: var(--card);
+  border-color: var(--border);
+  fill: var(--foreground);
+}
+
+.dark .react-flow__controls-button:hover {
+  background-color: var(--accent);
+}
+
 .react-flow__handle::after {
   content: '';
   position: absolute;
@@ -198,4 +219,35 @@
   width: 20px;
   height: 20px;
   transform: translate(-50%, -50%);
+}
+
+/* Resize line handler - 히트 영역 확장 */
+.react-flow__resize-handler.line {
+  border-width: 0 !important;
+}
+
+.react-flow__resize-handler.line.top,
+.react-flow__resize-handler.line.bottom {
+  height: 14px !important;
+}
+
+.react-flow__resize-handler.line.top {
+  top: -7px !important;
+}
+
+.react-flow__resize-handler.line.bottom {
+  bottom: -7px !important;
+}
+
+.react-flow__resize-handler.line.left,
+.react-flow__resize-handler.line.right {
+  width: 14px !important;
+}
+
+.react-flow__resize-handler.line.left {
+  left: -7px !important;
+}
+
+.react-flow__resize-handler.line.right {
+  right: -7px !important;
 }

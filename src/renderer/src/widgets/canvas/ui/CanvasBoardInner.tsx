@@ -133,6 +133,7 @@ export function CanvasBoardInner({
         fitView={nodes.length > 0}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode="Shift"
+        nodeDragThreshold={5}
         connectionRadius={20}
         snapToGrid
         snapGrid={[20, 20]}

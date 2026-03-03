@@ -1,9 +1,12 @@
+import { useState } from 'react'
+import { Settings } from 'lucide-react'
 import { useTabStore, applySessionToStore } from '@/features/tap-system/manage-tab-system'
 import type { SerializedTab, SessionData } from '@/features/tap-system/manage-tab-system'
 import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
 import type { TabSnapshot } from '@/entities/tab-snapshot'
 import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
+import { SettingsDialog } from '@/features/settings/manage-settings'
 import { sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import {
@@ -19,6 +22,7 @@ import {
 } from '@/shared/ui/sidebar'
 
 function MainSidebar(): React.JSX.Element {
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const openTab = useTabStore((state) => state.openTab)
   const { mutate: updateSnapshot } = useUpdateTabSnapshot()
   const tabs = useTabStore((state) => state.tabs)
@@ -57,6 +61,7 @@ function MainSidebar(): React.JSX.Element {
   }
 
   return (
+    <>
     <Sidebar collapsible="icon" className="mt-9">
       <SidebarHeader>
         <WorkspaceSwitcher />
@@ -90,13 +95,26 @@ function MainSidebar(): React.JSX.Element {
           />
         )}
         <SidebarGroup>
-          <SidebarGroupLabel>기타</SidebarGroupLabel>
+          <SidebarGroupLabel>시스템</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu></SidebarMenu>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  className="cursor-pointer"
+                  tooltip="설정"
+                  onClick={() => setSettingsOpen(true)}
+                >
+                  <Settings />
+                  <span>설정</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
+    <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
   )
 }
 
