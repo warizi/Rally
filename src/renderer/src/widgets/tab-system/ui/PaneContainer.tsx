@@ -8,13 +8,15 @@ interface PaneContainerProps {
   routes: PaneRoute[]
   isDragging: boolean
   showSidebarTrigger?: boolean
+  isTopRow?: boolean
 }
 
 export function PaneContainer({
   paneId,
   routes,
   isDragging,
-  showSidebarTrigger = false
+  showSidebarTrigger = false,
+  isTopRow = true
 }: PaneContainerProps): React.ReactElement {
   const pane = useTabStore((state) => state.panes[paneId])
   const tabs = useTabStore((state) => state.tabs)
@@ -41,7 +43,7 @@ export function PaneContainer({
       )}
     >
       {/* 탭 바 */}
-      <TabBar paneId={paneId} showSidebarTrigger={showSidebarTrigger} />
+      <TabBar paneId={paneId} showSidebarTrigger={showSidebarTrigger} isDragRegion={isTopRow} />
 
       {/* 컨텐츠 영역 */}
       <PaneContent tab={activeTab} routes={routes} className="flex-1 overflow-auto" />

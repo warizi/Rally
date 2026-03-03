@@ -28,6 +28,7 @@ interface LayoutNodeRendererProps {
   routes: PaneRoute[]
   isDragging: boolean
   topLeftPaneId: string | null
+  isTopRow: boolean
 }
 
 // SplitDirection를 react-resizable-panels의 orientation으로 변환
@@ -39,12 +40,14 @@ function SplitContainerRenderer({
   node,
   routes,
   isDragging,
-  topLeftPaneId
+  topLeftPaneId,
+  isTopRow
 }: {
   node: SplitNode
   routes: PaneRoute[]
   isDragging: boolean
   topLeftPaneId: string | null
+  isTopRow: boolean
 }): React.ReactElement {
   const updateLayoutSizes = useTabStore((state) => state.updateLayoutSizes)
   const orientation = toOrientation(node.direction)
@@ -94,6 +97,7 @@ function SplitContainerRenderer({
               routes={routes}
               isDragging={isDragging}
               topLeftPaneId={topLeftPaneId}
+              isTopRow={orientation === 'horizontal' ? isTopRow : index === 0 && isTopRow}
             />
           </ResizablePanel>
           {index < node.children.length - 1 && <ResizableHandle />}
@@ -107,7 +111,8 @@ function LayoutNodeRenderer({
   node,
   routes,
   isDragging,
-  topLeftPaneId
+  topLeftPaneId,
+  isTopRow
 }: LayoutNodeRendererProps): React.ReactElement {
   if (isPaneNode(node)) {
     return (
@@ -116,6 +121,7 @@ function LayoutNodeRenderer({
         routes={routes}
         isDragging={isDragging}
         showSidebarTrigger={node.paneId === topLeftPaneId}
+        isTopRow={isTopRow}
       />
     )
   }
@@ -127,6 +133,7 @@ function LayoutNodeRenderer({
         routes={routes}
         isDragging={isDragging}
         topLeftPaneId={topLeftPaneId}
+        isTopRow={isTopRow}
       />
     )
   }
@@ -145,6 +152,7 @@ export function PaneLayout({ routes, isDragging = false }: PaneLayoutProps): Rea
         routes={routes}
         isDragging={isDragging}
         topLeftPaneId={topLeftPaneId}
+        isTopRow={true}
       />
     </div>
   )

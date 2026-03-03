@@ -18,9 +18,10 @@ import { cn } from '@/shared/lib/utils'
 interface TabBarProps {
   paneId: string
   showSidebarTrigger?: boolean
+  isDragRegion?: boolean
 }
 
-export function TabBar({ paneId, showSidebarTrigger = false }: TabBarProps): React.ReactElement {
+export function TabBar({ paneId, showSidebarTrigger = false, isDragRegion = true }: TabBarProps): React.ReactElement {
   const pane = useTabStore((state) => state.panes[paneId])
   const tabs = useTabStore((state) => state.tabs)
   const isPaneActive = useTabStore((state) => state.activePaneId === paneId)
@@ -38,7 +39,7 @@ export function TabBar({ paneId, showSidebarTrigger = false }: TabBarProps): Rea
   const paneTabs = pane.tabIds.map((id) => tabs[id]).filter(Boolean)
 
   return (
-    <div ref={setNodeRef} className="flex flex-row items-center h-9 w-full drag-region">
+    <div ref={setNodeRef} className={cn('flex flex-row items-center h-9 w-full', isDragRegion && 'drag-region')}>
       {showSidebarTrigger && (
         <SidebarTrigger
           className={cn(

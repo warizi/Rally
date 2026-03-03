@@ -15,7 +15,8 @@ import {
   HEADER_HEIGHT,
   ROW_NUM_WIDTH,
   ADD_COL_WIDTH,
-  DEFAULT_COL_WIDTH
+  DEFAULT_COL_WIDTH,
+  type CellPos
 } from '../model/types'
 import { useCsvSelection } from '../model/use-csv-selection'
 import { useCsvClipboard } from '../model/use-csv-clipboard'
@@ -39,6 +40,9 @@ interface Props {
   onRenameColumn: (colIndex: number, name: string) => void
   onUndo: () => void
   onRedo: () => void
+  focusCell?: CellPos | null
+  matchedCells?: Set<string>
+  onSearchClear?: () => void
 }
 
 export function CsvTable({
@@ -55,7 +59,10 @@ export function CsvTable({
   onRemoveColumn,
   onRenameColumn,
   onUndo,
-  onRedo
+  onRedo,
+  focusCell,
+  matchedCells,
+  onSearchClear
 }: Props): JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
@@ -112,6 +119,12 @@ export function CsvTable({
     onRedo
   )
   const { handleResizeStart } = useCsvColumnResize(getColWidth, onColumnSizingChange)
+
+  // --- Search focus ---
+  useEffect(() => {
+    if (!focusCell || focusCell.row < 0) return
+    sel.setSelection({ anchor: focusCell, focus: focusCell })
+  }, [focusCell]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // --- Computed ---
   const colTotalSize = colVirtualizer.getTotalSize()
@@ -287,6 +300,7 @@ export function CsvTable({
                       ri <= sel.selectionRange.endRow &&
                       ci >= sel.selectionRange.startCol &&
                       ci <= sel.selectionRange.endCol
+                    const isSearchMatch = matchedCells?.has(`${ri}_${ci}`) ?? false
 
                     return (
                       <div
@@ -298,7 +312,9 @@ export function CsvTable({
                               (!sel.isSingleSelection ? ' bg-primary/10' : '')
                             : isSelected
                               ? ' bg-primary/10'
-                              : ' hover:bg-accent/50')
+                              : isSearchMatch
+                                ? ' bg-yellow-200/30'
+                                : ' hover:bg-accent/50')
                         }
                         style={{
                           top: vr.start,
@@ -306,7 +322,10 @@ export function CsvTable({
                           width: vc.size,
                           height: vr.size
                         }}
-                        onMouseDown={(e) => sel.handleCellMouseDown(ri, ci, e)}
+                        onMouseDown={(e) => {
+                          onSearchClear?.()
+                          sel.handleCellMouseDown(ri, ci, e)
+                        }}
                         onMouseEnter={() => sel.handleCellMouseEnter(ri, ci)}
                         onDoubleClick={(e) => {
                           if (e.button !== 0) return

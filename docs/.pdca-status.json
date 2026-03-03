@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-03T05:02:37.569Z",
+  "lastUpdated": "2026-03-03T05:33:49.249Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -74,9 +74,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-21T22:19:42.353Z",
-        "lastUpdated": "2026-03-03T03:57:08.293Z"
+        "lastUpdated": "2026-03-03T05:07:59.960Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/pages/todo/ui/TodoPage.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/tab-system/ui/PaneContainer.tsx"
     },
     "workspace": {
       "phase": "do",
@@ -204,9 +204,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-23T12:55:37.864Z",
-        "lastUpdated": "2026-03-03T02:56:21.282Z"
+        "lastUpdated": "2026-03-03T05:08:12.863Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/tap-system/manage-tab-system/ui/TabContextMenu.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/tap-system/manage-tab-system/ui/TabBar.tsx"
     },
     "repositories": {
       "phase": "do",
@@ -269,9 +269,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T07:33:45.573Z",
-        "lastUpdated": "2026-02-24T08:30:23.507Z"
+        "lastUpdated": "2026-03-03T05:33:49.249Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotPreview.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/tab-snapshot/manage-tab-snapshot/ui/TabSnapshotItem.tsx"
     },
     "layout": {
       "phase": "do",
@@ -523,9 +523,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-28T16:58:48.640Z",
-        "lastUpdated": "2026-03-03T05:01:17.355Z"
+        "lastUpdated": "2026-03-03T05:29:54.229Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/csv/edit-csv/ui/CsvTable.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/csv/edit-csv/ui/EditableCell.tsx"
     },
     "csv-viewer": {
       "phase": "do",
@@ -867,7 +867,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-03T05:02:37.569Z"
+    "lastActivity": "2026-03-03T05:33:49.249Z"
   },
   "history": [
     {
@@ -16695,6 +16695,198 @@
     {
       "timestamp": "2026-03-03T05:02:37.569Z",
       "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:27.968Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:32.646Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:36.894Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:43.237Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:47.269Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:51.763Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:55.974Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:07:59.960Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:08:04.579Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:08:08.355Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:08:12.863Z",
+      "feature": "tap-system",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:17:24.588Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:17:50.450Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:01.614Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:06.970Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:10.587Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:17.005Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:27.276Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:34.759Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:40.887Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:47.154Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:18:53.983Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:21:30.330Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:21:34.481Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:21:40.163Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:25:57.167Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:26:00.746Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:26:08.090Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:26:15.906Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:28:57.822Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:29:54.229Z",
+      "feature": "csv",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-03T05:33:49.249Z",
+      "feature": "tab-snapshot",
       "phase": "do",
       "action": "updated"
     }

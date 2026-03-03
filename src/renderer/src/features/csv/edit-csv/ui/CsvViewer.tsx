@@ -4,6 +4,7 @@ import type { ColumnSizingState, Updater } from '@tanstack/react-table'
 import { useUpdateCsvMeta, isOwnWrite } from '@entities/csv-file'
 import { useCsvEditor } from '../model/use-csv-editor'
 import { useCsvExternalSync } from '../model/use-csv-external-sync'
+import { useCsvSearch } from '../model/use-csv-search'
 import { CsvToolbar } from './CsvToolbar'
 import { CsvTable } from './CsvTable'
 
@@ -145,6 +146,9 @@ export function CsvViewer({
     [removeColumn]
   )
 
+  // 검색
+  const search = useCsvSearch(data, headers)
+
   return (
     <div className="flex flex-col h-full">
       <CsvToolbar
@@ -157,6 +161,12 @@ export function CsvViewer({
         onAddColumn={handleAddColumn}
         onUndo={undo}
         onRedo={redo}
+        searchQuery={search.query}
+        onSearchQueryChange={search.setQuery}
+        onSearchNext={search.next}
+        onSearchPrev={search.prev}
+        searchMatchCount={search.matches.length}
+        searchCurrentIndex={search.currentIndex}
       />
       <div className="flex-1 overflow-hidden" key={key}>
         <CsvTable
@@ -174,6 +184,9 @@ export function CsvViewer({
           onRenameColumn={renameColumn}
           onUndo={undo}
           onRedo={redo}
+          focusCell={search.currentMatch}
+          matchedCells={search.matchedCells}
+          onSearchClear={() => search.setQuery('')}
         />
       </div>
     </div>

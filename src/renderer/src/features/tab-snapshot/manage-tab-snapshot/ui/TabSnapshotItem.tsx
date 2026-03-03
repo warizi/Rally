@@ -1,5 +1,5 @@
 import { JSX } from 'react'
-import { Camera } from 'lucide-react'
+import { LayoutGrid } from 'lucide-react'
 import { SidebarMenuItem, SidebarMenuButton } from '@shared/ui/sidebar'
 import {
   ContextMenu,
@@ -34,7 +34,7 @@ export function TabSnapshotItem({
             <Tooltip>
               <TooltipTrigger asChild>
                 <SidebarMenuButton className="cursor-pointer" onClick={onRestore}>
-                  <Camera className="h-4 w-4 shrink-0" />
+                  <LayoutGrid className="h-4 w-4 shrink-0" />
                   <span className="truncate">{snapshot.name}</span>
                 </SidebarMenuButton>
               </TooltipTrigger>
