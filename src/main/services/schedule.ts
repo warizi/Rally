@@ -5,6 +5,7 @@ import { scheduleTodoRepository } from '../repositories/schedule-todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { todoRepository } from '../repositories/todo'
 import { entityLinkService } from './entity-link'
+import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import type { Schedule } from '../repositories/schedule'
 import type { Todo } from '../repositories/todo'
@@ -230,12 +231,19 @@ export const scheduleService = {
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')
+
+    // 시간 또는 종일 속성 변경 시 알림 재계산
+    if (data.startAt !== undefined || data.allDay !== undefined) {
+      reminderService.recalculate('schedule', scheduleId)
+    }
+
     return toScheduleItem(row)
   },
 
   remove(scheduleId: string): void {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
+    reminderService.removeByEntity('schedule', scheduleId)
     entityLinkService.removeAllLinks('schedule', scheduleId)
     canvasNodeRepository.deleteByRef('schedule', scheduleId)
     scheduleRepository.delete(scheduleId)
@@ -256,6 +264,10 @@ export const scheduleService = {
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')
+
+    // 캘린더 드래그로 시간 변경 시 알림 재계산
+    reminderService.recalculate('schedule', scheduleId)
+
     return toScheduleItem(row)
   },
 

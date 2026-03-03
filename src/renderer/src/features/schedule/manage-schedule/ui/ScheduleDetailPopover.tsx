@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Calendar, Clock, MapPin, FileText, Link, Pencil, Trash2, CheckSquare } from 'lucide-react'
+import { Bell, Calendar, Clock, MapPin, FileText, Link, Pencil, Trash2, CheckSquare } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
 import type { ScheduleItem } from '@entities/schedule'
@@ -12,6 +12,7 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import type { TabType } from '@shared/constants/tab-url'
 import { getScheduleColor } from '../model/schedule-color'
 import { isTodoItem } from '../model/calendar-utils'
+import { useReminders, REMINDER_OFFSETS } from '@entities/reminder'
 import { ScheduleFormDialog } from './ScheduleFormDialog'
 import { DeleteScheduleDialog } from './DeleteScheduleDialog'
 import { LinkEntityPopover, OpenAllSubmenu } from '@features/entity-link/manage-link'
@@ -33,6 +34,7 @@ export function ScheduleDetailPopover({
   const color = getScheduleColor(schedule)
   const isTodo = isTodoItem(schedule)
   const { data: linked = [] } = useLinkedEntities('schedule', schedule.id)
+  const { data: reminders = [] } = useReminders('schedule', schedule.id)
   const openTab = useTabStore((s) => s.openTab)
 
   const handleNavigateLinked = useCallback(
@@ -111,6 +113,19 @@ export function ScheduleDetailPopover({
                 <div className="flex items-start gap-1.5">
                   <FileText className="size-3.5 mt-0.5" />
                   <span className="line-clamp-3">{schedule.description}</span>
+                </div>
+              )}
+              {!isTodo && reminders.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <Bell className="size-3.5" />
+                  <span>
+                    {reminders
+                      .map((r) => {
+                        const found = REMINDER_OFFSETS.find((o) => o.value === r.offsetMs)
+                        return found?.label ?? `${Math.round(r.offsetMs / 60000)}분 전`
+                      })
+                      .join(', ')}
+                  </span>
                 </div>
               )}
             </div>

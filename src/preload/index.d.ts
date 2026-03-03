@@ -523,6 +523,39 @@ interface ScheduleAPI {
   getLinkedTodos: (scheduleId: string) => Promise<IpcResponse<TodoItem[]>>
 }
 
+interface ReminderItem {
+  id: string
+  entityType: 'todo' | 'schedule'
+  entityId: string
+  offsetMs: number
+  remindAt: Date
+  isFired: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface SetReminderData {
+  entityType: 'todo' | 'schedule'
+  entityId: string
+  offsetMs: number
+}
+
+interface ReminderAPI {
+  findByEntity: (
+    entityType: 'todo' | 'schedule',
+    entityId: string
+  ) => Promise<IpcResponse<ReminderItem[]>>
+  set: (data: SetReminderData) => Promise<IpcResponse<ReminderItem>>
+  remove: (reminderId: string) => Promise<IpcResponse<void>>
+  removeByEntity: (
+    entityType: 'todo' | 'schedule',
+    entityId: string
+  ) => Promise<IpcResponse<void>>
+  onFired: (
+    callback: (data: { entityType: string; entityId: string; title: string }) => void
+  ) => () => void
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -540,6 +573,7 @@ interface API {
   canvas: CanvasAPI
   canvasNode: CanvasNodeAPI
   canvasEdge: CanvasEdgeAPI
+  reminder: ReminderAPI
 }
 
 declare global {

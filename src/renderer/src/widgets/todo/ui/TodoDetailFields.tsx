@@ -4,6 +4,7 @@ import { TodoCheckbox } from '@features/todo/todo-field/ui/TodoCheckbox'
 import { TodoStatusSelect } from '@features/todo/todo-field/ui/TodoStatusSelect'
 import { TodoPrioritySelect } from '@features/todo/todo-field/ui/TodoPrioritySelect'
 import { DatePickerButton } from '@shared/ui/date-picker-button'
+import { ReminderSelect } from '@features/reminder'
 
 interface Props {
   todo: TodoItem
@@ -71,6 +72,17 @@ export function TodoDetailFields({ todo, workspaceId }: Props): React.JSX.Elemen
             }}
             placeholder="날짜 없음"
             className="min-w-[140px]"
+          />
+        </Label>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 @[550px]:grid-cols-2 w-fit">
+        {/* 알림 */}
+        <Label title="알림">
+          <ReminderSelect
+            entityType="todo"
+            entityId={todo.id}
+            disabled={!todo.dueDate && !todo.startDate}
           />
         </Label>
       </div>

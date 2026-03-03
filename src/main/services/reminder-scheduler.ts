@@ -1,0 +1,64 @@
+import { Notification, BrowserWindow } from 'electron'
+import { reminderService } from './reminder'
+
+const CHECK_INTERVAL = 60_000 // 1분
+const STALE_THRESHOLD = 5 * 60_000 // 5분: 이보다 오래된 미발송 알림은 무시
+
+let intervalId: ReturnType<typeof setInterval> | null = null
+
+function checkAndFire(): void {
+  const now = new Date()
+  const pending = reminderService.findPendingWithTitle(now)
+
+  for (const item of pending) {
+    // 과거 알림 필터: remind_at이 5분 이상 지난 알림은 발송하지 않고 fired 처리만
+    if (now.getTime() - item.remindAt.getTime() > STALE_THRESHOLD) {
+      reminderService.markFired(item.id)
+      continue
+    }
+
+    // Notification 발송
+    const notification = new Notification({
+      title: item.entityType === 'todo' ? '할 일 알림' : '일정 알림',
+      body: item.title
+    })
+
+    notification.on('click', () => {
+      // 모든 윈도우에 알림 클릭 이벤트 전송
+      BrowserWindow.getAllWindows().forEach((win) => {
+        win.webContents.send('reminder:fired', {
+          entityType: item.entityType,
+          entityId: item.entityId,
+          title: item.title
+        })
+      })
+      // 첫 번째 윈도우 포커스
+      const win = BrowserWindow.getAllWindows()[0]
+      if (win) {
+        if (win.isMinimized()) win.restore()
+        win.focus()
+      }
+    })
+
+    notification.show()
+
+    // 발송 완료 마킹
+    reminderService.markFired(item.id)
+  }
+}
+
+export const reminderScheduler = {
+  start(): void {
+    if (intervalId) return
+    // 앱 시작 시 즉시 1회 체크
+    checkAndFire()
+    intervalId = setInterval(checkAndFire, CHECK_INTERVAL)
+  },
+
+  stop(): void {
+    if (intervalId) {
+      clearInterval(intervalId)
+      intervalId = null
+    }
+  }
+}

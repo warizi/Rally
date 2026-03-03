@@ -20,6 +20,8 @@ import { registerCanvasHandlers } from './ipc/canvas'
 import { registerCanvasNodeHandlers } from './ipc/canvas-node'
 import { registerCanvasEdgeHandlers } from './ipc/canvas-edge'
 import { registerNoteImageHandlers } from './ipc/note-image'
+import { registerReminderHandlers } from './ipc/reminder'
+import { reminderScheduler } from './services/reminder-scheduler'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 
@@ -102,8 +104,11 @@ app.whenReady().then(() => {
   registerCanvasNodeHandlers()
   registerCanvasEdgeHandlers()
   registerNoteImageHandlers()
+  registerReminderHandlers()
 
   createWindow()
+
+  reminderScheduler.start()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -123,6 +128,7 @@ app.on('before-quit', (event) => {
   if (isQuitting) return
   event.preventDefault()
   isQuitting = true
+  reminderScheduler.stop()
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   // localStorage 등 Web Storage를 디스크에 flush한 뒤 종료
   session.defaultSession.flushStorageData()

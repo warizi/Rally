@@ -10,6 +10,8 @@ import { useCreateTodo } from '@entities/todo'
 import { useLinkEntity } from '@entities/entity-link'
 import { PendingLinkPicker } from '@features/entity-link/manage-link'
 import type { PendingLink } from '@features/entity-link/manage-link'
+import { ReminderPendingSelect } from '@features/reminder'
+import { useSetReminder } from '@entities/reminder'
 import { TodoFormFields } from './TodoFormFields'
 import type { TodoStatus } from '@entities/todo'
 
@@ -39,8 +41,10 @@ export function CreateTodoDialog({
   const [dueDate, setDueDate] = useState<Date | null>(null)
   const [startDate, setStartDate] = useState<Date | null>(null)
   const [pendingLinks, setPendingLinks] = useState<PendingLink[]>([])
+  const [pendingReminders, setPendingReminders] = useState<number[]>([])
   const createTodo = useCreateTodo()
   const linkEntity = useLinkEntity()
+  const setReminder = useSetReminder()
   const titleOnly = !!parentId
 
   const handleAddLink = useCallback(
@@ -69,6 +73,7 @@ export function CreateTodoDialog({
       setDueDate(null)
       setStartDate(null)
       setPendingLinks([])
+      setPendingReminders([])
       form.reset({
         title: '',
         description: '',
@@ -144,10 +149,20 @@ export function CreateTodoDialog({
               })
             }
           }
+          if (created && pendingReminders.length > 0) {
+            for (const offsetMs of pendingReminders) {
+              setReminder.mutate({
+                entityType: 'todo',
+                entityId: created.id,
+                offsetMs
+              })
+            }
+          }
           setOpen(false)
           setDueDate(null)
           setStartDate(null)
           setPendingLinks([])
+          setPendingReminders([])
           form.reset({
             title: '',
             description: '',
@@ -180,7 +195,10 @@ export function CreateTodoDialog({
                   <span className="text-sm font-medium">시작일</span>
                   <DatePickerButton
                     value={startDate}
-                    onChange={setStartDate}
+                    onChange={(v) => {
+                      setStartDate(v)
+                      if (!v && !dueDate) setPendingReminders([])
+                    }}
                     placeholder="날짜 없음 (선택)"
                     className="w-full"
                   />
@@ -192,9 +210,22 @@ export function CreateTodoDialog({
                   <span className="text-sm font-medium">마감일</span>
                   <DatePickerButton
                     value={dueDate}
-                    onChange={setDueDate}
+                    onChange={(v) => {
+                      setDueDate(v)
+                      if (!v && !startDate) setPendingReminders([])
+                    }}
                     placeholder="날짜 없음 (선택)"
                     className="w-full"
+                  />
+                </div>
+              )}
+
+              {!titleOnly && (startDate || dueDate) && (
+                <div className="flex flex-col gap-1.5">
+                  <span className="text-sm font-medium">알림</span>
+                  <ReminderPendingSelect
+                    selected={pendingReminders}
+                    onChange={setPendingReminders}
                   />
                 </div>
               )}

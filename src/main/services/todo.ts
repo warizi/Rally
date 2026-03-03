@@ -3,6 +3,7 @@ import { NotFoundError } from '../lib/errors'
 import { todoRepository } from '../repositories/todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { entityLinkService } from './entity-link'
+import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 
 export interface TodoItem {
@@ -180,6 +181,21 @@ export const todoService = {
 
     if (!updated) throw new NotFoundError(`Todo not found: ${todoId}`)
 
+    // 완료 시 미발송 알림 삭제
+    if (doneFields.isDone === true) {
+      reminderService.removeUnfiredByEntity('todo', todoId)
+    }
+
+    // 날짜 변경 시 remind_at 재계산 (완료 처리가 아닌 경우에만)
+    if (doneFields.isDone !== true && (data.dueDate !== undefined || data.startDate !== undefined)) {
+      const refreshed = todoRepository.findById(todoId)
+      if (refreshed && !refreshed.dueDate && !refreshed.startDate) {
+        reminderService.removeByEntity('todo', todoId)
+      } else {
+        reminderService.recalculate('todo', todoId)
+      }
+    }
+
     // 자동완료 (단방향): 하위 전체 완료 → 부모 자동완료
     // 역방향(하위 미완료 → 부모 복원)은 없음
     if (doneFields.isDone === true && todo.parentId) {
@@ -193,6 +209,7 @@ export const todoService = {
           doneAt: new Date(parentNow),
           updatedAt: new Date(parentNow)
         })
+        reminderService.removeUnfiredByEntity('todo', todo.parentId)
       }
     }
 
@@ -204,6 +221,7 @@ export const todoService = {
     if (!todo) throw new NotFoundError(`Todo not found: ${todoId}`)
 
     const subtodoIds = todoRepository.findAllDescendantIds(todoId)
+    reminderService.removeByEntities('todo', [todoId, ...subtodoIds])
     entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])
     canvasNodeRepository.deleteByRef('todo', todoId)
     for (const subId of subtodoIds) {
@@ -237,6 +255,13 @@ export const todoService = {
         return { id: u.id, order: u.order }
       })
     )
+
+    // 칸반 완료 이동 시 미발송 알림 삭제
+    for (const u of updates) {
+      if (u.status === '완료') {
+        reminderService.removeUnfiredByEntity('todo', u.id)
+      }
+    }
   },
 
   reorderSub(parentId: string, updates: TodoOrderUpdate[]): void {

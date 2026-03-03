@@ -10,6 +10,7 @@ import { useNoteWatcher } from '@entities/note'
 import { useCsvWatcher } from '@entities/csv-file'
 import { usePdfWatcher } from '@entities/pdf-file'
 import { useImageWatcher } from '@entities/image-file'
+import { useReminderWatcher } from '@features/reminder'
 import { useState } from 'react'
 import {
   DndContext,
@@ -47,6 +48,8 @@ function MainLayout(): React.JSX.Element {
   useCsvWatcher()
   usePdfWatcher()
   useImageWatcher()
+  // 알림 push 이벤트 구독
+  useReminderWatcher()
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   // 드래그 활성화 조건: 8px 이상 이동해야 드래그 시작

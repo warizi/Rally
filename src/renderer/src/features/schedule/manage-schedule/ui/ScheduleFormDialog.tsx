@@ -16,6 +16,8 @@ import { useLinkEntity } from '@entities/entity-link'
 import type { ScheduleItem } from '@entities/schedule'
 import { PendingLinkPicker } from '@features/entity-link/manage-link'
 import type { PendingLink } from '@features/entity-link/manage-link'
+import { ReminderPendingSelect, ReminderSelect } from '@features/reminder'
+import { useSetReminder } from '@entities/reminder'
 import { ColorPicker } from './ColorPicker'
 
 const scheduleSchema = z.object({
@@ -59,7 +61,9 @@ export function ScheduleFormDialog({
   const createSchedule = useCreateSchedule()
   const updateSchedule = useUpdateSchedule()
   const linkEntity = useLinkEntity()
+  const setReminderMut = useSetReminder()
   const [pendingLinks, setPendingLinks] = useState<PendingLink[]>([])
+  const [pendingReminders, setPendingReminders] = useState<number[]>([])
 
   const handleAddLink = useCallback(
     (link: PendingLink) => setPendingLinks((prev) => [...prev, link]),
@@ -126,6 +130,7 @@ export function ScheduleFormDialog({
       })
       setAllDay(false)
       setPendingLinks([])
+      setPendingReminders([])
       setStartDate(defaultStartDate ?? new Date())
       setEndDate(defaultEndDate ?? new Date())
       setStartHour(defaultStartDate?.getHours() ?? 9)
@@ -198,8 +203,18 @@ export function ScheduleFormDialog({
                 })
               }
             }
+            if (created && pendingReminders.length > 0) {
+              for (const offsetMs of pendingReminders) {
+                setReminderMut.mutate({
+                  entityType: 'schedule',
+                  entityId: created.id,
+                  offsetMs
+                })
+              }
+            }
             setOpen(false)
             setPendingLinks([])
+            setPendingReminders([])
             form.reset()
           }
         }
@@ -390,6 +405,21 @@ export function ScheduleFormDialog({
                     </FormItem>
                   )}
                 />
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-sm font-medium">알림</span>
+                {isEdit ? (
+                  <ReminderSelect
+                    entityType="schedule"
+                    entityId={initialData.id}
+                  />
+                ) : (
+                  <ReminderPendingSelect
+                    selected={pendingReminders}
+                    onChange={setPendingReminders}
+                  />
+                )}
               </div>
 
               {!isEdit && (
