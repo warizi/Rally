@@ -175,7 +175,11 @@ class WorkspaceWatcherService {
         // 변경된 이미지 파일 경로 수집 + 폴더 삭제로 함께 삭제된 Image 경로 병합
         const changedImageRelPaths = [
           ...eventsToProcess
-            .filter((e) => isImageFile(e.path) && !path.basename(e.path).startsWith('.'))
+            .filter((e) => {
+              if (!isImageFile(e.path) || path.basename(e.path).startsWith('.')) return false
+              const rel = path.relative(workspacePath, e.path).replace(/\\/g, '/')
+              return !rel.startsWith('.images/') && !rel.includes('/.images/')
+            })
             .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
           ...orphanImagePaths
         ]
@@ -608,12 +612,18 @@ class WorkspaceWatcherService {
     }
 
     // ─── Step 12: 이미지 파일 rename/move 감지 ──────────────────────
-    const imageDeletes = events.filter(
-      (e) => e.type === 'delete' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
-    )
-    const imageCreates = events.filter(
-      (e) => e.type === 'create' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
-    )
+    const imageDeletes = events.filter((e) => {
+      if (e.type !== 'delete' || !isImageFile(e.path) || path.basename(e.path).startsWith('.'))
+        return false
+      const rel = path.relative(workspacePath, e.path).replace(/\\/g, '/')
+      return !rel.startsWith('.images/') && !rel.includes('/.images/')
+    })
+    const imageCreates = events.filter((e) => {
+      if (e.type !== 'create' || !isImageFile(e.path) || path.basename(e.path).startsWith('.'))
+        return false
+      const rel = path.relative(workspacePath, e.path).replace(/\\/g, '/')
+      return !rel.startsWith('.images/') && !rel.includes('/.images/')
+    })
     const pairedImageDeletePaths = new Set<string>()
     const pairedImageCreatePaths = new Set<string>()
     for (const createEvent of imageCreates) {

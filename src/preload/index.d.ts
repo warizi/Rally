@@ -188,6 +188,19 @@ interface ImageAPI {
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
+interface NoteImageAPI {
+  saveFromPath: (workspaceId: string, sourcePath: string) => Promise<IpcResponse<string>>
+  saveFromBuffer: (
+    workspaceId: string,
+    buffer: ArrayBuffer,
+    ext: string
+  ) => Promise<IpcResponse<string>>
+  readImage: (
+    workspaceId: string,
+    relativePath: string
+  ) => Promise<IpcResponse<{ data: ArrayBuffer }>>
+}
+
 interface FolderNode {
   id: string
   name: string
@@ -515,6 +528,7 @@ interface API {
   csv: CsvAPI
   pdf: PdfAPI
   image: ImageAPI
+  noteImage: NoteImageAPI
   folder: FolderAPI
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI

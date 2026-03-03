@@ -7,6 +7,7 @@
 | link-test            | completed | 100%       | 2026-03-02 |
 | image-viewer-test    | completed | 100%       | 2026-03-02 |
 | canvas-visualization | completed | 93%        | 2026-03-03 |
+| note-image           | completed | 100%       | 2026-03-03 |
 
 ## calendar-refactor
 
@@ -37,3 +38,9 @@
 - **Description**: Obsidian Canvas-style infinite canvas tool — 4 DB tables, 15 IPC channels, @xyflow/react integration, 8 React components, Phase 1 MVP
 - **Key Results**: 24 new files + 6 modified, 93% match rate (87% initial → 93% after 1 iteration), backend 100% match, Phase 2 features (EntityPicker) delivered early
 - **Documents**: [plan](canvas-visualization/canvas-visualization.plan.md) | [design](canvas-visualization/canvas-visualization.design.md) | [analysis](canvas-visualization/canvas-visualization.analysis.md) | [report](canvas-visualization/canvas-visualization.report.md)
+
+## note-image
+
+- **Description**: Milkdown MD editor image DnD/Paste — .images/ folder storage, blob URL rendering, auto-cleanup on delete
+- **Key Results**: 3 new files + 6 modified, 100% match rate, 0 iterations, 12 enhancements beyond design (image garbage collection)
+- **Documents**: [plan](note-image/note-image.plan.md) | [design](note-image/note-image.design.md) | [analysis](note-image/note-image.analysis.md) | [report](note-image/note-image.report.md)

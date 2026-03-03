@@ -19,6 +19,7 @@ import { registerEntityLinkHandlers } from './ipc/entity-link'
 import { registerCanvasHandlers } from './ipc/canvas'
 import { registerCanvasNodeHandlers } from './ipc/canvas-node'
 import { registerCanvasEdgeHandlers } from './ipc/canvas-edge'
+import { registerNoteImageHandlers } from './ipc/note-image'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 
@@ -100,6 +101,7 @@ app.whenReady().then(() => {
   registerCanvasHandlers()
   registerCanvasNodeHandlers()
   registerCanvasEdgeHandlers()
+  registerNoteImageHandlers()
 
   createWindow()
 

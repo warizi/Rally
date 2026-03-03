@@ -1,14 +1,20 @@
 {
-  "sessionCount": 166,
+  "sessionCount": 170,
   "lastSession": {
-    "startedAt": "2026-03-03T06:37:42.494Z",
+    "startedAt": "2026-03-03T08:22:02.675Z",
     "platform": "claude",
     "level": "Dynamic"
   },
-  "currentFeature": "settings-dialog",
-  "phase": "do",
+  "currentFeature": null,
+  "phase": null,
   "matchRate": null,
   "archivedFeatures": {
+    "note-image": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-03T12:00:00Z",
+      "archivedTo": "docs/archive/2026-03/note-image/"
+    },
     "calendar-refactor": {
       "phase": "archived",
       "matchRate": 100,

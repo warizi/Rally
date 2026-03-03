@@ -1,7 +1,13 @@
 import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
+import { createDragDropManager } from 'dnd-core'
+import { HTML5Backend } from 'react-dnd-html5-backend'
 import { ChevronsDownUp, FilePlus, FolderPlus } from 'lucide-react'
+
+// 여러 Tree 인스턴스(여러 폴더 탭)가 동시에 마운트될 때
+// "Cannot have two HTML5 backends" 에러 방지를 위해 공유 DnD 매니저 사용
+const sharedDndManager = createDragDropManager(HTML5Backend)
 import {
   useCreateFolder,
   useRenameFolder,
@@ -471,6 +477,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <Tree<WorkspaceTreeNode>
             key={workspaceId}
             ref={treeRef}
+            dndManager={sharedDndManager}
             data={tree}
             idAccessor="id"
             initialOpenState={openState}

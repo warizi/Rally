@@ -9,6 +9,7 @@ import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { entityLinkService } from './entity-link'
 import { canvasNodeRepository } from '../repositories/canvas-node'
+import { noteImageService } from './note-image'
 
 export interface NoteNode {
   id: string
@@ -238,6 +239,15 @@ export const noteService = {
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
 
     const absPath = path.join(workspace.path, note.relativePath)
+
+    // 노트 삭제 전 참조된 이미지 파일 정리
+    try {
+      const content = fs.readFileSync(absPath, 'utf-8')
+      noteImageService.deleteAllImages(workspaceId, content)
+    } catch {
+      // 파일 읽기 실패 시 무시
+    }
+
     try {
       fs.unlinkSync(absPath)
     } catch {
@@ -277,6 +287,15 @@ export const noteService = {
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
 
     const absPath = path.join(workspace.path, note.relativePath)
+
+    // 저장 전 기존 내용 읽어서 제거된 이미지 파일 삭제
+    try {
+      const oldContent = fs.readFileSync(absPath, 'utf-8')
+      noteImageService.cleanupRemovedImages(workspaceId, oldContent, content)
+    } catch {
+      // 파일이 아직 없거나 읽기 실패 시 무시
+    }
+
     fs.writeFileSync(absPath, content, 'utf-8')
 
     const preview = content.slice(0, 200).replace(/\s+/g, ' ').trim()

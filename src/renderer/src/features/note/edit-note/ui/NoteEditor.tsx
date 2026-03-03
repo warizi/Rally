@@ -1,10 +1,13 @@
 import { JSX, useCallback, useEffect, useRef } from 'react'
 import { Editor, rootCtx, defaultValueCtx } from '@milkdown/core'
-import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
-import { commonmark } from '@milkdown/preset-commonmark'
+import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
+import { commonmark, imageSchema, insertImageCommand } from '@milkdown/preset-commonmark'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
+import { upload, uploadConfig } from '@milkdown/kit/plugin/upload'
+import { $view, callCommand } from '@milkdown/kit/utils'
 import { useWriteNoteContent } from '@entities/note'
 import { useNoteExternalSync } from '../model/use-note-external-sync'
+import { createNoteImageNodeViewFactory } from '../model/note-image-node-view'
 
 /** 저장 시: 문단 사이 빈 줄 제거, <br /> → 빈 줄로 변환 */
 function compactMarkdown(md: string): string {
@@ -63,12 +66,31 @@ function expandMarkdown(md: string): string {
   return result.join('\n')
 }
 
+async function saveDroppedFile(
+  workspaceId: string,
+  file: File
+): Promise<string | null> {
+  const filePath = window.electron.webUtils.getPathForFile(file)
+  if (filePath) {
+    const res = await window.api.noteImage.saveFromPath(workspaceId, filePath)
+    return res.success ? res.data! : null
+  }
+  const buffer = await file.arrayBuffer()
+  const ext = file.name.split('.').pop() || 'png'
+  const res = await window.api.noteImage.saveFromBuffer(workspaceId, buffer, ext)
+  return res.success ? res.data! : null
+}
+
 interface MilkdownEditorProps {
+  workspaceId: string
   initialContent: string
   onSave: (markdown: string) => void
 }
 
-function MilkdownEditor({ initialContent, onSave }: MilkdownEditorProps): JSX.Element {
+function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorProps): JSX.Element {
+  const wrapperRef = useRef<HTMLDivElement>(null)
+  const [loading, getEditor] = useInstance()
+
   useEditor((root) =>
     Editor.make()
       .config((ctx) => {
@@ -77,11 +99,76 @@ function MilkdownEditor({ initialContent, onSave }: MilkdownEditorProps): JSX.El
         ctx.get(listenerCtx).markdownUpdated((_, markdown) => {
           onSave(markdown)
         })
+        ctx.update(uploadConfig.key, (prev) => ({
+          ...prev,
+          uploader: async (files: FileList, schema) => {
+            const nodes: import('@milkdown/kit/prose/model').Node[] = []
+            for (let i = 0; i < files.length; i++) {
+              const file = files.item(i)
+              if (!file || !file.type.startsWith('image/')) continue
+              const relativePath = await saveDroppedFile(workspaceId, file)
+              if (!relativePath) continue
+              const node = schema.nodes.image.createAndFill({
+                src: relativePath,
+                alt: file.name
+              })
+              if (node) nodes.push(node)
+            }
+            return nodes
+          }
+        }))
       })
       .use(commonmark)
       .use(listener)
+      .use(upload)
+      .use(
+        $view(imageSchema.node, (_ctx) =>
+          createNoteImageNodeViewFactory(workspaceId)
+        )
+      )
   )
-  return <Milkdown />
+
+  // DnD: 드롭 시 이미지 삽입
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+
+    const onDragOver = (e: DragEvent): void => {
+      e.preventDefault()
+    }
+
+    const onDrop = async (e: DragEvent): Promise<void> => {
+      e.preventDefault()
+      e.stopPropagation()
+
+      const files = e.dataTransfer?.files
+      if (!files || files.length === 0) return
+
+      const editor = getEditor()
+      if (!editor) return
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files.item(i)
+        if (!file || !file.type.startsWith('image/')) continue
+        const relativePath = await saveDroppedFile(workspaceId, file)
+        if (!relativePath) continue
+        editor.action(callCommand(insertImageCommand.key, { src: relativePath, alt: file.name }))
+      }
+    }
+
+    el.addEventListener('dragover', onDragOver)
+    el.addEventListener('drop', onDrop)
+    return () => {
+      el.removeEventListener('dragover', onDragOver)
+      el.removeEventListener('drop', onDrop)
+    }
+  }, [loading, workspaceId, getEditor])
+
+  return (
+    <div ref={wrapperRef} className="h-full">
+      <Milkdown />
+    </div>
+  )
 }
 
 interface NoteEditorProps {
@@ -118,7 +205,7 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
   return (
     <div className="h-full">
       <MilkdownProvider key={editorKey}>
-        <MilkdownEditor initialContent={contentToMount} onSave={handleSave} />
+        <MilkdownEditor workspaceId={workspaceId} initialContent={contentToMount} onSave={handleSave} />
       </MilkdownProvider>
     </div>
   )
