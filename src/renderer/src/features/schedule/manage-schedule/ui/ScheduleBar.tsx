@@ -25,7 +25,7 @@ export function ScheduleBar({
   isStart,
   isEnd,
   barHeight = 20,
-  gap = 2,
+  gap = 2
 }: Props): React.JSX.Element {
   const color = getScheduleColor(schedule)
 
@@ -44,7 +44,7 @@ export function ScheduleBar({
     backgroundColor: isTodo ? 'transparent' : `${color}20`,
     border: isTodo ? `1px solid ${color}50` : undefined,
     color,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.4 : 1
   }
 
   return (

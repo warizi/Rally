@@ -84,37 +84,34 @@ export function TodoDetailPage({ tabId, params }: Props): React.JSX.Element {
           }
           buttons={
             <div className="flex items-center gap-1">
-            <LinkedEntityPopoverButton
-              entityType="todo"
-              entityId={todo.id}
-              workspaceId={workspaceId!}
-            />
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="size-7">
-                  <MoreHorizontal className="size-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DeleteTodoDialog
-                  todoId={todo.id}
-                  workspaceId={workspaceId!}
-                  hasSubTodos={subTodos.length > 0}
-                  trigger={
-                    <DropdownMenuItem
-                      variant="destructive"
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      <Trash2 className="size-4" />
-                      삭제
-                    </DropdownMenuItem>
-                  }
-                  onDeleted={() => {
-                    if (tabId) closeTab(tabId)
-                  }}
-                />
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <LinkedEntityPopoverButton
+                entityType="todo"
+                entityId={todo.id}
+                workspaceId={workspaceId!}
+              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-7">
+                    <MoreHorizontal className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DeleteTodoDialog
+                    todoId={todo.id}
+                    workspaceId={workspaceId!}
+                    hasSubTodos={subTodos.length > 0}
+                    trigger={
+                      <DropdownMenuItem variant="destructive" onSelect={(e) => e.preventDefault()}>
+                        <Trash2 className="size-4" />
+                        삭제
+                      </DropdownMenuItem>
+                    }
+                    onDeleted={() => {
+                      if (tabId) closeTab(tabId)
+                    }}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           }
         />

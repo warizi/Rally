@@ -122,9 +122,7 @@ describe('import', () => {
 
   it('없는 folderId → NotFoundError', () => {
     vi.mocked(folderRepository.findById).mockReturnValue(undefined)
-    expect(() => pdfFileService.import('ws-1', 'ghost', '/source/test.pdf')).toThrow(
-      NotFoundError
-    )
+    expect(() => pdfFileService.import('ws-1', 'ghost', '/source/test.pdf')).toThrow(NotFoundError)
   })
 })
 

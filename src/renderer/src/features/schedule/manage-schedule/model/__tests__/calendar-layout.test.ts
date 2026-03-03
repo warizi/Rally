@@ -6,17 +6,14 @@ import {
   assignLanes,
   splitBarByWeeks,
   computeWeekBars,
-  layoutOverlappingSchedules,
+  layoutOverlappingSchedules
 } from '../calendar-layout'
 import { makeScheduleItem } from './helpers'
 
 // ─── helpers ───
 
-function makeSegment(
-  startCol: number,
-  span: number,
-  schedule?: ScheduleItem,
-) {
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+function makeSegment(startCol: number, span: number, schedule?: ScheduleItem) {
   return { startCol, span, schedule: schedule ?? makeScheduleItem() }
 }
 
@@ -74,11 +71,7 @@ describe('assignLanes', () => {
   })
 
   it('3개 이상 겹침 → lane 0, 1, 2', () => {
-    const result = assignLanes([
-      makeSegment(0, 3),
-      makeSegment(0, 3),
-      makeSegment(0, 3),
-    ])
+    const result = assignLanes([makeSegment(0, 3), makeSegment(0, 3), makeSegment(0, 3)])
     const lanes = result.map((r) => r.lane).sort()
     expect(lanes).toEqual([0, 1, 2])
   })
@@ -92,11 +85,7 @@ describe('assignLanes', () => {
 
   it('[L-2] lane 0이 아닌 lane 1 재사용', () => {
     // A(col=0, span=5)→lane0, B(col=0, span=2)→lane1, C(col=3, span=1)→lane1 재사용
-    const result = assignLanes([
-      makeSegment(0, 5),
-      makeSegment(0, 2),
-      makeSegment(3, 1),
-    ])
+    const result = assignLanes([makeSegment(0, 5), makeSegment(0, 2), makeSegment(3, 1)])
     const a = result.find((r) => r.span === 5)!
     const b = result.find((r) => r.span === 2 && r.startCol === 0)!
     const c = result.find((r) => r.span === 1 && r.startCol === 3)!
@@ -116,7 +105,7 @@ describe('splitBarByWeeks', () => {
   it('단일 주 내 1일 스케줄 → segments 1개', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-03T09:00:00'), // Tuesday
-      endAt: new Date('2026-03-03T17:00:00'),
+      endAt: new Date('2026-03-03T17:00:00')
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     expect(segments).toHaveLength(1)
@@ -128,7 +117,7 @@ describe('splitBarByWeeks', () => {
   it('단일 주 내 3일 스케줄 → span=3', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-02T09:00:00'), // Monday
-      endAt: new Date('2026-03-04T17:00:00'), // Wednesday
+      endAt: new Date('2026-03-04T17:00:00') // Wednesday
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     expect(segments).toHaveLength(1)
@@ -138,7 +127,7 @@ describe('splitBarByWeeks', () => {
   it('2주에 걸친 스케줄 → segments 2개', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-06T09:00:00'), // Friday week0
-      endAt: new Date('2026-03-09T17:00:00'), // Monday week1
+      endAt: new Date('2026-03-09T17:00:00') // Monday week1
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     expect(segments).toHaveLength(2)
@@ -149,7 +138,7 @@ describe('splitBarByWeeks', () => {
   it('3주에 걸친 스케줄 → segments 3개, 중간은 isStart/isEnd=false', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-05T09:00:00'), // Thursday week0
-      endAt: new Date('2026-03-16T17:00:00'), // Monday week2
+      endAt: new Date('2026-03-16T17:00:00') // Monday week2
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     expect(segments).toHaveLength(3)
@@ -160,7 +149,7 @@ describe('splitBarByWeeks', () => {
   it('monthGrid 범위 밖 → 빈 배열', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-04-10T09:00:00'),
-      endAt: new Date('2026-04-11T17:00:00'),
+      endAt: new Date('2026-04-11T17:00:00')
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     expect(segments).toEqual([])
@@ -169,7 +158,7 @@ describe('splitBarByWeeks', () => {
   it('스케줄이 monthGrid 시작 전부터 → 첫 segment startCol=0', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-02-25T09:00:00'),
-      endAt: new Date('2026-03-03T17:00:00'),
+      endAt: new Date('2026-03-03T17:00:00')
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     expect(segments[0].startCol).toBe(0)
@@ -178,7 +167,7 @@ describe('splitBarByWeeks', () => {
   it('스케줄이 monthGrid 끝 이후까지 → 마지막 segment 토요일까지', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-28T09:00:00'),
-      endAt: new Date('2026-04-10T17:00:00'),
+      endAt: new Date('2026-04-10T17:00:00')
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     const last = segments[segments.length - 1]
@@ -189,7 +178,7 @@ describe('splitBarByWeeks', () => {
     // week0 ends Saturday 2026-03-07 23:59:59.999
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-07T23:59:59.999'),
-      endAt: new Date('2026-03-08T17:00:00'),
+      endAt: new Date('2026-03-08T17:00:00')
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     // Should be included in week0 (startAt <= weekEnd)
@@ -201,7 +190,7 @@ describe('splitBarByWeeks', () => {
     // week1 starts Sunday 2026-03-08 00:00:00.000
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-05T09:00:00'),
-      endAt: new Date('2026-03-08T00:00:00.000'),
+      endAt: new Date('2026-03-08T00:00:00.000')
     })
     const segments = splitBarByWeeks(schedule, monthGrid)
     const week1Seg = segments.find((s) => s.weekIndex === 1)
@@ -222,7 +211,7 @@ describe('computeWeekBars', () => {
   it('주간 범위 밖 스케줄 → 필터링', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-01T09:00:00'),
-      endAt: new Date('2026-03-01T17:00:00'),
+      endAt: new Date('2026-03-01T17:00:00')
     })
     expect(computeWeekBars([schedule], weekDates)).toEqual([])
   })
@@ -230,7 +219,7 @@ describe('computeWeekBars', () => {
   it('주간 내 2일 스케줄 → span=2', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-09T09:00:00'), // Monday
-      endAt: new Date('2026-03-10T17:00:00'), // Tuesday
+      endAt: new Date('2026-03-10T17:00:00') // Tuesday
     })
     const bars = computeWeekBars([schedule], weekDates)
     expect(bars).toHaveLength(1)
@@ -242,7 +231,7 @@ describe('computeWeekBars', () => {
   it('주간 시작 전부터 → isStart=false, startCol=0', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-06T09:00:00'), // Before the week
-      endAt: new Date('2026-03-10T17:00:00'),
+      endAt: new Date('2026-03-10T17:00:00')
     })
     const bars = computeWeekBars([schedule], weekDates)
     expect(bars[0].isStart).toBe(false)
@@ -252,7 +241,7 @@ describe('computeWeekBars', () => {
   it('주간 끝 이후까지 → isEnd=false', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-12T09:00:00'),
-      endAt: new Date('2026-03-18T17:00:00'), // After the week
+      endAt: new Date('2026-03-18T17:00:00') // After the week
     })
     const bars = computeWeekBars([schedule], weekDates)
     expect(bars[0].isEnd).toBe(false)
@@ -262,12 +251,12 @@ describe('computeWeekBars', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-09T09:00:00'),
-      endAt: new Date('2026-03-11T17:00:00'),
+      endAt: new Date('2026-03-11T17:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-10T09:00:00'),
-      endAt: new Date('2026-03-12T17:00:00'),
+      endAt: new Date('2026-03-12T17:00:00')
     })
     const bars = computeWeekBars([a, b], weekDates)
     expect(bars).toHaveLength(2)
@@ -278,7 +267,7 @@ describe('computeWeekBars', () => {
   it('[L-8] 같은 날 시작/종료 → span=1', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-10T09:00:00'),
-      endAt: new Date('2026-03-10T17:00:00'),
+      endAt: new Date('2026-03-10T17:00:00')
     })
     const bars = computeWeekBars([schedule], weekDates)
     expect(bars[0].span).toBe(1)
@@ -288,12 +277,12 @@ describe('computeWeekBars', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-09T09:00:00'), // Monday
-      endAt: new Date('2026-03-09T17:00:00'), // same day → span=1
+      endAt: new Date('2026-03-09T17:00:00') // same day → span=1
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-09T09:00:00'), // Monday
-      endAt: new Date('2026-03-11T17:00:00'), // Wednesday → span=3
+      endAt: new Date('2026-03-11T17:00:00') // Wednesday → span=3
     })
     const bars = computeWeekBars([a, b], weekDates)
     expect(bars).toHaveLength(2)
@@ -306,12 +295,12 @@ describe('computeWeekBars', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-08T09:00:00'), // Sunday
-      endAt: new Date('2026-03-09T17:00:00'), // Monday → span=2
+      endAt: new Date('2026-03-09T17:00:00') // Monday → span=2
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-11T09:00:00'), // Wednesday
-      endAt: new Date('2026-03-12T17:00:00'), // Thursday → span=2
+      endAt: new Date('2026-03-12T17:00:00') // Thursday → span=2
     })
     const bars = computeWeekBars([a, b], weekDates)
     expect(bars).toHaveLength(2)
@@ -337,12 +326,12 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T11:00:00'),
-      endAt: new Date('2026-03-02T12:00:00'),
+      endAt: new Date('2026-03-02T12:00:00')
     })
     const result = layoutOverlappingSchedules([a, b])
     expect(result[0].column).toBe(0)
@@ -355,12 +344,12 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T10:00:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const result = layoutOverlappingSchedules([a, b])
     // Phase1: B.startAt(10:00) >= columnEnds[0](10:00) → true → same col
@@ -375,12 +364,12 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T10:00:00'),
-      endAt: new Date('2026-03-02T12:00:00'),
+      endAt: new Date('2026-03-02T12:00:00')
     })
     const result = layoutOverlappingSchedules([a, b])
     expect(result[0].column).toBe(0)
@@ -393,17 +382,17 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T09:30:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const c = makeScheduleItem({
       id: 'c',
       startAt: new Date('2026-03-02T10:30:00'),
-      endAt: new Date('2026-03-02T12:00:00'),
+      endAt: new Date('2026-03-02T12:00:00')
     })
     const result = layoutOverlappingSchedules([a, b, c])
     // All in same cluster via chain: A-B overlap, B-C overlap
@@ -415,12 +404,12 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const result = layoutOverlappingSchedules([a, b])
     const cols = result.map((r) => r.column)
@@ -431,22 +420,22 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const c = makeScheduleItem({
       id: 'c',
       startAt: new Date('2026-03-02T14:00:00'),
-      endAt: new Date('2026-03-02T15:00:00'),
+      endAt: new Date('2026-03-02T15:00:00')
     })
     const d = makeScheduleItem({
       id: 'd',
       startAt: new Date('2026-03-02T14:00:00'),
-      endAt: new Date('2026-03-02T15:00:00'),
+      endAt: new Date('2026-03-02T15:00:00')
     })
     const result = layoutOverlappingSchedules([a, b, c, d])
     const cluster1 = result.filter((r) => r.schedule.id === 'a' || r.schedule.id === 'b')
@@ -459,22 +448,22 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     const c = makeScheduleItem({
       id: 'c',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const d = makeScheduleItem({
       id: 'd',
       startAt: new Date('2026-03-02T10:30:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const result = layoutOverlappingSchedules([a, b, c, d])
     const dResult = result.find((r) => r.schedule.id === 'd')!
@@ -486,12 +475,12 @@ describe('layoutOverlappingSchedules', () => {
     const a = makeScheduleItem({
       id: 'a',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const b = makeScheduleItem({
       id: 'b',
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T11:00:00'),
+      endAt: new Date('2026-03-02T11:00:00')
     })
     const result = layoutOverlappingSchedules([a, b])
     // Both overlap fully → each has span=1

@@ -51,55 +51,55 @@ describe('timeToPosition', () => {
 describe('scheduleHeight', () => {
   it('1시간 → 60', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T10:00:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T10:00:00'), 60)
     ).toBe(60)
   })
 
   it('30분 → 30', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:30:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:30:00'), 60)
     ).toBe(30)
   })
 
   it('2시간 → 120', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T11:00:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T11:00:00'), 60)
     ).toBe(120)
   })
 
   it('최소값: 19분 → Math.max(19, 20) = 20', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:19:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:19:00'), 60)
     ).toBe(20)
   })
 
   it('최소값 정확 경계: 20분 → 20', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:20:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:20:00'), 60)
     ).toBe(20)
   })
 
   it('최소값 초과: 21분 → 21', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:21:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:21:00'), 60)
     ).toBe(21)
   })
 
   it('다른 hourHeight=120: 1시간 → 120', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T10:00:00'), 120),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T10:00:00'), 120)
     ).toBe(120)
   })
 
   it('[T-1] 0분 (startAt === endAt) → Math.max(0, 20) = 20', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:00:00'), 60),
+      scheduleHeight(new Date('2026-03-02T09:00:00'), new Date('2026-03-02T09:00:00'), 60)
     ).toBe(20)
   })
 
   it('[T-2] 음수 기간 (endAt < startAt) → Math.max(음수, 20) = 20', () => {
     expect(
-      scheduleHeight(new Date('2026-03-02T10:00:00'), new Date('2026-03-02T09:00:00'), 60),
+      scheduleHeight(new Date('2026-03-02T10:00:00'), new Date('2026-03-02T09:00:00'), 60)
     ).toBe(20)
   })
 })

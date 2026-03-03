@@ -88,9 +88,7 @@ describe('useTodoList', () => {
       expect(result.current.filterActive).toBe(true)
     })
     it("priority='high' → true", () => {
-      const { result } = renderHook(() =>
-        useTodoList([], { ...DEFAULT_FILTER, priority: 'high' })
-      )
+      const { result } = renderHook(() => useTodoList([], { ...DEFAULT_FILTER, priority: 'high' }))
       expect(result.current.filterActive).toBe(true)
     })
   })

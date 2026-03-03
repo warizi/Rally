@@ -41,4 +41,12 @@ describe('toTabOptions', () => {
       title: '캘린더'
     })
   })
+
+  it("image → type='image', pathname='/folder/image/{id}', title=전달값", () => {
+    expect(toTabOptions('image', 'i-1', '사진.png')).toEqual({
+      type: 'image',
+      pathname: '/folder/image/i-1',
+      title: '사진.png'
+    })
+  })
 })

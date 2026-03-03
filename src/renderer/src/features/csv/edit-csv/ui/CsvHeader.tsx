@@ -34,11 +34,7 @@ export function CsvHeader({ workspaceId, csvId, tabId, encoding }: CsvHeaderProp
               {encoding}
             </span>
           )}
-          <LinkedEntityPopoverButton
-            entityType="csv"
-            entityId={csvId}
-            workspaceId={workspaceId}
-          />
+          <LinkedEntityPopoverButton entityType="csv" entityId={csvId} workspaceId={workspaceId} />
         </div>
       }
       onTitleChange={(title) => {

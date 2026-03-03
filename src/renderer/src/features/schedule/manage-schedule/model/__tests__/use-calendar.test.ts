@@ -30,9 +30,7 @@ describe('useCalendar', () => {
     })
 
     it('initialDate 지정', () => {
-      const { result } = renderHook(() =>
-        useCalendar({ initialDate: '2026-06-01T00:00:00' }),
-      )
+      const { result } = renderHook(() => useCalendar({ initialDate: '2026-06-01T00:00:00' }))
       expect(result.current.currentDate.getMonth()).toBe(5) // June
     })
   })
@@ -162,7 +160,7 @@ describe('useCalendar', () => {
       const { result } = renderHook(() => useCalendar())
       const expected = {
         start: startOfWeek(startOfMonth(new Date('2026-03-15'))),
-        end: endOfWeek(endOfMonth(new Date('2026-03-15'))),
+        end: endOfWeek(endOfMonth(new Date('2026-03-15')))
       }
       expect(result.current.dateRange.start.getTime()).toBe(expected.start.getTime())
       expect(result.current.dateRange.end.getTime()).toBe(expected.end.getTime())

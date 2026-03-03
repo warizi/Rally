@@ -55,20 +55,22 @@
 ## IPC 인터페이스 변경
 
 ### 기존
+
 ```typescript
 todo:findByWorkspace (workspaceId: string) → TodoItem[]
 ```
 
 ### 변경 후
+
 ```typescript
 todo:findByWorkspace (workspaceId: string, options?: { filter?: 'all' | 'active' | 'completed' }) → TodoItem[]
 ```
 
-| filter 값 | SQL 조건 | 용도 |
-|-----------|----------|------|
-| `'all'` 또는 미전달 | 전체 조회 | 칸반 뷰 |
-| `'active'` | `(parent_id IS NULL AND is_done = 0) OR (parent_id IS NOT NULL)` | 리스트 메인 |
-| `'completed'` | `parent_id IS NULL AND is_done = 1` | 완료 섹션 |
+| filter 값           | SQL 조건                                                         | 용도        |
+| ------------------- | ---------------------------------------------------------------- | ----------- |
+| `'all'` 또는 미전달 | 전체 조회                                                        | 칸반 뷰     |
+| `'active'`          | `(parent_id IS NULL AND is_done = 0) OR (parent_id IS NOT NULL)` | 리스트 메인 |
+| `'completed'`       | `parent_id IS NULL AND is_done = 1`                              | 완료 섹션   |
 
 > **active**: 최상위 미완료 투두 + **모든 sub-todo** (isDone 무관). 부모가 미완료이면 자식 중 완료된 sub-todo도 함께 조회해야 하므로 sub-todo에는 isDone 필터를 적용하지 않는다.
 >
@@ -194,6 +196,7 @@ const kanbanState    = useTodoKanban(todos, ...)                             // 
 ## 구현 파일 목록
 
 ### 수정
+
 1. `src/main/repositories/todo.ts` — `findByWorkspaceId(workspaceId, filter?)` 옵션 추가
 2. `src/main/services/todo.ts` — `findByWorkspace(workspaceId, filter?)` options 전달
 3. `src/main/ipc/todo.ts` — `options` 파라미터 추가
@@ -207,6 +210,7 @@ const kanbanState    = useTodoKanban(todos, ...)                             // 
 11. `src/renderer/src/pages/todo/ui/TodoPage.tsx` — 쿼리 3개 분리 + 완료 섹션 추가
 
 ### 신규
+
 12. `src/renderer/src/features/todo/todo-list/model/use-completed-todo-list.ts`
 13. `src/renderer/src/features/todo/todo-list/ui/TodoCompletedView.tsx`
 14. `src/renderer/src/widgets/todo/ui/TodoCompletedSection.tsx`

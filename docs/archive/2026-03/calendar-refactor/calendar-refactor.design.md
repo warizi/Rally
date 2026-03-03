@@ -78,14 +78,7 @@ export function isScheduleOnDate(schedule: ScheduleItem, date: Date): boolean {
 ### 1-3. `calendar-grid.ts` (신규, ~40줄)
 
 ```typescript
-import {
-  addDays,
-  endOfMonth,
-  startOfWeek,
-  endOfWeek,
-  startOfDay,
-  isSameDay
-} from 'date-fns'
+import { addDays, endOfMonth, startOfWeek, endOfWeek, startOfDay, isSameDay } from 'date-fns'
 
 export interface MonthGridDay {
   date: Date
@@ -129,13 +122,7 @@ export function getWeekDates(date: Date): Date[] {
 ### 1-4. `calendar-layout.ts` (신규, ~160줄)
 
 ```typescript
-import {
-  isSameDay,
-  differenceInCalendarDays,
-  startOfDay,
-  endOfDay,
-  getDay
-} from 'date-fns'
+import { isSameDay, differenceInCalendarDays, startOfDay, endOfDay, getDay } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import type { MonthGridDay } from './calendar-grid'
 
@@ -271,14 +258,10 @@ export function computeWeekBars(multiDay: ScheduleItem[], weekDates: Date[]): We
 
 // === 겹침 레이아웃 (일간/주간) ===
 
-export function layoutOverlappingSchedules(
-  schedules: ScheduleItem[]
-): LayoutedSchedule[] {
+export function layoutOverlappingSchedules(schedules: ScheduleItem[]): LayoutedSchedule[] {
   if (schedules.length === 0) return []
 
-  const sorted = [...schedules].sort(
-    (a, b) => a.startAt.getTime() - b.startAt.getTime()
-  )
+  const sorted = [...schedules].sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
 
   // 1) 열 할당: greedy
   const assigned: { schedule: ScheduleItem; column: number }[] = []
@@ -355,6 +338,7 @@ export function layoutOverlappingSchedules(
 ```
 
 > **출처**:
+>
 > - `assignLanes`: MonthView:48-76 → 제네릭화 (`T extends { startCol, span }`)
 > - `splitBarByWeeks`: calendar-utils.ts:105-137 — 변경 없이 이동
 > - `computeWeekBars`: WeekView:45-94 → 내부 lane 할당을 `assignLanes()` 호출로 교체
@@ -452,6 +436,7 @@ export function applyDaysDelta(
 ```
 
 > **출처**:
+>
 > - `moveScheduleByDays/Minutes`: calendar-utils.ts:231-251 — 변경 없이 이동
 > - `applyDaysDelta`: MonthView:158-174, WeekView:171-187 공통 mutation 패턴 추출 (신규)
 
@@ -599,30 +584,42 @@ export function ScheduleBarItem({
 ```
 
 > **MonthView 사용**:
+>
 > ```tsx
 > <ScheduleBarItem
 >   schedule={ls.schedule}
 >   workspaceId={workspaceId}
->   startCol={ls.startCol} span={ls.span} lane={ls.lane}
->   isStart={ls.isStart} isEnd={ls.isEnd}
+>   startCol={ls.startCol}
+>   span={ls.span}
+>   lane={ls.lane}
+>   isStart={ls.isStart}
+>   isEnd={ls.isEnd}
 >   barHeight={MONTH_BAR_HEIGHT}
 >   draggableId={`bar-${ls.schedule.id}-w${weekIdx}`}
->   onGrab={(offset) => { /* 기존 로직 */ }}
+>   onGrab={(offset) => {
+>     /* 기존 로직 */
+>   }}
 >   wrapperClassName="pointer-events-auto"
 > />
 > ```
 >
 > **WeekView 사용**:
+>
 > ```tsx
 > <ScheduleBarItem
 >   schedule={bar.schedule}
 >   workspaceId={workspaceId}
->   startCol={bar.startCol} span={bar.span} lane={bar.lane}
->   isStart={bar.isStart} isEnd={bar.isEnd}
+>   startCol={bar.startCol}
+>   span={bar.span}
+>   lane={bar.lane}
+>   isStart={bar.isStart}
+>   isEnd={bar.isEnd}
 >   barHeight={WEEK_BAR_HEIGHT}
 >   draggableId={`week-bar-${bar.schedule.id}`}
 >   draggableData={{ span: bar.span }}
->   onGrab={(offset, width) => { /* 기존 로직 */ }}
+>   onGrab={(offset, width) => {
+>     /* 기존 로직 */
+>   }}
 > />
 > ```
 
@@ -958,14 +955,14 @@ export function useScheduleResize(options: UseScheduleResizeOptions): UseSchedul
 
 #### 제거 항목
 
-| 제거 대상 | 줄 | 대체 |
-|-----------|-----|------|
-| `WEEKDAY_LABELS` 로컬 선언 | 39 | `calendar-constants` import |
-| `BAR_HEIGHT`, `BAR_GAP` 로컬 선언 | 40-41 | `MONTH_BAR_HEIGHT`, `BAR_GAP` import |
-| `LanedSegment` 인터페이스 | 43-46 | 불필요 (assignLanes 제네릭 반환 타입) |
-| `assignLanes` 함수 | 48-76 | `calendar-layout` import |
-| `MonthBarItem` 컴포넌트 | 322-388 | `ScheduleBarItem` import |
-| `handleDragEnd` 내 mutation 분기 | 158-174 | `applyDaysDelta` 호출 |
+| 제거 대상                         | 줄      | 대체                                  |
+| --------------------------------- | ------- | ------------------------------------- |
+| `WEEKDAY_LABELS` 로컬 선언        | 39      | `calendar-constants` import           |
+| `BAR_HEIGHT`, `BAR_GAP` 로컬 선언 | 40-41   | `MONTH_BAR_HEIGHT`, `BAR_GAP` import  |
+| `LanedSegment` 인터페이스         | 43-46   | 불필요 (assignLanes 제네릭 반환 타입) |
+| `assignLanes` 함수                | 48-76   | `calendar-layout` import              |
+| `MonthBarItem` 컴포넌트           | 322-388 | `ScheduleBarItem` import              |
+| `handleDragEnd` 내 mutation 분기  | 158-174 | `applyDaysDelta` 호출                 |
 
 #### 추가 import
 
@@ -1029,27 +1026,29 @@ const weekLanes = useMemo(() => {
 #### 핵심 변경: MonthBarItem → ScheduleBarItem
 
 ```tsx
-{lanes.map((ls) => (
-  <ScheduleBarItem
-    key={`${ls.schedule.id}-w${weekIdx}`}
-    schedule={ls.schedule}
-    workspaceId={workspaceId}
-    startCol={ls.startCol}
-    span={ls.span}
-    lane={ls.lane}
-    isStart={ls.isStart}
-    isEnd={ls.isEnd}
-    barHeight={MONTH_BAR_HEIGHT}
-    draggableId={`bar-${ls.schedule.id}-w${weekIdx}`}
-    onGrab={(offset) => {
-      const segDate = week[ls.startCol].date
-      setGrabDayOffset(
-        differenceInCalendarDays(segDate, startOfDay(ls.schedule.startAt)) + offset
-      )
-    }}
-    wrapperClassName="pointer-events-auto"
-  />
-))}
+{
+  lanes.map((ls) => (
+    <ScheduleBarItem
+      key={`${ls.schedule.id}-w${weekIdx}`}
+      schedule={ls.schedule}
+      workspaceId={workspaceId}
+      startCol={ls.startCol}
+      span={ls.span}
+      lane={ls.lane}
+      isStart={ls.isStart}
+      isEnd={ls.isEnd}
+      barHeight={MONTH_BAR_HEIGHT}
+      draggableId={`bar-${ls.schedule.id}-w${weekIdx}`}
+      onGrab={(offset) => {
+        const segDate = week[ls.startCol].date
+        setGrabDayOffset(
+          differenceInCalendarDays(segDate, startOfDay(ls.schedule.startAt)) + offset
+        )
+      }}
+      wrapperClassName="pointer-events-auto"
+    />
+  ))
+}
 ```
 
 #### 인라인 유지 (변경 없음)
@@ -1062,16 +1061,16 @@ const weekLanes = useMemo(() => {
 
 #### 제거 항목
 
-| 제거 대상 | 줄 | 대체 |
-|-----------|-----|------|
-| `WEEKDAY_LABELS` 로컬 선언 | 32 | `calendar-constants` import |
-| `BAR_HEIGHT`, `BAR_GAP` 로컬 선언 | 33-34 | `WEEK_BAR_HEIGHT`, `BAR_GAP` import |
-| `WeekBar` 인터페이스 | 36-43 | `calendar-layout` import |
-| `computeWeekBars` 함수 | 45-94 | `calendar-layout` import |
-| `WeekBarItem` 컴포넌트 | 354-415 | `ScheduleBarItem` import |
-| `WeekDayCell` 컴포넌트 | 418-482 | `WeekDayCell.tsx` import |
-| `DraggableScheduleItem` 컴포넌트 | 484-502 | `WeekDayCell.tsx`에 co-locate |
-| `handleDragEnd` 내 mutation 분기 | 171-187 | `applyDaysDelta` 호출 |
+| 제거 대상                         | 줄      | 대체                                |
+| --------------------------------- | ------- | ----------------------------------- |
+| `WEEKDAY_LABELS` 로컬 선언        | 32      | `calendar-constants` import         |
+| `BAR_HEIGHT`, `BAR_GAP` 로컬 선언 | 33-34   | `WEEK_BAR_HEIGHT`, `BAR_GAP` import |
+| `WeekBar` 인터페이스              | 36-43   | `calendar-layout` import            |
+| `computeWeekBars` 함수            | 45-94   | `calendar-layout` import            |
+| `WeekBarItem` 컴포넌트            | 354-415 | `ScheduleBarItem` import            |
+| `WeekDayCell` 컴포넌트            | 418-482 | `WeekDayCell.tsx` import            |
+| `DraggableScheduleItem` 컴포넌트  | 484-502 | `WeekDayCell.tsx`에 co-locate       |
+| `handleDragEnd` 내 mutation 분기  | 171-187 | `applyDaysDelta` 호출               |
 
 #### 추가 import
 
@@ -1126,28 +1125,30 @@ function handleDragEnd(event: DragEndEvent): void {
 #### 핵심 변경: WeekBarItem → ScheduleBarItem
 
 ```tsx
-{weekBars.map((bar, i) => (
-  <div key={`${bar.schedule.id}-${i}`} className="pointer-events-auto">
-    <ScheduleBarItem
-      schedule={bar.schedule}
-      workspaceId={workspaceId}
-      startCol={bar.startCol}
-      span={bar.span}
-      lane={bar.lane}
-      isStart={bar.isStart}
-      isEnd={bar.isEnd}
-      barHeight={WEEK_BAR_HEIGHT}
-      draggableId={`week-bar-${bar.schedule.id}`}
-      draggableData={{ span: bar.span }}
-      onGrab={(offset, width) => {
-        const segDate = weekDates[bar.startCol]
-        grabDayOffsetRef.current =
-          differenceInCalendarDays(segDate, startOfDay(bar.schedule.startAt)) + offset
-        setActiveWidth(width)
-      }}
-    />
-  </div>
-))}
+{
+  weekBars.map((bar, i) => (
+    <div key={`${bar.schedule.id}-${i}`} className="pointer-events-auto">
+      <ScheduleBarItem
+        schedule={bar.schedule}
+        workspaceId={workspaceId}
+        startCol={bar.startCol}
+        span={bar.span}
+        lane={bar.lane}
+        isStart={bar.isStart}
+        isEnd={bar.isEnd}
+        barHeight={WEEK_BAR_HEIGHT}
+        draggableId={`week-bar-${bar.schedule.id}`}
+        draggableData={{ span: bar.span }}
+        onGrab={(offset, width) => {
+          const segDate = weekDates[bar.startCol]
+          grabDayOffsetRef.current =
+            differenceInCalendarDays(segDate, startOfDay(bar.schedule.startAt)) + offset
+          setActiveWidth(width)
+        }}
+      />
+    </div>
+  ))
+}
 ```
 
 #### 인라인 유지 (변경 없음)
@@ -1158,16 +1159,16 @@ function handleDragEnd(event: DragEndEvent): void {
 
 #### 제거 항목
 
-| 제거 대상 | 줄 | 대체 |
-|-----------|-----|------|
-| DnD 상태 4개 | 38-41 | `useDayDnd` 훅 |
-| Resize 상태 2개 | 42-46 | `useScheduleResize` 훅 |
-| `handleDragStart` | 94-105 | `useDayDnd` 훅 |
-| `handleDragMove` | 107-110 | `useDayDnd` 훅 |
-| `handleDragEnd` | 112-150 | `useDayDnd` 훅 |
-| `handleResizeStart` | 152-210 | `useScheduleResize` 훅 |
-| `const hourHeight = 60` | 212 | `HOUR_HEIGHT` import |
-| `const hourHeight = 60` (local) | 118 | 제거 (중복 선언 정리) |
+| 제거 대상                       | 줄      | 대체                   |
+| ------------------------------- | ------- | ---------------------- |
+| DnD 상태 4개                    | 38-41   | `useDayDnd` 훅         |
+| Resize 상태 2개                 | 42-46   | `useScheduleResize` 훅 |
+| `handleDragStart`               | 94-105  | `useDayDnd` 훅         |
+| `handleDragMove`                | 107-110 | `useDayDnd` 훅         |
+| `handleDragEnd`                 | 112-150 | `useDayDnd` 훅         |
+| `handleResizeStart`             | 152-210 | `useScheduleResize` 훅 |
+| `const hourHeight = 60`         | 212     | `HOUR_HEIGHT` import   |
+| `const hourHeight = 60` (local) | 118     | 제거 (중복 선언 정리)  |
 
 #### 추가 import
 
@@ -1265,11 +1266,7 @@ export {
 } from './model/calendar-utils'
 
 // model — schedule-color (3)
-export {
-  SCHEDULE_COLOR_PRESETS,
-  PRIORITY_COLORS,
-  getScheduleColor
-} from './model/schedule-color'
+export { SCHEDULE_COLOR_PRESETS, PRIORITY_COLORS, getScheduleColor } from './model/schedule-color'
 
 // ui (16)
 export { CalendarNavigation } from './ui/CalendarNavigation'
@@ -1298,28 +1295,28 @@ export { TodoLinkPopover } from './ui/TodoLinkPopover'
 
 ### 신규 파일 (11개)
 
-| # | 파일 | 역할 | 줄 수 |
-|---|------|------|-------|
-| 1 | `model/calendar-constants.ts` | 공통 상수 | ~12 |
-| 2 | `model/calendar-predicates.ts` | 판별 함수 | ~15 |
-| 3 | `model/calendar-grid.ts` | 그리드/날짜 생성 | ~40 |
-| 4 | `model/calendar-layout.ts` | lane/겹침 레이아웃 | ~160 |
-| 5 | `model/calendar-time.ts` | 시간 계산 | ~25 |
-| 6 | `model/calendar-move.ts` | DnD mutation 유틸 | ~50 |
-| 7 | `model/schedule-style.ts` | Todo/Schedule 스타일 | ~25 |
-| 8 | `model/use-day-dnd.ts` | DayView DnD 훅 | ~80 |
-| 9 | `model/use-schedule-resize.ts` | DayView Resize 훅 | ~70 |
-| 10 | `ui/ScheduleBarItem.tsx` | 통합 기간 바 | ~65 |
-| 11 | `ui/WeekDayCell.tsx` | WeekView droppable 셀 | ~85 |
+| #   | 파일                           | 역할                  | 줄 수 |
+| --- | ------------------------------ | --------------------- | ----- |
+| 1   | `model/calendar-constants.ts`  | 공통 상수             | ~12   |
+| 2   | `model/calendar-predicates.ts` | 판별 함수             | ~15   |
+| 3   | `model/calendar-grid.ts`       | 그리드/날짜 생성      | ~40   |
+| 4   | `model/calendar-layout.ts`     | lane/겹침 레이아웃    | ~160  |
+| 5   | `model/calendar-time.ts`       | 시간 계산             | ~25   |
+| 6   | `model/calendar-move.ts`       | DnD mutation 유틸     | ~50   |
+| 7   | `model/schedule-style.ts`      | Todo/Schedule 스타일  | ~25   |
+| 8   | `model/use-day-dnd.ts`         | DayView DnD 훅        | ~80   |
+| 9   | `model/use-schedule-resize.ts` | DayView Resize 훅     | ~70   |
+| 10  | `ui/ScheduleBarItem.tsx`       | 통합 기간 바          | ~65   |
+| 11  | `ui/WeekDayCell.tsx`           | WeekView droppable 셀 | ~85   |
 
 ### 수정 파일 (4개)
 
-| # | 파일 | 변경 | before → after |
-|---|------|------|----------------|
-| 1 | `model/calendar-utils.ts` | barrel re-export 전환 | 252 → ~10 |
-| 2 | `ui/MonthView.tsx` | BarItem→ScheduleBarItem, assignLanes 제거, applyDaysDelta | 524 → ~430 |
-| 3 | `ui/WeekView.tsx` | BarItem→ScheduleBarItem, WeekDayCell 추출, applyDaysDelta | 553 → ~358 |
-| 4 | `ui/DayView.tsx` | useDayDnd + useScheduleResize 훅 적용 | 355 → ~180 |
+| #   | 파일                      | 변경                                                      | before → after |
+| --- | ------------------------- | --------------------------------------------------------- | -------------- |
+| 1   | `model/calendar-utils.ts` | barrel re-export 전환                                     | 252 → ~10      |
+| 2   | `ui/MonthView.tsx`        | BarItem→ScheduleBarItem, assignLanes 제거, applyDaysDelta | 524 → ~430     |
+| 3   | `ui/WeekView.tsx`         | BarItem→ScheduleBarItem, WeekDayCell 추출, applyDaysDelta | 553 → ~358     |
+| 4   | `ui/DayView.tsx`          | useDayDnd + useScheduleResize 훅 적용                     | 355 → ~180     |
 
 ### 변경 없는 파일
 
@@ -1337,21 +1334,21 @@ Phase별 완료 후 `npm run typecheck && npm run lint` 실행.
 
 최종 검증 (Plan 문서 체크리스트 16항목):
 
-| # | 항목 | 확인 방법 |
-|---|------|----------|
-| 1 | MonthView 기간 바 DnD | 드래그 후 startAt/endAt 날짜 변경 |
-| 2 | MonthView 단일 일정 DnD | 드래그 후 날짜 변경 |
-| 3 | MonthView Todo DnD | 드래그 후 startDate/dueDate 변경 |
-| 4 | MonthView 소형 빈 상태 | 일정 없는 날 → 하단 목록 사라짐 |
-| 5 | WeekView 기간 바 DnD | 드래그 후 날짜 변경 + overlay width |
-| 6 | WeekView 단일 일정 DnD | 드래그 후 날짜 변경 |
-| 7 | WeekView Todo DnD | 드래그 후 startDate/dueDate 변경 |
-| 8 | WeekView 소형 빈 상태 | "일정 없음" 표시 |
-| 9 | DayView 블록 DnD (schedule) | 시간 변경 (15분 스냅) |
-| 10 | DayView 블록 DnD (todo) | **시간만 변경, 날짜 보존** |
-| 11 | DayView Resize top | 시작 시간만 변경 |
-| 12 | DayView Resize bottom | 종료 시간만 변경 |
-| 13 | DayView Todo Resize | 시간만 변경, 날짜 보존 |
-| 14 | 기간 바 프리뷰 (Month) | splitBarByWeeks 기반 위치 정상 |
-| 15 | 기간 바 프리뷰 (Week) | clamping 기반 위치 정상 |
-| 16 | barrel export 호환 | CalendarPage, CalendarViewToolbar import 정상 |
+| #   | 항목                        | 확인 방법                                     |
+| --- | --------------------------- | --------------------------------------------- |
+| 1   | MonthView 기간 바 DnD       | 드래그 후 startAt/endAt 날짜 변경             |
+| 2   | MonthView 단일 일정 DnD     | 드래그 후 날짜 변경                           |
+| 3   | MonthView Todo DnD          | 드래그 후 startDate/dueDate 변경              |
+| 4   | MonthView 소형 빈 상태      | 일정 없는 날 → 하단 목록 사라짐               |
+| 5   | WeekView 기간 바 DnD        | 드래그 후 날짜 변경 + overlay width           |
+| 6   | WeekView 단일 일정 DnD      | 드래그 후 날짜 변경                           |
+| 7   | WeekView Todo DnD           | 드래그 후 startDate/dueDate 변경              |
+| 8   | WeekView 소형 빈 상태       | "일정 없음" 표시                              |
+| 9   | DayView 블록 DnD (schedule) | 시간 변경 (15분 스냅)                         |
+| 10  | DayView 블록 DnD (todo)     | **시간만 변경, 날짜 보존**                    |
+| 11  | DayView Resize top          | 시작 시간만 변경                              |
+| 12  | DayView Resize bottom       | 종료 시간만 변경                              |
+| 13  | DayView Todo Resize         | 시간만 변경, 날짜 보존                        |
+| 14  | 기간 바 프리뷰 (Month)      | splitBarByWeeks 기반 위치 정상                |
+| 15  | 기간 바 프리뷰 (Week)       | clamping 기반 위치 정상                       |
+| 16  | barrel export 호환          | CalendarPage, CalendarViewToolbar import 정상 |

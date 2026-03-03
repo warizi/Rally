@@ -132,7 +132,9 @@ export const imageFileRepository = {
     return db
       .select()
       .from(imageFiles)
-      .where(and(eq(imageFiles.workspaceId, workspaceId), eq(imageFiles.relativePath, relativePath)))
+      .where(
+        and(eq(imageFiles.workspaceId, workspaceId), eq(imageFiles.relativePath, relativePath))
+      )
       .get()
   },
 
@@ -144,14 +146,20 @@ export const imageFileRepository = {
     if (items.length === 0) return
     const CHUNK = 99
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(imageFiles).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(imageFiles)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
   update(
     id: string,
     data: Partial<
-      Pick<ImageFile, 'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'>
+      Pick<
+        ImageFile,
+        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+      >
     >
   ): ImageFile | undefined {
     return db.update(imageFiles).set(data).where(eq(imageFiles.id, id)).returning().get()
@@ -172,13 +180,17 @@ export const imageFileRepository = {
     if (orphanIds.length === 0) return
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(imageFiles).where(inArray(imageFiles.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(imageFiles)
+        .where(inArray(imageFiles.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
   bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
     db.delete(imageFiles)
-      .where(and(eq(imageFiles.workspaceId, workspaceId), like(imageFiles.relativePath, `${prefix}/%`)))
+      .where(
+        and(eq(imageFiles.workspaceId, workspaceId), like(imageFiles.relativePath, `${prefix}/%`))
+      )
       .run()
   },
 
@@ -220,6 +232,7 @@ export const imageFileRepository = {
 **파일**: `src/main/services/image-file.ts`
 
 > **PDF 대비 핵심 차이 3가지**:
+>
 > 1. title 추출: `path.basename(name, path.extname(name))` (동적) vs `.replace(/\.pdf$/, '')` (하드코딩)
 > 2. rename 시 원본 확장자 유지: `path.extname(image.relativePath)` 사용
 > 3. move 시 kind: `'image'` vs `'pdf'`
@@ -535,11 +548,7 @@ export const imageFileService = {
   },
 
   /** 메타데이터 업데이트 (description만) */
-  updateMeta(
-    _workspaceId: string,
-    imageId: string,
-    data: { description?: string }
-  ): ImageFileNode {
+  updateMeta(_workspaceId: string, imageId: string, data: { description?: string }): ImageFileNode {
     const image = imageFileRepository.findById(imageId)
     if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
 
@@ -627,9 +636,7 @@ export function registerImageFileHandlers(): void {
   ipcMain.handle('image:selectFile', async (): Promise<string[] | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],
-      filters: [
-        { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'] }
-      ]
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'] }]
     })
     return result.canceled ? null : result.filePaths
   })
@@ -638,16 +645,16 @@ export function registerImageFileHandlers(): void {
 
 ### 4.2 채널 목록
 
-| 채널 | 파라미터 | 반환 |
-|------|---------|------|
-| `image:readByWorkspace` | `workspaceId` | `IpcResponse<ImageFileNode[]>` |
-| `image:import` | `workspaceId, folderId, sourcePath` | `IpcResponse<ImageFileNode>` |
-| `image:rename` | `workspaceId, imageId, newName` | `IpcResponse<ImageFileNode>` |
-| `image:remove` | `workspaceId, imageId` | `IpcResponse<void>` |
-| `image:readContent` | `workspaceId, imageId` | `IpcResponse<{ data: Buffer }>` |
-| `image:move` | `workspaceId, imageId, folderId, index` | `IpcResponse<ImageFileNode>` |
-| `image:updateMeta` | `workspaceId, imageId, data` | `IpcResponse<ImageFileNode>` |
-| `image:selectFile` | (없음) | `string[] \| null` |
+| 채널                    | 파라미터                                | 반환                            |
+| ----------------------- | --------------------------------------- | ------------------------------- |
+| `image:readByWorkspace` | `workspaceId`                           | `IpcResponse<ImageFileNode[]>`  |
+| `image:import`          | `workspaceId, folderId, sourcePath`     | `IpcResponse<ImageFileNode>`    |
+| `image:rename`          | `workspaceId, imageId, newName`         | `IpcResponse<ImageFileNode>`    |
+| `image:remove`          | `workspaceId, imageId`                  | `IpcResponse<void>`             |
+| `image:readContent`     | `workspaceId, imageId`                  | `IpcResponse<{ data: Buffer }>` |
+| `image:move`            | `workspaceId, imageId, folderId, index` | `IpcResponse<ImageFileNode>`    |
+| `image:updateMeta`      | `workspaceId, imageId, data`            | `IpcResponse<ImageFileNode>`    |
+| `image:selectFile`      | (없음)                                  | `string[] \| null`              |
 
 > PDF 대비 차이: `selectFile`이 `string[]` 반환 (다중 선택), PDF는 `string` 반환 (단일 선택)
 
@@ -891,97 +898,92 @@ export async function readImageFilesRecursiveAsync(
 PDF Steps 9~11을 복제하여 이미지 전용 블록 추가. Step 11 다음에 삽입:
 
 ```typescript
-    // ─── Step 12: 이미지 파일 rename/move 감지 ──────────────────────
-    const imageDeletes = events.filter(
-      (e) =>
-        e.type === 'delete' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+// ─── Step 12: 이미지 파일 rename/move 감지 ──────────────────────
+const imageDeletes = events.filter(
+  (e) => e.type === 'delete' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+)
+const imageCreates = events.filter(
+  (e) => e.type === 'create' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+)
+const pairedImageDeletePaths = new Set<string>()
+const pairedImageCreatePaths = new Set<string>()
+for (const createEvent of imageCreates) {
+  const createDir = path.dirname(createEvent.path)
+  const createBasename = path.basename(createEvent.path)
+  const matchingDelete =
+    imageDeletes.find(
+      (d) => !pairedImageDeletePaths.has(d.path) && path.dirname(d.path) === createDir
+    ) ??
+    imageDeletes.find(
+      (d) => !pairedImageDeletePaths.has(d.path) && path.basename(d.path) === createBasename
     )
-    const imageCreates = events.filter(
-      (e) =>
-        e.type === 'create' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
-    )
-    const pairedImageDeletePaths = new Set<string>()
-    const pairedImageCreatePaths = new Set<string>()
-    for (const createEvent of imageCreates) {
-      const createDir = path.dirname(createEvent.path)
-      const createBasename = path.basename(createEvent.path)
-      const matchingDelete =
-        imageDeletes.find(
-          (d) => !pairedImageDeletePaths.has(d.path) && path.dirname(d.path) === createDir
-        ) ??
-        imageDeletes.find(
-          (d) => !pairedImageDeletePaths.has(d.path) && path.basename(d.path) === createBasename
-        )
-      if (matchingDelete) {
-        const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
-        const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
-        const existing = imageFileRepository.findByRelativePath(workspaceId, oldRel)
-        if (existing) {
-          const newParentRel = newRel.includes('/')
-            ? newRel.split('/').slice(0, -1).join('/')
-            : null
-          const newFolder = newParentRel
-            ? folderRepository.findByRelativePath(workspaceId, newParentRel)
-            : null
-          // ⚠️ title 추출: 동적 확장자 제거
-          imageFileRepository.update(existing.id, {
-            relativePath: newRel,
-            folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
-            title: path.basename(createEvent.path, path.extname(createEvent.path)),
-            updatedAt: new Date()
-          })
-          pairedImageDeletePaths.add(matchingDelete.path)
-          pairedImageCreatePaths.add(createEvent.path)
-        }
-      }
+  if (matchingDelete) {
+    const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
+    const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+    const existing = imageFileRepository.findByRelativePath(workspaceId, oldRel)
+    if (existing) {
+      const newParentRel = newRel.includes('/') ? newRel.split('/').slice(0, -1).join('/') : null
+      const newFolder = newParentRel
+        ? folderRepository.findByRelativePath(workspaceId, newParentRel)
+        : null
+      // ⚠️ title 추출: 동적 확장자 제거
+      imageFileRepository.update(existing.id, {
+        relativePath: newRel,
+        folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
+        title: path.basename(createEvent.path, path.extname(createEvent.path)),
+        updatedAt: new Date()
+      })
+      pairedImageDeletePaths.add(matchingDelete.path)
+      pairedImageCreatePaths.add(createEvent.path)
     }
+  }
+}
 
-    // ─── Step 13: standalone Image create → DB에 이미지 추가 ────────
-    for (const createEvent of imageCreates) {
-      if (pairedImageCreatePaths.has(createEvent.path)) continue
-      const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
-      const existing = imageFileRepository.findByRelativePath(workspaceId, rel)
-      if (!existing) {
-        try {
-          const stat = await fs.promises.stat(createEvent.path)
-          if (!stat.isFile()) continue
-        } catch {
-          continue
-        }
-        const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
-        const folder = parentRel
-          ? folderRepository.findByRelativePath(workspaceId, parentRel)
-          : null
-        const now = new Date()
-        imageFileRepository.create({
-          id: nanoid(),
-          workspaceId,
-          relativePath: rel,
-          folderId: folder?.id ?? null,
-          // ⚠️ title 추출: 동적 확장자 제거
-          title: path.basename(createEvent.path, path.extname(createEvent.path)),
-          description: '',
-          preview: '',
-          order: 0,
-          createdAt: now,
-          updatedAt: now
-        })
-      }
+// ─── Step 13: standalone Image create → DB에 이미지 추가 ────────
+for (const createEvent of imageCreates) {
+  if (pairedImageCreatePaths.has(createEvent.path)) continue
+  const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+  const existing = imageFileRepository.findByRelativePath(workspaceId, rel)
+  if (!existing) {
+    try {
+      const stat = await fs.promises.stat(createEvent.path)
+      if (!stat.isFile()) continue
+    } catch {
+      continue
     }
+    const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
+    const folder = parentRel ? folderRepository.findByRelativePath(workspaceId, parentRel) : null
+    const now = new Date()
+    imageFileRepository.create({
+      id: nanoid(),
+      workspaceId,
+      relativePath: rel,
+      folderId: folder?.id ?? null,
+      // ⚠️ title 추출: 동적 확장자 제거
+      title: path.basename(createEvent.path, path.extname(createEvent.path)),
+      description: '',
+      preview: '',
+      order: 0,
+      createdAt: now,
+      updatedAt: now
+    })
+  }
+}
 
-    // ─── Step 14: standalone Image delete → DB에서 이미지 삭제 ──────
-    for (const deleteEvent of imageDeletes) {
-      if (pairedImageDeletePaths.has(deleteEvent.path)) continue
-      const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
-      const existing = imageFileRepository.findByRelativePath(workspaceId, rel)
-      if (existing) {
-        entityLinkRepository.removeAllByEntity('image', existing.id)
-        imageFileRepository.delete(existing.id)
-      }
-    }
+// ─── Step 14: standalone Image delete → DB에서 이미지 삭제 ──────
+for (const deleteEvent of imageDeletes) {
+  if (pairedImageDeletePaths.has(deleteEvent.path)) continue
+  const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
+  const existing = imageFileRepository.findByRelativePath(workspaceId, rel)
+  if (existing) {
+    entityLinkRepository.removeAllByEntity('image', existing.id)
+    imageFileRepository.delete(existing.id)
+  }
+}
 ```
 
 > **PDF와의 차이**:
+>
 > - 필터: `e.path.endsWith('.pdf')` → `isImageFile(e.path)` (7개 확장자)
 > - title: `path.basename(p, '.pdf')` → `path.basename(p, path.extname(p))` (동적)
 > - delete 시 `entityLinkRepository.removeAllByEntity('image', id)` 호출 추가
@@ -1226,6 +1228,7 @@ image: {
 **디렉토리**: `src/renderer/src/entities/image-file/`
 
 #### model/types.ts
+
 ```typescript
 export interface ImageFileNode {
   id: string
@@ -1241,6 +1244,7 @@ export interface ImageFileNode {
 ```
 
 #### model/own-write-tracker.ts
+
 ```typescript
 const pendingWrites = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -1496,6 +1500,7 @@ export function useImageWatcher(): void {
 > **PDF와의 차이**: 아이콘 `PdfIcon` → `ImageIcon`, 이벤트 이름 `pdf:external-changed` → `image:external-changed`
 
 #### index.ts
+
 ```typescript
 export type { ImageFileNode } from './model/types'
 export {
@@ -1515,6 +1520,7 @@ export { IMAGE_EXTERNAL_CHANGED_EVENT } from './model/use-image-watcher'
 ### 6.2 Tab System + Routing + Entity Link
 
 **`src/renderer/src/shared/constants/tab-url.ts`**:
+
 ```diff
   import {
     Calendar,
@@ -1546,6 +1552,7 @@ export { IMAGE_EXTERNAL_CHANGED_EVENT } from './model/use-image-watcher'
 ```
 
 **`src/renderer/src/app/layout/model/pane-routes.tsx`**:
+
 ```diff
   const PdfPage = lazy(() => import('@pages/pdf'))
 + const ImagePage = lazy(() => import('@pages/image'))
@@ -1860,8 +1867,10 @@ const handleImportImage = useCallback(
 ##### Image 삭제 다이얼로그 (PDF 삭제 다이얼로그 다음에 추가)
 
 ```tsx
-{/* Image 삭제 다이얼로그 — DeleteFolderDialog 재사용 */}
-<DeleteFolderDialog
+{
+  /* Image 삭제 다이얼로그 — DeleteFolderDialog 재사용 */
+}
+;<DeleteFolderDialog
   open={imageDeleteTarget !== null}
   onOpenChange={(open) => {
     if (!open) setImageDeleteTarget(null)
@@ -1893,7 +1902,12 @@ interface ImageNodeRendererProps extends NodeRendererProps<ImageTreeNode> {
   onOpen: () => void
 }
 
-export function ImageNodeRenderer({ node, style, dragHandle, onOpen }: ImageNodeRendererProps): JSX.Element {
+export function ImageNodeRenderer({
+  node,
+  style,
+  dragHandle,
+  onOpen
+}: ImageNodeRendererProps): JSX.Element {
   return (
     <div
       ref={dragHandle}
@@ -2031,12 +2045,7 @@ export function ImageViewer({ imageId, imageData, title }: ImageViewerProps): JS
 
   return (
     <div className="flex flex-col h-full">
-      <TransformWrapper
-        initialScale={1}
-        minScale={0.1}
-        maxScale={10}
-        centerOnInit
-      >
+      <TransformWrapper initialScale={1} minScale={0.1} maxScale={10} centerOnInit>
         {({ zoomIn, zoomOut, resetTransform, state }) => (
           <>
             <ImageToolbar
@@ -2071,6 +2080,7 @@ export function ImageViewer({ imageId, imageData, title }: ImageViewerProps): JS
 ```
 
 > **PDF와의 핵심 차이**:
+>
 > - PDF: `react-pdf` Document/Page + 다중 페이지 + 페이지 네비게이션
 > - Image: `react-zoom-pan-pinch` TransformWrapper + 단일 `<img>` + ObjectURL
 > - **공통**: 외부 변경 이벤트 리스닝은 Viewer 내부에서 처리 (PdfViewer/ImageViewer 모두 `useQueryClient`로 `invalidateQueries`)
@@ -2230,7 +2240,11 @@ export default ImagePage
 ```tsx
 import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
-import { useRenameImageFile, useUpdateImageMeta, useImageFilesByWorkspace } from '@entities/image-file'
+import {
+  useRenameImageFile,
+  useUpdateImageMeta,
+  useImageFilesByWorkspace
+} from '@entities/image-file'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { ImageIcon } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
@@ -2256,7 +2270,11 @@ export function ImageHeader({ workspaceId, imageId, tabId }: ImageHeaderProps): 
       title={image?.title ?? ''}
       description={image?.description ?? ''}
       buttons={
-        <LinkedEntityPopoverButton entityType="image" entityId={imageId} workspaceId={workspaceId} />
+        <LinkedEntityPopoverButton
+          entityType="image"
+          entityId={imageId}
+          workspaceId={workspaceId}
+        />
       }
       onTitleChange={(title) => {
         renameImage({ workspaceId, imageId, newName: title })
@@ -2282,26 +2300,26 @@ export { ImageHeader } from './ui/ImageHeader'
 
 ## 7. Implementation Order
 
-| # | Phase | 파일 수 | 설명 |
-|---|-------|---------|------|
-| 1 | 3.1 | 1 | DB 스키마 (`image-file.ts`) |
-| 2 | 5A.1 | 1 | `schema/index.ts` — imageFiles export |
-| 3 | — | 0 | `npm run db:generate` → `npm run db:migrate` |
-| 4 | 3.2 | 1 | Repository (`image-file.ts`) |
-| 5 | 5.2 | 1 | fs-utils 확장 (`IMAGE_EXTENSIONS`, `isImageFile`, 스캐너) |
-| 6 | 5.1 | 1 | Leaf reindex 확장 (kind `'image'`) |
-| 7 | 5.4 | 2 | Entity link 확장 (schema + service) |
-| 8 | 3.3 | 1 | Service (`image-file.ts`) |
-| 9 | 4.1 | 1 | IPC 핸들러 (`image-file.ts`) |
-| 10 | 5A.2 | 1 | `main/index.ts` — registerImageFileHandlers |
-| 11 | 5.3 | 1 | Workspace watcher 확장 |
-| 12 | 5.5 | 2 | Preload bridge (타입 + 구현) |
-| 13 | 6.2 | 3 | Tab system + routing + entity link renderer |
-| 14 | 6.1 | 5 | Entity layer (types, own-write, queries, watcher, index) |
-| 15 | 5A.3 | 1 | `MainLayout.tsx` — useImageWatcher |
-| 16 | 6.3 | 7 | 폴더 트리 통합 (types, tree builder, FolderTree, FolderContextMenu, ImageNodeRenderer, ImageContextMenu) |
-| 17 | 6.4 | 3 | Image 뷰어 위젯 (ImageViewer, ImageToolbar, index) |
-| 18 | 6.5~6.6 | 4 | 페이지 (ImagePage + index) + Feature (ImageHeader + index) |
+| #   | Phase   | 파일 수 | 설명                                                                                                     |
+| --- | ------- | ------- | -------------------------------------------------------------------------------------------------------- |
+| 1   | 3.1     | 1       | DB 스키마 (`image-file.ts`)                                                                              |
+| 2   | 5A.1    | 1       | `schema/index.ts` — imageFiles export                                                                    |
+| 3   | —       | 0       | `npm run db:generate` → `npm run db:migrate`                                                             |
+| 4   | 3.2     | 1       | Repository (`image-file.ts`)                                                                             |
+| 5   | 5.2     | 1       | fs-utils 확장 (`IMAGE_EXTENSIONS`, `isImageFile`, 스캐너)                                                |
+| 6   | 5.1     | 1       | Leaf reindex 확장 (kind `'image'`)                                                                       |
+| 7   | 5.4     | 2       | Entity link 확장 (schema + service)                                                                      |
+| 8   | 3.3     | 1       | Service (`image-file.ts`)                                                                                |
+| 9   | 4.1     | 1       | IPC 핸들러 (`image-file.ts`)                                                                             |
+| 10  | 5A.2    | 1       | `main/index.ts` — registerImageFileHandlers                                                              |
+| 11  | 5.3     | 1       | Workspace watcher 확장                                                                                   |
+| 12  | 5.5     | 2       | Preload bridge (타입 + 구현)                                                                             |
+| 13  | 6.2     | 3       | Tab system + routing + entity link renderer                                                              |
+| 14  | 6.1     | 5       | Entity layer (types, own-write, queries, watcher, index)                                                 |
+| 15  | 5A.3    | 1       | `MainLayout.tsx` — useImageWatcher                                                                       |
+| 16  | 6.3     | 7       | 폴더 트리 통합 (types, tree builder, FolderTree, FolderContextMenu, ImageNodeRenderer, ImageContextMenu) |
+| 17  | 6.4     | 3       | Image 뷰어 위젯 (ImageViewer, ImageToolbar, index)                                                       |
+| 18  | 6.5~6.6 | 4       | 페이지 (ImagePage + index) + Feature (ImageHeader + index)                                               |
 
 총 **~36개 파일** (신규 ~18, 수정 ~18)
 
@@ -2313,11 +2331,11 @@ export { ImageHeader } from './ui/ImageHeader'
 
 ### 8.1 Unit Tests
 
-| 대상 | 파일 | 주요 케이스 |
-|------|------|-------------|
-| Repository | `repositories/__tests__/image-file.test.ts` | CRUD, createMany, bulkDeleteByPrefix, bulkUpdatePathPrefix, reindexSiblings, deleteOrphans |
-| Service | `services/__tests__/image-file.test.ts` | import (copyFileSync), rename (확장자 유지), remove (entity link 정리), readContent (Buffer), move (reindex kind='image'), readByWorkspace (orphan 삭제, 이동 감지), title 추출 동적 (7개 확장자) |
-| buildWorkspaceTree | `features/folder/manage-folder/model/__tests__/use-workspace-tree.test.ts` | 기존 테스트에 imageFiles 파라미터 추가, Image 노드 정렬, 혼합 정렬 (note+csv+pdf+image) |
+| 대상               | 파일                                                                       | 주요 케이스                                                                                                                                                                                       |
+| ------------------ | -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository         | `repositories/__tests__/image-file.test.ts`                                | CRUD, createMany, bulkDeleteByPrefix, bulkUpdatePathPrefix, reindexSiblings, deleteOrphans                                                                                                        |
+| Service            | `services/__tests__/image-file.test.ts`                                    | import (copyFileSync), rename (확장자 유지), remove (entity link 정리), readContent (Buffer), move (reindex kind='image'), readByWorkspace (orphan 삭제, 이동 감지), title 추출 동적 (7개 확장자) |
+| buildWorkspaceTree | `features/folder/manage-folder/model/__tests__/use-workspace-tree.test.ts` | 기존 테스트에 imageFiles 파라미터 추가, Image 노드 정렬, 혼합 정렬 (note+csv+pdf+image)                                                                                                           |
 
 ### 8.2 Manual Verification
 
@@ -2370,6 +2388,6 @@ export { ImageHeader } from './ui/ImageHeader'
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 0.1 | 2026-03-02 | Initial draft — PDF design 패턴 복제 + Image 전용 차이점 반영 |
+| Version | Date       | Changes                                                       |
+| ------- | ---------- | ------------------------------------------------------------- |
+| 0.1     | 2026-03-02 | Initial draft — PDF design 패턴 복제 + Image 전용 차이점 반영 |

@@ -30,7 +30,10 @@ export const pdfFileRepository = {
     if (items.length === 0) return
     const CHUNK = 99
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(pdfFiles).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(pdfFiles)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
@@ -61,15 +64,15 @@ export const pdfFileRepository = {
     if (orphanIds.length === 0) return
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(pdfFiles).where(inArray(pdfFiles.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(pdfFiles)
+        .where(inArray(pdfFiles.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
   bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
     db.delete(pdfFiles)
-      .where(
-        and(eq(pdfFiles.workspaceId, workspaceId), like(pdfFiles.relativePath, `${prefix}/%`))
-      )
+      .where(and(eq(pdfFiles.workspaceId, workspaceId), like(pdfFiles.relativePath, `${prefix}/%`)))
       .run()
   },
 
@@ -98,6 +101,17 @@ export const pdfFileRepository = {
         stmt.run(i, now, workspaceId, orderedIds[i])
       }
     })()
+  },
+
+  findByIds(ids: string[]): PdfFile[] {
+    if (ids.length === 0) return []
+    const CHUNK = 900
+    const results: PdfFile[] = []
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      results.push(...db.select().from(pdfFiles).where(inArray(pdfFiles.id, chunk)).all())
+    }
+    return results
   },
 
   delete(id: string): void {

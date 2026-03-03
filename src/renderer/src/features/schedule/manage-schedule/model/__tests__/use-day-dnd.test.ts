@@ -4,6 +4,7 @@ import type { DragStartEvent, DragMoveEvent, DragEndEvent } from '@dnd-kit/core'
 import { useDayDnd } from '../use-day-dnd'
 import { makeScheduleItem } from './helpers'
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createOptions(overrides?: Partial<Parameters<typeof useDayDnd>[0]>) {
   return {
     workspaceId: 'ws-1',
@@ -11,34 +12,31 @@ function createOptions(overrides?: Partial<Parameters<typeof useDayDnd>[0]>) {
     clampMap: new Map(),
     onMoveSchedule: vi.fn(),
     onMoveTodo: vi.fn(),
-    ...overrides,
+    ...overrides
   }
 }
 
 function makeDragStartEvent(data?: Record<string, unknown>): DragStartEvent {
   return {
     active: {
-      data: { current: data },
+      data: { current: data }
     },
-    activatorEvent: { target: null },
+    activatorEvent: { target: null }
   } as unknown as DragStartEvent
 }
 
 function makeDragMoveEvent(deltaY: number): DragMoveEvent {
   return {
-    delta: { y: deltaY },
+    delta: { y: deltaY }
   } as unknown as DragMoveEvent
 }
 
-function makeDragEndEvent(
-  deltaY: number,
-  data?: Record<string, unknown>,
-): DragEndEvent {
+function makeDragEndEvent(deltaY: number, data?: Record<string, unknown>): DragEndEvent {
   return {
     active: {
-      data: { current: data },
+      data: { current: data }
     },
-    delta: { y: deltaY },
+    delta: { y: deltaY }
   } as unknown as DragEndEvent
 }
 
@@ -57,11 +55,7 @@ describe('useDayDnd', () => {
     it('schedule 있는 이벤트 → activeSchedule 설정', () => {
       const schedule = makeScheduleItem()
       const { result } = renderHook(() => useDayDnd(createOptions()))
-      act(() =>
-        result.current.handleDragStart(
-          makeDragStartEvent({ schedule, type: 'block' }),
-        ),
-      )
+      act(() => result.current.handleDragStart(makeDragStartEvent({ schedule, type: 'block' })))
       expect(result.current.activeSchedule).toEqual(schedule)
     })
 
@@ -75,8 +69,8 @@ describe('useDayDnd', () => {
       const { result } = renderHook(() => useDayDnd(createOptions()))
       act(() =>
         result.current.handleDragStart(
-          makeDragStartEvent({ schedule: makeScheduleItem(), type: 'bar' }),
-        ),
+          makeDragStartEvent({ schedule: makeScheduleItem(), type: 'bar' })
+        )
       )
       expect(result.current.activeType).toBe('bar')
     })
@@ -84,9 +78,7 @@ describe('useDayDnd', () => {
     it('type 없음 → activeType=block (기본값)', () => {
       const { result } = renderHook(() => useDayDnd(createOptions()))
       act(() =>
-        result.current.handleDragStart(
-          makeDragStartEvent({ schedule: makeScheduleItem() }),
-        ),
+        result.current.handleDragStart(makeDragStartEvent({ schedule: makeScheduleItem() }))
       )
       expect(result.current.activeType).toBe('block')
     })
@@ -100,9 +92,9 @@ describe('useDayDnd', () => {
 
       const event = {
         active: {
-          data: { current: { schedule: makeScheduleItem(), type: 'block' } },
+          data: { current: { schedule: makeScheduleItem(), type: 'block' } }
         },
-        activatorEvent: { target: el },
+        activatorEvent: { target: el }
       } as unknown as DragStartEvent
 
       const { result } = renderHook(() => useDayDnd(createOptions()))
@@ -115,7 +107,7 @@ describe('useDayDnd', () => {
     it('[DD-3] data.current undefined → activeSchedule=null', () => {
       const event = {
         active: { data: { current: undefined } },
-        activatorEvent: { target: null },
+        activatorEvent: { target: null }
       } as unknown as DragStartEvent
       const { result } = renderHook(() => useDayDnd(createOptions()))
       act(() => result.current.handleDragStart(event))
@@ -147,9 +139,7 @@ describe('useDayDnd', () => {
     it('[DD-1] schedule 없어도 상태 리셋', () => {
       const { result } = renderHook(() => useDayDnd(createOptions()))
       act(() =>
-        result.current.handleDragStart(
-          makeDragStartEvent({ schedule: makeScheduleItem() }),
-        ),
+        result.current.handleDragStart(makeDragStartEvent({ schedule: makeScheduleItem() }))
       )
       act(() => result.current.handleDragEnd(makeDragEndEvent(60, {})))
       expect(result.current.activeSchedule).toBeNull()
@@ -160,11 +150,7 @@ describe('useDayDnd', () => {
       const opts = createOptions()
       const schedule = makeScheduleItem()
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(0, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(0, { schedule })))
       expect(opts.onMoveSchedule).not.toHaveBeenCalled()
       expect(opts.onMoveTodo).not.toHaveBeenCalled()
       expect(result.current.activeSchedule).toBeNull()
@@ -174,16 +160,12 @@ describe('useDayDnd', () => {
       const opts = createOptions()
       const schedule = makeScheduleItem({ id: 'sched-1' })
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(60, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       expect(opts.onMoveSchedule).toHaveBeenCalledWith({
         scheduleId: 'sched-1',
         startAt: expect.any(Date),
         endAt: expect.any(Date),
-        workspaceId: 'ws-1',
+        workspaceId: 'ws-1'
       })
     })
 
@@ -191,15 +173,11 @@ describe('useDayDnd', () => {
       const opts = createOptions()
       const schedule = makeScheduleItem({ id: 'todo:abc123' })
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(60, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       expect(opts.onMoveTodo).toHaveBeenCalledWith({
         workspaceId: 'ws-1',
         todoId: 'abc123',
-        data: { startDate: expect.any(Date), dueDate: expect.any(Date) },
+        data: { startDate: expect.any(Date), dueDate: expect.any(Date) }
       })
     })
 
@@ -207,24 +185,20 @@ describe('useDayDnd', () => {
       const schedule = makeScheduleItem({
         id: 'todo:t1',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-04T10:00:00'),
+        endAt: new Date('2026-03-04T10:00:00')
       })
       const clampMap = new Map([
         [
           'todo:t1',
           {
             start: new Date('2026-03-02T08:00:00'),
-            end: new Date('2026-03-02T09:00:00'),
-          },
-        ],
+            end: new Date('2026-03-02T09:00:00')
+          }
+        ]
       ])
       const opts = createOptions({ clampMap })
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(60, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       expect(opts.onMoveTodo).toHaveBeenCalled()
       const callArg = opts.onMoveTodo.mock.calls[0][0]
       // clamp base used → movedStart based on 08:00, movedEnd based on 09:00
@@ -237,15 +211,11 @@ describe('useDayDnd', () => {
       const schedule = makeScheduleItem({
         id: 'todo:t2',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-02T10:00:00'),
+        endAt: new Date('2026-03-02T10:00:00')
       })
       const opts = createOptions()
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(60, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       const callArg = opts.onMoveTodo.mock.calls[0][0]
       expect(callArg.data.startDate.getHours()).toBe(10) // 09:00 + 60min
       expect(callArg.data.dueDate.getHours()).toBe(11) // 10:00 + 60min
@@ -255,15 +225,11 @@ describe('useDayDnd', () => {
       const schedule = makeScheduleItem({
         id: 'todo:t3',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-05T10:00:00'),
+        endAt: new Date('2026-03-05T10:00:00')
       })
       const opts = createOptions()
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(60, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       const callArg = opts.onMoveTodo.mock.calls[0][0]
       // 날짜는 유지, 시간만 변경
       expect(callArg.data.startDate.getDate()).toBe(2) // 3/2 유지
@@ -276,11 +242,7 @@ describe('useDayDnd', () => {
       const opts = createOptions()
       const schedule = makeScheduleItem()
       const { result } = renderHook(() => useDayDnd(opts))
-      act(() =>
-        result.current.handleDragEnd(
-          makeDragEndEvent(60, { schedule }),
-        ),
-      )
+      act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       expect(result.current.activeSchedule).toBeNull()
       expect(result.current.previewDelta).toBe(0)
     })

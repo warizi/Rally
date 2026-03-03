@@ -137,14 +137,20 @@ export const pdfFileRepository = {
     if (items.length === 0) return
     const CHUNK = 99
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(pdfFiles).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(pdfFiles)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
   update(
     id: string,
     data: Partial<
-      Pick<PdfFile, 'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'>
+      Pick<
+        PdfFile,
+        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+      >
     >
   ): PdfFile | undefined {
     return db.update(pdfFiles).set(data).where(eq(pdfFiles.id, id)).returning().get()
@@ -165,7 +171,9 @@ export const pdfFileRepository = {
     if (orphanIds.length === 0) return
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(pdfFiles).where(inArray(pdfFiles.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(pdfFiles)
+        .where(inArray(pdfFiles.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
@@ -514,11 +522,7 @@ export const pdfFileService = {
   },
 
   /** 메타데이터 업데이트 (description만) */
-  updateMeta(
-    _workspaceId: string,
-    pdfId: string,
-    data: { description?: string }
-  ): PdfFileNode {
+  updateMeta(_workspaceId: string, pdfId: string, data: { description?: string }): PdfFileNode {
     const pdf = pdfFileRepository.findById(pdfId)
     if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
 
@@ -614,16 +618,16 @@ export function registerPdfFileHandlers(): void {
 
 ### 4.2 채널 목록
 
-| 채널 | 파라미터 | 반환 |
-|------|---------|------|
-| `pdf:readByWorkspace` | `workspaceId` | `IpcResponse<PdfFileNode[]>` |
-| `pdf:import` | `workspaceId, folderId, sourcePath` | `IpcResponse<PdfFileNode>` |
-| `pdf:rename` | `workspaceId, pdfId, newName` | `IpcResponse<PdfFileNode>` |
-| `pdf:remove` | `workspaceId, pdfId` | `IpcResponse<void>` |
-| `pdf:readContent` | `workspaceId, pdfId` | `IpcResponse<{ data: Buffer }>` |
-| `pdf:move` | `workspaceId, pdfId, folderId, index` | `IpcResponse<PdfFileNode>` |
-| `pdf:updateMeta` | `workspaceId, pdfId, data` | `IpcResponse<PdfFileNode>` |
-| `pdf:selectFile` | (없음) | `string \| null` |
+| 채널                  | 파라미터                              | 반환                            |
+| --------------------- | ------------------------------------- | ------------------------------- |
+| `pdf:readByWorkspace` | `workspaceId`                         | `IpcResponse<PdfFileNode[]>`    |
+| `pdf:import`          | `workspaceId, folderId, sourcePath`   | `IpcResponse<PdfFileNode>`      |
+| `pdf:rename`          | `workspaceId, pdfId, newName`         | `IpcResponse<PdfFileNode>`      |
+| `pdf:remove`          | `workspaceId, pdfId`                  | `IpcResponse<void>`             |
+| `pdf:readContent`     | `workspaceId, pdfId`                  | `IpcResponse<{ data: Buffer }>` |
+| `pdf:move`            | `workspaceId, pdfId, folderId, index` | `IpcResponse<PdfFileNode>`      |
+| `pdf:updateMeta`      | `workspaceId, pdfId, data`            | `IpcResponse<PdfFileNode>`      |
+| `pdf:selectFile`      | (없음)                                | `string \| null`                |
 
 ---
 
@@ -847,91 +851,85 @@ export async function readPdfFilesRecursiveAsync(
 CSV Steps 6~8을 복제하여 `.pdf` 전용 블록 추가. Step 8 다음에 삽입:
 
 ```typescript
-    // ─── Step 9: .pdf 파일 rename/move 감지 ──────────────────────
-    const pdfDeletes = events.filter(
-      (e) =>
-        e.type === 'delete' && e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.')
+// ─── Step 9: .pdf 파일 rename/move 감지 ──────────────────────
+const pdfDeletes = events.filter(
+  (e) => e.type === 'delete' && e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.')
+)
+const pdfCreates = events.filter(
+  (e) => e.type === 'create' && e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.')
+)
+const pairedPdfDeletePaths = new Set<string>()
+const pairedPdfCreatePaths = new Set<string>()
+for (const createEvent of pdfCreates) {
+  const createDir = path.dirname(createEvent.path)
+  const createBasename = path.basename(createEvent.path)
+  const matchingDelete =
+    pdfDeletes.find(
+      (d) => !pairedPdfDeletePaths.has(d.path) && path.dirname(d.path) === createDir
+    ) ??
+    pdfDeletes.find(
+      (d) => !pairedPdfDeletePaths.has(d.path) && path.basename(d.path) === createBasename
     )
-    const pdfCreates = events.filter(
-      (e) =>
-        e.type === 'create' && e.path.endsWith('.pdf') && !path.basename(e.path).startsWith('.')
-    )
-    const pairedPdfDeletePaths = new Set<string>()
-    const pairedPdfCreatePaths = new Set<string>()
-    for (const createEvent of pdfCreates) {
-      const createDir = path.dirname(createEvent.path)
-      const createBasename = path.basename(createEvent.path)
-      const matchingDelete =
-        pdfDeletes.find(
-          (d) => !pairedPdfDeletePaths.has(d.path) && path.dirname(d.path) === createDir
-        ) ??
-        pdfDeletes.find(
-          (d) => !pairedPdfDeletePaths.has(d.path) && path.basename(d.path) === createBasename
-        )
-      if (matchingDelete) {
-        const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
-        const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
-        const existing = pdfFileRepository.findByRelativePath(workspaceId, oldRel)
-        if (existing) {
-          const newParentRel = newRel.includes('/')
-            ? newRel.split('/').slice(0, -1).join('/')
-            : null
-          const newFolder = newParentRel
-            ? folderRepository.findByRelativePath(workspaceId, newParentRel)
-            : null
-          pdfFileRepository.update(existing.id, {
-            relativePath: newRel,
-            folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
-            title: path.basename(createEvent.path, '.pdf'),
-            updatedAt: new Date()
-          })
-          pairedPdfDeletePaths.add(matchingDelete.path)
-          pairedPdfCreatePaths.add(createEvent.path)
-        }
-      }
+  if (matchingDelete) {
+    const oldRel = path.relative(workspacePath, matchingDelete.path).replace(/\\/g, '/')
+    const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+    const existing = pdfFileRepository.findByRelativePath(workspaceId, oldRel)
+    if (existing) {
+      const newParentRel = newRel.includes('/') ? newRel.split('/').slice(0, -1).join('/') : null
+      const newFolder = newParentRel
+        ? folderRepository.findByRelativePath(workspaceId, newParentRel)
+        : null
+      pdfFileRepository.update(existing.id, {
+        relativePath: newRel,
+        folderId: newParentRel ? (newFolder?.id ?? existing.folderId) : null,
+        title: path.basename(createEvent.path, '.pdf'),
+        updatedAt: new Date()
+      })
+      pairedPdfDeletePaths.add(matchingDelete.path)
+      pairedPdfCreatePaths.add(createEvent.path)
     }
+  }
+}
 
-    // ─── Step 10: standalone PDF create → DB에 pdf 추가 ──────────
-    for (const createEvent of pdfCreates) {
-      if (pairedPdfCreatePaths.has(createEvent.path)) continue
-      const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
-      const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
-      if (!existing) {
-        try {
-          const stat = await fs.promises.stat(createEvent.path)
-          if (!stat.isFile()) continue
-        } catch {
-          continue
-        }
-        const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
-        const folder = parentRel
-          ? folderRepository.findByRelativePath(workspaceId, parentRel)
-          : null
-        const now = new Date()
-        pdfFileRepository.create({
-          id: nanoid(),
-          workspaceId,
-          relativePath: rel,
-          folderId: folder?.id ?? null,
-          title: path.basename(createEvent.path, '.pdf'),
-          description: '',
-          preview: '',
-          order: 0,
-          createdAt: now,
-          updatedAt: now
-        })
-      }
+// ─── Step 10: standalone PDF create → DB에 pdf 추가 ──────────
+for (const createEvent of pdfCreates) {
+  if (pairedPdfCreatePaths.has(createEvent.path)) continue
+  const rel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
+  const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
+  if (!existing) {
+    try {
+      const stat = await fs.promises.stat(createEvent.path)
+      if (!stat.isFile()) continue
+    } catch {
+      continue
     }
+    const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
+    const folder = parentRel ? folderRepository.findByRelativePath(workspaceId, parentRel) : null
+    const now = new Date()
+    pdfFileRepository.create({
+      id: nanoid(),
+      workspaceId,
+      relativePath: rel,
+      folderId: folder?.id ?? null,
+      title: path.basename(createEvent.path, '.pdf'),
+      description: '',
+      preview: '',
+      order: 0,
+      createdAt: now,
+      updatedAt: now
+    })
+  }
+}
 
-    // ─── Step 11: standalone PDF delete → DB에서 pdf 삭제 ────────
-    for (const deleteEvent of pdfDeletes) {
-      if (pairedPdfDeletePaths.has(deleteEvent.path)) continue
-      const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
-      const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
-      if (existing) {
-        pdfFileRepository.delete(existing.id)
-      }
-    }
+// ─── Step 11: standalone PDF delete → DB에서 pdf 삭제 ────────
+for (const deleteEvent of pdfDeletes) {
+  if (pairedPdfDeletePaths.has(deleteEvent.path)) continue
+  const rel = path.relative(workspacePath, deleteEvent.path).replace(/\\/g, '/')
+  const existing = pdfFileRepository.findByRelativePath(workspaceId, rel)
+  if (existing) {
+    pdfFileRepository.delete(existing.id)
+  }
+}
 ```
 
 #### 5.3.8 `applyEvents()` return 변경
@@ -1133,6 +1131,7 @@ pdf: {
 **디렉토리**: `src/renderer/src/entities/pdf-file/`
 
 #### types.ts
+
 ```typescript
 export interface PdfFileNode {
   id: string
@@ -1148,6 +1147,7 @@ export interface PdfFileNode {
 ```
 
 #### own-write-tracker.ts
+
 ```typescript
 const pendingWrites = new Map<string, ReturnType<typeof setTimeout>>()
 
@@ -1232,11 +1232,7 @@ export function useRenamePdfFile(): UseMutationResult<
       markAsOwnWrite(pdfId)
     },
     mutationFn: async ({ workspaceId, pdfId, newName }) => {
-      const res: IpcResponse<PdfFileNode> = await window.api.pdf.rename(
-        workspaceId,
-        pdfId,
-        newName
-      )
+      const res: IpcResponse<PdfFileNode> = await window.api.pdf.rename(workspaceId, pdfId, newName)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -1405,9 +1401,17 @@ export function usePdfWatcher(): void {
 ```
 
 #### index.ts
+
 ```typescript
-export { usePdfFilesByWorkspace, useImportPdfFile, useRenamePdfFile, useRemovePdfFile,
-         useReadPdfContent, useMovePdfFile, useUpdatePdfMeta } from './api/queries'
+export {
+  usePdfFilesByWorkspace,
+  useImportPdfFile,
+  useRenamePdfFile,
+  useRemovePdfFile,
+  useReadPdfContent,
+  useMovePdfFile,
+  useUpdatePdfMeta
+} from './api/queries'
 export type { PdfFileNode } from './model/types'
 export { usePdfWatcher, PDF_EXTERNAL_CHANGED_EVENT } from './model/use-pdf-watcher'
 ```
@@ -1415,6 +1419,7 @@ export { usePdfWatcher, PDF_EXTERNAL_CHANGED_EVENT } from './model/use-pdf-watch
 ### 6.2 Tab System + Routing
 
 **`src/renderer/src/shared/constants/tab-url.ts`**:
+
 ```diff
 - import { Calendar, Check, FileText, FolderOpen, LayoutDashboard, Sheet } from 'lucide-react'
 + import { Calendar, Check, FileText, FileType, FolderOpen, LayoutDashboard, Sheet } from 'lucide-react'
@@ -1438,6 +1443,7 @@ export { usePdfWatcher, PDF_EXTERNAL_CHANGED_EVENT } from './model/use-pdf-watch
 ```
 
 **`src/renderer/src/app/layout/model/pane-routes.tsx`**:
+
 ```typescript
 const PdfPage = lazy(() => import('@pages/pdf'))
 // PANE_ROUTES에 { pattern: ROUTES.PDF_DETAIL, component: PdfPage } 추가
@@ -1446,6 +1452,7 @@ const PdfPage = lazy(() => import('@pages/pdf'))
 ### 6.3 Folder Tree Integration
 
 #### types.ts 수정
+
 ```diff
 + export interface PdfTreeNode {
 +   kind: 'pdf'
@@ -1696,8 +1703,10 @@ const handleImportPdf = useCallback(
 ##### PDF 삭제 다이얼로그 (CSV 삭제 다이얼로그 다음에 추가)
 
 ```tsx
-{/* PDF 삭제 다이얼로그 */}
-<DeleteFolderDialog
+{
+  /* PDF 삭제 다이얼로그 */
+}
+;<DeleteFolderDialog
   open={pdfDeleteTarget !== null}
   onOpenChange={(open) => {
     if (!open) setPdfDeleteTarget(null)
@@ -1809,6 +1818,7 @@ export function PdfContextMenu({ children, onDelete }: Props): JSX.Element {
 **디렉토리**: `src/renderer/src/widgets/pdf-viewer/`
 
 #### model/use-pdf-viewer.ts
+
 ```typescript
 interface PdfViewerState {
   currentPage: number
@@ -1836,6 +1846,7 @@ export function usePdfViewer() {
 ```
 
 #### ui/PdfViewer.tsx
+
 ```tsx
 import { Document, Page, pdfjs } from 'react-pdf'
 import 'react-pdf/dist/Page/TextLayer.css'
@@ -1859,10 +1870,7 @@ export function PdfViewer({ data }: PdfViewerProps): JSX.Element {
     <div className="flex flex-col h-full">
       <PdfToolbar {...viewer} />
       <div className="flex-1 overflow-auto flex justify-center bg-muted/30 p-4">
-        <Document
-          file={{ data }}
-          onLoadSuccess={viewer.onDocumentLoadSuccess}
-        >
+        <Document file={{ data }} onLoadSuccess={viewer.onDocumentLoadSuccess}>
           <Page pageNumber={viewer.currentPage} scale={viewer.scale} />
         </Document>
       </div>
@@ -1929,7 +1937,12 @@ export function PdfToolbar({
           />
           <span className="text-sm text-muted-foreground">/ {numPages}</span>
         </form>
-        <Button variant="ghost" size="icon-sm" onClick={nextPage} disabled={currentPage >= numPages}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={nextPage}
+          disabled={currentPage >= numPages}
+        >
           <ChevronRight className="size-4" />
         </Button>
       </div>
@@ -2118,25 +2131,25 @@ export { PdfHeader } from './ui/PdfHeader'
 
 ## 7. Implementation Order
 
-| # | Phase | 파일 수 | 설명 |
-|---|-------|---------|------|
-| 1 | A-1 | 2 | DB 스키마 + 마이그레이션 |
-| 2 | 5A.1 | 1 | `schema/index.ts` — pdfFiles export |
-| 3 | A-2 | 1 | Repository |
-| 4 | A-3 | 1 | Service |
-| 5 | A-4 | 1 | IPC 핸들러 (selectFile 포함) |
-| 6 | 5A.2 | 1 | `main/index.ts` — registerPdfFileHandlers |
-| 7 | A-5 | 1 | Leaf reindex 확장 |
-| 8 | A-6 (5.2) | 1 | fs-utils 확장 |
-| 9 | A-6 (5.3) | 1 | Workspace watcher 확장 |
-| 10 | B-1~2 | 2 | Preload bridge (타입 + 구현) |
-| 11 | C-1 | 1 | TabType + Route + Icon |
-| 12 | C-2 | 5 | Entity layer |
-| 13 | 5A.3 | 1 | `MainLayout.tsx` — usePdfWatcher |
-| 14 | C-3 | 1 | 라우팅 등록 |
-| 15 | D-1~4 | 8 | 폴더 트리 통합 (FolderContextMenu, PdfNodeRenderer, PdfContextMenu 포함) |
-| 16 | E-1~2 | 4 | PDF 뷰어 위젯 (index.ts 배럴 포함) |
-| 17 | F-1~2 | 4 | 페이지 (PdfPage + index.ts) + Feature (PdfHeader + index.ts) |
+| #   | Phase     | 파일 수 | 설명                                                                     |
+| --- | --------- | ------- | ------------------------------------------------------------------------ |
+| 1   | A-1       | 2       | DB 스키마 + 마이그레이션                                                 |
+| 2   | 5A.1      | 1       | `schema/index.ts` — pdfFiles export                                      |
+| 3   | A-2       | 1       | Repository                                                               |
+| 4   | A-3       | 1       | Service                                                                  |
+| 5   | A-4       | 1       | IPC 핸들러 (selectFile 포함)                                             |
+| 6   | 5A.2      | 1       | `main/index.ts` — registerPdfFileHandlers                                |
+| 7   | A-5       | 1       | Leaf reindex 확장                                                        |
+| 8   | A-6 (5.2) | 1       | fs-utils 확장                                                            |
+| 9   | A-6 (5.3) | 1       | Workspace watcher 확장                                                   |
+| 10  | B-1~2     | 2       | Preload bridge (타입 + 구현)                                             |
+| 11  | C-1       | 1       | TabType + Route + Icon                                                   |
+| 12  | C-2       | 5       | Entity layer                                                             |
+| 13  | 5A.3      | 1       | `MainLayout.tsx` — usePdfWatcher                                         |
+| 14  | C-3       | 1       | 라우팅 등록                                                              |
+| 15  | D-1~4     | 8       | 폴더 트리 통합 (FolderContextMenu, PdfNodeRenderer, PdfContextMenu 포함) |
+| 16  | E-1~2     | 4       | PDF 뷰어 위젯 (index.ts 배럴 포함)                                       |
+| 17  | F-1~2     | 4       | 페이지 (PdfPage + index.ts) + Feature (PdfHeader + index.ts)             |
 
 총 **~35개 파일** (신규 ~24, 수정 ~11)
 
@@ -2148,12 +2161,12 @@ export { PdfHeader } from './ui/PdfHeader'
 
 ### 8.1 Unit Tests
 
-| 대상 | 파일 | 주요 케이스 |
-|------|------|-------------|
-| Repository | `repositories/__tests__/pdf-file.test.ts` | CRUD, createMany, bulkDeleteByPrefix, bulkUpdatePathPrefix, reindexSiblings |
-| Service | `services/__tests__/pdf-file.test.ts` | import (copyFileSync), rename (renameSync), remove (unlinkSync), readContent (Buffer), move (reindex), readByWorkspace (orphan 삭제, 이동 감지) |
-| usePdfViewer | `widgets/pdf-viewer/model/__tests__/use-pdf-viewer.test.ts` | goToPage 범위 제한, zoom 범위(0.25~4.0), onDocumentLoadSuccess numPages 설정 |
-| buildWorkspaceTree | `features/folder/manage-folder/model/__tests__/use-workspace-tree.test.ts` | 기존 테스트에 pdfFiles 파라미터 추가, PDF 노드 정렬 |
+| 대상               | 파일                                                                       | 주요 케이스                                                                                                                                     |
+| ------------------ | -------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Repository         | `repositories/__tests__/pdf-file.test.ts`                                  | CRUD, createMany, bulkDeleteByPrefix, bulkUpdatePathPrefix, reindexSiblings                                                                     |
+| Service            | `services/__tests__/pdf-file.test.ts`                                      | import (copyFileSync), rename (renameSync), remove (unlinkSync), readContent (Buffer), move (reindex), readByWorkspace (orphan 삭제, 이동 감지) |
+| usePdfViewer       | `widgets/pdf-viewer/model/__tests__/use-pdf-viewer.test.ts`                | goToPage 범위 제한, zoom 범위(0.25~4.0), onDocumentLoadSuccess numPages 설정                                                                    |
+| buildWorkspaceTree | `features/folder/manage-folder/model/__tests__/use-workspace-tree.test.ts` | 기존 테스트에 pdfFiles 파라미터 추가, PDF 노드 정렬                                                                                             |
 
 ### 8.2 Manual Verification
 
@@ -2185,8 +2198,8 @@ export { PdfHeader } from './ui/PdfHeader'
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 0.1 | 2026-03-01 | Initial draft |
-| 0.2 | 2026-03-01 | 검증 피드백 15건 반영: workspace-watcher 전체 diff, 글루 파일 3개, queries/watcher/toolbar 전체 코드, FolderContextMenu diff, PdfPage imports, 테스트 계획, 주의사항 |
-| 0.3 | 2026-03-01 | 2차 심층 검증 12건 반영: PdfPage CsvPage 패턴 완전 복제(H-1~H-2), PdfViewer import 보완(H-3), FolderTree pdfDeleteTarget/PdfNodeRenderer/PdfContextMenu 신규(H-4~H-5), PdfHeader interface+imports(M-1), useWorkspaceTree 전체 diff(M-2), 배럴 export 3개(M-3), tab-url.ts 정확한 diff(M-4), 의존성 설치 명령(M-5), 루트 PDF 가져오기 UX(M-6), isRemovingPdf(L-1), 페이지 수 표시 노트(L-2) |
+| Version | Date       | Changes                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------- | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0.1     | 2026-03-01 | Initial draft                                                                                                                                                                                                                                                                                                                                                                               |
+| 0.2     | 2026-03-01 | 검증 피드백 15건 반영: workspace-watcher 전체 diff, 글루 파일 3개, queries/watcher/toolbar 전체 코드, FolderContextMenu diff, PdfPage imports, 테스트 계획, 주의사항                                                                                                                                                                                                                        |
+| 0.3     | 2026-03-01 | 2차 심층 검증 12건 반영: PdfPage CsvPage 패턴 완전 복제(H-1~H-2), PdfViewer import 보완(H-3), FolderTree pdfDeleteTarget/PdfNodeRenderer/PdfContextMenu 신규(H-4~H-5), PdfHeader interface+imports(M-1), useWorkspaceTree 전체 diff(M-2), 배럴 export 3개(M-3), tab-url.ts 정확한 diff(M-4), 의존성 설치 명령(M-5), 루트 PDF 가져오기 UX(M-6), isRemovingPdf(L-1), 페이지 수 표시 노트(L-2) |

@@ -12,7 +12,7 @@ import {
   endOfWeek,
   startOfDay,
   endOfDay,
-  format,
+  format
 } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import type { ScheduleDateRange } from '@entities/schedule'
@@ -38,11 +38,9 @@ interface UseCalendarReturn {
 }
 
 export function useCalendar(options?: UseCalendarOptions): UseCalendarReturn {
-  const [viewType, setViewType] = useState<CalendarViewType>(
-    options?.initialViewType ?? 'month',
-  )
+  const [viewType, setViewType] = useState<CalendarViewType>(options?.initialViewType ?? 'month')
   const [currentDate, setCurrentDate] = useState<Date>(
-    options?.initialDate ? new Date(options.initialDate) : new Date(),
+    options?.initialDate ? new Date(options.initialDate) : new Date()
   )
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
@@ -106,6 +104,6 @@ export function useCalendar(options?: UseCalendarOptions): UseCalendarReturn {
     goPrev,
     goNext,
     title,
-    dateRange,
+    dateRange
   }
 }

@@ -87,18 +87,10 @@ export function buildWorkspaceTree(
 
   // leaf 항목(note + csv + pdf + image)을 order 기준으로 혼합 정렬
   function getLeafChildren(folderId: string | null): WorkspaceTreeNode[] {
-    const childNotes = notes
-      .filter((n) => n.folderId === folderId)
-      .map(convertNote)
-    const childCsvs = csvFiles
-      .filter((c) => c.folderId === folderId)
-      .map(convertCsv)
-    const childPdfs = pdfFiles
-      .filter((p) => p.folderId === folderId)
-      .map(convertPdf)
-    const childImages = imageFiles
-      .filter((i) => i.folderId === folderId)
-      .map(convertImage)
+    const childNotes = notes.filter((n) => n.folderId === folderId).map(convertNote)
+    const childCsvs = csvFiles.filter((c) => c.folderId === folderId).map(convertCsv)
+    const childPdfs = pdfFiles.filter((p) => p.folderId === folderId).map(convertPdf)
+    const childImages = imageFiles.filter((i) => i.folderId === folderId).map(convertImage)
     return [...childNotes, ...childCsvs, ...childPdfs, ...childImages].sort(
       (a, b) => a.order - b.order || a.name.localeCompare(b.name)
     )
@@ -136,12 +128,14 @@ export function useWorkspaceTree(workspaceId: string): {
   const { data: notes = [], isLoading: isNotesLoading } = useNotesByWorkspace(workspaceId)
   const { data: csvFiles = [], isLoading: isCsvsLoading } = useCsvFilesByWorkspace(workspaceId)
   const { data: pdfFiles = [], isLoading: isPdfsLoading } = usePdfFilesByWorkspace(workspaceId)
-  const { data: imageFiles = [], isLoading: isImagesLoading } = useImageFilesByWorkspace(workspaceId)
+  const { data: imageFiles = [], isLoading: isImagesLoading } =
+    useImageFilesByWorkspace(workspaceId)
 
   const tree = buildWorkspaceTree(folders, notes, csvFiles, pdfFiles, imageFiles)
 
   return {
     tree,
-    isLoading: isFoldersLoading || isNotesLoading || isCsvsLoading || isPdfsLoading || isImagesLoading
+    isLoading:
+      isFoldersLoading || isNotesLoading || isCsvsLoading || isPdfsLoading || isImagesLoading
   }
 }

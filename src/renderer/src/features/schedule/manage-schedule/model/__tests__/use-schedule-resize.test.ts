@@ -3,6 +3,7 @@ import { renderHook, act } from '@testing-library/react'
 import { useScheduleResize } from '../use-schedule-resize'
 import { makeScheduleItem } from './helpers'
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createOptions(overrides?: Partial<Parameters<typeof useScheduleResize>[0]>) {
   return {
     workspaceId: 'ws-1',
@@ -10,14 +11,15 @@ function createOptions(overrides?: Partial<Parameters<typeof useScheduleResize>[
     clampMap: new Map(),
     onMoveSchedule: vi.fn(),
     onMoveTodo: vi.fn(),
-    ...overrides,
+    ...overrides
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function makeMockPointerEvent(clientY: number) {
   return {
     preventDefault: vi.fn(),
-    clientY,
+    clientY
   } as unknown as React.PointerEvent
 }
 
@@ -49,7 +51,9 @@ describe('useScheduleResize', () => {
   describe('pointermove', () => {
     it('clientY 변화 → resizeDelta 업데이트', () => {
       const { result } = renderHook(() => useScheduleResize(createOptions()))
-      act(() => result.current.handleResizeStart(makeMockPointerEvent(100), makeScheduleItem(), 'bottom'))
+      act(() =>
+        result.current.handleResizeStart(makeMockPointerEvent(100), makeScheduleItem(), 'bottom')
+      )
       act(() => document.dispatchEvent(new PointerEvent('pointermove', { clientY: 160 })))
       // (160-100)/60*60 = 60, snapped to 15 → 60
       expect(result.current.resizeDelta).toBe(60)
@@ -57,7 +61,9 @@ describe('useScheduleResize', () => {
 
     it('[SR-3] 연속 pointermove → 매번 업데이트', () => {
       const { result } = renderHook(() => useScheduleResize(createOptions()))
-      act(() => result.current.handleResizeStart(makeMockPointerEvent(100), makeScheduleItem(), 'bottom'))
+      act(() =>
+        result.current.handleResizeStart(makeMockPointerEvent(100), makeScheduleItem(), 'bottom')
+      )
       act(() => document.dispatchEvent(new PointerEvent('pointermove', { clientY: 130 })))
       expect(result.current.resizeDelta).toBe(30)
       act(() => document.dispatchEvent(new PointerEvent('pointermove', { clientY: 160 })))
@@ -72,7 +78,7 @@ describe('useScheduleResize', () => {
       const schedule = makeScheduleItem({
         id: 'sched-1',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-02T10:00:00'),
+        endAt: new Date('2026-03-02T10:00:00')
       })
       const opts = createOptions()
       const { result } = renderHook(() => useScheduleResize(opts))
@@ -82,7 +88,7 @@ describe('useScheduleResize', () => {
         scheduleId: 'sched-1',
         startAt: schedule.startAt,
         endAt: new Date(schedule.endAt.getTime() + 60 * 60 * 1000),
-        workspaceId: 'ws-1',
+        workspaceId: 'ws-1'
       })
     })
 
@@ -90,7 +96,7 @@ describe('useScheduleResize', () => {
       const schedule = makeScheduleItem({
         id: 'sched-1',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-02T11:00:00'),
+        endAt: new Date('2026-03-02T11:00:00')
       })
       const opts = createOptions()
       const { result } = renderHook(() => useScheduleResize(opts))
@@ -100,7 +106,7 @@ describe('useScheduleResize', () => {
         scheduleId: 'sched-1',
         startAt: new Date(schedule.startAt.getTime() + 60 * 60 * 1000),
         endAt: schedule.endAt,
-        workspaceId: 'ws-1',
+        workspaceId: 'ws-1'
       })
     })
 
@@ -117,7 +123,9 @@ describe('useScheduleResize', () => {
     it('[SR-1] delta=0 → 콜백 미호출, 상태 리셋', () => {
       const opts = createOptions()
       const { result } = renderHook(() => useScheduleResize(opts))
-      act(() => result.current.handleResizeStart(makeMockPointerEvent(100), makeScheduleItem(), 'bottom'))
+      act(() =>
+        result.current.handleResizeStart(makeMockPointerEvent(100), makeScheduleItem(), 'bottom')
+      )
       act(() => document.dispatchEvent(new PointerEvent('pointerup', { clientY: 100 })))
       expect(opts.onMoveSchedule).not.toHaveBeenCalled()
       expect(result.current.resizing).toBeNull()
@@ -130,7 +138,7 @@ describe('useScheduleResize', () => {
       const schedule = makeScheduleItem({
         id: 'todo:t1',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-02T10:00:00'),
+        endAt: new Date('2026-03-02T10:00:00')
       })
       const opts = createOptions()
       const { result } = renderHook(() => useScheduleResize(opts))
@@ -147,7 +155,7 @@ describe('useScheduleResize', () => {
       const schedule = makeScheduleItem({
         id: 'todo:t2',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-02T11:00:00'),
+        endAt: new Date('2026-03-02T11:00:00')
       })
       const opts = createOptions()
       const { result } = renderHook(() => useScheduleResize(opts))
@@ -163,16 +171,16 @@ describe('useScheduleResize', () => {
       const schedule = makeScheduleItem({
         id: 'todo:t3',
         startAt: new Date('2026-03-02T09:00:00'),
-        endAt: new Date('2026-03-02T11:00:00'),
+        endAt: new Date('2026-03-02T11:00:00')
       })
       const clampMap = new Map([
         [
           'todo:t3',
           {
             start: new Date('2026-03-02T08:00:00'),
-            end: new Date('2026-03-02T10:00:00'),
-          },
-        ],
+            end: new Date('2026-03-02T10:00:00')
+          }
+        ]
       ])
       const opts = createOptions({ clampMap })
       const { result } = renderHook(() => useScheduleResize(opts))

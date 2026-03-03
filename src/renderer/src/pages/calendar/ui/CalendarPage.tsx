@@ -1,12 +1,5 @@
 import { useMemo } from 'react'
-import {
-  addDays,
-  addMonths,
-  addWeeks,
-  subDays,
-  subMonths,
-  subWeeks
-} from 'date-fns'
+import { addDays, addMonths, addWeeks, subDays, subMonths, subWeeks } from 'date-fns'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useSchedulesByWorkspace, type ScheduleItem } from '@entities/schedule'

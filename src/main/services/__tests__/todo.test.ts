@@ -125,21 +125,19 @@ describe('create', () => {
 
   it("title='  제목  ' — trim 적용", () => {
     todoService.create('ws-1', { title: '  제목  ' })
-    expect(todoRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: '제목' })
-    )
+    expect(todoRepository.create).toHaveBeenCalledWith(expect.objectContaining({ title: '제목' }))
   })
 
   it('description 미전달 — description=""', () => {
     todoService.create('ws-1', { title: '제목' })
-    expect(todoRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ description: '' })
-    )
+    expect(todoRepository.create).toHaveBeenCalledWith(expect.objectContaining({ description: '' }))
   })
 
   it('없는 parentId → NotFoundError', () => {
     vi.mocked(todoRepository.findById).mockReturnValue(undefined)
-    expect(() => todoService.create('ws-1', { title: 't', parentId: 'ghost' })).toThrow(NotFoundError)
+    expect(() => todoService.create('ws-1', { title: 't', parentId: 'ghost' })).toThrow(
+      NotFoundError
+    )
   })
 
   it('없는 workspaceId → NotFoundError', () => {

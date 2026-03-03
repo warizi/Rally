@@ -1,1 +1,1 @@
-export { PdfViewer } from './ui/PdfViewer'
+export { PdfViewer } from '@features/pdf/view-pdf'

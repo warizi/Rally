@@ -1,6 +1,10 @@
 import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
-import { useRenameImageFile, useUpdateImageMeta, useImageFilesByWorkspace } from '@entities/image-file'
+import {
+  useRenameImageFile,
+  useUpdateImageMeta,
+  useImageFilesByWorkspace
+} from '@entities/image-file'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { ImageIcon } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
@@ -26,7 +30,11 @@ export function ImageHeader({ workspaceId, imageId, tabId }: ImageHeaderProps): 
       title={image?.title ?? ''}
       description={image?.description ?? ''}
       buttons={
-        <LinkedEntityPopoverButton entityType="image" entityId={imageId} workspaceId={workspaceId} />
+        <LinkedEntityPopoverButton
+          entityType="image"
+          entityId={imageId}
+          workspaceId={workspaceId}
+        />
       }
       onTitleChange={(title) => {
         renameImage({ workspaceId, imageId, newName: title })

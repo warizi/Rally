@@ -23,5 +23,5 @@ export const scheduleTodoRepository = {
     db.delete(scheduleTodos)
       .where(and(eq(scheduleTodos.scheduleId, scheduleId), eq(scheduleTodos.todoId, todoId)))
       .run()
-  },
+  }
 }

@@ -5,6 +5,7 @@ import { scheduleTodoRepository } from '../repositories/schedule-todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { todoRepository } from '../repositories/todo'
 import { entityLinkService } from './entity-link'
+import { canvasNodeRepository } from '../repositories/canvas-node'
 import type { Schedule } from '../repositories/schedule'
 import type { Todo } from '../repositories/todo'
 
@@ -88,7 +89,7 @@ function toScheduleItem(row: Schedule): ScheduleItem {
     color: row.color,
     priority: row.priority as ScheduleItem['priority'],
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number),
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number)
   }
 }
 
@@ -121,7 +122,7 @@ function toTodoItem(todo: Todo): TodoItem {
       ? todo.startDate instanceof Date
         ? todo.startDate
         : new Date(todo.startDate as number)
-      : null,
+      : null
   }
 }
 
@@ -178,7 +179,7 @@ export const scheduleService = {
       color: data.color ?? null,
       priority: data.priority ?? 'medium',
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     })
 
     return toScheduleItem(row)
@@ -190,9 +191,7 @@ export const scheduleService = {
 
     const startAt =
       data.startAt ??
-      (existing.startAt instanceof Date
-        ? existing.startAt
-        : new Date(existing.startAt as number))
+      (existing.startAt instanceof Date ? existing.startAt : new Date(existing.startAt as number))
     const endAt =
       data.endAt ??
       (existing.endAt instanceof Date ? existing.endAt : new Date(existing.endAt as number))
@@ -215,15 +214,7 @@ export const scheduleService = {
         0,
         0
       )
-      finalEndAt = new Date(
-        endAt.getFullYear(),
-        endAt.getMonth(),
-        endAt.getDate(),
-        23,
-        59,
-        59,
-        999
-      )
+      finalEndAt = new Date(endAt.getFullYear(), endAt.getMonth(), endAt.getDate(), 23, 59, 59, 999)
     }
 
     const row = scheduleRepository.update(scheduleId, {
@@ -235,7 +226,7 @@ export const scheduleService = {
       ...(finalEndAt && { endAt: finalEndAt }),
       ...(data.color !== undefined && { color: data.color }),
       ...(data.priority !== undefined && { priority: data.priority }),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')
@@ -246,6 +237,7 @@ export const scheduleService = {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
     entityLinkService.removeAllLinks('schedule', scheduleId)
+    canvasNodeRepository.deleteByRef('schedule', scheduleId)
     scheduleRepository.delete(scheduleId)
   },
 
@@ -260,7 +252,7 @@ export const scheduleService = {
     const row = scheduleRepository.update(scheduleId, {
       startAt,
       endAt,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')
@@ -287,5 +279,5 @@ export const scheduleService = {
 
     const todoRows = scheduleTodoRepository.findTodosByScheduleId(scheduleId)
     return todoRows.map(toTodoItem)
-  },
+  }
 }

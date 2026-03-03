@@ -62,9 +62,7 @@ export function registerImageFileHandlers(): void {
   ipcMain.handle('image:selectFile', async (): Promise<string[] | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],
-      filters: [
-        { name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'] }
-      ]
+      filters: [{ name: 'Images', extensions: ['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'] }]
     })
     return result.canceled ? null : result.filePaths
   })

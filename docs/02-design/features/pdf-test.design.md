@@ -8,10 +8,10 @@
 
 ## 1. 구현 순서
 
-| 순서 | 파일 | 설명 |
-|------|------|------|
-| 1 | `src/main/repositories/__tests__/pdf-file.test.ts` | Repository 테스트 (testDb) |
-| 2 | `src/main/services/__tests__/pdf-file.test.ts` | Service 테스트 (vi.mock) |
+| 순서 | 파일                                               | 설명                       |
+| ---- | -------------------------------------------------- | -------------------------- |
+| 1    | `src/main/repositories/__tests__/pdf-file.test.ts` | Repository 테스트 (testDb) |
+| 2    | `src/main/services/__tests__/pdf-file.test.ts`     | Service 테스트 (vi.mock)   |
 
 환경 설정 변경 없음 (`setup.ts` — cascade 삭제로 pdfFiles 자동 정리).
 
@@ -36,18 +36,30 @@ import { pdfFileRepository, type PdfFileInsert } from '../pdf-file'
 const WS_ID = 'ws-1'
 
 beforeEach(() => {
-  testDb.insert(schema.workspaces).values({
-    id: WS_ID, name: 'Test', path: '/test',
-    createdAt: new Date(), updatedAt: new Date()
-  }).run()
+  testDb
+    .insert(schema.workspaces)
+    .values({
+      id: WS_ID,
+      name: 'Test',
+      path: '/test',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+    .run()
 })
 
 function makePdf(overrides?: Partial<PdfFileInsert>): PdfFileInsert {
   return {
-    id: 'pdf-1', workspaceId: WS_ID, folderId: null,
-    relativePath: 'test.pdf', title: 'test',
-    description: '', preview: '', order: 0,
-    createdAt: new Date(), updatedAt: new Date(),
+    id: 'pdf-1',
+    workspaceId: WS_ID,
+    folderId: null,
+    relativePath: 'test.pdf',
+    title: 'test',
+    description: '',
+    preview: '',
+    order: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
     ...overrides
   }
 }
@@ -147,10 +159,14 @@ vi.mock('../../repositories/workspace', () => ({
 }))
 vi.mock('../../repositories/pdf-file', () => ({
   pdfFileRepository: {
-    findByWorkspaceId: vi.fn(), findById: vi.fn(),
-    findByRelativePath: vi.fn(), create: vi.fn(),
-    createMany: vi.fn(), update: vi.fn(),
-    deleteOrphans: vi.fn(), delete: vi.fn()
+    findByWorkspaceId: vi.fn(),
+    findById: vi.fn(),
+    findByRelativePath: vi.fn(),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    update: vi.fn(),
+    deleteOrphans: vi.fn(),
+    delete: vi.fn()
   }
 }))
 vi.mock('../../repositories/folder', () => ({
@@ -174,15 +190,26 @@ vi.mock('../../lib/leaf-reindex', () => ({
 const MOCK_WS = { id: 'ws-1', name: 'T', path: '/t', createdAt: new Date(), updatedAt: new Date() }
 
 const MOCK_PDF_ROW = {
-  id: 'pdf-1', workspaceId: 'ws-1', folderId: null,
-  relativePath: 'test.pdf', title: 'test',
-  description: '', preview: '', order: 0,
-  createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01')
+  id: 'pdf-1',
+  workspaceId: 'ws-1',
+  folderId: null,
+  relativePath: 'test.pdf',
+  title: 'test',
+  description: '',
+  preview: '',
+  order: 0,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01')
 }
 
 const MOCK_FOLDER = {
-  id: 'folder-1', workspaceId: 'ws-1', relativePath: 'docs',
-  color: null, order: 0, createdAt: new Date(), updatedAt: new Date()
+  id: 'folder-1',
+  workspaceId: 'ws-1',
+  relativePath: 'docs',
+  color: null,
+  order: 0,
+  createdAt: new Date(),
+  updatedAt: new Date()
 }
 
 beforeEach(() => {
@@ -269,15 +296,15 @@ beforeEach(() => {
 
 ## 3. CSV 대비 차이 요약
 
-| 항목 | CSV 테스트 | PDF 테스트 |
-|------|-----------|-----------|
-| Repository 케이스 | 21건 | 21건 (동일) |
-| Service 케이스 | 30건 | 26건 |
-| mock 대상 | chardet, iconv-lite, fs, nanoid | fs, nanoid만 |
-| create/import | `writeFileSync` 검증 | `copyFileSync` 검증 |
-| readContent | 인코딩/BOM 7건 | 단순 Buffer 4건 |
-| writeContent | 3건 | 없음 |
-| updateMeta | description + columnWidths 3건 | description만 2건 |
+| 항목              | CSV 테스트                      | PDF 테스트          |
+| ----------------- | ------------------------------- | ------------------- |
+| Repository 케이스 | 21건                            | 21건 (동일)         |
+| Service 케이스    | 30건                            | 26건                |
+| mock 대상         | chardet, iconv-lite, fs, nanoid | fs, nanoid만        |
+| create/import     | `writeFileSync` 검증            | `copyFileSync` 검증 |
+| readContent       | 인코딩/BOM 7건                  | 단순 Buffer 4건     |
+| writeContent      | 3건                             | 없음                |
+| updateMeta        | description + columnWidths 3건  | description만 2건   |
 
 ---
 

@@ -145,11 +145,8 @@ class WorkspaceWatcherService {
     this.debounceTimer = setTimeout(async () => {
       try {
         const eventsToProcess = this.pendingEvents.splice(0)
-        const { folderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths, orphanImagePaths } = await this.applyEvents(
-          workspaceId,
-          workspacePath,
-          eventsToProcess
-        )
+        const { folderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths, orphanImagePaths } =
+          await this.applyEvents(workspaceId, workspacePath, eventsToProcess)
         this.pushFolderChanged(workspaceId, folderPaths)
         // 변경된 .md 파일 경로 수집 + 폴더 삭제로 함께 삭제된 노트 경로 병합
         const changedRelPaths = [
@@ -612,12 +609,10 @@ class WorkspaceWatcherService {
 
     // ─── Step 12: 이미지 파일 rename/move 감지 ──────────────────────
     const imageDeletes = events.filter(
-      (e) =>
-        e.type === 'delete' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+      (e) => e.type === 'delete' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
     )
     const imageCreates = events.filter(
-      (e) =>
-        e.type === 'create' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
+      (e) => e.type === 'create' && isImageFile(e.path) && !path.basename(e.path).startsWith('.')
     )
     const pairedImageDeletePaths = new Set<string>()
     const pairedImageCreatePaths = new Set<string>()
@@ -697,7 +692,13 @@ class WorkspaceWatcherService {
       }
     }
 
-    return { folderPaths: changedFolderPaths, orphanNotePaths, orphanCsvPaths, orphanPdfPaths, orphanImagePaths }
+    return {
+      folderPaths: changedFolderPaths,
+      orphanNotePaths,
+      orphanCsvPaths,
+      orphanPdfPaths,
+      orphanImagePaths
+    }
   }
 
   private async fullReconciliation(workspaceId: string, workspacePath: string): Promise<void> {

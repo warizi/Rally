@@ -9,7 +9,11 @@ interface Props {
   compact?: boolean
 }
 
-export function LinkedTodoList({ scheduleId, workspaceId, compact = false }: Props): React.JSX.Element {
+export function LinkedTodoList({
+  scheduleId,
+  workspaceId,
+  compact = false
+}: Props): React.JSX.Element {
   const { data: linkedTodos = [] } = useLinkedTodos(scheduleId)
   const unlinkTodo = useUnlinkTodo()
 

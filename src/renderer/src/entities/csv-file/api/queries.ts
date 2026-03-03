@@ -36,11 +36,7 @@ export function useCreateCsvFile(): UseMutationResult<
       markWorkspaceOwnWrite(workspaceId)
     },
     mutationFn: async ({ workspaceId, folderId, name }) => {
-      const res: IpcResponse<CsvFileNode> = await window.api.csv.create(
-        workspaceId,
-        folderId,
-        name
-      )
+      const res: IpcResponse<CsvFileNode> = await window.api.csv.create(workspaceId, folderId, name)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -62,11 +58,7 @@ export function useRenameCsvFile(): UseMutationResult<
       markAsOwnWrite(csvId)
     },
     mutationFn: async ({ workspaceId, csvId, newName }) => {
-      const res: IpcResponse<CsvFileNode> = await window.api.csv.rename(
-        workspaceId,
-        csvId,
-        newName
-      )
+      const res: IpcResponse<CsvFileNode> = await window.api.csv.rename(workspaceId, csvId, newName)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -132,19 +124,13 @@ export function useWriteCsvContent(): UseMutationResult<
       markAsOwnWrite(csvId)
     },
     mutationFn: async ({ workspaceId, csvId, content }) => {
-      const res: IpcResponse<void> = await window.api.csv.writeContent(
-        workspaceId,
-        csvId,
-        content
-      )
+      const res: IpcResponse<void> = await window.api.csv.writeContent(workspaceId, csvId, content)
       if (!res.success) throwIpcError(res)
     },
     onSuccess: (_, { csvId, content }) => {
       queryClient.setQueryData(
         [CSV_KEY, 'content', csvId],
-        (
-          old: { content: string; encoding: string; columnWidths: string | null } | undefined
-        ) => ({
+        (old: { content: string; encoding: string; columnWidths: string | null } | undefined) => ({
           content,
           encoding: old?.encoding ?? 'UTF-8',
           columnWidths: old?.columnWidths ?? null
@@ -201,9 +187,8 @@ export function useUpdateCsvMeta(): UseMutationResult<
       if (data.columnWidths !== undefined) {
         queryClient.setQueryData(
           [CSV_KEY, 'content', csvId],
-          (
-            old: { content: string; encoding: string; columnWidths: string | null } | undefined
-          ) => (old ? { ...old, columnWidths: data.columnWidths ?? null } : old)
+          (old: { content: string; encoding: string; columnWidths: string | null } | undefined) =>
+            old ? { ...old, columnWidths: data.columnWidths ?? null } : old
         )
       }
     }

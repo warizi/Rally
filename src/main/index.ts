@@ -16,6 +16,9 @@ import { registerImageFileHandlers } from './ipc/image-file'
 import { registerAppSettingsHandlers } from './ipc/app-settings'
 import { registerScheduleHandlers } from './ipc/schedule'
 import { registerEntityLinkHandlers } from './ipc/entity-link'
+import { registerCanvasHandlers } from './ipc/canvas'
+import { registerCanvasNodeHandlers } from './ipc/canvas-node'
+import { registerCanvasEdgeHandlers } from './ipc/canvas-edge'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 
@@ -94,6 +97,9 @@ app.whenReady().then(() => {
   registerAppSettingsHandlers()
   registerScheduleHandlers()
   registerEntityLinkHandlers()
+  registerCanvasHandlers()
+  registerCanvasNodeHandlers()
+  registerCanvasEdgeHandlers()
 
   createWindow()
 

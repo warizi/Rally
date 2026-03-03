@@ -51,9 +51,7 @@ export function filterFromParams(
     startDateFrom: params[`${prefix}StartDateFrom`]
       ? new Date(params[`${prefix}StartDateFrom`])
       : null,
-    startDateTo: params[`${prefix}StartDateTo`]
-      ? new Date(params[`${prefix}StartDateTo`])
-      : null,
+    startDateTo: params[`${prefix}StartDateTo`] ? new Date(params[`${prefix}StartDateTo`]) : null,
     dueDateFrom: params[`${prefix}DueDateFrom`] ? new Date(params[`${prefix}DueDateFrom`]) : null,
     dueDateTo: params[`${prefix}DueDateTo`] ? new Date(params[`${prefix}DueDateTo`]) : null
   }

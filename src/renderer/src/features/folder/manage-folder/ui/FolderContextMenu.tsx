@@ -1,5 +1,14 @@
 import { JSX } from 'react'
-import { FileText, FolderPlus, ImageIcon, Palette, Pencil, Sheet, FileUp, Trash2 } from 'lucide-react'
+import {
+  FileText,
+  FolderPlus,
+  ImageIcon,
+  Palette,
+  Pencil,
+  Sheet,
+  FileUp,
+  Trash2
+} from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,

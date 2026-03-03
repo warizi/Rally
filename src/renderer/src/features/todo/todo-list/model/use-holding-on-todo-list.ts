@@ -37,10 +37,7 @@ export function useHoldingOnTodoList(
     return [...result].sort((a, b) => a.listOrder - b.listOrder)
   }, [topLevel, filter])
 
-  const filterActive = useMemo(
-    () => isFilterActive({ ...filter, status: 'all' }),
-    [filter]
-  )
+  const filterActive = useMemo(() => isFilterActive({ ...filter, status: 'all' }), [filter])
 
   return { filteredHoldingOn, subTodoMap, filterActive }
 }

@@ -1,4 +1,4 @@
-import { and, eq, gte, lte } from 'drizzle-orm'
+import { and, eq, gte, inArray, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { schedules } from '../db/schema'
 
@@ -58,7 +58,18 @@ export const scheduleRepository = {
     return db.update(schedules).set(data).where(eq(schedules.id, id)).returning().get()
   },
 
+  findByIds(ids: string[]): Schedule[] {
+    if (ids.length === 0) return []
+    const CHUNK = 900
+    const results: Schedule[] = []
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      results.push(...db.select().from(schedules).where(inArray(schedules.id, chunk)).all())
+    }
+    return results
+  },
+
   delete(id: string): void {
     db.delete(schedules).where(eq(schedules.id, id)).run()
-  },
+  }
 }

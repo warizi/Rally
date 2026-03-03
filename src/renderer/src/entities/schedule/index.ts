@@ -3,7 +3,7 @@ export type {
   CreateScheduleData,
   UpdateScheduleData,
   ScheduleDateRange,
-  SchedulePriority,
+  SchedulePriority
 } from './model/types'
 export {
   useAllSchedulesByWorkspace,
@@ -15,5 +15,5 @@ export {
   useRemoveSchedule,
   useMoveSchedule,
   useLinkTodo,
-  useUnlinkTodo,
+  useUnlinkTodo
 } from './model/queries'

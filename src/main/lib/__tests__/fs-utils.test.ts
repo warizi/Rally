@@ -117,7 +117,9 @@ describe('readMdFilesRecursiveAsync', () => {
   }
 
   function setReaddirAsyncReturn(entries: fs.Dirent[]): void {
-    readdirMock().mockResolvedValue(entries as unknown as Awaited<ReturnType<typeof fs.promises.readdir>>)
+    readdirMock().mockResolvedValue(
+      entries as unknown as Awaited<ReturnType<typeof fs.promises.readdir>>
+    )
   }
 
   it('빈 디렉토리면 빈 배열을 반환한다', async () => {

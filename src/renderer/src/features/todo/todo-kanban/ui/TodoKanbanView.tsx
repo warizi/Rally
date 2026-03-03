@@ -274,8 +274,9 @@ export function TodoKanbanView({
                   <button
                     key={i}
                     onClick={() => onColumnChange(i)}
-                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === activeColumn ? 'bg-foreground' : 'bg-muted-foreground/30'
-                      }`}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${
+                      i === activeColumn ? 'bg-foreground' : 'bg-muted-foreground/30'
+                    }`}
                   />
                 ))}
               </div>

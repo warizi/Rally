@@ -105,11 +105,7 @@ describe('applyDaysDelta', () => {
     const schedule = makeScheduleItem({ id: 'sched-1' })
     applyDaysDelta(schedule, 1, { onMoveSchedule, onMoveTodo })
     expect(onMoveSchedule).toHaveBeenCalledTimes(1)
-    expect(onMoveSchedule).toHaveBeenCalledWith(
-      'sched-1',
-      expect.any(Date),
-      expect.any(Date),
-    )
+    expect(onMoveSchedule).toHaveBeenCalledWith('sched-1', expect.any(Date), expect.any(Date))
     expect(onMoveTodo).not.toHaveBeenCalled()
   })
 
@@ -122,7 +118,7 @@ describe('applyDaysDelta', () => {
     expect(onMoveTodo).toHaveBeenCalledWith(
       'abc123', // slice(5)
       expect.any(Date),
-      expect.any(Date),
+      expect.any(Date)
     )
     expect(onMoveSchedule).not.toHaveBeenCalled()
   })

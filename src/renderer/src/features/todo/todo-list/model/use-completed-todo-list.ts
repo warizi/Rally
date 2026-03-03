@@ -22,10 +22,7 @@ export function useCompletedTodoList(
     })
   }, [completedTodos, filter])
 
-  const filterActive = useMemo(
-    () => isFilterActive({ ...filter, status: 'all' }),
-    [filter]
-  )
+  const filterActive = useMemo(() => isFilterActive({ ...filter, status: 'all' }), [filter])
 
   return { filteredCompleted, filterActive }
 }

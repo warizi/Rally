@@ -64,7 +64,7 @@ export function SubTodoListView({ subTodos, workspaceId, parentId }: Props): Rea
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="rounded-md border border-border overflow-hidden">
+      <div className="rounded-md border border-border overflow-hidden h-fit">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent h-8">

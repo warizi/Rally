@@ -52,4 +52,9 @@ export interface ImageTreeNode {
   order: number
 }
 
-export type WorkspaceTreeNode = FolderTreeNode | NoteTreeNode | CsvTreeNode | PdfTreeNode | ImageTreeNode
+export type WorkspaceTreeNode =
+  | FolderTreeNode
+  | NoteTreeNode
+  | CsvTreeNode
+  | PdfTreeNode
+  | ImageTreeNode

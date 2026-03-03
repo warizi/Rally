@@ -24,7 +24,7 @@ describe('isScheduleOnDate', () => {
   it('당일 내 시작/종료 → true', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     expect(isScheduleOnDate(schedule, new Date('2026-03-02'))).toBe(true)
   })
@@ -32,7 +32,7 @@ describe('isScheduleOnDate', () => {
   it('여러 날 걸쳐 당일 포함 → true', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-01T09:00:00'),
-      endAt: new Date('2026-03-05T10:00:00'),
+      endAt: new Date('2026-03-05T10:00:00')
     })
     expect(isScheduleOnDate(schedule, new Date('2026-03-03'))).toBe(true)
   })
@@ -40,7 +40,7 @@ describe('isScheduleOnDate', () => {
   it('완전히 이전 날 → false', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     expect(isScheduleOnDate(schedule, new Date('2026-03-01'))).toBe(false)
   })
@@ -48,7 +48,7 @@ describe('isScheduleOnDate', () => {
   it('완전히 이후 날 → false', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-02T09:00:00'),
-      endAt: new Date('2026-03-02T10:00:00'),
+      endAt: new Date('2026-03-02T10:00:00')
     })
     expect(isScheduleOnDate(schedule, new Date('2026-03-03'))).toBe(false)
   })
@@ -56,7 +56,7 @@ describe('isScheduleOnDate', () => {
   it('경계: startAt이 정확히 dayEnd와 같을 때 → true', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-02T23:59:59.999'),
-      endAt: new Date('2026-03-03T10:00:00'),
+      endAt: new Date('2026-03-03T10:00:00')
     })
     expect(isScheduleOnDate(schedule, new Date('2026-03-02'))).toBe(true)
   })
@@ -64,7 +64,7 @@ describe('isScheduleOnDate', () => {
   it('경계: endAt이 정확히 dayStart와 같을 때 → true', () => {
     const schedule = makeScheduleItem({
       startAt: new Date('2026-03-01T09:00:00'),
-      endAt: new Date('2026-03-02T00:00:00.000'),
+      endAt: new Date('2026-03-02T00:00:00.000')
     })
     expect(isScheduleOnDate(schedule, new Date('2026-03-02'))).toBe(true)
   })

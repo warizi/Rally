@@ -51,6 +51,7 @@ function SplitContainerRenderer({
 
   const rafRef = useRef(0)
   const nodeRef = useRef(node)
+  // eslint-disable-next-line react-hooks/refs
   nodeRef.current = node
 
   useEffect(() => {

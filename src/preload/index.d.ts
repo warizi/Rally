@@ -89,21 +89,13 @@ interface CsvAPI {
     folderId: string | null,
     name: string
   ) => Promise<IpcResponse<CsvFileNode>>
-  rename: (
-    workspaceId: string,
-    csvId: string,
-    newName: string
-  ) => Promise<IpcResponse<CsvFileNode>>
+  rename: (workspaceId: string, csvId: string, newName: string) => Promise<IpcResponse<CsvFileNode>>
   remove: (workspaceId: string, csvId: string) => Promise<IpcResponse<void>>
   readContent: (
     workspaceId: string,
     csvId: string
   ) => Promise<IpcResponse<{ content: string; encoding: string; columnWidths: string | null }>>
-  writeContent: (
-    workspaceId: string,
-    csvId: string,
-    content: string
-  ) => Promise<IpcResponse<void>>
+  writeContent: (workspaceId: string, csvId: string, content: string) => Promise<IpcResponse<void>>
   move: (
     workspaceId: string,
     csvId: string,
@@ -137,16 +129,9 @@ interface PdfAPI {
     folderId: string | null,
     sourcePath: string
   ) => Promise<IpcResponse<PdfFileNode>>
-  rename: (
-    workspaceId: string,
-    pdfId: string,
-    newName: string
-  ) => Promise<IpcResponse<PdfFileNode>>
+  rename: (workspaceId: string, pdfId: string, newName: string) => Promise<IpcResponse<PdfFileNode>>
   remove: (workspaceId: string, pdfId: string) => Promise<IpcResponse<void>>
-  readContent: (
-    workspaceId: string,
-    pdfId: string
-  ) => Promise<IpcResponse<{ data: ArrayBuffer }>>
+  readContent: (workspaceId: string, pdfId: string) => Promise<IpcResponse<{ data: ArrayBuffer }>>
   move: (
     workspaceId: string,
     pdfId: string,
@@ -187,10 +172,7 @@ interface ImageAPI {
     newName: string
   ) => Promise<IpcResponse<ImageFileNode>>
   remove: (workspaceId: string, imageId: string) => Promise<IpcResponse<void>>
-  readContent: (
-    workspaceId: string,
-    imageId: string
-  ) => Promise<IpcResponse<{ data: ArrayBuffer }>>
+  readContent: (workspaceId: string, imageId: string) => Promise<IpcResponse<{ data: ArrayBuffer }>>
   move: (
     workspaceId: string,
     imageId: string,
@@ -390,6 +372,128 @@ interface EntityLinkAPI {
   ) => Promise<IpcResponse<LinkedEntity[]>>
 }
 
+type CanvasNodeType = 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image'
+type CanvasEdgeSide = 'top' | 'right' | 'bottom' | 'left'
+type CanvasEdgeStyle = 'solid' | 'dashed' | 'dotted'
+type CanvasEdgeArrow = 'none' | 'end' | 'both'
+
+interface CanvasItem {
+  id: string
+  workspaceId: string
+  title: string
+  description: string
+  viewportX: number
+  viewportY: number
+  viewportZoom: number
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CanvasNodeItem {
+  id: string
+  canvasId: string
+  type: CanvasNodeType
+  refId: string | null
+  x: number
+  y: number
+  width: number
+  height: number
+  color: string | null
+  content: string | null
+  zIndex: number
+  createdAt: Date
+  updatedAt: Date
+  refTitle?: string
+  refPreview?: string
+  refMeta?: Record<string, unknown>
+}
+
+interface CanvasEdgeItem {
+  id: string
+  canvasId: string
+  fromNode: string
+  toNode: string
+  fromSide: CanvasEdgeSide
+  toSide: CanvasEdgeSide
+  label: string | null
+  color: string | null
+  style: CanvasEdgeStyle
+  arrow: CanvasEdgeArrow
+  createdAt: Date
+}
+
+interface CreateCanvasNodeData {
+  type: CanvasNodeType
+  refId?: string
+  x: number
+  y: number
+  width?: number
+  height?: number
+  color?: string
+  content?: string
+}
+
+interface UpdateCanvasNodeData {
+  content?: string
+  color?: string
+  width?: number
+  height?: number
+  zIndex?: number
+}
+
+interface CreateCanvasEdgeData {
+  fromNode: string
+  toNode: string
+  fromSide?: CanvasEdgeSide
+  toSide?: CanvasEdgeSide
+  label?: string
+  color?: string
+  style?: CanvasEdgeStyle
+  arrow?: CanvasEdgeArrow
+}
+
+interface UpdateCanvasEdgeData {
+  fromSide?: CanvasEdgeSide
+  toSide?: CanvasEdgeSide
+  label?: string
+  color?: string
+  style?: CanvasEdgeStyle
+  arrow?: CanvasEdgeArrow
+}
+
+interface CanvasAPI {
+  findByWorkspace: (workspaceId: string) => Promise<IpcResponse<CanvasItem[]>>
+  findById: (canvasId: string) => Promise<IpcResponse<CanvasItem>>
+  create: (
+    workspaceId: string,
+    data: { title: string; description?: string }
+  ) => Promise<IpcResponse<CanvasItem>>
+  update: (
+    canvasId: string,
+    data: { title?: string; description?: string }
+  ) => Promise<IpcResponse<CanvasItem>>
+  updateViewport: (
+    canvasId: string,
+    viewport: { x: number; y: number; zoom: number }
+  ) => Promise<IpcResponse<void>>
+  remove: (canvasId: string) => Promise<IpcResponse<void>>
+}
+
+interface CanvasNodeAPI {
+  findByCanvas: (canvasId: string) => Promise<IpcResponse<CanvasNodeItem[]>>
+  create: (canvasId: string, data: CreateCanvasNodeData) => Promise<IpcResponse<CanvasNodeItem>>
+  update: (nodeId: string, data: UpdateCanvasNodeData) => Promise<IpcResponse<CanvasNodeItem>>
+  updatePositions: (updates: { id: string; x: number; y: number }[]) => Promise<IpcResponse<void>>
+  remove: (nodeId: string) => Promise<IpcResponse<void>>
+}
+
+interface CanvasEdgeAPI {
+  findByCanvas: (canvasId: string) => Promise<IpcResponse<CanvasEdgeItem[]>>
+  create: (canvasId: string, data: CreateCanvasEdgeData) => Promise<IpcResponse<CanvasEdgeItem>>
+  update: (edgeId: string, data: UpdateCanvasEdgeData) => Promise<IpcResponse<CanvasEdgeItem>>
+  remove: (edgeId: string) => Promise<IpcResponse<void>>
+}
+
 interface ScheduleAPI {
   findAllByWorkspace: (workspaceId: string) => Promise<IpcResponse<ScheduleItem[]>>
   findByWorkspace: (
@@ -397,20 +501,10 @@ interface ScheduleAPI {
     range: ScheduleDateRange
   ) => Promise<IpcResponse<ScheduleItem[]>>
   findById: (scheduleId: string) => Promise<IpcResponse<ScheduleItem>>
-  create: (
-    workspaceId: string,
-    data: CreateScheduleData
-  ) => Promise<IpcResponse<ScheduleItem>>
-  update: (
-    scheduleId: string,
-    data: UpdateScheduleData
-  ) => Promise<IpcResponse<ScheduleItem>>
+  create: (workspaceId: string, data: CreateScheduleData) => Promise<IpcResponse<ScheduleItem>>
+  update: (scheduleId: string, data: UpdateScheduleData) => Promise<IpcResponse<ScheduleItem>>
   remove: (scheduleId: string) => Promise<IpcResponse<void>>
-  move: (
-    scheduleId: string,
-    startAt: Date,
-    endAt: Date
-  ) => Promise<IpcResponse<ScheduleItem>>
+  move: (scheduleId: string, startAt: Date, endAt: Date) => Promise<IpcResponse<ScheduleItem>>
   linkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
   unlinkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
   getLinkedTodos: (scheduleId: string) => Promise<IpcResponse<TodoItem[]>>
@@ -429,6 +523,9 @@ interface API {
   settings: SettingsAPI
   schedule: ScheduleAPI
   entityLink: EntityLinkAPI
+  canvas: CanvasAPI
+  canvasNode: CanvasNodeAPI
+  canvasEdge: CanvasEdgeAPI
 }
 
 declare global {

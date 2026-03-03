@@ -11,7 +11,9 @@ export const schedules = sqliteTable('schedules', {
   startAt: integer('start_at', { mode: 'timestamp_ms' }).notNull(),
   endAt: integer('end_at', { mode: 'timestamp_ms' }).notNull(),
   color: text('color'),
-  priority: text('priority', { enum: ['low', 'medium', 'high'] }).notNull().default('medium'),
+  priority: text('priority', { enum: ['low', 'medium', 'high'] })
+    .notNull()
+    .default('medium'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
 })

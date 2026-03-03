@@ -1,3 +1,4 @@
+export { toTabOptions } from './lib/to-tab-options'
 export { LinkedEntityList } from './ui/LinkedEntityList'
 export { LinkEntityPopover } from './ui/LinkEntityPopover'
 export { LinkedEntityPopoverButton } from './ui/LinkedEntityPopoverButton'

@@ -1,1 +1,1 @@
-export { ImageViewer } from './ui/ImageViewer'
+export { ImageViewer } from '@features/image/view-image'

@@ -44,13 +44,13 @@
 
 ### 2.2 의존성 관계
 
-| 테스트 파일 | 의존 대상 | Mock 전략 |
-|------------|----------|----------|
-| [A] repository/entity-link.test | testDb (in-memory SQLite) | 없음 (실제 DB) |
-| [B] service/entity-link.test | entityLinkRepository + 5개 entity repository | 전체 vi.mock (factory) |
-| [C] toTabOptions.test | 없음 (순수 함수) | 없음 |
-| [D] service/todo.test | todoRepository + entityLinkService | 기존 factory mock 보강 |
-| [D-2] repository/todo.test | testDb (in-memory SQLite) | 없음 (실제 DB) |
+| 테스트 파일                     | 의존 대상                                    | Mock 전략              |
+| ------------------------------- | -------------------------------------------- | ---------------------- |
+| [A] repository/entity-link.test | testDb (in-memory SQLite)                    | 없음 (실제 DB)         |
+| [B] service/entity-link.test    | entityLinkRepository + 5개 entity repository | 전체 vi.mock (factory) |
+| [C] toTabOptions.test           | 없음 (순수 함수)                             | 없음                   |
+| [D] service/todo.test           | todoRepository + entityLinkService           | 기존 factory mock 보강 |
+| [D-2] repository/todo.test      | testDb (in-memory SQLite)                    | 없음 (실제 DB)         |
 
 ---
 
@@ -74,7 +74,7 @@ vi.mock('../../repositories/todo', () => ({
     findById: vi.fn(),
     findByParentId: vi.fn(),
     findTopLevelByWorkspaceId: vi.fn(),
-    findAllDescendantIds: vi.fn(),  // ← 추가
+    findAllDescendantIds: vi.fn(), // ← 추가
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn(),
@@ -102,7 +102,7 @@ import { entityLinkService } from '../entity-link'
 beforeEach(() => {
   vi.clearAllMocks()
   // ... 기존 mock 설정 ...
-  vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue([])  // ← 추가
+  vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue([]) // ← 추가
 })
 ```
 
@@ -184,13 +184,16 @@ function makeTodo(id: string, parentId: string | null = null) {
 }
 
 beforeEach(() => {
-  testDb.insert(schema.workspaces).values({
-    id: WS_ID,
-    name: 'Test',
-    path: '/test',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }).run()
+  testDb
+    .insert(schema.workspaces)
+    .values({
+      id: WS_ID,
+      name: 'Test',
+      path: '/test',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+    .run()
 })
 
 describe('findAllDescendantIds', () => {
@@ -242,13 +245,16 @@ import { entityLinkRepository, type EntityLinkInsert } from '../entity-link'
 const WS_ID = 'ws-1'
 
 beforeEach(() => {
-  testDb.insert(schema.workspaces).values({
-    id: WS_ID,
-    name: 'Test',
-    path: '/test',
-    createdAt: new Date(),
-    updatedAt: new Date()
-  }).run()
+  testDb
+    .insert(schema.workspaces)
+    .values({
+      id: WS_ID,
+      name: 'Test',
+      path: '/test',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+    .run()
 })
 
 function makeLink(overrides?: Partial<EntityLinkInsert>): EntityLinkInsert {
@@ -302,9 +308,7 @@ describe('unlink', () => {
   })
 
   it('존재하지 않는 링크 삭제 → 에러 없음', () => {
-    expect(() =>
-      entityLinkRepository.unlink('note', 'x', 'todo', 'y')
-    ).not.toThrow()
+    expect(() => entityLinkRepository.unlink('note', 'x', 'todo', 'y')).not.toThrow()
   })
 })
 ```
@@ -367,10 +371,14 @@ describe('removeAllByEntity', () => {
 
   it('무관한 링크는 유지', () => {
     entityLinkRepository.link(makeLink())
-    entityLinkRepository.link(makeLink({
-      sourceType: 'csv', sourceId: 'csv-1',
-      targetType: 'pdf', targetId: 'pdf-1'
-    }))
+    entityLinkRepository.link(
+      makeLink({
+        sourceType: 'csv',
+        sourceId: 'csv-1',
+        targetType: 'pdf',
+        targetId: 'pdf-1'
+      })
+    )
     entityLinkRepository.removeAllByEntity('note', 'note-1')
     expect(entityLinkRepository.findByEntity('csv', 'csv-1')).toHaveLength(1)
   })
@@ -382,9 +390,15 @@ describe('removeAllByEntity', () => {
 ```typescript
 describe('removeAllByEntities', () => {
   it('여러 ID의 링크 일괄 삭제', () => {
-    entityLinkRepository.link(makeLink({ sourceType: 'todo', sourceId: 'todo-a', targetType: 'note', targetId: 'n1' }))
-    entityLinkRepository.link(makeLink({ sourceType: 'todo', sourceId: 'todo-b', targetType: 'note', targetId: 'n2' }))
-    entityLinkRepository.link(makeLink({ sourceType: 'todo', sourceId: 'todo-c', targetType: 'note', targetId: 'n3' }))
+    entityLinkRepository.link(
+      makeLink({ sourceType: 'todo', sourceId: 'todo-a', targetType: 'note', targetId: 'n1' })
+    )
+    entityLinkRepository.link(
+      makeLink({ sourceType: 'todo', sourceId: 'todo-b', targetType: 'note', targetId: 'n2' })
+    )
+    entityLinkRepository.link(
+      makeLink({ sourceType: 'todo', sourceId: 'todo-c', targetType: 'note', targetId: 'n3' })
+    )
     entityLinkRepository.removeAllByEntities('todo', ['todo-a', 'todo-b', 'todo-c'])
     expect(entityLinkRepository.findByEntity('todo', 'todo-a')).toHaveLength(0)
     expect(entityLinkRepository.findByEntity('todo', 'todo-b')).toHaveLength(0)
@@ -439,11 +453,21 @@ const MOCK_ENTITY = { workspaceId: 'ws-1', title: 'Test Entity' }
 
 function mockFindById(type: LinkableEntityType, returnValue: unknown = MOCK_ENTITY) {
   switch (type) {
-    case 'todo': vi.mocked(todoRepository.findById).mockReturnValue(returnValue as any); break
-    case 'schedule': vi.mocked(scheduleRepository.findById).mockReturnValue(returnValue as any); break
-    case 'note': vi.mocked(noteRepository.findById).mockReturnValue(returnValue as any); break
-    case 'pdf': vi.mocked(pdfFileRepository.findById).mockReturnValue(returnValue as any); break
-    case 'csv': vi.mocked(csvFileRepository.findById).mockReturnValue(returnValue as any); break
+    case 'todo':
+      vi.mocked(todoRepository.findById).mockReturnValue(returnValue as any)
+      break
+    case 'schedule':
+      vi.mocked(scheduleRepository.findById).mockReturnValue(returnValue as any)
+      break
+    case 'note':
+      vi.mocked(noteRepository.findById).mockReturnValue(returnValue as any)
+      break
+    case 'pdf':
+      vi.mocked(pdfFileRepository.findById).mockReturnValue(returnValue as any)
+      break
+    case 'csv':
+      vi.mocked(csvFileRepository.findById).mockReturnValue(returnValue as any)
+      break
   }
 }
 
@@ -494,35 +518,36 @@ describe('link', () => {
   })
 
   it('EC-01: 자기 자신 링크 → ValidationError (findById 호출 안 됨)', () => {
-    expect(() => entityLinkService.link('todo', 'id-1', 'todo', 'id-1', 'ws-1'))
-      .toThrow(ValidationError)
+    expect(() => entityLinkService.link('todo', 'id-1', 'todo', 'id-1', 'ws-1')).toThrow(
+      ValidationError
+    )
     expect(todoRepository.findById).not.toHaveBeenCalled()
   })
 
   it('EC-02: typeA 엔티티 미존재 → NotFoundError', () => {
     mockFindById('todo', undefined)
-    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1'))
-      .toThrow(NotFoundError)
+    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(NotFoundError)
   })
 
   it('EC-02: typeB 엔티티 미존재 → NotFoundError', () => {
     mockFindById('todo')
     mockFindById('note', undefined)
-    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1'))
-      .toThrow(NotFoundError)
+    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(NotFoundError)
   })
 
   it('EC-03: 다른 워크스페이스 → ValidationError', () => {
     mockFindById('todo')
     mockFindById('note', { workspaceId: 'ws-2', title: 'Other' })
-    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1'))
-      .toThrow(ValidationError)
+    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(
+      ValidationError
+    )
   })
 
   it('EC-03: 전달된 workspaceId 불일치 → ValidationError', () => {
     mockBothEntities('todo', 'note')
-    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-other'))
-      .toThrow(ValidationError)
+    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-other')).toThrow(
+      ValidationError
+    )
   })
 
   it('createdAt 필드 포함 (Date 인스턴스)', () => {
@@ -536,15 +561,17 @@ describe('link', () => {
   it('entityA의 workspaceId가 null → ValidationError (L81)', () => {
     mockFindById('schedule', { workspaceId: null, title: 'T' })
     mockFindById('note')
-    expect(() => entityLinkService.link('schedule', 's1', 'note', 'n1', 'ws-1'))
-      .toThrow(ValidationError)
+    expect(() => entityLinkService.link('schedule', 's1', 'note', 'n1', 'ws-1')).toThrow(
+      ValidationError
+    )
   })
 
   it('entityB만 workspaceId null → ValidationError (L82)', () => {
     mockFindById('todo')
     mockFindById('schedule', { workspaceId: null, title: 'T' })
-    expect(() => entityLinkService.link('todo', 't1', 'schedule', 's1', 'ws-1'))
-      .toThrow(ValidationError)
+    expect(() => entityLinkService.link('todo', 't1', 'schedule', 's1', 'ws-1')).toThrow(
+      ValidationError
+    )
   })
 })
 ```
@@ -619,9 +646,9 @@ describe('getLinked', () => {
       makeRow({ targetId: 't-orphan' })
     ] as any)
     vi.mocked(todoRepository.findById)
-      .mockReturnValueOnce(MOCK_ENTITY as any)  // t1 존재
-      .mockReturnValueOnce(MOCK_ENTITY as any)  // t2 존재
-      .mockReturnValueOnce(undefined)            // t-orphan 미존재
+      .mockReturnValueOnce(MOCK_ENTITY as any) // t1 존재
+      .mockReturnValueOnce(MOCK_ENTITY as any) // t2 존재
+      .mockReturnValueOnce(undefined) // t-orphan 미존재
     const result = entityLinkService.getLinked('note', 'n1')
     expect(result).toHaveLength(2)
     expect(entityLinkRepository.unlink).toHaveBeenCalledTimes(1)
@@ -635,9 +662,7 @@ describe('getLinked', () => {
 
   it('linkedAt 필드 포함', () => {
     const createdAt = new Date('2026-01-15')
-    vi.mocked(entityLinkRepository.findByEntity).mockReturnValue([
-      makeRow({ createdAt })
-    ] as any)
+    vi.mocked(entityLinkRepository.findByEntity).mockReturnValue([makeRow({ createdAt })] as any)
     mockFindById('todo')
     const result = entityLinkService.getLinked('note', 'n1')
     expect(result[0].linkedAt).toBe(createdAt)
@@ -754,14 +779,14 @@ describe('toTabOptions', () => {
 
 ## 4. 구현 순서
 
-| 순서 | 파일 | 작업 | 의존 |
-|------|------|------|------|
-| 1 | `src/main/services/__tests__/todo.test.ts` | mock 보강 + remove 테스트 추가 | — |
-| 2 | `src/main/repositories/__tests__/todo.test.ts` | findAllDescendantIds BFS 통합 테스트 | — |
-| 3 | `src/main/repositories/__tests__/entity-link.test.ts` | Repository 통합 테스트 | — |
-| 4 | `src/main/services/__tests__/entity-link.test.ts` | Service 단위 테스트 | — |
-| 5 | `src/renderer/src/features/entity-link/manage-link/lib/__tests__/to-tab-options.test.ts` | Renderer 순수 함수 테스트 | — |
-| 6 | `npm run test && npm run test:web` | 전체 통과 확인 | 1-5 |
+| 순서 | 파일                                                                                     | 작업                                 | 의존 |
+| ---- | ---------------------------------------------------------------------------------------- | ------------------------------------ | ---- |
+| 1    | `src/main/services/__tests__/todo.test.ts`                                               | mock 보강 + remove 테스트 추가       | —    |
+| 2    | `src/main/repositories/__tests__/todo.test.ts`                                           | findAllDescendantIds BFS 통합 테스트 | —    |
+| 3    | `src/main/repositories/__tests__/entity-link.test.ts`                                    | Repository 통합 테스트               | —    |
+| 4    | `src/main/services/__tests__/entity-link.test.ts`                                        | Service 단위 테스트                  | —    |
+| 5    | `src/renderer/src/features/entity-link/manage-link/lib/__tests__/to-tab-options.test.ts` | Renderer 순수 함수 테스트            | —    |
+| 6    | `npm run test && npm run test:web`                                                       | 전체 통과 확인                       | 1-5  |
 
 ---
 
@@ -769,37 +794,37 @@ describe('toTabOptions', () => {
 
 ### 5.1 normalize() — 4 branches
 
-| Branch | 조건 | 테스트 |
-|--------|------|--------|
-| 1 | typeA < typeB | B-1-2 (note < todo) |
-| 2 | typeA > typeB | B-2-1 (todo > note → 정규화) |
-| 3 | typeA === typeB, idA < idB | B-1-3 |
-| 4 | typeA === typeB, idA >= idB | B-1-3-R |
+| Branch | 조건                        | 테스트                       |
+| ------ | --------------------------- | ---------------------------- |
+| 1      | typeA < typeB               | B-1-2 (note < todo)          |
+| 2      | typeA > typeB               | B-2-1 (todo > note → 정규화) |
+| 3      | typeA === typeB, idA < idB  | B-1-3                        |
+| 4      | typeA === typeB, idA >= idB | B-1-3-R                      |
 
 ### 5.2 link() — 실행 경로
 
-| Line | 분기 | 테스트 |
-|------|------|--------|
+| Line   | 분기                                   | 테스트        |
+| ------ | -------------------------------------- | ------------- |
 | L72-74 | self-link (typeA===typeB && idA===idB) | B-1-4 (EC-01) |
-| L76-77 | entityA not found | B-1-5 (EC-02) |
-| L78-79 | entityB not found | B-1-6 (EC-02) |
-| L81 | getWorkspaceId(typeA) null | B-1-10 |
-| L82 | getWorkspaceId(typeB) null | B-1-11 |
-| L83-85 | wsA !== wsB | B-1-7 (EC-03) |
-| L86-88 | wsA !== workspaceId | B-1-8 (EC-03) |
-| L90-95 | happy path | B-1-1, B-1-9 |
+| L76-77 | entityA not found                      | B-1-5 (EC-02) |
+| L78-79 | entityB not found                      | B-1-6 (EC-02) |
+| L81    | getWorkspaceId(typeA) null             | B-1-10        |
+| L82    | getWorkspaceId(typeB) null             | B-1-11        |
+| L83-85 | wsA !== wsB                            | B-1-7 (EC-03) |
+| L86-88 | wsA !== workspaceId                    | B-1-8 (EC-03) |
+| L90-95 | happy path                             | B-1-1, B-1-9  |
 
 ### 5.3 getLinked() — isSource 분기
 
-| 조건 | 테스트 |
-|------|--------|
-| 다른 타입, isSource=true | B-3-1 |
-| 다른 타입, isSource=false | B-3-2 |
-| 같은 타입 (todo↔todo), isSource=true | B-3-8 |
-| 같은 타입 (todo↔todo), isSource=false | B-3-9 |
-| orphan (entity not found) | B-3-4 |
-| mixed (valid + orphan) | B-3-5 |
-| all orphans | B-3-10 |
+| 조건                                  | 테스트 |
+| ------------------------------------- | ------ |
+| 다른 타입, isSource=true              | B-3-1  |
+| 다른 타입, isSource=false             | B-3-2  |
+| 같은 타입 (todo↔todo), isSource=true  | B-3-8  |
+| 같은 타입 (todo↔todo), isSource=false | B-3-9  |
+| orphan (entity not found)             | B-3-4  |
+| mixed (valid + orphan)                | B-3-5  |
+| all orphans                           | B-3-10 |
 
 ---
 
@@ -815,7 +840,7 @@ describe('toTabOptions', () => {
 
 ## Version History
 
-| Version | Date | Changes |
-|---------|------|---------|
-| 0.1 | 2026-03-02 | Initial draft |
-| 0.2 | 2026-03-02 | 점검 반영: import 명시, globals:true 적용, mock 순서 주석 보강 |
+| Version | Date       | Changes                                                        |
+| ------- | ---------- | -------------------------------------------------------------- |
+| 0.1     | 2026-03-02 | Initial draft                                                  |
+| 0.2     | 2026-03-02 | 점검 반영: import 명시, globals:true 적용, mock 순서 주석 보강 |

@@ -41,6 +41,7 @@ afterEach(() => {
   delete (window as unknown as Record<string, unknown>).api
 })
 
+// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
@@ -123,7 +124,10 @@ describe('useCompletedTodosByWorkspace', () => {
     const { queryClient, wrapper } = createWrapper()
     renderHook(() => useCompletedTodosByWorkspace('ws-1'), { wrapper })
     await waitFor(() => expect(mockFindByWorkspace).toHaveBeenCalled())
-    const keys = queryClient.getQueryCache().getAll().map((q) => q.queryKey)
+    const keys = queryClient
+      .getQueryCache()
+      .getAll()
+      .map((q) => q.queryKey)
     expect(keys).toContainEqual(['todo', 'workspace', 'ws-1', 'completed'])
   })
 })

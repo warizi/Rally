@@ -14,22 +14,24 @@
 
 ### 1.1 Feature Overview
 
-| Item | Content |
-|------|---------|
-| Feature | large-workspace-freeze-v2 |
-| Problem | 5-second UI freezes when entering workspaces with thousands of files or modifying note files |
-| Root Causes | Synchronous `fs.readdirSync` blocking the event loop in two places: (1) workspace entry reconciliation, (2) note change handling |
-| Solution | 7 targeted fixes applying async I/O, DB-only IPC pattern, chunked batch operations, and event accumulation pattern |
-| Design Match Rate | 100% (120/120 items) |
-| Completion Status | All 7 fixes implemented and verified |
+| Item              | Content                                                                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| Feature           | large-workspace-freeze-v2                                                                                                        |
+| Problem           | 5-second UI freezes when entering workspaces with thousands of files or modifying note files                                     |
+| Root Causes       | Synchronous `fs.readdirSync` blocking the event loop in two places: (1) workspace entry reconciliation, (2) note change handling |
+| Solution          | 7 targeted fixes applying async I/O, DB-only IPC pattern, chunked batch operations, and event accumulation pattern               |
+| Design Match Rate | 100% (120/120 items)                                                                                                             |
+| Completion Status | All 7 fixes implemented and verified                                                                                             |
 
 ### 1.2 Business Impact
 
 **Before**:
+
 - Workspace with 1496 files: ~5000ms freeze on entry
 - Modifying a single MD file: ~5000ms freeze
 
 **After**:
+
 - Workspace entry: 118ms (42x faster)
 - MD file modification: 0-2ms (2500x faster)
 - Background reconciliation completes in <2 seconds after initial display
@@ -51,12 +53,12 @@
 
 ## 2. Related Documents
 
-| Phase | Document | Status |
-|-------|----------|--------|
-| Plan | [large-workspace-freeze-v2.plan.md](../01-plan/features/large-workspace-freeze-v2.plan.md) | ✅ Complete |
-| Design | [large-workspace-freeze-v2.design.md](../02-design/features/large-workspace-freeze-v2.design.md) | ✅ Complete |
-| Check | [large-workspace-freeze-v2.analysis.md](../03-analysis/large-workspace-freeze-v2.analysis.md) | ✅ Complete (100% match) |
-| Act | Current document | ✅ Complete |
+| Phase  | Document                                                                                         | Status                   |
+| ------ | ------------------------------------------------------------------------------------------------ | ------------------------ |
+| Plan   | [large-workspace-freeze-v2.plan.md](../01-plan/features/large-workspace-freeze-v2.plan.md)       | ✅ Complete              |
+| Design | [large-workspace-freeze-v2.design.md](../02-design/features/large-workspace-freeze-v2.design.md) | ✅ Complete              |
+| Check  | [large-workspace-freeze-v2.analysis.md](../03-analysis/large-workspace-freeze-v2.analysis.md)    | ✅ Complete (100% match) |
+| Act    | Current document                                                                                 | ✅ Complete              |
 
 ---
 
@@ -103,7 +105,7 @@ folder:readTree IPC
 ```javascript
 // This STILL blocks the event loop for seconds:
 async function readRecursive() {
-  const files = fs.readdirSync(dir)  // ← Blocks entire event loop
+  const files = fs.readdirSync(dir) // ← Blocks entire event loop
   // IPC queue frozen while this runs
 }
 ```
@@ -117,29 +119,30 @@ The IPC queue backs up while the main process blocks on file I/O, causing the re
 ### 4.1 Core Strategy
 
 Apply the proven **folder pattern** to note handling:
+
 1. IPC handlers return DB state immediately (non-blocking)
 2. Background reconciliation updates DB asynchronously
 3. Push events notify renderer to re-fetch
 4. Watcher processes real-time events and keeps DB in sync
 
-| Role | Folder (Pre-existing) | Note (This Fix) |
-|------|----------------------|-----------------|
-| IPC Response | `readTreeFromDb()` — DB only | `readByWorkspaceFromDb()` — DB only |
-| Background Init | `fullReconciliation()` — async | `noteReconciliation()` — async |
-| Real-time Sync | `applyEvents()` (folder events) | `applyEvents()` (folder + note events) |
-| Notification | `pushFolderChanged()` | `pushNoteChanged()` |
+| Role            | Folder (Pre-existing)           | Note (This Fix)                        |
+| --------------- | ------------------------------- | -------------------------------------- |
+| IPC Response    | `readTreeFromDb()` — DB only    | `readByWorkspaceFromDb()` — DB only    |
+| Background Init | `fullReconciliation()` — async  | `noteReconciliation()` — async         |
+| Real-time Sync  | `applyEvents()` (folder events) | `applyEvents()` (folder + note events) |
+| Notification    | `pushFolderChanged()`           | `pushNoteChanged()`                    |
 
 ### 4.2 Seven Fixes (Implementation Strategy)
 
-| Fix | Problem | Solution | File(s) | Impact |
-|-----|---------|----------|---------|--------|
-| Fix 1 | P0-2: note IPC fs scan | Add `readByWorkspaceFromDb()` (DB only) | `services/note.ts` | Eliminates 5s freeze on note query |
-| Fix 2 | P0-2: note IPC handler | Replace `readByWorkspace` with `readByWorkspaceFromDb` | `ipc/note.ts` | Wires up DB-only pattern |
-| Fix 3 | P2: standalone MD create/delete | Add Step 4/5 to `applyEvents` | `services/workspace-watcher.ts` | Prevents regression when files created/deleted externally |
-| Fix 4 | P0-1: note initial sync | Add `noteReconciliation()` background method | `services/workspace-watcher.ts` | Ensures DB has all notes after workspace entry |
-| Fix 5 | P1: SQLite 999-var crash | Chunk `createMany` (99 rows), JS-side `deleteOrphans` diff | `repositories/note.ts` | Prevents crash when reconciling >100 notes |
-| Fix 6 | P0-1: event loop block | Async `readDirRecursiveAsync`, `readMdFilesRecursiveAsync` | `lib/fs-utils.ts`, `services/folder.ts` | Eliminates synchronous I/O; allows event loop to process IPC |
-| Fix 7 | P3: event loss bug | `pendingEvents[]` class member + `splice(0)` pattern | `services/workspace-watcher.ts` | Fixes batched events being lost within 50ms debounce window |
+| Fix   | Problem                         | Solution                                                   | File(s)                                 | Impact                                                       |
+| ----- | ------------------------------- | ---------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------ |
+| Fix 1 | P0-2: note IPC fs scan          | Add `readByWorkspaceFromDb()` (DB only)                    | `services/note.ts`                      | Eliminates 5s freeze on note query                           |
+| Fix 2 | P0-2: note IPC handler          | Replace `readByWorkspace` with `readByWorkspaceFromDb`     | `ipc/note.ts`                           | Wires up DB-only pattern                                     |
+| Fix 3 | P2: standalone MD create/delete | Add Step 4/5 to `applyEvents`                              | `services/workspace-watcher.ts`         | Prevents regression when files created/deleted externally    |
+| Fix 4 | P0-1: note initial sync         | Add `noteReconciliation()` background method               | `services/workspace-watcher.ts`         | Ensures DB has all notes after workspace entry               |
+| Fix 5 | P1: SQLite 999-var crash        | Chunk `createMany` (99 rows), JS-side `deleteOrphans` diff | `repositories/note.ts`                  | Prevents crash when reconciling >100 notes                   |
+| Fix 6 | P0-1: event loop block          | Async `readDirRecursiveAsync`, `readMdFilesRecursiveAsync` | `lib/fs-utils.ts`, `services/folder.ts` | Eliminates synchronous I/O; allows event loop to process IPC |
+| Fix 7 | P3: event loss bug              | `pendingEvents[]` class member + `splice(0)` pattern       | `services/workspace-watcher.ts`         | Fixes batched events being lost within 50ms debounce window  |
 
 ---
 
@@ -147,14 +150,14 @@ Apply the proven **folder pattern** to note handling:
 
 ### 5.1 Files Changed
 
-| File | Changes | LOC +/- | Type |
-|------|---------|--------|------|
-| `src/main/services/note.ts` | Added `readByWorkspaceFromDb()` | +10 | New method |
-| `src/main/ipc/note.ts` | Changed handler to use `readByWorkspaceFromDb` | 1 | 1-line swap |
-| `src/main/services/workspace-watcher.ts` | Added `noteReconciliation()`, Step 4/5 in `applyEvents`, `pendingEvents` pattern, `start()` updates, import changes | +150 | 5 related changes |
-| `src/main/repositories/note.ts` | Chunked `createMany` (CHUNK=99), JS-side `deleteOrphans` with chunked delete (CHUNK=900), removed `not` import | +40 | 2 method rewrites |
-| `src/main/lib/fs-utils.ts` | Added `readMdFilesRecursiveAsync()` | +35 | New async function |
-| `src/main/services/folder.ts` | Added `readDirRecursiveAsync()`, updated `fullReconciliation` to use async version | +35 | New async function |
+| File                                     | Changes                                                                                                             | LOC +/- | Type               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------- | ------------------ |
+| `src/main/services/note.ts`              | Added `readByWorkspaceFromDb()`                                                                                     | +10     | New method         |
+| `src/main/ipc/note.ts`                   | Changed handler to use `readByWorkspaceFromDb`                                                                      | 1       | 1-line swap        |
+| `src/main/services/workspace-watcher.ts` | Added `noteReconciliation()`, Step 4/5 in `applyEvents`, `pendingEvents` pattern, `start()` updates, import changes | +150    | 5 related changes  |
+| `src/main/repositories/note.ts`          | Chunked `createMany` (CHUNK=99), JS-side `deleteOrphans` with chunked delete (CHUNK=900), removed `not` import      | +40     | 2 method rewrites  |
+| `src/main/lib/fs-utils.ts`               | Added `readMdFilesRecursiveAsync()`                                                                                 | +35     | New async function |
+| `src/main/services/folder.ts`            | Added `readDirRecursiveAsync()`, updated `fullReconciliation` to use async version                                  | +35     | New async function |
 
 **Total**: 6 files, ~270 LOC added, 0 schema/migration/preload/renderer changes
 
@@ -163,6 +166,7 @@ Apply the proven **folder pattern** to note handling:
 **Analysis Result: 100% (120/120 items)**
 
 Breakdown by fix:
+
 - Fix 1: 7/7 items (100%)
 - Fix 2: 3/3 items (100%)
 - Fix 3: 23/23 items (100%)
@@ -182,12 +186,12 @@ After the initial report was generated, two follow-up activities were completed:
 
 A project-wide code style review of all freeze-fix files identified and fixed 4 issues:
 
-| Issue | File | Fix |
-|-------|------|-----|
-| Debug artifact: `<div className="h-full bg-red-500" />` | `NoteEditor.tsx:66` | Removed |
-| Unhandled async rejection in `setTimeout` callback | `workspace-watcher.ts:handleEvents` | Added `try/catch` |
-| O(n²) orphan detection: `fsPaths.includes()` | `services/note.ts:83` | Replaced with `fsPathSet.has()` (Set) |
-| Stray import at mid-file position | `services/folder.ts:42` | Moved to top of import block |
+| Issue                                                   | File                                | Fix                                   |
+| ------------------------------------------------------- | ----------------------------------- | ------------------------------------- |
+| Debug artifact: `<div className="h-full bg-red-500" />` | `NoteEditor.tsx:66`                 | Removed                               |
+| Unhandled async rejection in `setTimeout` callback      | `workspace-watcher.ts:handleEvents` | Added `try/catch`                     |
+| O(n²) orphan detection: `fsPaths.includes()`            | `services/note.ts:83`               | Replaced with `fsPathSet.has()` (Set) |
+| Stray import at mid-file position                       | `services/folder.ts:42`             | Moved to top of import block          |
 
 All fixes confirmed passing ESLint, TypeScript strict mode, and project Prettier rules.
 
@@ -195,11 +199,11 @@ All fixes confirmed passing ESLint, TypeScript strict mode, and project Prettier
 
 Gap analysis between design-specified tests and actual test implementations found missing coverage. New tests added:
 
-| Test File | Tests Added | Coverage Added |
-|-----------|-------------|----------------|
-| `repositories/__tests__/note.test.ts` | `createMany` 150-item (SQLite chunk), `deleteOrphans` 1100-item (JS-diff chunk) | SQLite 999-variable limit safety |
-| `services/__tests__/note.test.ts` | `readByWorkspaceFromDb` — normal + workspace-missing `NotFoundError` | DB-only IPC pattern |
-| `lib/__tests__/fs-utils.test.ts` | `readMdFilesRecursiveAsync` — 8 cases (filter, recurse, hidden, symlink, graceful, sync equivalence) | Async fs traversal |
+| Test File                                      | Tests Added                                                                                                   | Coverage Added                                  |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| `repositories/__tests__/note.test.ts`          | `createMany` 150-item (SQLite chunk), `deleteOrphans` 1100-item (JS-diff chunk)                               | SQLite 999-variable limit safety                |
+| `services/__tests__/note.test.ts`              | `readByWorkspaceFromDb` — normal + workspace-missing `NotFoundError`                                          | DB-only IPC pattern                             |
+| `lib/__tests__/fs-utils.test.ts`               | `readMdFilesRecursiveAsync` — 8 cases (filter, recurse, hidden, symlink, graceful, sync equivalence)          | Async fs traversal                              |
 | `services/__tests__/workspace-watcher.test.ts` | **New file** — 10 cases: `applyEvents` (create/delete/rename), `handleEvents` debounce accumulation, `stop()` | `applyEvents` Step 4/5, `pendingEvents` pattern |
 
 #### Test Infrastructure Fix
@@ -212,11 +216,11 @@ Root cause identified: `vi.mock('fs')` auto-mock in vitest does **not** mock `fs
 // fs-utils.test.ts and workspace-watcher.test.ts
 vi.mock('fs', () => {
   const mod = {
-    readdirSync: vi.fn(),   // or existsSync, mkdirSync
+    readdirSync: vi.fn(), // or existsSync, mkdirSync
     accessSync: vi.fn(),
-    promises: { readdir: vi.fn() }  // or { stat: vi.fn() }
+    promises: { readdir: vi.fn() } // or { stat: vi.fn() }
   }
-  return { ...mod, default: mod }  // shared reference: ns.promises === ns.default.promises
+  return { ...mod, default: mod } // shared reference: ns.promises === ns.default.promises
 })
 ```
 
@@ -230,21 +234,23 @@ vi.mock('fs', () => {
 
 #### Test Scenario: Workspace with 1496 files
 
-| Scenario | Before | After | Improvement |
-|----------|--------|-------|-------------|
-| **Workspace Entry** | ~5000ms freeze | 118ms DB query | **42x faster** |
-| **MD File Modification** | ~5000ms freeze | 0-2ms (DB only) | **2500x faster** |
-| **Background Reconciliation** | N/A | <2 seconds | Non-blocking |
-| **IPC Response Time** | Blocking | <50ms | Unblocked |
+| Scenario                      | Before         | After           | Improvement      |
+| ----------------------------- | -------------- | --------------- | ---------------- |
+| **Workspace Entry**           | ~5000ms freeze | 118ms DB query  | **42x faster**   |
+| **MD File Modification**      | ~5000ms freeze | 0-2ms (DB only) | **2500x faster** |
+| **Background Reconciliation** | N/A            | <2 seconds      | Non-blocking     |
+| **IPC Response Time**         | Blocking       | <50ms           | Unblocked        |
 
 #### Detailed Breakdown
 
 **Workspace Entry (Before)**:
+
 1. `folder:readTree` IPC → `readDirRecursive()` → 5000ms (blocked)
 2. `note:readByWorkspace` IPC → `readMdFilesRecursive()` → 5000ms (blocked)
 3. Renderer frozen for entire duration
 
 **Workspace Entry (After)**:
+
 1. `folder:readTree` IPC → `readTreeFromDb()` → 20ms (instant DB query)
 2. `note:readByWorkspace` IPC → `readByWorkspaceFromDb()` → 15ms (instant DB query)
 3. `[background]` `syncOfflineChanges()` + `fullReconciliation()` → 1200ms (async, non-blocking)
@@ -253,38 +259,40 @@ vi.mock('fs', () => {
 6. **Total time to interactive: 20ms** (vs 5000ms before)
 
 **MD File Modification (Before)**:
+
 1. Change event → `applyEvents()` (fast)
 2. `pushNoteChanged()` → renderer re-fetches
 3. `note:readByWorkspace` IPC → scan all 1496 files → 5000ms
 
 **MD File Modification (After)**:
+
 1. Change event → `applyEvents()` (fast, skip step)
 2. `pushNoteChanged()` → renderer re-fetches
 3. `note:readByWorkspace` IPC → `readByWorkspaceFromDb()` → 1ms
 
 ### 6.2 Test Coverage & Quality
 
-| Metric | Status | Notes |
-|--------|--------|-------|
-| Unit tests (note repository) | ✅ Pass | `createMany` chunking (150-item), `deleteOrphans` JS-diff (1100-item), `bulkUpdatePathPrefix`, `reindexSiblings` all tested |
-| Unit tests (note service) | ✅ Pass | `readByWorkspaceFromDb` — DB-only, no fs calls; workspace-not-found `NotFoundError` |
-| Unit tests (workspace-watcher) | ✅ Pass | `applyEvents` Step 4/5 (standalone create/delete/rename), `pendingEvents` debounce accumulation (6 cases) |
-| Integration tests (fs-utils async) | ✅ Pass | `readMdFilesRecursiveAsync` 8 cases — matches sync output, hidden/symlink filters, graceful error |
-| Async/await patterns | ✅ Pass | No deadlocks, all promises properly awaited |
-| Error handling | ✅ Pass | `noteReconciliation` try/catch prevents crash on fs errors |
-| Code style compliance | ✅ Pass | ESLint, Prettier, naming conventions; debug artifacts and stray imports cleaned |
-| Type safety | ✅ Pass | No `any` types introduced, all TypeScript strict mode |
+| Metric                             | Status  | Notes                                                                                                                       |
+| ---------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------- |
+| Unit tests (note repository)       | ✅ Pass | `createMany` chunking (150-item), `deleteOrphans` JS-diff (1100-item), `bulkUpdatePathPrefix`, `reindexSiblings` all tested |
+| Unit tests (note service)          | ✅ Pass | `readByWorkspaceFromDb` — DB-only, no fs calls; workspace-not-found `NotFoundError`                                         |
+| Unit tests (workspace-watcher)     | ✅ Pass | `applyEvents` Step 4/5 (standalone create/delete/rename), `pendingEvents` debounce accumulation (6 cases)                   |
+| Integration tests (fs-utils async) | ✅ Pass | `readMdFilesRecursiveAsync` 8 cases — matches sync output, hidden/symlink filters, graceful error                           |
+| Async/await patterns               | ✅ Pass | No deadlocks, all promises properly awaited                                                                                 |
+| Error handling                     | ✅ Pass | `noteReconciliation` try/catch prevents crash on fs errors                                                                  |
+| Code style compliance              | ✅ Pass | ESLint, Prettier, naming conventions; debug artifacts and stray imports cleaned                                             |
+| Type safety                        | ✅ Pass | No `any` types introduced, all TypeScript strict mode                                                                       |
 
 ### 6.3 Regression Prevention
 
-| Check | Result | Evidence |
-|-------|--------|----------|
-| No synchronous I/O in IPC handlers | ✅ Pass | `readByWorkspaceFromDb()` contains only `db.select()` calls |
-| Event loss prevention | ✅ Pass | `pendingEvents.splice(0)` accumulates 50ms batches |
-| DB constraint violations | ✅ Pass | No foreign key violations in `noteRepository.create()` or `deleteOrphans()` |
-| Orphan DB entries | ✅ Pass | `fs.promises.stat()` guard prevents creating DB entries for files that were immediately deleted |
-| 999-variable SQLite limit | ✅ Pass | Chunking at 99 rows (10 cols × 99 = 990 < 999) |
-| Snapshot consistency | ✅ Pass | `pendingEvents = []` in `stop()` prevents dangling events |
+| Check                              | Result  | Evidence                                                                                        |
+| ---------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |
+| No synchronous I/O in IPC handlers | ✅ Pass | `readByWorkspaceFromDb()` contains only `db.select()` calls                                     |
+| Event loss prevention              | ✅ Pass | `pendingEvents.splice(0)` accumulates 50ms batches                                              |
+| DB constraint violations           | ✅ Pass | No foreign key violations in `noteRepository.create()` or `deleteOrphans()`                     |
+| Orphan DB entries                  | ✅ Pass | `fs.promises.stat()` guard prevents creating DB entries for files that were immediately deleted |
+| 999-variable SQLite limit          | ✅ Pass | Chunking at 99 rows (10 cols × 99 = 990 < 999)                                                  |
+| Snapshot consistency               | ✅ Pass | `pendingEvents = []` in `stop()` prevents dangling events                                       |
 
 ---
 
@@ -297,13 +305,13 @@ vi.mock('fs', () => {
 ```javascript
 // WRONG (blocks event loop):
 async function readWorkspace() {
-  const files = fs.readdirSync(dir)  // Blocks entire Node.js thread
+  const files = fs.readdirSync(dir) // Blocks entire Node.js thread
   // IPC queue is frozen while this runs
 }
 
 // CORRECT (non-blocking):
 async function readWorkspace() {
-  const files = await fs.promises.readdir(dir)  // Yields to event loop
+  const files = await fs.promises.readdir(dir) // Yields to event loop
   // IPC queue can be processed while waiting
 }
 ```
@@ -327,6 +335,7 @@ Updated state displayed (usually <1s later)
 ```
 
 **Advantages**:
+
 - IPC response time guaranteed <50ms
 - Renderer never blocked waiting for I/O
 - Background reconciliation can take seconds without user seeing freeze
@@ -346,7 +355,9 @@ insert 100 rows → 10 × 100 = 1000 variables → CRASH
 ```typescript
 const CHUNK = 99
 for (let i = 0; i < items.length; i += CHUNK) {
-  db.insert(notes).values(items.slice(i, i + CHUNK)).run()
+  db.insert(notes)
+    .values(items.slice(i, i + CHUNK))
+    .run()
 }
 ```
 
@@ -354,14 +365,12 @@ Also applies to `NOT IN` and `inArray` — both are limited. The `deleteOrphans`
 
 ```typescript
 // WRONG (can exceed 999 if >999 paths):
-db.delete(notes).where(
-  not(inArray(notes.relativePath, existingPaths))
-).run()
+db.delete(notes)
+  .where(not(inArray(notes.relativePath, existingPaths)))
+  .run()
 
 // CORRECT (compute diff in JS, then delete by ID):
-const orphanIds = dbRows
-  .filter(r => !existingSet.has(r.relativePath))
-  .map(r => r.id)
+const orphanIds = dbRows.filter((r) => !existingSet.has(r.relativePath)).map((r) => r.id)
 // Then chunk the delete by ID (less pressure on bind variables)
 ```
 
@@ -478,12 +487,12 @@ This is **asynchronous and non-blocking** — check happens during the 50ms debo
 
 ### 9.1 Improvements for Future Cycles
 
-| Item | Estimated Effort | Priority | Notes |
-|------|------------------|----------|-------|
-| Promise concurrency limiter (EC-4) | 2 hours | Low | Add `p-limit` if users report OS fd exhaustion on deeply nested workspaces (>5000 levels) |
-| Offline note move ID preservation (EC-6) | 1 day | Low | Only affects corrupted snapshots (rare); note content always preserved. Implement if user requests. |
-| Batch operation safety checklist | 2 hours | Medium | Prevent future SQLite limit surprises |
-| Performance regression tests | 4 hours | Medium | Generate N-file workspaces, measure IPC response times in CI |
+| Item                                     | Estimated Effort | Priority | Notes                                                                                               |
+| ---------------------------------------- | ---------------- | -------- | --------------------------------------------------------------------------------------------------- |
+| Promise concurrency limiter (EC-4)       | 2 hours          | Low      | Add `p-limit` if users report OS fd exhaustion on deeply nested workspaces (>5000 levels)           |
+| Offline note move ID preservation (EC-6) | 1 day            | Low      | Only affects corrupted snapshots (rare); note content always preserved. Implement if user requests. |
+| Batch operation safety checklist         | 2 hours          | Medium   | Prevent future SQLite limit surprises                                                               |
+| Performance regression tests             | 4 hours          | Medium   | Generate N-file workspaces, measure IPC response times in CI                                        |
 
 ### 9.2 Known Limitations
 
@@ -499,18 +508,18 @@ This is **asynchronous and non-blocking** — check happens during the 50ms debo
 
 All acceptance criteria from the plan document met:
 
-| Criterion | Target | Result | Status |
-|-----------|--------|--------|--------|
-| `folder:readTree` IPC response < 500ms | <500ms | 20ms | ✅ **42x better** |
-| `note:readByWorkspace` IPC response < 500ms | <500ms | 15ms | ✅ **33x better** |
-| Background sync completes after entry | Yes | <2s | ✅ **Auto-refresh works** |
-| MD file modify: no 5s freeze | No freeze | 0-2ms | ✅ **2500x faster** |
-| Standalone MD create: immediate reflection | Yes | Yes | ✅ **Step 4 implemented** |
-| Standalone MD delete: immediate reflection | Yes | Yes | ✅ **Step 5 implemented** |
-| >100 note insert: no crash | OK | OK | ✅ **Chunked at 99** |
-| >1000 note deleteOrphans: no crash | OK | OK | ✅ **JS-diff + chunked** |
-| All tests pass | Yes | Yes | ✅ **100% coverage maintained** |
-| No UnhandledPromiseRejection | Zero | Zero | ✅ **All async errors handled** |
+| Criterion                                   | Target    | Result | Status                          |
+| ------------------------------------------- | --------- | ------ | ------------------------------- |
+| `folder:readTree` IPC response < 500ms      | <500ms    | 20ms   | ✅ **42x better**               |
+| `note:readByWorkspace` IPC response < 500ms | <500ms    | 15ms   | ✅ **33x better**               |
+| Background sync completes after entry       | Yes       | <2s    | ✅ **Auto-refresh works**       |
+| MD file modify: no 5s freeze                | No freeze | 0-2ms  | ✅ **2500x faster**             |
+| Standalone MD create: immediate reflection  | Yes       | Yes    | ✅ **Step 4 implemented**       |
+| Standalone MD delete: immediate reflection  | Yes       | Yes    | ✅ **Step 5 implemented**       |
+| >100 note insert: no crash                  | OK        | OK     | ✅ **Chunked at 99**            |
+| >1000 note deleteOrphans: no crash          | OK        | OK     | ✅ **JS-diff + chunked**        |
+| All tests pass                              | Yes       | Yes    | ✅ **100% coverage maintained** |
+| No UnhandledPromiseRejection                | Zero      | Zero   | ✅ **All async errors handled** |
 
 ---
 
@@ -518,11 +527,11 @@ All acceptance criteria from the plan document met:
 
 ### 11.1 User Experience Improvements
 
-| Scenario | Before | After | User Benefit |
-|----------|--------|-------|--------------|
-| Open workspace (1496 files) | 5s freeze + confused UI | 100ms + instant display | **Snappy, responsive feeling** |
-| Edit MD file | 5s freeze after every keystroke | Instant, no visible delay | **Seamless editing experience** |
-| Bulk file operations | Sluggish sync (minutes) | Fast background sync (<2s) | **Improved perceived performance** |
+| Scenario                    | Before                          | After                      | User Benefit                       |
+| --------------------------- | ------------------------------- | -------------------------- | ---------------------------------- |
+| Open workspace (1496 files) | 5s freeze + confused UI         | 100ms + instant display    | **Snappy, responsive feeling**     |
+| Edit MD file                | 5s freeze after every keystroke | Instant, no visible delay  | **Seamless editing experience**    |
+| Bulk file operations        | Sluggish sync (minutes)         | Fast background sync (<2s) | **Improved perceived performance** |
 
 ### 11.2 Code Maintainability
 
@@ -579,13 +588,13 @@ note:readByWorkspace ──► readByWorkspaceFromDb() ◄──── [instant,
 
 ### 12.2 Code Quality Comparison
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| Blocking I/O in IPC | 2 places | 0 places |
-| Event loss potential | Yes (closure bug) | No (`splice(0)` pattern) |
-| SQLite bind-var safety | No checks | Chunked at 99 rows |
-| Async function purity | 50% (some blocking) | 100% (truly non-blocking) |
-| Test coverage | 80% | 85% (new methods added + tested) |
+| Aspect                 | Before              | After                            |
+| ---------------------- | ------------------- | -------------------------------- |
+| Blocking I/O in IPC    | 2 places            | 0 places                         |
+| Event loss potential   | Yes (closure bug)   | No (`splice(0)` pattern)         |
+| SQLite bind-var safety | No checks           | Chunked at 99 rows               |
+| Async function purity  | 50% (some blocking) | 100% (truly non-blocking)        |
+| Test coverage          | 80%                 | 85% (new methods added + tested) |
 
 ---
 
@@ -624,6 +633,7 @@ note:readByWorkspace ──► readByWorkspaceFromDb() ◄──── [instant,
 ### v1.0.0 (2026-02-28)
 
 **Added:**
+
 - `noteService.readByWorkspaceFromDb()` — DB-only note query (non-blocking IPC)
 - `workspace-watcher.noteReconciliation()` — Async note reconciliation on startup
 - `applyEvents()` Step 4 (standalone MD create) + Step 5 (standalone MD delete) — Real-time note sync
@@ -632,18 +642,21 @@ note:readByWorkspace ──► readByWorkspaceFromDb() ◄──── [instant,
 - `pendingEvents` class member and `splice(0)` pattern — Fixed event loss bug in watcher
 
 **Changed:**
+
 - `note:readByWorkspace` IPC handler — Now uses `readByWorkspaceFromDb()` instead of synchronous `readByWorkspace()`
 - `noteRepository.createMany()` — Added chunking at 99 rows (SQLite 999-variable limit safety)
 - `noteRepository.deleteOrphans()` — Changed from `NOT IN` SQL to JS-side Set diff + chunked delete
 - `workspace-watcher.start()` — Added `noteReconciliation()` call and `pushNoteChanged([])` signal
 
 **Fixed:**
+
 - Workspace entry freeze (~5000ms) — Now <200ms
 - MD file modification freeze (~5000ms) — Now <5ms
 - Event loss bug in `handleEvents()` — Closure-captured events now accumulate safely
 - Orphan DB entries from files deleted within debounce window — Added `fs.promises.stat()` guard
 
 **Performance:**
+
 - Workspace entry: 42x faster (5000ms → 118ms)
 - MD file modification: 2500x faster (5000ms → 0-2ms)
 - Background reconciliation: non-blocking (<2 seconds)
@@ -652,10 +665,10 @@ note:readByWorkspace ──► readByWorkspaceFromDb() ◄──── [instant,
 
 ## 15. Version History
 
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-02-28 | Claude Code (report-generator) | Completion report: 7 fixes, 100% design match, 42-2500x performance gains |
-| 1.1 | 2026-03-01 | Claude Code | Added section 5.3: code style audit (4 fixes), test gap fill (workspace-watcher.test.ts, 4 files updated), vitest fs.promises factory mock fix; 263/263 tests pass |
+| Version | Date       | Author                         | Changes                                                                                                                                                            |
+| ------- | ---------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1.0     | 2026-02-28 | Claude Code (report-generator) | Completion report: 7 fixes, 100% design match, 42-2500x performance gains                                                                                          |
+| 1.1     | 2026-03-01 | Claude Code                    | Added section 5.3: code style audit (4 fixes), test gap fill (workspace-watcher.test.ts, 4 files updated), vitest fs.promises factory mock fix; 263/263 tests pass |
 
 ---
 
@@ -689,10 +702,12 @@ src/main/
 ### Related Features (Dependencies)
 
 This feature extends:
+
 - `workspace-folder-freeze-fix` (folder pattern)
 - `workspace-folder-sync-fix` (chunked batch operations)
 
 Addresses all issues from:
+
 - P0-1, P0-2 (freeze causes)
 - P1 (SQLite crash)
 - P2 (regression prevention)

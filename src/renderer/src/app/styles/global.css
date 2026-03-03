@@ -158,7 +158,7 @@
 }
 
 /* scroll area 내부 동작중 컨텐츠가 커지면 부모 넓이에 넘치는 걸 방지함 */
-.scroll-area-w-content-fit [data-slot="scroll-area-viewport"]>div {
+.scroll-area-w-content-fit [data-slot='scroll-area-viewport'] > div {
   display: block !important;
 }
 
@@ -167,4 +167,14 @@
 }
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+.react-flow__handle::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  transform: translate(-50%, -50%);
 }

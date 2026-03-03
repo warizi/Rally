@@ -12,28 +12,26 @@ export function useFolderWatcher(): void {
     const timer = setTimeout(() => {
       readyRef.current = true
     }, 2000)
-    const unsub = window.api.folder.onChanged(
-      (workspaceId: string, changedRelPaths: string[]) => {
-        queryClient.invalidateQueries({ queryKey: ['folder', 'tree', workspaceId] })
-        if (readyRef.current && changedRelPaths.length > 0 && !isWorkspaceOwnWrite(workspaceId)) {
-          const names = [...new Set(changedRelPaths.map((p) => p.split('/').pop() ?? p))]
-          toast.info('외부에서 폴더가 변경되었습니다', {
-            description: createElement(
-              'ul',
-              { className: 'mt-1 flex flex-col gap-0.5' },
-              ...names.map((name) =>
-                createElement(
-                  'li',
-                  { key: name, className: 'flex items-center gap-1.5' },
-                  createElement(Folder, { className: 'size-3.5 shrink-0' }),
-                  name
-                )
+    const unsub = window.api.folder.onChanged((workspaceId: string, changedRelPaths: string[]) => {
+      queryClient.invalidateQueries({ queryKey: ['folder', 'tree', workspaceId] })
+      if (readyRef.current && changedRelPaths.length > 0 && !isWorkspaceOwnWrite(workspaceId)) {
+        const names = [...new Set(changedRelPaths.map((p) => p.split('/').pop() ?? p))]
+        toast.info('외부에서 폴더가 변경되었습니다', {
+          description: createElement(
+            'ul',
+            { className: 'mt-1 flex flex-col gap-0.5' },
+            ...names.map((name) =>
+              createElement(
+                'li',
+                { key: name, className: 'flex items-center gap-1.5' },
+                createElement(Folder, { className: 'size-3.5 shrink-0' }),
+                name
               )
             )
-          })
-        }
+          )
+        })
       }
-    )
+    })
     return () => {
       clearTimeout(timer)
       unsub()

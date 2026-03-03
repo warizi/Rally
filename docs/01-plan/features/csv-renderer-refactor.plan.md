@@ -9,6 +9,7 @@
 ## 1. 배경 및 목적
 
 `CsvTable.tsx`가 620줄 단일 컴포넌트로 다음 7가지 책임을 모두 담당하고 있다:
+
 - 셀 선택 상태 관리 + 범위 계산
 - 마우스 핸들러 (클릭, 드래그, 더블클릭)
 - 클립보드 (복사/잘라내기/붙여넣기/삭제)
@@ -18,6 +19,7 @@
 - JSX 렌더링 (헤더, 행 번호, 데이터 그리드, 컨텍스트 메뉴)
 
 **핵심 문제**:
+
 1. 클립보드 로직이 컨텍스트 메뉴 핸들러(172-226)와 키보드 핸들러(236-293)에 **중복** 존재
 2. 삭제 로직도 컨텍스트 메뉴(197-206)와 키보드(344-355)에 **중복** 존재
 3. 단일 컴포넌트에 너무 많은 상태와 로직이 혼재하여 유지보수 어려움
@@ -28,31 +30,31 @@
 
 ## 2. 현재 파일 구조 및 줄 수
 
-| 파일 | 줄 수 | 역할 |
-|------|------|------|
-| `widgets/csv-viewer/ui/CsvTable.tsx` | 620 | 테이블 렌더링 + 전체 로직 |
-| `widgets/csv-viewer/ui/CsvViewer.tsx` | 181 | 오케스트레이터 |
-| `widgets/csv-viewer/ui/CsvToolbar.tsx` | 54 | 툴바 UI |
-| `widgets/csv-viewer/ui/EditableCell.tsx` | 75 | 셀 편집 UI |
-| `widgets/csv-viewer/ui/EditableColumnHeader.tsx` | 63 | 헤더 편집 UI |
-| `widgets/csv-viewer/model/use-csv-editor.ts` | 282 | 데이터 상태 + undo/redo + 자동 저장 |
-| `widgets/csv-viewer/model/use-csv-external-sync.ts` | 19 | 외부 변경 감지 |
-| **합계** | **1,294** | |
+| 파일                                                | 줄 수     | 역할                                |
+| --------------------------------------------------- | --------- | ----------------------------------- |
+| `widgets/csv-viewer/ui/CsvTable.tsx`                | 620       | 테이블 렌더링 + 전체 로직           |
+| `widgets/csv-viewer/ui/CsvViewer.tsx`               | 181       | 오케스트레이터                      |
+| `widgets/csv-viewer/ui/CsvToolbar.tsx`              | 54        | 툴바 UI                             |
+| `widgets/csv-viewer/ui/EditableCell.tsx`            | 75        | 셀 편집 UI                          |
+| `widgets/csv-viewer/ui/EditableColumnHeader.tsx`    | 63        | 헤더 편집 UI                        |
+| `widgets/csv-viewer/model/use-csv-editor.ts`        | 282       | 데이터 상태 + undo/redo + 자동 저장 |
+| `widgets/csv-viewer/model/use-csv-external-sync.ts` | 19        | 외부 변경 감지                      |
+| **합계**                                            | **1,294** |                                     |
 
 ---
 
 ## 3. 리팩토링 대상 분석 — CsvTable.tsx 책임별 라인
 
-| 책임 | 라인 범위 | 추정 줄 수 | 추출 대상 |
-|------|----------|-----------|----------|
-| 선택 상태 + 범위 계산 | 63-64, 110-124 | ~18 | `useCsvSelection` |
-| 마우스 핸들러 | 127-161 | ~35 | `useCsvSelection` |
-| 포커스 복원 | 162-169 | ~8 | `useCsvSelection` |
-| 클립보드 (컨텍스트 메뉴) | 172-226 | ~55 | `useCsvClipboard` |
-| 키보드 내비게이션 + 단축키 | 228-379 | ~152 | `useCsvKeyboard` |
-| 블러 핸들러 | 381-386 | ~6 | `useCsvSelection` |
-| 열 리사이즈 | 388-411 | ~24 | `useCsvColumnResize` |
-| 가상화 + 렌더링 | 나머지 | ~322 | CsvTable (잔류) |
+| 책임                       | 라인 범위      | 추정 줄 수 | 추출 대상            |
+| -------------------------- | -------------- | ---------- | -------------------- |
+| 선택 상태 + 범위 계산      | 63-64, 110-124 | ~18        | `useCsvSelection`    |
+| 마우스 핸들러              | 127-161        | ~35        | `useCsvSelection`    |
+| 포커스 복원                | 162-169        | ~8         | `useCsvSelection`    |
+| 클립보드 (컨텍스트 메뉴)   | 172-226        | ~55        | `useCsvClipboard`    |
+| 키보드 내비게이션 + 단축키 | 228-379        | ~152       | `useCsvKeyboard`     |
+| 블러 핸들러                | 381-386        | ~6         | `useCsvSelection`    |
+| 열 리사이즈                | 388-411        | ~24        | `useCsvColumnResize` |
+| 가상화 + 렌더링            | 나머지         | ~322       | CsvTable (잔류)      |
 
 ---
 
@@ -67,6 +69,7 @@
 **경로**: `src/renderer/src/widgets/csv-viewer/model/use-csv-selection.ts`
 
 **추출 대상**:
+
 - `selection` / `setSelection` 상태
 - `editingCell` / `setEditingCell` 상태
 - `isDragging` ref
@@ -80,6 +83,7 @@
 - 스크롤 연동 (`scrollToIndex` useEffect)
 
 **반환 타입**:
+
 ```typescript
 interface UseCsvSelectionReturn {
   selection: { anchor: CellPos; focus: CellPos } | null
@@ -99,6 +103,7 @@ interface UseCsvSelectionReturn {
 ```
 
 **인자**:
+
 ```typescript
 function useCsvSelection(
   scrollRef: React.RefObject<HTMLDivElement>,
@@ -114,6 +119,7 @@ function useCsvSelection(
 **경로**: `src/renderer/src/widgets/csv-viewer/model/use-csv-clipboard.ts`
 
 **추출 대상**:
+
 - `handleContextCopy` → `copy()`
 - `handleContextCut` → `cut()`
 - `handleContextPaste` → `paste()`
@@ -122,6 +128,7 @@ function useCsvSelection(
 **중복 제거**: 현재 키보드 핸들러(236-293)에서 복사/잘라내기/붙여넣기/삭제 로직이 컨텍스트 메뉴 핸들러와 거의 동일하게 반복됨. 이 훅에서 통합하고 키보드 핸들러는 이 훅의 메서드를 호출하도록 변경.
 
 **반환 타입**:
+
 ```typescript
 interface UseCsvClipboardReturn {
   copy: () => void
@@ -132,6 +139,7 @@ interface UseCsvClipboardReturn {
 ```
 
 **인자**:
+
 ```typescript
 function useCsvClipboard(
   selection: { anchor: CellPos; focus: CellPos } | null,
@@ -149,22 +157,25 @@ function useCsvClipboard(
 **경로**: `src/renderer/src/widgets/csv-viewer/model/use-csv-keyboard.ts`
 
 **추출 대상**:
+
 - `handleKeyDown` 전체 (228-379)
 - 내부에서 `useCsvClipboard`의 `copy/cut/paste/deleteSelection` 호출
 - Arrow / Tab / Enter / Escape / Backspace / Delete 처리
 - Ctrl+Z/Shift+Ctrl+Z/Ctrl+Y (undo/redo)
 
 **`e.preventDefault()` 분리 원칙**: 클립보드 메서드(`copy/cut/paste/deleteSelection`)는 순수 동작만 수행하고, `e.preventDefault()`는 반드시 키보드 핸들러 쪽에서만 호출한다.
+
 ```typescript
 // 올바른 패턴
 if (mod && e.key === 'c') {
-  e.preventDefault()    // 키보드 핸들러 책임
-  clipboard.copy()      // 순수 클립보드 동작
+  e.preventDefault() // 키보드 핸들러 책임
+  clipboard.copy() // 순수 클립보드 동작
   return
 }
 ```
 
 **반환 타입**:
+
 ```typescript
 interface UseCsvKeyboardReturn {
   handleKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void
@@ -172,6 +183,7 @@ interface UseCsvKeyboardReturn {
 ```
 
 **인자**:
+
 ```typescript
 function useCsvKeyboard(
   selection: { anchor: CellPos; focus: CellPos } | null,
@@ -195,9 +207,11 @@ function useCsvKeyboard(
 **경로**: `src/renderer/src/widgets/csv-viewer/model/use-csv-column-resize.ts`
 
 **추출 대상**:
+
 - `handleResizeStart` (388-411)
 
 **반환 타입**:
+
 ```typescript
 interface UseCsvColumnResizeReturn {
   handleResizeStart: (colIndex: number, e: React.MouseEvent) => void
@@ -205,6 +219,7 @@ interface UseCsvColumnResizeReturn {
 ```
 
 **인자**:
+
 ```typescript
 function useCsvColumnResize(
   getColWidth: (index: number) => number,
@@ -248,6 +263,7 @@ export function CsvTable({ ... }: Props): JSX.Element {
 ```
 
 **예상 결과**:
+
 - CsvTable.tsx: 620줄 → ~250줄 (순수 렌더링 — 컨텍스트 메뉴 JSX 포함)
 - 신규 훅 4개: ~280줄 합계
 - 전체 코드 양: 중복 제거로 ~50줄 감소
@@ -274,6 +290,7 @@ export type Selection = { anchor: CellPos; focus: CellPos }
 ```
 
 상수도 함께 이동:
+
 ```typescript
 export const ROW_HEIGHT = 28
 export const HEADER_HEIGHT = 32
@@ -287,14 +304,14 @@ export const MIN_COL_WIDTH = 60
 
 ## 5. 변경 파일 목록
 
-| # | 파일 | 작업 |
-|---|------|------|
-| 1 | `widgets/csv-viewer/model/types.ts` | **신규** — 공통 타입 + 상수 |
-| 2 | `widgets/csv-viewer/model/use-csv-selection.ts` | **신규** — 선택/마우스/블러 |
-| 3 | `widgets/csv-viewer/model/use-csv-clipboard.ts` | **신규** — 클립보드 통합 |
-| 4 | `widgets/csv-viewer/model/use-csv-keyboard.ts` | **신규** — 키보드 내비게이션 |
-| 5 | `widgets/csv-viewer/model/use-csv-column-resize.ts` | **신규** — 열 리사이즈 |
-| 6 | `widgets/csv-viewer/ui/CsvTable.tsx` | **수정** — 훅 사용으로 축소 |
+| #   | 파일                                                | 작업                         |
+| --- | --------------------------------------------------- | ---------------------------- |
+| 1   | `widgets/csv-viewer/model/types.ts`                 | **신규** — 공통 타입 + 상수  |
+| 2   | `widgets/csv-viewer/model/use-csv-selection.ts`     | **신규** — 선택/마우스/블러  |
+| 3   | `widgets/csv-viewer/model/use-csv-clipboard.ts`     | **신규** — 클립보드 통합     |
+| 4   | `widgets/csv-viewer/model/use-csv-keyboard.ts`      | **신규** — 키보드 내비게이션 |
+| 5   | `widgets/csv-viewer/model/use-csv-column-resize.ts` | **신규** — 열 리사이즈       |
+| 6   | `widgets/csv-viewer/ui/CsvTable.tsx`                | **수정** — 훅 사용으로 축소  |
 
 > CsvViewer.tsx, CsvToolbar.tsx, EditableCell.tsx, EditableColumnHeader.tsx — 변경 없음
 
@@ -319,6 +336,7 @@ npm run lint            # ESLint
 ```
 
 > 기존 CSV 기능 테스트는 서비스/리포지토리 레이어에만 존재하며, 렌더러 컴포넌트 테스트는 없으므로 수동 검증:
+>
 > - 셀 선택 (클릭, Shift+클릭, 드래그)
 > - 키보드 내비게이션 (화살표, Tab, Enter, Escape)
 > - 클립보드 (Ctrl+C/X/V, 컨텍스트 메뉴)

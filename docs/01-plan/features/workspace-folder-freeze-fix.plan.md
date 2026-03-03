@@ -40,6 +40,7 @@ folder:readTree IPC (main thread, 동기)
 #### 1. `src/main/services/folder.ts`
 
 `folderService.readTreeFromDb(workspaceId)` 추가:
+
 - DB rows만 읽어 tree 구성 반환
 - fs 스캔 없음 → 수 ms 내 반환
 
@@ -48,15 +49,18 @@ folder:readTree IPC (main thread, 동기)
 #### 2. `src/main/ipc/folder.ts`
 
 `folder:readTree` 핸들러:
+
 - `folderService.readTree()` → `folderService.readTreeFromDb()` 로 교체
 
 #### 3. `src/main/services/workspace-watcher.ts`
 
 `start()` 메서드 끝 (subscription 설정 완료 후):
+
 - `this.pushFolderChanged(workspaceId)` 호출 추가
 - 초기 동기화 완료 신호 → 렌더러가 re-fetch
 
 또한 `syncOfflineChanges` 내 `fullReconciliation` 호출에 try/catch 추가:
+
 - 동기화 실패해도 watcher 자체는 정상 시작
 - UnhandledPromiseRejection 방지
 
@@ -84,11 +88,11 @@ folder:readTree IPC
 
 ### UX
 
-| 상황 | 변경 전 | 변경 후 |
-|------|---------|---------|
-| 최초 진입 | 5초 freeze 후 트리 표시 | 즉시 표시 (빈 트리 or 기존 DB), 수초 후 자동 갱신 |
-| 이후 진입 | 매번 5초 freeze | 즉시 DB 트리 표시 (snapshot 기반 동기화, 빠름) |
-| 실시간 변경 | 정상 | 동일 |
+| 상황        | 변경 전                 | 변경 후                                           |
+| ----------- | ----------------------- | ------------------------------------------------- |
+| 최초 진입   | 5초 freeze 후 트리 표시 | 즉시 표시 (빈 트리 or 기존 DB), 수초 후 자동 갱신 |
+| 이후 진입   | 매번 5초 freeze         | 즉시 DB 트리 표시 (snapshot 기반 동기화, 빠름)    |
+| 실시간 변경 | 정상                    | 동일                                              |
 
 ## Acceptance Criteria
 

@@ -7,9 +7,10 @@ import { NOTE_EXTERNAL_CHANGED_EVENT } from '@entities/note/model/use-note-watch
  * @returns editorKey - MilkdownProvider의 key로 사용
  * @returns latestContent - 이벤트 시점 캐시에서 읽은 최신 내용 (null이면 initialContent 사용)
  */
-export function useNoteExternalSync(
-  noteId: string
-): { editorKey: number; latestContent: string | null } {
+export function useNoteExternalSync(noteId: string): {
+  editorKey: number
+  latestContent: string | null
+} {
   const [editorKey, setEditorKey] = useState(0)
   const [latestContent, setLatestContent] = useState<string | null>(null)
   const queryClient = useQueryClient()

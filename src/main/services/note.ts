@@ -8,6 +8,7 @@ import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { entityLinkService } from './entity-link'
+import { canvasNodeRepository } from '../repositories/canvas-node'
 
 export interface NoteNode {
   id: string
@@ -243,6 +244,7 @@ export const noteService = {
       // 이미 외부에서 삭제된 경우 무시 (DB만 정리)
     }
     entityLinkService.removeAllLinks('note', noteId)
+    canvasNodeRepository.deleteByRef('note', noteId)
     noteRepository.delete(noteId)
   },
 

@@ -1,4 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@shared/lib/utils'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import type { LayoutNode, Pane } from '@entities/tab-system'
@@ -17,11 +18,7 @@ interface Props {
   children: (props: PanePickerRenderProps) => React.ReactNode
 }
 
-export function PanePickerSubmenu({
-  onPaneSelect,
-  className,
-  children
-}: Props): React.JSX.Element {
+export function PanePickerSubmenu({ onPaneSelect, className, children }: Props): React.JSX.Element {
   const layout = useTabStore((s) => s.layout)
   const panes = useTabStore((s) => s.panes)
 
@@ -46,8 +43,8 @@ export function PanePickerSubmenu({
       const fitsBelow = rect.top + SUBMENU_H <= vh
 
       setPos({
-        left: fitsRight ? rect.width + 4 : -(SUBMENU_W + 1),
-        top: fitsBelow ? 0 : -(SUBMENU_H - rect.height)
+        left: fitsRight ? rect.right + 4 : rect.left - SUBMENU_W - 4,
+        top: fitsBelow ? rect.top : rect.bottom - SUBMENU_H
       })
       setVisible(true)
     },
@@ -105,15 +102,18 @@ export function PanePickerSubmenu({
 
   return (
     <div ref={triggerRef} className={cn('relative', className)}>
+      {/* eslint-disable-next-line react-hooks/refs */}
       {children({ onClick: handleClick, isOpen: visible })}
-      {visible && (
-        <div ref={submenuRef} className="absolute z-50" style={{ left: pos.left, top: pos.top }}>
-          <div className="w-52 rounded-md border bg-popover p-2.5 shadow-md">
-            <p className="text-[10px] text-muted-foreground mb-2">탭 영역을 선택하세요</p>
-            <div className="flex h-24">{renderLayoutNode(layout, panes)}</div>
-          </div>
-        </div>
-      )}
+      {visible &&
+        createPortal(
+          <div ref={submenuRef} className="fixed z-50" style={{ left: pos.left, top: pos.top }}>
+            <div className="w-52 rounded-md border bg-popover p-2.5 shadow-md">
+              <p className="text-[10px] text-muted-foreground mb-2">탭 영역을 선택하세요</p>
+              <div className="flex h-24">{renderLayoutNode(layout, panes)}</div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   )
 }

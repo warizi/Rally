@@ -32,7 +32,10 @@ export const folderRepository = {
     // Chunk at 100 rows to stay well under the limit.
     const CHUNK = 100
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(folders).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(folders)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
@@ -100,7 +103,9 @@ export const folderRepository = {
     // inArray also has the 999-variable limit; chunk at 900 to stay safe
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(folders).where(inArray(folders.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(folders)
+        .where(inArray(folders.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 

@@ -24,11 +24,7 @@ export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX
       title={note?.title ?? ''}
       description={note?.description ?? ''}
       buttons={
-        <LinkedEntityPopoverButton
-          entityType="note"
-          entityId={noteId}
-          workspaceId={workspaceId}
-        />
+        <LinkedEntityPopoverButton entityType="note" entityId={noteId} workspaceId={workspaceId} />
       }
       onTitleChange={(title) => {
         renameNote({ workspaceId, noteId, newName: title })

@@ -10,7 +10,7 @@ export const scheduleTodos = sqliteTable(
       .references(() => schedules.id, { onDelete: 'cascade' }),
     todoId: text('todo_id')
       .notNull()
-      .references(() => todos.id, { onDelete: 'cascade' }),
+      .references(() => todos.id, { onDelete: 'cascade' })
   },
   (t) => [primaryKey({ columns: [t.scheduleId, t.todoId] })]
 )

@@ -3,6 +3,7 @@ import { NotFoundError } from '../lib/errors'
 import { todoRepository } from '../repositories/todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { entityLinkService } from './entity-link'
+import { canvasNodeRepository } from '../repositories/canvas-node'
 
 export interface TodoItem {
   id: string
@@ -204,7 +205,10 @@ export const todoService = {
 
     const subtodoIds = todoRepository.findAllDescendantIds(todoId)
     entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])
-
+    canvasNodeRepository.deleteByRef('todo', todoId)
+    for (const subId of subtodoIds) {
+      canvasNodeRepository.deleteByRef('todo', subId)
+    }
     todoRepository.delete(todoId)
   },
 

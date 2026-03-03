@@ -1,4 +1,4 @@
-import { and, eq, isNull, isNotNull, or } from 'drizzle-orm'
+import { and, eq, inArray, isNull, isNotNull, or } from 'drizzle-orm'
 import { db } from '../db'
 import { todos } from '../db/schema'
 
@@ -6,17 +6,19 @@ export type Todo = typeof todos.$inferSelect
 export type TodoInsert = typeof todos.$inferInsert
 
 export const todoRepository = {
-  findByWorkspaceId(
-    workspaceId: string,
-    filter?: 'all' | 'active' | 'completed'
-  ): Todo[] {
+  findByWorkspaceId(workspaceId: string, filter?: 'all' | 'active' | 'completed'): Todo[] {
     const base = eq(todos.workspaceId, workspaceId)
     if (filter === 'active') {
       // 최상위 미완료 + 모든 sub-todo (isDone 무관)
       return db
         .select()
         .from(todos)
-        .where(and(base, or(and(isNull(todos.parentId), eq(todos.isDone, false)), isNotNull(todos.parentId))))
+        .where(
+          and(
+            base,
+            or(and(isNull(todos.parentId), eq(todos.isDone, false)), isNotNull(todos.parentId))
+          )
+        )
         .all()
     }
     if (filter === 'completed') {
@@ -134,6 +136,17 @@ export const todoRepository = {
     }
 
     return result
+  },
+
+  findByIds(ids: string[]): Todo[] {
+    if (ids.length === 0) return []
+    const CHUNK = 900
+    const results: Todo[] = []
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      results.push(...db.select().from(todos).where(inArray(todos.id, chunk)).all())
+    }
+    return results
   },
 
   bulkUpdateSubOrder(updates: { id: string; order: number }[]): void {

@@ -71,9 +71,11 @@ export const schedules = sqliteTable('schedules', {
   startAt: integer('start_at', { mode: 'timestamp_ms' }).notNull(),
   endAt: integer('end_at', { mode: 'timestamp_ms' }).notNull(),
   color: text('color'),
-  priority: text('priority', { enum: ['low', 'medium', 'high'] }).notNull().default('medium'),
+  priority: text('priority', { enum: ['low', 'medium', 'high'] })
+    .notNull()
+    .default('medium'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+  updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
 })
 ```
 
@@ -94,7 +96,7 @@ export const scheduleTodos = sqliteTable(
       .references(() => schedules.id, { onDelete: 'cascade' }),
     todoId: text('todo_id')
       .notNull()
-      .references(() => todos.id, { onDelete: 'cascade' }),
+      .references(() => todos.id, { onDelete: 'cascade' })
   },
   (t) => [primaryKey({ columns: [t.scheduleId, t.todoId] })]
 )
@@ -112,16 +114,16 @@ export { scheduleTodos } from './schedule-todo'
 
 ### 비즈니스 규칙
 
-| 규칙 | 검증 위치 | 에러 |
-|------|----------|------|
-| `startAt <= endAt` | service | ValidationError |
-| `title.trim()` 빈 문자열 | service | ValidationError |
-| workspace 존재 (workspaceId 있을 때) | service | NotFoundError |
-| `allDay = true` → startAt 00:00:00.000, endAt 23:59:59.999 | service (자동 보정) | — |
-| 여러 날 일정 허용 | — | — |
-| `color` null → priority별 기본 색상 | renderer | — |
-| DnD move: duration 유지 | renderer + service | — |
-| Todo 연결 N:M | DB schema (복합 PK) | — |
+| 규칙                                                       | 검증 위치           | 에러            |
+| ---------------------------------------------------------- | ------------------- | --------------- |
+| `startAt <= endAt`                                         | service             | ValidationError |
+| `title.trim()` 빈 문자열                                   | service             | ValidationError |
+| workspace 존재 (workspaceId 있을 때)                       | service             | NotFoundError   |
+| `allDay = true` → startAt 00:00:00.000, endAt 23:59:59.999 | service (자동 보정) | —               |
+| 여러 날 일정 허용                                          | —                   | —               |
+| `color` null → priority별 기본 색상                        | renderer            | —               |
+| DnD move: duration 유지                                    | renderer + service  | —               |
+| Todo 연결 N:M                                              | DB schema (복합 PK) | —               |
 
 ---
 
@@ -138,11 +140,7 @@ export type Schedule = typeof schedules.$inferSelect
 export type ScheduleInsert = typeof schedules.$inferInsert
 
 export const scheduleRepository = {
-  findByWorkspaceId(
-    workspaceId: string,
-    rangeStart: number,
-    rangeEnd: number
-  ): Schedule[] {
+  findByWorkspaceId(workspaceId: string, rangeStart: number, rangeEnd: number): Schedule[] {
     // WHERE workspaceId = ? AND startAt <= rangeEnd AND endAt >= rangeStart
     return db
       .select()
@@ -168,14 +166,27 @@ export const scheduleRepository = {
 
   update(
     id: string,
-    data: Partial<Pick<Schedule, 'title' | 'description' | 'location' | 'allDay' | 'startAt' | 'endAt' | 'color' | 'priority' | 'updatedAt'>>
+    data: Partial<
+      Pick<
+        Schedule,
+        | 'title'
+        | 'description'
+        | 'location'
+        | 'allDay'
+        | 'startAt'
+        | 'endAt'
+        | 'color'
+        | 'priority'
+        | 'updatedAt'
+      >
+    >
   ): Schedule | undefined {
     return db.update(schedules).set(data).where(eq(schedules.id, id)).returning().get()
   },
 
   delete(id: string): void {
     db.delete(schedules).where(eq(schedules.id, id)).run()
-  },
+  }
 }
 ```
 
@@ -191,11 +202,7 @@ export type ScheduleTodo = typeof scheduleTodos.$inferSelect
 
 export const scheduleTodoRepository = {
   findByScheduleId(scheduleId: string): ScheduleTodo[] {
-    return db
-      .select()
-      .from(scheduleTodos)
-      .where(eq(scheduleTodos.scheduleId, scheduleId))
-      .all()
+    return db.select().from(scheduleTodos).where(eq(scheduleTodos.scheduleId, scheduleId)).all()
   },
 
   findTodosByScheduleId(scheduleId: string) {
@@ -210,22 +217,14 @@ export const scheduleTodoRepository = {
 
   link(scheduleId: string, todoId: string): void {
     // INSERT OR IGNORE — 멱등성
-    db.insert(scheduleTodos)
-      .values({ scheduleId, todoId })
-      .onConflictDoNothing()
-      .run()
+    db.insert(scheduleTodos).values({ scheduleId, todoId }).onConflictDoNothing().run()
   },
 
   unlink(scheduleId: string, todoId: string): void {
     db.delete(scheduleTodos)
-      .where(
-        and(
-          eq(scheduleTodos.scheduleId, scheduleId),
-          eq(scheduleTodos.todoId, todoId)
-        )
-      )
+      .where(and(eq(scheduleTodos.scheduleId, scheduleId), eq(scheduleTodos.todoId, todoId)))
       .run()
-  },
+  }
 }
 ```
 
@@ -304,7 +303,7 @@ function toScheduleItem(row: Schedule): ScheduleItem {
     color: row.color,
     priority: row.priority,
     createdAt: new Date(row.createdAt as unknown as number),
-    updatedAt: new Date(row.updatedAt as unknown as number),
+    updatedAt: new Date(row.updatedAt as unknown as number)
   }
 }
 
@@ -364,7 +363,7 @@ export const scheduleService = {
       color: data.color ?? null,
       priority: data.priority ?? 'medium',
       createdAt: now,
-      updatedAt: now,
+      updatedAt: now
     })
 
     return toScheduleItem(row)
@@ -388,7 +387,15 @@ export const scheduleService = {
 
     // allDay 변경 시 시간 자동 보정
     if (allDay && data.allDay !== undefined) {
-      finalStartAt = new Date(startAt.getFullYear(), startAt.getMonth(), startAt.getDate(), 0, 0, 0, 0)
+      finalStartAt = new Date(
+        startAt.getFullYear(),
+        startAt.getMonth(),
+        startAt.getDate(),
+        0,
+        0,
+        0,
+        0
+      )
       finalEndAt = new Date(endAt.getFullYear(), endAt.getMonth(), endAt.getDate(), 23, 59, 59, 999)
     }
 
@@ -401,7 +408,7 @@ export const scheduleService = {
       ...(finalEndAt && { endAt: finalEndAt }),
       ...(data.color !== undefined && { color: data.color }),
       ...(data.priority !== undefined && { priority: data.priority }),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')
@@ -425,7 +432,7 @@ export const scheduleService = {
     const row = scheduleRepository.update(scheduleId, {
       startAt,
       endAt,
-      updatedAt: new Date(),
+      updatedAt: new Date()
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')
@@ -452,7 +459,7 @@ export const scheduleService = {
 
     const todoRows = scheduleTodoRepository.findTodosByScheduleId(scheduleId)
     return todoRows.map(toTodoItem)
-  },
+  }
 }
 
 // schedule 전용 todoItem mapper (todoService의 toTodoItem이 private이므로 별도 정의)
@@ -474,7 +481,7 @@ function toTodoItem(todo: Todo): TodoItem {
     updatedAt: new Date(todo.updatedAt as unknown as number),
     doneAt: todo.doneAt ? new Date(todo.doneAt as unknown as number) : null,
     dueDate: todo.dueDate ? new Date(todo.dueDate as unknown as number) : null,
-    startDate: todo.startDate ? new Date(todo.startDate as unknown as number) : null,
+    startDate: todo.startDate ? new Date(todo.startDate as unknown as number) : null
   }
 }
 ```
@@ -491,7 +498,11 @@ function toTodoItem(todo: Todo): TodoItem {
 import { ipcMain, type IpcMainInvokeEvent } from 'electron'
 import { handle } from '../lib/handle'
 import { scheduleService } from '../services/schedule'
-import type { CreateScheduleData, UpdateScheduleData, ScheduleDateRange } from '../services/schedule'
+import type {
+  CreateScheduleData,
+  UpdateScheduleData,
+  ScheduleDateRange
+} from '../services/schedule'
 
 export function registerScheduleHandlers(): void {
   ipcMain.handle(
@@ -500,10 +511,8 @@ export function registerScheduleHandlers(): void {
       handle(() => scheduleService.findByWorkspace(workspaceId, range))
   )
 
-  ipcMain.handle(
-    'schedule:findById',
-    (_: IpcMainInvokeEvent, scheduleId: string) =>
-      handle(() => scheduleService.findById(scheduleId))
+  ipcMain.handle('schedule:findById', (_: IpcMainInvokeEvent, scheduleId: string) =>
+    handle(() => scheduleService.findById(scheduleId))
   )
 
   ipcMain.handle(
@@ -518,10 +527,8 @@ export function registerScheduleHandlers(): void {
       handle(() => scheduleService.update(scheduleId, data))
   )
 
-  ipcMain.handle(
-    'schedule:remove',
-    (_: IpcMainInvokeEvent, scheduleId: string) =>
-      handle(() => scheduleService.remove(scheduleId))
+  ipcMain.handle('schedule:remove', (_: IpcMainInvokeEvent, scheduleId: string) =>
+    handle(() => scheduleService.remove(scheduleId))
   )
 
   ipcMain.handle(
@@ -530,10 +537,8 @@ export function registerScheduleHandlers(): void {
       handle(() => scheduleService.move(scheduleId, startAt, endAt))
   )
 
-  ipcMain.handle(
-    'schedule:linkTodo',
-    (_: IpcMainInvokeEvent, scheduleId: string, todoId: string) =>
-      handle(() => scheduleService.linkTodo(scheduleId, todoId))
+  ipcMain.handle('schedule:linkTodo', (_: IpcMainInvokeEvent, scheduleId: string, todoId: string) =>
+    handle(() => scheduleService.linkTodo(scheduleId, todoId))
   )
 
   ipcMain.handle(
@@ -542,10 +547,8 @@ export function registerScheduleHandlers(): void {
       handle(() => scheduleService.unlinkTodo(scheduleId, todoId))
   )
 
-  ipcMain.handle(
-    'schedule:getLinkedTodos',
-    (_: IpcMainInvokeEvent, scheduleId: string) =>
-      handle(() => scheduleService.getLinkedTodos(scheduleId))
+  ipcMain.handle('schedule:getLinkedTodos', (_: IpcMainInvokeEvent, scheduleId: string) =>
+    handle(() => scheduleService.getLinkedTodos(scheduleId))
   )
 }
 ```
@@ -728,7 +731,7 @@ import {
   useQuery,
   useQueryClient,
   type UseMutationResult,
-  type UseQueryResult,
+  type UseQueryResult
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
@@ -736,7 +739,7 @@ import type {
   ScheduleItem,
   CreateScheduleData,
   UpdateScheduleData,
-  ScheduleDateRange,
+  ScheduleDateRange
 } from './types'
 import type { TodoItem } from '@entities/todo'
 
@@ -754,7 +757,7 @@ export function useSchedulesByWorkspace(
       'workspace',
       workspaceId,
       range.start.toISOString(),
-      range.end.toISOString(),
+      range.end.toISOString()
     ],
     queryFn: async (): Promise<ScheduleItem[]> => {
       const res: IpcResponse<ScheduleItem[]> = await window.api.schedule.findByWorkspace(
@@ -764,13 +767,11 @@ export function useSchedulesByWorkspace(
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId
   })
 }
 
-export function useScheduleById(
-  scheduleId: string | undefined
-): UseQueryResult<ScheduleItem> {
+export function useScheduleById(scheduleId: string | undefined): UseQueryResult<ScheduleItem> {
   return useQuery({
     queryKey: [SCHEDULE_KEY, 'detail', scheduleId],
     queryFn: async (): Promise<ScheduleItem> => {
@@ -778,13 +779,11 @@ export function useScheduleById(
       if (!res.success) throwIpcError(res)
       return res.data!
     },
-    enabled: !!scheduleId,
+    enabled: !!scheduleId
   })
 }
 
-export function useLinkedTodos(
-  scheduleId: string | undefined
-): UseQueryResult<TodoItem[]> {
+export function useLinkedTodos(scheduleId: string | undefined): UseQueryResult<TodoItem[]> {
   return useQuery({
     queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
     queryFn: async () => {
@@ -792,7 +791,7 @@ export function useLinkedTodos(
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
-    enabled: !!scheduleId,
+    enabled: !!scheduleId
   })
 }
 
@@ -812,9 +811,9 @@ export function useCreateSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -832,9 +831,9 @@ export function useUpdateSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -851,9 +850,9 @@ export function useRemoveSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -871,9 +870,9 @@ export function useMoveSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -890,9 +889,9 @@ export function useLinkTodo(): UseMutationResult<
     },
     onSuccess: (_, { scheduleId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
+        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId]
       })
-    },
+    }
   })
 }
 
@@ -909,9 +908,9 @@ export function useUnlinkTodo(): UseMutationResult<
     },
     onSuccess: (_, { scheduleId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
+        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId]
       })
-    },
+    }
   })
 }
 ```
@@ -919,7 +918,13 @@ export function useUnlinkTodo(): UseMutationResult<
 ### `index.ts`
 
 ```typescript
-export type { ScheduleItem, CreateScheduleData, UpdateScheduleData, ScheduleDateRange, SchedulePriority } from './model/types'
+export type {
+  ScheduleItem,
+  CreateScheduleData,
+  UpdateScheduleData,
+  ScheduleDateRange,
+  SchedulePriority
+} from './model/types'
 export {
   useSchedulesByWorkspace,
   useScheduleById,
@@ -929,7 +934,7 @@ export {
   useRemoveSchedule,
   useMoveSchedule,
   useLinkTodo,
-  useUnlinkTodo,
+  useUnlinkTodo
 } from './model/queries'
 ```
 
@@ -978,13 +983,13 @@ export const SCHEDULE_COLOR_PRESETS = [
   { label: '초록', value: '#22c55e' },
   { label: '파랑', value: '#3b82f6' },
   { label: '보라', value: '#a855f7' },
-  { label: '분홍', value: '#ec4899' },
+  { label: '분홍', value: '#ec4899' }
 ] as const
 
 export const PRIORITY_COLORS: Record<string, string> = {
   high: '#ef4444',
   medium: '#3b82f6',
-  low: '#6b7280',
+  low: '#6b7280'
 }
 
 export function getScheduleColor(schedule: ScheduleItem): string {
@@ -998,9 +1003,18 @@ export function getScheduleColor(schedule: ScheduleItem): string {
 
 ```typescript
 import {
-  addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
-  startOfDay, endOfDay, isSameDay, isSameMonth, differenceInMinutes,
-  differenceInDays, getDay,
+  addDays,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  startOfDay,
+  endOfDay,
+  isSameDay,
+  isSameMonth,
+  differenceInMinutes,
+  differenceInDays,
+  getDay
 } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 
@@ -1018,22 +1032,22 @@ export interface TimeSlot {
 }
 
 export interface ScheduleBarLayout {
-  startCol: number  // 0~6 (일~토)
-  span: number      // 차지하는 열 수 (1~7)
+  startCol: number // 0~6 (일~토)
+  span: number // 차지하는 열 수 (1~7)
 }
 
 export interface LayoutedSchedule {
   schedule: ScheduleItem
-  column: number        // 0-based 수평 위치
-  totalColumns: number  // 동시 겹침 최대 수
+  column: number // 0-based 수평 위치
+  totalColumns: number // 동시 겹침 최대 수
 }
 
 export interface WeekBarSegment {
-  weekIndex: number       // 몇 번째 주 row인지
-  startCol: number        // 해당 주 내 시작 열 (0~6)
-  span: number            // 해당 주 내 차지하는 열 수
-  isStart: boolean        // 이 세그먼트가 일정의 진짜 시작인지
-  isEnd: boolean          // 이 세그먼트가 일정의 진짜 끝인지
+  weekIndex: number // 몇 번째 주 row인지
+  startCol: number // 해당 주 내 시작 열 (0~6)
+  span: number // 해당 주 내 차지하는 열 수
+  isStart: boolean // 이 세그먼트가 일정의 진짜 시작인지
+  isEnd: boolean // 이 세그먼트가 일정의 진짜 끝인지
 }
 
 // === 월간 그리드 ===
@@ -1054,7 +1068,7 @@ export function getMonthGrid(year: number, month: number): MonthGridDay[][] {
       week.push({
         date: new Date(current),
         isCurrentMonth: current.getMonth() === month,
-        isToday: isSameDay(current, today),
+        isToday: isSameDay(current, today)
       })
       current = addDays(current, 1)
     }
@@ -1078,7 +1092,7 @@ export function getWeekDates(date: Date): Date[] {
 export function getTimeSlots(): TimeSlot[] {
   return Array.from({ length: 24 }, (_, i) => ({
     hour: i,
-    label: `${String(i).padStart(2, '0')}:00`,
+    label: `${String(i).padStart(2, '0')}:00`
   }))
 }
 
@@ -1143,7 +1157,7 @@ export function splitBarByWeeks(
       startCol: getDay(effectiveStart),
       span: differenceInDays(startOfDay(effectiveEnd), startOfDay(effectiveStart)) + 1,
       isStart: isSameDay(effectiveStart, schedule.startAt),
-      isEnd: isSameDay(effectiveEnd, schedule.endAt),
+      isEnd: isSameDay(effectiveEnd, schedule.endAt)
     })
   }
 
@@ -1153,15 +1167,11 @@ export function splitBarByWeeks(
 // === 겹침 레이아웃 (일간/주간) ===
 
 /** 겹치는 일정 수평 분할 레이아웃 */
-export function layoutOverlappingSchedules(
-  schedules: ScheduleItem[]
-): LayoutedSchedule[] {
+export function layoutOverlappingSchedules(schedules: ScheduleItem[]): LayoutedSchedule[] {
   if (schedules.length === 0) return []
 
   // startAt ASC 정렬
-  const sorted = [...schedules].sort(
-    (a, b) => a.startAt.getTime() - b.startAt.getTime()
-  )
+  const sorted = [...schedules].sort((a, b) => a.startAt.getTime() - b.startAt.getTime())
 
   const result: LayoutedSchedule[] = []
   const clusters: { items: { schedule: ScheduleItem; column: number }[]; maxEnd: Date }[] = []
@@ -1185,7 +1195,7 @@ export function layoutOverlappingSchedules(
     if (!placed) {
       clusters.push({
         items: [{ schedule, column: 0 }],
-        maxEnd: schedule.endAt,
+        maxEnd: schedule.endAt
       })
     }
   }
@@ -1197,7 +1207,7 @@ export function layoutOverlappingSchedules(
       result.push({
         schedule: item.schedule,
         column: item.column,
-        totalColumns,
+        totalColumns
       })
     }
   }
@@ -1214,7 +1224,7 @@ export function moveScheduleByDays(
 ): { startAt: Date; endAt: Date } {
   return {
     startAt: addDays(schedule.startAt, daysDelta),
-    endAt: addDays(schedule.endAt, daysDelta),
+    endAt: addDays(schedule.endAt, daysDelta)
   }
 }
 
@@ -1227,7 +1237,7 @@ export function moveScheduleByMinutes(
   const msOffset = snapped * 60 * 1000
   return {
     startAt: new Date(schedule.startAt.getTime() + msOffset),
-    endAt: new Date(schedule.endAt.getTime() + msOffset),
+    endAt: new Date(schedule.endAt.getTime() + msOffset)
   }
 }
 ```
@@ -1237,9 +1247,19 @@ export function moveScheduleByMinutes(
 ```typescript
 import { useState, useMemo } from 'react'
 import {
-  addMonths, subMonths, addWeeks, subWeeks, addDays, subDays,
-  startOfMonth, endOfMonth, startOfWeek, endOfWeek, startOfDay, endOfDay,
-  format,
+  addMonths,
+  subMonths,
+  addWeeks,
+  subWeeks,
+  addDays,
+  subDays,
+  startOfMonth,
+  endOfMonth,
+  startOfWeek,
+  endOfWeek,
+  startOfDay,
+  endOfDay,
+  format
 } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import type { ScheduleDateRange } from '@entities/schedule'
@@ -1248,7 +1268,7 @@ export type CalendarViewType = 'month' | 'week' | 'day'
 
 interface UseCalendarOptions {
   initialViewType?: CalendarViewType
-  initialDate?: string  // ISO string (tabSearchParams에서 복원)
+  initialDate?: string // ISO string (tabSearchParams에서 복원)
 }
 
 interface UseCalendarReturn {
@@ -1265,9 +1285,7 @@ interface UseCalendarReturn {
 }
 
 export function useCalendar(options?: UseCalendarOptions): UseCalendarReturn {
-  const [viewType, setViewType] = useState<CalendarViewType>(
-    options?.initialViewType ?? 'month'
-  )
+  const [viewType, setViewType] = useState<CalendarViewType>(options?.initialViewType ?? 'month')
   const [currentDate, setCurrentDate] = useState<Date>(
     options?.initialDate ? new Date(options.initialDate) : new Date()
   )
@@ -1334,7 +1352,7 @@ export function useCalendar(options?: UseCalendarOptions): UseCalendarReturn {
     goPrev,
     goNext,
     title,
-    dateRange,
+    dateRange
   }
 }
 ```
@@ -1578,15 +1596,16 @@ export function CalendarNavigation({ title, onPrev, onNext, onToday }: Props) {
 
 ### 9.1 월간 뷰 (MonthView)
 
-| 범위 | 셀 높이 | 일정 표시 | 최대 | 여러 날 |
-|------|---------|----------|------|---------|
-| < 400px | min-h-10 | ScheduleDot (색상 도트 size-1.5) | 3 | 없음 (도트만) |
-| 400~800px | min-h-20 | 제목 1줄 truncate text-[10px] | 3 + "+N개 더보기" | ScheduleBar |
-| >= 800px | min-h-24 | 시간+제목 text-[11px] | 4 + "+N개 더보기" | ScheduleBar |
+| 범위      | 셀 높이  | 일정 표시                        | 최대              | 여러 날       |
+| --------- | -------- | -------------------------------- | ----------------- | ------------- |
+| < 400px   | min-h-10 | ScheduleDot (색상 도트 size-1.5) | 3                 | 없음 (도트만) |
+| 400~800px | min-h-20 | 제목 1줄 truncate text-[10px]    | 3 + "+N개 더보기" | ScheduleBar   |
+| >= 800px  | min-h-24 | 시간+제목 text-[11px]            | 4 + "+N개 더보기" | ScheduleBar   |
 
 **소형 (< 400px) 전용 하단 목록**: `selectedDate` 있을 때 그리드 아래 해당 날짜 일정 목록 표시
 
 **MonthDayCell** 스타일:
+
 ```
 border-b border-r border-border p-1 overflow-hidden cursor-pointer relative
 !isCurrentMonth → bg-muted/30 text-muted-foreground
@@ -1597,41 +1616,45 @@ isOver (DnD) → bg-accent
 ```
 
 **DnD**: `@dnd-kit/core` — `useDraggable` + `useDroppable` (sortable 아님)
+
 - sensors: PointerSensor delay 200ms tolerance 5
 - onDragEnd: over.id (dateKey) → daysDelta 계산 → `moveScheduleByDays()` → `move` IPC
 
 **여러 날 바 렌더링 알고리즘**:
+
 1. `splitBarByWeeks()` → 주별 세그먼트
 2. 각 week-row 내 lane 배치 (위→아래 빈 lane 할당)
-3. absolute positioning: top = lane * (barHeight + gap), left/width = 열 기반 %
+3. absolute positioning: top = lane \* (barHeight + gap), left/width = 열 기반 %
 4. `isStart` → `rounded-l-sm`, `isEnd` → `rounded-r-sm`
 
 ### 9.2 주간 뷰 (WeekView)
 
-| 범위 | 처리 | 시간당 높이 | 시간 라벨 | 일정 블록 |
-|------|------|-----------|----------|----------|
-| < 400px | DayView 위임 + 상단 날짜 선택 바 | — | — | — |
-| 400~800px | 7열 타임라인 | 40px | w-10 text-[10px] | 제목만 text-[10px] |
-| >= 800px | 7열 타임라인 | 60px | w-14 text-xs | 제목+시간 text-xs |
+| 범위      | 처리                             | 시간당 높이 | 시간 라벨        | 일정 블록          |
+| --------- | -------------------------------- | ----------- | ---------------- | ------------------ |
+| < 400px   | DayView 위임 + 상단 날짜 선택 바 | —           | —                | —                  |
+| 400~800px | 7열 타임라인                     | 40px        | w-10 text-[10px] | 제목만 text-[10px] |
+| >= 800px  | 7열 타임라인                     | 60px        | w-14 text-xs     | 제목+시간 text-xs  |
 
 **구조**: 요일 헤더 → 종일 일정 영역 → TimeGrid (ScrollArea)
 
 **TimeGrid** (주간/일간 공용):
-- `ScrollArea` 감싸기, height = 24 * hourHeight
+
+- `ScrollArea` 감싸기, height = 24 \* hourHeight
 - 24개 시간 라벨 + 가로선
 - 초기 스크롤: 현재 시각 또는 08:00 위치
 - 빈 시간 클릭: Y좌표 → 시간 계산 (15분 스냅) → ScheduleFormDialog 열기
 
 **DnD**: `useDraggable` transform.y 직접 적용 (세로 이동)
+
 - onDragEnd: deltaY → minutesDelta (15분 스냅) → `moveScheduleByMinutes()` → `move` IPC
 
 ### 9.3 일간 뷰 (DayView)
 
-| 범위 | 시간당 높이 | 시간 라벨 | 일정 표시 |
-|------|-----------|----------|----------|
-| < 400px | 50px | w-8 text-[9px] | 제목만 |
-| 400~800px | 60px | w-10 text-[10px] | 제목 + 시간 |
-| >= 800px | 60px | w-14 text-xs | 제목 + 시간 + 설명 1줄 + 장소 |
+| 범위      | 시간당 높이 | 시간 라벨        | 일정 표시                     |
+| --------- | ----------- | ---------------- | ----------------------------- |
+| < 400px   | 50px        | w-8 text-[9px]   | 제목만                        |
+| 400~800px | 60px        | w-10 text-[10px] | 제목 + 시간                   |
+| >= 800px  | 60px        | w-14 text-xs     | 제목 + 시간 + 설명 1줄 + 장소 |
 
 **겹침 처리**: `layoutOverlappingSchedules()` → column/totalColumns → ScheduleBlock에 전달
 
@@ -1642,14 +1665,15 @@ isOver (DnD) → bg-accent
 ### ScheduleFormDialog (생성/수정 겸용)
 
 **Props:**
+
 ```typescript
 interface Props {
   workspaceId: string
-  trigger?: React.ReactNode       // 생성 모드
-  initialData?: ScheduleItem      // 수정 모드
-  defaultStartDate?: Date         // 빈 시간 클릭 시 사전 설정
+  trigger?: React.ReactNode // 생성 모드
+  initialData?: ScheduleItem // 수정 모드
+  defaultStartDate?: Date // 빈 시간 클릭 시 사전 설정
   defaultEndDate?: Date
-  open?: boolean                  // controlled
+  open?: boolean // controlled
   onOpenChange?: (open: boolean) => void
 }
 ```
@@ -1669,6 +1693,7 @@ interface Props {
 | 색상 | ColorPicker | — | 프리셋 8개 |
 
 **Zod 스키마**: title, description, location, allDay, priority, color (zod)
+
 - startDate/endDate/startHour/startMinute/endHour/endMinute는 별도 useState (CreateTodoDialog 패턴)
 
 ### DeleteScheduleDialog
@@ -1678,6 +1703,7 @@ interface Props {
 ### ScheduleDetailPopover
 
 Popover 기반 상세 보기:
+
 - 헤더: 색상 도트 + 제목
 - 상세: 날짜(CalendarIcon), 시간(Clock), 장소(MapPin), 설명(FileText)
 - LinkedTodoList (compact)
@@ -1686,10 +1712,12 @@ Popover 기반 상세 보기:
 ### LinkedTodoList + TodoLinkPopover
 
 **LinkedTodoList**: 연결된 Todo 목록 + 해제 + "할 일 연결" 버튼
+
 - compact=true: Popover 내부 (최대 3개)
 - compact=false: Dialog 내부 (전체)
 
 **TodoLinkPopover**: 검색 Input + Todo 목록 ScrollArea
+
 - `useTodosByWorkspace()` 전체 조회 → 클라이언트 필터링
 - 이미 연결된 Todo는 disabled + Check 아이콘
 
@@ -1712,14 +1740,14 @@ const CalendarPage = lazy(() => import('@pages/calendar'))
 
 ## 12. 기존 패턴과의 차이 요약
 
-| 항목 | 기존 | Schedule |
-|------|------|----------|
-| 복합 PK | 미사용 | `schedule_todos` 첫 도입 |
-| `date-fns` | `format` 1개 | 15+ 함수 추가 |
-| DnD | `useSortable` + `SortableContext` | `useDraggable` + `useDroppable` (셀 간 이동) |
-| Optimistic update | 미사용 | 동일 (미사용) |
-| workspaceId FK | notNull() | nullable (전역 일정) |
-| tabSearchParams | view, filter | viewType, currentDate |
+| 항목              | 기존                              | Schedule                                     |
+| ----------------- | --------------------------------- | -------------------------------------------- |
+| 복합 PK           | 미사용                            | `schedule_todos` 첫 도입                     |
+| `date-fns`        | `format` 1개                      | 15+ 함수 추가                                |
+| DnD               | `useSortable` + `SortableContext` | `useDraggable` + `useDroppable` (셀 간 이동) |
+| Optimistic update | 미사용                            | 동일 (미사용)                                |
+| workspaceId FK    | notNull()                         | nullable (전역 일정)                         |
+| tabSearchParams   | view, filter                      | viewType, currentDate                        |
 
 ---
 

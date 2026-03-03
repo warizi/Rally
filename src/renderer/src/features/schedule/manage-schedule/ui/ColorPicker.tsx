@@ -21,7 +21,7 @@ export function ColorPicker({ value, onChange }: Props): React.JSX.Element {
             className="size-7 rounded-md flex items-center justify-center border-2 transition-all"
             style={{
               backgroundColor: color ?? 'transparent',
-              borderColor: value === color ? 'hsl(var(--foreground))' : 'transparent',
+              borderColor: value === color ? 'hsl(var(--foreground))' : 'transparent'
             }}
           >
             {value === color && (

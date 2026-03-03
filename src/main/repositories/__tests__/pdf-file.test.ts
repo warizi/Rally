@@ -50,7 +50,10 @@ describe('findByWorkspaceId', () => {
         updatedAt: new Date()
       })
       .run()
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'p1' })).run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'p1' }))
+      .run()
     testDb
       .insert(schema.pdfFiles)
       .values(makePdf({ id: 'p2', workspaceId: 'ws-2', relativePath: 'other.pdf' }))
@@ -63,7 +66,10 @@ describe('findByWorkspaceId', () => {
 
 describe('findById', () => {
   it('존재하는 id → PdfFile 반환', () => {
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'x1' })).run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'x1' }))
+      .run()
     expect(pdfFileRepository.findById('x1')).toBeDefined()
   })
   it('없는 id → undefined', () => {
@@ -141,7 +147,10 @@ describe('update', () => {
 
 describe('deleteOrphans', () => {
   it('existingPaths에 없는 pdf 삭제', () => {
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'o1', relativePath: 'keep.pdf' })).run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'o1', relativePath: 'keep.pdf' }))
+      .run()
     testDb
       .insert(schema.pdfFiles)
       .values(makePdf({ id: 'o2', relativePath: 'orphan.pdf' }))
@@ -152,15 +161,27 @@ describe('deleteOrphans', () => {
   })
 
   it('existingPaths 빈 배열 → 전체 삭제', () => {
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'o3', relativePath: 'a.pdf' })).run()
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'o4', relativePath: 'b.pdf' })).run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'o3', relativePath: 'a.pdf' }))
+      .run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'o4', relativePath: 'b.pdf' }))
+      .run()
     pdfFileRepository.deleteOrphans(WS_ID, [])
     expect(pdfFileRepository.findByWorkspaceId(WS_ID)).toHaveLength(0)
   })
 
   it('모두 existingPaths에 있으면 삭제 없음', () => {
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'o5', relativePath: 'x.pdf' })).run()
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'o6', relativePath: 'y.pdf' })).run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'o5', relativePath: 'x.pdf' }))
+      .run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'o6', relativePath: 'y.pdf' }))
+      .run()
     pdfFileRepository.deleteOrphans(WS_ID, ['x.pdf', 'y.pdf'])
     expect(pdfFileRepository.findByWorkspaceId(WS_ID)).toHaveLength(2)
   })
@@ -241,7 +262,10 @@ describe('reindexSiblings', () => {
 
 describe('delete', () => {
   it('삭제 후 findById → undefined', () => {
-    testDb.insert(schema.pdfFiles).values(makePdf({ id: 'd1' })).run()
+    testDb
+      .insert(schema.pdfFiles)
+      .values(makePdf({ id: 'd1' }))
+      .run()
     pdfFileRepository.delete('d1')
     expect(pdfFileRepository.findById('d1')).toBeUndefined()
   })

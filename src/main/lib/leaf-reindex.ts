@@ -13,10 +13,7 @@ export interface LeafSibling {
 /**
  * 같은 폴더 내 모든 leaf siblings (note + csv) 조회, order 기준 정렬
  */
-export function getLeafSiblings(
-  workspaceId: string,
-  folderId: string | null
-): LeafSibling[] {
+export function getLeafSiblings(workspaceId: string, folderId: string | null): LeafSibling[] {
   const notes = noteRepository
     .findByWorkspaceId(workspaceId)
     .filter((n) => n.folderId === folderId)

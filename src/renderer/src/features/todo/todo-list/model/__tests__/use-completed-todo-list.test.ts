@@ -81,10 +81,9 @@ describe('useCompletedTodoList', () => {
       makeTodoItem({ id: 'high', priority: 'high', isDone: true }),
       makeTodoItem({ id: 'low', priority: 'low', isDone: true })
     ]
-    const { result, rerender } = renderHook(
-      ({ filter }) => useCompletedTodoList(todos, filter),
-      { initialProps: { filter: DEFAULT_FILTER } }
-    )
+    const { result, rerender } = renderHook(({ filter }) => useCompletedTodoList(todos, filter), {
+      initialProps: { filter: DEFAULT_FILTER }
+    })
     expect(result.current.filteredCompleted).toHaveLength(2)
     rerender({ filter: { ...DEFAULT_FILTER, priority: 'high' } })
     expect(result.current.filteredCompleted).toHaveLength(1)

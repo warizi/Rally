@@ -5,6 +5,7 @@ import {
   FolderOpen,
   ImageIcon,
   LayoutDashboard,
+  Network,
   Sheet
 } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
@@ -19,6 +20,8 @@ export type TabType =
   | 'pdf'
   | 'image'
   | 'calendar'
+  | 'canvas'
+  | 'canvas-detail'
 
 export type TabIcon = TabType
 
@@ -31,7 +34,9 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   csv: Sheet,
   pdf: PdfIcon,
   image: ImageIcon,
-  calendar: Calendar
+  calendar: Calendar,
+  canvas: Network,
+  'canvas-detail': Network
 }
 
 // 정적 라우트
@@ -49,7 +54,9 @@ export const ROUTES = {
   PDF_DETAIL: '/folder/pdf/:pdfId',
   // Image 상세
   IMAGE_DETAIL: '/folder/image/:imageId',
-  CALENDAR: '/calendar'
+  CALENDAR: '/calendar',
+  CANVAS: '/canvas',
+  CANVAS_DETAIL: '/canvas/:canvasId'
 } as const
 
 export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES]
@@ -88,5 +95,11 @@ export const sidebar_items: SidebarItem[] = [
     tabType: 'calendar',
     pathname: ROUTES.CALENDAR,
     icon: TAB_ICON['calendar']
+  },
+  {
+    title: '캔버스',
+    tabType: 'canvas',
+    pathname: ROUTES.CANVAS,
+    icon: TAB_ICON['canvas']
   }
 ]

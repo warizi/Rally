@@ -25,13 +25,13 @@
 
 ## 대상 엔티티
 
-| 엔티티 | DB 테이블 | TabType | Detail Route | 생성 방식 |
-|--------|----------|---------|-------------|----------|
-| Todo | `todos` | `todo-detail` | `/todo/:todoId` | CreateTodoDialog |
-| Schedule | `schedules` | `calendar` | `/calendar?scheduleId=:id` | ScheduleFormDialog |
-| Note | `notes` | `note` | `/folder/note/:noteId` | 폴더 트리 컨텍스트 메뉴 (다이얼로그 없음) |
-| PDF | `pdf_files` | `pdf` | `/folder/pdf/:pdfId` | 파일 선택기로 import (다이얼로그 없음) |
-| CSV | `csv_files` | `csv` | `/folder/csv/:csvId` | 폴더 트리 컨텍스트 메뉴 (다이얼로그 없음) |
+| 엔티티   | DB 테이블   | TabType       | Detail Route               | 생성 방식                                 |
+| -------- | ----------- | ------------- | -------------------------- | ----------------------------------------- |
+| Todo     | `todos`     | `todo-detail` | `/todo/:todoId`            | CreateTodoDialog                          |
+| Schedule | `schedules` | `calendar`    | `/calendar?scheduleId=:id` | ScheduleFormDialog                        |
+| Note     | `notes`     | `note`        | `/folder/note/:noteId`     | 폴더 트리 컨텍스트 메뉴 (다이얼로그 없음) |
+| PDF      | `pdf_files` | `pdf`         | `/folder/pdf/:pdfId`       | 파일 선택기로 import (다이얼로그 없음)    |
+| CSV      | `csv_files` | `csv`         | `/folder/csv/:csvId`       | 폴더 트리 컨텍스트 메뉴 (다이얼로그 없음) |
 
 ## 핵심 요구사항
 
@@ -141,14 +141,14 @@ type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv'
 
 FK cascade를 사용할 수 없으므로 (폴리모픽 참조), 엔티티 삭제 시 수동 정리 필요:
 
-| 엔티티 | 삭제 방식 | 링크 정리 전략 |
-|--------|----------|--------------|
-| Todo | hard delete (subtodo cascade) | 서비스에서 삭제 전 `removeAllLinks('todo', todoId)` 호출 |
-| Schedule | hard delete | 서비스에서 삭제 전 `removeAllLinks('schedule', scheduleId)` 호출 |
-| Note | disk + DB delete | 서비스에서 삭제 전 `removeAllLinks('note', noteId)` 호출 |
-| PDF | disk + DB delete | 서비스에서 삭제 전 `removeAllLinks('pdf', pdfId)` 호출 |
-| CSV | disk + DB delete | 서비스에서 삭제 전 `removeAllLinks('csv', csvId)` 호출 |
-| Workspace | cascade 전체 삭제 | **워크스페이스 삭제 시 bulk 정리** 필요 |
+| 엔티티    | 삭제 방식                     | 링크 정리 전략                                                   |
+| --------- | ----------------------------- | ---------------------------------------------------------------- |
+| Todo      | hard delete (subtodo cascade) | 서비스에서 삭제 전 `removeAllLinks('todo', todoId)` 호출         |
+| Schedule  | hard delete                   | 서비스에서 삭제 전 `removeAllLinks('schedule', scheduleId)` 호출 |
+| Note      | disk + DB delete              | 서비스에서 삭제 전 `removeAllLinks('note', noteId)` 호출         |
+| PDF       | disk + DB delete              | 서비스에서 삭제 전 `removeAllLinks('pdf', pdfId)` 호출           |
+| CSV       | disk + DB delete              | 서비스에서 삭제 전 `removeAllLinks('csv', csvId)` 호출           |
+| Workspace | cascade 전체 삭제             | **워크스페이스 삭제 시 bulk 정리** 필요                          |
 
 **Workspace 삭제 시**: workspace에 속한 모든 엔티티의 링크를 한번에 정리해야 한다.
 → `removeAllLinksByWorkspace(workspaceId)` 메서드 필요
@@ -156,6 +156,7 @@ FK cascade를 사용할 수 없으므로 (폴리모픽 참조), 엔티티 삭제
 ### EC-05: 파일 기반 엔티티의 외부 삭제
 
 Note/PDF/CSV는 파일 시스템 변경(외부 삭제)으로 DB와 불일치할 수 있다.
+
 - 파일 워커가 외부 삭제를 감지하면 DB 레코드 제거 → 이때 링크도 정리되어야 함
 - **폴더 삭제 시**: 하위 파일들의 folderId가 `SET NULL`되므로 파일 레코드는 유지됨 → 링크 유지
 
@@ -176,10 +177,16 @@ Note/PDF/CSV는 파일 시스템 변경(외부 삭제)으로 DB와 불일치할 
 ```typescript
 const LINK_TAB_CONFIG: Record<LinkableEntityType, (id: string) => TabOptions> = {
   todo: (id) => ({ type: 'todo-detail', pathname: `/todo/${id}`, title: '', icon: 'todo-detail' }),
-  schedule: (id) => ({ type: 'calendar', pathname: '/calendar', searchParams: { scheduleId: id }, title: '캘린더', icon: 'calendar' }),
+  schedule: (id) => ({
+    type: 'calendar',
+    pathname: '/calendar',
+    searchParams: { scheduleId: id },
+    title: '캘린더',
+    icon: 'calendar'
+  }),
   note: (id) => ({ type: 'note', pathname: `/folder/note/${id}`, title: '', icon: 'note' }),
   pdf: (id) => ({ type: 'pdf', pathname: `/folder/pdf/${id}`, title: '', icon: 'pdf' }),
-  csv: (id) => ({ type: 'csv', pathname: `/folder/csv/${id}`, title: '', icon: 'csv' }),
+  csv: (id) => ({ type: 'csv', pathname: `/folder/csv/${id}`, title: '', icon: 'csv' })
 }
 ```
 
@@ -191,8 +198,8 @@ const LINK_TAB_CONFIG: Record<LinkableEntityType, (id: string) => TabOptions> = 
 interface LinkedEntity {
   entityType: LinkableEntityType
   entityId: string
-  title: string        // 표시용 제목
-  createdAt: string    // 링크 생성일
+  title: string // 표시용 제목
+  createdAt: string // 링크 생성일
 }
 ```
 
@@ -210,15 +217,15 @@ interface LinkedEntity {
 
 ### 영향 없음 확인
 
-| 기존 기능 | 영향 | 이유 |
-|----------|------|------|
-| `schedule_todos` 테이블 | 없음 | 그대로 유지, 변경 없음 |
-| `scheduleTodoRepository` | 없음 | 코드 변경 없음 |
-| `scheduleService.linkTodo/unlinkTodo/getLinkedTodos` | 없음 | 코드 변경 없음 |
-| `schedule:linkTodo` IPC | 없음 | 등록 유지 |
-| `useLinkedTodos/useLinkTodo/useUnlinkTodo` hooks | 없음 | 코드 변경 없음 |
-| `LinkedTodoList`, `TodoLinkPopover` | 없음 | 미사용 상태이며 변경 없음 |
-| 캘린더 내 todo 표시 | 없음 | `todoToScheduleItem()` 로직 별개 |
+| 기존 기능                                            | 영향 | 이유                             |
+| ---------------------------------------------------- | ---- | -------------------------------- |
+| `schedule_todos` 테이블                              | 없음 | 그대로 유지, 변경 없음           |
+| `scheduleTodoRepository`                             | 없음 | 코드 변경 없음                   |
+| `scheduleService.linkTodo/unlinkTodo/getLinkedTodos` | 없음 | 코드 변경 없음                   |
+| `schedule:linkTodo` IPC                              | 없음 | 등록 유지                        |
+| `useLinkedTodos/useLinkTodo/useUnlinkTodo` hooks     | 없음 | 코드 변경 없음                   |
+| `LinkedTodoList`, `TodoLinkPopover`                  | 없음 | 미사용 상태이며 변경 없음        |
+| 캘린더 내 todo 표시                                  | 없음 | `todoToScheduleItem()` 로직 별개 |
 
 ### 주의: 두 시스템의 의미 차이
 
@@ -271,13 +278,13 @@ interface LinkedEntity {
 
 ## 위험 요소
 
-| 위험 | 영향도 | 대응 |
-|------|--------|------|
-| FK 없는 폴리모픽 참조 → 고아 레코드 | 중 | 조회 시 자동 정리 + 삭제 시 수동 정리 |
-| 5개 타입 통합 검색 UX | 중 | 타입별 탭 또는 필터로 분류 |
-| subtodo cascade 시 링크 누락 | 중 | 부모 삭제 시 하위 todo 링크도 재귀 정리 |
-| 외부 파일 삭제 시 고아 링크 | 하 | 조회 시 자동 필터링으로 대응 |
-| 성능 (다수 링크 조회) | 하 | 역방향 인덱스로 해결 |
+| 위험                                | 영향도 | 대응                                    |
+| ----------------------------------- | ------ | --------------------------------------- |
+| FK 없는 폴리모픽 참조 → 고아 레코드 | 중     | 조회 시 자동 정리 + 삭제 시 수동 정리   |
+| 5개 타입 통합 검색 UX               | 중     | 타입별 탭 또는 필터로 분류              |
+| subtodo cascade 시 링크 누락        | 중     | 부모 삭제 시 하위 todo 링크도 재귀 정리 |
+| 외부 파일 삭제 시 고아 링크         | 하     | 조회 시 자동 필터링으로 대응            |
+| 성능 (다수 링크 조회)               | 하     | 역방향 인덱스로 해결                    |
 
 ## 성공 기준
 

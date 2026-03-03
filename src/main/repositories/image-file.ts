@@ -18,7 +18,9 @@ export const imageFileRepository = {
     return db
       .select()
       .from(imageFiles)
-      .where(and(eq(imageFiles.workspaceId, workspaceId), eq(imageFiles.relativePath, relativePath)))
+      .where(
+        and(eq(imageFiles.workspaceId, workspaceId), eq(imageFiles.relativePath, relativePath))
+      )
       .get()
   },
 
@@ -30,14 +32,20 @@ export const imageFileRepository = {
     if (items.length === 0) return
     const CHUNK = 99
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(imageFiles).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(imageFiles)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
   update(
     id: string,
     data: Partial<
-      Pick<ImageFile, 'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'>
+      Pick<
+        ImageFile,
+        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+      >
     >
   ): ImageFile | undefined {
     return db.update(imageFiles).set(data).where(eq(imageFiles.id, id)).returning().get()
@@ -58,13 +66,17 @@ export const imageFileRepository = {
     if (orphanIds.length === 0) return
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(imageFiles).where(inArray(imageFiles.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(imageFiles)
+        .where(inArray(imageFiles.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
   bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
     db.delete(imageFiles)
-      .where(and(eq(imageFiles.workspaceId, workspaceId), like(imageFiles.relativePath, `${prefix}/%`)))
+      .where(
+        and(eq(imageFiles.workspaceId, workspaceId), like(imageFiles.relativePath, `${prefix}/%`))
+      )
       .run()
   },
 
@@ -93,6 +105,17 @@ export const imageFileRepository = {
         stmt.run(i, now, workspaceId, orderedIds[i])
       }
     })()
+  },
+
+  findByIds(ids: string[]): ImageFile[] {
+    if (ids.length === 0) return []
+    const CHUNK = 900
+    const results: ImageFile[] = []
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      results.push(...db.select().from(imageFiles).where(inArray(imageFiles.id, chunk)).all())
+    }
+    return results
   },
 
   delete(id: string): void {

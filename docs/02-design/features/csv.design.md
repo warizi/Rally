@@ -88,7 +88,7 @@ import { tabSessions } from './tab-session'
 import { tabSnapshots } from './tab-snapshot'
 import { folders } from './folder'
 import { notes } from './note'
-import { csvFiles } from './csv-file'            // 추가
+import { csvFiles } from './csv-file' // 추가
 import { todos } from './todo'
 import { appSettings } from './app-settings'
 
@@ -140,7 +140,10 @@ export const csvFileRepository = {
     if (items.length === 0) return
     const CHUNK = 99 // 10 columns × 99 = 990 < SQLite 999 limit
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(csvFiles).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(csvFiles)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
@@ -171,7 +174,9 @@ export const csvFileRepository = {
     if (orphanIds.length === 0) return
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(csvFiles).where(inArray(csvFiles.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(csvFiles)
+        .where(inArray(csvFiles.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
@@ -294,10 +299,7 @@ export interface LeafSibling {
 /**
  * 같은 폴더 내 모든 leaf siblings (note + csv) 조회, order 기준 정렬
  */
-export function getLeafSiblings(
-  workspaceId: string,
-  folderId: string | null
-): LeafSibling[] {
+export function getLeafSiblings(workspaceId: string, folderId: string | null): LeafSibling[] {
   const notes = noteRepository
     .findByWorkspaceId(workspaceId)
     .filter((n) => n.folderId === folderId)
@@ -840,7 +842,7 @@ export function registerCsvHandlers(): void {
 ### `src/main/index.ts` 수정
 
 ```typescript
-import { registerCsvHandlers } from './ipc/csv-file'  // 추가
+import { registerCsvHandlers } from './ipc/csv-file' // 추가
 
 // app.whenReady() 내부, registerNoteHandlers() 바로 아래:
 registerCsvHandlers()
@@ -941,9 +943,7 @@ for (const createEvent of csvCreates) {
     const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
     const existing = csvFileRepository.findByRelativePath(workspaceId, oldRel)
     if (existing) {
-      const newParentRel = newRel.includes('/')
-        ? newRel.split('/').slice(0, -1).join('/')
-        : null
+      const newParentRel = newRel.includes('/') ? newRel.split('/').slice(0, -1).join('/') : null
       const newFolder = newParentRel
         ? folderRepository.findByRelativePath(workspaceId, newParentRel)
         : null
@@ -972,9 +972,7 @@ for (const createEvent of csvCreates) {
       continue
     }
     const parentRel = rel.includes('/') ? rel.split('/').slice(0, -1).join('/') : null
-    const folder = parentRel
-      ? folderRepository.findByRelativePath(workspaceId, parentRel)
-      : null
+    const folder = parentRel ? folderRepository.findByRelativePath(workspaceId, parentRel) : null
     const now = new Date()
     csvFileRepository.create({
       id: nanoid(),
@@ -1132,21 +1130,13 @@ interface CsvAPI {
     folderId: string | null,
     name: string
   ) => Promise<IpcResponse<CsvFileNode>>
-  rename: (
-    workspaceId: string,
-    csvId: string,
-    newName: string
-  ) => Promise<IpcResponse<CsvFileNode>>
+  rename: (workspaceId: string, csvId: string, newName: string) => Promise<IpcResponse<CsvFileNode>>
   remove: (workspaceId: string, csvId: string) => Promise<IpcResponse<void>>
   readContent: (
     workspaceId: string,
     csvId: string
   ) => Promise<IpcResponse<{ content: string; encoding: string }>>
-  writeContent: (
-    workspaceId: string,
-    csvId: string,
-    content: string
-  ) => Promise<IpcResponse<void>>
+  writeContent: (workspaceId: string, csvId: string, content: string) => Promise<IpcResponse<void>>
   move: (
     workspaceId: string,
     csvId: string,
@@ -1165,7 +1155,7 @@ interface CsvAPI {
 interface API {
   note: NoteAPI
   folder: FolderAPI
-  csv: CsvAPI          // 추가
+  csv: CsvAPI // 추가
   tabSession: TabSessionAPI
   tabSnapshot: TabSnapshotAPI
   workspace: WorkspaceAPI
@@ -1259,11 +1249,7 @@ export function useCsvWatcher(): void {
     const unsub = window.api.csv.onChanged((workspaceId: string, changedRelPaths: string[]) => {
       queryClient.invalidateQueries({ queryKey: ['csv', 'workspace', workspaceId] })
 
-      const csvFiles = queryClient.getQueryData<CsvFileNode[]>([
-        'csv',
-        'workspace',
-        workspaceId
-      ])
+      const csvFiles = queryClient.getQueryData<CsvFileNode[]>(['csv', 'workspace', workspaceId])
       if (csvFiles && changedRelPaths.length > 0) {
         csvFiles
           .filter((c) => changedRelPaths.includes(c.relativePath) && !isOwnWrite(c.id))
@@ -1318,11 +1304,7 @@ export function useCreateCsv(): UseMutationResult<
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ workspaceId, folderId, name }) => {
-      const res: IpcResponse<CsvFileNode> = await window.api.csv.create(
-        workspaceId,
-        folderId,
-        name
-      )
+      const res: IpcResponse<CsvFileNode> = await window.api.csv.create(workspaceId, folderId, name)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -1340,11 +1322,7 @@ export function useRenameCsv(): UseMutationResult<
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ workspaceId, csvId, newName }) => {
-      const res: IpcResponse<CsvFileNode> = await window.api.csv.rename(
-        workspaceId,
-        csvId,
-        newName
-      )
+      const res: IpcResponse<CsvFileNode> = await window.api.csv.rename(workspaceId, csvId, newName)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -1399,19 +1377,18 @@ export function useWriteCsvContent(): UseMutationResult<
       markAsOwnWrite(csvId)
     },
     mutationFn: async ({ workspaceId, csvId, content }) => {
-      const res: IpcResponse<void> = await window.api.csv.writeContent(
-        workspaceId,
-        csvId,
-        content
-      )
+      const res: IpcResponse<void> = await window.api.csv.writeContent(workspaceId, csvId, content)
       if (!res.success) throwIpcError(res)
     },
     onSuccess: (_, { csvId, content }) => {
       // content cache를 직접 업데이트 (refetch 불필요)
-      queryClient.setQueryData([CSV_KEY, 'content', csvId], (prev: { content: string; encoding: string } | undefined) => ({
-        content,
-        encoding: prev?.encoding ?? 'UTF-8'
-      }))
+      queryClient.setQueryData(
+        [CSV_KEY, 'content', csvId],
+        (prev: { content: string; encoding: string } | undefined) => ({
+          content,
+          encoding: prev?.encoding ?? 'UTF-8'
+        })
+      )
     }
   })
 }
@@ -1596,7 +1573,9 @@ export function buildWorkspaceTree(
   notes: NoteNode[],
   csvFiles: CsvFileNode[]
 ): WorkspaceTreeNode[] {
-  function convertNote(note: NoteNode): NoteTreeNode { /* 기존 동일 */ }
+  function convertNote(note: NoteNode): NoteTreeNode {
+    /* 기존 동일 */
+  }
 
   function convertCsv(csv: CsvFileNode): CsvTreeNode {
     return {
@@ -1619,8 +1598,9 @@ export function buildWorkspaceTree(
     // Note + CSV 혼합 정렬
     const childNotes = notes.filter((n) => n.folderId === folder.id).map(convertNote)
     const childCsvs = csvFiles.filter((c) => c.folderId === folder.id).map(convertCsv)
-    const leafChildren = [...childNotes, ...childCsvs]
-      .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
+    const leafChildren = [...childNotes, ...childCsvs].sort(
+      (a, b) => a.order - b.order || a.name.localeCompare(b.name)
+    )
 
     return {
       kind: 'folder',
@@ -1864,7 +1844,7 @@ export interface CsvEditorState {
   headers: string[]
   rows: string[][]
   isDirty: boolean
-  modifiedCells: Set<string>  // key: `${rowIdx}-${colIdx}`
+  modifiedCells: Set<string> // key: `${rowIdx}-${colIdx}`
 }
 ```
 
@@ -1918,9 +1898,10 @@ import { useState, useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { CSV_EXTERNAL_CHANGED_EVENT } from '@entities/csv-file/model/use-csv-watcher'
 
-export function useCsvExternalSync(
-  csvId: string
-): { editorKey: number; latestContent: string | null } {
+export function useCsvExternalSync(csvId: string): {
+  editorKey: number
+  latestContent: string | null
+} {
   const [editorKey, setEditorKey] = useState(0)
   const [latestContent, setLatestContent] = useState<string | null>(null)
   const queryClient = useQueryClient()
@@ -1954,11 +1935,7 @@ import { useWriteCsvContent } from '@entities/csv-file'
 import { CsvHistory } from './csv-history'
 import type { CsvCommand, CsvEditorState } from './types'
 
-export function useCsvEditor(
-  workspaceId: string,
-  csvId: string,
-  initialContent: string
-) {
+export function useCsvEditor(workspaceId: string, csvId: string, initialContent: string) {
   const historyRef = useRef(new CsvHistory())
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const { mutate: writeCsvContent } = useWriteCsvContent()
@@ -2078,11 +2055,13 @@ function applyCommand(
         next.splice(cmd.index, 0, cmd.name)
         return next
       })
-      setRows((prev) => prev.map((r) => {
-        const next = [...r]
-        next.splice(cmd.index, 0, '')
-        return next
-      }))
+      setRows((prev) =>
+        prev.map((r) => {
+          const next = [...r]
+          next.splice(cmd.index, 0, '')
+          return next
+        })
+      )
       setModifiedCells((prev) => new Set(prev).add('structure'))
       break
     case 'deleteColumn':
@@ -2113,43 +2092,69 @@ function reverseCommand(
     case 'editCell':
       applyCommand(
         { ...cmd, newValue: cmd.oldValue, oldValue: cmd.newValue },
-        headers, rows, setHeaders, setRows, setModifiedCells
+        headers,
+        rows,
+        setHeaders,
+        setRows,
+        setModifiedCells
       )
       break
     case 'addRow':
       applyCommand(
         { type: 'deleteRow', index: cmd.index, row: cmd.row },
-        headers, rows, setHeaders, setRows, setModifiedCells
+        headers,
+        rows,
+        setHeaders,
+        setRows,
+        setModifiedCells
       )
       break
     case 'deleteRow':
       applyCommand(
         { type: 'addRow', index: cmd.index, row: cmd.row },
-        headers, rows, setHeaders, setRows, setModifiedCells
+        headers,
+        rows,
+        setHeaders,
+        setRows,
+        setModifiedCells
       )
       break
     case 'addColumn':
       applyCommand(
         { type: 'deleteColumn', index: cmd.index, name: cmd.name, columnData: [] },
-        headers, rows, setHeaders, setRows, setModifiedCells
+        headers,
+        rows,
+        setHeaders,
+        setRows,
+        setModifiedCells
       )
       break
     case 'deleteColumn':
       applyCommand(
         { type: 'addColumn', index: cmd.index, name: cmd.name },
-        headers, rows, setHeaders, setRows, setModifiedCells
+        headers,
+        rows,
+        setHeaders,
+        setRows,
+        setModifiedCells
       )
       // 삭제된 열 데이터 복원
-      setRows((prev) => prev.map((r, rowIdx) => {
-        const next = [...r]
-        next.splice(cmd.index, 0, cmd.columnData[rowIdx] ?? '')
-        return next
-      }))
+      setRows((prev) =>
+        prev.map((r, rowIdx) => {
+          const next = [...r]
+          next.splice(cmd.index, 0, cmd.columnData[rowIdx] ?? '')
+          return next
+        })
+      )
       break
     case 'renameColumn':
       applyCommand(
         { ...cmd, oldName: cmd.newName, newName: cmd.oldName },
-        headers, rows, setHeaders, setRows, setModifiedCells
+        headers,
+        rows,
+        setHeaders,
+        setRows,
+        setModifiedCells
       )
       break
   }
@@ -2724,55 +2729,55 @@ export { CsvViewer } from './ui/CsvViewer'
 
 ### 신규 파일 (26개)
 
-| # | 파일 | 설명 |
-|---|------|------|
-| 1 | `src/main/db/schema/csv-file.ts` | Drizzle 스키마 |
-| 2 | `src/main/repositories/csv-file.ts` | CRUD 리포지토리 |
-| 3 | `src/main/services/csv-file.ts` | 비즈니스 로직 |
-| 4 | `src/main/ipc/csv-file.ts` | IPC 핸들러 |
-| 5 | `src/main/lib/leaf-reindex.ts` | 혼합 reindex 유틸 |
-| 6 | `src/renderer/src/entities/csv-file/model/types.ts` | 타입 |
-| 7 | `src/renderer/src/entities/csv-file/model/own-write-tracker.ts` | own-write 추적 |
-| 8 | `src/renderer/src/entities/csv-file/model/use-csv-watcher.ts` | 외부 변경 구독 |
-| 9 | `src/renderer/src/entities/csv-file/api/queries.ts` | React Query hooks |
-| 10 | `src/renderer/src/entities/csv-file/index.ts` | barrel export |
-| 11 | `src/renderer/src/features/folder/manage-folder/ui/CsvNodeRenderer.tsx` | 트리 노드 |
-| 12 | `src/renderer/src/features/folder/manage-folder/ui/CsvContextMenu.tsx` | 컨텍스트 메뉴 |
-| 13 | `src/renderer/src/features/csv-viewer/model/types.ts` | 에디터 타입 |
-| 14 | `src/renderer/src/features/csv-viewer/model/csv-history.ts` | Undo/Redo |
-| 15 | `src/renderer/src/features/csv-viewer/model/use-csv-editor.ts` | 핵심 에디터 훅 |
-| 16 | `src/renderer/src/features/csv-viewer/model/use-csv-external-sync.ts` | 외부 동기화 |
-| 17 | `src/renderer/src/features/csv-viewer/ui/CsvViewer.tsx` | 메인 뷰어 |
-| 18 | `src/renderer/src/features/csv-viewer/ui/CsvTable.tsx` | 테이블 + 가상 스크롤 |
-| 19 | `src/renderer/src/features/csv-viewer/ui/CsvCell.tsx` | 인라인 셀 편집 |
-| 20 | `src/renderer/src/features/csv-viewer/ui/CsvColumnHeader.tsx` | 컬럼 헤더 |
-| 21 | `src/renderer/src/features/csv-viewer/ui/CsvToolbar.tsx` | 툴바 |
-| 22 | `src/renderer/src/features/csv-viewer/ui/CsvSearchBar.tsx` | 검색 바 |
-| 23 | `src/renderer/src/features/csv-viewer/index.ts` | barrel export |
-| 24 | `src/renderer/src/pages/csv/ui/CsvPage.tsx` | CSV 페이지 |
-| 25 | `src/renderer/src/pages/csv/index.ts` | barrel export |
-| 26 | DB migration 파일 | `db:generate` 자동 생성 |
+| #   | 파일                                                                    | 설명                    |
+| --- | ----------------------------------------------------------------------- | ----------------------- |
+| 1   | `src/main/db/schema/csv-file.ts`                                        | Drizzle 스키마          |
+| 2   | `src/main/repositories/csv-file.ts`                                     | CRUD 리포지토리         |
+| 3   | `src/main/services/csv-file.ts`                                         | 비즈니스 로직           |
+| 4   | `src/main/ipc/csv-file.ts`                                              | IPC 핸들러              |
+| 5   | `src/main/lib/leaf-reindex.ts`                                          | 혼합 reindex 유틸       |
+| 6   | `src/renderer/src/entities/csv-file/model/types.ts`                     | 타입                    |
+| 7   | `src/renderer/src/entities/csv-file/model/own-write-tracker.ts`         | own-write 추적          |
+| 8   | `src/renderer/src/entities/csv-file/model/use-csv-watcher.ts`           | 외부 변경 구독          |
+| 9   | `src/renderer/src/entities/csv-file/api/queries.ts`                     | React Query hooks       |
+| 10  | `src/renderer/src/entities/csv-file/index.ts`                           | barrel export           |
+| 11  | `src/renderer/src/features/folder/manage-folder/ui/CsvNodeRenderer.tsx` | 트리 노드               |
+| 12  | `src/renderer/src/features/folder/manage-folder/ui/CsvContextMenu.tsx`  | 컨텍스트 메뉴           |
+| 13  | `src/renderer/src/features/csv-viewer/model/types.ts`                   | 에디터 타입             |
+| 14  | `src/renderer/src/features/csv-viewer/model/csv-history.ts`             | Undo/Redo               |
+| 15  | `src/renderer/src/features/csv-viewer/model/use-csv-editor.ts`          | 핵심 에디터 훅          |
+| 16  | `src/renderer/src/features/csv-viewer/model/use-csv-external-sync.ts`   | 외부 동기화             |
+| 17  | `src/renderer/src/features/csv-viewer/ui/CsvViewer.tsx`                 | 메인 뷰어               |
+| 18  | `src/renderer/src/features/csv-viewer/ui/CsvTable.tsx`                  | 테이블 + 가상 스크롤    |
+| 19  | `src/renderer/src/features/csv-viewer/ui/CsvCell.tsx`                   | 인라인 셀 편집          |
+| 20  | `src/renderer/src/features/csv-viewer/ui/CsvColumnHeader.tsx`           | 컬럼 헤더               |
+| 21  | `src/renderer/src/features/csv-viewer/ui/CsvToolbar.tsx`                | 툴바                    |
+| 22  | `src/renderer/src/features/csv-viewer/ui/CsvSearchBar.tsx`              | 검색 바                 |
+| 23  | `src/renderer/src/features/csv-viewer/index.ts`                         | barrel export           |
+| 24  | `src/renderer/src/pages/csv/ui/CsvPage.tsx`                             | CSV 페이지              |
+| 25  | `src/renderer/src/pages/csv/index.ts`                                   | barrel export           |
+| 26  | DB migration 파일                                                       | `db:generate` 자동 생성 |
 
 ### 수정 파일 (12개)
 
-| # | 파일 | 변경 내용 |
-|---|------|-----------|
-| 1 | `src/main/db/schema/index.ts` | csvFiles export 추가 |
-| 2 | `src/main/index.ts` | registerCsvHandlers() 호출 |
-| 3 | `src/main/services/workspace-watcher.ts` | .csv 이벤트 + csvReconciliation + 필터 수정 |
-| 4 | `src/main/lib/fs-utils.ts` | readCsvFilesRecursive(Async) 추가 |
-| 5 | `src/main/services/note.ts` | create(), move() — getLeafSiblings 사용 |
-| 6 | `src/preload/index.ts` | csv bridge 추가 |
-| 7 | `src/preload/index.d.ts` | CsvFileNode, CsvAPI, API 확장 |
-| 8 | `src/renderer/src/app/layout/MainLayout.tsx` | useCsvWatcher() 등록 |
-| 9 | `src/renderer/src/shared/constants/tab-url.ts` | TabType, TAB_ICON, ROUTES 확장 |
-| 10 | `src/renderer/src/app/layout/model/pane-routes.tsx` | CsvPage 라우트 추가 |
-| 11 | `src/renderer/src/features/folder/manage-folder/ui/FolderTree.tsx` | csv 통합 |
-| 12 | `src/renderer/src/features/folder/manage-folder/ui/FolderContextMenu.tsx` | CSV 추가 항목 |
+| #   | 파일                                                                      | 변경 내용                                   |
+| --- | ------------------------------------------------------------------------- | ------------------------------------------- |
+| 1   | `src/main/db/schema/index.ts`                                             | csvFiles export 추가                        |
+| 2   | `src/main/index.ts`                                                       | registerCsvHandlers() 호출                  |
+| 3   | `src/main/services/workspace-watcher.ts`                                  | .csv 이벤트 + csvReconciliation + 필터 수정 |
+| 4   | `src/main/lib/fs-utils.ts`                                                | readCsvFilesRecursive(Async) 추가           |
+| 5   | `src/main/services/note.ts`                                               | create(), move() — getLeafSiblings 사용     |
+| 6   | `src/preload/index.ts`                                                    | csv bridge 추가                             |
+| 7   | `src/preload/index.d.ts`                                                  | CsvFileNode, CsvAPI, API 확장               |
+| 8   | `src/renderer/src/app/layout/MainLayout.tsx`                              | useCsvWatcher() 등록                        |
+| 9   | `src/renderer/src/shared/constants/tab-url.ts`                            | TabType, TAB_ICON, ROUTES 확장              |
+| 10  | `src/renderer/src/app/layout/model/pane-routes.tsx`                       | CsvPage 라우트 추가                         |
+| 11  | `src/renderer/src/features/folder/manage-folder/ui/FolderTree.tsx`        | csv 통합                                    |
+| 12  | `src/renderer/src/features/folder/manage-folder/ui/FolderContextMenu.tsx` | CSV 추가 항목                               |
 
 ### 추가 수정 파일 (2개)
 
-| # | 파일 | 변경 내용 |
-|---|------|-----------|
-| 13 | `src/renderer/src/features/folder/manage-folder/model/types.ts` | CsvTreeNode 추가 |
-| 14 | `src/renderer/src/features/folder/manage-folder/model/use-workspace-tree.ts` | CSV 병합 |
+| #   | 파일                                                                         | 변경 내용        |
+| --- | ---------------------------------------------------------------------------- | ---------------- |
+| 13  | `src/renderer/src/features/folder/manage-folder/model/types.ts`              | CsvTreeNode 추가 |
+| 14  | `src/renderer/src/features/folder/manage-folder/model/use-workspace-tree.ts` | CSV 병합         |

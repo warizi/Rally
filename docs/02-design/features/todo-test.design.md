@@ -94,18 +94,35 @@ import { todoRepository, type TodoInsert } from '../todo'
 const WS_ID = 'ws-1'
 
 beforeEach(() => {
-  testDb.insert(schema.workspaces).values({
-    id: WS_ID, name: 'Test', path: '/test',
-    createdAt: new Date(), updatedAt: new Date()
-  }).run()
+  testDb
+    .insert(schema.workspaces)
+    .values({
+      id: WS_ID,
+      name: 'Test',
+      path: '/test',
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+    .run()
 })
 
 function makeTodo(overrides?: Partial<TodoInsert>): TodoInsert {
   return {
-    id: 'todo-1', workspaceId: WS_ID, parentId: null,
-    title: 'Test Todo', description: '', status: '할일', priority: 'medium',
-    isDone: false, listOrder: 0, kanbanOrder: 0, subOrder: 0,
-    createdAt: new Date(), updatedAt: new Date(), doneAt: null, dueDate: null,
+    id: 'todo-1',
+    workspaceId: WS_ID,
+    parentId: null,
+    title: 'Test Todo',
+    description: '',
+    status: '할일',
+    priority: 'medium',
+    isDone: false,
+    listOrder: 0,
+    kanbanOrder: 0,
+    subOrder: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    doneAt: null,
+    dueDate: null,
     ...overrides
   }
 }
@@ -120,47 +137,80 @@ describe('findByWorkspaceId', () => {
   })
 
   it('filter 없음 — 최상위+서브투두 모두 반환', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'parent-1' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'child-1', parentId: 'parent-1' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'parent-1' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'child-1', parentId: 'parent-1' }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID)
     expect(result).toHaveLength(2)
   })
 
   it("filter='active' — 최상위 미완료 포함", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 't1', isDone: false, parentId: null })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 't1', isDone: false, parentId: null }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID, 'active')
     expect(result.map((r) => r.id)).toContain('t1')
   })
 
   it("filter='active' — 최상위 완료 제외", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 't2', isDone: true, parentId: null })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 't2', isDone: true, parentId: null }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID, 'active')
     expect(result.map((r) => r.id)).not.toContain('t2')
   })
 
   it("filter='active' — 서브투두 미완료 포함", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'p1' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'c1', parentId: 'p1', isDone: false })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'p1' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'c1', parentId: 'p1', isDone: false }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID, 'active')
     expect(result.map((r) => r.id)).toContain('c1')
   })
 
   it("filter='active' — 서브투두 완료도 포함 (핵심 동작)", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'p2' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'c2', parentId: 'p2', isDone: true })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'p2' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'c2', parentId: 'p2', isDone: true }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID, 'active')
     expect(result.map((r) => r.id)).toContain('c2')
   })
 
   it("filter='completed' — 최상위 완료 포함", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 't3', isDone: true, parentId: null })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 't3', isDone: true, parentId: null }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID, 'completed')
     expect(result.map((r) => r.id)).toContain('t3')
   })
 
   it("filter='completed' — 서브투두 완료 제외", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'p3' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'c3', parentId: 'p3', isDone: true })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'p3' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'c3', parentId: 'p3', isDone: true }))
+      .run()
     const result = todoRepository.findByWorkspaceId(WS_ID, 'completed')
     expect(result.map((r) => r.id)).not.toContain('c3')
   })
@@ -172,7 +222,10 @@ describe('findByWorkspaceId', () => {
 ```typescript
 describe('findById', () => {
   it('존재하는 id → Todo 반환', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'x1' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'x1' }))
+      .run()
     expect(todoRepository.findById('x1')).toBeDefined()
   })
   it('없는 id → undefined', () => {
@@ -182,10 +235,22 @@ describe('findById', () => {
 
 describe('findByParentId', () => {
   it('해당 parentId 서브투두만 반환 (다른 parentId 배제)', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'p-a' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'p-b' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'c-a1', parentId: 'p-a' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'c-b1', parentId: 'p-b' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'p-a' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'p-b' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'c-a1', parentId: 'p-a' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'c-b1', parentId: 'p-b' }))
+      .run()
     const result = todoRepository.findByParentId('p-a')
     expect(result.map((r) => r.id)).toEqual(['c-a1'])
   })
@@ -193,8 +258,14 @@ describe('findByParentId', () => {
 
 describe('findTopLevelByWorkspaceId', () => {
   it('parentId=null 항목만 반환', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'top-1', parentId: null })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'sub-1', parentId: 'top-1' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'top-1', parentId: null }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'sub-1', parentId: 'top-1' }))
+      .run()
     const result = todoRepository.findTopLevelByWorkspaceId(WS_ID)
     expect(result.map((r) => r.id)).toEqual(['top-1'])
   })
@@ -220,7 +291,10 @@ describe('create', () => {
 
 describe('update', () => {
   it('지정 필드만 변경, 나머지 보존', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'u1', title: '원본' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'u1', title: '원본' }))
+      .run()
     const updated = todoRepository.update('u1', { title: '수정' })
     expect(updated?.title).toBe('수정')
     expect(updated?.status).toBe('할일')
@@ -232,13 +306,22 @@ describe('update', () => {
 
 describe('delete', () => {
   it('삭제 후 findById → undefined', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'd1' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'd1' }))
+      .run()
     todoRepository.delete('d1')
     expect(todoRepository.findById('d1')).toBeUndefined()
   })
   it('부모 삭제 시 자식 cascade 삭제', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'par' })).run()
-    testDb.insert(schema.todos).values(makeTodo({ id: 'chi', parentId: 'par' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'par' }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'chi', parentId: 'par' }))
+      .run()
     todoRepository.delete('par')
     expect(todoRepository.findById('chi')).toBeUndefined()
   })
@@ -250,12 +333,18 @@ describe('delete', () => {
 ```typescript
 describe('bulkUpdateListOrder', () => {
   it('빈 배열 → no-op', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'b1', listOrder: 5 })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'b1', listOrder: 5 }))
+      .run()
     todoRepository.bulkUpdateListOrder([])
     expect(todoRepository.findById('b1')!.listOrder).toBe(5)
   })
   it('listOrder + updatedAt 변경', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'b2', listOrder: 0 })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'b2', listOrder: 0 }))
+      .run()
     todoRepository.bulkUpdateListOrder([{ id: 'b2', order: 99 }])
     expect(todoRepository.findById('b2')!.listOrder).toBe(99)
   })
@@ -263,12 +352,18 @@ describe('bulkUpdateListOrder', () => {
 
 describe('bulkUpdateKanbanOrder', () => {
   it('빈 배열 → no-op', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'k1' })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'k1' }))
+      .run()
     todoRepository.bulkUpdateKanbanOrder([])
     expect(todoRepository.findById('k1')!.kanbanOrder).toBe(0)
   })
   it("status='완료' 포함 → isDone=true, doneAt≠null (Drizzle Date로 읽힘)", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'k2', status: '할일', isDone: false })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'k2', status: '할일', isDone: false }))
+      .run()
     const now = Date.now()
     todoRepository.bulkUpdateKanbanOrder([
       { id: 'k2', order: 1, status: '완료', isDone: true, doneAt: now }
@@ -279,7 +374,10 @@ describe('bulkUpdateKanbanOrder', () => {
     expect(row.doneAt).toBeInstanceOf(Date)
   })
   it("status='할일' 포함 → isDone=false, doneAt=null", () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'k3', status: '완료', isDone: true, doneAt: new Date() })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'k3', status: '완료', isDone: true, doneAt: new Date() }))
+      .run()
     todoRepository.bulkUpdateKanbanOrder([
       { id: 'k3', order: 1, status: '할일', isDone: false, doneAt: null }
     ])
@@ -288,7 +386,10 @@ describe('bulkUpdateKanbanOrder', () => {
     expect(row.doneAt).toBeNull()
   })
   it('status 없이 order만 전달 → kanbanOrder만 변경', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 'k4', isDone: false })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'k4', isDone: false }))
+      .run()
     todoRepository.bulkUpdateKanbanOrder([{ id: 'k4', order: 7 }])
     const row = todoRepository.findById('k4')!
     expect(row.kanbanOrder).toBe(7)
@@ -298,12 +399,18 @@ describe('bulkUpdateKanbanOrder', () => {
 
 describe('bulkUpdateSubOrder', () => {
   it('빈 배열 → no-op', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 's1', subOrder: 0 })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 's1', subOrder: 0 }))
+      .run()
     todoRepository.bulkUpdateSubOrder([])
     expect(todoRepository.findById('s1')!.subOrder).toBe(0)
   })
   it('subOrder 변경', () => {
-    testDb.insert(schema.todos).values(makeTodo({ id: 's2', subOrder: 0 })).run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 's2', subOrder: 0 }))
+      .run()
     todoRepository.bulkUpdateSubOrder([{ id: 's2', order: 3 }])
     expect(todoRepository.findById('s2')!.subOrder).toBe(3)
   })
@@ -347,11 +454,21 @@ vi.mock('../../repositories/todo', () => ({
 const MOCK_WS = { id: 'ws-1', name: 'T', path: '/t', createdAt: new Date(), updatedAt: new Date() }
 
 const MOCK_TODO_ROW = {
-  id: 'todo-1', workspaceId: 'ws-1', parentId: null,
-  title: 'Test', description: '', status: '할일' as const, priority: 'medium' as const,
-  isDone: false, listOrder: 0, kanbanOrder: 0, subOrder: 0,
-  createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01'),
-  doneAt: null, dueDate: null
+  id: 'todo-1',
+  workspaceId: 'ws-1',
+  parentId: null,
+  title: 'Test',
+  description: '',
+  status: '할일' as const,
+  priority: 'medium' as const,
+  isDone: false,
+  listOrder: 0,
+  kanbanOrder: 0,
+  subOrder: 0,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+  doneAt: null,
+  dueDate: null
 }
 
 beforeEach(() => {
@@ -434,21 +551,19 @@ describe('create', () => {
 
   it("title='  제목  ' — trim 적용", () => {
     todoService.create('ws-1', { title: '  제목  ' })
-    expect(todoRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: '제목' })
-    )
+    expect(todoRepository.create).toHaveBeenCalledWith(expect.objectContaining({ title: '제목' }))
   })
 
   it('description 미전달 — description=""', () => {
     todoService.create('ws-1', { title: '제목' })
-    expect(todoRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ description: '' })
-    )
+    expect(todoRepository.create).toHaveBeenCalledWith(expect.objectContaining({ description: '' }))
   })
 
   it('없는 parentId → NotFoundError', () => {
     vi.mocked(todoRepository.findById).mockReturnValue(undefined)
-    expect(() => todoService.create('ws-1', { title: 't', parentId: 'ghost' })).toThrow(NotFoundError)
+    expect(() => todoService.create('ws-1', { title: 't', parentId: 'ghost' })).toThrow(
+      NotFoundError
+    )
   })
 
   it('없는 workspaceId → NotFoundError', () => {
@@ -464,35 +579,40 @@ describe('create', () => {
 describe('update', () => {
   it('{isDone:true} → status=완료, doneAt=Date', () => {
     todoService.update('todo-1', { isDone: true })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ isDone: true, status: '완료', doneAt: expect.any(Date) })
     )
   })
 
   it('{isDone:false} → status=할일, doneAt=null', () => {
     todoService.update('todo-1', { isDone: false })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ isDone: false, status: '할일', doneAt: null })
     )
   })
 
   it("{status:'완료'} → isDone=true, doneAt=Date", () => {
     todoService.update('todo-1', { status: '완료' })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ isDone: true, status: '완료', doneAt: expect.any(Date) })
     )
   })
 
   it("{status:'진행중'} → isDone=false, doneAt=null", () => {
     todoService.update('todo-1', { status: '진행중' })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ isDone: false, status: '진행중', doneAt: null })
     )
   })
 
   it("{status:'보류'} → isDone=false, doneAt=null", () => {
     todoService.update('todo-1', { status: '보류' })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ isDone: false, status: '보류', doneAt: null })
     )
   })
@@ -507,21 +627,24 @@ describe('update', () => {
 
   it('{isDone:false, status:진행중} → isDone 우선, status=할일로 강제', () => {
     todoService.update('todo-1', { isDone: false, status: '진행중' })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ isDone: false, status: '할일' })
     )
   })
 
   it("{title:'  수정  '} → title trim 적용", () => {
     todoService.update('todo-1', { title: '  수정  ' })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ title: '수정' })
     )
   })
 
   it("{description:'  설명  '} → description trim 적용", () => {
     todoService.update('todo-1', { description: '  설명  ' })
-    expect(todoRepository.update).toHaveBeenCalledWith('todo-1',
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'todo-1',
       expect.objectContaining({ description: '설명' })
     )
   })
@@ -556,7 +679,9 @@ describe('부모 자동완료', () => {
     todoService.update('sub-1', { isDone: true })
     expect(todoRepository.update).toHaveBeenCalledTimes(2)
     // 두 번째 호출이 부모 자동완료
-    expect(todoRepository.update).toHaveBeenNthCalledWith(2, 'par-1',
+    expect(todoRepository.update).toHaveBeenNthCalledWith(
+      2,
+      'par-1',
       expect.objectContaining({ isDone: true, status: '완료' })
     )
   })
@@ -643,9 +768,7 @@ describe('reorderKanban', () => {
   })
   it('status 없음 — {id, order}만 전달', () => {
     todoService.reorderKanban('ws-1', [{ id: 'todo-1', order: 1 }])
-    expect(todoRepository.bulkUpdateKanbanOrder).toHaveBeenCalledWith([
-      { id: 'todo-1', order: 1 }
-    ])
+    expect(todoRepository.bulkUpdateKanbanOrder).toHaveBeenCalledWith([{ id: 'todo-1', order: 1 }])
   })
 })
 
@@ -666,7 +789,11 @@ describe('reorderSub', () => {
 ```typescript
 describe('toTodoItem Date 변환', () => {
   it('createdAt/updatedAt → Date 인스턴스 (number 입력)', () => {
-    const numericRow = { ...MOCK_TODO_ROW, createdAt: 1700000000000 as unknown as Date, updatedAt: 1700000000000 as unknown as Date }
+    const numericRow = {
+      ...MOCK_TODO_ROW,
+      createdAt: 1700000000000 as unknown as Date,
+      updatedAt: 1700000000000 as unknown as Date
+    }
     vi.mocked(todoRepository.findById).mockReturnValue(numericRow)
     vi.mocked(todoRepository.update).mockReturnValue(numericRow)
     const result = todoService.update('todo-1', { title: 'x' })
@@ -708,10 +835,21 @@ import type { TodoItem } from '@entities/todo'
 
 function makeTodoItem(overrides?: Partial<TodoItem>): TodoItem {
   return {
-    id: 't1', workspaceId: 'ws', parentId: null,
-    title: 'Test', description: '', status: '할일', priority: 'medium',
-    isDone: false, listOrder: 0, kanbanOrder: 0, subOrder: 0,
-    createdAt: new Date(), updatedAt: new Date(), doneAt: null, dueDate: null,
+    id: 't1',
+    workspaceId: 'ws',
+    parentId: null,
+    title: 'Test',
+    description: '',
+    status: '할일',
+    priority: 'medium',
+    isDone: false,
+    listOrder: 0,
+    kanbanOrder: 0,
+    subOrder: 0,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    doneAt: null,
+    dueDate: null,
     ...overrides
   }
 }
@@ -722,10 +860,14 @@ function makeTodoItem(overrides?: Partial<TodoItem>): TodoItem {
 ```typescript
 describe('isFilterActive', () => {
   it('DEFAULT_FILTER → false', () => expect(isFilterActive(DEFAULT_FILTER)).toBe(false))
-  it("status='할일' → true", () => expect(isFilterActive({ ...DEFAULT_FILTER, status: '할일' })).toBe(true))
-  it("priority='high' → true", () => expect(isFilterActive({ ...DEFAULT_FILTER, priority: 'high' })).toBe(true))
-  it('dueDateFrom 설정 → true', () => expect(isFilterActive({ ...DEFAULT_FILTER, dueDateFrom: new Date() })).toBe(true))
-  it('dueDateTo 설정 → true', () => expect(isFilterActive({ ...DEFAULT_FILTER, dueDateTo: new Date() })).toBe(true))
+  it("status='할일' → true", () =>
+    expect(isFilterActive({ ...DEFAULT_FILTER, status: '할일' })).toBe(true))
+  it("priority='high' → true", () =>
+    expect(isFilterActive({ ...DEFAULT_FILTER, priority: 'high' })).toBe(true))
+  it('dueDateFrom 설정 → true', () =>
+    expect(isFilterActive({ ...DEFAULT_FILTER, dueDateFrom: new Date() })).toBe(true))
+  it('dueDateTo 설정 → true', () =>
+    expect(isFilterActive({ ...DEFAULT_FILTER, dueDateTo: new Date() })).toBe(true))
 })
 ```
 
@@ -746,12 +888,18 @@ describe('filterFromParams', () => {
 
 describe('roundtrip filterToParams → filterFromParams', () => {
   it('날짜 없는 필터 roundtrip', () => {
-    const filter: TodoFilter = { status: '할일', priority: 'high', dueDateFrom: null, dueDateTo: null }
+    const filter: TodoFilter = {
+      status: '할일',
+      priority: 'high',
+      dueDateFrom: null,
+      dueDateTo: null
+    }
     expect(filterFromParams(filterToParams(filter, 'k'), 'k')).toEqual(filter)
   })
   it('날짜 포함 필터 roundtrip', () => {
     const filter: TodoFilter = {
-      status: 'all', priority: 'all',
+      status: 'all',
+      priority: 'all',
       dueDateFrom: new Date('2026-01-01'),
       dueDateTo: new Date('2026-01-31')
     }
@@ -776,20 +924,14 @@ describe('applyFilter', () => {
   })
 
   it("status='할일' → 해당 status만", () => {
-    const todos = [
-      makeTodoItem({ status: '할일' }),
-      makeTodoItem({ id: 't2', status: '완료' })
-    ]
+    const todos = [makeTodoItem({ status: '할일' }), makeTodoItem({ id: 't2', status: '완료' })]
     const result = applyFilter(todos, { ...DEFAULT_FILTER, status: '할일' })
     expect(result).toHaveLength(1)
     expect(result[0].status).toBe('할일')
   })
 
   it("priority='high' → 해당 priority만", () => {
-    const todos = [
-      makeTodoItem({ priority: 'high' }),
-      makeTodoItem({ id: 't2', priority: 'low' })
-    ]
+    const todos = [makeTodoItem({ priority: 'high' }), makeTodoItem({ id: 't2', priority: 'low' })]
     expect(applyFilter(todos, { ...DEFAULT_FILTER, priority: 'high' })).toHaveLength(1)
   })
 
@@ -844,11 +986,21 @@ import { DEFAULT_FILTER } from '../../../filter-todo/model/todo-filter'
 import type { TodoItem } from '@entities/todo'
 
 const BASE_TODO: TodoItem = {
-  id: 'todo-1', workspaceId: 'ws-1', parentId: null,
-  title: 'Test', description: '', status: '할일', priority: 'medium',
-  isDone: false, listOrder: 0, kanbanOrder: 0, subOrder: 0,
-  createdAt: new Date('2026-01-01'), updatedAt: new Date('2026-01-01'),
-  doneAt: null, dueDate: null
+  id: 'todo-1',
+  workspaceId: 'ws-1',
+  parentId: null,
+  title: 'Test',
+  description: '',
+  status: '할일',
+  priority: 'medium',
+  isDone: false,
+  listOrder: 0,
+  kanbanOrder: 0,
+  subOrder: 0,
+  createdAt: new Date('2026-01-01'),
+  updatedAt: new Date('2026-01-01'),
+  doneAt: null,
+  dueDate: null
 }
 
 function makeTodoItem(overrides?: Partial<TodoItem>): TodoItem {
@@ -1013,7 +1165,9 @@ describe('useTodoKanban', () => {
       makeTodoItem({ id: 'p-low', status: '할일', priority: 'low' }),
       makeTodoItem({ id: 'c1', parentId: 'p-low' })
     ]
-    const { result } = renderHook(() => useTodoKanban(todos, 0, { ...DEFAULT_FILTER, priority: 'high' }))
+    const { result } = renderHook(() =>
+      useTodoKanban(todos, 0, { ...DEFAULT_FILTER, priority: 'high' })
+    )
     expect(result.current.columnMap.get('할일')).toHaveLength(0)
     expect(result.current.subTodoMap.get('p-low')).toHaveLength(1)
   })
@@ -1045,14 +1199,14 @@ describe('useTodoKanban', () => {
 
   it('setActiveColumn → activeColumn 변경', () => {
     const { result } = renderHook(() => useTodoKanban([]))
-    act(() => { result.current.setActiveColumn(2) })
+    act(() => {
+      result.current.setActiveColumn(2)
+    })
     expect(result.current.activeColumn).toBe(2)
   })
 
   it('dueDate=null 투두는 날짜 필터에서 제외', () => {
-    const todos = [
-      makeTodoItem({ id: 'no-due', dueDate: null, status: '할일' })
-    ]
+    const todos = [makeTodoItem({ id: 'no-due', dueDate: null, status: '할일' })]
     const { result } = renderHook(() =>
       useTodoKanban(todos, 0, { ...DEFAULT_FILTER, dueDateFrom: new Date('2026-01-01') })
     )
@@ -1150,10 +1304,9 @@ describe('useCompletedTodoList', () => {
       makeTodoItem({ id: 'high', priority: 'high', isDone: true }),
       makeTodoItem({ id: 'low', priority: 'low', isDone: true })
     ]
-    const { result, rerender } = renderHook(
-      ({ filter }) => useCompletedTodoList(todos, filter),
-      { initialProps: { filter: DEFAULT_FILTER } }
-    )
+    const { result, rerender } = renderHook(({ filter }) => useCompletedTodoList(todos, filter), {
+      initialProps: { filter: DEFAULT_FILTER }
+    })
     expect(result.current.filteredCompleted).toHaveLength(2)
     rerender({ filter: { ...DEFAULT_FILTER, priority: 'high' } })
     expect(result.current.filteredCompleted).toHaveLength(1)
@@ -1298,7 +1451,10 @@ describe('useCompletedTodosByWorkspace', () => {
     const { queryClient, wrapper } = createWrapper()
     renderHook(() => useCompletedTodosByWorkspace('ws-1'), { wrapper })
     await waitFor(() => expect(mockFindByWorkspace).toHaveBeenCalled())
-    const keys = queryClient.getQueryCache().getAll().map((q) => q.queryKey)
+    const keys = queryClient
+      .getQueryCache()
+      .getAll()
+      .map((q) => q.queryKey)
     expect(keys).toContainEqual(['todo', 'workspace', 'ws-1', 'completed'])
   })
 })
@@ -1349,7 +1505,11 @@ describe('useReorderTodoSub', () => {
     mockReorderSub.mockResolvedValue({ success: true, data: undefined })
     const { wrapper } = createWrapper()
     const { result } = renderHook(() => useReorderTodoSub(), { wrapper })
-    result.current.mutate({ workspaceId: 'ws-1', parentId: 'par-1', updates: [{ id: 'sub-1', order: 0 }] })
+    result.current.mutate({
+      workspaceId: 'ws-1',
+      parentId: 'par-1',
+      updates: [{ id: 'sub-1', order: 0 }]
+    })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(mockReorderSub).toHaveBeenCalledWith('par-1', [{ id: 'sub-1', order: 0 }])
   })
@@ -1374,18 +1534,18 @@ describe('useReorderTodoSub', () => {
 
 ## 11. 완료 기준
 
-| 명령 | 범위 | 통과 조건 |
-|------|------|----------|
-| `npm run test` | [A][B] | repository + service |
-| `npm run test:web` | [C][D][E][F][G] | filter + hooks + queries |
-| `npm run typecheck` | 전체 | 타입 오류 없음 |
+| 명령                | 범위            | 통과 조건                |
+| ------------------- | --------------- | ------------------------ |
+| `npm run test`      | [A][B]          | repository + service     |
+| `npm run test:web`  | [C][D][E][F][G] | filter + hooks + queries |
+| `npm run typecheck` | 전체            | 타입 오류 없음           |
 
 **목표 케이스 수: 70건 이상**
 
-| 섹션 | 목표 |
-|------|------|
-| [A] Repository | ~20건 |
-| [B] Service | ~28건 |
-| [C] 순수 함수 | ~15건 |
+| 섹션             | 목표  |
+| ---------------- | ----- |
+| [A] Repository   | ~20건 |
+| [B] Service      | ~28건 |
+| [C] 순수 함수    | ~15건 |
 | [D]+[E]+[F] Hook | ~17건 |
-| [G] Queries | ~15건 |
+| [G] Queries      | ~15건 |

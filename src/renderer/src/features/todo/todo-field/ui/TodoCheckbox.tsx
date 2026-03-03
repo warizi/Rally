@@ -18,7 +18,11 @@ export function TodoCheckbox({ todoId, workspaceId, checked, title }: Props): Re
       onCheckedChange={(value) =>
         updateTodo.mutate(
           { workspaceId, todoId, data: { isDone: !!value } },
-          { onSuccess: () => { if (value && title) toast.success(`"${title}" 완료!`) } }
+          {
+            onSuccess: () => {
+              if (value && title) toast.success(`"${title}" 완료!`)
+            }
+          }
         )
       }
     />

@@ -11,6 +11,10 @@ import { appSettings } from './app-settings'
 import { schedules } from './schedule'
 import { scheduleTodos } from './schedule-todo'
 import { entityLinks } from './entity-link'
+import { canvases } from './canvas'
+import { canvasNodes } from './canvas-node'
+import { canvasEdges } from './canvas-edge'
+import { canvasGroups } from './canvas-group'
 
 export {
   workspaces,
@@ -26,4 +30,8 @@ export {
   schedules,
   scheduleTodos,
   entityLinks,
+  canvases,
+  canvasNodes,
+  canvasEdges,
+  canvasGroups
 }

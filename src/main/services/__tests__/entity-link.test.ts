@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import { entityLinkService } from '../entity-link'
 import { entityLinkRepository } from '../../repositories/entity-link'
@@ -29,7 +30,7 @@ const MOCK_ENTITY = { workspaceId: 'ws-1', title: 'Test Entity' }
 
 // ⚠️ returnValue에 undefined를 넘기면 JS default parameter가 트리거되어 MOCK_ENTITY가 사용됨.
 // "미존재" 시나리오는 resetAllMocks 후 mock을 설정하지 않거나, mockReturnValue를 직접 호출할 것.
-function mockFindById(type: LinkableEntityType, returnValue: unknown = MOCK_ENTITY) {
+function mockFindById(type: LinkableEntityType, returnValue: unknown = MOCK_ENTITY): void {
   switch (type) {
     case 'todo':
       vi.mocked(todoRepository.findById).mockReturnValue(returnValue as any)
@@ -51,7 +52,7 @@ function mockFindById(type: LinkableEntityType, returnValue: unknown = MOCK_ENTI
 
 // 같은 타입(todo↔todo)일 때 mockFindById 1회만 호출.
 // mockReturnValue는 영구 설정이므로 findEntity가 2회 호출되어도 같은 값 반환.
-function mockBothEntities(typeA: LinkableEntityType, typeB: LinkableEntityType) {
+function mockBothEntities(typeA: LinkableEntityType, typeB: LinkableEntityType): void {
   mockFindById(typeA)
   if (typeA !== typeB) mockFindById(typeB)
 }
@@ -100,17 +101,13 @@ describe('link', () => {
 
   // resetAllMocks 후 mock 미설정 → findById가 undefined 반환 → NotFoundError
   it('EC-02: typeA 엔티티 미존재 → NotFoundError', () => {
-    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(
-      NotFoundError
-    )
+    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(NotFoundError)
   })
 
   it('EC-02: typeB 엔티티 미존재 → NotFoundError', () => {
     mockFindById('todo')
     // note는 mock 미설정 → resetAllMocks 후 undefined 반환
-    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(
-      NotFoundError
-    )
+    expect(() => entityLinkService.link('todo', 't1', 'note', 'n1', 'ws-1')).toThrow(NotFoundError)
   })
 
   it('EC-03: 다른 워크스페이스 → ValidationError', () => {
@@ -166,7 +163,7 @@ describe('unlink', () => {
 })
 
 describe('getLinked', () => {
-  const makeRow = (overrides?: Record<string, unknown>) => ({
+  const makeRow = (overrides?: Record<string, unknown>): Record<string, unknown> => ({
     sourceType: 'note',
     sourceId: 'n1',
     targetType: 'todo',
@@ -232,9 +229,7 @@ describe('getLinked', () => {
 
   it('linkedAt 필드 포함', () => {
     const createdAt = new Date('2026-01-15')
-    vi.mocked(entityLinkRepository.findByEntity).mockReturnValue([
-      makeRow({ createdAt })
-    ] as any)
+    vi.mocked(entityLinkRepository.findByEntity).mockReturnValue([makeRow({ createdAt })] as any)
     mockFindById('todo')
     const result = entityLinkService.getLinked('note', 'n1')
     expect(result[0].linkedAt).toBe(createdAt)

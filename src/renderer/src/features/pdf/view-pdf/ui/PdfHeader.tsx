@@ -27,11 +27,7 @@ export function PdfHeader({ workspaceId, pdfId, tabId }: PdfHeaderProps): JSX.El
       title={pdf?.title ?? ''}
       description={pdf?.description ?? ''}
       buttons={
-        <LinkedEntityPopoverButton
-          entityType="pdf"
-          entityId={pdfId}
-          workspaceId={workspaceId}
-        />
+        <LinkedEntityPopoverButton entityType="pdf" entityId={pdfId} workspaceId={workspaceId} />
       }
       onTitleChange={(title) => {
         renamePdf({ workspaceId, pdfId, newName: title })

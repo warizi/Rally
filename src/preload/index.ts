@@ -197,17 +197,45 @@ const api = {
   },
 
   entityLink: {
-    link: (
-      typeA: string,
-      idA: string,
-      typeB: string,
-      idB: string,
-      workspaceId: string
-    ) => ipcRenderer.invoke('entityLink:link', typeA, idA, typeB, idB, workspaceId),
+    link: (typeA: string, idA: string, typeB: string, idB: string, workspaceId: string) =>
+      ipcRenderer.invoke('entityLink:link', typeA, idA, typeB, idB, workspaceId),
     unlink: (typeA: string, idA: string, typeB: string, idB: string) =>
       ipcRenderer.invoke('entityLink:unlink', typeA, idA, typeB, idB),
     getLinked: (entityType: string, entityId: string) =>
-      ipcRenderer.invoke('entityLink:getLinked', entityType, entityId),
+      ipcRenderer.invoke('entityLink:getLinked', entityType, entityId)
+  },
+
+  canvas: {
+    findByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('canvas:findByWorkspace', workspaceId),
+    findById: (canvasId: string) => ipcRenderer.invoke('canvas:findById', canvasId),
+    create: (workspaceId: string, data: unknown) =>
+      ipcRenderer.invoke('canvas:create', workspaceId, data),
+    update: (canvasId: string, data: unknown) =>
+      ipcRenderer.invoke('canvas:update', canvasId, data),
+    updateViewport: (canvasId: string, viewport: unknown) =>
+      ipcRenderer.invoke('canvas:updateViewport', canvasId, viewport),
+    remove: (canvasId: string) => ipcRenderer.invoke('canvas:remove', canvasId)
+  },
+
+  canvasNode: {
+    findByCanvas: (canvasId: string) => ipcRenderer.invoke('canvasNode:findByCanvas', canvasId),
+    create: (canvasId: string, data: unknown) =>
+      ipcRenderer.invoke('canvasNode:create', canvasId, data),
+    update: (nodeId: string, data: unknown) =>
+      ipcRenderer.invoke('canvasNode:update', nodeId, data),
+    updatePositions: (updates: unknown) =>
+      ipcRenderer.invoke('canvasNode:updatePositions', updates),
+    remove: (nodeId: string) => ipcRenderer.invoke('canvasNode:remove', nodeId)
+  },
+
+  canvasEdge: {
+    findByCanvas: (canvasId: string) => ipcRenderer.invoke('canvasEdge:findByCanvas', canvasId),
+    create: (canvasId: string, data: unknown) =>
+      ipcRenderer.invoke('canvasEdge:create', canvasId, data),
+    update: (edgeId: string, data: unknown) =>
+      ipcRenderer.invoke('canvasEdge:update', edgeId, data),
+    remove: (edgeId: string) => ipcRenderer.invoke('canvasEdge:remove', edgeId)
   },
 
   schedule: {
@@ -228,7 +256,7 @@ const api = {
     unlinkTodo: (scheduleId: string, todoId: string) =>
       ipcRenderer.invoke('schedule:unlinkTodo', scheduleId, todoId),
     getLinkedTodos: (scheduleId: string) =>
-      ipcRenderer.invoke('schedule:getLinkedTodos', scheduleId),
+      ipcRenderer.invoke('schedule:getLinkedTodos', scheduleId)
   }
 }
 

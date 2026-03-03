@@ -16,14 +16,14 @@
 
 ### Key Achievements
 
-| 항목 | 결과 |
-|------|------|
-| **Design Match Rate** | 100% (131/131 items) |
-| **Iterations Needed** | 0 (no iterate phase required) |
-| **Code Reduction** | 31% (1,432 → 986 lines) |
-| **Module Modularization** | 12 new files (model + ui) |
-| **Type Safety** | All files pass typecheck |
-| **Lint Compliance** | 15 modified/new files pass eslint |
+| 항목                      | 결과                              |
+| ------------------------- | --------------------------------- |
+| **Design Match Rate**     | 100% (131/131 items)              |
+| **Iterations Needed**     | 0 (no iterate phase required)     |
+| **Code Reduction**        | 31% (1,432 → 986 lines)           |
+| **Module Modularization** | 12 new files (model + ui)         |
+| **Type Safety**           | All files pass typecheck          |
+| **Lint Compliance**       | 15 modified/new files pass eslint |
 
 ---
 
@@ -34,12 +34,14 @@
 **Document**: `docs/01-plan/features/calendar-refactor.plan.md`
 
 **Scope**: 3개 뷰의 구조 개선 (기능 변경 없음)
+
 - MonthView: 524줄 → ~430줄 예상 (-94줄)
 - WeekView: 553줄 → ~358줄 예상 (-195줄)
 - DayView: 355줄 → ~180줄 예상 (-175줄)
 - calendar-utils.ts: 252줄 → re-export barrel (~10줄)
 
 **Goals**:
+
 1. 중복 제거 (코드 패턴/상수/컴포넌트)
 2. 컴포넌트 분리 (거대 파일 축소)
 3. 유틸리티 모듈화 (관심사별 분리)
@@ -47,6 +49,7 @@
 5. 과도한 추상화 금지 (가독성 유지)
 
 **Plan Structure**:
+
 - 4개 Phase (Constants, Common Logic, View Refactor, Cleanup)
 - 13개 Task
 - 16개 side effect checklist items
@@ -57,30 +60,31 @@
 
 **New Files (11개)**:
 
-| # | File | Role | LOC |
-|---|------|------|-----|
-| 1 | `model/calendar-constants.ts` | 공통 상수 + DnD 센서 | 10 |
-| 2 | `model/calendar-predicates.ts` | 판별 함수 | 13 |
-| 3 | `model/calendar-grid.ts` | 그리드/날짜 생성 | 38 |
-| 4 | `model/calendar-layout.ts` | lane/겹침 레이아웃 | 231 |
-| 5 | `model/calendar-time.ts` | 시간 계산 | 23 |
-| 6 | `model/calendar-move.ts` | DnD mutation 유틸 | 47 |
-| 7 | `model/schedule-style.ts` | 스타일 헬퍼 | 23 |
-| 8 | `model/use-day-dnd.ts` | DayView DnD 훅 | 112 |
-| 9 | `model/use-schedule-resize.ts` | DayView Resize 훅 | 103 |
-| 10 | `ui/ScheduleBarItem.tsx` | 통합 기간 바 | 80 |
-| 11 | `ui/WeekDayCell.tsx` | WeekView droppable 셀 | 91 |
+| #   | File                           | Role                  | LOC |
+| --- | ------------------------------ | --------------------- | --- |
+| 1   | `model/calendar-constants.ts`  | 공통 상수 + DnD 센서  | 10  |
+| 2   | `model/calendar-predicates.ts` | 판별 함수             | 13  |
+| 3   | `model/calendar-grid.ts`       | 그리드/날짜 생성      | 38  |
+| 4   | `model/calendar-layout.ts`     | lane/겹침 레이아웃    | 231 |
+| 5   | `model/calendar-time.ts`       | 시간 계산             | 23  |
+| 6   | `model/calendar-move.ts`       | DnD mutation 유틸     | 47  |
+| 7   | `model/schedule-style.ts`      | 스타일 헬퍼           | 23  |
+| 8   | `model/use-day-dnd.ts`         | DayView DnD 훅        | 112 |
+| 9   | `model/use-schedule-resize.ts` | DayView Resize 훅     | 103 |
+| 10  | `ui/ScheduleBarItem.tsx`       | 통합 기간 바          | 80  |
+| 11  | `ui/WeekDayCell.tsx`           | WeekView droppable 셀 | 91  |
 
 **Modified Files (4개)**:
 
-| File | Before → After | Change Type |
-|------|---|---|
-| `model/calendar-utils.ts` | 252 → 12 | re-export barrel 전환 |
-| `ui/MonthView.tsx` | 524 → 412 | BarItem 통합, applyDaysDelta 적용 |
-| `ui/WeekView.tsx` | 553 → 337 | BarItem/WeekDayCell 분리, applyDaysDelta |
-| `ui/DayView.tsx` | 355 → 239 | 훅 적용 (useDayDnd, useScheduleResize) |
+| File                      | Before → After | Change Type                              |
+| ------------------------- | -------------- | ---------------------------------------- |
+| `model/calendar-utils.ts` | 252 → 12       | re-export barrel 전환                    |
+| `ui/MonthView.tsx`        | 524 → 412      | BarItem 통합, applyDaysDelta 적용        |
+| `ui/WeekView.tsx`         | 553 → 337      | BarItem/WeekDayCell 분리, applyDaysDelta |
+| `ui/DayView.tsx`          | 355 → 239      | 훅 적용 (useDayDnd, useScheduleResize)   |
 
 **Total Code Impact**:
+
 - New files: 771 lines
 - Deleted: calendar-utils.ts (252줄) 모놀리스
 - Reduced: 3 views 464줄 감소
@@ -93,6 +97,7 @@
 All 11 new files created, 4 files modified exactly as designed.
 
 **Phase 1**: 6 utility modules + barrel re-export
+
 - ✅ calendar-constants.ts (7 constants)
 - ✅ calendar-predicates.ts (2 functions)
 - ✅ calendar-grid.ts (2 functions + 1 type)
@@ -101,6 +106,7 @@ All 11 new files created, 4 files modified exactly as designed.
 - ✅ calendar-move.ts (3 functions + callback type)
 
 **Phase 2**: Common extraction + hooks
+
 - ✅ schedule-style.ts (2 style helpers)
 - ✅ ScheduleBarItem.tsx (MonthBarItem + WeekBarItem unified)
 - ✅ WeekDayCell.tsx (65줄 WeekDayCell + 18줄 DraggableScheduleItem co-located)
@@ -108,11 +114,13 @@ All 11 new files created, 4 files modified exactly as designed.
 - ✅ use-schedule-resize.ts (2 state + 1 handler)
 
 **Phase 3**: View refactoring
+
 - ✅ MonthView.tsx: ScheduleBarItem 사용, applyDaysDelta 호출, 인라인 컴포넌트 유지
 - ✅ WeekView.tsx: ScheduleBarItem/WeekDayCell 사용, applyDaysDelta 호출
 - ✅ DayView.tsx: useDayDnd/useScheduleResize 훅 적용, HOUR_HEIGHT 상수화
 
 **Phase 4**: Cleanup
+
 - ✅ index.ts: 기존 barrel 경로 호환 (36개 export 전부 유지)
 - ✅ npm run typecheck: 0 schedule-related errors
 - ✅ npm run lint: 15 files pass
@@ -123,13 +131,13 @@ All 11 new files created, 4 files modified exactly as designed.
 
 **Gap Analysis Results**:
 
-| Category | Total | Exact Match | Equivalent | Missing |
-|----------|:-----:|:-----------:|:----------:|:-------:|
-| Phase 1: Constants & Utils | 36 | 27 | 9 | 0 |
-| Phase 2: Common Logic | 28 | 26 | 2 | 0 |
-| Phase 3: View Refactoring | 57 | 57 | 0 | 0 |
-| Phase 4: Barrel & Cleanup | 10 | 10 | 0 | 0 |
-| **Total** | **131** | **120** | **11** | **0** |
+| Category                   |  Total  | Exact Match | Equivalent | Missing |
+| -------------------------- | :-----: | :---------: | :--------: | :-----: |
+| Phase 1: Constants & Utils |   36    |     27      |     9      |    0    |
+| Phase 2: Common Logic      |   28    |     26      |     2      |    0    |
+| Phase 3: View Refactoring  |   57    |     57      |     0      |    0    |
+| Phase 4: Barrel & Cleanup  |   10    |     10      |     0      |    0    |
+| **Total**                  | **131** |   **120**   |   **11**   |  **0**  |
 
 **Match Rate**: 100% (131/131 items implemented or functionally equivalent)
 
@@ -142,7 +150,7 @@ All 11 new files created, 4 files modified exactly as designed.
 5. `schedule-style.ts` variable name: `todo` vs `isTodo` (cosmetic)
 6. `applyDaysDelta` date math: `moveScheduleByDays` 재사용 (코드 품질 향상)
 7. `applyDaysDelta` callback type: 명명된 인터페이스 (가독성 개선)
-8-11. Hook interface names: 짧은 이름 (cosmetic)
+   8-11. Hook interface names: 짧은 이름 (cosmetic)
 
 **All differences are quality improvements — Zero functional gaps.**
 
@@ -153,32 +161,38 @@ All 11 new files created, 4 files modified exactly as designed.
 ### Completed Features
 
 ✅ **Code Structure Improvements**
+
 - MonthView: 524줄 → 412줄 (-21% = 112줄)
 - WeekView: 553줄 → 337줄 (-39% = 216줄)
 - DayView: 355줄 → 239줄 (-33% = 116줄)
 - **View Total**: 1,432줄 → 988줄 (유틸 제외)
 
 ✅ **Utility Modularization**
+
 - calendar-utils.ts: 252줄 monolith → 6 modules (771줄)
   - 관심사별 분리 (constants, predicates, grid, layout, time, move)
   - re-export barrel로 backward compatibility 유지
 
 ✅ **Code Reuse & Deduplication**
+
 - 중복 상수 제거: WEEKDAY_LABELS (2회), BAR_HEIGHT (2회), DND 센서 (3회)
 - 중복 함수 제거: assignLanes (1회), computeWeekBars (1회)
 - 중복 패턴 추출: handleDragEnd mutation (2회), style logic (10회+)
 
 ✅ **Component Extraction**
+
 - ScheduleBarItem: MonthBarItem(66줄) + WeekBarItem(62줄) → unified 80줄
 - WeekDayCell: 65줄 분리 + DraggableScheduleItem 18줄 co-locate
 - 인라인 유지 (합리적): DraggableScheduleItem (MonthView), CellContent, SelectedDateList, SmallDayList
 
 ✅ **Hook Extraction**
+
 - useDayDnd: 113줄 DnD 상태/핸들러 캡슐화
 - useScheduleResize: 59줄 resize 상태/핸들러 캡슐화
 - 순수 함수: applyDaysDelta (mutation 분기 추출, Hook 아님)
 
 ✅ **Quality Assurance**
+
 - typecheck: 0 schedule-related errors
 - eslint: 15 modified/new files pass
 - barrel export: 36개 public API 호환 유지
@@ -232,15 +246,15 @@ None. All planned items completed.
 
 ### Code Quality
 
-| Metric | Before | After | Change |
-|--------|--------|-------|--------|
-| MonthView LOC | 524 | 412 | -21% |
-| WeekView LOC | 553 | 337 | -39% |
-| DayView LOC | 355 | 239 | -33% |
-| **View Total** | **1,432** | **988** | **-31%** |
-| calendar-utils LOC | 252 | 12 | -95% |
-| New Modular Files | 0 | 771 | +771 |
-| **Total Project** | **1,684** | **1,771** | +87 lines* |
+| Metric             | Before    | After     | Change      |
+| ------------------ | --------- | --------- | ----------- |
+| MonthView LOC      | 524       | 412       | -21%        |
+| WeekView LOC       | 553       | 337       | -39%        |
+| DayView LOC        | 355       | 239       | -33%        |
+| **View Total**     | **1,432** | **988**   | **-31%**    |
+| calendar-utils LOC | 252       | 12        | -95%        |
+| New Modular Files  | 0         | 771       | +771        |
+| **Total Project**  | **1,684** | **1,771** | +87 lines\* |
 
 \* Net increase due to new modular files, but view files reduced 31%. Better separation of concerns.
 
@@ -253,18 +267,18 @@ None. All planned items completed.
 
 ### Test Coverage (Manual Verification)
 
-| Feature | Coverage |
-|---------|----------|
-| MonthView bar DnD | Manual ✓ |
-| MonthView single DnD | Manual ✓ |
-| MonthView Todo DnD | Manual ✓ |
-| WeekView bar DnD | Manual ✓ |
-| WeekView single DnD | Manual ✓ |
-| WeekView Todo DnD | Manual ✓ |
-| DayView block DnD | Manual ✓ |
+| Feature                      | Coverage |
+| ---------------------------- | -------- |
+| MonthView bar DnD            | Manual ✓ |
+| MonthView single DnD         | Manual ✓ |
+| MonthView Todo DnD           | Manual ✓ |
+| WeekView bar DnD             | Manual ✓ |
+| WeekView single DnD          | Manual ✓ |
+| WeekView Todo DnD            | Manual ✓ |
+| DayView block DnD            | Manual ✓ |
 | DayView Todo DnD (time-only) | Manual ✓ |
-| DayView Resize top/bottom | Manual ✓ |
-| Barrel export compatibility | Manual ✓ |
+| DayView Resize top/bottom    | Manual ✓ |
+| Barrel export compatibility  | Manual ✓ |
 
 ---
 
@@ -335,6 +349,7 @@ features/schedule/manage-schedule/
 ```
 
 **Benefits**:
+
 - 각 모듈이 단일 책임 (SRP)
 - 테스트 용이 (순수 함수, 훅 분리)
 - 재사용성 증가 (새 뷰 추가시 calendar-layout 등 재사용)
@@ -361,24 +376,24 @@ features/schedule/manage-schedule/
 
 All items verified during Check phase:
 
-| # | Item | Status | Evidence |
-|---|------|:------:|----------|
-| 1 | MonthView 기간 바 DnD | ✅ | applyDaysDelta + ScheduleBarItem |
-| 2 | MonthView 단일 일정 DnD | ✅ | DraggableScheduleItem (inline) |
-| 3 | MonthView Todo DnD | ✅ | applyDaysDelta isTodoItem branch |
-| 4 | MonthView 소형 빈 상태 | ✅ | SelectedDateList returns null |
-| 5 | WeekView 기간 바 DnD | ✅ | applyDaysDelta + ScheduleBarItem |
-| 6 | WeekView 단일 일정 DnD | ✅ | WeekDayCell + DraggableScheduleItem |
-| 7 | WeekView Todo DnD | ✅ | applyDaysDelta isTodoItem branch |
-| 8 | WeekView 소형 빈 상태 | ✅ | SmallDayList "empty" state |
-| 9 | DayView 블록 DnD (schedule) | ✅ | useDayDnd handleDragEnd |
-| 10 | DayView 블록 DnD (todo) | ✅ | useDayDnd clampMap time-only |
-| 11 | DayView Resize top | ✅ | useScheduleResize edge='top' |
-| 12 | DayView Resize bottom | ✅ | useScheduleResize edge='bottom' |
-| 13 | DayView Todo Resize | ✅ | useScheduleResize isTodoItem |
-| 14 | 기간 바 프리뷰 (Month) | ✅ | splitBarByWeeks + preview JSX |
-| 15 | 기간 바 프리뷰 (Week) | ✅ | Clamping-based preview |
-| 16 | Barrel export 호환 | ✅ | index.ts unchanged paths |
+| #   | Item                        | Status | Evidence                            |
+| --- | --------------------------- | :----: | ----------------------------------- |
+| 1   | MonthView 기간 바 DnD       |   ✅   | applyDaysDelta + ScheduleBarItem    |
+| 2   | MonthView 단일 일정 DnD     |   ✅   | DraggableScheduleItem (inline)      |
+| 3   | MonthView Todo DnD          |   ✅   | applyDaysDelta isTodoItem branch    |
+| 4   | MonthView 소형 빈 상태      |   ✅   | SelectedDateList returns null       |
+| 5   | WeekView 기간 바 DnD        |   ✅   | applyDaysDelta + ScheduleBarItem    |
+| 6   | WeekView 단일 일정 DnD      |   ✅   | WeekDayCell + DraggableScheduleItem |
+| 7   | WeekView Todo DnD           |   ✅   | applyDaysDelta isTodoItem branch    |
+| 8   | WeekView 소형 빈 상태       |   ✅   | SmallDayList "empty" state          |
+| 9   | DayView 블록 DnD (schedule) |   ✅   | useDayDnd handleDragEnd             |
+| 10  | DayView 블록 DnD (todo)     |   ✅   | useDayDnd clampMap time-only        |
+| 11  | DayView Resize top          |   ✅   | useScheduleResize edge='top'        |
+| 12  | DayView Resize bottom       |   ✅   | useScheduleResize edge='bottom'     |
+| 13  | DayView Todo Resize         |   ✅   | useScheduleResize isTodoItem        |
+| 14  | 기간 바 프리뷰 (Month)      |   ✅   | splitBarByWeeks + preview JSX       |
+| 15  | 기간 바 프리뷰 (Week)       |   ✅   | Clamping-based preview              |
+| 16  | Barrel export 호환          |   ✅   | index.ts unchanged paths            |
 
 ---
 

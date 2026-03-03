@@ -113,7 +113,9 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const [pdfDeleteTarget, setPdfDeleteTarget] = useState<{ id: string; name: string } | null>(null)
 
   // Image dialog states
-  const [imageDeleteTarget, setImageDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  const [imageDeleteTarget, setImageDeleteTarget] = useState<{ id: string; name: string } | null>(
+    null
+  )
 
   /** 노트 생성 → 성공 시 오른쪽 탭에 자동 오픈 */
   const handleCreateNote = useCallback(
@@ -340,7 +342,14 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     },
     // workspaceId는 NodeRenderer 내부에서 직접 참조하지 않음
     // (handleCreateNote가 이미 workspaceId를 capture하고 있어 deps에서 제외)
-    [sourcePaneId, handleCreateNote, handleCreateCsv, handleImportPdf, handleImportImage, openRightTab]
+    [
+      sourcePaneId,
+      handleCreateNote,
+      handleCreateCsv,
+      handleImportPdf,
+      handleImportImage,
+      openRightTab
+    ]
   )
 
   return (
@@ -419,7 +428,9 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
               parentNode?.data.kind === 'pdf' ||
               parentNode?.data.kind === 'image'
             }
-            disableEdit={(n) => n.kind === 'note' || n.kind === 'csv' || n.kind === 'pdf' || n.kind === 'image'}
+            disableEdit={(n) =>
+              n.kind === 'note' || n.kind === 'csv' || n.kind === 'pdf' || n.kind === 'image'
+            }
             onToggle={(id) => toggle(id, treeRef.current?.isOpen(id) ?? false)}
             onCreate={({ parentId }) => {
               setCreateTarget({ parentFolderId: parentId ?? null })
@@ -438,7 +449,12 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
               } else if (kind === 'pdf') {
                 movePdfFile({ workspaceId, pdfId: dragIds[0], folderId: parentId ?? null, index })
               } else if (kind === 'image') {
-                moveImageFile({ workspaceId, imageId: dragIds[0], folderId: parentId ?? null, index })
+                moveImageFile({
+                  workspaceId,
+                  imageId: dragIds[0],
+                  folderId: parentId ?? null,
+                  index
+                })
               } else {
                 move({ workspaceId, folderId: dragIds[0], parentFolderId: parentId ?? null, index })
               }

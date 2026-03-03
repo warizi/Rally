@@ -3,7 +3,6 @@ import * as fs from 'fs'
 import { testDb } from '../../__tests__/setup'
 import * as schema from '../../db/schema'
 import { noteRepository } from '../../repositories/note'
-import { folderRepository } from '../../repositories/folder'
 
 // ─── Mock 선언 ───────────────────────────────────────────────
 // fs.promises.stat는 auto-mock 대상이 아니므로 factory로 명시 포함

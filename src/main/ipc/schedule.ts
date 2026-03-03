@@ -2,7 +2,11 @@ import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
 import { scheduleService } from '../services/schedule'
-import type { CreateScheduleData, UpdateScheduleData, ScheduleDateRange } from '../services/schedule'
+import type {
+  CreateScheduleData,
+  UpdateScheduleData,
+  ScheduleDateRange
+} from '../services/schedule'
 
 export function registerScheduleHandlers(): void {
   ipcMain.handle(

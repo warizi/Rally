@@ -3,7 +3,7 @@ import {
   useQuery,
   useQueryClient,
   type UseMutationResult,
-  type UseQueryResult,
+  type UseQueryResult
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
@@ -11,7 +11,7 @@ import type {
   ScheduleItem,
   CreateScheduleData,
   UpdateScheduleData,
-  ScheduleDateRange,
+  ScheduleDateRange
 } from './types'
 import type { TodoItem } from '@entities/todo/model/types'
 
@@ -25,12 +25,13 @@ export function useAllSchedulesByWorkspace(
   return useQuery({
     queryKey: [SCHEDULE_KEY, 'workspace', workspaceId, 'all'],
     queryFn: async (): Promise<ScheduleItem[]> => {
-      const res: IpcResponse<ScheduleItem[]> =
-        await window.api.schedule.findAllByWorkspace(workspaceId!)
+      const res: IpcResponse<ScheduleItem[]> = await window.api.schedule.findAllByWorkspace(
+        workspaceId!
+      )
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId
   })
 }
 
@@ -44,7 +45,7 @@ export function useSchedulesByWorkspace(
       'workspace',
       workspaceId,
       range.start.toISOString(),
-      range.end.toISOString(),
+      range.end.toISOString()
     ],
     queryFn: async (): Promise<ScheduleItem[]> => {
       const res: IpcResponse<ScheduleItem[]> = await window.api.schedule.findByWorkspace(
@@ -54,13 +55,11 @@ export function useSchedulesByWorkspace(
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId
   })
 }
 
-export function useScheduleById(
-  scheduleId: string | undefined
-): UseQueryResult<ScheduleItem> {
+export function useScheduleById(scheduleId: string | undefined): UseQueryResult<ScheduleItem> {
   return useQuery({
     queryKey: [SCHEDULE_KEY, 'detail', scheduleId],
     queryFn: async (): Promise<ScheduleItem> => {
@@ -68,13 +67,11 @@ export function useScheduleById(
       if (!res.success) throwIpcError(res)
       return res.data!
     },
-    enabled: !!scheduleId,
+    enabled: !!scheduleId
   })
 }
 
-export function useLinkedTodos(
-  scheduleId: string | undefined
-): UseQueryResult<TodoItem[]> {
+export function useLinkedTodos(scheduleId: string | undefined): UseQueryResult<TodoItem[]> {
   return useQuery({
     queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
     queryFn: async (): Promise<TodoItem[]> => {
@@ -82,7 +79,7 @@ export function useLinkedTodos(
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
-    enabled: !!scheduleId,
+    enabled: !!scheduleId
   })
 }
 
@@ -102,9 +99,9 @@ export function useCreateSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -122,9 +119,9 @@ export function useUpdateSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -141,9 +138,9 @@ export function useRemoveSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -161,9 +158,9 @@ export function useMoveSchedule(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId],
+        queryKey: [SCHEDULE_KEY, 'workspace', workspaceId]
       })
-    },
+    }
   })
 }
 
@@ -180,9 +177,9 @@ export function useLinkTodo(): UseMutationResult<
     },
     onSuccess: (_, { scheduleId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
+        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId]
       })
-    },
+    }
   })
 }
 
@@ -199,8 +196,8 @@ export function useUnlinkTodo(): UseMutationResult<
     },
     onSuccess: (_, { scheduleId }) => {
       queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
+        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId]
       })
-    },
+    }
   })
 }

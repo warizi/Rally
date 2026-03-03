@@ -18,7 +18,7 @@ export function TimeGrid({
   labelClass,
   showCurrentTime = true,
   onTimeClick,
-  children,
+  children
 }: Props): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
   const slots = getTimeSlots()

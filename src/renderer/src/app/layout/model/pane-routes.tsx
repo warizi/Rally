@@ -28,6 +28,8 @@ const CsvPage = lazy(() => import('@pages/csv'))
 const PdfPage = lazy(() => import('@pages/pdf'))
 const ImagePage = lazy(() => import('@pages/image'))
 const CalendarPage = lazy(() => import('@pages/calendar'))
+const CanvasListPage = lazy(() => import('@pages/canvas'))
+const CanvasDetailPage = lazy(() => import('@pages/canvas-detail'))
 
 export const PANE_ROUTES: PaneRoute[] = [
   {
@@ -65,5 +67,13 @@ export const PANE_ROUTES: PaneRoute[] = [
   {
     pattern: ROUTES.CALENDAR,
     component: CalendarPage
+  },
+  {
+    pattern: ROUTES.CANVAS,
+    component: CanvasListPage
+  },
+  {
+    pattern: ROUTES.CANVAS_DETAIL,
+    component: CanvasDetailPage
   }
 ]

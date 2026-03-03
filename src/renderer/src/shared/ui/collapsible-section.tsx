@@ -45,8 +45,7 @@ export function CollapsibleSection({
         />
         {title}
       </button>
-      {open &&
-        (contentClassName ? <div className={contentClassName}>{children}</div> : children)}
+      {open && (contentClassName ? <div className={contentClassName}>{children}</div> : children)}
     </div>
   )
 }

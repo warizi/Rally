@@ -8,6 +8,7 @@ import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readImageFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { entityLinkService } from './entity-link'
+import { canvasNodeRepository } from '../repositories/canvas-node'
 
 export interface ImageFileNode {
   id: string
@@ -212,6 +213,7 @@ export const imageFileService = {
       // 이미 외부에서 삭제된 경우 무시
     }
     entityLinkService.removeAllLinks('image', imageId)
+    canvasNodeRepository.deleteByRef('image', imageId)
     imageFileRepository.delete(imageId)
   },
 
@@ -292,11 +294,7 @@ export const imageFileService = {
     return toImageFileNode(updated)
   },
 
-  updateMeta(
-    _workspaceId: string,
-    imageId: string,
-    data: { description?: string }
-  ): ImageFileNode {
+  updateMeta(_workspaceId: string, imageId: string, data: { description?: string }): ImageFileNode {
     const image = imageFileRepository.findById(imageId)
     if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
 

@@ -33,6 +33,7 @@ The CSV renderer had grown to 620 lines with 7 intertwined responsibilities, cre
 **Document**: [csv-renderer-refactor.plan.md](../01-plan/features/csv-renderer-refactor.plan.md)
 
 The plan detailed a structured approach:
+
 - **Phase A**: Extract 4 custom hooks (`useCsvSelection`, `useCsvClipboard`, `useCsvKeyboard`, `useCsvColumnResize`)
 - **Phase B**: Refactor CsvTable.tsx to use extracted hooks
 - **Phase C**: Create shared types file (`model/types.ts`)
@@ -50,6 +51,7 @@ No separate design document was created for this refactoring (refactoring tasks 
 **Implementation Status**: Complete ✅
 
 **Files Created**:
+
 1. `src/renderer/src/widgets/csv-viewer/model/types.ts` — 18 lines
    - Shared types: `CellPos`, `Selection`, `SelectionRange`
    - Constants: `ROW_HEIGHT`, `HEADER_HEIGHT`, `ROW_NUM_WIDTH`, `ADD_COL_WIDTH`, `DEFAULT_COL_WIDTH`, `MIN_COL_WIDTH`
@@ -79,6 +81,7 @@ No separate design document was created for this refactoring (refactoring tasks 
    - Document-level event listeners for drag tracking
 
 **File Modified**:
+
 - `src/renderer/src/widgets/csv-viewer/ui/CsvTable.tsx` — 620 → 325 lines (48% reduction)
   - Replaced inline business logic with hook composition
   - Maintains all 12+ existing functionalities
@@ -89,12 +92,14 @@ No separate design document was created for this refactoring (refactoring tasks 
 **Document**: [csv-renderer-refactor.analysis.md](../03-analysis/csv-renderer-refactor.analysis.md)
 
 **Analysis Results**:
+
 - **Total items verified**: 78
 - **Items matching plan**: 77
 - **Match rate**: 100% (functional accuracy)
 - **Deviations**: 1 cosmetic (line count estimate)
 
 **Gap Analysis Findings**:
+
 - All 4 hooks extracted with exact signatures, return types, and logic specified
 - All 12 functionalities preserved (cell selection, navigation, clipboard, editing, resize, undo/redo, etc.)
 - Clipboard/delete duplication fully eliminated
@@ -106,15 +111,15 @@ No separate design document was created for this refactoring (refactoring tasks 
 
 ### 3.1 Code Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| CsvTable.tsx before | 620 lines | Baseline |
-| CsvTable.tsx after | 325 lines | 48% reduction ✅ |
-| Target line count | ~250 lines | Exceeded by 30% (acceptable) |
-| New hook files | 4 | Created as planned ✅ |
-| New type file | 1 | Created as planned ✅ |
-| Total new code | 412 lines | Includes type boilerplate |
-| Duplication eliminated | 100% | Clipboard/delete logic unified ✅ |
+| Metric                 | Value      | Status                            |
+| ---------------------- | ---------- | --------------------------------- |
+| CsvTable.tsx before    | 620 lines  | Baseline                          |
+| CsvTable.tsx after     | 325 lines  | 48% reduction ✅                  |
+| Target line count      | ~250 lines | Exceeded by 30% (acceptable)      |
+| New hook files         | 4          | Created as planned ✅             |
+| New type file          | 1          | Created as planned ✅             |
+| Total new code         | 412 lines  | Includes type boilerplate         |
+| Duplication eliminated | 100%       | Clipboard/delete logic unified ✅ |
 
 ### 3.2 Functionality Preservation
 
@@ -137,24 +142,24 @@ No separate design document was created for this refactoring (refactoring tasks 
 
 ### 3.3 Code Quality
 
-| Category | Result | Status |
-|----------|--------|--------|
-| TypeScript errors | 0 new errors | ✅ |
-| ESLint compliance | 100% | ✅ |
-| FSD layer rules | All compliant | ✅ |
-| Naming conventions | All correct | ✅ |
-| Import order | Correct | ✅ |
-| React Hook deps | Correct with justified disables | ✅ |
+| Category           | Result                          | Status |
+| ------------------ | ------------------------------- | ------ |
+| TypeScript errors  | 0 new errors                    | ✅     |
+| ESLint compliance  | 100%                            | ✅     |
+| FSD layer rules    | All compliant                   | ✅     |
+| Naming conventions | All correct                     | ✅     |
+| Import order       | Correct                         | ✅     |
+| React Hook deps    | Correct with justified disables | ✅     |
 
 ### 3.4 Design Principles Maintained
 
-| Principle | Implementation |
-|-----------|----------------|
-| Separation of concerns | Each hook has single responsibility |
-| Pure functions | Clipboard methods are pure operations; `e.preventDefault()` in keyboard handler only |
-| Dependency clarity | All hook dependencies explicit in function signatures |
-| Reusability | Hooks can be reused in other components if needed |
-| Testing surface | Hooks can be tested independently without component rendering |
+| Principle              | Implementation                                                                       |
+| ---------------------- | ------------------------------------------------------------------------------------ |
+| Separation of concerns | Each hook has single responsibility                                                  |
+| Pure functions         | Clipboard methods are pure operations; `e.preventDefault()` in keyboard handler only |
+| Dependency clarity     | All hook dependencies explicit in function signatures                                |
+| Reusability            | Hooks can be reused in other components if needed                                    |
+| Testing surface        | Hooks can be tested independently without component rendering                        |
 
 ---
 
@@ -315,6 +320,6 @@ The only deviation from plan estimates was line count (actual exceeded estimates
 
 ## Version History
 
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0 | 2026-03-01 | Initial completion report | Report Generator |
+| Version | Date       | Changes                   | Author           |
+| ------- | ---------- | ------------------------- | ---------------- |
+| 1.0     | 2026-03-01 | Initial completion report | Report Generator |

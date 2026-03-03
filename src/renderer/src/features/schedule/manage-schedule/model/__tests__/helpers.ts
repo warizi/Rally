@@ -16,15 +16,13 @@ export function makeScheduleItem(overrides?: Partial<ScheduleItem>): ScheduleIte
     priority: 'medium' as SchedulePriority,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
-    ...overrides,
+    ...overrides
   }
 }
 
 export function makeMonthGrid(year: number, month: number): MonthGridDay[][] {
   const firstDay = new Date(year, month, 1)
-  const startSunday = startOfDay(
-    addDays(firstDay, -firstDay.getDay()),
-  )
+  const startSunday = startOfDay(addDays(firstDay, -firstDay.getDay()))
 
   const weeks: MonthGridDay[][] = []
   let current = startSunday
@@ -35,7 +33,7 @@ export function makeMonthGrid(year: number, month: number): MonthGridDay[][] {
       week.push({
         date: new Date(current),
         isCurrentMonth: current.getMonth() === month,
-        isToday: false,
+        isToday: false
       })
       current = addDays(current, 1)
     }

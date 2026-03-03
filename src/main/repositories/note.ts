@@ -30,7 +30,10 @@ export const noteRepository = {
     if (items.length === 0) return
     const CHUNK = 99 // 10 columns × 99 = 990 variables < SQLite 999 limit
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(notes).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(notes)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
@@ -61,14 +64,14 @@ export const noteRepository = {
       .from(notes)
       .where(eq(notes.workspaceId, workspaceId))
       .all()
-    const orphanIds = dbRows
-      .filter((r) => !existingSet.has(r.relativePath))
-      .map((r) => r.id)
+    const orphanIds = dbRows.filter((r) => !existingSet.has(r.relativePath)).map((r) => r.id)
     if (orphanIds.length === 0) return
     // inArray also has the 999-variable limit; chunk at 900 to stay safe
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(notes).where(inArray(notes.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(notes)
+        .where(inArray(notes.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
@@ -114,6 +117,17 @@ export const noteRepository = {
         stmt.run(i, now, workspaceId, orderedIds[i])
       }
     })()
+  },
+
+  findByIds(ids: string[]): Note[] {
+    if (ids.length === 0) return []
+    const CHUNK = 900
+    const results: Note[] = []
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      results.push(...db.select().from(notes).where(inArray(notes.id, chunk)).all())
+    }
+    return results
   },
 
   delete(id: string): void {

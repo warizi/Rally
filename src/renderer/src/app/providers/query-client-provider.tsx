@@ -8,9 +8,6 @@ const queryClient = new QueryClient({
       staleTime: 1000 * 60 * 5 // 5분
     },
     mutations: {
-      onSuccess: () => {
-        toast.success('성공')
-      },
       onError: (error) => {
         toast.error(error.message)
       }

@@ -8,6 +8,7 @@ import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readPdfFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { entityLinkService } from './entity-link'
+import { canvasNodeRepository } from '../repositories/canvas-node'
 
 export interface PdfFileNode {
   id: string
@@ -217,6 +218,7 @@ export const pdfFileService = {
       // 이미 외부에서 삭제된 경우 무시
     }
     entityLinkService.removeAllLinks('pdf', pdfId)
+    canvasNodeRepository.deleteByRef('pdf', pdfId)
     pdfFileRepository.delete(pdfId)
   },
 
@@ -301,11 +303,7 @@ export const pdfFileService = {
   },
 
   /** 메타데이터 업데이트 (description만) */
-  updateMeta(
-    _workspaceId: string,
-    pdfId: string,
-    data: { description?: string }
-  ): PdfFileNode {
+  updateMeta(_workspaceId: string, pdfId: string, data: { description?: string }): PdfFileNode {
     const pdf = pdfFileRepository.findById(pdfId)
     if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
 

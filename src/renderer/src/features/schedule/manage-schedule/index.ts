@@ -14,13 +14,9 @@ export {
   type MonthGridDay,
   type TimeSlot,
   type LayoutedSchedule,
-  type WeekBarSegment,
+  type WeekBarSegment
 } from './model/calendar-utils'
-export {
-  SCHEDULE_COLOR_PRESETS,
-  PRIORITY_COLORS,
-  getScheduleColor,
-} from './model/schedule-color'
+export { SCHEDULE_COLOR_PRESETS, PRIORITY_COLORS, getScheduleColor } from './model/schedule-color'
 export { CalendarNavigation } from './ui/CalendarNavigation'
 export { ScheduleFormDialog } from './ui/ScheduleFormDialog'
 export { DeleteScheduleDialog } from './ui/DeleteScheduleDialog'

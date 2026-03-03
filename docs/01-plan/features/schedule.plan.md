@@ -38,20 +38,20 @@ pages/calendar                            → CalendarPage (TabContainer + TabHe
 
 ### SQLite `schedules` 테이블
 
-| 필드          | 타입                                    | 설명                                          |
-| ------------- | --------------------------------------- | --------------------------------------------- |
-| `id`          | text PK                                 | nanoid                                        |
-| `workspaceId` | text NULL → workspaces.id (cascade)     | 워크스페이스 소속. null이면 전역 일정         |
-| `title`       | text NOT NULL                           | 일정 제목                                     |
-| `description` | text NULL                               | 상세 설명                                     |
-| `location`    | text NULL                               | 장소                                          |
-| `allDay`      | integer NOT NULL DEFAULT 0              | boolean (mode: 'boolean'). 종일 일정 여부     |
-| `startAt`     | integer (timestamp_ms) NOT NULL         | 시작 시각                                     |
-| `endAt`       | integer (timestamp_ms) NOT NULL         | 종료 시각                                     |
-| `color`       | text NULL                               | hex 색상 (null이면 priority별 기본 색상)      |
-| `priority`    | text NOT NULL DEFAULT 'medium'          | 'low' \| 'medium' \| 'high'                   |
-| `createdAt`   | integer (timestamp_ms) NOT NULL         |                                               |
-| `updatedAt`   | integer (timestamp_ms) NOT NULL         |                                               |
+| 필드          | 타입                                | 설명                                      |
+| ------------- | ----------------------------------- | ----------------------------------------- |
+| `id`          | text PK                             | nanoid                                    |
+| `workspaceId` | text NULL → workspaces.id (cascade) | 워크스페이스 소속. null이면 전역 일정     |
+| `title`       | text NOT NULL                       | 일정 제목                                 |
+| `description` | text NULL                           | 상세 설명                                 |
+| `location`    | text NULL                           | 장소                                      |
+| `allDay`      | integer NOT NULL DEFAULT 0          | boolean (mode: 'boolean'). 종일 일정 여부 |
+| `startAt`     | integer (timestamp_ms) NOT NULL     | 시작 시각                                 |
+| `endAt`       | integer (timestamp_ms) NOT NULL     | 종료 시각                                 |
+| `color`       | text NULL                           | hex 색상 (null이면 priority별 기본 색상)  |
+| `priority`    | text NOT NULL DEFAULT 'medium'      | 'low' \| 'medium' \| 'high'               |
+| `createdAt`   | integer (timestamp_ms) NOT NULL     |                                           |
+| `updatedAt`   | integer (timestamp_ms) NOT NULL     |                                           |
 
 ### Drizzle 스키마 코드
 
@@ -70,7 +70,9 @@ export const schedules = sqliteTable('schedules', {
   startAt: integer('start_at', { mode: 'timestamp_ms' }).notNull(),
   endAt: integer('end_at', { mode: 'timestamp_ms' }).notNull(),
   color: text('color'),
-  priority: text('priority', { enum: ['low', 'medium', 'high'] }).notNull().default('medium'),
+  priority: text('priority', { enum: ['low', 'medium', 'high'] })
+    .notNull()
+    .default('medium'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
 })
@@ -78,10 +80,10 @@ export const schedules = sqliteTable('schedules', {
 
 ### SQLite `schedule_todos` 테이블 (연결 테이블)
 
-| 필드         | 타입                                   | 설명                                      |
-| ------------ | -------------------------------------- | ----------------------------------------- |
-| `scheduleId` | text NOT NULL → schedules.id (cascade) | 일정 ID. 일정 삭제 시 연결도 삭제         |
-| `todoId`     | text NOT NULL → todos.id (cascade)     | Todo ID. Todo 삭제 시 연결도 삭제         |
+| 필드         | 타입                                   | 설명                              |
+| ------------ | -------------------------------------- | --------------------------------- |
+| `scheduleId` | text NOT NULL → schedules.id (cascade) | 일정 ID. 일정 삭제 시 연결도 삭제 |
+| `todoId`     | text NOT NULL → todos.id (cascade)     | Todo ID. Todo 삭제 시 연결도 삭제 |
 
 - **복합 PK**: (scheduleId, todoId) — 중복 연결 방지
 - 양방향 cascade: 일정/Todo 삭제 시 연결만 삭제, 원본 유지
@@ -270,16 +272,19 @@ export const scheduleService = { ... }
 ### 메서드 상세
 
 **`findByWorkspace(workspaceId, range)`**
+
 - workspace 유효성 확인 (NotFoundError)
 - WHERE: `startAt <= range.end AND endAt >= range.start` (범위 겹침 조건)
 - ORDER BY: startAt ASC
 - ScheduleItem[] 반환
 
 **`findById(scheduleId)`**
+
 - schedule 존재 확인 (NotFoundError)
 - ScheduleItem 반환
 
 **`create(workspaceId, data)`**
+
 - workspace 존재 확인 (workspaceId 있을 때)
 - `title.trim()` 빈 문자열 → ValidationError
 - `startAt <= endAt` → ValidationError
@@ -289,6 +294,7 @@ export const scheduleService = { ... }
 - DB insert → ScheduleItem 반환
 
 **`update(scheduleId, data)`**
+
 - schedule 존재 확인 (NotFoundError)
 - startAt/endAt 변경 시 기존값과 merge 후 `startAt <= endAt` 재검증
 - allDay 변경 시 시간 자동 보정
@@ -296,22 +302,27 @@ export const scheduleService = { ... }
 - DB update → ScheduleItem 반환
 
 **`remove(scheduleId)`**
+
 - schedule 존재 확인
 - DB delete (schedule_todos cascade)
 
 **`move(scheduleId, startAt, endAt)`**
+
 - schedule 존재 확인
 - `startAt <= endAt` 검증
 - startAt, endAt, updatedAt만 업데이트 (DnD 최적화)
 
 **`linkTodo(scheduleId, todoId)`**
+
 - schedule, todo 존재 확인 (NotFoundError)
 - INSERT OR IGNORE (멱등성)
 
 **`unlinkTodo(scheduleId, todoId)`**
+
 - DELETE WHERE (연결 없어도 에러 안남, 멱등성)
 
 **`getLinkedTodos(scheduleId)`**
+
 - schedule 존재 확인
 - schedule_todos + todos JOIN → TodoItem[] 반환
 - todoService의 toTodoItem 매퍼 재사용 (import)
@@ -392,7 +403,10 @@ function getWeekDates(date: Date): Date[]
 // date가 속한 주의 일~토 7개 Date 반환 (startOfWeek 사용)
 
 /** 시간 슬롯 (00~23시) */
-interface TimeSlot { hour: number; label: string }
+interface TimeSlot {
+  hour: number
+  label: string
+}
 function getTimeSlots(): TimeSlot[]
 // [{ hour: 0, label: '00:00' }, ..., { hour: 23, label: '23:00' }]
 
@@ -405,8 +419,8 @@ function isScheduleOnDate(schedule: ScheduleItem, date: Date): boolean
 
 /** 월간 뷰: 일정의 주(row) 내 가로 배치 계산 */
 interface ScheduleBarLayout {
-  startCol: number  // 0~6 (일~토)
-  span: number      // 차지하는 열 수 (1~7)
+  startCol: number // 0~6 (일~토)
+  span: number // 차지하는 열 수 (1~7)
 }
 function getScheduleBarLayout(
   schedule: ScheduleItem,
@@ -439,8 +453,8 @@ function moveScheduleByMinutes(
 /** 겹치는 일정 수평 분할 레이아웃 (일간/주간 뷰) */
 interface LayoutedSchedule {
   schedule: ScheduleItem
-  column: number        // 0-based 수평 위치
-  totalColumns: number  // 동시 겹침 최대 수
+  column: number // 0-based 수평 위치
+  totalColumns: number // 동시 겹침 최대 수
 }
 function layoutOverlappingSchedules(schedules: ScheduleItem[]): LayoutedSchedule[]
 // 알고리즘:
@@ -451,16 +465,13 @@ function layoutOverlappingSchedules(schedules: ScheduleItem[]): LayoutedSchedule
 
 /** 월간 뷰: 여러 날 일정 바의 주(row)별 분할 */
 interface WeekBarSegment {
-  weekIndex: number       // 몇 번째 주 row인지
-  startCol: number        // 해당 주 내 시작 열 (0~6)
-  span: number            // 해당 주 내 차지하는 열 수
-  isStart: boolean        // 이 세그먼트가 일정의 진짜 시작인지
-  isEnd: boolean          // 이 세그먼트가 일정의 진짜 끝인지
+  weekIndex: number // 몇 번째 주 row인지
+  startCol: number // 해당 주 내 시작 열 (0~6)
+  span: number // 해당 주 내 차지하는 열 수
+  isStart: boolean // 이 세그먼트가 일정의 진짜 시작인지
+  isEnd: boolean // 이 세그먼트가 일정의 진짜 끝인지
 }
-function splitBarByWeeks(
-  schedule: ScheduleItem,
-  monthGrid: MonthGridDay[][]
-): WeekBarSegment[]
+function splitBarByWeeks(schedule: ScheduleItem, monthGrid: MonthGridDay[][]): WeekBarSegment[]
 // 여러 날 일정이 주(row) 경계를 넘을 때 세그먼트로 분할
 // isStart/isEnd로 좌/우 라운드 처리 판단
 ```
@@ -473,8 +484,8 @@ function splitBarByWeeks(
 type CalendarViewType = 'month' | 'week' | 'day'
 
 interface UseCalendarOptions {
-  initialViewType?: CalendarViewType  // tabSearchParams에서 복원
-  initialDate?: string                // ISO string, tabSearchParams에서 복원
+  initialViewType?: CalendarViewType // tabSearchParams에서 복원
+  initialDate?: string // ISO string, tabSearchParams에서 복원
 }
 
 interface UseCalendarReturn {
@@ -487,12 +498,12 @@ interface UseCalendarReturn {
   setViewType: (type: CalendarViewType) => void
   selectDate: (date: Date) => void
   goToday: () => void
-  goPrev: () => void   // month: -1월, week: -7일, day: -1일
-  goNext: () => void   // month: +1월, week: +7일, day: +1일
+  goPrev: () => void // month: -1월, week: -7일, day: -1일
+  goNext: () => void // month: +1월, week: +7일, day: +1일
 
   // 파생 값
-  title: string                 // "2026년 3월" | "2026년 3월 1일 ~ 7일" | "2026년 3월 1일 (일)"
-  dateRange: ScheduleDateRange  // 현재 뷰의 데이터 조회 범위
+  title: string // "2026년 3월" | "2026년 3월 1일 ~ 7일" | "2026년 3월 1일 (일)"
+  dateRange: ScheduleDateRange // 현재 뷰의 데이터 조회 범위
 }
 
 function useCalendar(options?: UseCalendarOptions): UseCalendarReturn
@@ -509,12 +520,12 @@ function useCalendar(options?: UseCalendarOptions): UseCalendarReturn
 
 ```typescript
 // pages/calendar/ui/CalendarPage.tsx (TodoPage 패턴 준수)
-const tabSearchParams = useTabStore((s) => tabId ? s.tabs[tabId]?.searchParams : undefined)
+const tabSearchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
 const navigateTab = useTabStore((s) => s.navigateTab)
 
 const calendar = useCalendar({
   initialViewType: (tabSearchParams?.viewType as CalendarViewType) || 'month',
-  initialDate: tabSearchParams?.currentDate,
+  initialDate: tabSearchParams?.currentDate
 })
 
 // viewType 변경 시 searchParams 동기화
@@ -544,13 +555,13 @@ export const SCHEDULE_COLOR_PRESETS = [
   { label: '초록', value: '#22c55e' },
   { label: '파랑', value: '#3b82f6' },
   { label: '보라', value: '#a855f7' },
-  { label: '분홍', value: '#ec4899' },
+  { label: '분홍', value: '#ec4899' }
 ]
 
 export const PRIORITY_COLORS: Record<string, string> = {
   high: '#ef4444',
   medium: '#3b82f6',
-  low: '#6b7280',
+  low: '#6b7280'
 }
 
 export function getScheduleColor(schedule: ScheduleItem): string {
@@ -569,17 +580,17 @@ TodoPage 패턴을 **정확히** 따른다.
 ```tsx
 // pages/calendar/ui/CalendarPage.tsx
 interface Props {
-  tabId?: string  // PageProps에서 자동 주입 (PaneContent.tsx)
+  tabId?: string // PageProps에서 자동 주입 (PaneContent.tsx)
 }
 
 export function CalendarPage({ tabId }: Props): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
-  const tabSearchParams = useTabStore((s) => tabId ? s.tabs[tabId]?.searchParams : undefined)
+  const tabSearchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
   const navigateTab = useTabStore((s) => s.navigateTab)
 
   const calendar = useCalendar({
-    initialViewType: tabSearchParams?.viewType as CalendarViewType || 'month',
-    initialDate: tabSearchParams?.currentDate,
+    initialViewType: (tabSearchParams?.viewType as CalendarViewType) || 'month',
+    initialDate: tabSearchParams?.currentDate
   })
 
   const { data: schedules = [] } = useSchedulesByWorkspace(workspaceId, calendar.dateRange)
@@ -780,10 +791,12 @@ export function CalendarViewToolbar({ viewType, onViewTypeChange, workspaceId })
   )}
   onClick={() => onSelectDate(day.date)}
 >
-  <span className={cn(
-    'text-xs font-medium inline-block',
-    day.isToday && 'bg-primary text-primary-foreground rounded-full size-6 leading-6 text-center'
-  )}>
+  <span
+    className={cn(
+      'text-xs font-medium inline-block',
+      day.isToday && 'bg-primary text-primary-foreground rounded-full size-6 leading-6 text-center'
+    )}
+  >
     {day.date.getDate()}
   </span>
   {/* 일정 렌더링: ScheduleDot (소형) / ScheduleBar + 텍스트 (중/대형) */}
@@ -795,7 +808,7 @@ export function CalendarViewToolbar({ viewType, onViewTypeChange, workspaceId })
 1. `splitBarByWeeks(schedule, monthGrid)` → 주(row)별 세그먼트 분할
 2. 각 week-row 내에서 바를 "lane"에 배치 (위→아래 순서로 빈 lane 할당)
 3. 바 렌더링: absolute positioning
-   - `top`: lane * (barHeight + gap)
+   - `top`: lane \* (barHeight + gap)
    - `left`: `${startCol * (100/7)}%`
    - `width`: `${span * (100/7)}%`
 4. `isStart` → `rounded-l-sm`, `isEnd` → `rounded-r-sm` (주 경계에서 잘린 바는 해당 쪽 라운드 없음)
@@ -804,7 +817,15 @@ export function CalendarViewToolbar({ viewType, onViewTypeChange, workspaceId })
 #### DnD (월간) — `@dnd-kit/core` only
 
 ```tsx
-import { DndContext, useDraggable, useDroppable, DragOverlay, PointerSensor, useSensor, useSensors } from '@dnd-kit/core'
+import {
+  DndContext,
+  useDraggable,
+  useDroppable,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors
+} from '@dnd-kit/core'
 
 // sensors: delay 200ms (클릭과 드래그 구분)
 const sensors = useSensors(
@@ -826,17 +847,20 @@ const sensors = useSensors(
 #### Container Query 반응형
 
 **< 400px:**
+
 - DayView로 위임 (selectedDate 또는 currentDate의 날짜). 사실상 일간 뷰와 동일 렌더링.
 - 상단에 요일 가로 스크롤 날짜 선택 바 표시 (어떤 날짜인지 탭으로 전환)
 - DnD: 세로만 (시간 이동)
 
 **400~800px:**
+
 - 7열 타임라인
 - 시간당 높이: 40px
 - 시간 라벨: `w-10 text-[10px]`
 - 일정 블록: 제목만, `text-[10px]`
 
 **≥ 800px:**
+
 - 7열 타임라인
 - 시간당 높이: 60px
 - 시간 라벨: `w-14 text-xs`
@@ -866,7 +890,7 @@ const sensors = useSensors(
 <ScrollArea className="flex-1 min-h-0">
   <div className="relative" style={{ height: 24 * hourHeight }}>
     {/* 시간 라벨 + 가로선 24개 */}
-    {timeSlots.map(slot => (
+    {timeSlots.map((slot) => (
       <div
         key={slot.hour}
         className="absolute left-0 right-0 border-t border-border"
@@ -879,9 +903,7 @@ const sensors = useSensors(
     ))}
 
     {/* 일정 블록 영역 */}
-    <div className="absolute top-0 bottom-0 left-10 @[800px]:left-14 right-0">
-      {children}
-    </div>
+    <div className="absolute top-0 bottom-0 left-10 @[800px]:left-14 right-0">{children}</div>
 
     <CurrentTimeIndicator hourHeight={hourHeight} />
   </div>
@@ -955,7 +977,7 @@ function handleDragEnd(event: DragEndEvent) {
   if (!event.active || !event.delta) return
   const schedule = event.active.data.current?.schedule as ScheduleItem
   const deltaY = event.delta.y
-  const minutesDelta = Math.round(deltaY / (hourHeight / 4)) * 15  // 15분 스냅
+  const minutesDelta = Math.round(deltaY / (hourHeight / 4)) * 15 // 15분 스냅
   if (minutesDelta === 0) return
   const { startAt, endAt } = moveScheduleByMinutes(schedule, minutesDelta)
   moveSchedule.mutate({ id: schedule.id, startAt, endAt })
@@ -970,15 +992,16 @@ function handleDragEnd(event: DragEndEvent) {
 
 #### Container Query 반응형
 
-| 범위      | 시간당 높이 | 시간 라벨 | 일정 표시                    |
-| --------- | ----------- | --------- | ---------------------------- |
-| < 400px   | 50px        | w-8 9px   | 제목만                       |
-| 400~800px | 60px        | w-10 10px | 제목 + 시간                  |
-| ≥ 800px   | 60px        | w-14 xs   | 제목 + 시간 + 설명 1줄 + 장소|
+| 범위      | 시간당 높이 | 시간 라벨 | 일정 표시                     |
+| --------- | ----------- | --------- | ----------------------------- |
+| < 400px   | 50px        | w-8 9px   | 제목만                        |
+| 400~800px | 60px        | w-10 10px | 제목 + 시간                   |
+| ≥ 800px   | 60px        | w-14 xs   | 제목 + 시간 + 설명 1줄 + 장소 |
 
 #### 겹치는 일정
 
 `layoutOverlappingSchedules()` 결과를 바탕으로 ScheduleBlock에 `column`/`totalColumns` 전달:
+
 - `left: (column / totalColumns) * 100%`
 - `width: (1 / totalColumns) * 100% - 2px`
 
@@ -1035,7 +1058,7 @@ const scheduleFormSchema = z.object({
   location: z.string().nullable().optional(),
   allDay: z.boolean().default(false),
   priority: z.enum(['low', 'medium', 'high']).default('medium'),
-  color: z.string().nullable().optional(),
+  color: z.string().nullable().optional()
 })
 // startDate, endDate, startHour, startMinute, endHour, endMinute는
 // CreateTodoDialog 패턴과 동일하게 별도 useState로 관리 (zod schema 외부)
@@ -1063,7 +1086,7 @@ const [endMinute, setEndMinute] = useState(0)
 
 ```tsx
 <div className="flex flex-wrap gap-2">
-  {SCHEDULE_COLOR_PRESETS.map(preset => (
+  {SCHEDULE_COLOR_PRESETS.map((preset) => (
     <button
       key={preset.label}
       type="button"
@@ -1122,7 +1145,10 @@ const [endMinute, setEndMinute] = useState(0)
   <PopoverContent className="w-80 p-4" align="start">
     {/* 헤더 */}
     <div className="flex items-start gap-2 mb-3">
-      <div className="size-3 rounded-full mt-1 shrink-0" style={{ backgroundColor: getScheduleColor(schedule) }} />
+      <div
+        className="size-3 rounded-full mt-1 shrink-0"
+        style={{ backgroundColor: getScheduleColor(schedule) }}
+      />
       <h4 className="font-semibold text-sm">{schedule.title}</h4>
     </div>
 
@@ -1135,7 +1161,9 @@ const [endMinute, setEndMinute] = useState(0)
       {!schedule.allDay && (
         <div className="flex items-center gap-2">
           <Clock className="size-3.5" />
-          <span>{format(schedule.startAt, 'HH:mm')} - {format(schedule.endAt, 'HH:mm')}</span>
+          <span>
+            {format(schedule.startAt, 'HH:mm')} - {format(schedule.endAt, 'HH:mm')}
+          </span>
         </div>
       )}
       {schedule.location && (
@@ -1157,8 +1185,12 @@ const [endMinute, setEndMinute] = useState(0)
     <Separator className="my-2" />
 
     <div className="flex justify-end gap-2">
-      <Button variant="outline" size="sm" onClick={openEdit}>수정</Button>
-      <Button variant="destructive" size="sm" onClick={openDelete}>삭제</Button>
+      <Button variant="outline" size="sm" onClick={openEdit}>
+        수정
+      </Button>
+      <Button variant="destructive" size="sm" onClick={openDelete}>
+        삭제
+      </Button>
     </div>
   </PopoverContent>
 </Popover>
@@ -1388,16 +1420,16 @@ export function useLinkedTodos(scheduleId: string | undefined): UseQueryResult<T
 
 ## 주의사항 / 기존 패턴과의 차이
 
-| 항목 | 기존 프로젝트 | Schedule 신규 |
-|------|--------------|--------------|
-| 복합 PK | 사용 없음 (모든 테이블 단일 PK) | `schedule_todos`에서 첫 도입 |
-| `date-fns` import | `format` 1개만 사용 | 15+ 함수 추가 (`addDays`, `startOfMonth` 등) |
-| DnD 방식 | `useSortable` + `SortableContext` | `useDraggable` + `useDroppable` (셀 간 이동) |
-| Optimistic update | 미사용 (전부 `invalidateQueries`) | 동일 (미사용, 일관성 유지) |
-| `@dnd-kit/utilities` | 미설치 (`@dnd-kit/core` + `sortable` + `modifiers`만) | 추가 설치 불필요 (`useDraggable`의 `transform` 직접 사용) |
-| Zod version | v4 (`^4.3.6`) | 동일 v4 사용 |
-| CalendarViewToolbar | — | `TodoViewToolbar` 패턴 확장 (ToggleGroup + Dialog trigger) |
-| tabSearchParams 동기화 | view, filter, section open/close 저장 | viewType, currentDate 저장 |
+| 항목                   | 기존 프로젝트                                         | Schedule 신규                                              |
+| ---------------------- | ----------------------------------------------------- | ---------------------------------------------------------- |
+| 복합 PK                | 사용 없음 (모든 테이블 단일 PK)                       | `schedule_todos`에서 첫 도입                               |
+| `date-fns` import      | `format` 1개만 사용                                   | 15+ 함수 추가 (`addDays`, `startOfMonth` 등)               |
+| DnD 방식               | `useSortable` + `SortableContext`                     | `useDraggable` + `useDroppable` (셀 간 이동)               |
+| Optimistic update      | 미사용 (전부 `invalidateQueries`)                     | 동일 (미사용, 일관성 유지)                                 |
+| `@dnd-kit/utilities`   | 미설치 (`@dnd-kit/core` + `sortable` + `modifiers`만) | 추가 설치 불필요 (`useDraggable`의 `transform` 직접 사용)  |
+| Zod version            | v4 (`^4.3.6`)                                         | 동일 v4 사용                                               |
+| CalendarViewToolbar    | —                                                     | `TodoViewToolbar` 패턴 확장 (ToggleGroup + Dialog trigger) |
+| tabSearchParams 동기화 | view, filter, section open/close 저장                 | viewType, currentDate 저장                                 |
 
 ---
 

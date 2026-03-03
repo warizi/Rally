@@ -12,11 +12,17 @@ interface Props {
   previewSchedule?: ScheduleItem | null
 }
 
-export function MonthDayCell({ day, isSelected, onClick, children, previewSchedule }: Props): React.JSX.Element {
+export function MonthDayCell({
+  day,
+  isSelected,
+  onClick,
+  children,
+  previewSchedule
+}: Props): React.JSX.Element {
   const dateKey = format(day.date, 'yyyy-MM-dd')
   const { setNodeRef, isOver } = useDroppable({
     id: dateKey,
-    data: { date: day.date },
+    data: { date: day.date }
   })
 
   const today = isSameDay(day.date, new Date())
@@ -56,7 +62,7 @@ export function MonthDayCell({ day, isSelected, onClick, children, previewSchedu
           style={{
             backgroundColor: `${getScheduleColor(previewSchedule)}15`,
             border: `1.5px dashed ${getScheduleColor(previewSchedule)}60`,
-            color: getScheduleColor(previewSchedule),
+            color: getScheduleColor(previewSchedule)
           }}
         >
           {previewSchedule.title}

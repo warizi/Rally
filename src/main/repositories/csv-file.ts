@@ -30,7 +30,10 @@ export const csvFileRepository = {
     if (items.length === 0) return
     const CHUNK = 99 // 10 columns × 99 = 990 < SQLite 999 limit
     for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(csvFiles).values(items.slice(i, i + CHUNK)).onConflictDoNothing().run()
+      db.insert(csvFiles)
+        .values(items.slice(i, i + CHUNK))
+        .onConflictDoNothing()
+        .run()
     }
   },
 
@@ -68,7 +71,9 @@ export const csvFileRepository = {
     if (orphanIds.length === 0) return
     const CHUNK = 900
     for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(csvFiles).where(inArray(csvFiles.id, orphanIds.slice(i, i + CHUNK))).run()
+      db.delete(csvFiles)
+        .where(inArray(csvFiles.id, orphanIds.slice(i, i + CHUNK)))
+        .run()
     }
   },
 
@@ -106,6 +111,17 @@ export const csvFileRepository = {
         stmt.run(i, now, workspaceId, orderedIds[i])
       }
     })()
+  },
+
+  findByIds(ids: string[]): CsvFile[] {
+    if (ids.length === 0) return []
+    const CHUNK = 900
+    const results: CsvFile[] = []
+    for (let i = 0; i < ids.length; i += CHUNK) {
+      const chunk = ids.slice(i, i + CHUNK)
+      results.push(...db.select().from(csvFiles).where(inArray(csvFiles.id, chunk)).all())
+    }
+    return results
   },
 
   delete(id: string): void {

@@ -62,11 +62,7 @@ export function useRenamePdfFile(): UseMutationResult<
       markAsOwnWrite(pdfId)
     },
     mutationFn: async ({ workspaceId, pdfId, newName }) => {
-      const res: IpcResponse<PdfFileNode> = await window.api.pdf.rename(
-        workspaceId,
-        pdfId,
-        newName
-      )
+      const res: IpcResponse<PdfFileNode> = await window.api.pdf.rename(workspaceId, pdfId, newName)
       if (!res.success) throwIpcError(res)
       return res.data
     },

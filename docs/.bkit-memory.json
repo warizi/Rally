@@ -1,11 +1,11 @@
 {
-  "sessionCount": 131,
+  "sessionCount": 157,
   "lastSession": {
-    "startedAt": "2026-03-02T04:38:00.351Z",
+    "startedAt": "2026-03-03T02:14:23.758Z",
     "platform": "claude",
     "level": "Dynamic"
   },
-  "currentFeature": "image-viewer",
+  "currentFeature": "canvas-bugfix-v1",
   "phase": "do",
   "matchRate": null,
   "archivedFeatures": {
@@ -26,6 +26,13 @@
       "matchRate": 100,
       "archivedAt": "2026-03-02T09:30:00Z",
       "archivedTo": "docs/archive/2026-03/link-test/"
+    },
+    "canvas-visualization": {
+      "phase": "archived",
+      "matchRate": 93,
+      "iterationCount": 1,
+      "archivedAt": "2026-03-03T00:00:00Z",
+      "archivedTo": "docs/archive/2026-03/canvas-visualization/"
     }
   }
 }

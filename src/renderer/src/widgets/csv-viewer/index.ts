@@ -1,1 +1,1 @@
-export { CsvViewer } from './ui/CsvViewer'
+export { CsvViewer } from '@features/csv/edit-csv'

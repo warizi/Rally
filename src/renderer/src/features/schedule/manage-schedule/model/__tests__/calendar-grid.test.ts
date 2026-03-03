@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { addDays } from 'date-fns'
 import { getMonthGrid, getWeekDates } from '../calendar-grid'
 
 beforeEach(() => {
@@ -63,9 +62,7 @@ describe('getMonthGrid', () => {
     vi.setSystemTime(new Date('2026-03-29T12:00:00'))
     const grid = getMonthGrid(2026, 3) // 4월 뷰 (0-indexed: 3 = 4월)
     // 패딩 영역의 3월 29일 셀이 isToday=true
-    const mar29 = grid.flat().find(
-      (d) => d.date.getDate() === 29 && d.date.getMonth() === 2,
-    )
+    const mar29 = grid.flat().find((d) => d.date.getDate() === 29 && d.date.getMonth() === 2)
     expect(mar29).toBeDefined()
     expect(mar29!.isToday).toBe(true)
     expect(mar29!.isCurrentMonth).toBe(false)

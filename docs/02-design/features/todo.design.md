@@ -1003,6 +1003,7 @@ export function useTodoKanban(allTodos: TodoItem[]) {
 - **props**: `workspaceId: string`, `parentId?: string | null`, `trigger: React.ReactNode`, `defaultStatus?: TodoStatus`
 - **상태**: `open: boolean`
 - **폼 초기값**: `defaultStatus`를 `useForm`의 `defaultValues`로 전달
+
   ```tsx
   const form = useForm<CreateTodoFormValues>({
     resolver: zodResolver(createTodoSchema),
@@ -1019,6 +1020,7 @@ export function useTodoKanban(allTodos: TodoItem[]) {
     ```tsx
     form.reset({ title: '', description: '', status: defaultStatus ?? '할일', priority: 'medium' })
     ```
+
 - **제출**: `useCreateTodo().mutate({ workspaceId, data: { ...values, parentId } })`
 - **성공 시**: Dialog 닫기 + 폼 리셋
 - **shadcn**: `Dialog`, `DialogContent`, `DialogHeader`, `DialogTitle`, `DialogFooter`, `Button`, `Form`
@@ -1050,6 +1052,7 @@ export function useTodoKanban(allTodos: TodoItem[]) {
 - **제목 클릭**: `onTitleClick()` (prop으로 주입받은 콜백 호출)
 - **더보기 DropdownMenu**: "상세 보기"(→ `onTitleClick()` 호출), "삭제"(→DeleteTodoDialog)
 - **Sub-todo DnD**: Collapsible 내부에 자체 `DndContext` + `SortableContext` (subOrder 기준 정렬)
+
   ```tsx
   function handleSubDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -1119,6 +1122,7 @@ export function useTodoKanban(allTodos: TodoItem[]) {
   ```
 - **제목 클릭**: `onTitleClick()` 호출 (TodoListItem과 동일, 상세 페이지 이동)
 - **Sub-todo DnD**: 자체 `DndContext` + `SortableContext` (kanbanOrder 기준 정렬)
+
   ```tsx
   function handleSubDragEnd(event: DragEndEvent) {
     const { active, over } = event
@@ -1137,6 +1141,7 @@ export function useTodoKanban(allTodos: TodoItem[]) {
 
   - 부모 `DndContext`(TodoKanbanView)와 완전히 격리 — 카드 드래그 중 서브-투두 DnD가 충돌하지 않음
   - 서브-투두는 카드 내부에서만 이동 (보드 간 이동 없음)
+
 - **`+ 하위 추가하기` 버튼**: Collapsible 내 하단에 위치, `CreateTodoDialog` with `parentId={todo.id}`
   ```tsx
   <CreateTodoDialog
@@ -1353,6 +1358,7 @@ export function TodoPage(): React.JSX.Element {
   }
   ```
 - **Not Found 처리**: `todo`가 `undefined`인 경우 (삭제된 todo, 잘못된 URL 등) 빈 상태 표시
+
   ```tsx
   if (!todo) {
     return (
@@ -1366,6 +1372,7 @@ export function TodoPage(): React.JSX.Element {
   ```
 
   - `import TabHeader from '@shared/ui/tab-header'` 사용 — raw `<h1>` 대신 앱 표준 헤더 컴포넌트
+
 - **Sub-todo 목록**: `todos.filter(t => t.parentId === todo.id).sort((a,b) => a.subOrder - b.subOrder)`
   - `todoId` 변수를 별도 선언하지 않고 early return 이후 확정된 `todo.id` 사용
   ```tsx

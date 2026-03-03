@@ -7,7 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
+  AlertDialogTrigger
 } from '@shared/ui/alert-dialog'
 import { useRemoveSchedule } from '@entities/schedule'
 
@@ -26,7 +26,7 @@ export function DeleteScheduleDialog({
   trigger,
   open,
   onOpenChange,
-  onDeleted,
+  onDeleted
 }: Props): React.JSX.Element {
   const removeSchedule = useRemoveSchedule()
 
