@@ -3,6 +3,7 @@ import TabHeader from '@shared/ui/tab-header'
 import { useRenameNote, useUpdateNoteMeta, useNotesByWorkspace } from '@entities/note'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { TagList } from '@features/tag/manage-tag'
 
 interface NoteHeaderProps {
   workspaceId: string
@@ -26,6 +27,7 @@ export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX
       buttons={
         <LinkedEntityPopoverButton entityType="note" entityId={noteId} workspaceId={workspaceId} />
       }
+      footer={<TagList workspaceId={workspaceId} itemType="note" itemId={noteId} />}
       onTitleChange={(title) => {
         renameNote({ workspaceId, noteId, newName: title })
         if (tabId) setTabTitle(tabId, title)

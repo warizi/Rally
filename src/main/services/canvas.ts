@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { NotFoundError } from '../lib/errors'
 import { canvasRepository } from '../repositories/canvas'
 import { workspaceRepository } from '../repositories/workspace'
+import { itemTagService } from './item-tag'
 
 export interface CanvasItem {
   id: string
@@ -83,6 +84,7 @@ export const canvasService = {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
     // Phase 2: entityLinkService.removeAllLinks('canvas', canvasId) 호출 추가
+    itemTagService.removeByItem('canvas', canvasId)
     canvasRepository.delete(canvasId)
   }
 }

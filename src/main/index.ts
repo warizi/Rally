@@ -21,6 +21,8 @@ import { registerCanvasNodeHandlers } from './ipc/canvas-node'
 import { registerCanvasEdgeHandlers } from './ipc/canvas-edge'
 import { registerNoteImageHandlers } from './ipc/note-image'
 import { registerReminderHandlers } from './ipc/reminder'
+import { registerTagHandlers } from './ipc/tag'
+import { registerItemTagHandlers } from './ipc/item-tag'
 import { reminderScheduler } from './services/reminder-scheduler'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
@@ -105,6 +107,8 @@ app.whenReady().then(() => {
   registerCanvasEdgeHandlers()
   registerNoteImageHandlers()
   registerReminderHandlers()
+  registerTagHandlers()
+  registerItemTagHandlers()
 
   createWindow()
 

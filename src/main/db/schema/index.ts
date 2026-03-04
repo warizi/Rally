@@ -16,6 +16,8 @@ import { canvasNodes } from './canvas-node'
 import { canvasEdges } from './canvas-edge'
 import { canvasGroups } from './canvas-group'
 import { reminders } from './reminder'
+import { tags } from './tag'
+import { itemTags } from './item-tag'
 
 export {
   workspaces,
@@ -35,5 +37,7 @@ export {
   canvasNodes,
   canvasEdges,
   canvasGroups,
-  reminders
+  reminders,
+  tags,
+  itemTags
 }

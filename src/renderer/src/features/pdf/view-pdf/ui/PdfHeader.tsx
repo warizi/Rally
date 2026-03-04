@@ -4,6 +4,7 @@ import { useRenamePdfFile, useUpdatePdfMeta, usePdfFilesByWorkspace } from '@ent
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { TagList } from '@features/tag/manage-tag'
 
 interface PdfHeaderProps {
   workspaceId: string
@@ -29,6 +30,7 @@ export function PdfHeader({ workspaceId, pdfId, tabId }: PdfHeaderProps): JSX.El
       buttons={
         <LinkedEntityPopoverButton entityType="pdf" entityId={pdfId} workspaceId={workspaceId} />
       }
+      footer={<TagList workspaceId={workspaceId} itemType="pdf" itemId={pdfId} />}
       onTitleChange={(title) => {
         renamePdf({ workspaceId, pdfId, newName: title })
         if (tabId) setTabTitle(tabId, title)

@@ -14,6 +14,7 @@ type TabHeaderProps = {
   onDescriptionChange?: (desc: string) => void
   titleError?: string
   buttons?: React.JSX.Element
+  footer?: React.ReactNode
 }
 
 function TabHeader({
@@ -26,7 +27,8 @@ function TabHeader({
   onTitleChange,
   onDescriptionChange,
   titleError,
-  buttons
+  buttons,
+  footer
 }: TabHeaderProps) {
   const [localTitle, setLocalTitle] = useState(title ?? '')
   const [localDesc, setLocalDesc] = useState(description ?? '')
@@ -107,6 +109,7 @@ function TabHeader({
           className="text-sm text-muted-foreground bg-transparent border-b-2 border-transparent outline-none w-full focus:border-primary transition-colors"
           placeholder="설명을 입력해주세요"
         />
+        {footer && <div className="mt-2">{footer}</div>}
       </div>
     )
   }
@@ -121,6 +124,7 @@ function TabHeader({
         {buttons && <div className="ml-auto">{buttons}</div>}
       </div>
       <p className="text-sm text-muted-foreground">{description}</p>
+      {footer && <div className="mt-2">{footer}</div>}
     </div>
   )
 }

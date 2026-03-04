@@ -10,6 +10,7 @@ import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readCsvFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { entityLinkService } from './entity-link'
+import { itemTagService } from './item-tag'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 
 export interface CsvFileNode {
@@ -240,6 +241,7 @@ export const csvFileService = {
       // 이미 외부에서 삭제된 경우 무시
     }
     entityLinkService.removeAllLinks('csv', csvId)
+    itemTagService.removeByItem('csv', csvId)
     canvasNodeRepository.deleteByRef('csv', csvId)
     csvFileRepository.delete(csvId)
   },

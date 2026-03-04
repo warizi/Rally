@@ -4,6 +4,7 @@ import { useRenameCsvFile, useUpdateCsvMeta, useCsvFilesByWorkspace } from '@ent
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { Sheet } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { TagList } from '@features/tag/manage-tag'
 
 interface CsvHeaderProps {
   workspaceId: string
@@ -37,6 +38,7 @@ export function CsvHeader({ workspaceId, csvId, tabId, encoding }: CsvHeaderProp
           <LinkedEntityPopoverButton entityType="csv" entityId={csvId} workspaceId={workspaceId} />
         </div>
       }
+      footer={<TagList workspaceId={workspaceId} itemType="csv" itemId={csvId} />}
       onTitleChange={(title) => {
         renameCsv({ workspaceId, csvId, newName: title })
         if (tabId) setTabTitle(tabId, title)

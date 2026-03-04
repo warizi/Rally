@@ -14,6 +14,7 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { TodoDetailFields, SubTodoSection } from '@widgets/todo'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { TagList } from '@features/tag/manage-tag'
 
 interface Props {
   tabId?: string
@@ -114,6 +115,7 @@ export function TodoDetailPage({ tabId, params }: Props): React.JSX.Element {
               </DropdownMenu>
             </div>
           }
+          footer={<TagList workspaceId={workspaceId!} itemType="todo" itemId={todo.id} />}
         />
       }
     >

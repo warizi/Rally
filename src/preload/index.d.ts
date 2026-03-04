@@ -586,6 +586,57 @@ interface ReminderAPI {
   ) => () => void
 }
 
+type TaggableEntityType = 'note' | 'todo' | 'image' | 'pdf' | 'csv' | 'canvas' | 'folder'
+
+interface TagItem {
+  id: string
+  workspaceId: string
+  name: string
+  color: string
+  description: string | null
+  createdAt: Date
+}
+
+interface CreateTagInput {
+  name: string
+  color: string
+  description?: string
+}
+
+interface UpdateTagInput {
+  name?: string
+  color?: string
+  description?: string | null
+}
+
+interface TagAPI {
+  getAll: (workspaceId: string) => Promise<IpcResponse<TagItem[]>>
+  create: (workspaceId: string, input: CreateTagInput) => Promise<IpcResponse<TagItem>>
+  update: (id: string, input: UpdateTagInput) => Promise<IpcResponse<TagItem>>
+  remove: (id: string) => Promise<IpcResponse<void>>
+}
+
+interface ItemTagAPI {
+  getTagsByItem: (
+    itemType: TaggableEntityType,
+    itemId: string
+  ) => Promise<IpcResponse<TagItem[]>>
+  getItemIdsByTag: (
+    tagId: string,
+    itemType: TaggableEntityType
+  ) => Promise<IpcResponse<string[]>>
+  attach: (
+    itemType: TaggableEntityType,
+    tagId: string,
+    itemId: string
+  ) => Promise<IpcResponse<void>>
+  detach: (
+    itemType: TaggableEntityType,
+    tagId: string,
+    itemId: string
+  ) => Promise<IpcResponse<void>>
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -604,6 +655,8 @@ interface API {
   canvasNode: CanvasNodeAPI
   canvasEdge: CanvasEdgeAPI
   reminder: ReminderAPI
+  tag: TagAPI
+  itemTag: ItemTagAPI
 }
 
 declare global {

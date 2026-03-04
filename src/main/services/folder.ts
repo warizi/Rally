@@ -6,6 +6,7 @@ import { resolveNameConflict } from '../lib/fs-utils'
 import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
 import { workspaceRepository } from '../repositories/workspace'
+import { itemTagService } from './item-tag'
 // ⚠️ folder-watcher.ts를 import하지 않음 — 순환 의존성 방지
 //    folderWatcher.ensureWatching 호출은 ipc/folder.ts에서 담당
 
@@ -322,6 +323,7 @@ export const folderService = {
 
     const absPath = path.join(workspace.path, folder.relativePath)
     fs.rmSync(absPath, { recursive: true, force: true })
+    itemTagService.removeByItem('folder', folderId)
     folderRepository.bulkDeleteByPrefix(workspaceId, folder.relativePath)
   },
 

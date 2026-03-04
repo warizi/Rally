@@ -3,6 +3,7 @@ import { NotFoundError } from '../lib/errors'
 import { todoRepository } from '../repositories/todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { entityLinkService } from './entity-link'
+import { itemTagService } from './item-tag'
 import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 
@@ -223,6 +224,9 @@ export const todoService = {
     const subtodoIds = todoRepository.findAllDescendantIds(todoId)
     reminderService.removeByEntities('todo', [todoId, ...subtodoIds])
     entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])
+    for (const id of [todoId, ...subtodoIds]) {
+      itemTagService.removeByItem('todo', id)
+    }
     canvasNodeRepository.deleteByRef('todo', todoId)
     for (const subId of subtodoIds) {
       canvasNodeRepository.deleteByRef('todo', subId)

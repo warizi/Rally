@@ -287,6 +287,25 @@ const api = {
       ipcRenderer.on('reminder:fired', handler)
       return () => ipcRenderer.removeListener('reminder:fired', handler)
     }
+  },
+
+  tag: {
+    getAll: (workspaceId: string) => ipcRenderer.invoke('tag:getAll', workspaceId),
+    create: (workspaceId: string, input: unknown) =>
+      ipcRenderer.invoke('tag:create', workspaceId, input),
+    update: (id: string, input: unknown) => ipcRenderer.invoke('tag:update', id, input),
+    remove: (id: string) => ipcRenderer.invoke('tag:remove', id)
+  },
+
+  itemTag: {
+    getTagsByItem: (itemType: string, itemId: string) =>
+      ipcRenderer.invoke('itemTag:getTagsByItem', itemType, itemId),
+    getItemIdsByTag: (tagId: string, itemType: string) =>
+      ipcRenderer.invoke('itemTag:getItemIdsByTag', tagId, itemType),
+    attach: (itemType: string, tagId: string, itemId: string) =>
+      ipcRenderer.invoke('itemTag:attach', itemType, tagId, itemId),
+    detach: (itemType: string, tagId: string, itemId: string) =>
+      ipcRenderer.invoke('itemTag:detach', itemType, tagId, itemId)
   }
 }
 
