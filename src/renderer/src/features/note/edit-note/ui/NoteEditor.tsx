@@ -1,5 +1,6 @@
 import { JSX, useCallback, useEffect, useRef } from 'react'
-import { Editor, rootCtx, defaultValueCtx } from '@milkdown/core'
+import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from '@milkdown/core'
+import { TextSelection } from '@milkdown/kit/prose/state'
 import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
 import { commonmark, imageSchema, insertImageCommand } from '@milkdown/preset-commonmark'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
@@ -89,6 +90,7 @@ interface MilkdownEditorProps {
 
 function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorProps): JSX.Element {
   const wrapperRef = useRef<HTMLDivElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
   const [loading, getEditor] = useInstance()
 
   useEditor((root) =>
@@ -164,9 +166,28 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
     }
   }, [loading, workspaceId, getEditor])
 
+  const handleBottomClick = useCallback(() => {
+    const editor = getEditor()
+    if (!editor) return
+    // 에디터 끝으로 포커스 이동
+    editor.action((ctx) => {
+      const view = ctx.get(editorViewCtx)
+      const { doc } = view.state
+      const end = doc.content.size
+      view.dispatch(view.state.tr.setSelection(TextSelection.create(doc, end)))
+      view.focus()
+    })
+  }, [getEditor])
+
   return (
-    <div ref={wrapperRef} className="h-full">
-      <Milkdown />
+    <div ref={wrapperRef} className="h-full flex flex-col">
+      <div ref={editorRef} className="flex-1">
+        <Milkdown />
+      </div>
+      <div
+        className="h-[300px] shrink-0 cursor-text"
+        onClick={handleBottomClick}
+      />
     </div>
   )
 }
