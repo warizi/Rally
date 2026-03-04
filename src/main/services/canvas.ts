@@ -30,10 +30,10 @@ function toCanvasItem(row: NonNullable<ReturnType<typeof canvasRepository.findBy
 }
 
 export const canvasService = {
-  findByWorkspace(workspaceId: string): CanvasItem[] {
+  findByWorkspace(workspaceId: string, search?: string): CanvasItem[] {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
-    return canvasRepository.findByWorkspaceId(workspaceId).map(toCanvasItem)
+    return canvasRepository.findByWorkspaceId(workspaceId, search).map(toCanvasItem)
   },
 
   findById(canvasId: string): CanvasItem {

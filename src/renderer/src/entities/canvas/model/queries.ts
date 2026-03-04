@@ -1,4 +1,5 @@
 import {
+  keepPreviousData,
   useMutation,
   useQuery,
   useQueryClient,
@@ -24,16 +25,22 @@ const CANVAS_EDGE_KEY = 'canvasEdge'
 // ─── Canvas Queries ──────────────────────────────────────
 
 export function useCanvasesByWorkspace(
-  workspaceId: string | null | undefined
+  workspaceId: string | null | undefined,
+  search?: string
 ): UseQueryResult<CanvasItem[]> {
   return useQuery({
-    queryKey: [CANVAS_KEY, 'workspace', workspaceId],
+    queryKey: [CANVAS_KEY, 'workspace', workspaceId, search],
     queryFn: async (): Promise<CanvasItem[]> => {
-      const res: IpcResponse<CanvasItem[]> = await window.api.canvas.findByWorkspace(workspaceId!)
+      const options = search ? { search } : undefined
+      const res: IpcResponse<CanvasItem[]> = await window.api.canvas.findByWorkspace(
+        workspaceId!,
+        options
+      )
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
-    enabled: !!workspaceId
+    enabled: !!workspaceId,
+    placeholderData: search ? keepPreviousData : undefined
   })
 }
 

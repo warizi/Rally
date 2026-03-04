@@ -49,4 +49,12 @@ describe('toTabOptions', () => {
       title: '사진.png'
     })
   })
+
+  it("canvas → type='canvas-detail', pathname='/canvas/{id}', title=전달값", () => {
+    expect(toTabOptions('canvas', 'cv-1', '내 캔버스')).toEqual({
+      type: 'canvas-detail',
+      pathname: '/canvas/cv-1',
+      title: '내 캔버스'
+    })
+  })
 })

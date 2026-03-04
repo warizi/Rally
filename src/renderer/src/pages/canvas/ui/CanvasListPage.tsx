@@ -1,14 +1,36 @@
-import { useState } from 'react'
-import { Plus, Network, Trash2 } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Plus, Network, MoreHorizontal, Search } from 'lucide-react'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { Button } from '@shared/ui/button'
+import { Input } from '@shared/ui/input'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@shared/ui/dropdown-menu'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { ROUTES } from '@shared/constants/tab-url'
 import { useTabStore, selectPaneByTabId } from '@features/tap-system/manage-tab-system'
+import { PanePickerSubmenu } from '@features/entity-link/manage-link'
 import { CreateCanvasDialog } from '@features/canvas/create-canvas/ui/CreateCanvasDialog'
 import { DeleteCanvasDialog } from '@features/canvas/delete-canvas/ui/DeleteCanvasDialog'
 import { useCanvasesByWorkspace, useCreateCanvas, type CanvasItem } from '@entities/canvas'
+
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debounced, setDebounced] = useState(value)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => {
+    timerRef.current = setTimeout(() => setDebounced(value), delay)
+    return () => {
+      if (timerRef.current) clearTimeout(timerRef.current)
+    }
+  }, [value, delay])
+
+  return debounced
+}
 
 interface Props {
   tabId?: string
@@ -16,10 +38,26 @@ interface Props {
 
 export function CanvasListPage({ tabId }: Props): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
-  const { data: canvases = [], isLoading } = useCanvasesByWorkspace(workspaceId)
+  const tabSearchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
+  const navigateTab = useTabStore((s) => s.navigateTab)
+
+  const [search, setSearch] = useState(tabSearchParams?.search ?? '')
+  const debouncedSearch = useDebouncedValue(search, 300)
+
+  useEffect(() => {
+    if (!tabId) return
+    const current = useTabStore.getState().tabs[tabId]?.searchParams
+    navigateTab(tabId, { searchParams: { ...current, search: debouncedSearch } })
+  }, [tabId, debouncedSearch, navigateTab])
+
+  const { data: canvases = [], isLoading } = useCanvasesByWorkspace(
+    workspaceId,
+    debouncedSearch || undefined
+  )
   const { mutate: createCanvas, isPending } = useCreateCanvas()
 
   const openTab = useTabStore((s) => s.openTab)
+  const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
   const pane = useTabStore(selectPaneByTabId(tabId ?? ''))
 
   const [dialogOpen, setDialogOpen] = useState(false)
@@ -56,6 +94,19 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
     )
   }
 
+  const handleOpenInPane = (canvas: CanvasItem, paneId: string): void => {
+    const pathname = ROUTES.CANVAS_DETAIL.replace(':canvasId', canvas.id)
+    closeTabByPathname(pathname)
+    openTab(
+      {
+        type: 'canvas-detail',
+        pathname,
+        title: canvas.title
+      },
+      paneId
+    )
+  }
+
   const handleRemove = (canvas: CanvasItem): void => {
     setDeleteTarget(canvas)
   }
@@ -77,6 +128,15 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
       }
     >
       <div className="py-4 space-y-3">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            placeholder="캔버스 검색..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-8 h-8"
+          />
+        </div>
         {canvases.length === 0 && !isLoading && (
           <div className="text-center py-12 text-muted-foreground">
             <Network className="size-12 mx-auto mb-3 opacity-40" />
@@ -102,15 +162,34 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
                   <Network className="size-4 shrink-0 text-muted-foreground" />
                   <span className="font-medium text-sm truncate">{canvas.title}</span>
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    handleRemove(canvas)
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-1 hover:bg-destructive/10 rounded transition-opacity"
-                >
-                  <Trash2 className="size-3.5 text-destructive" />
-                </button>
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      onClick={(e) => e.stopPropagation()}
+                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
+                    >
+                      <MoreHorizontal className="size-3.5 text-muted-foreground" />
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                    <PanePickerSubmenu
+                      onPaneSelect={(paneId) => handleOpenInPane(canvas, paneId)}
+                    >
+                      {({ onClick }) => (
+                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
+                          상세 보기
+                        </DropdownMenuItem>
+                      )}
+                    </PanePickerSubmenu>
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => e.preventDefault()}
+                      onClick={() => handleRemove(canvas)}
+                    >
+                      삭제
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               {canvas.description && (
                 <p className="text-xs text-muted-foreground mt-2 line-clamp-2">

@@ -1,9 +1,10 @@
 import { index, integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { workspaces } from './workspace'
 
-export type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv' | 'image'
+export type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv' | 'image' | 'canvas'
 
 export const LINKABLE_ENTITY_TYPES: LinkableEntityType[] = [
+  'canvas',
   'csv',
   'image',
   'note',

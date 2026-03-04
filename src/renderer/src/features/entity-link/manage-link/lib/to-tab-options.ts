@@ -20,5 +20,7 @@ export function toTabOptions(
       return { type: 'image', pathname: `/folder/image/${linkedId}`, title }
     case 'schedule':
       return { type: 'calendar', pathname: '/calendar', title: '캘린더' }
+    case 'canvas':
+      return { type: 'canvas-detail', pathname: `/canvas/${linkedId}`, title }
   }
 }

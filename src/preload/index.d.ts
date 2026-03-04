@@ -356,7 +356,7 @@ interface ScheduleDateRange {
   end: Date
 }
 
-type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv' | 'image'
+type LinkableEntityType = 'todo' | 'schedule' | 'note' | 'pdf' | 'csv' | 'image' | 'canvas'
 
 interface LinkedEntity {
   entityType: LinkableEntityType
@@ -475,7 +475,10 @@ interface UpdateCanvasEdgeData {
 }
 
 interface CanvasAPI {
-  findByWorkspace: (workspaceId: string) => Promise<IpcResponse<CanvasItem[]>>
+  findByWorkspace: (
+    workspaceId: string,
+    options?: { search?: string }
+  ) => Promise<IpcResponse<CanvasItem[]>>
   findById: (canvasId: string) => Promise<IpcResponse<CanvasItem>>
   create: (
     workspaceId: string,

@@ -215,8 +215,8 @@ const api = {
   },
 
   canvas: {
-    findByWorkspace: (workspaceId: string) =>
-      ipcRenderer.invoke('canvas:findByWorkspace', workspaceId),
+    findByWorkspace: (workspaceId: string, options?: { search?: string }) =>
+      ipcRenderer.invoke('canvas:findByWorkspace', workspaceId, options),
     findById: (canvasId: string) => ipcRenderer.invoke('canvas:findById', canvasId),
     create: (workspaceId: string, data: unknown) =>
       ipcRenderer.invoke('canvas:create', workspaceId, data),

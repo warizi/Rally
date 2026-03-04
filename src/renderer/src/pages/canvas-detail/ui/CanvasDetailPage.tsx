@@ -2,6 +2,7 @@ import { Network } from 'lucide-react'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { useCanvasById, useUpdateCanvas } from '@entities/canvas'
 import { CanvasBoard } from '@widgets/canvas/ui/CanvasBoard'
 
@@ -56,6 +57,15 @@ export function CanvasDetailPage({ tabId, params }: Props): React.JSX.Element {
           editable
           onTitleChange={handleTitleChange}
           onDescriptionChange={handleDescriptionChange}
+          buttons={
+            canvas ? (
+              <LinkedEntityPopoverButton
+                entityType="canvas"
+                entityId={canvas.id}
+                workspaceId={canvas.workspaceId}
+              />
+            ) : undefined
+          }
         />
       }
       scrollable={false}

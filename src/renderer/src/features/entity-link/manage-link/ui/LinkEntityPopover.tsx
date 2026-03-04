@@ -9,6 +9,7 @@ import { useNotesByWorkspace } from '@entities/note'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import { useImageFilesByWorkspace } from '@entities/image-file'
+import { useCanvasesByWorkspace } from '@entities/canvas'
 import { useLinkedEntities, useLinkEntity, useUnlinkEntity } from '@entities/entity-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
@@ -28,7 +29,7 @@ interface EntityOption {
   title: string
 }
 
-const LINKABLE_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv', 'image']
+const LINKABLE_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv', 'image', 'canvas']
 
 export function LinkEntityPopover({
   entityType,
@@ -61,6 +62,7 @@ export function LinkEntityPopover({
   const { data: pdfs = [] } = usePdfFilesByWorkspace(workspaceId)
   const { data: csvs = [] } = useCsvFilesByWorkspace(workspaceId)
   const { data: images = [] } = useImageFilesByWorkspace(workspaceId)
+  const { data: canvasList = [] } = useCanvasesByWorkspace(workspaceId)
 
   const linkedSet = useMemo(() => {
     const s = new Set<string>()
@@ -79,9 +81,10 @@ export function LinkEntityPopover({
       note: notes.map((n) => ({ type: 'note', id: n.id, title: n.title })),
       pdf: pdfs.map((p) => ({ type: 'pdf', id: p.id, title: p.title })),
       csv: csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title })),
-      image: images.map((i) => ({ type: 'image', id: i.id, title: i.title }))
+      image: images.map((i) => ({ type: 'image', id: i.id, title: i.title })),
+      canvas: canvasList.map((c) => ({ type: 'canvas', id: c.id, title: c.title }))
     }
-  }, [todos, schedules, notes, pdfs, csvs, images])
+  }, [todos, schedules, notes, pdfs, csvs, images, canvasList])
 
   const filtered = useMemo(() => {
     const items = optionsByType[activeTab] ?? []
@@ -172,7 +175,7 @@ export function LinkEntityPopover({
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 p-2">
+      <PopoverContent align="start" className="w-96 p-2">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LinkableEntityType)}>
           <TabsList className="w-full h-7 mb-2">
             {availableTabs.map((tab) => {

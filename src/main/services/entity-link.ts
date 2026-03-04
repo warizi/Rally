@@ -5,6 +5,7 @@ import { noteRepository } from '../repositories/note'
 import { pdfFileRepository } from '../repositories/pdf-file'
 import { imageFileRepository } from '../repositories/image-file'
 import { csvFileRepository } from '../repositories/csv-file'
+import { canvasRepository } from '../repositories/canvas'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import type { LinkableEntityType } from '../db/schema/entity-link'
 
@@ -32,6 +33,8 @@ function findEntity(
       return csvFileRepository.findById(id)
     case 'image':
       return imageFileRepository.findById(id)
+    case 'canvas':
+      return canvasRepository.findById(id)
   }
 }
 
