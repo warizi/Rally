@@ -5,10 +5,11 @@ import { CanvasBoardInner } from './CanvasBoardInner'
 
 interface CanvasBoardProps {
   canvasId: string
+  tabId?: string
 }
 
-export function CanvasBoard({ canvasId }: CanvasBoardProps): React.JSX.Element {
-  const canvasData = useCanvasData(canvasId)
+export function CanvasBoard({ canvasId, tabId }: CanvasBoardProps): React.JSX.Element {
+  const canvasData = useCanvasData(canvasId, tabId)
 
   const isReady = !canvasData.isLoading && canvasData.hydrated
 
@@ -29,12 +30,20 @@ export function CanvasBoard({ canvasId }: CanvasBoardProps): React.JSX.Element {
         nodes={canvasData.nodes}
         edges={canvasData.edges}
         defaultViewport={canvasData.defaultViewport}
+        hasSavedViewport={canvasData.hasSavedViewport}
         onNodesChange={canvasData.onNodesChange}
         onEdgesChange={canvasData.onEdgesChange}
         onConnect={canvasData.onConnect}
         saveViewport={canvasData.saveViewport}
         addTextNode={canvasData.addTextNode}
         addRefNode={canvasData.addRefNode}
+        canvasId={canvasId}
+        createNodeAsync={canvasData.createNodeAsync}
+        createEdgeAsync={canvasData.createEdgeAsync}
+        undo={canvasData.undo}
+        redo={canvasData.redo}
+        canUndo={canvasData.canUndo}
+        canRedo={canvasData.canRedo}
       />
     </ReactFlowProvider>
   )

@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from 'react'
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
 import {
   ReactFlow,
   Background,
@@ -16,8 +16,15 @@ import { EntityPickerDialog } from './EntityPickerDialog'
 import { SelectionToolbar } from './SelectionToolbar'
 import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 import { findNonOverlappingPosition } from '../model/canvas-layout'
+import { useCanvasClipboard } from '../model/use-canvas-clipboard'
 import type { CanvasNodeType, CanvasNode, CanvasEdge } from '@entities/canvas'
-import type { OnNodesChange, OnEdgesChange, OnConnect } from '@xyflow/react'
+import type {
+  CanvasNodeItem,
+  CanvasEdgeItem,
+  CreateCanvasNodeData,
+  CreateCanvasEdgeData
+} from '@entities/canvas'
+import type { OnNodesChange, OnEdgesChange, OnConnect, NodeChange } from '@xyflow/react'
 
 const NODE_TYPES = { textNode: TextNode, refNode: RefNode }
 const EDGE_TYPES = { customEdge: CustomEdge }
@@ -32,6 +39,20 @@ interface CanvasBoardInnerProps {
   saveViewport: (viewport: { x: number; y: number; zoom: number }) => void
   addTextNode: (x: number, y: number) => void
   addRefNode: (type: CanvasNodeType, refId: string, x: number, y: number) => void
+  canvasId: string
+  createNodeAsync: (args: {
+    canvasId: string
+    data: CreateCanvasNodeData
+  }) => Promise<CanvasNodeItem>
+  createEdgeAsync: (args: {
+    canvasId: string
+    data: CreateCanvasEdgeData
+  }) => Promise<CanvasEdgeItem>
+  hasSavedViewport: boolean
+  undo: () => void
+  redo: () => void
+  canUndo: boolean
+  canRedo: boolean
 }
 
 export function CanvasBoardInner({
@@ -43,12 +64,22 @@ export function CanvasBoardInner({
   onConnect,
   saveViewport,
   addTextNode,
-  addRefNode
+  addRefNode,
+  canvasId,
+  createNodeAsync,
+  createEdgeAsync,
+  hasSavedViewport,
+  undo,
+  redo,
+  canUndo,
+  canRedo
 }: CanvasBoardInnerProps): React.JSX.Element {
   const reactFlow = useReactFlow()
   const viewportTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const [entityPickerOpen, setEntityPickerOpen] = useState(false)
   const [showMinimap, setShowMinimap] = useState(true)
+  const { copy, paste, hasClipboard } = useCanvasClipboard()
+  const pendingSelectionRef = useRef<string[] | null>(null)
 
   const nodeTypes = useMemo(() => NODE_TYPES, [])
   const edgeTypes = useMemo(() => EDGE_TYPES, [])
@@ -105,6 +136,77 @@ export function CanvasBoardInner({
     [getViewportCenter, nodes, addRefNode]
   )
 
+  // ─── Clipboard ────────────────────────────────────────
+
+  const handleCopy = useCallback(() => {
+    const allNodes = reactFlow.getNodes() as CanvasNode[]
+    const allEdges = reactFlow.getEdges() as CanvasEdge[]
+    copy(allNodes, allEdges)
+  }, [reactFlow, copy])
+
+  const handlePaste = useCallback(async () => {
+    if (!hasClipboard()) return
+    const center = getViewportCenter()
+    const newIds = await paste(canvasId, center, createNodeAsync, createEdgeAsync)
+    if (newIds.length > 0) {
+      pendingSelectionRef.current = newIds
+    }
+  }, [hasClipboard, getViewportCenter, canvasId, createNodeAsync, createEdgeAsync, paste])
+
+  // Select pasted nodes after hydration
+  useEffect(() => {
+    if (!pendingSelectionRef.current) return
+    const pendingIds = new Set(pendingSelectionRef.current)
+    const allPresent = [...pendingIds].every((id) => nodes.some((n) => n.id === id))
+    if (!allPresent) return
+
+    pendingSelectionRef.current = null
+    const changes: NodeChange[] = [
+      ...nodes
+        .filter((n) => n.selected)
+        .map((n) => ({ type: 'select' as const, id: n.id, selected: false })),
+      ...[...pendingIds].map((id) => ({ type: 'select' as const, id, selected: true }))
+    ]
+    onNodesChange(changes)
+  }, [nodes, onNodesChange])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent): void => {
+      const target = e.target as HTMLElement
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+        return
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
+        const allNodes = reactFlow.getNodes() as CanvasNode[]
+        const hasSelected = allNodes.some((n) => n.selected)
+        if (!hasSelected) return
+        const allEdges = reactFlow.getEdges() as CanvasEdge[]
+        copy(allNodes, allEdges)
+      }
+
+      if ((e.metaKey || e.ctrlKey) && e.key === 'v') {
+        e.preventDefault()
+        handlePaste()
+      }
+
+      // Undo: Cmd+Z (without Shift)
+      if ((e.metaKey || e.ctrlKey) && e.key === 'z' && !e.shiftKey) {
+        e.preventDefault()
+        undo()
+      }
+
+      // Redo: Cmd+Shift+Z or Cmd+Y
+      if ((e.metaKey || e.ctrlKey) && ((e.key === 'z' && e.shiftKey) || e.key === 'y')) {
+        e.preventDefault()
+        redo()
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [reactFlow, copy, handlePaste, undo, redo])
+
   return (
     <div className="h-full w-full relative">
       <CanvasToolbar
@@ -112,6 +214,10 @@ export function CanvasBoardInner({
         onAddEntity={() => setEntityPickerOpen(true)}
         minimap={showMinimap}
         onToggleMinimap={() => setShowMinimap((v) => !v)}
+        onUndo={undo}
+        onRedo={redo}
+        canUndo={canUndo}
+        canRedo={canRedo}
       />
       <ReactFlow
         nodes={nodes}
@@ -130,7 +236,7 @@ export function CanvasBoardInner({
         selectionOnDrag={false}
         selectionKeyCode="Meta"
         onlyRenderVisibleElements
-        fitView={nodes.length > 0}
+        fitView={nodes.length > 0 && !hasSavedViewport}
         deleteKeyCode={['Backspace', 'Delete']}
         multiSelectionKeyCode="Shift"
         nodeDragThreshold={5}
@@ -145,7 +251,7 @@ export function CanvasBoardInner({
         <Controls showInteractive={false} />
         {showMinimap && <MiniMap zoomable pannable className="!bg-background !border-border" />}
       </ReactFlow>
-      <SelectionToolbar />
+      <SelectionToolbar onCopy={handleCopy} />
       <EntityPickerDialog
         open={entityPickerOpen}
         onOpenChange={setEntityPickerOpen}

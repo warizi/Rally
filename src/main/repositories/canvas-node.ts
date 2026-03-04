@@ -60,5 +60,14 @@ export const canvasNodeRepository = {
     db.delete(canvasNodes)
       .where(and(eq(canvasNodes.type, type), eq(canvasNodes.refId, refId)))
       .run()
+  },
+
+  deleteByCanvasId(canvasId: string): void {
+    db.delete(canvasNodes).where(eq(canvasNodes.canvasId, canvasId)).run()
+  },
+
+  bulkCreate(nodes: CanvasNodeInsert[]): void {
+    if (nodes.length === 0) return
+    db.insert(canvasNodes).values(nodes).run()
   }
 }

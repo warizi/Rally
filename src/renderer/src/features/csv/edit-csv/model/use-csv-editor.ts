@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { MutableRefObject, useState, useCallback, useRef, useEffect } from 'react'
 import Papa from 'papaparse'
 import { useWriteCsvContent } from '@entities/csv-file'
 
@@ -24,6 +24,7 @@ export interface UseCsvEditorReturn {
   canRedo: boolean
   isDirty: boolean
   reset: (content: string) => void
+  lastWrittenRef: MutableRefObject<string | null>
 }
 
 function parseCsv(content: string): { headers: string[]; data: string[][] } {
@@ -58,6 +59,7 @@ export function useCsvEditor(
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const lastWrittenRef = useRef<string | null>(null)
   const { mutate: writeCsv } = useWriteCsvContent()
 
   // --- 최신 state ref (closure 대신 사용) ---
@@ -89,6 +91,7 @@ export function useCsvEditor(
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
         const content = serializeCsv(newHeaders, newData)
+        lastWrittenRef.current = content
         writeCsv({ workspaceId, csvId, content })
         setIsDirty(false)
       }, 800)
@@ -277,6 +280,7 @@ export function useCsvEditor(
     canUndo,
     canRedo,
     isDirty,
-    reset
+    reset,
+    lastWrittenRef
   }
 }

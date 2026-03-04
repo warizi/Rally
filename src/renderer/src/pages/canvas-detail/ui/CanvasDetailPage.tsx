@@ -71,7 +71,7 @@ export function CanvasDetailPage({ tabId, params }: Props): React.JSX.Element {
       scrollable={false}
       maxWidth="full"
     >
-      <CanvasBoard canvasId={canvasId} />
+      <CanvasBoard canvasId={canvasId} tabId={tabId} />
     </TabContainer>
   )
 }

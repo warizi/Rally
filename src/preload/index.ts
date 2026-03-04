@@ -235,7 +235,9 @@ const api = {
       ipcRenderer.invoke('canvasNode:update', nodeId, data),
     updatePositions: (updates: unknown) =>
       ipcRenderer.invoke('canvasNode:updatePositions', updates),
-    remove: (nodeId: string) => ipcRenderer.invoke('canvasNode:remove', nodeId)
+    remove: (nodeId: string) => ipcRenderer.invoke('canvasNode:remove', nodeId),
+    syncState: (canvasId: string, data: unknown) =>
+      ipcRenderer.invoke('canvasNode:syncState', canvasId, data)
   },
 
   canvasEdge: {

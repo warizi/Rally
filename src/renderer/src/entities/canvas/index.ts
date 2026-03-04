@@ -14,7 +14,8 @@ export type {
   RefNode,
   CanvasNode,
   CanvasEdge,
-  CanvasEdgeData
+  CanvasEdgeData,
+  RefNodeData
 } from './model/types'
 export {
   useCanvasesByWorkspace,
@@ -31,7 +32,8 @@ export {
   useRemoveCanvasNode,
   useCreateCanvasEdge,
   useUpdateCanvasEdge,
-  useRemoveCanvasEdge
+  useRemoveCanvasEdge,
+  useSyncCanvasState
 } from './model/queries'
 export {
   toReactFlowNode,

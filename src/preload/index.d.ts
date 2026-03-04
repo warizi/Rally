@@ -495,12 +495,39 @@ interface CanvasAPI {
   remove: (canvasId: string) => Promise<IpcResponse<void>>
 }
 
+interface SyncCanvasStateData {
+  nodes: {
+    id: string
+    type: CanvasNodeType
+    refId: string | null
+    x: number
+    y: number
+    width: number
+    height: number
+    color: string | null
+    content: string | null
+    zIndex: number
+  }[]
+  edges: {
+    id: string
+    fromNode: string
+    toNode: string
+    fromSide: string
+    toSide: string
+    label: string | null
+    color: string | null
+    style: string
+    arrow: string
+  }[]
+}
+
 interface CanvasNodeAPI {
   findByCanvas: (canvasId: string) => Promise<IpcResponse<CanvasNodeItem[]>>
   create: (canvasId: string, data: CreateCanvasNodeData) => Promise<IpcResponse<CanvasNodeItem>>
   update: (nodeId: string, data: UpdateCanvasNodeData) => Promise<IpcResponse<CanvasNodeItem>>
   updatePositions: (updates: { id: string; x: number; y: number }[]) => Promise<IpcResponse<void>>
   remove: (nodeId: string) => Promise<IpcResponse<void>>
+  syncState: (canvasId: string, data: SyncCanvasStateData) => Promise<IpcResponse<void>>
 }
 
 interface CanvasEdgeAPI {

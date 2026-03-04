@@ -1,6 +1,8 @@
 import { nanoid } from 'nanoid'
 import { NotFoundError } from '../lib/errors'
+import { db } from '../db'
 import { canvasNodeRepository } from '../repositories/canvas-node'
+import { canvasEdgeRepository } from '../repositories/canvas-edge'
 import { canvasRepository } from '../repositories/canvas'
 import { todoRepository } from '../repositories/todo'
 import { noteRepository } from '../repositories/note'
@@ -210,5 +212,70 @@ export const canvasNodeService = {
     if (!node) throw new NotFoundError(`Canvas node not found: ${nodeId}`)
     canvasNodeRepository.delete(nodeId)
     // FK CASCADE가 연결 엣지 자동 삭제
+  },
+
+  syncState(
+    canvasId: string,
+    nodes: {
+      id: string
+      type: string
+      refId: string | null
+      x: number
+      y: number
+      width: number
+      height: number
+      color: string | null
+      content: string | null
+      zIndex: number
+    }[],
+    edges: {
+      id: string
+      fromNode: string
+      toNode: string
+      fromSide: string
+      toSide: string
+      label: string | null
+      color: string | null
+      style: string
+      arrow: string
+    }[]
+  ): void {
+    const now = new Date()
+    db.$client.transaction(() => {
+      canvasEdgeRepository.deleteByCanvasId(canvasId)
+      canvasNodeRepository.deleteByCanvasId(canvasId)
+      canvasNodeRepository.bulkCreate(
+        nodes.map((n) => ({
+          id: n.id,
+          canvasId,
+          type: n.type as CanvasNodeType,
+          refId: n.refId,
+          x: n.x,
+          y: n.y,
+          width: n.width,
+          height: n.height,
+          color: n.color,
+          content: n.content,
+          zIndex: n.zIndex,
+          createdAt: now,
+          updatedAt: now
+        }))
+      )
+      canvasEdgeRepository.bulkCreate(
+        edges.map((e) => ({
+          id: e.id,
+          canvasId,
+          fromNode: e.fromNode,
+          toNode: e.toNode,
+          fromSide: e.fromSide as 'top' | 'right' | 'bottom' | 'left',
+          toSide: e.toSide as 'top' | 'right' | 'bottom' | 'left',
+          label: e.label,
+          color: e.color,
+          style: e.style as 'solid' | 'dashed' | 'dotted',
+          arrow: e.arrow as 'none' | 'end' | 'both',
+          createdAt: now
+        }))
+      )
+    })()
   }
 }

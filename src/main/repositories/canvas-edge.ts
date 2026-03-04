@@ -27,5 +27,14 @@ export const canvasEdgeRepository = {
 
   delete(id: string): void {
     db.delete(canvasEdges).where(eq(canvasEdges.id, id)).run()
+  },
+
+  deleteByCanvasId(canvasId: string): void {
+    db.delete(canvasEdges).where(eq(canvasEdges.canvasId, canvasId)).run()
+  },
+
+  bulkCreate(edges: CanvasEdgeInsert[]): void {
+    if (edges.length === 0) return
+    db.insert(canvasEdges).values(edges).run()
   }
 }

@@ -8,13 +8,21 @@ import {
 } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
 
-export function useCanvasNodeChanges(canvasId: string, store: StoreApi<CanvasFlowState>) {
+export function useCanvasNodeChanges(
+  canvasId: string,
+  store: StoreApi<CanvasFlowState>,
+  pushHistory?: () => void
+) {
   const { mutate: updateNode } = useUpdateCanvasNode()
   const { mutate: updatePositions } = useUpdateCanvasNodePositions()
   const { mutate: removeNode } = useRemoveCanvasNode()
 
   const onNodesChange: OnNodesChange = useCallback(
     (changes) => {
+      // Push history before removals
+      const hasRemove = changes.some((c) => c.type === 'remove')
+      if (hasRemove) pushHistory?.()
+
       store.getState().applyNodeChanges(changes)
 
       // Persist position changes on drag end
@@ -37,6 +45,7 @@ export function useCanvasNodeChanges(canvasId: string, store: StoreApi<CanvasFlo
           })),
           canvasId
         })
+        pushHistory?.()
       }
 
       // Handle resize (dimensions change)
@@ -53,6 +62,7 @@ export function useCanvasNodeChanges(canvasId: string, store: StoreApi<CanvasFlo
             data: { width: c.dimensions.width, height: c.dimensions.height },
             canvasId
           })
+          pushHistory?.()
         }
       }
 
@@ -62,7 +72,7 @@ export function useCanvasNodeChanges(canvasId: string, store: StoreApi<CanvasFlo
         removeNode({ nodeId: c.id, canvasId })
       }
     },
-    [canvasId, updatePositions, removeNode, updateNode, store]
+    [canvasId, updatePositions, removeNode, updateNode, store, pushHistory]
   )
 
   return { onNodesChange }

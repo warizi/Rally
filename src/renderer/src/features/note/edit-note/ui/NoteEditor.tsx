@@ -4,6 +4,7 @@ import { TextSelection } from '@milkdown/kit/prose/state'
 import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
 import { commonmark, imageSchema, insertImageCommand } from '@milkdown/preset-commonmark'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
+import { history } from '@milkdown/kit/plugin/history'
 import { upload, uploadConfig } from '@milkdown/kit/plugin/upload'
 import { $view, callCommand } from '@milkdown/kit/utils'
 import { useWriteNoteContent } from '@entities/note'
@@ -121,6 +122,7 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
         }))
       })
       .use(commonmark)
+      .use(history)
       .use(listener)
       .use(upload)
       .use(
@@ -200,14 +202,17 @@ interface NoteEditorProps {
 
 export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorProps): JSX.Element {
   const { mutate: writeContent } = useWriteNoteContent()
-  const { editorKey, latestContent } = useNoteExternalSync(noteId)
+  const lastSentRef = useRef<string | null>(null)
+  const { editorKey, contentToMount } = useNoteExternalSync(noteId, initialContent, lastSentRef)
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const handleSave = useCallback(
     (markdown: string) => {
       if (debounceRef.current) clearTimeout(debounceRef.current)
       debounceRef.current = setTimeout(() => {
-        writeContent({ workspaceId, noteId, content: compactMarkdown(markdown) })
+        const compacted = compactMarkdown(markdown)
+        lastSentRef.current = compacted
+        writeContent({ workspaceId, noteId, content: compacted })
       }, 800)
     },
     [workspaceId, noteId, writeContent]
@@ -218,10 +223,6 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
       if (debounceRef.current) clearTimeout(debounceRef.current)
     }
   }, [])
-
-  // 외부 변경 시: 캐시에서 직접 읽은 latestContent 사용 (race condition 방지)
-  // 초기 마운트 시: NotePage에서 전달된 initialContent 사용
-  const contentToMount = latestContent ?? initialContent
 
   return (
     <div className="h-full">

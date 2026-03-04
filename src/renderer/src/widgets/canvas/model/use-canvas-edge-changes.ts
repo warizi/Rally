@@ -4,12 +4,19 @@ import type { StoreApi } from 'zustand/vanilla'
 import { useCreateCanvasEdge, useRemoveCanvasEdge, toCreateCanvasEdgeData } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
 
-export function useCanvasEdgeChanges(canvasId: string, store: StoreApi<CanvasFlowState>) {
+export function useCanvasEdgeChanges(
+  canvasId: string,
+  store: StoreApi<CanvasFlowState>,
+  pushHistory?: () => void
+) {
   const { mutate: createEdge } = useCreateCanvasEdge()
   const { mutate: removeEdge } = useRemoveCanvasEdge()
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => {
+      const hasRemove = changes.some((c) => c.type === 'remove')
+      if (hasRemove) pushHistory?.()
+
       store.getState().applyEdgeChanges(changes)
 
       const removeChanges = changes.filter((c) => c.type === 'remove')
@@ -17,7 +24,7 @@ export function useCanvasEdgeChanges(canvasId: string, store: StoreApi<CanvasFlo
         removeEdge({ edgeId: c.id, canvasId })
       }
     },
-    [canvasId, removeEdge, store]
+    [canvasId, removeEdge, store, pushHistory]
   )
 
   const onConnect: OnConnect = useCallback(
@@ -27,8 +34,9 @@ export function useCanvasEdgeChanges(canvasId: string, store: StoreApi<CanvasFlo
         canvasId,
         data: toCreateCanvasEdgeData(connection)
       })
+      pushHistory?.()
     },
-    [canvasId, createEdge]
+    [canvasId, createEdge, pushHistory]
   )
 
   return { onEdgesChange, onConnect }

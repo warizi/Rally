@@ -1,7 +1,7 @@
 import { JSX, useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ColumnSizingState, Updater } from '@tanstack/react-table'
-import { useUpdateCsvMeta, isOwnWrite } from '@entities/csv-file'
+import { useUpdateCsvMeta } from '@entities/csv-file'
 import { useCsvEditor } from '../model/use-csv-editor'
 import { useCsvExternalSync } from '../model/use-csv-external-sync'
 import { useCsvSearch } from '../model/use-csv-search'
@@ -75,7 +75,8 @@ export function CsvViewer({
     canUndo,
     canRedo,
     isDirty,
-    reset
+    reset,
+    lastWrittenRef
   } = useCsvEditor(workspaceId, csvId, initialContent)
 
   // 열 너비 상태
@@ -119,14 +120,21 @@ export function CsvViewer({
 
   useCsvExternalSync(csvId, handleExternalChange)
 
-  // 외부 변경으로 initialContent가 바뀌면 에디터 리셋 + remount (자체 저장은 제외)
+  // 캐시 변경 감지: 인스턴스별 쓰기 추적으로 자체 저장과 외부 변경 구분
+  const prevContentRef = useRef(initialContent)
   useEffect(() => {
-    if (!isOwnWrite(csvId)) {
-      reset(initialContent)
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setKey((k) => k + 1)
+    if (prevContentRef.current === initialContent) return
+    prevContentRef.current = initialContent
+    // 내 쓰기 → skip
+    if (lastWrittenRef.current === initialContent) {
+      lastWrittenRef.current = null
+      return
     }
-  }, [initialContent, csvId, reset])
+    // 외부 변경 → 에디터 리셋 + remount
+    reset(initialContent)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setKey((k) => k + 1)
+  }, [initialContent, reset, lastWrittenRef])
 
   const handleAddColumn = useCallback(() => addColumn(), [addColumn])
 

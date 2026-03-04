@@ -242,6 +242,30 @@ export function useRemoveCanvasNode(): UseMutationResult<
   })
 }
 
+// ─── Canvas Sync State Mutation ──────────────────────────
+
+export function useSyncCanvasState(): UseMutationResult<
+  void,
+  Error,
+  { canvasId: string; data: Parameters<typeof window.api.canvasNode.syncState>[1] }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ canvasId, data }) => {
+      const res = await window.api.canvasNode.syncState(canvasId, data)
+      if (!res.success) throwIpcError(res)
+    },
+    onSuccess: (_, { canvasId }) => {
+      queryClient.invalidateQueries({
+        queryKey: [CANVAS_NODE_KEY, 'canvas', canvasId]
+      })
+      queryClient.invalidateQueries({
+        queryKey: [CANVAS_EDGE_KEY, 'canvas', canvasId]
+      })
+    }
+  })
+}
+
 // ─── Canvas Edge Mutations ───────────────────────────────
 
 export function useCreateCanvasEdge(): UseMutationResult<

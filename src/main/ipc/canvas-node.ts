@@ -36,4 +36,17 @@ export function registerCanvasNodeHandlers(): void {
     (_: IpcMainInvokeEvent, nodeId: string): IpcResponse =>
       handle(() => canvasNodeService.remove(nodeId))
   )
+
+  ipcMain.handle(
+    'canvasNode:syncState',
+    (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
+      handle(() => {
+        const { nodes, edges } = data as { nodes: unknown[]; edges: unknown[] }
+        canvasNodeService.syncState(
+          canvasId,
+          nodes as Parameters<typeof canvasNodeService.syncState>[1],
+          edges as Parameters<typeof canvasNodeService.syncState>[2]
+        )
+      })
+  )
 }

@@ -1,9 +1,13 @@
 import { useCallback } from 'react'
 import { useReactFlow, useStore } from '@xyflow/react'
-import { Trash2 } from 'lucide-react'
+import { Copy, Trash2 } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 
-export function SelectionToolbar(): React.JSX.Element | null {
+interface SelectionToolbarProps {
+  onCopy: () => void
+}
+
+export function SelectionToolbar({ onCopy }: SelectionToolbarProps): React.JSX.Element | null {
   const { deleteElements, getNodes, getEdges } = useReactFlow()
 
   const selectedNodeCount = useStore((s) => s.nodes.filter((n) => n.selected).length)
@@ -25,6 +29,12 @@ export function SelectionToolbar(): React.JSX.Element | null {
                     rounded-lg shadow-sm px-3 py-1.5"
     >
       <span className="text-sm text-muted-foreground">{totalSelected}개 선택됨</span>
+      {selectedNodeCount > 0 && (
+        <Button variant="outline" size="sm" className="h-7 px-2" onClick={onCopy}>
+          <Copy className="size-3.5 mr-1" />
+          복사
+        </Button>
+      )}
       <Button variant="destructive" size="sm" className="h-7 px-2" onClick={handleDelete}>
         <Trash2 className="size-3.5 mr-1" />
         삭제

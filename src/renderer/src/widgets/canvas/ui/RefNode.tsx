@@ -1,4 +1,4 @@
-import { memo, useCallback, useState, useEffect } from 'react'
+import { memo, useCallback, useState, useEffect, useRef } from 'react'
 import { Handle, Position, NodeResizer, useStore, type NodeProps } from '@xyflow/react'
 import { FileText, ExternalLink } from 'lucide-react'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
@@ -9,6 +9,8 @@ import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 
 function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>): React.JSX.Element {
   const [resizing, setResizing] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const nodeRef = useRef<HTMLDivElement>(null)
   const anyDragging = useStore((s) => s.nodes.some((n) => n.dragging))
   const interacting = dragging || resizing || (selected && anyDragging)
   const [mounted, setMounted] = useState(true)
@@ -21,6 +23,23 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
     setMounted(true) // eslint-disable-line react-hooks/set-state-in-effect
     return undefined
   }, [interacting])
+
+  // Exit edit mode on click outside
+  useEffect(() => {
+    if (!editing) return
+    const handleMouseDown = (e: MouseEvent): void => {
+      if (nodeRef.current && !nodeRef.current.contains(e.target as Node)) {
+        setEditing(false)
+      }
+    }
+    document.addEventListener('mousedown', handleMouseDown)
+    return () => document.removeEventListener('mousedown', handleMouseDown)
+  }, [editing])
+
+  // Exit edit mode during interaction or deselection
+  useEffect(() => {
+    if (interacting || !selected) setEditing(false) // eslint-disable-line react-hooks/set-state-in-effect
+  }, [interacting, selected])
   const config = NODE_TYPE_REGISTRY[data.nodeType]
   const Icon = config?.icon ?? FileText
   const label = config?.label ?? data.nodeType
@@ -55,6 +74,7 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
         onResizeEnd={() => setResizing(false)}
       />
       <div
+        ref={nodeRef}
         className={`rounded-lg border bg-card text-card-foreground shadow-sm h-full flex flex-col ${
           selected ? 'ring-2 ring-primary' : ''
         } ${isBrokenRef ? 'border-destructive opacity-60' : ''}`}
@@ -88,8 +108,15 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
         {ContentComponent ? (
           mounted ? (
             <div
-              className={`nodrag nowheel nopan flex-1 min-h-0 flex flex-col overflow-hidden ${interacting ? 'invisible' : ''}`}
-              onKeyDown={(e) => e.stopPropagation()}
+              className={`flex-1 min-h-0 flex flex-col overflow-hidden nowheel ${interacting ? 'invisible' : ''} ${editing ? 'nodrag nopan' : ''}`}
+              onDoubleClick={() => !editing && setEditing(true)}
+              onKeyDown={(e) => editing && e.stopPropagation()}
+              onMouseDownCapture={(e) => {
+                if (!editing) e.preventDefault()
+              }}
+              onClickCapture={(e) => {
+                if (!editing) e.stopPropagation()
+              }}
             >
               <ContentComponent
                 refId={data.refId}

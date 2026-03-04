@@ -1,25 +1,14 @@
 {
   "version": "1.0",
-  "enabled": true,
+  "enabled": false,
   "teamName": "",
   "feature": "pdf-viewer",
   "pdcaPhase": "do",
   "orchestrationPattern": "leader",
   "ctoAgent": "opus",
-  "startedAt": "2026-03-04T20:48:22.083Z",
-  "lastUpdated": "2026-03-04T20:49:34.738Z",
-  "teammates": [
-    {
-      "name": "ad0cab23d71a10bc6",
-      "role": "Explore",
-      "model": "sonnet",
-      "status": "completed",
-      "currentTask": null,
-      "taskId": null,
-      "startedAt": "2026-03-04T20:48:22.084Z",
-      "lastActivityAt": "2026-03-04T20:49:34.737Z"
-    }
-  ],
+  "startedAt": "2026-03-04T22:07:15.092Z",
+  "lastUpdated": "2026-03-04T22:25:31.933Z",
+  "teammates": [],
   "progress": {
     "totalTasks": 0,
     "completedTasks": 0,
@@ -28,5 +17,5 @@
     "pendingTasks": 0
   },
   "recentMessages": [],
-  "sessionId": "6f61d121-4d45-464c-879a-570a2a6c2142"
+  "sessionId": "ecfefd3e-5a33-4288-b4d6-7a8ea32e05e8"
 }
