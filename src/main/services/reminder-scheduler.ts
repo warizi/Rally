@@ -1,8 +1,17 @@
 import { Notification, BrowserWindow } from 'electron'
 import { reminderService } from './reminder'
+import icon from '../../../resources/256x256.png?asset'
 
 const CHECK_INTERVAL = 60_000 // 1분
 const STALE_THRESHOLD = 5 * 60_000 // 5분: 이보다 오래된 미발송 알림은 무시
+
+const OFFSET_LABELS: Record<number, string> = {
+  [10 * 60 * 1000]: '10분 전',
+  [30 * 60 * 1000]: '30분 전',
+  [60 * 60 * 1000]: '1시간 전',
+  [24 * 60 * 60 * 1000]: '1일 전',
+  [2 * 24 * 60 * 60 * 1000]: '2일 전'
+}
 
 let intervalId: ReturnType<typeof setInterval> | null = null
 
@@ -18,9 +27,12 @@ function checkAndFire(): void {
     }
 
     // Notification 발송
+    const offsetLabel = OFFSET_LABELS[item.offsetMs] ?? ''
+    const typeLabel = item.entityType === 'todo' ? '할 일' : '일정'
     const notification = new Notification({
-      title: item.entityType === 'todo' ? '할 일 알림' : '일정 알림',
-      body: item.title
+      title: offsetLabel ? `${typeLabel} 알림 · ${offsetLabel}` : `${typeLabel} 알림`,
+      body: item.title,
+      icon
     })
 
     notification.on('click', () => {

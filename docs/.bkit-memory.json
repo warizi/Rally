@@ -1,14 +1,14 @@
 {
-  "sessionCount": 194,
+  "sessionCount": 196,
   "lastSession": {
-    "startedAt": "2026-03-05T00:00:28.415Z",
+    "startedAt": "2026-03-05T01:49:26.479Z",
     "platform": "claude",
     "level": "Dynamic"
   },
-  "currentFeature": "tag",
-  "phase": "act",
-  "matchRate": 99,
-  "iterationCount": 1,
+  "currentFeature": "대시보드",
+  "phase": "do",
+  "matchRate": null,
+  "iterationCount": 0,
   "archivedFeatures": {
     "reminder": {
       "phase": "archived",
