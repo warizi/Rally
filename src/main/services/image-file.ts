@@ -7,9 +7,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readImageFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
-import { entityLinkService } from './entity-link'
-import { itemTagService } from './item-tag'
-import { canvasNodeRepository } from '../repositories/canvas-node'
+import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 
 export interface ImageFileNode {
   id: string
@@ -114,7 +112,13 @@ export const imageFileService = {
       }
     }
     imageFileRepository.createMany(toInsert)
-    imageFileRepository.deleteOrphans(workspaceId, fsPaths)
+    const dbRowsAfterUpsert = imageFileRepository.findByWorkspaceId(workspaceId)
+    const orphanIds = dbRowsAfterUpsert
+      .filter((r) => !fsPathSet.has(r.relativePath))
+      .map((r) => r.id)
+    cleanupOrphansAndDelete('image', orphanIds, () =>
+      imageFileRepository.deleteOrphans(workspaceId, fsPaths)
+    )
 
     return imageFileRepository.findByWorkspaceId(workspaceId).map(toImageFileNode)
   },
@@ -213,10 +217,7 @@ export const imageFileService = {
     } catch {
       // 이미 외부에서 삭제된 경우 무시
     }
-    entityLinkService.removeAllLinks('image', imageId)
-    itemTagService.removeByItem('image', imageId)
-    canvasNodeRepository.deleteByRef('image', imageId)
-    imageFileRepository.delete(imageId)
+    cleanupOrphansAndDelete('image', [imageId], () => imageFileRepository.delete(imageId))
   },
 
   readContent(workspaceId: string, imageId: string): { data: Buffer } {

@@ -383,6 +383,7 @@ interface EntityLinkAPI {
     entityType: LinkableEntityType,
     entityId: string
   ) => Promise<IpcResponse<LinkedEntity[]>>
+  onChanged: (callback: () => void) => () => void
 }
 
 type CanvasNodeType = 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image'

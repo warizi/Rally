@@ -15,6 +15,7 @@ import {
 import { getScheduleColor } from '../model/schedule-color'
 import { getItemStyle } from '../model/schedule-style'
 import { useDayDnd } from '../model/use-day-dnd'
+import { useDayViewTimeSettings } from '../model/use-day-view-time-settings'
 import { useScheduleResize } from '../model/use-schedule-resize'
 import { ScheduleBlock } from './ScheduleBlock'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
@@ -30,6 +31,7 @@ interface Props {
 export function DayView({ schedules, currentDate, workspaceId }: Props): React.JSX.Element {
   const moveSchedule = useMoveSchedule()
   const updateTodo = useUpdateTodo()
+  const { settings: timeSettings } = useDayViewTimeSettings()
 
   const { allDay, timed } = useMemo(() => {
     const ad: ScheduleItem[] = []
@@ -131,6 +133,8 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
           hourHeight={HOUR_HEIGHT}
           labelWidth="auto"
           labelClass="w-8 text-[9px] @[400px]:w-10 @[400px]:text-[10px] @[800px]:w-14 @[800px]:text-xs"
+          startHour={timeSettings.startHour}
+          endHour={timeSettings.endHour}
         >
           {layouted.map((l) => {
             const original = timed.find((s) => s.id === l.schedule.id)!
@@ -148,6 +152,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                 showDescription
                 displayStartAt={clamp?.start}
                 displayEndAt={clamp?.end}
+                startHour={timeSettings.startHour}
                 resizable
                 onResizeStart={resize.handleResizeStart}
               />
@@ -168,7 +173,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                 <div
                   className="absolute left-0 right-0 rounded-sm pointer-events-none"
                   style={{
-                    top: timeToPosition(previewStart, HOUR_HEIGHT),
+                    top: timeToPosition(previewStart, HOUR_HEIGHT, timeSettings.startHour),
                     height: scheduleHeight(baseStart, baseEnd, HOUR_HEIGHT),
                     backgroundColor: `${color}${isTodo ? '06' : '15'}`,
                     border: `1.5px dashed ${color}${isTodo ? '40' : '60'}`,
@@ -209,7 +214,7 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                 <div
                   className="absolute left-0 right-0 rounded-sm pointer-events-none"
                   style={{
-                    top: timeToPosition(previewStart, HOUR_HEIGHT),
+                    top: timeToPosition(previewStart, HOUR_HEIGHT, timeSettings.startHour),
                     height: scheduleHeight(previewStart, previewEnd, HOUR_HEIGHT),
                     backgroundColor: `${color}${isTodo ? '06' : '15'}`,
                     border: `1.5px dashed ${color}${isTodo ? '40' : '60'}`,

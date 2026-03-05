@@ -2,7 +2,7 @@ import { useDraggable } from '@dnd-kit/core'
 import { format } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import { getScheduleColor } from '../model/schedule-color'
-import { timeToPosition, scheduleHeight, isTodoItem } from '../model/calendar-utils'
+import { DEFAULT_START_HOUR, timeToPosition, scheduleHeight, isTodoItem } from '../model/calendar-utils'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 
 interface Props {
@@ -16,6 +16,7 @@ interface Props {
   showDescription?: boolean
   displayStartAt?: Date
   displayEndAt?: Date
+  startHour?: number
   resizable?: boolean
   onResizeStart?: (e: React.PointerEvent, schedule: ScheduleItem, edge: 'top' | 'bottom') => void
 }
@@ -31,13 +32,14 @@ export function ScheduleBlock({
   showDescription = false,
   displayStartAt,
   displayEndAt,
+  startHour = DEFAULT_START_HOUR,
   resizable,
   onResizeStart
 }: Props): React.JSX.Element {
   const color = getScheduleColor(schedule)
   const effectiveStart = displayStartAt ?? schedule.startAt
   const effectiveEnd = displayEndAt ?? schedule.endAt
-  const top = timeToPosition(effectiveStart, hourHeight)
+  const top = timeToPosition(effectiveStart, hourHeight, startHour)
   const height = scheduleHeight(effectiveStart, effectiveEnd, hourHeight)
 
   const isTodo = isTodoItem(schedule)

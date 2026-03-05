@@ -1,11 +1,15 @@
 import { useEffect, useState } from 'react'
-import { timeToPosition } from '../model/calendar-utils'
+import { DEFAULT_START_HOUR, timeToPosition } from '../model/calendar-utils'
 
 interface Props {
   hourHeight: number
+  startHour?: number
 }
 
-export function CurrentTimeIndicator({ hourHeight }: Props): React.JSX.Element {
+export function CurrentTimeIndicator({
+  hourHeight,
+  startHour = DEFAULT_START_HOUR
+}: Props): React.JSX.Element {
   const [now, setNow] = useState(new Date())
 
   useEffect(() => {
@@ -13,7 +17,7 @@ export function CurrentTimeIndicator({ hourHeight }: Props): React.JSX.Element {
     return () => clearInterval(timer)
   }, [])
 
-  const top = timeToPosition(now, hourHeight)
+  const top = timeToPosition(now, hourHeight, startHour)
 
   return (
     <div className="absolute left-0 right-0 z-20 pointer-events-none" style={{ top }}>

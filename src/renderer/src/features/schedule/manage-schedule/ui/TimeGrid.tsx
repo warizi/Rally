@@ -1,12 +1,14 @@
 import { useRef, useEffect } from 'react'
 import { ScrollArea } from '@shared/ui/scroll-area'
-import { getTimeSlots, START_HOUR } from '../model/calendar-utils'
+import { DEFAULT_START_HOUR, DEFAULT_END_HOUR, getTimeSlots } from '../model/calendar-utils'
 import { CurrentTimeIndicator } from './CurrentTimeIndicator'
 
 interface Props {
   hourHeight: number
   labelWidth: string
   labelClass: string
+  startHour?: number
+  endHour?: number
   showCurrentTime?: boolean
   onTimeClick?: (hour: number, minute: number) => void
   children: React.ReactNode
@@ -16,28 +18,30 @@ export function TimeGrid({
   hourHeight,
   labelWidth,
   labelClass,
+  startHour = DEFAULT_START_HOUR,
+  endHour = DEFAULT_END_HOUR,
   showCurrentTime = true,
   onTimeClick,
   children
 }: Props): React.JSX.Element {
   const scrollRef = useRef<HTMLDivElement>(null)
-  const slots = getTimeSlots()
-  const totalHeight = (24 - START_HOUR) * hourHeight
+  const slots = getTimeSlots(startHour, endHour)
+  const totalHeight = (endHour - startHour) * hourHeight
 
   useEffect(() => {
     if (scrollRef.current) {
       const now = new Date()
-      const scrollTo = Math.max((now.getHours() - START_HOUR - 1) * hourHeight, 0)
+      const scrollTo = Math.max((now.getHours() - startHour - 1) * hourHeight, 0)
       scrollRef.current.scrollTop = scrollTo
     }
-  }, [hourHeight])
+  }, [hourHeight, startHour])
 
   function handleGridClick(e: React.MouseEvent<HTMLDivElement>): void {
     if (!onTimeClick) return
     const rect = e.currentTarget.getBoundingClientRect()
     const y = e.clientY - rect.top + (scrollRef.current?.scrollTop ?? 0)
     const totalMinutes = (y / hourHeight) * 60
-    const hour = Math.floor(totalMinutes / 60)
+    const hour = startHour + Math.floor(totalMinutes / 60)
     const minute = Math.round((totalMinutes % 60) / 15) * 15
     onTimeClick(Math.min(hour, 23), minute >= 60 ? 0 : minute)
   }
@@ -68,12 +72,14 @@ export function TimeGrid({
             <div
               key={slot.hour}
               className="absolute left-0 right-0 border-t border-border"
-              style={{ top: (slot.hour - START_HOUR) * hourHeight }}
+              style={{ top: (slot.hour - startHour) * hourHeight }}
             />
           ))}
 
           {/* 현재 시간 표시 */}
-          {showCurrentTime && <CurrentTimeIndicator hourHeight={hourHeight} />}
+          {showCurrentTime && (
+            <CurrentTimeIndicator hourHeight={hourHeight} startHour={startHour} />
+          )}
 
           {/* 일정 블록 */}
           {children}

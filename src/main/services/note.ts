@@ -7,9 +7,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
-import { entityLinkService } from './entity-link'
-import { itemTagService } from './item-tag'
-import { canvasNodeRepository } from '../repositories/canvas-node'
+import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { noteImageService } from './note-image'
 
 export interface NoteNode {
@@ -130,7 +128,13 @@ export const noteService = {
 
     // 5. 이동 감지에서 제외된 진짜 orphan만 삭제
     // (update된 record는 이미 새 경로로 바뀌었으므로 deleteOrphans에서 보존됨)
-    noteRepository.deleteOrphans(workspaceId, fsPaths)
+    const dbNotesAfterUpsert = noteRepository.findByWorkspaceId(workspaceId)
+    const orphanIds = dbNotesAfterUpsert
+      .filter((n) => !fsPathSet.has(n.relativePath))
+      .map((n) => n.id)
+    cleanupOrphansAndDelete('note', orphanIds, () =>
+      noteRepository.deleteOrphans(workspaceId, fsPaths)
+    )
 
     // 6. 최신 DB rows 반환
     return noteRepository.findByWorkspaceId(workspaceId).map(toNoteNode)
@@ -254,10 +258,7 @@ export const noteService = {
     } catch {
       // 이미 외부에서 삭제된 경우 무시 (DB만 정리)
     }
-    entityLinkService.removeAllLinks('note', noteId)
-    itemTagService.removeByItem('note', noteId)
-    canvasNodeRepository.deleteByRef('note', noteId)
-    noteRepository.delete(noteId)
+    cleanupOrphansAndDelete('note', [noteId], () => noteRepository.delete(noteId))
   },
 
   /**

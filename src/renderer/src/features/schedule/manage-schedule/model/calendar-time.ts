@@ -1,20 +1,27 @@
 import { differenceInMinutes } from 'date-fns'
-import { START_HOUR } from './calendar-constants'
+import { DEFAULT_START_HOUR, DEFAULT_END_HOUR } from './calendar-constants'
 
 export interface TimeSlot {
   hour: number
   label: string
 }
 
-export function getTimeSlots(): TimeSlot[] {
-  return Array.from({ length: 24 - START_HOUR }, (_, i) => ({
-    hour: START_HOUR + i,
-    label: `${String(START_HOUR + i).padStart(2, '0')}:00`
+export function getTimeSlots(
+  startHour: number = DEFAULT_START_HOUR,
+  endHour: number = DEFAULT_END_HOUR
+): TimeSlot[] {
+  return Array.from({ length: endHour - startHour }, (_, i) => ({
+    hour: startHour + i,
+    label: `${String(startHour + i).padStart(2, '0')}:00`
   }))
 }
 
-export function timeToPosition(date: Date, hourHeight: number): number {
-  return (date.getHours() - START_HOUR + date.getMinutes() / 60) * hourHeight
+export function timeToPosition(
+  date: Date,
+  hourHeight: number,
+  startHour: number = DEFAULT_START_HOUR
+): number {
+  return (date.getHours() - startHour + date.getMinutes() / 60) * hourHeight
 }
 
 export function scheduleHeight(startAt: Date, endAt: Date, hourHeight: number): number {

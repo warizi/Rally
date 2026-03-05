@@ -7,9 +7,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readPdfFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
-import { entityLinkService } from './entity-link'
-import { itemTagService } from './item-tag'
-import { canvasNodeRepository } from '../repositories/canvas-node'
+import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 
 export interface PdfFileNode {
   id: string
@@ -116,7 +114,13 @@ export const pdfFileService = {
       }
     }
     pdfFileRepository.createMany(toInsert)
-    pdfFileRepository.deleteOrphans(workspaceId, fsPaths)
+    const dbRowsAfterUpsert = pdfFileRepository.findByWorkspaceId(workspaceId)
+    const orphanIds = dbRowsAfterUpsert
+      .filter((r) => !fsPathSet.has(r.relativePath))
+      .map((r) => r.id)
+    cleanupOrphansAndDelete('pdf', orphanIds, () =>
+      pdfFileRepository.deleteOrphans(workspaceId, fsPaths)
+    )
 
     return pdfFileRepository.findByWorkspaceId(workspaceId).map(toPdfFileNode)
   },
@@ -218,10 +222,7 @@ export const pdfFileService = {
     } catch {
       // 이미 외부에서 삭제된 경우 무시
     }
-    entityLinkService.removeAllLinks('pdf', pdfId)
-    itemTagService.removeByItem('pdf', pdfId)
-    canvasNodeRepository.deleteByRef('pdf', pdfId)
-    pdfFileRepository.delete(pdfId)
+    cleanupOrphansAndDelete('pdf', [pdfId], () => pdfFileRepository.delete(pdfId))
   },
 
   /** 파일 읽기 → Buffer 반환 (renderer에서 ArrayBuffer로 수신) */

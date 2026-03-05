@@ -211,7 +211,12 @@ const api = {
     unlink: (typeA: string, idA: string, typeB: string, idB: string) =>
       ipcRenderer.invoke('entityLink:unlink', typeA, idA, typeB, idB),
     getLinked: (entityType: string, entityId: string) =>
-      ipcRenderer.invoke('entityLink:getLinked', entityType, entityId)
+      ipcRenderer.invoke('entityLink:getLinked', entityType, entityId),
+    onChanged: (callback: () => void) => {
+      const handler = (): void => callback()
+      ipcRenderer.on('entity-link:changed', handler)
+      return () => ipcRenderer.removeListener('entity-link:changed', handler)
+    }
   },
 
   canvas: {

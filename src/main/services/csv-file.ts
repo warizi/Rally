@@ -9,9 +9,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readCsvFilesRecursive } from '../lib/fs-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
-import { entityLinkService } from './entity-link'
-import { itemTagService } from './item-tag'
-import { canvasNodeRepository } from '../repositories/canvas-node'
+import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 
 export interface CsvFileNode {
   id: string
@@ -128,7 +126,13 @@ export const csvFileService = {
       }
     }
     csvFileRepository.createMany(toInsert)
-    csvFileRepository.deleteOrphans(workspaceId, fsPaths)
+    const dbRowsAfterUpsert = csvFileRepository.findByWorkspaceId(workspaceId)
+    const orphanIds = dbRowsAfterUpsert
+      .filter((r) => !fsPathSet.has(r.relativePath))
+      .map((r) => r.id)
+    cleanupOrphansAndDelete('csv', orphanIds, () =>
+      csvFileRepository.deleteOrphans(workspaceId, fsPaths)
+    )
 
     return csvFileRepository.findByWorkspaceId(workspaceId).map(toCsvFileNode)
   },
@@ -240,10 +244,7 @@ export const csvFileService = {
     } catch {
       // 이미 외부에서 삭제된 경우 무시
     }
-    entityLinkService.removeAllLinks('csv', csvId)
-    itemTagService.removeByItem('csv', csvId)
-    canvasNodeRepository.deleteByRef('csv', csvId)
-    csvFileRepository.delete(csvId)
+    cleanupOrphansAndDelete('csv', [csvId], () => csvFileRepository.delete(csvId))
   },
 
   /**

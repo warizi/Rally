@@ -10,6 +10,7 @@ import { useNoteWatcher } from '@entities/note'
 import { useCsvWatcher } from '@entities/csv-file'
 import { usePdfWatcher } from '@entities/pdf-file'
 import { useImageWatcher } from '@entities/image-file'
+import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useState } from 'react'
 import {
@@ -48,6 +49,8 @@ function MainLayout(): React.JSX.Element {
   useCsvWatcher()
   usePdfWatcher()
   useImageWatcher()
+  // entity-link 변경 push 이벤트 구독 (orphan cleanup 시 캐시 동기화)
+  useEntityLinkWatcher()
   // 알림 push 이벤트 구독
   useReminderWatcher()
   // 드래그 상태 관리

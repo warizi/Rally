@@ -1,4 +1,4 @@
-export { START_HOUR } from './calendar-constants'
+export { DEFAULT_START_HOUR, DEFAULT_END_HOUR } from './calendar-constants'
 export { isTodoItem, isScheduleOnDate } from './calendar-predicates'
 export { getMonthGrid, getWeekDates, type MonthGridDay } from './calendar-grid'
 export { getTimeSlots, timeToPosition, scheduleHeight, type TimeSlot } from './calendar-time'

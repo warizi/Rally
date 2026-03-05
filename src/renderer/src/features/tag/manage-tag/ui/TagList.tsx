@@ -111,12 +111,19 @@ export function TagList({ workspaceId, itemType, itemId }: Props) {
     <div className="flex items-center gap-1 flex-wrap">
       <span className="text-xs text-muted-foreground mr-0.5">태그</span>
       {itemTags.map((tag) => (
-        <button key={tag.id} type="button" onClick={() => setEditTag(tag)}>
+        <div
+          key={tag.id}
+          role="button"
+          tabIndex={0}
+          className="cursor-pointer"
+          onClick={() => setEditTag(tag)}
+          onKeyDown={(e) => e.key === 'Enter' && setEditTag(tag)}
+        >
           <TagBadge
             tag={tag}
             onRemove={() => detachTag.mutate({ itemType, tagId: tag.id, itemId })}
           />
-        </button>
+        </div>
       ))}
 
       <TagPicker

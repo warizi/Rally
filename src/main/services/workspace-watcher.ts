@@ -8,6 +8,7 @@ import { csvFileRepository } from '../repositories/csv-file'
 import { pdfFileRepository } from '../repositories/pdf-file'
 import { imageFileRepository } from '../repositories/image-file'
 import { entityLinkRepository } from '../repositories/entity-link'
+import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { readDirRecursiveAsync } from './folder'
 import {
   readMdFilesRecursiveAsync,
@@ -766,7 +767,14 @@ class WorkspaceWatcherService {
       })
 
     noteRepository.createMany(toInsert)
-    noteRepository.deleteOrphans(workspaceId, fsPaths)
+    const fsPathSet = new Set(fsPaths)
+    const noteOrphanIds = noteRepository
+      .findByWorkspaceId(workspaceId)
+      .filter((n) => !fsPathSet.has(n.relativePath))
+      .map((n) => n.id)
+    cleanupOrphansAndDelete('note', noteOrphanIds, () =>
+      noteRepository.deleteOrphans(workspaceId, fsPaths)
+    )
   }
 
   private async csvReconciliation(workspaceId: string, workspacePath: string): Promise<void> {
@@ -801,7 +809,14 @@ class WorkspaceWatcherService {
       })
 
     csvFileRepository.createMany(toInsert)
-    csvFileRepository.deleteOrphans(workspaceId, fsPaths)
+    const csvFsPathSet = new Set(fsPaths)
+    const csvOrphanIds = csvFileRepository
+      .findByWorkspaceId(workspaceId)
+      .filter((c) => !csvFsPathSet.has(c.relativePath))
+      .map((c) => c.id)
+    cleanupOrphansAndDelete('csv', csvOrphanIds, () =>
+      csvFileRepository.deleteOrphans(workspaceId, fsPaths)
+    )
   }
 
   private getSnapshotPath(workspaceId: string): string {
@@ -860,7 +875,14 @@ class WorkspaceWatcherService {
       })
 
     pdfFileRepository.createMany(toInsert)
-    pdfFileRepository.deleteOrphans(workspaceId, fsPaths)
+    const pdfFsPathSet = new Set(fsPaths)
+    const pdfOrphanIds = pdfFileRepository
+      .findByWorkspaceId(workspaceId)
+      .filter((p) => !pdfFsPathSet.has(p.relativePath))
+      .map((p) => p.id)
+    cleanupOrphansAndDelete('pdf', pdfOrphanIds, () =>
+      pdfFileRepository.deleteOrphans(workspaceId, fsPaths)
+    )
   }
 
   private pushPdfChanged(workspaceId: string, changedRelPaths: string[]): void {
@@ -901,7 +923,14 @@ class WorkspaceWatcherService {
       })
 
     imageFileRepository.createMany(toInsert)
-    imageFileRepository.deleteOrphans(workspaceId, fsPaths)
+    const imgFsPathSet = new Set(fsPaths)
+    const imgOrphanIds = imageFileRepository
+      .findByWorkspaceId(workspaceId)
+      .filter((i) => !imgFsPathSet.has(i.relativePath))
+      .map((i) => i.id)
+    cleanupOrphansAndDelete('image', imgOrphanIds, () =>
+      imageFileRepository.deleteOrphans(workspaceId, fsPaths)
+    )
   }
 
   private pushImageChanged(workspaceId: string, changedRelPaths: string[]): void {

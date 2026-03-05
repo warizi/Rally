@@ -2,6 +2,15 @@ import { useState } from 'react'
 import { CheckIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { applyTheme, type Theme } from '@/shared/lib/theme'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/shared/ui/select'
+import { Separator } from '@/shared/ui/separator'
+import { useDayViewTimeSettings } from '@/features/schedule/manage-schedule/model/use-day-view-time-settings'
 
 export function DisplaySettings(): React.JSX.Element {
   const [currentTheme, setCurrentTheme] = useState<Theme>(() =>
@@ -15,21 +24,88 @@ export function DisplaySettings(): React.JSX.Element {
   }
 
   return (
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-sm font-medium mb-4">테마</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <ThemeCard
+            label="라이트"
+            theme="light"
+            selected={currentTheme === 'light'}
+            onClick={() => handleThemeChange('light')}
+          />
+          <ThemeCard
+            label="다크"
+            theme="dark"
+            selected={currentTheme === 'dark'}
+            onClick={() => handleThemeChange('dark')}
+          />
+        </div>
+      </div>
+
+      <Separator />
+
+      <ScheduleSettings />
+    </div>
+  )
+}
+
+function ScheduleSettings(): React.JSX.Element {
+  const { settings, updateStartHour, updateEndHour } = useDayViewTimeSettings()
+
+  const handleStartHourChange = (value: string): void => {
+    const hour = parseInt(value, 10)
+    if (hour < settings.endHour) {
+      updateStartHour(hour)
+    }
+  }
+
+  const handleEndHourChange = (value: string): void => {
+    const hour = parseInt(value, 10)
+    if (hour > settings.startHour) {
+      updateEndHour(hour)
+    }
+  }
+
+  const formatHour = (h: number): string => `${String(h).padStart(2, '0')}:00`
+
+  return (
     <div>
-      <h3 className="text-sm font-medium mb-4">테마</h3>
-      <div className="flex gap-4">
-        <ThemeCard
-          label="라이트"
-          theme="light"
-          selected={currentTheme === 'light'}
-          onClick={() => handleThemeChange('light')}
-        />
-        <ThemeCard
-          label="다크"
-          theme="dark"
-          selected={currentTheme === 'dark'}
-          onClick={() => handleThemeChange('dark')}
-        />
+      <h3 className="text-sm font-medium mb-1">일정</h3>
+      <p className="text-xs text-muted-foreground mb-4">일간 뷰 타임라인</p>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs text-muted-foreground mb-1.5 block">시작 시간</label>
+          <Select value={String(settings.startHour)} onValueChange={handleStartHourChange}>
+            <SelectTrigger className="w-full" size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 13 }, (_, i) => (
+                <SelectItem key={i} value={String(i)}>
+                  {formatHour(i)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
+          <label className="text-xs text-muted-foreground mb-1.5 block">끝 시간</label>
+          <Select value={String(settings.endHour)} onValueChange={handleEndHourChange}>
+            <SelectTrigger className="w-full" size="sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {Array.from({ length: 13 }, (_, i) => (
+                <SelectItem key={i + 12} value={String(i + 12)}>
+                  {formatHour(i + 12)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
     </div>
   )
@@ -52,7 +128,7 @@ function ThemeCard({
     <button
       onClick={onClick}
       className={cn(
-        'relative flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all',
+        'relative flex flex-col items-center gap-2 p-2 rounded-lg border-2 transition-all flex-1',
         'cursor-pointer hover:border-primary/50',
         selected ? 'border-primary ring-2 ring-primary/20' : 'border-border'
       )}
@@ -60,7 +136,7 @@ function ThemeCard({
       {/* 스켈레톤 미리보기 */}
       <div
         className={cn(
-          'w-32 h-24 rounded-md overflow-hidden border',
+          'w-full h-24 rounded-md overflow-hidden border',
           isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
         )}
       >
