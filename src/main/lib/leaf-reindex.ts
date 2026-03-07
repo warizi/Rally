@@ -15,20 +15,16 @@ export interface LeafSibling {
  */
 export function getLeafSiblings(workspaceId: string, folderId: string | null): LeafSibling[] {
   const notes = noteRepository
-    .findByWorkspaceId(workspaceId)
-    .filter((n) => n.folderId === folderId)
+    .findByFolderId(workspaceId, folderId)
     .map((n) => ({ id: n.id, kind: 'note' as const, order: n.order }))
   const csvs = csvFileRepository
-    .findByWorkspaceId(workspaceId)
-    .filter((c) => c.folderId === folderId)
+    .findByFolderId(workspaceId, folderId)
     .map((c) => ({ id: c.id, kind: 'csv' as const, order: c.order }))
   const pdfs = pdfFileRepository
-    .findByWorkspaceId(workspaceId)
-    .filter((p) => p.folderId === folderId)
+    .findByFolderId(workspaceId, folderId)
     .map((p) => ({ id: p.id, kind: 'pdf' as const, order: p.order }))
   const images = imageFileRepository
-    .findByWorkspaceId(workspaceId)
-    .filter((i) => i.folderId === folderId)
+    .findByFolderId(workspaceId, folderId)
     .map((i) => ({ id: i.id, kind: 'image' as const, order: i.order }))
   return [...notes, ...csvs, ...pdfs, ...images].sort((a, b) => a.order - b.order)
 }

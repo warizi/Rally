@@ -6,6 +6,7 @@ import { noteRepository } from '../repositories/note'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
+import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { noteImageService } from './note-image'
@@ -22,17 +23,6 @@ export interface NoteNode {
   updatedAt: Date
 }
 
-/** Windows '\' → '/' 정규화 */
-function normalizePath(p: string): string {
-  return p.replace(/\\/g, '/')
-}
-
-/** relativePath에서 부모 디렉토리 relative path 추출 ("folder/note.md" → "folder") */
-function parentRelPath(relativePath: string): string | null {
-  const parts = relativePath.split('/')
-  if (parts.length <= 1) return null
-  return parts.slice(0, -1).join('/')
-}
 
 function toNoteNode(note: {
   id: string
@@ -95,11 +85,13 @@ export const noteService = {
     }
 
     const now = new Date()
+    const allFolders = folderRepository.findByWorkspaceId(workspaceId)
+    const folderMap = new Map(allFolders.map((f) => [f.relativePath, f]))
     const toInsert: Parameters<typeof noteRepository.createMany>[0] = []
     for (const entry of newFsEntries) {
       const matchedOrphan = orphanByBasename.get(entry.name)
       const parentRel = parentRelPath(entry.relativePath)
-      const folder = parentRel ? folderRepository.findByRelativePath(workspaceId, parentRel) : null
+      const folder = parentRel ? folderMap.get(parentRel) ?? null : null
       if (matchedOrphan) {
         // 이동으로 간주: 경로·폴더·타이틀만 갱신, ID는 유지
         noteRepository.update(matchedOrphan.id, {

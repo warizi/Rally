@@ -20,7 +20,8 @@ vi.mock('../../repositories/workspace', () => ({
 vi.mock('../../repositories/folder', () => ({
   folderRepository: {
     findById: vi.fn(),
-    findByRelativePath: vi.fn()
+    findByRelativePath: vi.fn(),
+    findByWorkspaceId: vi.fn().mockReturnValue([])
   }
 }))
 
@@ -211,15 +212,17 @@ describe('readByWorkspace', () => {
     // FK 제약: folderId로 insert되는 folder row가 testDb에 존재해야 함
     insertTestWorkspace()
     insertTestFolder('f-docs', 'docs')
-    vi.mocked(folderRepository.findByRelativePath).mockReturnValue({
-      id: 'f-docs',
-      workspaceId: 'ws-1',
-      relativePath: 'docs',
-      color: null,
-      order: 0,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    } as ReturnType<typeof folderRepository.findByRelativePath>)
+    vi.mocked(folderRepository.findByWorkspaceId).mockReturnValue([
+      {
+        id: 'f-docs',
+        workspaceId: 'ws-1',
+        relativePath: 'docs',
+        color: null,
+        order: 0,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      }
+    ] as ReturnType<typeof folderRepository.findByWorkspaceId>)
     vi.mocked(fs.accessSync).mockReturnValueOnce(undefined)
     setReaddirImpl((dirPath) => {
       if (String(dirPath) === '/test/workspace') return [makeDirent('docs', { isDir: true })]

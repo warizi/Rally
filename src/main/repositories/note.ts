@@ -1,42 +1,15 @@
-import { and, eq, inArray, like } from 'drizzle-orm'
+import { eq } from 'drizzle-orm'
 import { db } from '../db'
 import { notes } from '../db/schema'
+import { createFileRepository } from './create-file-repository'
 
 export type Note = typeof notes.$inferSelect
 export type NoteInsert = typeof notes.$inferInsert
 
+const base = createFileRepository(notes, 'notes')
+
 export const noteRepository = {
-  findByWorkspaceId(workspaceId: string): Note[] {
-    return db.select().from(notes).where(eq(notes.workspaceId, workspaceId)).all()
-  },
-
-  findById(id: string): Note | undefined {
-    return db.select().from(notes).where(eq(notes.id, id)).get()
-  },
-
-  findByRelativePath(workspaceId: string, relativePath: string): Note | undefined {
-    return db
-      .select()
-      .from(notes)
-      .where(and(eq(notes.workspaceId, workspaceId), eq(notes.relativePath, relativePath)))
-      .get()
-  },
-
-  create(data: NoteInsert): Note {
-    return db.insert(notes).values(data).returning().get()
-  },
-
-  createMany(items: NoteInsert[]): void {
-    if (items.length === 0) return
-    const CHUNK = 99 // 10 columns × 99 = 990 variables < SQLite 999 limit
-    for (let i = 0; i < items.length; i += CHUNK) {
-      db.insert(notes)
-        .values(items.slice(i, i + CHUNK))
-        .onConflictDoNothing()
-        .run()
-    }
-  },
-
+  ...base,
   update(
     id: string,
     data: Partial<
@@ -47,90 +20,5 @@ export const noteRepository = {
     >
   ): Note | undefined {
     return db.update(notes).set(data).where(eq(notes.id, id)).returning().get()
-  },
-
-  /**
-   * fs에 존재하지 않는 orphaned DB row 삭제
-   * existingPaths가 빈 배열이면 해당 워크스페이스의 모든 note row 삭제
-   */
-  deleteOrphans(workspaceId: string, existingPaths: string[]): void {
-    if (existingPaths.length === 0) {
-      db.delete(notes).where(eq(notes.workspaceId, workspaceId)).run()
-      return
-    }
-    const existingSet = new Set(existingPaths)
-    const dbRows = db
-      .select({ id: notes.id, relativePath: notes.relativePath })
-      .from(notes)
-      .where(eq(notes.workspaceId, workspaceId))
-      .all()
-    const orphanIds = dbRows.filter((r) => !existingSet.has(r.relativePath)).map((r) => r.id)
-    if (orphanIds.length === 0) return
-    // inArray also has the 999-variable limit; chunk at 900 to stay safe
-    const CHUNK = 900
-    for (let i = 0; i < orphanIds.length; i += CHUNK) {
-      db.delete(notes)
-        .where(inArray(notes.id, orphanIds.slice(i, i + CHUNK)))
-        .run()
-    }
-  },
-
-  /**
-   * 폴더 삭제 시 해당 폴더 하위 note들을 일괄 삭제
-   */
-  bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
-    db.delete(notes)
-      .where(and(eq(notes.workspaceId, workspaceId), like(notes.relativePath, `${prefix}/%`)))
-      .run()
-  },
-
-  /**
-   * 폴더 rename 시 해당 폴더 하위 note들의 relativePath를 일괄 업데이트
-   * oldPrefix → newPrefix 로 prefix 교체
-   */
-  bulkUpdatePathPrefix(workspaceId: string, oldPrefix: string, newPrefix: string): void {
-    const now = Date.now()
-    db.$client.transaction(() => {
-      db.$client
-        .prepare(
-          `UPDATE notes
-           SET relative_path = ? || substr(relative_path, ?),
-               updated_at = ?
-           WHERE workspace_id = ?
-             AND (relative_path = ? OR relative_path LIKE ?)`
-        )
-        .run(newPrefix, oldPrefix.length + 1, now, workspaceId, oldPrefix, `${oldPrefix}/%`)
-    })()
-  },
-
-  /**
-   * siblings 전체 order 재할당 (integer reindex)
-   * orderedIds: 원하는 순서로 정렬된 note id 배열
-   */
-  reindexSiblings(workspaceId: string, orderedIds: string[]): void {
-    const now = Date.now()
-    const stmt = db.$client.prepare(
-      `UPDATE notes SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
-    )
-    db.$client.transaction(() => {
-      for (let i = 0; i < orderedIds.length; i++) {
-        stmt.run(i, now, workspaceId, orderedIds[i])
-      }
-    })()
-  },
-
-  findByIds(ids: string[]): Note[] {
-    if (ids.length === 0) return []
-    const CHUNK = 900
-    const results: Note[] = []
-    for (let i = 0; i < ids.length; i += CHUNK) {
-      const chunk = ids.slice(i, i + CHUNK)
-      results.push(...db.select().from(notes).where(inArray(notes.id, chunk)).all())
-    }
-    return results
-  },
-
-  delete(id: string): void {
-    db.delete(notes).where(eq(notes.id, id)).run()
   }
 }

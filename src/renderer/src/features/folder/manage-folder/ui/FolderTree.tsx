@@ -37,13 +37,10 @@ import { FolderColorDialog } from './FolderColorDialog'
 import { FolderContextMenu } from './FolderContextMenu'
 import { FolderNameDialog } from './FolderNameDialog'
 import { FolderNodeRenderer } from './FolderNodeRenderer'
-import { NoteContextMenu } from './NoteContextMenu'
+import { FileContextMenu } from './FileContextMenu'
 import { NoteNodeRenderer } from './NoteNodeRenderer'
-import { CsvContextMenu } from './CsvContextMenu'
 import { CsvNodeRenderer } from './CsvNodeRenderer'
-import { PdfContextMenu } from './PdfContextMenu'
 import { PdfNodeRenderer } from './PdfNodeRenderer'
-import { ImageContextMenu } from './ImageContextMenu'
 import { ImageNodeRenderer } from './ImageNodeRenderer'
 import { DeleteFolderDialog } from './DeleteFolderDialog'
 
@@ -270,7 +267,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     (props: NodeRendererProps<WorkspaceTreeNode>) => {
       if (props.node.data.kind === 'note') {
         return (
-          <NoteContextMenu
+          <FileContextMenu
             onDelete={() =>
               setNoteDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -291,13 +288,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
                 }
               />
             </div>
-          </NoteContextMenu>
+          </FileContextMenu>
         )
       }
 
       if (props.node.data.kind === 'csv') {
         return (
-          <CsvContextMenu
+          <FileContextMenu
             onDelete={() =>
               setCsvDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -318,13 +315,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
                 }
               />
             </div>
-          </CsvContextMenu>
+          </FileContextMenu>
         )
       }
 
       if (props.node.data.kind === 'pdf') {
         return (
-          <PdfContextMenu
+          <FileContextMenu
             onDelete={() =>
               setPdfDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -345,13 +342,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
                 }
               />
             </div>
-          </PdfContextMenu>
+          </FileContextMenu>
         )
       }
 
       if (props.node.data.kind === 'image') {
         return (
-          <ImageContextMenu
+          <FileContextMenu
             onDelete={() =>
               setImageDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -372,7 +369,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
                 }
               />
             </div>
-          </ImageContextMenu>
+          </FileContextMenu>
         )
       }
 

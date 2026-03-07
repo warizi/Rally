@@ -11,6 +11,18 @@ type TabSnapshotCreateInput = {
   layoutJson: string
 }
 
+function createOnChangedListener(channel: string) {
+  return (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
+    const handler = (
+      _: Electron.IpcRendererEvent,
+      workspaceId: string,
+      changedRelPaths: string[]
+    ): void => callback(workspaceId, changedRelPaths)
+    ipcRenderer.on(channel, handler)
+    return () => ipcRenderer.removeListener(channel, handler)
+  }
+}
+
 const api = {
   note: {
     readByWorkspace: (workspaceId: string) =>
@@ -29,15 +41,7 @@ const api = {
       ipcRenderer.invoke('note:move', workspaceId, noteId, folderId, index),
     updateMeta: (workspaceId: string, noteId: string, data: { description?: string }) =>
       ipcRenderer.invoke('note:updateMeta', workspaceId, noteId, data),
-    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
-      const handler = (
-        _: Electron.IpcRendererEvent,
-        workspaceId: string,
-        changedRelPaths: string[]
-      ): void => callback(workspaceId, changedRelPaths)
-      ipcRenderer.on('note:changed', handler)
-      return () => ipcRenderer.removeListener('note:changed', handler)
-    }
+    onChanged: createOnChangedListener('note:changed')
   },
 
   csv: {
@@ -60,15 +64,7 @@ const api = {
       csvId: string,
       data: { description?: string; columnWidths?: string }
     ) => ipcRenderer.invoke('csv:updateMeta', workspaceId, csvId, data),
-    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
-      const handler = (
-        _: Electron.IpcRendererEvent,
-        workspaceId: string,
-        changedRelPaths: string[]
-      ): void => callback(workspaceId, changedRelPaths)
-      ipcRenderer.on('csv:changed', handler)
-      return () => ipcRenderer.removeListener('csv:changed', handler)
-    }
+    onChanged: createOnChangedListener('csv:changed')
   },
 
   pdf: {
@@ -87,15 +83,7 @@ const api = {
     updateMeta: (workspaceId: string, pdfId: string, data: { description?: string }) =>
       ipcRenderer.invoke('pdf:updateMeta', workspaceId, pdfId, data),
     selectFile: () => ipcRenderer.invoke('pdf:selectFile'),
-    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
-      const handler = (
-        _: Electron.IpcRendererEvent,
-        workspaceId: string,
-        changedRelPaths: string[]
-      ): void => callback(workspaceId, changedRelPaths)
-      ipcRenderer.on('pdf:changed', handler)
-      return () => ipcRenderer.removeListener('pdf:changed', handler)
-    }
+    onChanged: createOnChangedListener('pdf:changed')
   },
 
   image: {
@@ -114,15 +102,7 @@ const api = {
     updateMeta: (workspaceId: string, imageId: string, data: { description?: string }) =>
       ipcRenderer.invoke('image:updateMeta', workspaceId, imageId, data),
     selectFile: () => ipcRenderer.invoke('image:selectFile'),
-    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
-      const handler = (
-        _: Electron.IpcRendererEvent,
-        workspaceId: string,
-        changedRelPaths: string[]
-      ): void => callback(workspaceId, changedRelPaths)
-      ipcRenderer.on('image:changed', handler)
-      return () => ipcRenderer.removeListener('image:changed', handler)
-    }
+    onChanged: createOnChangedListener('image:changed')
   },
 
   noteImage: {
@@ -149,15 +129,7 @@ const api = {
       folderId: string,
       data: { color?: string | null; order?: number }
     ) => ipcRenderer.invoke('folder:updateMeta', workspaceId, folderId, data),
-    onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => {
-      const handler = (
-        _: Electron.IpcRendererEvent,
-        workspaceId: string,
-        changedRelPaths: string[]
-      ): void => callback(workspaceId, changedRelPaths)
-      ipcRenderer.on('folder:changed', handler)
-      return () => ipcRenderer.removeListener('folder:changed', handler)
-    }
+    onChanged: createOnChangedListener('folder:changed')
   },
 
   tabSession: {

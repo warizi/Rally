@@ -1,25 +1,14 @@
 {
   "version": "1.0",
-  "enabled": true,
+  "enabled": false,
   "teamName": "",
   "feature": "pdf-viewer",
   "pdcaPhase": "do",
   "orchestrationPattern": "leader",
   "ctoAgent": "opus",
-  "startedAt": "2026-03-07T00:03:35.048Z",
-  "lastUpdated": "2026-03-07T00:03:35.048Z",
-  "teammates": [
-    {
-      "name": "a2a5373e606fa1683",
-      "role": "bkit:code-analyzer",
-      "model": "sonnet",
-      "status": "spawning",
-      "currentTask": null,
-      "taskId": null,
-      "startedAt": "2026-03-07T00:03:35.048Z",
-      "lastActivityAt": "2026-03-07T00:03:35.048Z"
-    }
-  ],
+  "startedAt": "2026-03-07T00:52:00.088Z",
+  "lastUpdated": "2026-03-07T00:53:54.967Z",
+  "teammates": [],
   "progress": {
     "totalTasks": 0,
     "completedTasks": 0,

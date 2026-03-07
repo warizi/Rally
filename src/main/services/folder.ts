@@ -3,6 +3,7 @@ import fs from 'fs'
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { resolveNameConflict } from '../lib/fs-utils'
+import { normalizePath } from '../lib/path-utils'
 import { folderRepository } from '../repositories/folder'
 import { noteRepository } from '../repositories/note'
 import { workspaceRepository } from '../repositories/workspace'
@@ -77,10 +78,6 @@ export async function readDirRecursiveAsync(
 
 // ─── 파일 내 private 헬퍼 ────────────────────────────────────
 
-/** Windows '\' → '/' 정규화 */
-function normalizePath(p: string): string {
-  return p.replace(/\\/g, '/')
-}
 
 /** 부모의 절대 경로 계산 (parentRelPath null = 워크스페이스 루트) */
 function resolveParentAbsPath(workspacePath: string, parentRelPath: string | null): string {

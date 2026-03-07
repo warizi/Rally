@@ -12,7 +12,7 @@ interface Props {
   onDelete: () => void
 }
 
-export function NoteContextMenu({ children, onDelete }: Props): JSX.Element {
+export function FileContextMenu({ children, onDelete }: Props): JSX.Element {
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>

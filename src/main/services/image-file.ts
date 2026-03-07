@@ -6,6 +6,7 @@ import { imageFileRepository } from '../repositories/image-file'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import { resolveNameConflict, readImageFilesRecursive } from '../lib/fs-utils'
+import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 
@@ -21,15 +22,6 @@ export interface ImageFileNode {
   updatedAt: Date
 }
 
-function normalizePath(p: string): string {
-  return p.replace(/\\/g, '/')
-}
-
-function parentRelPath(relativePath: string): string | null {
-  const parts = relativePath.split('/')
-  if (parts.length <= 1) return null
-  return parts.slice(0, -1).join('/')
-}
 
 function toImageFileNode(row: {
   id: string
@@ -83,11 +75,13 @@ export const imageFileService = {
     }
 
     const now = new Date()
+    const allFolders = folderRepository.findByWorkspaceId(workspaceId)
+    const folderMap = new Map(allFolders.map((f) => [f.relativePath, f]))
     const toInsert: Parameters<typeof imageFileRepository.createMany>[0] = []
     for (const entry of newFsEntries) {
       const matchedOrphan = orphanByBasename.get(entry.name)
       const parentRel = parentRelPath(entry.relativePath)
-      const folder = parentRel ? folderRepository.findByRelativePath(workspaceId, parentRel) : null
+      const folder = parentRel ? folderMap.get(parentRel) ?? null : null
       if (matchedOrphan) {
         imageFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,

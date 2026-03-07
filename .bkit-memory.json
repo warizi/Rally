@@ -1,6 +1,6 @@
 {
-  "currentFeature": "terminal",
-  "phase": "do",
+  "currentFeature": null,
+  "phase": null,
   "history": [
     {
       "feature": "image-viewer-test",
@@ -23,6 +23,13 @@
       "feature": "terminal",
       "phase": "plan",
       "startedAt": "2026-03-07T00:00:00Z"
+    },
+    {
+      "feature": "codebase-refactoring",
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-07T00:00:00Z",
+      "archivedTo": "docs/archive/2026-03/codebase-refactoring/"
     }
   ]
 }

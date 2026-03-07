@@ -10,6 +10,7 @@
 | note-image           | completed | 100%       | 2026-03-03 |
 | note-image-test      | completed | 100%       | 2026-03-03 |
 | reminder             | completed | 100%       | 2026-03-03 |
+| codebase-refactoring | completed | 100%       | 2026-03-07 |
 
 ## calendar-refactor
 
@@ -58,3 +59,9 @@
 - **Description**: Todo/Schedule 알림 시스템 — Electron Notification, 1분 간격 폴링 스케줄러, 5개 프리셋 오프셋, polymorphic entity 참조, 완료/날짜변경/삭제 자동 연동
 - **Key Results**: 13 new files + 11 modified, 100% match rate (151/151), 0 iterations, 9-stage implementation (schema → repo → service → IPC → scheduler → entities → features → todo/schedule integration → service wiring)
 - **Documents**: [plan](reminder/reminder.plan.md) | [design](reminder/reminder.design.md) | [analysis](reminder/reminder.analysis.md) | [report](reminder/reminder.report.md)
+
+## codebase-refactoring
+
+- **Description**: Comprehensive codebase refactoring — 2,500+ lines duplicate removal, factory patterns (repository, fs-utils, own-write-tracker, file-watcher), workspace-watcher 944→500 lines, N+1 query fix, 3 bug fixes
+- **Key Results**: 5 new files, 25+ modified, 4 deleted, 100% match rate (88/88), 0 iterations, 647/647 tests passing, zero side effects
+- **Documents**: [plan](codebase-refactoring/codebase-refactoring.plan.md) | [design](codebase-refactoring/codebase-refactoring.design.md) | [analysis](codebase-refactoring/codebase-refactoring.analysis.md) | [report](codebase-refactoring/codebase-refactoring.report.md)

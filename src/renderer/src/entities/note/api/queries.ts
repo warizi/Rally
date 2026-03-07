@@ -53,8 +53,9 @@ export function useRenameNote(): UseMutationResult<
 > {
   const queryClient = useQueryClient()
   return useMutation({
-    onMutate: ({ workspaceId }) => {
+    onMutate: ({ workspaceId, noteId }) => {
       markWorkspaceOwnWrite(workspaceId)
+      markAsOwnWrite(noteId)
     },
     mutationFn: async ({ workspaceId, noteId, newName }) => {
       const res: IpcResponse<NoteNode> = await window.api.note.rename(workspaceId, noteId, newName)
