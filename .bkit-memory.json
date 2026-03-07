@@ -1,6 +1,6 @@
 {
-  "currentFeature": null,
-  "phase": null,
+  "currentFeature": "mcp-server-crud-extension",
+  "phase": "do",
   "history": [
     {
       "feature": "image-viewer-test",

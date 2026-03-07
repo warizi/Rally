@@ -25,7 +25,8 @@
     "test": "npm rebuild better-sqlite3 --silent && vitest run --config vitest.config.node.mts; npx @electron/rebuild -f",
     "test:watch": "npm rebuild better-sqlite3 --silent && vitest --config vitest.config.node.mts",
     "test:web": "vitest run --config vitest.config.web.mts",
-    "test:web:watch": "vitest --config vitest.config.web.mts"
+    "test:web:watch": "vitest --config vitest.config.web.mts",
+    "build:mcp": "tsup --config src/mcp-server/tsup.config.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -41,6 +42,7 @@
     "@milkdown/preset-commonmark": "^7.18.0",
     "@milkdown/react": "^7.18.0",
     "@milkdown/theme-nord": "^7.18.0",
+    "@modelcontextprotocol/sdk": "^1.27.1",
     "@parcel/watcher": "^2.5.6",
     "@tailwindcss/vite": "^4.2.0",
     "@tanstack/react-query": "^5.90.21",
@@ -109,6 +111,7 @@
     "prettier": "^3.7.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
     "vitest": "^4.0.18"

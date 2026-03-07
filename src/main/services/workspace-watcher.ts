@@ -92,6 +92,10 @@ class WorkspaceWatcherService {
   private debounceTimer: NodeJS.Timeout | null = null
   private pendingEvents: parcelWatcher.Event[] = []
 
+  getActiveWorkspaceId(): string | null {
+    return this.activeWorkspaceId
+  }
+
   /**
    * watcher 없거나 다른 workspace → 전환
    */

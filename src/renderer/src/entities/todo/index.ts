@@ -18,3 +18,4 @@ export {
   useReorderTodoKanban,
   useReorderTodoSub
 } from './model/queries'
+export { useTodoWatcher } from './model/use-todo-watcher'

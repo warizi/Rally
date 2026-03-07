@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { NotFoundError } from '../lib/errors'
+import { NotFoundError, ValidationError } from '../lib/errors'
 import { todoRepository } from '../repositories/todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { entityLinkService } from './entity-link'
@@ -120,10 +120,13 @@ export const todoService = {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
-    // parentId 유효성 검사
+    // parentId 유효성 검사 (2depth 제한: 상위 → 하위만 허용)
     if (data.parentId) {
       const parent = todoRepository.findById(data.parentId)
       if (!parent) throw new NotFoundError(`Parent todo not found: ${data.parentId}`)
+      if (parent.parentId) {
+        throw new ValidationError('Subtodo cannot have children. Only 2-depth hierarchy is allowed (parent → subtodo).')
+      }
     }
 
     const now = new Date()

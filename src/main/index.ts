@@ -28,6 +28,7 @@ import { reminderScheduler } from './services/reminder-scheduler'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 import { terminalService } from './services/terminal'
+import { startMcpApiServer, stopMcpApiServer } from './mcp-api/server'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
@@ -113,6 +114,8 @@ app.whenReady().then(() => {
   registerItemTagHandlers()
   registerTerminalHandlers()
 
+  startMcpApiServer()
+
   createWindow()
 
   reminderScheduler.start()
@@ -137,6 +140,7 @@ app.on('before-quit', (event) => {
   isQuitting = true
   reminderScheduler.stop()
   terminalService.destroy()
+  stopMcpApiServer()
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   // localStorage 등 Web Storage를 디스크에 flush한 뒤 종료
   session.defaultSession.flushStorageData()

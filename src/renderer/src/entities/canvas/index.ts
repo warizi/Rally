@@ -42,3 +42,4 @@ export {
   toCreateCanvasEdgeData,
   parseSide
 } from './model/converters'
+export { useCanvasWatcher } from './model/use-canvas-watcher'

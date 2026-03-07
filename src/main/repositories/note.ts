@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { eq, and, like } from 'drizzle-orm'
 import { db } from '../db'
 import { notes } from '../db/schema'
 import { createFileRepository } from './create-file-repository'
@@ -20,5 +20,13 @@ export const noteRepository = {
     >
   ): Note | undefined {
     return db.update(notes).set(data).where(eq(notes.id, id)).returning().get()
+  },
+  searchByTitle(workspaceId: string, query: string): Note[] {
+    const pattern = `%${query}%`
+    return db
+      .select()
+      .from(notes)
+      .where(and(eq(notes.workspaceId, workspaceId), like(notes.title, pattern)))
+      .all()
   }
 }

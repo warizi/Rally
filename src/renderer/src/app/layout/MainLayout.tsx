@@ -10,6 +10,8 @@ import { useNoteWatcher } from '@entities/note'
 import { useCsvWatcher } from '@entities/csv-file'
 import { usePdfWatcher } from '@entities/pdf-file'
 import { useImageWatcher } from '@entities/image-file'
+import { useCanvasWatcher } from '@entities/canvas'
+import { useTodoWatcher } from '@entities/todo'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useState } from 'react'
@@ -49,6 +51,10 @@ function MainLayout(): React.JSX.Element {
   useCsvWatcher()
   usePdfWatcher()
   useImageWatcher()
+  // 캔버스 변경 push 이벤트 구독
+  useCanvasWatcher()
+  // todo 변경 push 이벤트 구독
+  useTodoWatcher()
   // entity-link 변경 push 이벤트 구독 (orphan cleanup 시 캐시 동기화)
   useEntityLinkWatcher()
   // 알림 push 이벤트 구독

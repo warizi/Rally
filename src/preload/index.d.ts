@@ -307,6 +307,7 @@ interface TodoAPI {
   reorderList: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
   reorderKanban: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
   reorderSub: (parentId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
 interface SettingsAPI {
@@ -494,6 +495,7 @@ interface CanvasAPI {
     viewport: { x: number; y: number; zoom: number }
   ) => Promise<IpcResponse<void>>
   remove: (canvasId: string) => Promise<IpcResponse<void>>
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
 interface SyncCanvasStateData {

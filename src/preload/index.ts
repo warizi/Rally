@@ -169,7 +169,8 @@ const api = {
     reorderKanban: (workspaceId: string, updates: unknown[]) =>
       ipcRenderer.invoke('todo:reorderKanban', workspaceId, updates),
     reorderSub: (parentId: string, updates: unknown[]) =>
-      ipcRenderer.invoke('todo:reorderSub', parentId, updates)
+      ipcRenderer.invoke('todo:reorderSub', parentId, updates),
+    onChanged: createOnChangedListener('todo:changed')
   },
 
   settings: {
@@ -201,7 +202,8 @@ const api = {
       ipcRenderer.invoke('canvas:update', canvasId, data),
     updateViewport: (canvasId: string, viewport: unknown) =>
       ipcRenderer.invoke('canvas:updateViewport', canvasId, viewport),
-    remove: (canvasId: string) => ipcRenderer.invoke('canvas:remove', canvasId)
+    remove: (canvasId: string) => ipcRenderer.invoke('canvas:remove', canvasId),
+    onChanged: createOnChangedListener('canvas:changed')
   },
 
   canvasNode: {

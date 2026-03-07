@@ -364,6 +364,76 @@ export const noteService = {
   /**
    * 메타데이터 업데이트 (description)
    */
+  async search(
+    workspaceId: string,
+    query: string
+  ): Promise<
+    { id: string; title: string; relativePath: string; preview: string; matchType: 'title' | 'content' }[]
+  > {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const MAX_RESULTS = 50
+    const results: {
+      id: string
+      title: string
+      relativePath: string
+      preview: string
+      matchType: 'title' | 'content'
+    }[] = []
+
+    const titleMatches = noteRepository.searchByTitle(workspaceId, query)
+
+    const titleMatchIds = new Set<string>()
+    for (const note of titleMatches) {
+      if (results.length >= MAX_RESULTS) break
+      results.push({
+        id: note.id,
+        title: note.title,
+        relativePath: note.relativePath,
+        preview: note.preview,
+        matchType: 'title'
+      })
+      titleMatchIds.add(note.id)
+    }
+
+    if (results.length < MAX_RESULTS) {
+      const allNotes = noteRepository.findByWorkspaceId(workspaceId)
+      const remaining = allNotes.filter((n) => !titleMatchIds.has(n.id))
+      const lowerQuery = query.toLowerCase()
+
+      const CHUNK_SIZE = 10
+      for (let i = 0; i < remaining.length && results.length < MAX_RESULTS; i += CHUNK_SIZE) {
+        const chunk = remaining.slice(i, i + CHUNK_SIZE)
+        const readResults = await Promise.all(
+          chunk.map(async (note) => {
+            try {
+              const absPath = path.join(workspace.path, note.relativePath)
+              const content = await fs.promises.readFile(absPath, 'utf-8')
+              if (content.toLowerCase().includes(lowerQuery)) {
+                return {
+                  id: note.id,
+                  title: note.title,
+                  relativePath: note.relativePath,
+                  preview: note.preview,
+                  matchType: 'content' as const
+                }
+              }
+            } catch {
+              // 파일 읽기 실패 시 무시
+            }
+            return null
+          })
+        )
+        for (const r of readResults) {
+          if (r && results.length < MAX_RESULTS) results.push(r)
+        }
+      }
+    }
+
+    return results
+  },
+
   updateMeta(_workspaceId: string, noteId: string, data: { description?: string }): NoteNode {
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
