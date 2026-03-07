@@ -30,6 +30,7 @@ const ImagePage = lazy(() => import('@pages/image'))
 const CalendarPage = lazy(() => import('@pages/calendar'))
 const CanvasListPage = lazy(() => import('@pages/canvas'))
 const CanvasDetailPage = lazy(() => import('@pages/canvas-detail'))
+const TerminalPage = lazy(() => import('@pages/terminal'))
 
 export const PANE_ROUTES: PaneRoute[] = [
   {
@@ -75,5 +76,9 @@ export const PANE_ROUTES: PaneRoute[] = [
   {
     pattern: ROUTES.CANVAS_DETAIL,
     component: CanvasDetailPage
+  },
+  {
+    pattern: ROUTES.TERMINAL,
+    component: TerminalPage
   }
 ]

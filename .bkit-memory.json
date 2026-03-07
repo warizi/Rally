@@ -1,7 +1,6 @@
 {
-  "currentFeature": "canvas-test",
-  "phase": "check",
-  "matchRate": 100,
+  "currentFeature": "terminal",
+  "phase": "do",
   "history": [
     {
       "feature": "image-viewer-test",
@@ -19,6 +18,11 @@
       "phase": "check",
       "matchRate": 100,
       "startedAt": "2026-03-03T00:00:00Z"
+    },
+    {
+      "feature": "terminal",
+      "phase": "plan",
+      "startedAt": "2026-03-07T00:00:00Z"
     }
   ]
 }

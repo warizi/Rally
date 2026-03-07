@@ -311,6 +311,26 @@ const api = {
       ipcRenderer.invoke('itemTag:attach', itemType, tagId, itemId),
     detach: (itemType: string, tagId: string, itemId: string) =>
       ipcRenderer.invoke('itemTag:detach', itemType, tagId, itemId)
+  },
+
+  terminal: {
+    create: (args: { cwd: string; cols: number; rows: number }) =>
+      ipcRenderer.invoke('terminal:create', args),
+    destroy: () => ipcRenderer.invoke('terminal:destroy'),
+    write: (args: { data: string }) => ipcRenderer.send('terminal:write', args),
+    resize: (args: { cols: number; rows: number }) => ipcRenderer.send('terminal:resize', args),
+    onData: (callback: (data: { data: string }) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, data: { data: string }): void =>
+        callback(data)
+      ipcRenderer.on('terminal:data', handler)
+      return () => ipcRenderer.removeListener('terminal:data', handler)
+    },
+    onExit: (callback: (data: { exitCode: number }) => void) => {
+      const handler = (_: Electron.IpcRendererEvent, data: { exitCode: number }): void =>
+        callback(data)
+      ipcRenderer.on('terminal:exit', handler)
+      return () => ipcRenderer.removeListener('terminal:exit', handler)
+    }
   }
 }
 

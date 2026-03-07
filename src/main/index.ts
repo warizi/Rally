@@ -23,9 +23,11 @@ import { registerNoteImageHandlers } from './ipc/note-image'
 import { registerReminderHandlers } from './ipc/reminder'
 import { registerTagHandlers } from './ipc/tag'
 import { registerItemTagHandlers } from './ipc/item-tag'
+import { registerTerminalHandlers } from './ipc/terminal'
 import { reminderScheduler } from './services/reminder-scheduler'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
+import { terminalService } from './services/terminal'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
@@ -109,6 +111,7 @@ app.whenReady().then(() => {
   registerReminderHandlers()
   registerTagHandlers()
   registerItemTagHandlers()
+  registerTerminalHandlers()
 
   createWindow()
 
@@ -133,6 +136,7 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   isQuitting = true
   reminderScheduler.stop()
+  terminalService.destroy()
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   // localStorage 등 Web Storage를 디스크에 flush한 뒤 종료
   session.defaultSession.flushStorageData()

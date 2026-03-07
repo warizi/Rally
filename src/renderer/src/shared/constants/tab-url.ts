@@ -6,7 +6,8 @@ import {
   ImageIcon,
   LayoutDashboard,
   Network,
-  Sheet
+  Sheet,
+  Terminal
 } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 
@@ -22,6 +23,7 @@ export type TabType =
   | 'calendar'
   | 'canvas'
   | 'canvas-detail'
+  | 'terminal'
 
 export type TabIcon = TabType
 
@@ -36,7 +38,8 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   image: ImageIcon,
   calendar: Calendar,
   canvas: Network,
-  'canvas-detail': Network
+  'canvas-detail': Network,
+  terminal: Terminal
 }
 
 // 정적 라우트
@@ -56,7 +59,8 @@ export const ROUTES = {
   IMAGE_DETAIL: '/folder/image/:imageId',
   CALENDAR: '/calendar',
   CANVAS: '/canvas',
-  CANVAS_DETAIL: '/canvas/:canvasId'
+  CANVAS_DETAIL: '/canvas/:canvasId',
+  TERMINAL: '/terminal'
 } as const
 
 export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES]
@@ -101,5 +105,11 @@ export const sidebar_items: SidebarItem[] = [
     tabType: 'canvas',
     pathname: ROUTES.CANVAS,
     icon: TAB_ICON['canvas']
+  },
+  {
+    title: '터미널',
+    tabType: 'terminal',
+    pathname: ROUTES.TERMINAL,
+    icon: TAB_ICON['terminal']
   }
 ]

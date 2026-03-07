@@ -638,6 +638,15 @@ interface ItemTagAPI {
   ) => Promise<IpcResponse<void>>
 }
 
+interface TerminalAPI {
+  create: (args: { cwd: string; cols: number; rows: number }) => Promise<IpcResponse<void>>
+  destroy: () => Promise<IpcResponse<void>>
+  write: (args: { data: string }) => void
+  resize: (args: { cols: number; rows: number }) => void
+  onData: (callback: (data: { data: string }) => void) => () => void
+  onExit: (callback: (data: { exitCode: number }) => void) => () => void
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -658,6 +667,7 @@ interface API {
   reminder: ReminderAPI
   tag: TagAPI
   itemTag: ItemTagAPI
+  terminal: TerminalAPI
 }
 
 declare global {
