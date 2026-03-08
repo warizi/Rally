@@ -78,23 +78,23 @@ DB 스키마 없음. 터미널은 런타임 전용 기능이다.
 
 ### 4.1 Renderer -> Main (request-response)
 
-| Channel | Args | Return | Pattern |
-|---------|------|--------|---------|
-| `terminal:create` | `{ cwd: string, cols: number, rows: number }` | `IpcResponse<void>` | `ipcMain.handle` / `ipcRenderer.invoke` |
-| `terminal:destroy` | (없음) | `IpcResponse<void>` | `ipcMain.handle` / `ipcRenderer.invoke` |
+| Channel            | Args                                          | Return              | Pattern                                 |
+| ------------------ | --------------------------------------------- | ------------------- | --------------------------------------- |
+| `terminal:create`  | `{ cwd: string, cols: number, rows: number }` | `IpcResponse<void>` | `ipcMain.handle` / `ipcRenderer.invoke` |
+| `terminal:destroy` | (없음)                                        | `IpcResponse<void>` | `ipcMain.handle` / `ipcRenderer.invoke` |
 
 ### 4.2 Renderer -> Main (fire-and-forget)
 
-| Channel | Args | Pattern | Note |
-|---------|------|---------|------|
-| `terminal:write` | `{ data: string }` | `ipcMain.on` / `ipcRenderer.send` | 고빈도 키 입력, 프로젝트 최초 `send` 사용 |
-| `terminal:resize` | `{ cols: number, rows: number }` | `ipcMain.on` / `ipcRenderer.send` | 리사이즈 시 |
+| Channel           | Args                             | Pattern                           | Note                                      |
+| ----------------- | -------------------------------- | --------------------------------- | ----------------------------------------- |
+| `terminal:write`  | `{ data: string }`               | `ipcMain.on` / `ipcRenderer.send` | 고빈도 키 입력, 프로젝트 최초 `send` 사용 |
+| `terminal:resize` | `{ cols: number, rows: number }` | `ipcMain.on` / `ipcRenderer.send` | 리사이즈 시                               |
 
 ### 4.3 Main -> Renderer (push)
 
-| Channel | Data | Pattern | Note |
-|---------|------|---------|------|
-| `terminal:data` | `{ data: string }` | `webContents.send` / `ipcRenderer.on` | pty stdout 스트림 |
+| Channel         | Data                   | Pattern                               | Note                          |
+| --------------- | ---------------------- | ------------------------------------- | ----------------------------- |
+| `terminal:data` | `{ data: string }`     | `webContents.send` / `ipcRenderer.on` | pty stdout 스트림             |
 | `terminal:exit` | `{ exitCode: number }` | `webContents.send` / `ipcRenderer.on` | shell 종료 알림, 탭 자동 닫기 |
 
 ---
@@ -170,6 +170,7 @@ export const terminalService = {
 ```
 
 **핵심 포인트**:
+
 - `currentPty`: 단일 변수, 워크스페이스당 1개 터미널
 - `create()`: `fs.accessSync`로 cwd 검증 → 실패 시 Error throw → `handle()` wrapper가 `ValidationError` 반환
 - `create()` 시 기존 pty 자동 kill → 워크스페이스 전환 시 이중 방어
@@ -190,10 +191,8 @@ export function registerTerminalHandlers(): void {
   // request-response (invoke/handle)
   ipcMain.handle(
     'terminal:create',
-    (
-      _: IpcMainInvokeEvent,
-      args: { cwd: string; cols: number; rows: number }
-    ): IpcResponse => handle(() => terminalService.create(args.cwd, args.cols, args.rows))
+    (_: IpcMainInvokeEvent, args: { cwd: string; cols: number; rows: number }): IpcResponse =>
+      handle(() => terminalService.create(args.cwd, args.cols, args.rows))
   )
 
   ipcMain.handle(
@@ -213,6 +212,7 @@ export function registerTerminalHandlers(): void {
 ```
 
 **핵심 포인트**:
+
 - `terminal:create`/`terminal:destroy`: `handle()` wrapper 사용 (기존 패턴)
 - `terminal:write`/`terminal:resize`: `ipcMain.on` (fire-and-forget, 프로젝트 최초)
 - `terminal:create` args를 단일 객체로 전달 (positional args 대신)
@@ -222,24 +222,27 @@ export function registerTerminalHandlers(): void {
 **파일**: `src/main/index.ts`
 
 변경 1: import 추가
+
 ```typescript
 import { registerTerminalHandlers } from './ipc/terminal'
 import { terminalService } from './services/terminal'
 ```
 
 변경 2: `app.whenReady()` 내 핸들러 등록 추가 (기존 `registerItemTagHandlers()` 다음)
+
 ```typescript
 registerTerminalHandlers()
 ```
 
 변경 3: `before-quit` 핸들러에 터미널 정리 추가
+
 ```typescript
 app.on('before-quit', (event) => {
   if (isQuitting) return
   event.preventDefault()
   isQuitting = true
   reminderScheduler.stop()
-  terminalService.destroy()  // <-- 추가
+  terminalService.destroy() // <-- 추가
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   session.defaultSession.flushStorageData()
   Promise.race([workspaceWatcher.stop(), timeout]).finally(() => app.quit())
@@ -273,6 +276,7 @@ terminal: {
 ```
 
 **핵심 포인트**:
+
 - `write`/`resize`: `ipcRenderer.send` (fire-and-forget) — 프로젝트 최초
 - `onData`/`onExit`: 기존 `onChanged`/`onFired` 패턴 동일 (cleanup 함수 반환)
 
@@ -292,6 +296,7 @@ interface TerminalAPI {
 ```
 
 `API` interface에 추가:
+
 ```typescript
 interface API {
   // ... 기존 항목들 ...
@@ -304,6 +309,7 @@ interface API {
 **파일**: `src/renderer/src/shared/constants/tab-url.ts`
 
 변경 1: `TabType` union에 `'terminal'` 추가
+
 ```typescript
 export type TabType =
   | 'dashboard'
@@ -314,11 +320,13 @@ export type TabType =
 ```
 
 변경 2: import에 `Terminal` 아이콘 추가
+
 ```typescript
 import { ..., Terminal } from 'lucide-react'
 ```
 
 변경 3: `TAB_ICON`에 terminal 추가
+
 ```typescript
 export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   // ... 기존 ...
@@ -328,6 +336,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
 ```
 
 변경 4: `ROUTES`에 TERMINAL 추가
+
 ```typescript
 export const ROUTES = {
   // ... 기존 ...
@@ -337,6 +346,7 @@ export const ROUTES = {
 ```
 
 변경 5: `sidebar_items`에 터미널 항목 추가 (캔버스 다음)
+
 ```typescript
 {
   title: '터미널',
@@ -434,6 +444,7 @@ export function useTerminal(containerRef: React.RefObject<HTMLDivElement | null>
 ```
 
 **핵심 포인트**:
+
 - `workspaceId`가 `useEffect` dep에 포함 → 워크스페이스 전환 시 cleanup(destroy) → 재생성(create) 자동 실행
 - xterm CSS는 이 레이어에서 import (lazy load 시 함께 로드)
 - `ResizeObserver`로 컨테이너 크기 변경 감지 → `fitAddon.fit()` + `terminal:resize` 연동
@@ -469,6 +480,7 @@ export function TerminalPage(): JSX.Element {
 ```
 
 **핵심 포인트**:
+
 - `scrollable={false} maxWidth="full"` — xterm 자체 스크롤 사용 (PDF/Image/Canvas-detail 동일 패턴)
 - `header={null}` — 터미널은 별도 헤더 불필요
 - 컨테이너 `div`가 xterm `term.open()` 대상
@@ -499,15 +511,15 @@ const TerminalPage = lazy(() => import('@pages/terminal'))
 
 ### 6.1 이벤트별 동작
 
-| 이벤트 | 동작 | 안전성 |
-|--------|------|--------|
-| 사이드바 클릭 | `openTab` → TerminalPage mount → `useEffect` → `terminal:create` | 중복 탭 방지 (같은 pathname) |
-| 탭 닫기 | TerminalPage unmount → `useEffect` cleanup → `terminal:destroy` | `destroy()` 멱등적 |
-| shell `exit` | main `terminal:exit` push → `closeTabByPathname('/terminal')` | `closeTab` 멱등적 (탭 없으면 early return) |
-| 탭 닫기 + shell exit 동시 | race condition이나 양쪽 모두 멱등적 → 안전 | |
-| 워크스페이스 전환 | `applySessionToStore`로 탭 교체. 같은 `tab-terminal` ID → unmount 안 될 수 있음 → `useEffect` dep `workspaceId`로 `destroy→create` 사이클 강제. 추가로 `terminal:create`가 기존 pty 자동 kill | 이중 방어 |
-| 탭 스냅샷 복원 | 터미널 탭 포함 시 TerminalPage mount → 새 pty spawn | |
-| 앱 종료 | `before-quit` → `terminalService.destroy()` | 동기적 kill |
+| 이벤트                    | 동작                                                                                                                                                                                          | 안전성                                     |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| 사이드바 클릭             | `openTab` → TerminalPage mount → `useEffect` → `terminal:create`                                                                                                                              | 중복 탭 방지 (같은 pathname)               |
+| 탭 닫기                   | TerminalPage unmount → `useEffect` cleanup → `terminal:destroy`                                                                                                                               | `destroy()` 멱등적                         |
+| shell `exit`              | main `terminal:exit` push → `closeTabByPathname('/terminal')`                                                                                                                                 | `closeTab` 멱등적 (탭 없으면 early return) |
+| 탭 닫기 + shell exit 동시 | race condition이나 양쪽 모두 멱등적 → 안전                                                                                                                                                    |                                            |
+| 워크스페이스 전환         | `applySessionToStore`로 탭 교체. 같은 `tab-terminal` ID → unmount 안 될 수 있음 → `useEffect` dep `workspaceId`로 `destroy→create` 사이클 강제. 추가로 `terminal:create`가 기존 pty 자동 kill | 이중 방어                                  |
+| 탭 스냅샷 복원            | 터미널 탭 포함 시 TerminalPage mount → 새 pty spawn                                                                                                                                           |                                            |
+| 앱 종료                   | `before-quit` → `terminalService.destroy()`                                                                                                                                                   | 동기적 kill                                |
 
 ### 6.2 워크스페이스 전환 시퀀스
 
@@ -526,11 +538,11 @@ const TerminalPage = lazy(() => import('@pages/terminal'))
 
 ### 7.1 New Packages
 
-| Package | Layer | Purpose |
-|---------|-------|---------|
-| `node-pty` | main | Pseudo-terminal 생성 (native addon) |
-| `@xterm/xterm` | renderer | 터미널 에뮬레이터 UI (v5+) |
-| `@xterm/addon-fit` | renderer | 터미널 크기 자동 조절 |
+| Package            | Layer    | Purpose                             |
+| ------------------ | -------- | ----------------------------------- |
+| `node-pty`         | main     | Pseudo-terminal 생성 (native addon) |
+| `@xterm/xterm`     | renderer | 터미널 에뮬레이터 UI (v5+)          |
+| `@xterm/addon-fit` | renderer | 터미널 크기 자동 조절               |
 
 ### 7.2 Build Pipeline
 
@@ -543,18 +555,18 @@ const TerminalPage = lazy(() => import('@pages/terminal'))
 
 ## 8. Implementation Order
 
-| Step | File(s) | Description |
-|------|---------|-------------|
-| 1 | `package.json` | `npm install node-pty @xterm/xterm @xterm/addon-fit` |
-| 2 | `src/main/services/terminal.ts` | terminalService 구현 |
-| 3 | `src/main/ipc/terminal.ts` | IPC 핸들러 등록 |
-| 4 | `src/main/index.ts` | import + 핸들러 등록 + before-quit 수정 |
-| 5 | `src/preload/index.ts` | terminal bridge 추가 |
-| 6 | `src/preload/index.d.ts` | TerminalAPI 타입 정의 |
-| 7 | `src/renderer/src/shared/constants/tab-url.ts` | TabType, ROUTES, TAB_ICON, sidebar_items 확장 |
-| 8 | `src/renderer/src/features/terminal/` | useTerminal 훅 + barrel export |
-| 9 | `src/renderer/src/pages/terminal/` | TerminalPage 컴포넌트 + barrel export |
-| 10 | `src/renderer/src/app/layout/model/pane-routes.tsx` | lazy import + 라우트 등록 |
+| Step | File(s)                                             | Description                                          |
+| ---- | --------------------------------------------------- | ---------------------------------------------------- |
+| 1    | `package.json`                                      | `npm install node-pty @xterm/xterm @xterm/addon-fit` |
+| 2    | `src/main/services/terminal.ts`                     | terminalService 구현                                 |
+| 3    | `src/main/ipc/terminal.ts`                          | IPC 핸들러 등록                                      |
+| 4    | `src/main/index.ts`                                 | import + 핸들러 등록 + before-quit 수정              |
+| 5    | `src/preload/index.ts`                              | terminal bridge 추가                                 |
+| 6    | `src/preload/index.d.ts`                            | TerminalAPI 타입 정의                                |
+| 7    | `src/renderer/src/shared/constants/tab-url.ts`      | TabType, ROUTES, TAB_ICON, sidebar_items 확장        |
+| 8    | `src/renderer/src/features/terminal/`               | useTerminal 훅 + barrel export                       |
+| 9    | `src/renderer/src/pages/terminal/`                  | TerminalPage 컴포넌트 + barrel export                |
+| 10   | `src/renderer/src/app/layout/model/pane-routes.tsx` | lazy import + 라우트 등록                            |
 
 ---
 
@@ -562,21 +574,21 @@ const TerminalPage = lazy(() => import('@pages/terminal'))
 
 ### 9.1 New Files (5)
 
-| File | Layer |
-|------|-------|
-| `src/main/services/terminal.ts` | main/services |
-| `src/main/ipc/terminal.ts` | main/ipc |
-| `src/renderer/src/features/terminal/use-terminal.ts` | features |
-| `src/renderer/src/features/terminal/index.ts` | features |
-| `src/renderer/src/pages/terminal/ui/TerminalPage.tsx` | pages |
-| `src/renderer/src/pages/terminal/index.ts` | pages |
+| File                                                  | Layer         |
+| ----------------------------------------------------- | ------------- |
+| `src/main/services/terminal.ts`                       | main/services |
+| `src/main/ipc/terminal.ts`                            | main/ipc      |
+| `src/renderer/src/features/terminal/use-terminal.ts`  | features      |
+| `src/renderer/src/features/terminal/index.ts`         | features      |
+| `src/renderer/src/pages/terminal/ui/TerminalPage.tsx` | pages         |
+| `src/renderer/src/pages/terminal/index.ts`            | pages         |
 
 ### 9.2 Modified Files (5)
 
-| File | Changes |
-|------|---------|
-| `src/main/index.ts` | import 2개 + `registerTerminalHandlers()` + `terminalService.destroy()` in before-quit |
-| `src/preload/index.ts` | `terminal` 객체 추가 (create, destroy, write, resize, onData, onExit) |
-| `src/preload/index.d.ts` | `TerminalAPI` interface + `API`에 `terminal` 필드 추가 |
-| `src/renderer/src/shared/constants/tab-url.ts` | TabType + ROUTES + TAB_ICON + sidebar_items 확장 |
-| `src/renderer/src/app/layout/model/pane-routes.tsx` | lazy import + PANE_ROUTES 항목 추가 |
+| File                                                | Changes                                                                                |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `src/main/index.ts`                                 | import 2개 + `registerTerminalHandlers()` + `terminalService.destroy()` in before-quit |
+| `src/preload/index.ts`                              | `terminal` 객체 추가 (create, destroy, write, resize, onData, onExit)                  |
+| `src/preload/index.d.ts`                            | `TerminalAPI` interface + `API`에 `terminal` 필드 추가                                 |
+| `src/renderer/src/shared/constants/tab-url.ts`      | TabType + ROUTES + TAB_ICON + sidebar_items 확장                                       |
+| `src/renderer/src/app/layout/model/pane-routes.tsx` | lazy import + PANE_ROUTES 항목 추가                                                    |

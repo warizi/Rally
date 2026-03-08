@@ -43,24 +43,25 @@
 ## Phase 1: Generic File Repository Factory (~520줄 제거)
 
 ### 현상
+
 - 4개 repository가 12개 메서드 중 11개 동일 (테이블 참조만 다름)
 
 ### 상세 비교 매트릭스 (문자 수준 검증 완료)
 
-| 메서드 | 동일 여부 | 비고 |
-|--------|----------|------|
-| findByWorkspaceId | 100% 동일 | `.select().from(table).where(eq(...)).all()` |
-| findById | 100% 동일 | `.select().from(table).where(eq(...)).get()` |
-| findByRelativePath | 100% 동일 | `.where(and(eq(...), eq(...))).get()` |
-| findByIds | 100% 동일 | CHUNK=900, `inArray()` 패턴 |
-| create | 100% 동일 | `.insert(table).values(data).returning().get()` |
-| createMany | 100% 동일 | CHUNK=99, `onConflictDoNothing()` |
-| delete | 100% 동일 | `.delete(table).where(eq(...)).run()` |
-| deleteOrphans | 100% 동일 | Set 기반 orphan 필터링 + chunk 삭제 |
-| bulkDeleteByPrefix | 100% 동일 | `like(table.relativePath, prefix+'/%')` |
-| bulkUpdatePathPrefix | 구조 동일 | **Raw SQL에 테이블명 하드코딩** |
-| reindexSiblings | 구조 동일 | **Raw SQL에 테이블명 하드코딩** |
-| **update** | **다름** | **CSV만 `columnWidths` 필드 포함** |
+| 메서드               | 동일 여부 | 비고                                            |
+| -------------------- | --------- | ----------------------------------------------- |
+| findByWorkspaceId    | 100% 동일 | `.select().from(table).where(eq(...)).all()`    |
+| findById             | 100% 동일 | `.select().from(table).where(eq(...)).get()`    |
+| findByRelativePath   | 100% 동일 | `.where(and(eq(...), eq(...))).get()`           |
+| findByIds            | 100% 동일 | CHUNK=900, `inArray()` 패턴                     |
+| create               | 100% 동일 | `.insert(table).values(data).returning().get()` |
+| createMany           | 100% 동일 | CHUNK=99, `onConflictDoNothing()`               |
+| delete               | 100% 동일 | `.delete(table).where(eq(...)).run()`           |
+| deleteOrphans        | 100% 동일 | Set 기반 orphan 필터링 + chunk 삭제             |
+| bulkDeleteByPrefix   | 100% 동일 | `like(table.relativePath, prefix+'/%')`         |
+| bulkUpdatePathPrefix | 구조 동일 | **Raw SQL에 테이블명 하드코딩**                 |
+| reindexSiblings      | 구조 동일 | **Raw SQL에 테이블명 하드코딩**                 |
+| **update**           | **다름**  | **CSV만 `columnWidths` 필드 포함**              |
 
 ### 사이드 이펙트 주의사항
 
@@ -82,6 +83,7 @@
    - **대응**: 이는 watcher 로직이므로 repository 팩토리와 무관. 변경 없음
 
 ### 개선 방법
+
 ```typescript
 // src/main/repositories/create-file-repository.ts
 function createFileRepository<T extends FileTable>(table: T, tableName: string) {
@@ -101,6 +103,7 @@ export const noteRepository = {
 ```
 
 ### 대상 파일
+
 - `src/main/repositories/note.ts`
 - `src/main/repositories/csv-file.ts`
 - `src/main/repositories/pdf-file.ts`
@@ -108,6 +111,7 @@ export const noteRepository = {
 - (신규) `src/main/repositories/create-file-repository.ts`
 
 ### 변경하지 않는 파일
+
 - `src/main/lib/leaf-reindex.ts` (독자 SQL 사용, repository 호출하지 않음)
 
 ---
@@ -115,17 +119,18 @@ export const noteRepository = {
 ## Phase 2: Generic Recursive File Scanner (~200줄 제거)
 
 ### 현상
+
 - `src/main/lib/fs-utils.ts`에 8개 함수 (sync 4 + async 4)
 - 확장자 체크만 다르고 나머지 로직 동일
 
 ### 상세 차이점 (라인별 검증 완료)
 
-| 함수 | 확장자 체크 방식 | 대소문자 | 비고 |
-|------|----------------|---------|------|
-| readMdFiles | `entry.name.endsWith('.md')` | 대소문자 구분 | |
-| readCsvFiles | `entry.name.endsWith('.csv')` | 대소문자 구분 | |
-| readPdfFiles | `entry.name.endsWith('.pdf')` | 대소문자 구분 | |
-| readImageFiles | `isImageFile(entry.name)` | **대소문자 무시** (.toLowerCase()) | 7개 확장자 |
+| 함수           | 확장자 체크 방식              | 대소문자                           | 비고       |
+| -------------- | ----------------------------- | ---------------------------------- | ---------- |
+| readMdFiles    | `entry.name.endsWith('.md')`  | 대소문자 구분                      |            |
+| readCsvFiles   | `entry.name.endsWith('.csv')` | 대소문자 구분                      |            |
+| readPdfFiles   | `entry.name.endsWith('.pdf')` | 대소문자 구분                      |            |
+| readImageFiles | `isImageFile(entry.name)`     | **대소문자 무시** (.toLowerCase()) | 7개 확장자 |
 
 ### Async 함수 배열 처리 불일치 (신규 발견)
 
@@ -137,6 +142,7 @@ return result
 // CSV/PDF/Image async (lines 132, 192, 259): concat 패턴
 return result.concat(...subResults)
 ```
+
 - **기능적으로 동일** (동일한 결과 배열 생성)
 - **대응**: 제네릭 함수에서 하나로 통일 (concat 패턴 채택)
 
@@ -150,6 +156,7 @@ return result.concat(...subResults)
    - **대응**: 기존 함수를 wrapper로 유지하여 호출부 변경 불필요
 
 ### 개선 방법
+
 ```typescript
 // 내부 제네릭 함수 (export하지 않음)
 function readFilesRecursive(absBase, parentRel, matcher): FileEntry[] { ... }
@@ -162,6 +169,7 @@ export const readMdFilesRecursiveAsync = (abs, rel) => readFilesRecursiveAsync(a
 ```
 
 ### 대상 파일
+
 - `src/main/lib/fs-utils.ts`
 
 ---
@@ -169,27 +177,30 @@ export const readMdFilesRecursiveAsync = (abs, rel) => readFilesRecursiveAsync(a
 ## Phase 3: Service 공통 유틸 추출 (MEDIUM - ~120줄 제거)
 
 ### 현상
+
 - `normalizePath`, `parentRelPath` 유틸이 4개 서비스에 복사-붙여넣기 (8개 복사본)
 - `toXxxNode` 매퍼가 4개 서비스에 중복 (CSV만 `columnWidths` 추가 필드)
 
 ### normalizePath / parentRelPath 검증 결과
+
 - **4개 파일 모두 문자 수준으로 동일** 확인 완료
 - `normalizePath`: `p.replace(/\\/g, '/')`
 - `parentRelPath`: `split('/') → length <= 1 ? null : slice(0, -1).join('/')`
 
 ### toXxxNode 매퍼 차이점
 
-| 서비스 | 반환 타입 고유 필드 | Date 처리 |
-|--------|-------------------|----------|
-| Note | 없음 | `instanceof Date ? createdAt : new Date(createdAt)` |
-| CSV | `columnWidths: string \| null` | 동일 |
-| PDF | 없음 | 동일 |
-| Image | 없음 | 동일 |
+| 서비스 | 반환 타입 고유 필드            | Date 처리                                           |
+| ------ | ------------------------------ | --------------------------------------------------- |
+| Note   | 없음                           | `instanceof Date ? createdAt : new Date(createdAt)` |
+| CSV    | `columnWidths: string \| null` | 동일                                                |
+| PDF    | 없음                           | 동일                                                |
+| Image  | 없음                           | 동일                                                |
 
 ### 사이드 이펙트 주의사항
 
 1. **타입 안전성**: `toFileNode` 베이스 매퍼에서 공통 필드만 처리
    - **대응**: CSV는 spread로 `columnWidths` 필드 병합
+
    ```typescript
    const toCsvFileNode = (row) => ({ ...toFileNode(row), columnWidths: row.columnWidths })
    ```
@@ -198,6 +209,7 @@ export const readMdFilesRecursiveAsync = (abs, rel) => readFilesRecursiveAsync(a
    - **대응**: 상대 import (`../lib/path-utils`)로 변경, barrel export 불필요
 
 ### 대상 파일
+
 - (신규) `src/main/lib/path-utils.ts`
 - (신규) `src/main/lib/file-node-mapper.ts`
 - `src/main/services/note.ts`, `csv-file.ts`, `pdf-file.ts`, `image-file.ts` (import 변경만)
@@ -211,22 +223,23 @@ export const readMdFilesRecursiveAsync = (abs, rel) => readFilesRecursiveAsync(a
 
 ### 근거: 서비스 간 차이가 크다 (검증 완료)
 
-| 기능 | Note | CSV | PDF | Image |
-|------|------|-----|-----|-------|
-| 파일 생성 | `create()` 빈 .md 파일 | `create()` 빈 .csv 파일 | `import()` fs.copyFileSync | `import()` fs.copyFileSync |
-| 내용 읽기 반환 | `string` (UTF-8 고정) | `{content, encoding, columnWidths}` (**chardet 인코딩 감지 + iconv-lite + BOM 제거**) | `{data: Buffer}` (바이너리) | `{data: Buffer}` (바이너리) |
-| 내용 쓰기 | `writeContent()` + **noteImageService.cleanupRemovedImages()** | `writeContent()` + **generateCsvPreview()** (첫 3줄 `' \| '` 구분) | 없음 (읽기 전용) | 없음 (읽기 전용) |
-| 삭제 시 | `fs.readFileSync` → **noteImageService.deleteAllImages()** → `fs.unlinkSync` | `fs.unlinkSync` | `fs.unlinkSync` | `fs.unlinkSync` |
-| 제목 추출 | `name.replace(/\.md$/, '')` | `name.replace(/\.csv$/, '')` | `name.replace(/\.pdf$/, '')` | **`path.basename(name, path.extname(name))`** (다중 확장자 안전) |
-| updateMeta | `{description}` | `{description, columnWidths}` | `{description}` | `{description}` |
-| Preview 생성 | 첫 200자 공백 정규화 (`replace(/\s+/g, ' ')`) | 첫 3줄 `' \| '` join | 없음 | 없음 |
-| 기본 파일명 | '새로운 노트' | '새로운 테이블' | (import이므로 없음) | (import이므로 없음) |
+| 기능           | Note                                                                         | CSV                                                                                   | PDF                          | Image                                                            |
+| -------------- | ---------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------- | ---------------------------------------------------------------- |
+| 파일 생성      | `create()` 빈 .md 파일                                                       | `create()` 빈 .csv 파일                                                               | `import()` fs.copyFileSync   | `import()` fs.copyFileSync                                       |
+| 내용 읽기 반환 | `string` (UTF-8 고정)                                                        | `{content, encoding, columnWidths}` (**chardet 인코딩 감지 + iconv-lite + BOM 제거**) | `{data: Buffer}` (바이너리)  | `{data: Buffer}` (바이너리)                                      |
+| 내용 쓰기      | `writeContent()` + **noteImageService.cleanupRemovedImages()**               | `writeContent()` + **generateCsvPreview()** (첫 3줄 `' \| '` 구분)                    | 없음 (읽기 전용)             | 없음 (읽기 전용)                                                 |
+| 삭제 시        | `fs.readFileSync` → **noteImageService.deleteAllImages()** → `fs.unlinkSync` | `fs.unlinkSync`                                                                       | `fs.unlinkSync`              | `fs.unlinkSync`                                                  |
+| 제목 추출      | `name.replace(/\.md$/, '')`                                                  | `name.replace(/\.csv$/, '')`                                                          | `name.replace(/\.pdf$/, '')` | **`path.basename(name, path.extname(name))`** (다중 확장자 안전) |
+| updateMeta     | `{description}`                                                              | `{description, columnWidths}`                                                         | `{description}`              | `{description}`                                                  |
+| Preview 생성   | 첫 200자 공백 정규화 (`replace(/\s+/g, ' ')`)                                | 첫 3줄 `' \| '` join                                                                  | 없음                         | 없음                                                             |
+| 기본 파일명    | '새로운 노트'                                                                | '새로운 테이블'                                                                       | (import이므로 없음)          | (import이므로 없음)                                              |
 
 ---
 
 ## Phase 5: Workspace Watcher Refactoring (~400줄 제거)
 
 ### 현상
+
 - 총 944줄 모놀리스
 - `applyEvents` 510줄 (14단계, 4개 파일 타입 반복)
 - 4개 `xxxReconciliation` 메서드 (~200줄)
@@ -247,35 +260,40 @@ Step 12-14: 이미지 파일 처리 (동일 패턴 + 고유 필터)
 ### 블록별 정밀 비교 결과
 
 **Rename/Move Detection (Step 3/6/9/12):**
+
 - 로직 100% 동일: delete+create 쌍 매칭 → 같은 디렉토리에서 같은 basename → rename 판정
 - **차이 1**: Image만 `.images/` 디렉토리 필터링 추가
 - **차이 2**: Image만 `path.basename(path, path.extname(path))` 제목 추출
 
 **Standalone Create (Step 4/7/10/13):**
+
 - 로직 100% 동일: `fs.promises.stat()` → file 확인 → DB 조회 → 없으면 create
 - **차이 1**: Image만 `.images/` 디렉토리 필터링 추가
 - **차이 2**: Image만 `path.basename()` 제목 추출
 
 **Standalone Delete (Step 5/8/11/14):**
+
 - 로직 100% 동일: DB 조회 → `entityLinkRepository.removeAllByEntity(type, id)` → repository.delete()
 - **차이 없음** (entity type 문자열만 다름: 'note'/'csv'/'pdf'/'image')
 
 **Reconciliation Methods:**
+
 - 로직 100% 동일: FS 스캔 → DB 조회 → 신규 항목 createMany → orphan 삭제
 - **차이**: Image만 `path.basename(e.name, path.extname(e.name))` 제목 추출
 
 **Push Methods:**
+
 - 로직 100% 동일: `BrowserWindow.getAllWindows().forEach(win => win.webContents.send(channel, ...))`
 - **차이 없음** (채널명만 다름)
 
 ### 파일 타입별 고유 로직 정리
 
-| 구분 | Note/CSV/PDF | Image |
-|------|-------------|-------|
-| 이벤트 필터링 | 없음 | `rel.startsWith('.images/') \|\| rel.includes('/.images/')` 제외 |
-| 확장자 매칭 | `.endsWith('.ext')` 단일 | `isImageFile()` 7개 확장자 + 대소문자 무시 |
-| 제목 추출 | `path.basename(p, '.ext')` (하드코딩) | `path.basename(p, path.extname(p))` (동적) |
-| entityLink type | 'note' / 'csv' / 'pdf' | 'image' |
+| 구분            | Note/CSV/PDF                          | Image                                                            |
+| --------------- | ------------------------------------- | ---------------------------------------------------------------- |
+| 이벤트 필터링   | 없음                                  | `rel.startsWith('.images/') \|\| rel.includes('/.images/')` 제외 |
+| 확장자 매칭     | `.endsWith('.ext')` 단일              | `isImageFile()` 7개 확장자 + 대소문자 무시                       |
+| 제목 추출       | `path.basename(p, '.ext')` (하드코딩) | `path.basename(p, path.extname(p))` (동적)                       |
+| entityLink type | 'note' / 'csv' / 'pdf'                | 'image'                                                          |
 
 ### handleEvents() 수집 로직
 
@@ -310,10 +328,10 @@ Step 12-14: 이미지 파일 처리 (동일 패턴 + 고유 필터)
 interface FileTypeConfig {
   extensions: string[] | ((name: string) => boolean) // Image: isImageFile
   repository: FileRepository
-  channelName: string                                 // 'note:changed' etc.
-  entityType: string                                  // 'note'/'csv'/'pdf'/'image'
+  channelName: string // 'note:changed' etc.
+  entityType: string // 'note'/'csv'/'pdf'/'image'
   extractTitle: (fileName: string) => string
-  skipFilter?: (relativePath: string) => boolean      // Image: .images/ 제외
+  skipFilter?: (relativePath: string) => boolean // Image: .images/ 제외
 }
 
 const fileTypeConfigs: FileTypeConfig[] = [
@@ -322,7 +340,7 @@ const fileTypeConfigs: FileTypeConfig[] = [
     repository: noteRepository,
     channelName: 'note:changed',
     entityType: 'note',
-    extractTitle: (name) => path.basename(name, '.md'),
+    extractTitle: (name) => path.basename(name, '.md')
   },
   // ... csv, pdf 동일 패턴
   {
@@ -331,12 +349,13 @@ const fileTypeConfigs: FileTypeConfig[] = [
     channelName: 'image:changed',
     entityType: 'image',
     extractTitle: (name) => path.basename(name, path.extname(name)),
-    skipFilter: (rel) => rel.startsWith('.images/') || rel.includes('/.images/'),
-  },
+    skipFilter: (rel) => rel.startsWith('.images/') || rel.includes('/.images/')
+  }
 ]
 ```
 
 ### 대상 파일
+
 - `src/main/services/workspace-watcher.ts`
 
 ---
@@ -346,6 +365,7 @@ const fileTypeConfigs: FileTypeConfig[] = [
 ### 6-1. Own-Write Tracker 통합 + 버그 수정
 
 **현재 구현 비교:**
+
 ```typescript
 // Note (BUG): Set 기반 — timer 참조 없음
 const pendingWrites = new Set<string>()
@@ -358,13 +378,14 @@ export function markAsOwnWrite(noteId: string): void {
 const pendingWrites = new Map<string, ReturnType<typeof setTimeout>>()
 export function markAsOwnWrite(csvId: string): void {
   const prev = pendingWrites.get(csvId)
-  if (prev) clearTimeout(prev)  // 이전 timer 정리
+  if (prev) clearTimeout(prev) // 이전 timer 정리
   const timer = setTimeout(() => pendingWrites.delete(csvId), 2000)
   pendingWrites.set(csvId, timer)
 }
 ```
 
 **통합 방식**: `createOwnWriteTracker()` 팩토리를 `@shared/lib/`에 생성
+
 - `workspace-own-write.ts`는 이미 올바른 Map 패턴 사용 → 그대로 유지
 - 4개 entity별 tracker → 팩토리로 생성, 각 entity에서 re-export
 
@@ -373,21 +394,23 @@ export function markAsOwnWrite(csvId: string): void {
 ### 6-2. File Watcher Hook 통합
 
 **4개 hook 비교 결과: 로직 100% 동일**
+
 - 차이: 아이콘(FileText/Sheet/PdfIcon/ImageIcon), 이벤트명, API 메서드명(`window.api.note.onChanged` vs `window.api.csv.onChanged`...), queryKey prefix
 
 **markAsOwnWrite 호출 패턴 불일치 (BUG-2 관련):**
 
-| Mutation | Note | CSV | PDF | Image |
-|----------|------|-----|-----|-------|
-| rename | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite + **markAsOwnWrite** | markWorkspaceOwnWrite + **markAsOwnWrite** | markWorkspaceOwnWrite + **markAsOwnWrite** |
-| writeContent | markWorkspaceOwnWrite + markAsOwnWrite | markWorkspaceOwnWrite + markAsOwnWrite | N/A (읽기전용) | N/A (읽기전용) |
-| create/import | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 |
-| remove | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 |
-| move | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 | markWorkspaceOwnWrite만 |
+| Mutation      | Note                                   | CSV                                        | PDF                                        | Image                                      |
+| ------------- | -------------------------------------- | ------------------------------------------ | ------------------------------------------ | ------------------------------------------ |
+| rename        | markWorkspaceOwnWrite만                | markWorkspaceOwnWrite + **markAsOwnWrite** | markWorkspaceOwnWrite + **markAsOwnWrite** | markWorkspaceOwnWrite + **markAsOwnWrite** |
+| writeContent  | markWorkspaceOwnWrite + markAsOwnWrite | markWorkspaceOwnWrite + markAsOwnWrite     | N/A (읽기전용)                             | N/A (읽기전용)                             |
+| create/import | markWorkspaceOwnWrite만                | markWorkspaceOwnWrite만                    | markWorkspaceOwnWrite만                    | markWorkspaceOwnWrite만                    |
+| remove        | markWorkspaceOwnWrite만                | markWorkspaceOwnWrite만                    | markWorkspaceOwnWrite만                    | markWorkspaceOwnWrite만                    |
+| move          | markWorkspaceOwnWrite만                | markWorkspaceOwnWrite만                    | markWorkspaceOwnWrite만                    | markWorkspaceOwnWrite만                    |
 
 → Note rename에만 `markAsOwnWrite` 누락 (BUG-2)
 
 **사이드 이펙트 주의:**
+
 - 각 이벤트명 (`NOTE_EXTERNAL_CHANGED_EVENT` 등)은 반드시 고유 유지
 - `queryClient.invalidateQueries()` 키가 타입별로 달라야 함
 - **대응**: config 객체로 모든 차이점을 파라미터화
@@ -400,6 +423,7 @@ export function markAsOwnWrite(csvId: string): void {
 - **사이드 이펙트 없음**: 순수 UI 컴포넌트, 호출부(`FolderTree.tsx`)는 동일 인터페이스 유지
 
 ### 대상 파일
+
 - `src/renderer/src/entities/*/model/own-write-tracker.ts` → `src/renderer/src/shared/lib/create-own-write-tracker.ts`
 - `src/renderer/src/entities/*/model/use-*-watcher.ts` → `src/renderer/src/shared/hooks/use-file-watcher.ts`
 - `src/renderer/src/features/folder/manage-folder/ui/*ContextMenu.tsx` → `FileContextMenu.tsx`
@@ -410,25 +434,27 @@ export function markAsOwnWrite(csvId: string): void {
 ## Phase 7: Preload & IPC 정리 (~80줄 제거)
 
 ### 현상
+
 - `src/preload/index.ts`: `onChanged` 콜백 5곳 동일 패턴 (note, csv, pdf, image, folder)
 - `src/main/ipc/`: 4개 파일 타입 IPC 핸들러 등록 파일 구조 동일
 
 ### onChanged 콜백 비교 (검증 완료)
 
-| 대상 | 콜백 시그니처 | 패턴 동일 |
-|------|-------------|----------|
-| note | `(workspaceId: string, changedRelPaths: string[]) => void` | 동일 |
-| csv | 동일 | 동일 |
-| pdf | 동일 | 동일 |
-| image | 동일 | 동일 |
-| folder | 동일 | 동일 |
-| **entity-link** | **`() => void`** (파라미터 없음) | **다름** |
+| 대상            | 콜백 시그니처                                              | 패턴 동일 |
+| --------------- | ---------------------------------------------------------- | --------- |
+| note            | `(workspaceId: string, changedRelPaths: string[]) => void` | 동일      |
+| csv             | 동일                                                       | 동일      |
+| pdf             | 동일                                                       | 동일      |
+| image           | 동일                                                       | 동일      |
+| folder          | 동일                                                       | 동일      |
+| **entity-link** | **`() => void`** (파라미터 없음)                           | **다름**  |
 
 → entity-link의 onChanged는 시그니처가 다르므로 통합 대상에서 **제외**
 
 ### IPC 핸들러 불일치 발견 (신규)
 
 **pdf:selectFile, image:selectFile이 handle() 래퍼를 사용하지 않음:**
+
 ```typescript
 // 다른 모든 핸들러 (일관된 패턴)
 ipcMain.handle('note:readByWorkspace', (_, workspaceId) => handle(() => noteService.readByWorkspaceFromDb(workspaceId)))
@@ -439,6 +465,7 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
   return result.canceled ? null : result.filePaths[0]
 })
 ```
+
 - 다른 35+ 핸들러는 `handle()` 래퍼로 `IpcResponse<T>` 반환
 - selectFile 2개만 raw 값 직접 반환
 - **현재 동작 중이므로** preload 쪽에서도 이에 맞게 호출하는 것으로 확인됨
@@ -446,25 +473,27 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 
 ### 파일 타입별 IPC 고유 핸들러
 
-| IPC | Note | CSV | PDF | Image |
-|-----|------|-----|-----|-------|
-| readByWorkspace | 공통 | 공통 | 공통 | 공통 |
-| create | O | O | X | X |
-| import | X | X | O | O |
-| rename | 공통 | 공통 | 공통 | 공통 |
-| remove | 공통 | 공통 | 공통 | 공통 |
-| readContent | 공통 | 공통 | 공통 | 공통 |
-| writeContent | O | O | X | X |
-| move | 공통 | 공통 | 공통 | 공통 |
-| updateMeta | 공통 | 공통(+columnWidths) | 공통 | 공통 |
-| **selectFile** | X | X | O (단일 선택, handle() 미사용) | O (다중 선택, handle() 미사용) |
+| IPC             | Note | CSV                 | PDF                            | Image                          |
+| --------------- | ---- | ------------------- | ------------------------------ | ------------------------------ |
+| readByWorkspace | 공통 | 공통                | 공통                           | 공통                           |
+| create          | O    | O                   | X                              | X                              |
+| import          | X    | X                   | O                              | O                              |
+| rename          | 공통 | 공통                | 공통                           | 공통                           |
+| remove          | 공통 | 공통                | 공통                           | 공통                           |
+| readContent     | 공통 | 공통                | 공통                           | 공통                           |
+| writeContent    | O    | O                   | X                              | X                              |
+| move            | 공통 | 공통                | 공통                           | 공통                           |
+| updateMeta      | 공통 | 공통(+columnWidths) | 공통                           | 공통                           |
+| **selectFile**  | X    | X                   | O (단일 선택, handle() 미사용) | O (다중 선택, handle() 미사용) |
 
 ### 사이드 이펙트 주의사항
+
 - onChanged 헬퍼 추출 시 `entity-link`는 제외 (시그니처 다름)
 - `selectFile` 핸들러는 개별 유지 (handle() 래퍼 미사용 패턴)
 - 채널명 정확히 보존 필수
 
 ### 대상 파일
+
 - `src/preload/index.ts`
 - `src/main/ipc/note.ts`, `csv-file.ts`, `pdf-file.ts`, `image-file.ts`
 
@@ -473,6 +502,7 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 ## Phase 8: 성능 개선 (MEDIUM)
 
 ### 8-1. N+1 쿼리 문제
+
 - **현상**: `readByWorkspace`에서 `newFsEntries`마다 `folderRepository.findByRelativePath` 개별 호출
 - **위치**: note.ts:102, csv-file.ts:104, pdf-file.ts:92, image-file.ts:90 (4곳 동일 패턴)
 - **추가 발견**: workspace-watcher의 reconciliation 메서드 4곳에도 동일한 N+1 패턴 존재
@@ -481,6 +511,7 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 - **사이드 이펙트**: 없음 (동일 결과, 더 빠름)
 
 ### 8-2. getLeafSiblings 비효율 쿼리
+
 - **현상**: 4개 `findByWorkspaceId()` 전체 조회 후 in-memory folderId 필터
 - **위치**: `src/main/lib/leaf-reindex.ts:16-34`
 - **호출 횟수**: 8곳 (모든 파일 타입의 create + move에서 호출)
@@ -490,17 +521,20 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 - **주의**: `reindexLeafSiblings()`의 트랜잭션에서 `Date.now()` 사용 (숫자 타입) — SQLite integer 컬럼에 직접 저장하므로 정상
 
 ### 8-3. Folder Service 비효율 (신규 발견)
+
 - **현상**: `folder.ts:235-243`에서 `folderRepository.findByWorkspaceId(workspaceId)` 전체 로드 후 in-memory 필터
 - **영향**: 1000개 폴더 → 전부 로드 후 직접 하위 폴더만 필터
 - **개선**: `findChildFolders(workspaceId, parentRelPath)` DB 레벨 쿼리 추가
 - **사이드 이펙트**: 없음
 
 ### 8-4. 동기 파일 I/O (참고만 — 이번 리팩토링 범위 밖)
+
 - **현상**: 서비스 레이어에서 `fs.writeFileSync`, `fs.readFileSync`, `fs.renameSync`, `fs.unlinkSync` 등 30+ 곳에서 동기 I/O 사용
 - **영향**: 대용량 파일 작업 시 메인 프로세스 블로킹 → UI 프리징
 - **이번 범위**: 비동기 전환은 서비스 전체 구조 변경이 필요하므로 **제외**. 별도 리팩토링 계획 필요
 
 ### 8-5. Silent Error Swallowing
+
 - **현상**: `workspace-watcher.ts`에 bare `catch {}` **16곳**
 - **구분**:
   - 의도적 (reconciliation try-catch 4곳, watcher init 6곳): 주석으로 설명됨
@@ -513,18 +547,19 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 
 ## Implementation Order (최종 v3)
 
-| 순서 | Phase | 제거 줄 수 | 위험도 | 검증 방법 |
-|------|-------|----------|--------|----------|
-| 0 | BUG-1, BUG-2, BUG-3 수정 | +15줄 | 낮음 | 노트 이름변경 + 빠른 저장 테스트 |
-| 1 | Phase 2: fs-utils 통합 | ~200줄 | 낮음 | 워크스페이스 열기 + 파일 탐색 |
-| 2 | Phase 3: 서비스 유틸 추출 | ~120줄 | 낮음 | 전 파일타입 CRUD 테스트 |
-| 3 | Phase 1: Repository Factory | ~520줄 | 중간 | 전 파일타입 CRUD + leaf reindex |
-| 4 | Phase 6: Renderer 통합 | ~170줄 | 낮음 | 외부 파일 변경 감지 + 컨텍스트 메뉴 |
-| 5 | Phase 7: Preload/IPC 정리 | ~80줄 | 낮음 | IPC 전체 동작 확인 |
-| 6 | Phase 5: Workspace Watcher | ~400줄 | **높음** | 파일 생성/삭제/이동/이름변경 + 동시다발 변경 |
-| 7 | Phase 8: 성능 개선 | 가변 | 중간 | 대규모 워크스페이스 성능 |
+| 순서 | Phase                       | 제거 줄 수 | 위험도   | 검증 방법                                    |
+| ---- | --------------------------- | ---------- | -------- | -------------------------------------------- |
+| 0    | BUG-1, BUG-2, BUG-3 수정    | +15줄      | 낮음     | 노트 이름변경 + 빠른 저장 테스트             |
+| 1    | Phase 2: fs-utils 통합      | ~200줄     | 낮음     | 워크스페이스 열기 + 파일 탐색                |
+| 2    | Phase 3: 서비스 유틸 추출   | ~120줄     | 낮음     | 전 파일타입 CRUD 테스트                      |
+| 3    | Phase 1: Repository Factory | ~520줄     | 중간     | 전 파일타입 CRUD + leaf reindex              |
+| 4    | Phase 6: Renderer 통합      | ~170줄     | 낮음     | 외부 파일 변경 감지 + 컨텍스트 메뉴          |
+| 5    | Phase 7: Preload/IPC 정리   | ~80줄      | 낮음     | IPC 전체 동작 확인                           |
+| 6    | Phase 5: Workspace Watcher  | ~400줄     | **높음** | 파일 생성/삭제/이동/이름변경 + 동시다발 변경 |
+| 7    | Phase 8: 성능 개선          | 가변       | 중간     | 대규모 워크스페이스 성능                     |
 
 ### 순서 결정 근거
+
 - **버그 수정 최우선**: 독립적이고 위험도 낮음, 즉시 사용자 경험 개선
 - **fs-utils → 유틸 추출 → Repository Factory**: 의존성 없는 것부터 안전하게 진행
 - **Renderer 통합**: main process 변경 없이 독립 진행 가능
@@ -534,14 +569,14 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 
 ## 리팩토링하지 않는 항목 (의도적 제외)
 
-| 항목 | 제외 근거 |
-|------|----------|
-| Service 레벨 팩토리/베이스 | Note의 imageService 연동, CSV의 인코딩 감지, PDF/Image의 import 패턴 등 차이가 너무 커서 추상화 시 조건 분기가 오히려 복잡해짐 |
-| Error 클래스 공유 (main↔renderer) | Electron 3-프로세스 모델에서 main/renderer 간 모듈 공유는 번들링 복잡성 증가. 3개 클래스 수준은 관리 가능 |
-| selectFile IPC 통합 | PDF(단일 선택)와 Image(다중 선택, 다른 필터)의 dialog 옵션이 달라 통합 시 오히려 복잡 |
-| selectFile handle() 래퍼 추가 | 현재 동작 중이며 preload와 짝이 맞음. 무리한 변경은 사이드 이펙트 위험 |
-| leaf-reindex.ts 4개 prepared statement | 트랜잭션 내에서 kind별 dispatch가 필요하므로 현재 구조가 적절. repository factory와 무관 |
-| 동기 파일 I/O → 비동기 전환 | 서비스 전체 구조 변경 필요. 별도 리팩토링 계획 필요 |
+| 항목                                   | 제외 근거                                                                                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Service 레벨 팩토리/베이스             | Note의 imageService 연동, CSV의 인코딩 감지, PDF/Image의 import 패턴 등 차이가 너무 커서 추상화 시 조건 분기가 오히려 복잡해짐 |
+| Error 클래스 공유 (main↔renderer)      | Electron 3-프로세스 모델에서 main/renderer 간 모듈 공유는 번들링 복잡성 증가. 3개 클래스 수준은 관리 가능                      |
+| selectFile IPC 통합                    | PDF(단일 선택)와 Image(다중 선택, 다른 필터)의 dialog 옵션이 달라 통합 시 오히려 복잡                                          |
+| selectFile handle() 래퍼 추가          | 현재 동작 중이며 preload와 짝이 맞음. 무리한 변경은 사이드 이펙트 위험                                                         |
+| leaf-reindex.ts 4개 prepared statement | 트랜잭션 내에서 kind별 dispatch가 필요하므로 현재 구조가 적절. repository factory와 무관                                       |
+| 동기 파일 I/O → 비동기 전환            | 서비스 전체 구조 변경 필요. 별도 리팩토링 계획 필요                                                                            |
 
 ---
 
@@ -572,12 +607,12 @@ ipcMain.handle('pdf:selectFile', async (): Promise<string | null> => {
 
 ## Risk & Mitigation
 
-| 리스크 | 완화 방안 |
-|--------|----------|
-| Repository 팩토리 타입 안전성 약화 | update()를 팩토리에서 제외, 개별 유지 |
-| Workspace Watcher 리팩토링 시 이벤트 순서 깨짐 | 폴더 처리 → 파일 처리 순서 보장, 단위별 점진적 추출 |
-| Image 전용 로직 누락 (.images/ 필터, basename 제목 추출, 대소문자 무시) | config 파라미터로 명시적 분리, 3가지 모두 검증 |
-| 채널명 변경으로 IPC 통신 단절 | 채널명을 상수로 관리, 테스트에서 검증 |
-| entity-link onChanged 시그니처 차이 | onChanged 헬퍼에서 entity-link 제외 |
-| selectFile의 handle() 미사용 패턴 깨짐 | 이번 리팩토링에서 변경하지 않음 |
-| 서비스 과도한 추상화 | **하지 않음** — 유틸 추출만 진행 |
+| 리스크                                                                  | 완화 방안                                           |
+| ----------------------------------------------------------------------- | --------------------------------------------------- |
+| Repository 팩토리 타입 안전성 약화                                      | update()를 팩토리에서 제외, 개별 유지               |
+| Workspace Watcher 리팩토링 시 이벤트 순서 깨짐                          | 폴더 처리 → 파일 처리 순서 보장, 단위별 점진적 추출 |
+| Image 전용 로직 누락 (.images/ 필터, basename 제목 추출, 대소문자 무시) | config 파라미터로 명시적 분리, 3가지 모두 검증      |
+| 채널명 변경으로 IPC 통신 단절                                           | 채널명을 상수로 관리, 테스트에서 검증               |
+| entity-link onChanged 시그니처 차이                                     | onChanged 헬퍼에서 entity-link 제외                 |
+| selectFile의 handle() 미사용 패턴 깨짐                                  | 이번 리팩토링에서 변경하지 않음                     |
+| 서비스 과도한 추상화                                                    | **하지 않음** — 유틸 추출만 진행                    |

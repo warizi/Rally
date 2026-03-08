@@ -62,58 +62,58 @@ function MainSidebar(): React.JSX.Element {
 
   return (
     <>
-    <Sidebar collapsible="icon" className="mt-9">
-      <SidebarHeader>
-        <WorkspaceSwitcher />
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>기능</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {sidebar_items.map((item) => (
-                <SidebarMenuItem key={item.pathname}>
+      <Sidebar collapsible="icon" className="mt-9">
+        <SidebarHeader>
+          <WorkspaceSwitcher />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>기능</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {sidebar_items.map((item) => (
+                  <SidebarMenuItem key={item.pathname}>
+                    <SidebarMenuButton
+                      className="cursor-pointer"
+                      isActive={activePathname === item.pathname}
+                      tooltip={item.title}
+                      onClick={() => handleOpenStaticTab(item)}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+          {currentWorkspaceId && (
+            <TabSnapshotSection
+              workspaceId={currentWorkspaceId}
+              onRestoreSnapshot={handleRestore}
+              onOverwriteSnapshot={handleOverwrite}
+            />
+          )}
+          <SidebarGroup>
+            <SidebarGroupLabel>시스템</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
                   <SidebarMenuButton
                     className="cursor-pointer"
-                    isActive={activePathname === item.pathname}
-                    tooltip={item.title}
-                    onClick={() => handleOpenStaticTab(item)}
+                    tooltip="설정"
+                    onClick={() => setSettingsOpen(true)}
                   >
-                    <item.icon />
-                    <span>{item.title}</span>
+                    <Settings />
+                    <span>설정</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-        {currentWorkspaceId && (
-          <TabSnapshotSection
-            workspaceId={currentWorkspaceId}
-            onRestoreSnapshot={handleRestore}
-            onOverwriteSnapshot={handleOverwrite}
-          />
-        )}
-        <SidebarGroup>
-          <SidebarGroupLabel>시스템</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  className="cursor-pointer"
-                  tooltip="설정"
-                  onClick={() => setSettingsOpen(true)}
-                >
-                  <Settings />
-                  <span>설정</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
-    </Sidebar>
-    <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
+      </Sidebar>
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   )
 }

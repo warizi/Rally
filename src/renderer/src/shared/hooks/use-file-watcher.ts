@@ -21,26 +21,34 @@ interface FileWatcherConfig {
 export function useFileWatcher(config: FileWatcherConfig): void {
   const queryClient = useQueryClient()
   const readyRef = useRef(false)
+  const {
+    onChanged,
+    queryKeyPrefix,
+    icon,
+    externalChangedEvent,
+    idField,
+    isOwnWrite: checkOwnWrite
+  } = config
 
   useEffect(() => {
     const timer = setTimeout(() => {
       readyRef.current = true
     }, 2000)
 
-    const unsub = config.onChanged((workspaceId, changedRelPaths) => {
+    const unsub = onChanged((workspaceId, changedRelPaths) => {
       queryClient.invalidateQueries({
-        queryKey: [config.queryKeyPrefix, 'workspace', workspaceId]
+        queryKey: [queryKeyPrefix, 'workspace', workspaceId]
       })
 
       const items = queryClient.getQueryData<
         Array<{ id: string; relativePath: string; title: string }>
-      >([config.queryKeyPrefix, 'workspace', workspaceId])
+      >([queryKeyPrefix, 'workspace', workspaceId])
 
       if (items && changedRelPaths.length > 0) {
         const externalItems = items.filter(
           (item) =>
             changedRelPaths.includes(item.relativePath) &&
-            !config.isOwnWrite(item.id) &&
+            !checkOwnWrite(item.id) &&
             !isWorkspaceOwnWrite(workspaceId)
         )
 
@@ -53,7 +61,7 @@ export function useFileWatcher(config: FileWatcherConfig): void {
                 createElement(
                   'li',
                   { key: item.id, className: 'flex items-center gap-1.5' },
-                  createElement(config.icon, { className: 'size-3.5 shrink-0' }),
+                  createElement(icon, { className: 'size-3.5 shrink-0' }),
                   item.title
                 )
               )
@@ -64,12 +72,12 @@ export function useFileWatcher(config: FileWatcherConfig): void {
         externalItems.forEach((item) => {
           queryClient
             .refetchQueries({
-              queryKey: [config.queryKeyPrefix, 'content', item.id]
+              queryKey: [queryKeyPrefix, 'content', item.id]
             })
             .then(() => {
               window.dispatchEvent(
-                new CustomEvent(config.externalChangedEvent, {
-                  detail: { [config.idField]: item.id }
+                new CustomEvent(externalChangedEvent, {
+                  detail: { [idField]: item.id }
                 })
               )
             })
@@ -81,5 +89,5 @@ export function useFileWatcher(config: FileWatcherConfig): void {
       clearTimeout(timer)
       unsub()
     }
-  }, [queryClient])
+  }, [queryClient, onChanged, queryKeyPrefix, icon, externalChangedEvent, idField, checkOwnWrite])
 }

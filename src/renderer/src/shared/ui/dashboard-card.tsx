@@ -17,7 +17,7 @@ export function DashboardCard({
   action,
   children,
   className,
-  isLoading,
+  isLoading
 }: DashboardCardProps): React.JSX.Element {
   return (
     <Card className={className}>
@@ -28,9 +28,7 @@ export function DashboardCard({
         </div>
         {action && <CardAction>{action}</CardAction>}
       </CardHeader>
-      <CardContent>
-        {isLoading ? <DashboardCardSkeleton /> : children}
-      </CardContent>
+      <CardContent>{isLoading ? <DashboardCardSkeleton /> : children}</CardContent>
     </Card>
   )
 }

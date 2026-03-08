@@ -1,7 +1,13 @@
 import { useState } from 'react'
 import { XIcon } from 'lucide-react'
 import { Dialog as DialogPrimitive } from 'radix-ui'
-import { Dialog, DialogOverlay, DialogPortal, DialogTitle, DialogDescription } from '@/shared/ui/dialog'
+import {
+  Dialog,
+  DialogOverlay,
+  DialogPortal,
+  DialogTitle,
+  DialogDescription
+} from '@/shared/ui/dialog'
 import { cn } from '@/shared/lib/utils'
 import { DisplaySettings } from './DisplaySettings'
 

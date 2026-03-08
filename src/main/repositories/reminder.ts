@@ -38,10 +38,7 @@ export const reminderRepository = {
   },
 
   markFired(id: string, now: Date): void {
-    db.update(reminders)
-      .set({ isFired: true, updatedAt: now })
-      .where(eq(reminders.id, id))
-      .run()
+    db.update(reminders).set({ isFired: true, updatedAt: now }).where(eq(reminders.id, id)).run()
   },
 
   delete(id: string): void {

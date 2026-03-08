@@ -6,14 +6,13 @@ import { terminalService } from '../services/terminal'
 export function registerTerminalHandlers(): void {
   ipcMain.handle(
     'terminal:create',
-    (
-      _: IpcMainInvokeEvent,
-      args: { cwd: string; cols: number; rows: number }
-    ): IpcResponse => handle(() => terminalService.create(args.cwd, args.cols, args.rows))
+    (_: IpcMainInvokeEvent, args: { cwd: string; cols: number; rows: number }): IpcResponse =>
+      handle(() => terminalService.create(args.cwd, args.cols, args.rows))
   )
 
   ipcMain.handle(
     'terminal:destroy',
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     (_: IpcMainInvokeEvent): IpcResponse => handle(() => terminalService.destroy())
   )
 

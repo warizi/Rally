@@ -1,13 +1,14 @@
 import { z } from 'zod'
-import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
-import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
+import type { McpServer, ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { callTool } from './lib/call-tool'
+
+type ToolSchema = Record<string, z.ZodType>
 
 interface ToolDefinition {
   name: string
   description: string
-  schema: Record<string, z.ZodType>
-  handler: (args: Record<string, any>) => Promise<CallToolResult>
+  schema: ToolSchema
+  handler: ToolCallback<ToolSchema>
 }
 
 const e = encodeURIComponent
@@ -26,7 +27,7 @@ const tools: ToolDefinition[] = [
     schema: {
       query: z.string().describe('Search query (case-insensitive)')
     },
-    handler: ({ query }) => callTool('GET', `/api/mcp/notes/search?q=${e(query)}`)
+    handler: ({ query }) => callTool('GET', `/api/mcp/notes/search?q=${e(query as string)}`)
   },
   {
     name: 'read_content',
@@ -35,7 +36,7 @@ const tools: ToolDefinition[] = [
     schema: {
       id: z.string().describe('Note or table ID (from list_items)')
     },
-    handler: ({ id }) => callTool('GET', `/api/mcp/content/${e(id)}`)
+    handler: ({ id }) => callTool('GET', `/api/mcp/content/${e(id as string)}`)
   },
   {
     name: 'write_content',
@@ -105,7 +106,7 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
     schema: {
       canvasId: z.string().describe('Canvas ID')
     },
-    handler: ({ canvasId }) => callTool('GET', `/api/mcp/canvases/${e(canvasId)}`)
+    handler: ({ canvasId }) => callTool('GET', `/api/mcp/canvases/${e(canvasId as string)}`)
   },
   {
     name: 'create_canvas',
@@ -192,39 +193,24 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
         .describe('Actions to perform on the canvas')
     },
     handler: ({ canvasId, ...rest }) =>
-      callTool('POST', `/api/mcp/canvases/${e(canvasId)}/edit`, rest)
+      callTool('POST', `/api/mcp/canvases/${e(canvasId as string)}/edit`, rest)
   },
   {
     name: 'list_todos',
-    description:
-      `List all todos in the active workspace. Supports filter: all, active, completed.
+    description: `List all todos in the active workspace. Supports filter: all, active, completed.
 Each todo includes linkedItems array with related items. To inspect a linked item:
 - type "note" or "csv" → use read_content with the id
 - type "canvas" → use read_canvas with the id as canvasId
 - type "schedule", "pdf", "image" → metadata only (no detail tool available)`,
     schema: {
-      filter: z
-        .enum(['all', 'active', 'completed'])
-        .optional()
-        .describe('Filter (default: all)')
+      filter: z.enum(['active', 'completed']).optional().describe('Filter (default: active)')
     },
-    handler: ({ filter }) =>
-      callTool('GET', `/api/mcp/todos${filter ? `?filter=${filter}` : ''}`)
+    handler: ({ filter }) => callTool('GET', `/api/mcp/todos${filter ? `?filter=${filter}` : ''}`)
   },
   {
     name: 'manage_todos',
-    description:
-      `Batch create, update, or delete todos. Status/isDone auto-sync.
-
-STRUCTURE: Only 2-depth hierarchy allowed (parent → subtodo). A subtodo CANNOT have children.
-To create todos with subtodos, use this template:
-  actions: [
-    { action: "create", title: "Parent task", ... },
-    { action: "create", title: "Subtask 1", parentId: "<parent-id>", ... },
-    { action: "create", title: "Subtask 2", parentId: "<parent-id>", ... }
-  ]
-Note: parentId must reference a top-level todo (one without a parent). Use the id returned from a previous create or from list_todos.
-Also supports linking items (linkItems/unlinkItems) on TOP-LEVEL todos only. Subtodos CANNOT have linkedItems.`,
+    description: `Batch create, update, or delete todos. Status/isDone auto-sync.
+Subtodos are created inline via the subtodos array (title only). linkItems supported on top-level todos only.`,
     schema: {
       actions: z
         .array(
@@ -235,9 +221,12 @@ Also supports linking items (linkItems/unlinkItems) on TOP-LEVEL todos only. Sub
               description: z.string().optional(),
               status: z.enum(['할일', '진행중', '완료', '보류']).optional(),
               priority: z.enum(['high', 'medium', 'low']).optional(),
-              parentId: z.string().optional(),
               dueDate: z.string().optional().describe('ISO 8601 date'),
               startDate: z.string().optional().describe('ISO 8601 date'),
+              subtodos: z
+                .array(z.object({ title: z.string() }))
+                .optional()
+                .describe('Subtodos to create under this todo (title only)'),
               linkItems: z
                 .array(
                   z.object({
@@ -288,6 +277,13 @@ Also supports linking items (linkItems/unlinkItems) on TOP-LEVEL todos only. Sub
 
 export function registerAllTools(server: McpServer): void {
   for (const tool of tools) {
-    server.tool(tool.name, tool.description, tool.schema, tool.handler as any)
+    server.registerTool(
+      tool.name,
+      {
+        description: tool.description,
+        inputSchema: tool.schema
+      },
+      tool.handler
+    )
   }
 }

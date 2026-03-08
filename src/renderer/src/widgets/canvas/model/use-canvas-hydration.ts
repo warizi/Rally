@@ -27,7 +27,7 @@ export function useCanvasHydration(
   hydratedRef: MutableRefObject<boolean>,
   skipHydrationRef: MutableRefObject<boolean>,
   initHistory?: () => void
-) {
+): { isLoading: boolean } {
   const { data: dbNodes = [], isLoading: nodesLoading } = useCanvasNodes(canvasId)
   const { data: dbEdges = [], isLoading: edgesLoading } = useCanvasEdges(canvasId)
 

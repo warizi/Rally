@@ -38,6 +38,16 @@ export function registerWorkspaceHandlers(): void {
     (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => workspaceService.delete(id))
   )
 
+  ipcMain.handle(
+    'workspace:activate',
+    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
+      handle(() => {
+        const ws = workspaceService.getById(id)
+        void workspaceWatcher.ensureWatching(ws.id, ws.path)
+        return ws
+      })
+  )
+
   ipcMain.handle('workspace:selectDirectory', async (): Promise<string | null> => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       properties: ['openDirectory', 'createDirectory']

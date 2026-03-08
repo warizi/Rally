@@ -1,5 +1,5 @@
 import { and, eq, inArray, isNull, like, type InferSelectModel } from 'drizzle-orm'
-import type { SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
+import type { SQLiteColumn, SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import { db } from '../db'
 
 /**
@@ -7,13 +7,30 @@ import { db } from '../db'
  * update()는 타입별 필드 차이(CSV의 columnWidths)가 있으므로 제외
  */
 export function createFileRepository<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   T extends SQLiteTableWithColumns<any> & {
-    id: any
-    workspaceId: any
-    relativePath: any
-    folderId: any
+    id: SQLiteColumn
+    workspaceId: SQLiteColumn
+    relativePath: SQLiteColumn
+    folderId: SQLiteColumn
   }
->(table: T, tableName: string) {
+>(
+  table: T,
+  tableName: string
+): {
+  findByWorkspaceId(workspaceId: string): InferSelectModel<T>[]
+  findById(id: string): InferSelectModel<T> | undefined
+  findByRelativePath(workspaceId: string, relativePath: string): InferSelectModel<T> | undefined
+  findByFolderId(workspaceId: string, folderId: string | null): InferSelectModel<T>[]
+  create(data: T['$inferInsert']): InferSelectModel<T>
+  createMany(items: T['$inferInsert'][]): void
+  deleteOrphans(workspaceId: string, existingPaths: string[]): void
+  bulkDeleteByPrefix(workspaceId: string, prefix: string): void
+  bulkUpdatePathPrefix(workspaceId: string, oldPrefix: string, newPrefix: string): void
+  reindexSiblings(workspaceId: string, orderedIds: string[]): void
+  findByIds(ids: string[]): InferSelectModel<T>[]
+  delete(id: string): void
+} {
   type Row = InferSelectModel<T>
   type Insert = T['$inferInsert']
 
@@ -50,7 +67,11 @@ export function createFileRepository<
     },
 
     create(data: Insert): Row {
-      return db.insert(table).values(data as any).returning().get() as Row
+      return db
+        .insert(table)
+        .values(data as T['$inferInsert'])
+        .returning()
+        .get() as Row
     },
 
     createMany(items: Insert[]): void {
@@ -58,7 +79,7 @@ export function createFileRepository<
       const CHUNK = 99
       for (let i = 0; i < items.length; i += CHUNK) {
         db.insert(table)
-          .values(items.slice(i, i + CHUNK) as any)
+          .values(items.slice(i, i + CHUNK) as T['$inferInsert'][])
           .onConflictDoNothing()
           .run()
       }
@@ -76,8 +97,8 @@ export function createFileRepository<
         .where(eq(table.workspaceId, workspaceId))
         .all()
       const orphanIds = dbRows
-        .filter((r: any) => !existingSet.has(r.relativePath))
-        .map((r: any) => r.id)
+        .filter((r) => !existingSet.has(r.relativePath as string))
+        .map((r) => r.id as string)
       if (orphanIds.length === 0) return
       const CHUNK = 900
       for (let i = 0; i < orphanIds.length; i += CHUNK) {
@@ -89,9 +110,7 @@ export function createFileRepository<
 
     bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
       db.delete(table)
-        .where(
-          and(eq(table.workspaceId, workspaceId), like(table.relativePath, `${prefix}/%`))
-        )
+        .where(and(eq(table.workspaceId, workspaceId), like(table.relativePath, `${prefix}/%`)))
         .run()
     },
 
@@ -128,9 +147,7 @@ export function createFileRepository<
       const results: Row[] = []
       for (let i = 0; i < ids.length; i += CHUNK) {
         const chunk = ids.slice(i, i + CHUNK)
-        results.push(
-          ...(db.select().from(table).where(inArray(table.id, chunk)).all() as Row[])
-        )
+        results.push(...(db.select().from(table).where(inArray(table.id, chunk)).all() as Row[]))
       }
       return results
     },

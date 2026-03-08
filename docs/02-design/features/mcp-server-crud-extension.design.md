@@ -82,13 +82,13 @@ DB 스키마 변경 없음. 기존 테이블만 사용한다.
 
 ### 3.1 추가로 사용하는 기존 테이블
 
-| Table | Used By Tools | Key Columns |
-|-------|--------------|-------------|
-| `csv_files` | list_tables, read_table, write_table, create_table, rename_table, delete_table, move_table | `id`, `workspaceId`, `folderId`, `relativePath`, `title`, `preview`, `description` |
-| `canvases` | list_canvases, read_canvas, create_canvas, update_canvas, delete_canvas | `id`, `workspaceId`, `title`, `description`, `createdAt`, `updatedAt` |
-| `canvas_nodes` | read_canvas, add_canvas_node, remove_canvas_node | `id`, `canvasId`, `type`, `refId`, `x`, `y`, `width`, `height`, `color`, `content`, `zIndex` |
-| `canvas_edges` | read_canvas, add_canvas_edge, remove_canvas_edge | `id`, `canvasId`, `fromNode`, `toNode`, `fromSide`, `toSide`, `label`, `style`, `arrow` |
-| `folders` | create_folder, rename_folder, delete_folder, move_folder | `id`, `workspaceId`, `relativePath`, `name`, `order` |
+| Table          | Used By Tools                                                                              | Key Columns                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- |
+| `csv_files`    | list_tables, read_table, write_table, create_table, rename_table, delete_table, move_table | `id`, `workspaceId`, `folderId`, `relativePath`, `title`, `preview`, `description`           |
+| `canvases`     | list_canvases, read_canvas, create_canvas, update_canvas, delete_canvas                    | `id`, `workspaceId`, `title`, `description`, `createdAt`, `updatedAt`                        |
+| `canvas_nodes` | read_canvas, add_canvas_node, remove_canvas_node                                           | `id`, `canvasId`, `type`, `refId`, `x`, `y`, `width`, `height`, `color`, `content`, `zIndex` |
+| `canvas_edges` | read_canvas, add_canvas_edge, remove_canvas_edge                                           | `id`, `canvasId`, `fromNode`, `toNode`, `fromSide`, `toSide`, `label`, `style`, `arrow`      |
+| `folders`      | create_folder, rename_folder, delete_folder, move_folder                                   | `id`, `workspaceId`, `relativePath`, `name`, `order`                                         |
 
 ### 3.2 HTTP API 응답 타입 (New)
 
@@ -105,7 +105,7 @@ interface ListTablesResponse {
     preview: string
     folderId: string | null
     folderPath: string | null
-    updatedAt: string  // ISO string
+    updatedAt: string // ISO string
   }[]
 }
 
@@ -296,32 +296,33 @@ interface MoveFolderResponse {
 
 ### 4.1 Routing Table (New — 20 endpoints)
 
-| Method | Path | Handler File | Service Call | Broadcast |
-|--------|------|-------------|-------------|-----------|
-| GET | `/api/workspaces/:wsId/tables` | `csv.ts` | `csvFileService.readByWorkspaceFromDb()` + folder Map | — |
-| GET | `/api/workspaces/:wsId/tables/:tableId/content` | `csv.ts` | `csvFileRepository.findById()` + `csvFileService.readContent()` | — |
-| PUT | `/api/workspaces/:wsId/tables/:tableId/content` | `csv.ts` | `csvFileRepository.findById()` + `csvFileService.writeContent()` | `csv:changed` |
-| POST | `/api/workspaces/:wsId/tables` | `csv.ts` | `csvFileService.create()` + optional `csvFileService.writeContent()` | `csv:changed` |
-| PATCH | `/api/workspaces/:wsId/tables/:tableId/rename` | `csv.ts` | `csvFileRepository.findById()` + `csvFileService.rename()` | `csv:changed` |
-| DELETE | `/api/workspaces/:wsId/tables/:tableId` | `csv.ts` | `csvFileRepository.findById()` + `csvFileService.remove()` | `csv:changed` |
-| PATCH | `/api/workspaces/:wsId/tables/:tableId/move` | `csv.ts` | `csvFileRepository.findById()` + `csvFileService.move()` | `csv:changed` |
-| GET | `/api/workspaces/:wsId/canvases` | `canvas.ts` | `canvasService.findByWorkspace()` | — |
-| GET | `/api/workspaces/:wsId/canvases/:canvasId` | `canvas.ts` | `canvasService.findById()` + `canvasNodeService.findByCanvas()` + `canvasEdgeService.findByCanvas()` | — |
-| POST | `/api/workspaces/:wsId/canvases` | `canvas.ts` | `canvasService.create()` | `canvas:changed` |
-| PATCH | `/api/workspaces/:wsId/canvases/:canvasId` | `canvas.ts` | `canvasService.update()` | `canvas:changed` |
-| DELETE | `/api/workspaces/:wsId/canvases/:canvasId` | `canvas.ts` | `canvasService.remove()` | `canvas:changed` |
-| POST | `/api/workspaces/:wsId/canvases/:canvasId/nodes` | `canvas.ts` | `canvasNodeService.create()` | `canvas:changed` |
-| DELETE | `/api/workspaces/:wsId/canvases/:canvasId/nodes/:nodeId` | `canvas.ts` | `canvasNodeService.remove()` | `canvas:changed` |
-| POST | `/api/workspaces/:wsId/canvases/:canvasId/edges` | `canvas.ts` | `canvasEdgeService.create()` | `canvas:changed` |
-| DELETE | `/api/workspaces/:wsId/canvases/:canvasId/edges/:edgeId` | `canvas.ts` | `canvasEdgeService.remove()` | `canvas:changed` |
-| POST | `/api/workspaces/:wsId/folders` | `folder.ts` | `folderService.create()` | `folder:changed` |
-| PATCH | `/api/workspaces/:wsId/folders/:folderId/rename` | `folder.ts` | `folderService.rename()` | `folder:changed` + `note:changed` + `csv:changed` |
-| DELETE | `/api/workspaces/:wsId/folders/:folderId` | `folder.ts` | `folderRepository.findById()` + `folderService.remove()` | `folder:changed` + `note:changed` + `csv:changed` |
-| PATCH | `/api/workspaces/:wsId/folders/:folderId/move` | `folder.ts` | `folderService.move()` | `folder:changed` + `note:changed` + `csv:changed` |
+| Method | Path                                                     | Handler File | Service Call                                                                                         | Broadcast                                         |
+| ------ | -------------------------------------------------------- | ------------ | ---------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| GET    | `/api/workspaces/:wsId/tables`                           | `csv.ts`     | `csvFileService.readByWorkspaceFromDb()` + folder Map                                                | —                                                 |
+| GET    | `/api/workspaces/:wsId/tables/:tableId/content`          | `csv.ts`     | `csvFileRepository.findById()` + `csvFileService.readContent()`                                      | —                                                 |
+| PUT    | `/api/workspaces/:wsId/tables/:tableId/content`          | `csv.ts`     | `csvFileRepository.findById()` + `csvFileService.writeContent()`                                     | `csv:changed`                                     |
+| POST   | `/api/workspaces/:wsId/tables`                           | `csv.ts`     | `csvFileService.create()` + optional `csvFileService.writeContent()`                                 | `csv:changed`                                     |
+| PATCH  | `/api/workspaces/:wsId/tables/:tableId/rename`           | `csv.ts`     | `csvFileRepository.findById()` + `csvFileService.rename()`                                           | `csv:changed`                                     |
+| DELETE | `/api/workspaces/:wsId/tables/:tableId`                  | `csv.ts`     | `csvFileRepository.findById()` + `csvFileService.remove()`                                           | `csv:changed`                                     |
+| PATCH  | `/api/workspaces/:wsId/tables/:tableId/move`             | `csv.ts`     | `csvFileRepository.findById()` + `csvFileService.move()`                                             | `csv:changed`                                     |
+| GET    | `/api/workspaces/:wsId/canvases`                         | `canvas.ts`  | `canvasService.findByWorkspace()`                                                                    | —                                                 |
+| GET    | `/api/workspaces/:wsId/canvases/:canvasId`               | `canvas.ts`  | `canvasService.findById()` + `canvasNodeService.findByCanvas()` + `canvasEdgeService.findByCanvas()` | —                                                 |
+| POST   | `/api/workspaces/:wsId/canvases`                         | `canvas.ts`  | `canvasService.create()`                                                                             | `canvas:changed`                                  |
+| PATCH  | `/api/workspaces/:wsId/canvases/:canvasId`               | `canvas.ts`  | `canvasService.update()`                                                                             | `canvas:changed`                                  |
+| DELETE | `/api/workspaces/:wsId/canvases/:canvasId`               | `canvas.ts`  | `canvasService.remove()`                                                                             | `canvas:changed`                                  |
+| POST   | `/api/workspaces/:wsId/canvases/:canvasId/nodes`         | `canvas.ts`  | `canvasNodeService.create()`                                                                         | `canvas:changed`                                  |
+| DELETE | `/api/workspaces/:wsId/canvases/:canvasId/nodes/:nodeId` | `canvas.ts`  | `canvasNodeService.remove()`                                                                         | `canvas:changed`                                  |
+| POST   | `/api/workspaces/:wsId/canvases/:canvasId/edges`         | `canvas.ts`  | `canvasEdgeService.create()`                                                                         | `canvas:changed`                                  |
+| DELETE | `/api/workspaces/:wsId/canvases/:canvasId/edges/:edgeId` | `canvas.ts`  | `canvasEdgeService.remove()`                                                                         | `canvas:changed`                                  |
+| POST   | `/api/workspaces/:wsId/folders`                          | `folder.ts`  | `folderService.create()`                                                                             | `folder:changed`                                  |
+| PATCH  | `/api/workspaces/:wsId/folders/:folderId/rename`         | `folder.ts`  | `folderService.rename()`                                                                             | `folder:changed` + `note:changed` + `csv:changed` |
+| DELETE | `/api/workspaces/:wsId/folders/:folderId`                | `folder.ts`  | `folderRepository.findById()` + `folderService.remove()`                                             | `folder:changed` + `note:changed` + `csv:changed` |
+| PATCH  | `/api/workspaces/:wsId/folders/:folderId/move`           | `folder.ts`  | `folderService.move()`                                                                               | `folder:changed` + `note:changed` + `csv:changed` |
 
 ### 4.2 URL 매칭 순서
 
 라우트 등록 순서가 중요한 케이스:
+
 - `/api/workspaces/:wsId/canvases/:canvasId/nodes` vs `/api/workspaces/:wsId/canvases/:canvasId` — 긴 패턴이 먼저 매칭되므로 문제 없음 (regex `^...$`가 정확 매칭)
 - Canvas/CSV 라우트는 note/search 라우트와 URL이 겹치지 않으므로 등록 순서 자유
 
@@ -628,17 +629,13 @@ export function registerCanvasRoutes(router: Router): void {
   })
 
   // DELETE /api/workspaces/:wsId/canvases/:canvasId/nodes/:nodeId
-  router.addRoute(
-    'DELETE',
-    '/api/workspaces/:wsId/canvases/:canvasId/nodes/:nodeId',
-    (params) => {
-      canvasNodeService.remove(params.nodeId)
+  router.addRoute('DELETE', '/api/workspaces/:wsId/canvases/:canvasId/nodes/:nodeId', (params) => {
+    canvasNodeService.remove(params.nodeId)
 
-      broadcastChanged('canvas:changed', params.wsId, [])
+    broadcastChanged('canvas:changed', params.wsId, [])
 
-      return { success: true }
-    }
-  )
+    return { success: true }
+  })
 
   // POST /api/workspaces/:wsId/canvases/:canvasId/edges
   router.addRoute<{
@@ -679,17 +676,13 @@ export function registerCanvasRoutes(router: Router): void {
   })
 
   // DELETE /api/workspaces/:wsId/canvases/:canvasId/edges/:edgeId
-  router.addRoute(
-    'DELETE',
-    '/api/workspaces/:wsId/canvases/:canvasId/edges/:edgeId',
-    (params) => {
-      canvasEdgeService.remove(params.edgeId)
+  router.addRoute('DELETE', '/api/workspaces/:wsId/canvases/:canvasId/edges/:edgeId', (params) => {
+    canvasEdgeService.remove(params.edgeId)
 
-      broadcastChanged('canvas:changed', params.wsId, [])
+    broadcastChanged('canvas:changed', params.wsId, [])
 
-      return { success: true }
-    }
-  )
+    return { success: true }
+  })
 }
 ```
 
@@ -813,8 +806,8 @@ import { registerWorkspaceRoutes } from './workspace'
 import { registerFolderRoutes } from './folder'
 import { registerNoteRoutes } from './note'
 import { registerSearchRoutes } from './search'
-import { registerCsvRoutes } from './csv'       // 추가
-import { registerCanvasRoutes } from './canvas'  // 추가
+import { registerCsvRoutes } from './csv' // 추가
+import { registerCanvasRoutes } from './canvas' // 추가
 
 export function registerAllRoutes(router: Router): void {
   registerWorkspaceRoutes(router)
@@ -822,8 +815,8 @@ export function registerAllRoutes(router: Router): void {
   // search를 note보다 먼저 등록 (URL 매칭 순서)
   registerSearchRoutes(router)
   registerNoteRoutes(router)
-  registerCsvRoutes(router)      // 추가
-  registerCanvasRoutes(router)   // 추가
+  registerCsvRoutes(router) // 추가
+  registerCanvasRoutes(router) // 추가
 }
 ```
 
@@ -1149,7 +1142,7 @@ canvas: {
 ```typescript
 interface CanvasAPI {
   // ... 기존 메서드들 ...
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void  // 추가
+  onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void // 추가
 }
 ```
 
@@ -1179,6 +1172,7 @@ export function useCanvasWatcher(): void {
 ```
 
 **핵심 포인트**:
+
 - Canvas broadcast는 `paths: []`로 전달되므로 `changedRelPaths` 파라미터는 사용하지 않음
 - `queryKey: ['canvas', 'detail']` — prefix 매칭으로 모든 캔버스 상세 invalidation
 - `queryKey: ['canvasNode']` — 모든 캔버스의 노드 invalidation (canvasId를 broadcast에서 전달하지 않으므로)
@@ -1199,7 +1193,7 @@ import { useCanvasWatcher } from '@entities/canvas'
 // ...
 function MainLayout(): React.JSX.Element {
   // ...
-  useCanvasWatcher()  // 추가
+  useCanvasWatcher() // 추가
   // ...
 }
 ```
@@ -1208,28 +1202,28 @@ function MainLayout(): React.JSX.Element {
 
 ## 6. MCP Tool Descriptions (AI Guide)
 
-| Tool | Description | 위험도 |
-|------|-------------|--------|
-| `list_tables` | List all CSV tables in a workspace with title, path, preview, and folder info | - |
-| `read_table` | Read the full CSV content of a table with encoding info | - |
-| `write_table` | Update CSV content. **WARNING: Replaces entire file.** Read first to avoid data loss. | 중 |
-| `create_table` | Create a new CSV table. Optionally set initial content. | - |
-| `rename_table` | Rename a CSV table (changes file name on disk) | - |
-| `delete_table` | Permanently delete a CSV table file. Cannot be undone. | 높 |
-| `move_table` | Move a CSV table to a different folder | - |
-| `list_canvases` | List all canvases in a workspace | - |
-| `read_canvas` | Read canvas with all nodes (including ref data) and edges | - |
-| `create_canvas` | Create a new canvas | - |
-| `update_canvas` | Update canvas title and/or description | - |
-| `delete_canvas` | **WARNING: Deletes canvas + ALL nodes + edges.** Cannot be undone. | 높 |
-| `add_canvas_node` | Add a node. Types: text, todo, note, schedule, csv, pdf, image | - |
-| `remove_canvas_node` | Remove a node. Connected edges auto-deleted. | 중 |
-| `add_canvas_edge` | Add an edge between two nodes | - |
-| `remove_canvas_edge` | Remove an edge | - |
-| `create_folder` | Create a new folder | - |
-| `rename_folder` | Rename a folder (changes directory name) | - |
-| `delete_folder` | **WARNING: Deletes folder + ALL contents** (notes, tables, subfolders). Cannot be undone. | 높 |
-| `move_folder` | Move a folder. Circular moves prevented. | - |
+| Tool                 | Description                                                                               | 위험도 |
+| -------------------- | ----------------------------------------------------------------------------------------- | ------ |
+| `list_tables`        | List all CSV tables in a workspace with title, path, preview, and folder info             | -      |
+| `read_table`         | Read the full CSV content of a table with encoding info                                   | -      |
+| `write_table`        | Update CSV content. **WARNING: Replaces entire file.** Read first to avoid data loss.     | 중     |
+| `create_table`       | Create a new CSV table. Optionally set initial content.                                   | -      |
+| `rename_table`       | Rename a CSV table (changes file name on disk)                                            | -      |
+| `delete_table`       | Permanently delete a CSV table file. Cannot be undone.                                    | 높     |
+| `move_table`         | Move a CSV table to a different folder                                                    | -      |
+| `list_canvases`      | List all canvases in a workspace                                                          | -      |
+| `read_canvas`        | Read canvas with all nodes (including ref data) and edges                                 | -      |
+| `create_canvas`      | Create a new canvas                                                                       | -      |
+| `update_canvas`      | Update canvas title and/or description                                                    | -      |
+| `delete_canvas`      | **WARNING: Deletes canvas + ALL nodes + edges.** Cannot be undone.                        | 높     |
+| `add_canvas_node`    | Add a node. Types: text, todo, note, schedule, csv, pdf, image                            | -      |
+| `remove_canvas_node` | Remove a node. Connected edges auto-deleted.                                              | 중     |
+| `add_canvas_edge`    | Add an edge between two nodes                                                             | -      |
+| `remove_canvas_edge` | Remove an edge                                                                            | -      |
+| `create_folder`      | Create a new folder                                                                       | -      |
+| `rename_folder`      | Rename a folder (changes directory name)                                                  | -      |
+| `delete_folder`      | **WARNING: Deletes folder + ALL contents** (notes, tables, subfolders). Cannot be undone. | 높     |
+| `move_folder`        | Move a folder. Circular moves prevented.                                                  | -      |
 
 ---
 
@@ -1237,46 +1231,46 @@ function MainLayout(): React.JSX.Element {
 
 ### 7.1 채널별 Broadcast 매핑
 
-| 작업 | `folder:changed` | `note:changed` | `csv:changed` | `canvas:changed` |
-|------|:-:|:-:|:-:|:-:|
-| CSV write/create/rename/delete/move | - | - | paths | - |
-| Canvas create/update/delete/node/edge | - | - | - | `[]` |
-| Folder create | paths | - | - | - |
-| Folder rename/move/delete | paths | `[]` | `[]` | - |
+| 작업                                  | `folder:changed` | `note:changed` | `csv:changed` | `canvas:changed` |
+| ------------------------------------- | :--------------: | :------------: | :-----------: | :--------------: |
+| CSV write/create/rename/delete/move   |        -         |       -        |     paths     |        -         |
+| Canvas create/update/delete/node/edge |        -         |       -        |       -       |       `[]`       |
+| Folder create                         |      paths       |       -        |       -       |        -         |
+| Folder rename/move/delete             |      paths       |      `[]`      |     `[]`      |        -         |
 
 ### 7.2 paths 값 상세
 
-| 작업 | paths 값 | 이유 |
-|------|---------|------|
-| CSV write | `[csv.relativePath]` | 열린 탭의 content refetch |
-| CSV rename | `[oldRelPath, newRelPath]` | 양쪽 경로 캐시 갱신 |
-| CSV move | `[oldRelPath, newRelPath]` | 양쪽 경로 캐시 갱신 |
-| CSV create | `[result.relativePath]` | 목록 + 새 항목 |
-| CSV delete | `[csv.relativePath]` | 삭제 항목 캐시 정리 |
-| Canvas 전체 | `[]` | relativePath 없음 |
-| Folder create | `[result.relativePath]` | 트리 갱신 |
-| Folder rename/move | `[result.relativePath]` | 트리 갱신 |
-| Folder delete | `[folder.relativePath]` | 트리 갱신 |
-| Folder → note:changed/csv:changed | `[]` | 목록 전체 invalidation만 (경로 특정 불가) |
+| 작업                              | paths 값                   | 이유                                      |
+| --------------------------------- | -------------------------- | ----------------------------------------- |
+| CSV write                         | `[csv.relativePath]`       | 열린 탭의 content refetch                 |
+| CSV rename                        | `[oldRelPath, newRelPath]` | 양쪽 경로 캐시 갱신                       |
+| CSV move                          | `[oldRelPath, newRelPath]` | 양쪽 경로 캐시 갱신                       |
+| CSV create                        | `[result.relativePath]`    | 목록 + 새 항목                            |
+| CSV delete                        | `[csv.relativePath]`       | 삭제 항목 캐시 정리                       |
+| Canvas 전체                       | `[]`                       | relativePath 없음                         |
+| Folder create                     | `[result.relativePath]`    | 트리 갱신                                 |
+| Folder rename/move                | `[result.relativePath]`    | 트리 갱신                                 |
+| Folder delete                     | `[folder.relativePath]`    | 트리 갱신                                 |
+| Folder → note:changed/csv:changed | `[]`                       | 목록 전체 invalidation만 (경로 특정 불가) |
 
 ---
 
 ## 8. Implementation Order
 
-| Step | File(s) | Description | Dependencies |
-|------|---------|-------------|-------------|
-| 1 | `src/preload/index.ts` | canvas.onChanged 추가 | - |
-| 2 | `src/preload/index.d.ts` | CanvasAPI 타입에 onChanged 추가 | Step 1 |
-| 3 | `src/renderer/.../use-canvas-watcher.ts` | Canvas watcher 신규 생성 | Step 2 |
-| 4 | `src/renderer/.../canvas/index.ts` | useCanvasWatcher export 추가 | Step 3 |
-| 5 | `src/renderer/.../MainLayout.tsx` | useCanvasWatcher() 호출 추가 | Step 4 |
-| 6 | `src/main/mcp-api/routes/csv.ts` | 7개 CSV 엔드포인트 (신규) | - |
-| 7 | `src/main/mcp-api/routes/canvas.ts` | 9개 Canvas 엔드포인트 (신규) | - |
-| 8 | `src/main/mcp-api/routes/folder.ts` | 4개 Folder 엔드포인트 추가 | - |
-| 9 | `src/main/mcp-api/routes/index.ts` | registerCsvRoutes, registerCanvasRoutes 등록 | Steps 6-8 |
-| 10 | `src/mcp-server/tool-definitions.ts` | 20개 MCP Tool 추가 | Steps 6-9 |
-| 11 | MCP 서버 재빌드 | `npm run build:mcp` | Step 10 |
-| 12 | 수동 테스트 | Claude Code에서 새 도구 호출 검증 | Steps 1-11 |
+| Step | File(s)                                  | Description                                  | Dependencies |
+| ---- | ---------------------------------------- | -------------------------------------------- | ------------ |
+| 1    | `src/preload/index.ts`                   | canvas.onChanged 추가                        | -            |
+| 2    | `src/preload/index.d.ts`                 | CanvasAPI 타입에 onChanged 추가              | Step 1       |
+| 3    | `src/renderer/.../use-canvas-watcher.ts` | Canvas watcher 신규 생성                     | Step 2       |
+| 4    | `src/renderer/.../canvas/index.ts`       | useCanvasWatcher export 추가                 | Step 3       |
+| 5    | `src/renderer/.../MainLayout.tsx`        | useCanvasWatcher() 호출 추가                 | Step 4       |
+| 6    | `src/main/mcp-api/routes/csv.ts`         | 7개 CSV 엔드포인트 (신규)                    | -            |
+| 7    | `src/main/mcp-api/routes/canvas.ts`      | 9개 Canvas 엔드포인트 (신규)                 | -            |
+| 8    | `src/main/mcp-api/routes/folder.ts`      | 4개 Folder 엔드포인트 추가                   | -            |
+| 9    | `src/main/mcp-api/routes/index.ts`       | registerCsvRoutes, registerCanvasRoutes 등록 | Steps 6-8    |
+| 10   | `src/mcp-server/tool-definitions.ts`     | 20개 MCP Tool 추가                           | Steps 6-9    |
+| 11   | MCP 서버 재빌드                          | `npm run build:mcp`                          | Step 10      |
+| 12   | 수동 테스트                              | Claude Code에서 새 도구 호출 검증            | Steps 1-11   |
 
 ---
 
@@ -1284,23 +1278,23 @@ function MainLayout(): React.JSX.Element {
 
 ### 9.1 New Files (3)
 
-| File | Description |
-|------|-------------|
-| `src/main/mcp-api/routes/csv.ts` | 7개 CSV HTTP API 엔드포인트 |
-| `src/main/mcp-api/routes/canvas.ts` | 9개 Canvas HTTP API 엔드포인트 |
-| `src/renderer/src/entities/canvas/model/use-canvas-watcher.ts` | Canvas push 이벤트 watcher |
+| File                                                           | Description                    |
+| -------------------------------------------------------------- | ------------------------------ |
+| `src/main/mcp-api/routes/csv.ts`                               | 7개 CSV HTTP API 엔드포인트    |
+| `src/main/mcp-api/routes/canvas.ts`                            | 9개 Canvas HTTP API 엔드포인트 |
+| `src/renderer/src/entities/canvas/model/use-canvas-watcher.ts` | Canvas push 이벤트 watcher     |
 
 ### 9.2 Modified Files (6)
 
-| File | Changes |
-|------|---------|
-| `src/main/mcp-api/routes/folder.ts` | POST, PATCH(rename/move), DELETE 4개 엔드포인트 추가 + folderService/broadcastChanged import |
-| `src/main/mcp-api/routes/index.ts` | `registerCsvRoutes`, `registerCanvasRoutes` import + 호출 추가 |
-| `src/mcp-server/tool-definitions.ts` | tools 배열에 20개 Tool 정의 추가 |
-| `src/preload/index.ts` | canvas 객체에 `onChanged: createOnChangedListener('canvas:changed')` 추가 |
-| `src/preload/index.d.ts` | CanvasAPI 인터페이스에 `onChanged` 타입 추가 |
-| `src/renderer/src/entities/canvas/index.ts` | `useCanvasWatcher` export 추가 |
-| `src/renderer/src/app/layout/MainLayout.tsx` | `useCanvasWatcher` import + 호출 추가 |
+| File                                         | Changes                                                                                      |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `src/main/mcp-api/routes/folder.ts`          | POST, PATCH(rename/move), DELETE 4개 엔드포인트 추가 + folderService/broadcastChanged import |
+| `src/main/mcp-api/routes/index.ts`           | `registerCsvRoutes`, `registerCanvasRoutes` import + 호출 추가                               |
+| `src/mcp-server/tool-definitions.ts`         | tools 배열에 20개 Tool 정의 추가                                                             |
+| `src/preload/index.ts`                       | canvas 객체에 `onChanged: createOnChangedListener('canvas:changed')` 추가                    |
+| `src/preload/index.d.ts`                     | CanvasAPI 인터페이스에 `onChanged` 타입 추가                                                 |
+| `src/renderer/src/entities/canvas/index.ts`  | `useCanvasWatcher` export 추가                                                               |
+| `src/renderer/src/app/layout/MainLayout.tsx` | `useCanvasWatcher` import + 호출 추가                                                        |
 
 ### 9.3 변경 파일 통계
 

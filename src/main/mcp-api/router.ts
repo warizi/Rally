@@ -1,6 +1,8 @@
 import http from 'http'
 import { parseBody } from './lib/body-parser'
 import { NotFoundError, ValidationError, ConflictError, PayloadTooLargeError } from '../lib/errors'
+import { workspaceWatcher } from '../services/workspace-watcher'
+import { workspaceRepository } from '../repositories/workspace'
 
 type RouteParams = Record<string, string>
 type RouteHandler = (
@@ -90,18 +92,23 @@ export function createRouter(): RouterInstance {
         const body = method === 'GET' ? null : await parseBody(req)
         const result = await Promise.resolve(route.handler(params, body, query))
 
+        const wsId = workspaceWatcher.getActiveWorkspaceId()
+        const wsName = wsId ? (workspaceRepository.findById(wsId)?.name ?? null) : null
+        const response = { _workspace: { id: wsId, name: wsName }, ...(result as object) }
         res.writeHead(200, { 'Content-Type': 'application/json' })
-        res.end(JSON.stringify(result))
+        res.end(JSON.stringify(response))
       } catch (error) {
         if (error instanceof Error) {
           const status = mapErrorToStatus(error)
           const details = (error as unknown as Record<string, unknown>).details
           res.writeHead(status, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({
-            error: error.message,
-            errorType: mapErrorToType(error),
-            ...(details ? { details } : {})
-          }))
+          res.end(
+            JSON.stringify({
+              error: error.message,
+              errorType: mapErrorToType(error),
+              ...(details ? { details } : {})
+            })
+          )
         } else {
           res.writeHead(500, { 'Content-Type': 'application/json' })
           res.end(JSON.stringify({ error: String(error), errorType: 'UnknownError' }))

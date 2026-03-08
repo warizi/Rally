@@ -2,13 +2,7 @@ import { useState } from 'react'
 import { CheckIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
 import { applyTheme, type Theme } from '@/shared/lib/theme'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue
-} from '@/shared/ui/select'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Separator } from '@/shared/ui/separator'
 import { useDayViewTimeSettings } from '@/features/schedule/manage-schedule/model/use-day-view-time-settings'
 
@@ -148,22 +142,13 @@ function ThemeCard({
           {/* 컨텐츠 영역 */}
           <div className="flex-1 p-2 space-y-1.5">
             <div
-              className={cn(
-                'h-1.5 w-full rounded-full',
-                isDark ? 'bg-zinc-700' : 'bg-zinc-200'
-              )}
+              className={cn('h-1.5 w-full rounded-full', isDark ? 'bg-zinc-700' : 'bg-zinc-200')}
             />
             <div
-              className={cn(
-                'h-1.5 w-3/4 rounded-full',
-                isDark ? 'bg-zinc-700' : 'bg-zinc-200'
-              )}
+              className={cn('h-1.5 w-3/4 rounded-full', isDark ? 'bg-zinc-700' : 'bg-zinc-200')}
             />
             <div
-              className={cn(
-                'h-1.5 w-5/6 rounded-full',
-                isDark ? 'bg-zinc-700' : 'bg-zinc-200'
-              )}
+              className={cn('h-1.5 w-5/6 rounded-full', isDark ? 'bg-zinc-700' : 'bg-zinc-200')}
             />
           </div>
         </div>

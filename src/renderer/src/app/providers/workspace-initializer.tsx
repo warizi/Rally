@@ -17,13 +17,15 @@ export function WorkspaceInitializer(): null {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  // Step 2: 로드 완료 후 유효성 검사
+  // Step 2: 로드 완료 후 유효성 검사 + main process에 활성 워크스페이스 알림
   useEffect(() => {
     if (!isInitialized || workspaces.length === 0) return
     const isValid = workspaces.some((w) => w.id === currentWorkspaceId)
     if (!isValid) {
       setCurrentWorkspaceId(workspaces[0].id)
     }
+    const activeId = isValid ? currentWorkspaceId! : workspaces[0].id
+    window.api.workspace.activate(activeId).catch(console.error)
   }, [workspaces, currentWorkspaceId, isInitialized, setCurrentWorkspaceId])
 
   return null

@@ -18,14 +18,7 @@ Plan 문서 기반 상세 설계서. Rally의 각 엔티티(note, todo, image, p
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 import { workspaces } from './workspace'
 
-export type TaggableEntityType =
-  | 'note'
-  | 'todo'
-  | 'image'
-  | 'pdf'
-  | 'csv'
-  | 'canvas'
-  | 'folder'
+export type TaggableEntityType = 'note' | 'todo' | 'image' | 'pdf' | 'csv' | 'canvas' | 'folder'
 
 export const TAGGABLE_ENTITY_TYPES: TaggableEntityType[] = [
   'canvas',
@@ -55,12 +48,12 @@ export const tags = sqliteTable(
 
 **설계 근거**:
 
-| 항목 | 설명 |
-|------|------|
-| `workspaceId` FK | workspace 삭제 시 cascade + workspace 단위 태그 관리 |
-| `unique(workspaceId, name)` | 같은 workspace 내 태그 이름 중복 방지 (anonymous `unique()` — 프로젝트 컨벤션) |
-| `description` nullable | 의도적 선택 — 다른 엔티티는 `.notNull().default('')`를 쓰지만, tag description은 대부분 미사용이므로 nullable이 더 적합 |
-| `createdAt` only | tag는 수정 시 별도 updatedAt 불필요 (name/color만 변경, 이력 추적 불필요) |
+| 항목                        | 설명                                                                                                                    |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| `workspaceId` FK            | workspace 삭제 시 cascade + workspace 단위 태그 관리                                                                    |
+| `unique(workspaceId, name)` | 같은 workspace 내 태그 이름 중복 방지 (anonymous `unique()` — 프로젝트 컨벤션)                                          |
+| `description` nullable      | 의도적 선택 — 다른 엔티티는 `.notNull().default('')`를 쓰지만, tag description은 대부분 미사용이므로 nullable이 더 적합 |
+| `createdAt` only            | tag는 수정 시 별도 updatedAt 불필요 (name/color만 변경, 이력 추적 불필요)                                               |
 
 ### 2.2 item_tags 테이블
 
@@ -91,15 +84,15 @@ export const itemTags = sqliteTable(
 
 **설계 근거**:
 
-| 항목 | 설명 |
-|------|------|
-| `id` PK | nanoid PK (entity-link는 composite PK 사용하지만, tag는 개별 ID가 프론트엔드 리스트 key로 유용) |
-| `unique(itemType, tagId, itemId)` | 동일 아이템에 같은 태그 중복 할당 방지, `onConflictDoNothing` 활용 (anonymous `unique()`) |
-| `tagId` FK cascade | 태그 삭제 시 연결 자동 정리 |
-| `itemId` FK 없음 | 다양한 테이블 참조이므로 로직으로 처리 (entity-link 패턴 동일) |
-| `createdAt` only | junction 테이블 — attach/detach만 수행, update 없음 |
-| `idx_item_tags_item` | 아이템별 태그 조회 (detail 페이지 진입 시) |
-| `idx_item_tags_tag` | 태그별 아이템 조회 (list filter 시) |
+| 항목                              | 설명                                                                                            |
+| --------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `id` PK                           | nanoid PK (entity-link는 composite PK 사용하지만, tag는 개별 ID가 프론트엔드 리스트 key로 유용) |
+| `unique(itemType, tagId, itemId)` | 동일 아이템에 같은 태그 중복 할당 방지, `onConflictDoNothing` 활용 (anonymous `unique()`)       |
+| `tagId` FK cascade                | 태그 삭제 시 연결 자동 정리                                                                     |
+| `itemId` FK 없음                  | 다양한 테이블 참조이므로 로직으로 처리 (entity-link 패턴 동일)                                  |
+| `createdAt` only                  | junction 테이블 — attach/detach만 수행, update 없음                                             |
+| `idx_item_tags_item`              | 아이템별 태그 조회 (detail 페이지 진입 시)                                                      |
+| `idx_item_tags_tag`               | 태그별 아이템 조회 (list filter 시)                                                             |
 
 ### 2.3 스키마 등록
 
@@ -195,11 +188,7 @@ export const itemTagRepository = {
   detach(itemType: string, tagId: string, itemId: string): void {
     db.delete(itemTags)
       .where(
-        and(
-          eq(itemTags.itemType, itemType),
-          eq(itemTags.tagId, tagId),
-          eq(itemTags.itemId, itemId)
-        )
+        and(eq(itemTags.itemType, itemType), eq(itemTags.tagId, tagId), eq(itemTags.itemId, itemId))
       )
       .run()
   },
@@ -532,10 +521,7 @@ interface ItemTagAPI {
     tagId: string,
     itemId: string
   ) => Promise<IpcResponse<void>>
-  getItemIdsByTag: (
-    tagId: string,
-    itemType: TaggableEntityType
-  ) => Promise<IpcResponse<string[]>>
+  getItemIdsByTag: (tagId: string, itemType: TaggableEntityType) => Promise<IpcResponse<string[]>>
 }
 
 // API 인터페이스에 추가
@@ -557,7 +543,7 @@ import { itemTagService } from './item-tag'
 // ── noteService.remove(workspaceId, noteId) 내부 ──
 // 기존: noteImageService.deleteAllImages → fs.unlinkSync → entityLink → canvasNode → DB delete
 entityLinkService.removeAllLinks('note', noteId)
-itemTagService.removeByItem('note', noteId)           // ← 추가
+itemTagService.removeByItem('note', noteId) // ← 추가
 canvasNodeRepository.deleteByRef('note', noteId)
 noteRepository.delete(noteId)
 
@@ -567,7 +553,8 @@ noteRepository.delete(noteId)
 const subtodoIds = todoRepository.findAllDescendantIds(todoId)
 reminderService.removeByEntities('todo', [todoId, ...subtodoIds])
 entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])
-for (const tid of [todoId, ...subtodoIds]) {           // ← 추가 (루프 — subtodo 수가 적으므로 충분)
+for (const tid of [todoId, ...subtodoIds]) {
+  // ← 추가 (루프 — subtodo 수가 적으므로 충분)
   itemTagService.removeByItem('todo', tid)
 }
 canvasNodeRepository.deleteByRef('todo', todoId)
@@ -578,33 +565,33 @@ todoRepository.delete(todoId)
 
 // ── imageFileService.remove(workspaceId, imageId) 내부 ──
 entityLinkService.removeAllLinks('image', imageId)
-itemTagService.removeByItem('image', imageId)          // ← 추가
+itemTagService.removeByItem('image', imageId) // ← 추가
 canvasNodeRepository.deleteByRef('image', imageId)
 imageFileRepository.delete(imageId)
 
 // ── pdfFileService.remove(workspaceId, pdfId) 내부 ──
 entityLinkService.removeAllLinks('pdf', pdfId)
-itemTagService.removeByItem('pdf', pdfId)              // ← 추가
+itemTagService.removeByItem('pdf', pdfId) // ← 추가
 canvasNodeRepository.deleteByRef('pdf', pdfId)
 pdfFileRepository.delete(pdfId)
 
 // ── csvFileService.remove(workspaceId, csvId) 내부 ──
 entityLinkService.removeAllLinks('csv', csvId)
-itemTagService.removeByItem('csv', csvId)              // ← 추가
+itemTagService.removeByItem('csv', csvId) // ← 추가
 canvasNodeRepository.deleteByRef('csv', csvId)
 csvFileRepository.delete(csvId)
 
 // ── canvasService.remove(canvasId) 내부 ──
 // 주의: 현재 entityLink cleanup이 없음 (Phase 2 TODO 상태)
 // entityLinkService.removeAllLinks('canvas', canvasId)  // TODO — 기존 누락
-itemTagService.removeByItem('canvas', canvasId)        // ← 추가
+itemTagService.removeByItem('canvas', canvasId) // ← 추가
 canvasRepository.delete(canvasId)
 
 // ── folderService.remove(workspaceId, folderId) 내부 ──
 // 주의: folder는 bulkDeleteByPrefix로 하위 폴더 cascade 삭제
 // 하위 note는 folderId가 SET NULL되며 DB에 남음 (물리 파일만 삭제)
 // → 하위 folder/note의 item_tag는 정리되지 않음 (orphan 허용 — entity-link과 동일 패턴)
-itemTagService.removeByItem('folder', folderId)        // ← 추가 (대상 folder 본인만 정리)
+itemTagService.removeByItem('folder', folderId) // ← 추가 (대상 folder 본인만 정리)
 fs.rmSync(absPath, { recursive: true, force: true })
 folderRepository.bulkDeleteByPrefix(workspaceId, folder.relativePath)
 ```
@@ -641,14 +628,7 @@ src/renderer/src/
 **파일**: `src/renderer/src/entities/tag/model/types.ts`
 
 ```typescript
-export type TaggableEntityType =
-  | 'note'
-  | 'todo'
-  | 'image'
-  | 'pdf'
-  | 'csv'
-  | 'canvas'
-  | 'folder'
+export type TaggableEntityType = 'note' | 'todo' | 'image' | 'pdf' | 'csv' | 'canvas' | 'folder'
 
 export interface TagItem {
   id: string
@@ -840,10 +820,7 @@ interface TagBadgeProps {
 export function TagBadge({ tag, onRemove, className }: TagBadgeProps) {
   return (
     <span
-      className={cn(
-        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs',
-        className
-      )}
+      className={cn('inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs', className)}
       style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
     >
       <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
@@ -894,9 +871,18 @@ export { TagBadge } from './ui/TagBadge'
 // 12개 프리셋 색상 그리드 (grid-cols-6)
 // Check 아이콘으로 선택 피드백
 const PRESET_COLORS = [
-  '#a3c4f5', '#93c5fd', '#6ee7b7', '#86efac',
-  '#fde68a', '#fcd34d', '#fca5a5', '#f9a8d4',
-  '#c4b5fd', '#a78bfa', '#94a3b8', '#78716c'
+  '#a3c4f5',
+  '#93c5fd',
+  '#6ee7b7',
+  '#86efac',
+  '#fde68a',
+  '#fcd34d',
+  '#fca5a5',
+  '#f9a8d4',
+  '#c4b5fd',
+  '#a78bfa',
+  '#94a3b8',
+  '#78716c'
 ]
 
 interface Props {
@@ -994,11 +980,13 @@ export { TagList } from './ui/TagList'
 // TabHeader에 footer prop 추가 (shared/ui/tab-header.tsx)
 interface TabHeaderProps {
   // ...기존 props
-  footer?: React.ReactNode  // ← 추가
+  footer?: React.ReactNode // ← 추가
 }
 
 // editable/non-editable 모드 모두에서 렌더
-{footer && <div className="mt-2">{footer}</div>}
+{
+  footer && <div className="mt-2">{footer}</div>
+}
 ```
 
 **통합 방식 A — Header 컴포넌트 위임 페이지**
@@ -1016,12 +1004,12 @@ interface TabHeaderProps {
 
 적용 대상:
 
-| Header 컴포넌트 | 파일 | itemType |
-|-----------------|------|----------|
-| `NoteHeader` | `features/note/edit-note/ui/NoteHeader.tsx` | `'note'` |
-| `ImageHeader` | `features/image/view-image/ui/ImageHeader.tsx` | `'image'` |
-| `PdfHeader` | `features/pdf/view-pdf/ui/PdfHeader.tsx` | `'pdf'` |
-| `CsvHeader` | `features/csv/edit-csv/ui/CsvHeader.tsx` | `'csv'` |
+| Header 컴포넌트 | 파일                                           | itemType  |
+| --------------- | ---------------------------------------------- | --------- |
+| `NoteHeader`    | `features/note/edit-note/ui/NoteHeader.tsx`    | `'note'`  |
+| `ImageHeader`   | `features/image/view-image/ui/ImageHeader.tsx` | `'image'` |
+| `PdfHeader`     | `features/pdf/view-pdf/ui/PdfHeader.tsx`       | `'pdf'`   |
+| `CsvHeader`     | `features/csv/edit-csv/ui/CsvHeader.tsx`       | `'csv'`   |
 
 **통합 방식 B — TabHeader 직접 사용 페이지**
 
@@ -1037,9 +1025,9 @@ interface TabHeaderProps {
 
 적용 대상:
 
-| 페이지 | 파일 | itemType |
-|--------|------|----------|
-| `TodoDetailPage` | `pages/todo-detail/ui/TodoDetailPage.tsx` | `'todo'` |
+| 페이지             | 파일                                          | itemType   |
+| ------------------ | --------------------------------------------- | ---------- |
+| `TodoDetailPage`   | `pages/todo-detail/ui/TodoDetailPage.tsx`     | `'todo'`   |
 | `CanvasDetailPage` | `pages/canvas-detail/ui/CanvasDetailPage.tsx` | `'canvas'` |
 
 **통합 방식 C — Folder (FolderTree context menu)** (향후 구현)
@@ -1051,6 +1039,7 @@ interface TabHeaderProps {
 기존 `tabSearchParams` 패턴을 따라 각 list 화면에 태그 필터 추가.
 
 **필터 흐름**:
+
 1. list 상단에 태그 필터 드롭다운 (workspace 태그 목록 — `useTagsByWorkspace`)
 2. 선택 시 `navigateTab(tabId, { searchParams: { tagId } })` — 탭 전환 시 필터 유지
 3. `useItemIdsByTag(tagId, itemType)` → 해당 태그의 아이템 ID 목록 조회
@@ -1062,16 +1051,16 @@ interface TabHeaderProps {
 
 ## 5. 구현 순서
 
-| 순서 | 작업 | 파일 |
-|------|------|------|
-| 1 | DB Schema | `schema/tag.ts`, `schema/item-tag.ts`, `schema/index.ts` + `db:generate` + `db:migrate` |
-| 2 | Repository | `repositories/tag.ts`, `repositories/item-tag.ts` |
-| 3 | Service + 기존 연동 | `services/tag.ts`, `services/item-tag.ts` + 7개 기존 서비스 remove 수정 |
-| 4 | IPC + Preload | `ipc/tag.ts`, `ipc/item-tag.ts`, `main/index.ts`, `preload/index.ts`, `preload/index.d.ts` |
-| 5 | entities/tag | `entities/tag/model/types.ts`, `queries.ts`, `ui/TagBadge.tsx`, `index.ts` |
-| 6 | features/tag | `TagList.tsx`, `TagCreateDialog.tsx`, `TagUpdateDialog.tsx`, `TagPicker.tsx` |
-| 7 | 각 기능 통합 | 방식 A: 4개 Header 수정, 방식 B: 2개 Page 수정, 방식 C: FolderTree, 방식 D: CreateTodoDialog |
-| 8 | List Filter | `getItemIdsByTag` IPC + 각 list 페이지 필터 UI |
+| 순서 | 작업                | 파일                                                                                         |
+| ---- | ------------------- | -------------------------------------------------------------------------------------------- |
+| 1    | DB Schema           | `schema/tag.ts`, `schema/item-tag.ts`, `schema/index.ts` + `db:generate` + `db:migrate`      |
+| 2    | Repository          | `repositories/tag.ts`, `repositories/item-tag.ts`                                            |
+| 3    | Service + 기존 연동 | `services/tag.ts`, `services/item-tag.ts` + 7개 기존 서비스 remove 수정                      |
+| 4    | IPC + Preload       | `ipc/tag.ts`, `ipc/item-tag.ts`, `main/index.ts`, `preload/index.ts`, `preload/index.d.ts`   |
+| 5    | entities/tag        | `entities/tag/model/types.ts`, `queries.ts`, `ui/TagBadge.tsx`, `index.ts`                   |
+| 6    | features/tag        | `TagList.tsx`, `TagCreateDialog.tsx`, `TagUpdateDialog.tsx`, `TagPicker.tsx`                 |
+| 7    | 각 기능 통합        | 방식 A: 4개 Header 수정, 방식 B: 2개 Page 수정, 방식 C: FolderTree, 방식 D: CreateTodoDialog |
+| 8    | List Filter         | `getItemIdsByTag` IPC + 각 list 페이지 필터 UI                                               |
 
 ---
 

@@ -1,14 +1,7 @@
 import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 import { workspaces } from './workspace'
 
-export type TaggableEntityType =
-  | 'note'
-  | 'todo'
-  | 'image'
-  | 'pdf'
-  | 'csv'
-  | 'canvas'
-  | 'folder'
+export type TaggableEntityType = 'note' | 'todo' | 'image' | 'pdf' | 'csv' | 'canvas' | 'folder'
 
 export const TAGGABLE_ENTITY_TYPES: TaggableEntityType[] = [
   'canvas',

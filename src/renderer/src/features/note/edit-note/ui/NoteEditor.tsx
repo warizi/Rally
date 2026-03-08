@@ -68,10 +68,7 @@ function expandMarkdown(md: string): string {
   return result.join('\n')
 }
 
-async function saveDroppedFile(
-  workspaceId: string,
-  file: File
-): Promise<string | null> {
+async function saveDroppedFile(workspaceId: string, file: File): Promise<string | null> {
   const filePath = window.electron.webUtils.getPathForFile(file)
   if (filePath) {
     const res = await window.api.noteImage.saveFromPath(workspaceId, filePath)
@@ -125,11 +122,7 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
       .use(history)
       .use(listener)
       .use(upload)
-      .use(
-        $view(imageSchema.node, (_ctx) =>
-          createNoteImageNodeViewFactory(workspaceId)
-        )
-      )
+      .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
   )
 
   // DnD: 드롭 시 이미지 삽입
@@ -186,10 +179,7 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
       <div ref={editorRef} className="flex-1">
         <Milkdown />
       </div>
-      <div
-        className="h-[300px] shrink-0 cursor-text"
-        onClick={handleBottomClick}
-      />
+      <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
     </div>
   )
 }
@@ -227,7 +217,11 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
   return (
     <div className="h-full">
       <MilkdownProvider key={editorKey}>
-        <MilkdownEditor workspaceId={workspaceId} initialContent={contentToMount} onSave={handleSave} />
+        <MilkdownEditor
+          workspaceId={workspaceId}
+          initialContent={contentToMount}
+          onSave={handleSave}
+        />
       </MilkdownProvider>
     </div>
   )

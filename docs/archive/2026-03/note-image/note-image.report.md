@@ -15,15 +15,15 @@ The **Note Image** feature is **complete and fully functional**. All design spec
 
 ### Key Metrics
 
-| Metric | Value | Status |
-|--------|-------|--------|
-| Design Items | 47 | ✅ 100% Matched |
-| Match Rate | 100% | ✅ Complete |
-| Code Files Modified/Created | 9 | ✅ All implemented |
-| Implementation Iterations | 1 | ✅ No rework needed |
-| Added Features (not in design) | 12 | ✅ Enhancements |
-| Intentional Deviations | 3 | ✅ Platform fixes |
-| Security Issues | 0 | ✅ No gaps |
+| Metric                         | Value | Status              |
+| ------------------------------ | ----- | ------------------- |
+| Design Items                   | 47    | ✅ 100% Matched     |
+| Match Rate                     | 100%  | ✅ Complete         |
+| Code Files Modified/Created    | 9     | ✅ All implemented  |
+| Implementation Iterations      | 1     | ✅ No rework needed |
+| Added Features (not in design) | 12    | ✅ Enhancements     |
+| Intentional Deviations         | 3     | ✅ Platform fixes   |
+| Security Issues                | 0     | ✅ No gaps          |
 
 ---
 
@@ -114,15 +114,15 @@ Overall Match Rate: 100% (all design items accounted for)
 
 **File**: `src/main/services/note-image.ts`
 
-| Method | Purpose | Status |
-|--------|---------|--------|
-| `saveFromPath(workspaceId, sourcePath)` | DnD file save via file path | ✅ Implemented |
-| `saveFromBuffer(workspaceId, buffer, ext)` | Paste image save via ArrayBuffer | ✅ Implemented |
-| `readImage(workspaceId, relativePath)` | Read image for blob URL rendering | ✅ Implemented |
-| `extractImagePaths(markdown)` | Extract `.images/` refs from markdown | ✅ Added |
-| `deleteImage(workspaceId, relativePath)` | Delete single image file | ✅ Added |
-| `cleanupRemovedImages(workspaceId, old, new)` | Auto-delete removed images on save | ✅ Added |
-| `deleteAllImages(workspaceId, content)` | Bulk delete on note deletion | ✅ Added |
+| Method                                        | Purpose                               | Status         |
+| --------------------------------------------- | ------------------------------------- | -------------- |
+| `saveFromPath(workspaceId, sourcePath)`       | DnD file save via file path           | ✅ Implemented |
+| `saveFromBuffer(workspaceId, buffer, ext)`    | Paste image save via ArrayBuffer      | ✅ Implemented |
+| `readImage(workspaceId, relativePath)`        | Read image for blob URL rendering     | ✅ Implemented |
+| `extractImagePaths(markdown)`                 | Extract `.images/` refs from markdown | ✅ Added       |
+| `deleteImage(workspaceId, relativePath)`      | Delete single image file              | ✅ Added       |
+| `cleanupRemovedImages(workspaceId, old, new)` | Auto-delete removed images on save    | ✅ Added       |
+| `deleteAllImages(workspaceId, content)`       | Bulk delete on note deletion          | ✅ Added       |
 
 **Design Match**: 6/6 core methods matched. 4 additional cleanup methods added for auto garbage collection.
 
@@ -130,11 +130,11 @@ Overall Match Rate: 100% (all design items accounted for)
 
 **File**: `src/main/ipc/note-image.ts`
 
-| Channel | Handler | Status |
-|---------|---------|--------|
-| `noteImage:saveFromPath` | `noteImageService.saveFromPath()` | ✅ Implemented |
+| Channel                    | Handler                             | Status         |
+| -------------------------- | ----------------------------------- | -------------- |
+| `noteImage:saveFromPath`   | `noteImageService.saveFromPath()`   | ✅ Implemented |
 | `noteImage:saveFromBuffer` | `noteImageService.saveFromBuffer()` | ✅ Implemented |
-| `noteImage:readImage` | `noteImageService.readImage()` | ✅ Implemented |
+| `noteImage:readImage`      | `noteImageService.readImage()`      | ✅ Implemented |
 
 **Design Match**: 3/3 handlers matched exactly.
 
@@ -144,11 +144,11 @@ Overall Match Rate: 100% (all design items accounted for)
 
 `.images/` folder completely isolated from image entity tracking:
 
-| Location | Filter Logic | Status |
-|----------|--------------|--------|
-| `handleEvents` (line 178-181) | `!rel.startsWith('.images/') && !rel.includes('/.images/')` | ✅ Implemented |
-| `applyEvents` imageDeletes (line 615-620) | Same filter on delete event collection | ✅ Implemented |
-| `applyEvents` imageCreates (line 621-626) | Same filter on create event collection | ✅ Implemented |
+| Location                                  | Filter Logic                                                | Status         |
+| ----------------------------------------- | ----------------------------------------------------------- | -------------- |
+| `handleEvents` (line 178-181)             | `!rel.startsWith('.images/') && !rel.includes('/.images/')` | ✅ Implemented |
+| `applyEvents` imageDeletes (line 615-620) | Same filter on delete event collection                      | ✅ Implemented |
+| `applyEvents` imageCreates (line 621-626) | Same filter on create event collection                      | ✅ Implemented |
 
 **Design Match**: 3/3 filter locations matched exactly.
 
@@ -156,13 +156,13 @@ Overall Match Rate: 100% (all design items accounted for)
 
 **Files**: `src/preload/index.ts` + `src/preload/index.d.ts`
 
-| Component | Implementation | Status |
-|-----------|-----------------|--------|
-| `noteImage.saveFromPath` | IPC invoke wrapper | ✅ Matched |
-| `noteImage.saveFromBuffer` | IPC invoke wrapper | ✅ Matched |
-| `noteImage.readImage` | IPC invoke wrapper | ✅ Matched |
-| `NoteImageAPI` interface | Type definition with 3 methods | ✅ Matched |
-| `API.noteImage` property | Added to main API interface | ✅ Matched |
+| Component                  | Implementation                 | Status     |
+| -------------------------- | ------------------------------ | ---------- |
+| `noteImage.saveFromPath`   | IPC invoke wrapper             | ✅ Matched |
+| `noteImage.saveFromBuffer` | IPC invoke wrapper             | ✅ Matched |
+| `noteImage.readImage`      | IPC invoke wrapper             | ✅ Matched |
+| `NoteImageAPI` interface   | Type definition with 3 methods | ✅ Matched |
+| `API.noteImage` property   | Added to main API interface    | ✅ Matched |
 
 **Design Match**: 5/5 preload items matched exactly.
 
@@ -172,16 +172,16 @@ Overall Match Rate: 100% (all design items accounted for)
 
 Vanilla DOM NodeView for blob URL rendering:
 
-| Feature | Implementation | Status |
-|---------|-----------------|--------|
-| `createNoteImageNodeViewFactory()` | Factory pattern with workspaceId closure | ✅ Matched |
-| `NoteImageNodeView` class | ProseMirror NodeView interface | ✅ Matched |
-| `.images/` detection | Path prefix check with conditional rendering | ✅ Matched |
-| `loadBlobUrl()` async loading | IPC read + Blob creation + URL.createObjectURL | ✅ Matched |
-| `update()` method | Handle src changes + cleanup old blob URL | ✅ Matched |
-| `destroy()` method | Memory cleanup with `URL.revokeObjectURL()` | ✅ Matched |
-| Placeholder styling | minHeight, background, borderRadius | ✅ Matched |
-| `ignoreMutation: true` | Required for async blob URL rendering | ✅ Matched |
+| Feature                            | Implementation                                 | Status     |
+| ---------------------------------- | ---------------------------------------------- | ---------- |
+| `createNoteImageNodeViewFactory()` | Factory pattern with workspaceId closure       | ✅ Matched |
+| `NoteImageNodeView` class          | ProseMirror NodeView interface                 | ✅ Matched |
+| `.images/` detection               | Path prefix check with conditional rendering   | ✅ Matched |
+| `loadBlobUrl()` async loading      | IPC read + Blob creation + URL.createObjectURL | ✅ Matched |
+| `update()` method                  | Handle src changes + cleanup old blob URL      | ✅ Matched |
+| `destroy()` method                 | Memory cleanup with `URL.revokeObjectURL()`    | ✅ Matched |
+| Placeholder styling                | minHeight, background, borderRadius            | ✅ Matched |
+| `ignoreMutation: true`             | Required for async blob URL rendering          | ✅ Matched |
 
 **Design Match**: 13/13 NodeView items matched exactly.
 
@@ -189,15 +189,15 @@ Vanilla DOM NodeView for blob URL rendering:
 
 **File**: `src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx`
 
-| Component | Design | Implementation | Status |
-|-----------|--------|-----------------|--------|
-| Upload plugin import | `@milkdown/plugin-upload` | `@milkdown/kit/plugin/upload` | ⚠️ Changed |
-| $view import | `@milkdown/utils` | `@milkdown/kit/utils` | ⚠️ Changed |
-| imageSchema import | `@milkdown/preset-commonmark` | `@milkdown/preset-commonmark` | ✅ Matched |
-| `uploader` function | Both DnD + paste in upload plugin | Paste in upload plugin; manual DnD handler | ⚠️ Changed |
-| MilkdownEditor props | `workspaceId` passed | `workspaceId` passed | ✅ Matched |
-| NodeView registration | `$view(imageSchema.node, ...)` | `$view(imageSchema.node, ...)` | ✅ Matched |
-| Image node creation | `schema.nodes.image.createAndFill()` | Same | ✅ Matched |
+| Component             | Design                               | Implementation                             | Status     |
+| --------------------- | ------------------------------------ | ------------------------------------------ | ---------- |
+| Upload plugin import  | `@milkdown/plugin-upload`            | `@milkdown/kit/plugin/upload`              | ⚠️ Changed |
+| $view import          | `@milkdown/utils`                    | `@milkdown/kit/utils`                      | ⚠️ Changed |
+| imageSchema import    | `@milkdown/preset-commonmark`        | `@milkdown/preset-commonmark`              | ✅ Matched |
+| `uploader` function   | Both DnD + paste in upload plugin    | Paste in upload plugin; manual DnD handler | ⚠️ Changed |
+| MilkdownEditor props  | `workspaceId` passed                 | `workspaceId` passed                       | ✅ Matched |
+| NodeView registration | `$view(imageSchema.node, ...)`       | `$view(imageSchema.node, ...)`             | ✅ Matched |
+| Image node creation   | `schema.nodes.image.createAndFill()` | Same                                       | ✅ Matched |
 
 **Design Match**: 8/11 items matched. 3 changed for platform compatibility (see Section 5).
 
@@ -207,10 +207,10 @@ Vanilla DOM NodeView for blob URL rendering:
 
 Two key integrations for garbage collection:
 
-| Method | Action | Purpose | Status |
-|--------|--------|---------|--------|
-| `writeContent()` | Read old content + `cleanupRemovedImages()` | Delete orphaned images on save | ✅ Added |
-| `remove()` | Read content + `deleteAllImages()` before delete | Clean up all images before note deletion | ✅ Added |
+| Method           | Action                                           | Purpose                                  | Status   |
+| ---------------- | ------------------------------------------------ | ---------------------------------------- | -------- |
+| `writeContent()` | Read old content + `cleanupRemovedImages()`      | Delete orphaned images on save           | ✅ Added |
+| `remove()`       | Read content + `deleteAllImages()` before delete | Clean up all images before note deletion | ✅ Added |
 
 **Not in Design**: These 2 methods (+ 7 supporting functions) were added as enhancements. Without them, images removed from markdown or deleted notes would accumulate forever in `.images/`, wasting disk space. This is now handled automatically.
 
@@ -289,23 +289,24 @@ Three changes from the original design were necessary for runtime compatibility.
 
 ### 5.1 Import Path Fixes (Cosmetic)
 
-| Item | Design | Implementation | Reason |
-|------|--------|-----------------|--------|
+| Item                 | Design                    | Implementation                | Reason                                                             |
+| -------------------- | ------------------------- | ----------------------------- | ------------------------------------------------------------------ |
 | Upload plugin import | `@milkdown/plugin-upload` | `@milkdown/kit/plugin/upload` | Vite bundler requires `/kit/` subpath for proper module resolution |
-| $view/utils import | `@milkdown/utils` | `@milkdown/kit/utils` | Same bundler resolution requirement |
+| $view/utils import   | `@milkdown/utils`         | `@milkdown/kit/utils`         | Same bundler resolution requirement                                |
 
 **Impact**: None. These are transpiled away and function identically.
 
 ### 5.2 Manual DnD Handler (Functional Fix)
 
-| Aspect | Design | Implementation | Reason |
-|--------|--------|-----------------|--------|
-| DnD handling | Upload plugin's built-in `handleDrop` | Manual wrapper-level DnD handler | ProseMirror's `handleDrop` does not fire in Electron's Chromium. Manual handler accesses `e.dataTransfer.files` at wrapper level and uses `callCommand(insertImageCommand)` for insertion |
-| Supporting code | None | `useInstance()`, `useRef`, `useEffect`, `saveDroppedFile()` helper | Required for manual handler infrastructure |
+| Aspect          | Design                                | Implementation                                                     | Reason                                                                                                                                                                                    |
+| --------------- | ------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| DnD handling    | Upload plugin's built-in `handleDrop` | Manual wrapper-level DnD handler                                   | ProseMirror's `handleDrop` does not fire in Electron's Chromium. Manual handler accesses `e.dataTransfer.files` at wrapper level and uses `callCommand(insertImageCommand)` for insertion |
+| Supporting code | None                                  | `useInstance()`, `useRef`, `useEffect`, `saveDroppedFile()` helper | Required for manual handler infrastructure                                                                                                                                                |
 
 **Impact**: Same UX. Files dropped on editor still insert at drop position.
 
 **Implementation Details**:
+
 - `wrapperRef` tracks Milkdown wrapper DOM element
 - `useEffect` registers dragover/drop listeners on wrapper
 - `saveDroppedFile()` helper handles both file path (DnD) and ArrayBuffer (paste)
@@ -319,30 +320,31 @@ Beyond the design specification, the following enhancements were added for produ
 
 ### 6.1 Image Cleanup Service Methods
 
-| Method | Lines | Purpose |
-|--------|-------|---------|
-| `extractImagePaths(markdown)` | 63-71 | Regex: `!/[.*?]\((.images\/[^)]+)\)/g` to extract `.images/` references |
-| `deleteImage(relPath)` | 74-88 | Delete single image with path traversal guard + silent failure |
-| `cleanupRemovedImages(old, new)` | 91-100 | Diff-based cleanup: old refs not in new are deleted |
-| `deleteAllImages(content)` | 103-108 | Bulk deletion of all image refs in markdown |
+| Method                           | Lines   | Purpose                                                                 |
+| -------------------------------- | ------- | ----------------------------------------------------------------------- |
+| `extractImagePaths(markdown)`    | 63-71   | Regex: `!/[.*?]\((.images\/[^)]+)\)/g` to extract `.images/` references |
+| `deleteImage(relPath)`           | 74-88   | Delete single image with path traversal guard + silent failure          |
+| `cleanupRemovedImages(old, new)` | 91-100  | Diff-based cleanup: old refs not in new are deleted                     |
+| `deleteAllImages(content)`       | 103-108 | Bulk deletion of all image refs in markdown                             |
 
 **Purpose**: Prevent orphaned files accumulating in `.images/` when users:
+
 - Delete image nodes from editor (refs removed, files cleanup on save)
 - Delete entire note (refs deleted, files cleanup before note removal)
 
 ### 6.2 Note Service Integration
 
-| File | Method | Added Code | Purpose |
-|------|--------|-----------|---------|
+| File      | Method           | Added Code    | Purpose                                                     |
+| --------- | ---------------- | ------------- | ----------------------------------------------------------- |
 | `note.ts` | `writeContent()` | Lines 291-297 | Before file write: read old content, cleanup removed images |
-| `note.ts` | `remove()` | Lines 243-249 | Before note delete: read content, delete all image files |
+| `note.ts` | `remove()`       | Lines 243-249 | Before note delete: read content, delete all image files    |
 
 **Design Impact**: These methods were not specified in design but are necessary for garbage collection. Without them, `.images/` would accumulate bloat.
 
 ### 6.3 Helper Functions
 
-| Function | Purpose |
-|----------|---------|
+| Function                             | Purpose                                                                               |
+| ------------------------------------ | ------------------------------------------------------------------------------------- |
 | `saveDroppedFile(workspaceId, file)` | Extracted DnD/paste save logic for reuse between upload plugin and manual DnD handler |
 
 ---
@@ -351,18 +353,19 @@ Beyond the design specification, the following enhancements were added for produ
 
 ### 7.1 Code Quality
 
-| Metric | Status | Details |
-|--------|--------|---------|
-| **Match Rate** | 100% | All 47 design items implemented |
-| **Architecture Compliance** | 100% | FSD layers, dependency rules enforced |
-| **Naming Convention** | 100% | `camelCase` functions, `UPPER_SNAKE_CASE` constants, `PascalCase` interfaces |
-| **Security** | ✅ Passed | Path traversal guard in `readImage()`, normalized paths, `.images/` validation |
-| **Memory Management** | ✅ Passed | `URL.revokeObjectURL()` on NodeView destroy |
-| **Error Handling** | ✅ Passed | Custom errors (NotFoundError, ValidationError), try-catch in IPC handlers |
+| Metric                      | Status    | Details                                                                        |
+| --------------------------- | --------- | ------------------------------------------------------------------------------ |
+| **Match Rate**              | 100%      | All 47 design items implemented                                                |
+| **Architecture Compliance** | 100%      | FSD layers, dependency rules enforced                                          |
+| **Naming Convention**       | 100%      | `camelCase` functions, `UPPER_SNAKE_CASE` constants, `PascalCase` interfaces   |
+| **Security**                | ✅ Passed | Path traversal guard in `readImage()`, normalized paths, `.images/` validation |
+| **Memory Management**       | ✅ Passed | `URL.revokeObjectURL()` on NodeView destroy                                    |
+| **Error Handling**          | ✅ Passed | Custom errors (NotFoundError, ValidationError), try-catch in IPC handlers      |
 
 ### 7.2 Test Coverage
 
 Not formally measured, but implementation includes:
+
 - Silent failure on non-existent image deletion (idempotent)
 - Path validation and normalization
 - MIME type checking via `isImageFile()`
@@ -370,12 +373,12 @@ Not formally measured, but implementation includes:
 
 ### 7.3 Performance
 
-| Factor | Evaluation |
-|--------|------------|
-| DnD File Transfer | ✅ Optimized — file path only, no binary transfer |
-| Paste Buffer | ✅ Acceptable — ArrayBuffer transfer, Electron IPC safe up to ~100MB |
-| Blob URL Cleanup | ✅ Proper — revoked on NodeView destroy |
-| Markdown Processing | ✅ Linear — regex extraction is O(n) on content length |
+| Factor              | Evaluation                                                           |
+| ------------------- | -------------------------------------------------------------------- |
+| DnD File Transfer   | ✅ Optimized — file path only, no binary transfer                    |
+| Paste Buffer        | ✅ Acceptable — ArrayBuffer transfer, Electron IPC safe up to ~100MB |
+| Blob URL Cleanup    | ✅ Proper — revoked on NodeView destroy                              |
+| Markdown Processing | ✅ Linear — regex extraction is O(n) on content length               |
 
 ---
 
@@ -419,24 +422,24 @@ Not formally measured, but implementation includes:
 
 ### 9.1 Dependencies on Other Features
 
-| Feature | Integration | Status |
-|---------|-------------|--------|
-| **Note Editor** (core) | NoteEditor UI wraps Milkdown | ✅ Direct dependency |
-| **Workspace Watcher** | Filters `.images/` events | ✅ Integrated at 3 points |
-| **Note Service** | Image cleanup on save/delete | ✅ Integrated |
-| **Preload Bridge** | IPC API exposure | ✅ Integrated |
-| **Image Entity** | Completely isolated | ✅ No conflicts |
+| Feature                | Integration                  | Status                    |
+| ---------------------- | ---------------------------- | ------------------------- |
+| **Note Editor** (core) | NoteEditor UI wraps Milkdown | ✅ Direct dependency      |
+| **Workspace Watcher**  | Filters `.images/` events    | ✅ Integrated at 3 points |
+| **Note Service**       | Image cleanup on save/delete | ✅ Integrated             |
+| **Preload Bridge**     | IPC API exposure             | ✅ Integrated             |
+| **Image Entity**       | Completely isolated          | ✅ No conflicts           |
 
 ### 9.2 External Dependencies
 
-| Library | Version | Usage |
-|---------|---------|-------|
-| `@milkdown/core` | Latest | Editor framework |
-| `@milkdown/preset-commonmark` | Latest | Markdown syntax + imageSchema |
-| `@milkdown/plugin-upload` | Latest | DnD/paste handling |
-| `@milkdown/kit` | Latest | Module resolution (`/kit/` subpath) |
-| `@milkdown/react` | Latest | React bindings (`useInstance`, `useEditor`) |
-| `nanoid` | Already used | Filename generation |
+| Library                       | Version      | Usage                                       |
+| ----------------------------- | ------------ | ------------------------------------------- |
+| `@milkdown/core`              | Latest       | Editor framework                            |
+| `@milkdown/preset-commonmark` | Latest       | Markdown syntax + imageSchema               |
+| `@milkdown/plugin-upload`     | Latest       | DnD/paste handling                          |
+| `@milkdown/kit`               | Latest       | Module resolution (`/kit/` subpath)         |
+| `@milkdown/react`             | Latest       | React bindings (`useInstance`, `useEditor`) |
+| `nanoid`                      | Already used | Filename generation                         |
 
 ---
 
@@ -486,22 +489,22 @@ CSP Policy: `img-src 'self' data: blob:` — blob:// URLs allowed.
 
 ### Files Created (3)
 
-| File | Lines | Purpose |
-|------|-------|---------|
-| `src/main/services/note-image.ts` | 131 | Core service: save/read/cleanup images |
-| `src/main/ipc/note-image.ts` | 24 | IPC handler registration |
-| `src/renderer/.../note-image-node-view.ts` | 102 | Vanilla DOM NodeView for blob URL rendering |
+| File                                       | Lines | Purpose                                     |
+| ------------------------------------------ | ----- | ------------------------------------------- |
+| `src/main/services/note-image.ts`          | 131   | Core service: save/read/cleanup images      |
+| `src/main/ipc/note-image.ts`               | 24    | IPC handler registration                    |
+| `src/renderer/.../note-image-node-view.ts` | 102   | Vanilla DOM NodeView for blob URL rendering |
 
 ### Files Modified (6)
 
-| File | Changes | Lines |
-|------|---------|-------|
-| `src/main/index.ts` | +1 import, +1 call | ~2 lines added |
-| `src/main/services/workspace-watcher.ts` | +2 filter guards at 3 locations | ~30 lines modified |
-| `src/preload/index.ts` | +1 noteImage block (3 methods) | ~7 lines added |
-| `src/preload/index.d.ts` | +NoteImageAPI interface, +1 property | ~15 lines added |
-| `src/renderer/.../NoteEditor.tsx` | +imports, +helper, +manual DnD handler | ~80 lines added |
-| `src/main/services/note.ts` | +2 cleanup integrations (save/delete) | ~13 lines added |
+| File                                     | Changes                                | Lines              |
+| ---------------------------------------- | -------------------------------------- | ------------------ |
+| `src/main/index.ts`                      | +1 import, +1 call                     | ~2 lines added     |
+| `src/main/services/workspace-watcher.ts` | +2 filter guards at 3 locations        | ~30 lines modified |
+| `src/preload/index.ts`                   | +1 noteImage block (3 methods)         | ~7 lines added     |
+| `src/preload/index.d.ts`                 | +NoteImageAPI interface, +1 property   | ~15 lines added    |
+| `src/renderer/.../NoteEditor.tsx`        | +imports, +helper, +manual DnD handler | ~80 lines added    |
+| `src/main/services/note.ts`              | +2 cleanup integrations (save/delete)  | ~13 lines added    |
 
 **Total**: 9 files, ~400 lines of code (new + modified).
 
@@ -553,7 +556,6 @@ The **Note Image** feature is **production-ready**. All design specifications ha
 
 ## Version History
 
-| Version | Date | Status | Author |
-|---------|------|--------|--------|
-| 1.0 | 2026-03-03 | Complete | report-generator |
-
+| Version | Date       | Status   | Author           |
+| ------- | ---------- | -------- | ---------------- |
+| 1.0     | 2026-03-03 | Complete | report-generator |

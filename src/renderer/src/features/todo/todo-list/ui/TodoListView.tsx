@@ -122,7 +122,9 @@ export function TodoListView({
                   workspaceId={workspaceId}
                   filterActive={filterActive}
                   onTitleClick={() => onItemClick(todo.id)}
-                  onOpenInPane={onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined}
+                  onOpenInPane={
+                    onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined
+                  }
                   onDeleted={() => onItemDeleted?.(todo.id)}
                 />
               ))}

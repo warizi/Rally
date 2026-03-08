@@ -125,7 +125,9 @@ export const todoService = {
       const parent = todoRepository.findById(data.parentId)
       if (!parent) throw new NotFoundError(`Parent todo not found: ${data.parentId}`)
       if (parent.parentId) {
-        throw new ValidationError('Subtodo cannot have children. Only 2-depth hierarchy is allowed (parent → subtodo).')
+        throw new ValidationError(
+          'Subtodo cannot have children. Only 2-depth hierarchy is allowed (parent → subtodo).'
+        )
       }
     }
 
@@ -191,7 +193,10 @@ export const todoService = {
     }
 
     // 날짜 변경 시 remind_at 재계산 (완료 처리가 아닌 경우에만)
-    if (doneFields.isDone !== true && (data.dueDate !== undefined || data.startDate !== undefined)) {
+    if (
+      doneFields.isDone !== true &&
+      (data.dueDate !== undefined || data.startDate !== undefined)
+    ) {
       const refreshed = todoRepository.findById(todoId)
       if (refreshed && !refreshed.dueDate && !refreshed.startDate) {
         reminderService.removeByEntity('todo', todoId)

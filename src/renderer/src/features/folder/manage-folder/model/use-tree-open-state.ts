@@ -15,10 +15,7 @@ function parseOpenState(raw: string | undefined): Record<string, boolean> {
 }
 
 /** 트리에서 targetId까지의 폴더 경로를 반환 */
-function findAncestorFolderIds(
-  nodes: WorkspaceTreeNode[],
-  targetId: string
-): string[] | null {
+function findAncestorFolderIds(nodes: WorkspaceTreeNode[], targetId: string): string[] | null {
   for (const node of nodes) {
     if (node.id === targetId) return []
     if (node.kind === 'folder') {
@@ -36,7 +33,11 @@ export function useTreeOpenState(tabId: string | undefined): {
   openState: Record<string, boolean>
   toggle: (id: string, isOpen: boolean) => void
   collapseAll: () => void
-  expandToItem: (tree: WorkspaceTreeNode[], itemId: string, treeApi?: TreeApi<WorkspaceTreeNode> | null) => void
+  expandToItem: (
+    tree: WorkspaceTreeNode[],
+    itemId: string,
+    treeApi?: TreeApi<WorkspaceTreeNode> | null
+  ) => void
 } {
   const searchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
   const navigateTab = useTabStore((s) => s.navigateTab)

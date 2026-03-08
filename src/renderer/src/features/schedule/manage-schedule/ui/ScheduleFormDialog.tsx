@@ -410,10 +410,7 @@ export function ScheduleFormDialog({
               <div className="flex flex-col gap-1.5">
                 <span className="text-sm font-medium">알림</span>
                 {isEdit ? (
-                  <ReminderSelect
-                    entityType="schedule"
-                    entityId={initialData.id}
-                  />
+                  <ReminderSelect entityType="schedule" entityId={initialData.id} />
                 ) : (
                   <ReminderPendingSelect
                     selected={pendingReminders}

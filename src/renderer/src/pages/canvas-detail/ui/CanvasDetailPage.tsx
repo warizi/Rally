@@ -69,11 +69,7 @@ export function CanvasDetailPage({ tabId, params }: Props): React.JSX.Element {
           }
           footer={
             canvas ? (
-              <TagList
-                workspaceId={canvas.workspaceId}
-                itemType="canvas"
-                itemId={canvas.id}
-              />
+              <TagList workspaceId={canvas.workspaceId} itemType="canvas" itemId={canvas.id} />
             ) : undefined
           }
         />

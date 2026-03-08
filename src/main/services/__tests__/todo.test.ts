@@ -441,9 +441,7 @@ describe('update — reminder 연동', () => {
     const subTodo = { ...MOCK_TODO_ROW, id: 'sub-1', parentId: 'par-1' }
     vi.mocked(todoRepository.findById).mockReturnValue(subTodo)
     vi.mocked(todoRepository.update).mockReturnValue(subTodo)
-    vi.mocked(todoRepository.findByParentId).mockReturnValue([
-      { ...subTodo, isDone: false }
-    ])
+    vi.mocked(todoRepository.findByParentId).mockReturnValue([{ ...subTodo, isDone: false }])
     todoService.update('sub-1', { isDone: true })
     expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'sub-1')
     expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'par-1')
@@ -490,9 +488,10 @@ describe('remove — reminder 연동', () => {
   it('removeByEntities 호출 (본인 + 하위)', () => {
     vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue(['sub-1', 'sub-2'])
     todoService.remove('todo-1')
-    expect(reminderService.removeByEntities).toHaveBeenCalledWith(
-      'todo',
-      ['todo-1', 'sub-1', 'sub-2']
-    )
+    expect(reminderService.removeByEntities).toHaveBeenCalledWith('todo', [
+      'todo-1',
+      'sub-1',
+      'sub-2'
+    ])
   })
 })

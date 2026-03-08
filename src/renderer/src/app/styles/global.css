@@ -156,12 +156,24 @@
   padding: 0;
 }
 
-.milkdown .ProseMirror h1 { margin-top: 16px; }
-.milkdown .ProseMirror h2 { margin-top: 14px; }
-.milkdown .ProseMirror h3 { margin-top: 12px; }
-.milkdown .ProseMirror h4 { margin-top: 10px; }
-.milkdown .ProseMirror h5 { margin-top: 8px; }
-.milkdown .ProseMirror h6 { margin-top: 8px; }
+.milkdown .ProseMirror h1 {
+  margin-top: 16px;
+}
+.milkdown .ProseMirror h2 {
+  margin-top: 14px;
+}
+.milkdown .ProseMirror h3 {
+  margin-top: 12px;
+}
+.milkdown .ProseMirror h4 {
+  margin-top: 10px;
+}
+.milkdown .ProseMirror h5 {
+  margin-top: 8px;
+}
+.milkdown .ProseMirror h6 {
+  margin-top: 8px;
+}
 
 .drag-region {
   -webkit-app-region: drag;

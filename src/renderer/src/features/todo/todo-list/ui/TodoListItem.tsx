@@ -371,9 +371,7 @@ export function TodoListItem({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <PanePickerSubmenu
-                  onPaneSelect={(paneId) => onOpenInPane?.(paneId)}
-                >
+                <PanePickerSubmenu onPaneSelect={(paneId) => onOpenInPane?.(paneId)}>
                   {({ onClick }) => (
                     <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
                       상세 보기

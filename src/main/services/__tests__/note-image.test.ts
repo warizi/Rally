@@ -47,10 +47,9 @@ describe('saveFromPath', () => {
       return true
     })
     noteImageService.saveFromPath('ws-1', '/source/photo.png')
-    expect(fs.mkdirSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images'),
-      { recursive: true }
-    )
+    expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images'), {
+      recursive: true
+    })
   })
 
   it('.images/ 폴더 이미 존재 시 mkdirSync 미호출', () => {
@@ -117,9 +116,7 @@ describe('readImage', () => {
     vi.mocked(fs.readFileSync).mockReturnValue(buf)
     const result = noteImageService.readImage('ws-1', '.images/abc.png')
     expect(result.data).toBe(buf)
-    expect(fs.readFileSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images', 'abc.png')
-    )
+    expect(fs.readFileSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images', 'abc.png'))
   })
 
   it('path traversal (../secret.txt) → ValidationError', () => {
@@ -187,9 +184,7 @@ describe('extractImagePaths', () => {
 describe('deleteImage', () => {
   it('정상 삭제 → fs.unlinkSync 호출', () => {
     noteImageService.deleteImage('ws-1', '.images/abc.png')
-    expect(fs.unlinkSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images', 'abc.png')
-    )
+    expect(fs.unlinkSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images', 'abc.png'))
   })
 
   it('path traversal (../file) → no-op', () => {
@@ -230,9 +225,7 @@ describe('cleanupRemovedImages', () => {
     const now = '![a](.images/a.png)'
     noteImageService.cleanupRemovedImages('ws-1', old, now)
     expect(fs.unlinkSync).toHaveBeenCalledTimes(1)
-    expect(fs.unlinkSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images', 'b.png')
-    )
+    expect(fs.unlinkSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images', 'b.png'))
   })
 
   it('old와 new 동일 → unlinkSync 미호출', () => {

@@ -115,7 +115,14 @@ export function useCanvasHistory(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   syncStateMutation: UseMutationResult<void, Error, any>,
   skipHydrationRef: MutableRefObject<boolean>
-) {
+): {
+  pushHistory: () => void
+  undo: () => Promise<void>
+  redo: () => Promise<void>
+  canUndo: boolean
+  canRedo: boolean
+  initHistory: () => void
+} {
   const historyRef = useRef<Snapshot[]>([])
   const historyIndexRef = useRef(-1)
   const [canUndo, setCanUndo] = useState(false)

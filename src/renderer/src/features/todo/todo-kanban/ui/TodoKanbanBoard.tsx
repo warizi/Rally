@@ -67,7 +67,9 @@ export function TodoKanbanBoard({
                     subTodos={subTodoMap.get(todo.id) ?? []}
                     workspaceId={workspaceId}
                     onTitleClick={() => onItemClick(todo.id)}
-                    onOpenInPane={onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined}
+                    onOpenInPane={
+                      onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined
+                    }
                     onDelete={() => onItemDelete(todo.id)}
                   />
                 ))}

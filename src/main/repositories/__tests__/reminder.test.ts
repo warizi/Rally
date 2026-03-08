@@ -7,7 +7,9 @@ beforeEach(() => {
   testDb.delete(schema.reminders).run()
 })
 
-function makeReminder(overrides?: Partial<typeof schema.reminders.$inferInsert>) {
+function makeReminder(
+  overrides?: Partial<typeof schema.reminders.$inferInsert>
+): ReturnType<typeof reminderRepository.create> {
   return {
     id: 'rem-1',
     entityType: 'todo' as const,
@@ -23,8 +25,14 @@ function makeReminder(overrides?: Partial<typeof schema.reminders.$inferInsert>)
 
 describe('findByEntity', () => {
   it('entity에 알림 2개 존재 → 2개 반환', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1' })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r2', offsetMs: 1800000 })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', offsetMs: 1800000 }))
+      .run()
     const result = reminderRepository.findByEntity('todo', 'todo-1')
     expect(result).toHaveLength(2)
   })
@@ -35,7 +43,10 @@ describe('findByEntity', () => {
   })
 
   it('다른 entityType의 동일 entityId → 해당 타입만 반환', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', entityType: 'todo' })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', entityType: 'todo' }))
+      .run()
     testDb
       .insert(schema.reminders)
       .values(makeReminder({ id: 'r2', entityType: 'schedule' }))
@@ -124,7 +135,10 @@ describe('update', () => {
 
 describe('markFired', () => {
   it('isFired=false → true 전환, updatedAt 갱신', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ isFired: false })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ isFired: false }))
+      .run()
     const now = new Date()
     reminderRepository.markFired('rem-1', now)
     const row = reminderRepository.findById('rem-1')
@@ -143,9 +157,18 @@ describe('delete', () => {
 
 describe('deleteByEntity', () => {
   it('entity 알림 3개 → 전부 삭제', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1' })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r2', offsetMs: 1800000 })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r3', offsetMs: 3600000 })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', offsetMs: 1800000 }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r3', offsetMs: 3600000 }))
+      .run()
     reminderRepository.deleteByEntity('todo', 'todo-1')
     expect(reminderRepository.findByEntity('todo', 'todo-1')).toEqual([])
   })
@@ -166,12 +189,18 @@ describe('deleteByEntity', () => {
 
 describe('deleteByEntities', () => {
   it('entityIds 2개, 각 알림 2개 → 4개 전부 삭제', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', entityId: 'a' })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', entityId: 'a' }))
+      .run()
     testDb
       .insert(schema.reminders)
       .values(makeReminder({ id: 'r2', entityId: 'a', offsetMs: 1800000 }))
       .run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r3', entityId: 'b' })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r3', entityId: 'b' }))
+      .run()
     testDb
       .insert(schema.reminders)
       .values(makeReminder({ id: 'r4', entityId: 'b', offsetMs: 1800000 }))
@@ -190,7 +219,10 @@ describe('deleteByEntities', () => {
 
 describe('deleteUnfiredByEntity', () => {
   it('fired 1개 + unfired 2개 → unfired만 삭제', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', isFired: true })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', isFired: true }))
+      .run()
     testDb
       .insert(schema.reminders)
       .values(makeReminder({ id: 'r2', isFired: false, offsetMs: 1800000 }))
@@ -206,7 +238,10 @@ describe('deleteUnfiredByEntity', () => {
   })
 
   it('전부 fired → 삭제 없음', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', isFired: true })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', isFired: true }))
+      .run()
     testDb
       .insert(schema.reminders)
       .values(makeReminder({ id: 'r2', isFired: true, offsetMs: 1800000 }))

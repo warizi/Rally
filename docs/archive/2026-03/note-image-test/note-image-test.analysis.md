@@ -31,21 +31,21 @@ Verify that the `note-image-test` implementation matches the design document exa
 
 ### 2.1 Overall Scores
 
-| Category | Score | Status |
-|----------|:-----:|:------:|
-| Design Match | 100% | PASS |
-| Test Case Coverage | 36/36 | PASS |
-| Mock Strategy | 100% | PASS |
-| Assertion Correctness | 100% | PASS |
-| **Overall** | **100%** | **PASS** |
+| Category              |  Score   |  Status  |
+| --------------------- | :------: | :------: |
+| Design Match          |   100%   |   PASS   |
+| Test Case Coverage    |  36/36   |   PASS   |
+| Mock Strategy         |   100%   |   PASS   |
+| Assertion Correctness |   100%   |   PASS   |
+| **Overall**           | **100%** | **PASS** |
 
 ### 2.2 File-Level Summary
 
-| File | Design Cases | Impl Cases | Match | Status |
-|------|:-----------:|:----------:|:-----:|:------:|
-| note-image.test.ts | 32 | 32 | 32/32 | PASS |
-| note.test.ts (added) | 4 | 4 | 4/4 | PASS |
-| **Total** | **36** | **36** | **36/36** | **PASS** |
+| File                 | Design Cases | Impl Cases |   Match   |  Status  |
+| -------------------- | :----------: | :--------: | :-------: | :------: |
+| note-image.test.ts   |      32      |     32     |   32/32   |   PASS   |
+| note.test.ts (added) |      4       |     4      |    4/4    |   PASS   |
+| **Total**            |    **36**    |   **36**   | **36/36** | **PASS** |
 
 ---
 
@@ -55,57 +55,57 @@ Verify that the `note-image-test` implementation matches the design document exa
 
 ##### Import & Mock & Fixture
 
-| Item | Design | Implementation | Status |
-|------|--------|----------------|--------|
-| vitest imports | `describe, expect, it, vi, beforeEach` | Same | PASS |
-| fs mock | `vi.mock('fs')` | Same | PASS |
-| nanoid mock | `() => 'mock-id'` | Same | PASS |
-| workspace mock | `findById: vi.fn()` | Same | PASS |
-| isImageFile | Not mocked (real) | Not mocked (real) | PASS |
-| path module | Not mocked (real) | Not mocked (real) | PASS |
-| MOCK_WS fixture | `{ id: 'ws-1', path: '/test/workspace', ... }` | Same | PASS |
-| beforeEach | `clearAllMocks` + `findById` mock + `existsSync` true | Same | PASS |
+| Item            | Design                                                | Implementation    | Status |
+| --------------- | ----------------------------------------------------- | ----------------- | ------ |
+| vitest imports  | `describe, expect, it, vi, beforeEach`                | Same              | PASS   |
+| fs mock         | `vi.mock('fs')`                                       | Same              | PASS   |
+| nanoid mock     | `() => 'mock-id'`                                     | Same              | PASS   |
+| workspace mock  | `findById: vi.fn()`                                   | Same              | PASS   |
+| isImageFile     | Not mocked (real)                                     | Not mocked (real) | PASS   |
+| path module     | Not mocked (real)                                     | Not mocked (real) | PASS   |
+| MOCK_WS fixture | `{ id: 'ws-1', path: '/test/workspace', ... }`        | Same              | PASS   |
+| beforeEach      | `clearAllMocks` + `findById` mock + `existsSync` true | Same              | PASS   |
 
 ##### saveFromPath (6 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | Normal save | `.images/mock-id.png` + `copyFileSync` args | Same | PASS |
-| 2 | .images/ folder missing | `existsSync` impl check + `mkdirSync` called | Same | PASS |
-| 3 | .images/ folder exists | `mkdirSync` not called | Same | PASS |
-| 4 | Source file missing | `NotFoundError` | Same | PASS |
-| 5 | Unsupported ext (.txt) | `ValidationError` | Same | PASS |
-| 6 | Invalid workspaceId | `NotFoundError` | Same | PASS |
+| #   | Case                    | Design Assertion                             | Impl Assertion | Status |
+| --- | ----------------------- | -------------------------------------------- | -------------- | ------ |
+| 1   | Normal save             | `.images/mock-id.png` + `copyFileSync` args  | Same           | PASS   |
+| 2   | .images/ folder missing | `existsSync` impl check + `mkdirSync` called | Same           | PASS   |
+| 3   | .images/ folder exists  | `mkdirSync` not called                       | Same           | PASS   |
+| 4   | Source file missing     | `NotFoundError`                              | Same           | PASS   |
+| 5   | Unsupported ext (.txt)  | `ValidationError`                            | Same           | PASS   |
+| 6   | Invalid workspaceId     | `NotFoundError`                              | Same           | PASS   |
 
 ##### saveFromBuffer (4 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | Normal ArrayBuffer save | `.images/mock-id.png` | Same | PASS |
-| 2 | Dot-prefixed ext (.jpg) | `.images/mock-id.jpg` | Same | PASS |
-| 3 | Unsupported ext (txt) | `ValidationError` | Same | PASS |
-| 4 | writeFileSync args | `Buffer.from(buf)` | Same | PASS |
+| #   | Case                    | Design Assertion      | Impl Assertion | Status |
+| --- | ----------------------- | --------------------- | -------------- | ------ |
+| 1   | Normal ArrayBuffer save | `.images/mock-id.png` | Same           | PASS   |
+| 2   | Dot-prefixed ext (.jpg) | `.images/mock-id.jpg` | Same           | PASS   |
+| 3   | Unsupported ext (txt)   | `ValidationError`     | Same           | PASS   |
+| 4   | writeFileSync args      | `Buffer.from(buf)`    | Same           | PASS   |
 
 ##### readImage (6 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | Normal read | `{ data: Buffer }` + `readFileSync` args | Same | PASS |
-| 2 | Path traversal `../` | `ValidationError` | Same | PASS |
-| 3 | Internal traversal `.images/../` | `ValidationError` | Same | PASS |
-| 4 | Absolute path `/etc/passwd` | `ValidationError` | Same | PASS |
-| 5 | Outside .images/ dir | `ValidationError` | Same | PASS |
-| 6 | File not found | `NotFoundError` | Same | PASS |
+| #   | Case                             | Design Assertion                         | Impl Assertion | Status |
+| --- | -------------------------------- | ---------------------------------------- | -------------- | ------ |
+| 1   | Normal read                      | `{ data: Buffer }` + `readFileSync` args | Same           | PASS   |
+| 2   | Path traversal `../`             | `ValidationError`                        | Same           | PASS   |
+| 3   | Internal traversal `.images/../` | `ValidationError`                        | Same           | PASS   |
+| 4   | Absolute path `/etc/passwd`      | `ValidationError`                        | Same           | PASS   |
+| 5   | Outside .images/ dir             | `ValidationError`                        | Same           | PASS   |
+| 6   | File not found                   | `NotFoundError`                          | Same           | PASS   |
 
 ##### extractImagePaths (5 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status | Notes |
-|---|------|------------------|----------------|--------|-------|
-| 1 | 2 image refs | `['.images/a.png', '.images/b.jpg']` | Same | PASS | |
-| 2 | No image refs | `[]` | Same | PASS | |
-| 3 | External URL | `[]` | Same | PASS | |
-| 4 | Empty string | `[]` | Same | PASS | |
-| 5 | Title attribute | `['.images/photo.png']` | `[]` | COSMETIC | See below |
+| #   | Case            | Design Assertion                     | Impl Assertion | Status   | Notes     |
+| --- | --------------- | ------------------------------------ | -------------- | -------- | --------- |
+| 1   | 2 image refs    | `['.images/a.png', '.images/b.jpg']` | Same           | PASS     |           |
+| 2   | No image refs   | `[]`                                 | Same           | PASS     |           |
+| 3   | External URL    | `[]`                                 | Same           | PASS     |           |
+| 4   | Empty string    | `[]`                                 | Same           | PASS     |           |
+| 5   | Title attribute | `['.images/photo.png']`              | `[]`           | COSMETIC | See below |
 
 **Case 5 -- extractImagePaths title attribute handling:**
 
@@ -116,29 +116,29 @@ Verify that the `note-image-test` implementation matches the design document exa
 
 ##### deleteImage (6 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | Normal delete | `unlinkSync` called with correct path | Same | PASS |
-| 2 | Path traversal `../` | `unlinkSync` not called | Same | PASS |
-| 3 | Internal traversal `.images/../` | `unlinkSync` not called | Same | PASS |
-| 4 | Absolute path | `unlinkSync` not called | Same | PASS |
-| 5 | Outside .images/ | `unlinkSync` not called | Same | PASS |
-| 6 | ENOENT (already deleted) | No throw | Same | PASS |
+| #   | Case                             | Design Assertion                      | Impl Assertion | Status |
+| --- | -------------------------------- | ------------------------------------- | -------------- | ------ |
+| 1   | Normal delete                    | `unlinkSync` called with correct path | Same           | PASS   |
+| 2   | Path traversal `../`             | `unlinkSync` not called               | Same           | PASS   |
+| 3   | Internal traversal `.images/../` | `unlinkSync` not called               | Same           | PASS   |
+| 4   | Absolute path                    | `unlinkSync` not called               | Same           | PASS   |
+| 5   | Outside .images/                 | `unlinkSync` not called               | Same           | PASS   |
+| 6   | ENOENT (already deleted)         | No throw                              | Same           | PASS   |
 
 ##### cleanupRemovedImages (3 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | old 2, new 1 -> 1 deleted | `unlinkSync` 1x, correct path | Same | PASS |
-| 2 | old = new | `unlinkSync` not called | Same | PASS |
-| 3 | old 2, new 0 -> 2 deleted | `unlinkSync` 2x | Same | PASS |
+| #   | Case                      | Design Assertion              | Impl Assertion | Status |
+| --- | ------------------------- | ----------------------------- | -------------- | ------ |
+| 1   | old 2, new 1 -> 1 deleted | `unlinkSync` 1x, correct path | Same           | PASS   |
+| 2   | old = new                 | `unlinkSync` not called       | Same           | PASS   |
+| 3   | old 2, new 0 -> 2 deleted | `unlinkSync` 2x               | Same           | PASS   |
 
 ##### deleteAllImages (2 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | 3 images | `unlinkSync` 3x | Same | PASS |
-| 2 | No images | `unlinkSync` not called | Same | PASS |
+| #   | Case      | Design Assertion        | Impl Assertion | Status |
+| --- | --------- | ----------------------- | -------------- | ------ |
+| 1   | 3 images  | `unlinkSync` 3x         | Same           | PASS   |
+| 2   | No images | `unlinkSync` not called | Same           | PASS   |
 
 ---
 
@@ -146,24 +146,24 @@ Verify that the `note-image-test` implementation matches the design document exa
 
 ##### Mock Declaration
 
-| Item | Design | Implementation | Status |
-|------|--------|----------------|--------|
-| `vi.mock('../note-image', ...)` | `{ cleanupRemovedImages: vi.fn(), deleteAllImages: vi.fn() }` | Same (line 27-32) | PASS |
-| Import | `import { noteImageService } from '../note-image'` | Same (line 11) | PASS |
+| Item                            | Design                                                        | Implementation    | Status |
+| ------------------------------- | ------------------------------------------------------------- | ----------------- | ------ |
+| `vi.mock('../note-image', ...)` | `{ cleanupRemovedImages: vi.fn(), deleteAllImages: vi.fn() }` | Same (line 27-32) | PASS   |
+| Import                          | `import { noteImageService } from '../note-image'`            | Same (line 11)    | PASS   |
 
 ##### writeContent -- Image Cleanup (2 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | Image removal -> cleanupRemovedImages called | `cleanupRemovedImages('ws-1', oldContent, newContent)` | Same (line 447-458) | PASS |
-| 2 | File not found -> cleanupRemovedImages not called | `readFileSync` throws, `cleanupRemovedImages` not called | Same (line 460-467) | PASS |
+| #   | Case                                              | Design Assertion                                         | Impl Assertion      | Status |
+| --- | ------------------------------------------------- | -------------------------------------------------------- | ------------------- | ------ |
+| 1   | Image removal -> cleanupRemovedImages called      | `cleanupRemovedImages('ws-1', oldContent, newContent)`   | Same (line 447-458) | PASS   |
+| 2   | File not found -> cleanupRemovedImages not called | `readFileSync` throws, `cleanupRemovedImages` not called | Same (line 460-467) | PASS   |
 
 ##### remove -- Image Full Delete (2 cases)
 
-| # | Case | Design Assertion | Impl Assertion | Status |
-|---|------|------------------|----------------|--------|
-| 1 | Note delete -> deleteAllImages called | `deleteAllImages('ws-1', content)` | Same (line 377-383) | PASS |
-| 2 | File read fails -> deleteAllImages not called, no throw | `readFileSync` throws, `deleteAllImages` not called | Same (line 385-392) | PASS |
+| #   | Case                                                    | Design Assertion                                    | Impl Assertion      | Status |
+| --- | ------------------------------------------------------- | --------------------------------------------------- | ------------------- | ------ |
+| 1   | Note delete -> deleteAllImages called                   | `deleteAllImages('ws-1', content)`                  | Same (line 377-383) | PASS   |
+| 2   | File read fails -> deleteAllImages not called, no throw | `readFileSync` throws, `deleteAllImages` not called | Same (line 385-392) | PASS   |
 
 ---
 
@@ -179,13 +179,14 @@ None.
 
 ### Changed Features (Design != Implementation)
 
-| # | Item | Design | Implementation | Impact |
-|---|------|--------|----------------|--------|
-| 1 | extractImagePaths case 5 (title) | Expects `['.images/photo.png']` | Expects `[]` | None (cosmetic) |
+| #   | Item                             | Design                          | Implementation | Impact          |
+| --- | -------------------------------- | ------------------------------- | -------------- | --------------- |
+| 1   | extractImagePaths case 5 (title) | Expects `['.images/photo.png']` | Expects `[]`   | None (cosmetic) |
 
 **Detail on the single difference:**
 
 The design document (line 269-274) specifies:
+
 ```typescript
 it('title 속성 포함 -> 경로만 추출, title 제외', () => {
   const md = '![alt](.images/photo.png "title text")'
@@ -195,6 +196,7 @@ it('title 속성 포함 -> 경로만 추출, title 제외', () => {
 ```
 
 The implementation (line 176-182) specifies:
+
 ```typescript
 it('title 속성 포함 -> 현재 regex 미매칭 (title 미지원)', () => {
   const md = '![alt](.images/photo.png "title text")'
@@ -209,16 +211,17 @@ The implementation is correct. The regex `/!\[.*?\]\((\.images\/[^)"\s]+)\)/g` c
 
 ## 4. Mock Strategy Verification
 
-| Mock Target | Strategy | Design | Implementation | Correct |
-|-------------|----------|--------|----------------|---------|
-| `fs` | Full module mock | `vi.mock('fs')` | Same | PASS |
-| `nanoid` | Fixed ID `'mock-id'` | `vi.mock('nanoid', ...)` | Same | PASS |
-| `workspaceRepository` | `findById: vi.fn()` | Factory mock | Same | PASS |
-| `isImageFile` | NOT mocked (real) | Real logic | Same | PASS |
-| `path` | NOT mocked (real) | Real logic | Same | PASS |
-| `noteImageService` (in note.test.ts) | Partial mock | `cleanupRemovedImages + deleteAllImages` | Same | PASS |
+| Mock Target                          | Strategy             | Design                                   | Implementation | Correct |
+| ------------------------------------ | -------------------- | ---------------------------------------- | -------------- | ------- |
+| `fs`                                 | Full module mock     | `vi.mock('fs')`                          | Same           | PASS    |
+| `nanoid`                             | Fixed ID `'mock-id'` | `vi.mock('nanoid', ...)`                 | Same           | PASS    |
+| `workspaceRepository`                | `findById: vi.fn()`  | Factory mock                             | Same           | PASS    |
+| `isImageFile`                        | NOT mocked (real)    | Real logic                               | Same           | PASS    |
+| `path`                               | NOT mocked (real)    | Real logic                               | Same           | PASS    |
+| `noteImageService` (in note.test.ts) | Partial mock         | `cleanupRemovedImages + deleteAllImages` | Same           | PASS    |
 
 **Key design decisions verified:**
+
 - `isImageFile` uses real `path.extname` + array check -- simple enough to not require mocking
 - `path.normalize` and `path.join` use real implementations -- essential for security validation (path traversal prevention)
 - `noteImageService` in `note.test.ts` only mocks `cleanupRemovedImages` and `deleteAllImages` -- the two methods called by `writeContent` and `remove`
@@ -230,17 +233,17 @@ The implementation is correct. The regex `/!\[.*?\]\((\.images\/[^)"\s]+)\)/g` c
 
 Verified that test assertions align with actual source code behavior:
 
-| Method | Source Behavior | Test Coverage | Status |
-|--------|----------------|---------------|--------|
-| `saveFromPath` | `getWorkspacePath` -> `existsSync(source)` -> `isImageFile` -> `ensureImagesDir` -> `copyFileSync` | 6 cases cover all branches | PASS |
-| `saveFromBuffer` | `getWorkspacePath` -> normalize ext -> `isImageFile` -> `ensureImagesDir` -> `writeFileSync(Buffer.from)` | 4 cases cover all branches | PASS |
-| `readImage` | `getWorkspacePath` -> `normalize` -> `startsWith('..')` / `isAbsolute` / `!startsWith('.images')` -> `readFileSync` | 6 cases cover all security paths | PASS |
-| `extractImagePaths` | Regex `/!\[.*?\]\((\.images\/[^)"\s]+)\)/g` | 5 cases (including edge: title, URL, empty) | PASS |
-| `deleteImage` | `getWorkspacePath` -> `normalize` -> security checks -> `unlinkSync` (try-catch) | 6 cases cover all security paths + ENOENT | PASS |
-| `cleanupRemovedImages` | `extractImagePaths(old)` diff `extractImagePaths(new)` -> `deleteImage` each | 3 cases cover diff scenarios | PASS |
-| `deleteAllImages` | `extractImagePaths` -> `deleteImage` each | 2 cases cover with/without images | PASS |
-| `noteService.writeContent` (integration) | `readFileSync(old)` -> `cleanupRemovedImages(ws, old, new)` in try-catch | 2 cases cover success + ENOENT | PASS |
-| `noteService.remove` (integration) | `readFileSync` -> `deleteAllImages(ws, content)` in try-catch | 2 cases cover success + ENOENT | PASS |
+| Method                                   | Source Behavior                                                                                                     | Test Coverage                               | Status |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- | ------ |
+| `saveFromPath`                           | `getWorkspacePath` -> `existsSync(source)` -> `isImageFile` -> `ensureImagesDir` -> `copyFileSync`                  | 6 cases cover all branches                  | PASS   |
+| `saveFromBuffer`                         | `getWorkspacePath` -> normalize ext -> `isImageFile` -> `ensureImagesDir` -> `writeFileSync(Buffer.from)`           | 4 cases cover all branches                  | PASS   |
+| `readImage`                              | `getWorkspacePath` -> `normalize` -> `startsWith('..')` / `isAbsolute` / `!startsWith('.images')` -> `readFileSync` | 6 cases cover all security paths            | PASS   |
+| `extractImagePaths`                      | Regex `/!\[.*?\]\((\.images\/[^)"\s]+)\)/g`                                                                         | 5 cases (including edge: title, URL, empty) | PASS   |
+| `deleteImage`                            | `getWorkspacePath` -> `normalize` -> security checks -> `unlinkSync` (try-catch)                                    | 6 cases cover all security paths + ENOENT   | PASS   |
+| `cleanupRemovedImages`                   | `extractImagePaths(old)` diff `extractImagePaths(new)` -> `deleteImage` each                                        | 3 cases cover diff scenarios                | PASS   |
+| `deleteAllImages`                        | `extractImagePaths` -> `deleteImage` each                                                                           | 2 cases cover with/without images           | PASS   |
+| `noteService.writeContent` (integration) | `readFileSync(old)` -> `cleanupRemovedImages(ws, old, new)` in try-catch                                            | 2 cases cover success + ENOENT              | PASS   |
+| `noteService.remove` (integration)       | `readFileSync` -> `deleteAllImages(ws, content)` in try-catch                                                       | 2 cases cover success + ENOENT              | PASS   |
 
 ---
 
@@ -262,9 +265,9 @@ Match Rate: 36/36 = 100%
 
 ## 7. Cosmetic Differences Detail
 
-| # | Location | Design | Implementation | Category |
-|---|----------|--------|----------------|----------|
-| 1 | extractImagePaths case 5 | `expect(['.images/photo.png'])` | `expect([])` | Design regex prediction error -- impl is correct |
+| #   | Location                 | Design                          | Implementation | Category                                         |
+| --- | ------------------------ | ------------------------------- | -------------- | ------------------------------------------------ |
+| 1   | extractImagePaths case 5 | `expect(['.images/photo.png'])` | `expect([])`   | Design regex prediction error -- impl is correct |
 
 This single difference is categorized as a **design document inaccuracy** rather than an implementation deviation. The implementation correctly tests the actual regex behavior of `noteImageService.extractImagePaths`. The design incorrectly predicted that the regex would extract the path even when a Markdown title attribute is present. The test name was also improved: "title 속성 포함 -> 현재 regex 미매칭 (title 미지원)" provides more accurate documentation than the design's "title 속성 포함 -> 경로만 추출, title 제외".
 
@@ -290,6 +293,6 @@ The `note-image-test` implementation achieves a **100% match rate** (36/36 cases
 
 ## Version History
 
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0 | 2026-03-03 | Initial analysis | gap-detector |
+| Version | Date       | Changes          | Author       |
+| ------- | ---------- | ---------------- | ------------ |
+| 1.0     | 2026-03-03 | Initial analysis | gap-detector |

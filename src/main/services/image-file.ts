@@ -22,7 +22,6 @@ export interface ImageFileNode {
   updatedAt: Date
 }
 
-
 function toImageFileNode(row: {
   id: string
   title: string
@@ -81,7 +80,7 @@ export const imageFileService = {
     for (const entry of newFsEntries) {
       const matchedOrphan = orphanByBasename.get(entry.name)
       const parentRel = parentRelPath(entry.relativePath)
-      const folder = parentRel ? folderMap.get(parentRel) ?? null : null
+      const folder = parentRel ? (folderMap.get(parentRel) ?? null) : null
       if (matchedOrphan) {
         imageFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,

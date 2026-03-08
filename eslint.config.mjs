@@ -7,7 +7,15 @@ import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 import boundaries from 'eslint-plugin-boundaries'
 
 export default defineConfig(
-  { ignores: ['**/node_modules', '**/dist', '**/out', 'src/renderer/src/shared/ui/**'] },
+  {
+    ignores: [
+      '**/node_modules',
+      '**/dist',
+      '**/dist-mcp',
+      '**/out',
+      'src/renderer/src/shared/ui/**'
+    ]
+  },
   tseslint.configs.recommended,
   eslintPluginReact.configs.flat.recommended,
   eslintPluginReact.configs.flat['jsx-runtime'],

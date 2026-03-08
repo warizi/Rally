@@ -2,24 +2,11 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter
-} from '@shared/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Textarea } from '@shared/ui/textarea'
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@shared/ui/form'
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
 import type { TagItem } from '@entities/tag'
 import { TagColorPicker } from './TagColorPicker'
 
@@ -47,7 +34,7 @@ export function TagUpdateDialog({
   isPending,
   onSubmit,
   onRemove
-}: Props) {
+}: Props): React.JSX.Element {
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -132,12 +119,7 @@ export function TagUpdateDialog({
             </div>
             <DialogFooter className="mt-4">
               {onRemove && (
-                <Button
-                  type="button"
-                  variant="destructive"
-                  onClick={onRemove}
-                  className="mr-auto"
-                >
+                <Button type="button" variant="destructive" onClick={onRemove} className="mr-auto">
                   삭제
                 </Button>
               )}

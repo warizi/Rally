@@ -95,9 +95,7 @@ describe('create', () => {
 
   it('title trim 적용', () => {
     canvasService.create('ws-1', { title: '  제목  ' })
-    expect(canvasRepository.create).toHaveBeenCalledWith(
-      expect.objectContaining({ title: '제목' })
-    )
+    expect(canvasRepository.create).toHaveBeenCalledWith(expect.objectContaining({ title: '제목' }))
   })
 
   it('description 미전달 → 빈 문자열', () => {

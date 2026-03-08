@@ -40,8 +40,14 @@ describe('findByWorkspaceId', () => {
   })
 
   it('캔버스 여러 개 반환', () => {
-    testDb.insert(schema.canvases).values(makeCanvas({ id: 'c-1' })).run()
-    testDb.insert(schema.canvases).values(makeCanvas({ id: 'c-2' })).run()
+    testDb
+      .insert(schema.canvases)
+      .values(makeCanvas({ id: 'c-1' }))
+      .run()
+    testDb
+      .insert(schema.canvases)
+      .values(makeCanvas({ id: 'c-2' }))
+      .run()
     const result = canvasRepository.findByWorkspaceId(WS_ID)
     expect(result).toHaveLength(2)
   })
@@ -57,7 +63,10 @@ describe('findByWorkspaceId', () => {
         updatedAt: new Date()
       })
       .run()
-    testDb.insert(schema.canvases).values(makeCanvas({ id: 'c-1' })).run()
+    testDb
+      .insert(schema.canvases)
+      .values(makeCanvas({ id: 'c-1' }))
+      .run()
     testDb
       .insert(schema.canvases)
       .values(makeCanvas({ id: 'c-other', workspaceId: 'ws-other' }))

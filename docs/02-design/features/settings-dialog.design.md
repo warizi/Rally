@@ -427,6 +427,7 @@ export { Toaster, ToasterProps }
 ```
 
 **변경 포인트**:
+
 - `'use client'` 디렉티브 제거 (Electron 앱, 불필요)
 - `import { useTheme } from 'next-themes'` → `import { useSyncExternalStore } from 'react'`
 - `const { theme = 'system' } = useTheme()` → `const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot)`
@@ -564,6 +565,7 @@ export default MainSidebar
 ```
 
 **변경 포인트**:
+
 - `useState(false)` 추가 — `settingsOpen` 상태
 - `Settings` 아이콘 import (lucide-react)
 - `SettingsDialog` import (features/settings/manage-settings)
@@ -591,17 +593,17 @@ export { SettingsDialog } from './manage-settings'
 
 ## 5. Implementation Order
 
-| 순서 | 파일 | 작업 | 의존 |
-|------|------|------|------|
-| 1 | `shared/lib/theme.ts` | 신규: Theme 타입 + applyTheme | 없음 |
-| 2 | `shared/ui/sonner.tsx` | 수정: next-themes → useSyncExternalStore | theme.ts (간접) |
-| 3 | `features/settings/manage-settings/ui/DisplaySettings.tsx` | 신규: 다크모드 스켈레톤 UI | theme.ts |
-| 4 | `features/settings/manage-settings/ui/SettingsDialog.tsx` | 신규: 설정 다이얼로그 | DisplaySettings |
-| 5 | `features/settings/manage-settings/index.ts` | 신규: barrel export | SettingsDialog |
-| 6 | `features/settings/index.ts` | 신규: barrel export | manage-settings |
-| 7 | `app/layout/MainSidebar.tsx` | 수정: 시스템 그룹 + 설정 항목 | SettingsDialog |
-| 8 | `app/providers/theme-initializer.tsx` | 신규: 테마 초기화 | theme.ts |
-| 9 | `app/App.tsx` | 수정: ThemeInitializer 등록 | theme-initializer |
+| 순서 | 파일                                                       | 작업                                     | 의존              |
+| ---- | ---------------------------------------------------------- | ---------------------------------------- | ----------------- |
+| 1    | `shared/lib/theme.ts`                                      | 신규: Theme 타입 + applyTheme            | 없음              |
+| 2    | `shared/ui/sonner.tsx`                                     | 수정: next-themes → useSyncExternalStore | theme.ts (간접)   |
+| 3    | `features/settings/manage-settings/ui/DisplaySettings.tsx` | 신규: 다크모드 스켈레톤 UI               | theme.ts          |
+| 4    | `features/settings/manage-settings/ui/SettingsDialog.tsx`  | 신규: 설정 다이얼로그                    | DisplaySettings   |
+| 5    | `features/settings/manage-settings/index.ts`               | 신규: barrel export                      | SettingsDialog    |
+| 6    | `features/settings/index.ts`                               | 신규: barrel export                      | manage-settings   |
+| 7    | `app/layout/MainSidebar.tsx`                               | 수정: 시스템 그룹 + 설정 항목            | SettingsDialog    |
+| 8    | `app/providers/theme-initializer.tsx`                      | 신규: 테마 초기화                        | theme.ts          |
+| 9    | `app/App.tsx`                                              | 수정: ThemeInitializer 등록              | theme-initializer |
 
 총 **9개 파일** (신규 6, 수정 3)
 
@@ -611,22 +613,22 @@ export { SettingsDialog } from './manage-settings'
 
 ### 신규 파일
 
-| 파일 | FSD 레이어 | 설명 |
-|------|-----------|------|
-| `src/renderer/src/shared/lib/theme.ts` | shared | Theme 타입 + applyTheme 함수 |
-| `src/renderer/src/features/settings/manage-settings/ui/SettingsDialog.tsx` | features | 설정 다이얼로그 (블러 백드롭, 탭 레이아웃) |
-| `src/renderer/src/features/settings/manage-settings/ui/DisplaySettings.tsx` | features | 디스플레이 설정 (다크모드 스켈레톤 카드) |
-| `src/renderer/src/features/settings/manage-settings/index.ts` | features | barrel export |
-| `src/renderer/src/features/settings/index.ts` | features | barrel export |
-| `src/renderer/src/app/providers/theme-initializer.tsx` | app | 앱 시작 시 DB → DOM 테마 초기화 |
+| 파일                                                                        | FSD 레이어 | 설명                                       |
+| --------------------------------------------------------------------------- | ---------- | ------------------------------------------ |
+| `src/renderer/src/shared/lib/theme.ts`                                      | shared     | Theme 타입 + applyTheme 함수               |
+| `src/renderer/src/features/settings/manage-settings/ui/SettingsDialog.tsx`  | features   | 설정 다이얼로그 (블러 백드롭, 탭 레이아웃) |
+| `src/renderer/src/features/settings/manage-settings/ui/DisplaySettings.tsx` | features   | 디스플레이 설정 (다크모드 스켈레톤 카드)   |
+| `src/renderer/src/features/settings/manage-settings/index.ts`               | features   | barrel export                              |
+| `src/renderer/src/features/settings/index.ts`                               | features   | barrel export                              |
+| `src/renderer/src/app/providers/theme-initializer.tsx`                      | app        | 앱 시작 시 DB → DOM 테마 초기화            |
 
 ### 수정 파일
 
-| 파일 | 변경 요약 |
-|------|----------|
-| `src/renderer/src/shared/ui/sonner.tsx` | `useTheme()` → `useSyncExternalStore` + MutationObserver |
-| `src/renderer/src/app/layout/MainSidebar.tsx` | "기타"→"시스템", 설정 메뉴, SettingsDialog, Fragment |
-| `src/renderer/src/app/App.tsx` | ThemeInitializer 컴포넌트 추가 |
+| 파일                                          | 변경 요약                                                |
+| --------------------------------------------- | -------------------------------------------------------- |
+| `src/renderer/src/shared/ui/sonner.tsx`       | `useTheme()` → `useSyncExternalStore` + MutationObserver |
+| `src/renderer/src/app/layout/MainSidebar.tsx` | "기타"→"시스템", 설정 메뉴, SettingsDialog, Fragment     |
+| `src/renderer/src/app/App.tsx`                | ThemeInitializer 컴포넌트 추가                           |
 
 ---
 

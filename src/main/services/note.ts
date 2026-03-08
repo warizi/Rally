@@ -23,7 +23,6 @@ export interface NoteNode {
   updatedAt: Date
 }
 
-
 function toNoteNode(note: {
   id: string
   title: string
@@ -91,7 +90,7 @@ export const noteService = {
     for (const entry of newFsEntries) {
       const matchedOrphan = orphanByBasename.get(entry.name)
       const parentRel = parentRelPath(entry.relativePath)
-      const folder = parentRel ? folderMap.get(parentRel) ?? null : null
+      const folder = parentRel ? (folderMap.get(parentRel) ?? null) : null
       if (matchedOrphan) {
         // 이동으로 간주: 경로·폴더·타이틀만 갱신, ID는 유지
         noteRepository.update(matchedOrphan.id, {
@@ -368,7 +367,13 @@ export const noteService = {
     workspaceId: string,
     query: string
   ): Promise<
-    { id: string; title: string; relativePath: string; preview: string; matchType: 'title' | 'content' }[]
+    {
+      id: string
+      title: string
+      relativePath: string
+      preview: string
+      matchType: 'title' | 'content'
+    }[]
   > {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)

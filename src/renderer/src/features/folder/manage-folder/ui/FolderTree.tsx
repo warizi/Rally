@@ -82,10 +82,7 @@ function findFolderNode(nodes: WorkspaceTreeNode[], id: string): FolderTreeNode 
   return null
 }
 
-function countVisibleNodes(
-  nodes: WorkspaceTreeNode[],
-  openState: Record<string, boolean>
-): number {
+function countVisibleNodes(nodes: WorkspaceTreeNode[], openState: Record<string, boolean>): number {
   let count = 0
   for (const node of nodes) {
     count++

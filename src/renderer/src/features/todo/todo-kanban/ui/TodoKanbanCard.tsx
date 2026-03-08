@@ -111,9 +111,7 @@ export function TodoKanbanCard({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <PanePickerSubmenu
-              onPaneSelect={(paneId) => onOpenInPane?.(paneId)}
-            >
+            <PanePickerSubmenu onPaneSelect={(paneId) => onOpenInPane?.(paneId)}>
               {({ onClick }) => (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
                   상세 보기

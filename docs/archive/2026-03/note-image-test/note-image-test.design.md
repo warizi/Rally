@@ -8,10 +8,10 @@
 
 ## 1. 구현 순서
 
-| 순서 | 파일 | 설명 |
-| ---- | ---- | ---- |
-| 1 | `src/main/services/__tests__/note-image.test.ts` | noteImageService 7개 메서드 단위 테스트 (32 cases) |
-| 2 | `src/main/services/__tests__/note.test.ts` | writeContent/remove 이미지 연동 테스트 추가 (4 cases) |
+| 순서 | 파일                                             | 설명                                                  |
+| ---- | ------------------------------------------------ | ----------------------------------------------------- |
+| 1    | `src/main/services/__tests__/note-image.test.ts` | noteImageService 7개 메서드 단위 테스트 (32 cases)    |
+| 2    | `src/main/services/__tests__/note.test.ts`       | writeContent/remove 이미지 연동 테스트 추가 (4 cases) |
 
 환경 설정 변경 없음.
 
@@ -62,6 +62,7 @@ beforeEach(() => {
 ```
 
 **핵심 설계 판단:**
+
 - `fs` 전체 모킹 — `existsSync`, `mkdirSync`, `copyFileSync`, `writeFileSync`, `unlinkSync`, `readFileSync` 모두 제어
 - `nanoid` 고정 ID `'mock-id'` — 파일명 예측 가능
 - `isImageFile`은 **모킹하지 않음** — `path.extname` + 배열 체크이므로 실제 로직 사용이 적절
@@ -73,14 +74,14 @@ beforeEach(() => {
 
 **saveFromPath** (6건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 정상 이미지 파일 저장 | 반환값 `'.images/mock-id.png'`, `fs.copyFileSync` 호출 |
-| 2 | .images/ 폴더 미존재 시 자동 생성 | `existsSync` false → `mkdirSync` 호출 확인 |
-| 3 | .images/ 폴더 이미 존재 | `existsSync` true → `mkdirSync` 미호출 |
-| 4 | 존재하지 않는 소스 파일 | `existsSync` sourcePath에 false → `NotFoundError` |
-| 5 | 지원하지 않는 확장자 (.txt) | `ValidationError` throw |
-| 6 | 잘못된 workspaceId | `workspaceRepository.findById` undefined → `NotFoundError` |
+| #   | Case                              | 핵심 assertion                                             |
+| --- | --------------------------------- | ---------------------------------------------------------- |
+| 1   | 정상 이미지 파일 저장             | 반환값 `'.images/mock-id.png'`, `fs.copyFileSync` 호출     |
+| 2   | .images/ 폴더 미존재 시 자동 생성 | `existsSync` false → `mkdirSync` 호출 확인                 |
+| 3   | .images/ 폴더 이미 존재           | `existsSync` true → `mkdirSync` 미호출                     |
+| 4   | 존재하지 않는 소스 파일           | `existsSync` sourcePath에 false → `NotFoundError`          |
+| 5   | 지원하지 않는 확장자 (.txt)       | `ValidationError` throw                                    |
+| 6   | 잘못된 workspaceId                | `workspaceRepository.findById` undefined → `NotFoundError` |
 
 ```typescript
 describe('saveFromPath', () => {
@@ -99,10 +100,9 @@ describe('saveFromPath', () => {
       return true // 소스 파일 존재
     })
     noteImageService.saveFromPath('ws-1', '/source/photo.png')
-    expect(fs.mkdirSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images'),
-      { recursive: true }
-    )
+    expect(fs.mkdirSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images'), {
+      recursive: true
+    })
   })
 
   it('.images/ 폴더 이미 존재 시 mkdirSync 미호출', () => {
@@ -116,19 +116,18 @@ describe('saveFromPath', () => {
       if (String(p) === '/source/missing.png') return false
       return true
     })
-    expect(() => noteImageService.saveFromPath('ws-1', '/source/missing.png'))
-      .toThrow(NotFoundError)
+    expect(() => noteImageService.saveFromPath('ws-1', '/source/missing.png')).toThrow(
+      NotFoundError
+    )
   })
 
   it('지원하지 않는 확장자 → ValidationError', () => {
-    expect(() => noteImageService.saveFromPath('ws-1', '/source/doc.txt'))
-      .toThrow(ValidationError)
+    expect(() => noteImageService.saveFromPath('ws-1', '/source/doc.txt')).toThrow(ValidationError)
   })
 
   it('잘못된 workspaceId → NotFoundError', () => {
     vi.mocked(workspaceRepository.findById).mockReturnValue(undefined)
-    expect(() => noteImageService.saveFromPath('bad', '/source/photo.png'))
-      .toThrow(NotFoundError)
+    expect(() => noteImageService.saveFromPath('bad', '/source/photo.png')).toThrow(NotFoundError)
   })
 })
 ```
@@ -137,12 +136,12 @@ describe('saveFromPath', () => {
 
 **saveFromBuffer** (4건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 정상 ArrayBuffer 저장 (ext: 'png') | 반환값 `'.images/mock-id.png'` |
-| 2 | 점 포함 확장자 (ext: '.jpg') | 정규화 후 `.images/mock-id.jpg` |
-| 3 | 지원하지 않는 확장자 (ext: 'txt') | `ValidationError` throw |
-| 4 | fs.writeFileSync에 Buffer.from(buffer) 전달 | 호출 인자 검증 |
+| #   | Case                                        | 핵심 assertion                  |
+| --- | ------------------------------------------- | ------------------------------- |
+| 1   | 정상 ArrayBuffer 저장 (ext: 'png')          | 반환값 `'.images/mock-id.png'`  |
+| 2   | 점 포함 확장자 (ext: '.jpg')                | 정규화 후 `.images/mock-id.jpg` |
+| 3   | 지원하지 않는 확장자 (ext: 'txt')           | `ValidationError` throw         |
+| 4   | fs.writeFileSync에 Buffer.from(buffer) 전달 | 호출 인자 검증                  |
 
 ```typescript
 describe('saveFromBuffer', () => {
@@ -160,8 +159,7 @@ describe('saveFromBuffer', () => {
 
   it('지원하지 않는 확장자 → ValidationError', () => {
     const buf = new ArrayBuffer(8)
-    expect(() => noteImageService.saveFromBuffer('ws-1', buf, 'txt'))
-      .toThrow(ValidationError)
+    expect(() => noteImageService.saveFromBuffer('ws-1', buf, 'txt')).toThrow(ValidationError)
   })
 
   it('fs.writeFileSync에 Buffer.from(buffer) 전달', () => {
@@ -179,14 +177,14 @@ describe('saveFromBuffer', () => {
 
 **readImage** (6건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 정상 읽기 (.images/abc.png) | `{ data: Buffer }` 반환 |
-| 2 | path traversal: `../secret.txt` | `ValidationError` throw |
-| 3 | .images/ 내부 path traversal: `.images/../secret.txt` | normalize 후 `secret.txt` → `ValidationError` |
-| 4 | 절대 경로: `/etc/passwd` | `ValidationError` throw |
-| 5 | .images/ 외 경로: `photos/img.png` | `ValidationError` throw |
-| 6 | 파일 미존재 (readFileSync throw) | `NotFoundError` throw |
+| #   | Case                                                  | 핵심 assertion                                |
+| --- | ----------------------------------------------------- | --------------------------------------------- |
+| 1   | 정상 읽기 (.images/abc.png)                           | `{ data: Buffer }` 반환                       |
+| 2   | path traversal: `../secret.txt`                       | `ValidationError` throw                       |
+| 3   | .images/ 내부 path traversal: `.images/../secret.txt` | normalize 후 `secret.txt` → `ValidationError` |
+| 4   | 절대 경로: `/etc/passwd`                              | `ValidationError` throw                       |
+| 5   | .images/ 외 경로: `photos/img.png`                    | `ValidationError` throw                       |
+| 6   | 파일 미존재 (readFileSync throw)                      | `NotFoundError` throw                         |
 
 ```typescript
 describe('readImage', () => {
@@ -195,39 +193,34 @@ describe('readImage', () => {
     vi.mocked(fs.readFileSync).mockReturnValue(buf)
     const result = noteImageService.readImage('ws-1', '.images/abc.png')
     expect(result.data).toBe(buf)
-    expect(fs.readFileSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images', 'abc.png')
-    )
+    expect(fs.readFileSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images', 'abc.png'))
   })
 
   it('path traversal (../secret.txt) → ValidationError', () => {
-    expect(() => noteImageService.readImage('ws-1', '../secret.txt'))
-      .toThrow(ValidationError)
+    expect(() => noteImageService.readImage('ws-1', '../secret.txt')).toThrow(ValidationError)
   })
 
   it('.images/ 내부 path traversal (.images/../secret.txt) → ValidationError', () => {
     // path.normalize('.images/../secret.txt') → 'secret.txt' (.. 해소)
     // 'secret.txt'.startsWith('.images') → false → ValidationError
-    expect(() => noteImageService.readImage('ws-1', '.images/../secret.txt'))
-      .toThrow(ValidationError)
+    expect(() => noteImageService.readImage('ws-1', '.images/../secret.txt')).toThrow(
+      ValidationError
+    )
   })
 
   it('절대 경로 (/etc/passwd) → ValidationError', () => {
-    expect(() => noteImageService.readImage('ws-1', '/etc/passwd'))
-      .toThrow(ValidationError)
+    expect(() => noteImageService.readImage('ws-1', '/etc/passwd')).toThrow(ValidationError)
   })
 
   it('.images/ 외 경로 (photos/img.png) → ValidationError', () => {
-    expect(() => noteImageService.readImage('ws-1', 'photos/img.png'))
-      .toThrow(ValidationError)
+    expect(() => noteImageService.readImage('ws-1', 'photos/img.png')).toThrow(ValidationError)
   })
 
   it('파일 미존재 → NotFoundError', () => {
     vi.mocked(fs.readFileSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    expect(() => noteImageService.readImage('ws-1', '.images/missing.png'))
-      .toThrow(NotFoundError)
+    expect(() => noteImageService.readImage('ws-1', '.images/missing.png')).toThrow(NotFoundError)
   })
 })
 ```
@@ -236,13 +229,13 @@ describe('readImage', () => {
 
 **extractImagePaths** (5건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 이미지 참조 2개 포함 | 2개 경로 배열 |
-| 2 | 이미지 참조 없는 마크다운 | 빈 배열 |
-| 3 | 외부 URL 이미지 | 빈 배열 (.images/ 아님) |
-| 4 | 빈 문자열 | 빈 배열 |
-| 5 | title 속성 포함 마크다운 | 경로만 추출, title 제외 |
+| #   | Case                      | 핵심 assertion          |
+| --- | ------------------------- | ----------------------- |
+| 1   | 이미지 참조 2개 포함      | 2개 경로 배열           |
+| 2   | 이미지 참조 없는 마크다운 | 빈 배열                 |
+| 3   | 외부 URL 이미지           | 빈 배열 (.images/ 아님) |
+| 4   | 빈 문자열                 | 빈 배열                 |
+| 5   | title 속성 포함 마크다운  | 경로만 추출, title 제외 |
 
 ```typescript
 describe('extractImagePaths', () => {
@@ -279,22 +272,20 @@ describe('extractImagePaths', () => {
 
 **deleteImage** (6건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 정상 삭제 (.images/abc.png) | `fs.unlinkSync` 호출 |
-| 2 | path traversal (../file) | no-op (unlinkSync 미호출) |
-| 3 | .images/ 내부 path traversal (.images/../file) | normalize 후 탈출 → no-op |
-| 4 | 절대 경로 (/etc/passwd) | no-op |
-| 5 | .images/ 외 경로 | no-op |
-| 6 | 이미 삭제된 파일 (ENOENT) | 예외 무시, throw 없음 |
+| #   | Case                                           | 핵심 assertion            |
+| --- | ---------------------------------------------- | ------------------------- |
+| 1   | 정상 삭제 (.images/abc.png)                    | `fs.unlinkSync` 호출      |
+| 2   | path traversal (../file)                       | no-op (unlinkSync 미호출) |
+| 3   | .images/ 내부 path traversal (.images/../file) | normalize 후 탈출 → no-op |
+| 4   | 절대 경로 (/etc/passwd)                        | no-op                     |
+| 5   | .images/ 외 경로                               | no-op                     |
+| 6   | 이미 삭제된 파일 (ENOENT)                      | 예외 무시, throw 없음     |
 
 ```typescript
 describe('deleteImage', () => {
   it('정상 삭제 → fs.unlinkSync 호출', () => {
     noteImageService.deleteImage('ws-1', '.images/abc.png')
-    expect(fs.unlinkSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images', 'abc.png')
-    )
+    expect(fs.unlinkSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images', 'abc.png'))
   })
 
   it('path traversal (../file) → no-op', () => {
@@ -323,8 +314,7 @@ describe('deleteImage', () => {
     vi.mocked(fs.unlinkSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    expect(() => noteImageService.deleteImage('ws-1', '.images/gone.png'))
-      .not.toThrow()
+    expect(() => noteImageService.deleteImage('ws-1', '.images/gone.png')).not.toThrow()
   })
 })
 ```
@@ -333,11 +323,11 @@ describe('deleteImage', () => {
 
 **cleanupRemovedImages** (3건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | old 2개, new 1개 → 1개 삭제 | `unlinkSync` 1회 호출, 제거된 경로만 |
-| 2 | old와 new 동일 | `unlinkSync` 미호출 |
-| 3 | old에 있고 new에 전부 제거 | `unlinkSync` N회 호출 |
+| #   | Case                        | 핵심 assertion                       |
+| --- | --------------------------- | ------------------------------------ |
+| 1   | old 2개, new 1개 → 1개 삭제 | `unlinkSync` 1회 호출, 제거된 경로만 |
+| 2   | old와 new 동일              | `unlinkSync` 미호출                  |
+| 3   | old에 있고 new에 전부 제거  | `unlinkSync` N회 호출                |
 
 ```typescript
 describe('cleanupRemovedImages', () => {
@@ -346,9 +336,7 @@ describe('cleanupRemovedImages', () => {
     const now = '![a](.images/a.png)'
     noteImageService.cleanupRemovedImages('ws-1', old, now)
     expect(fs.unlinkSync).toHaveBeenCalledTimes(1)
-    expect(fs.unlinkSync).toHaveBeenCalledWith(
-      path.join('/test/workspace', '.images', 'b.png')
-    )
+    expect(fs.unlinkSync).toHaveBeenCalledWith(path.join('/test/workspace', '.images', 'b.png'))
   })
 
   it('old와 new 동일 → unlinkSync 미호출', () => {
@@ -370,10 +358,10 @@ describe('cleanupRemovedImages', () => {
 
 **deleteAllImages** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 이미지 3개 참조 마크다운 | `unlinkSync` 3회 호출 |
-| 2 | 이미지 없는 마크다운 | `unlinkSync` 미호출 |
+| #   | Case                     | 핵심 assertion        |
+| --- | ------------------------ | --------------------- |
+| 1   | 이미지 3개 참조 마크다운 | `unlinkSync` 3회 호출 |
+| 2   | 이미지 없는 마크다운     | `unlinkSync` 미호출   |
 
 ```typescript
 describe('deleteAllImages', () => {
@@ -421,10 +409,10 @@ import { noteImageService } from '../note-image'
 
 **writeContent — 이미지 정리** (2건, 기존 writeContent describe에 추가)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 이미지 제거 시 cleanupRemovedImages 호출 | old/new content로 호출 확인 |
-| 2 | 파일 미존재 시 (최초 작성) cleanupRemovedImages 미호출 | readFileSync throw → 미호출 |
+| #   | Case                                                   | 핵심 assertion              |
+| --- | ------------------------------------------------------ | --------------------------- |
+| 1   | 이미지 제거 시 cleanupRemovedImages 호출               | old/new content로 호출 확인 |
+| 2   | 파일 미존재 시 (최초 작성) cleanupRemovedImages 미호출 | readFileSync throw → 미호출 |
 
 ```typescript
 // 기존 writeContent describe 내부에 추가
@@ -434,11 +422,7 @@ it('이미지 제거 시 cleanupRemovedImages 호출', () => {
   const newContent = 'no image'
   vi.mocked(fs.readFileSync).mockReturnValueOnce(oldContent as never)
   noteService.writeContent('ws-1', 'n1', newContent)
-  expect(noteImageService.cleanupRemovedImages).toHaveBeenCalledWith(
-    'ws-1',
-    oldContent,
-    newContent
-  )
+  expect(noteImageService.cleanupRemovedImages).toHaveBeenCalledWith('ws-1', oldContent, newContent)
 })
 
 it('파일 미존재 시 (최초 작성) cleanupRemovedImages 미호출', () => {
@@ -455,10 +439,10 @@ it('파일 미존재 시 (최초 작성) cleanupRemovedImages 미호출', () => 
 
 **remove — 이미지 전삭제** (2건, 기존 remove describe에 추가)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 노트 삭제 시 deleteAllImages 호출 | content로 호출 확인 |
-| 2 | 파일 읽기 실패 시 에러 무시 | readFileSync throw → deleteAllImages 미호출, throw 없음 |
+| #   | Case                              | 핵심 assertion                                          |
+| --- | --------------------------------- | ------------------------------------------------------- |
+| 1   | 노트 삭제 시 deleteAllImages 호출 | content로 호출 확인                                     |
+| 2   | 파일 읽기 실패 시 에러 무시       | readFileSync throw → deleteAllImages 미호출, throw 없음 |
 
 ```typescript
 // 기존 remove describe 내부에 추가
@@ -484,18 +468,18 @@ it('파일 읽기 실패 시 deleteAllImages 미호출, throw 없음', () => {
 
 ## 3. 테스트 케이스 요약
 
-| 파일 | describe | cases |
-|------|----------|:-----:|
-| note-image.test.ts | saveFromPath | 6 |
-| | saveFromBuffer | 4 |
-| | readImage | 6 |
-| | extractImagePaths | 5 |
-| | deleteImage | 6 |
-| | cleanupRemovedImages | 3 |
-| | deleteAllImages | 2 |
-| note.test.ts | writeContent (추가) | 2 |
-| | remove (추가) | 2 |
-| **Total** | | **36** |
+| 파일               | describe             | cases  |
+| ------------------ | -------------------- | :----: |
+| note-image.test.ts | saveFromPath         |   6    |
+|                    | saveFromBuffer       |   4    |
+|                    | readImage            |   6    |
+|                    | extractImagePaths    |   5    |
+|                    | deleteImage          |   6    |
+|                    | cleanupRemovedImages |   3    |
+|                    | deleteAllImages      |   2    |
+| note.test.ts       | writeContent (추가)  |   2    |
+|                    | remove (추가)        |   2    |
+| **Total**          |                      | **36** |
 
 ---
 

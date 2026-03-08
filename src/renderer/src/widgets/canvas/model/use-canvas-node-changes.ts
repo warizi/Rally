@@ -12,7 +12,7 @@ export function useCanvasNodeChanges(
   canvasId: string,
   store: StoreApi<CanvasFlowState>,
   pushHistory?: () => void
-) {
+): { onNodesChange: OnNodesChange } {
   const { mutate: updateNode } = useUpdateCanvasNode()
   const { mutate: updatePositions } = useUpdateCanvasNodePositions()
   const { mutate: removeNode } = useRemoveCanvasNode()

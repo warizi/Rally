@@ -6,11 +6,8 @@ import { canvasService } from '../services/canvas'
 export function registerCanvasHandlers(): void {
   ipcMain.handle(
     'canvas:findByWorkspace',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      options?: { search?: string }
-    ): IpcResponse => handle(() => canvasService.findByWorkspace(workspaceId, options?.search))
+    (_: IpcMainInvokeEvent, workspaceId: string, options?: { search?: string }): IpcResponse =>
+      handle(() => canvasService.findByWorkspace(workspaceId, options?.search))
   )
 
   ipcMain.handle(

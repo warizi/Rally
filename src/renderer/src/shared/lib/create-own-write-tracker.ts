@@ -1,5 +1,8 @@
 /** 자체 저장 추적기 팩토리 — watcher 이벤트와 구분하기 위해 사용 */
-export function createOwnWriteTracker(timeoutMs = 2000) {
+export function createOwnWriteTracker(timeoutMs = 2000): {
+  markAsOwnWrite(id: string): void
+  isOwnWrite(id: string): boolean
+} {
   const pendingWrites = new Map<string, ReturnType<typeof setTimeout>>()
 
   return {

@@ -12,7 +12,11 @@ export const canvasRepository = {
       const pattern = `%${search}%`
       conditions.push(or(like(canvases.title, pattern), like(canvases.description, pattern))!)
     }
-    return db.select().from(canvases).where(and(...conditions)).all()
+    return db
+      .select()
+      .from(canvases)
+      .where(and(...conditions))
+      .all()
   },
 
   findById(id: string): Canvas | undefined {

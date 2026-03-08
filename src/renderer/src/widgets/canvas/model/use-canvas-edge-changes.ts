@@ -8,7 +8,7 @@ export function useCanvasEdgeChanges(
   canvasId: string,
   store: StoreApi<CanvasFlowState>,
   pushHistory?: () => void
-) {
+): { onEdgesChange: OnEdgesChange; onConnect: OnConnect } {
   const { mutate: createEdge } = useCreateCanvasEdge()
   const { mutate: removeEdge } = useRemoveCanvasEdge()
 

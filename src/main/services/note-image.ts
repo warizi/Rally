@@ -75,7 +75,11 @@ export const noteImageService = {
     const workspacePath = getWorkspacePath(workspaceId)
 
     const normalized = path.normalize(relativePath)
-    if (normalized.startsWith('..') || path.isAbsolute(normalized) || !normalized.startsWith(IMAGES_DIR)) {
+    if (
+      normalized.startsWith('..') ||
+      path.isAbsolute(normalized) ||
+      !normalized.startsWith(IMAGES_DIR)
+    ) {
       return
     }
 

@@ -246,6 +246,7 @@ interface WorkspaceAPI {
     data: Partial<Pick<Workspace, 'name' | 'path' | 'updatedAt'>>
   ) => Promise<IpcResponse<Workspace>>
   delete: (id: string) => Promise<IpcResponse<void>>
+  activate: (id: string) => Promise<IpcResponse<Workspace>>
   selectDirectory: () => Promise<string | null>
 }
 
@@ -580,10 +581,7 @@ interface ReminderAPI {
   ) => Promise<IpcResponse<ReminderItem[]>>
   set: (data: SetReminderData) => Promise<IpcResponse<ReminderItem>>
   remove: (reminderId: string) => Promise<IpcResponse<void>>
-  removeByEntity: (
-    entityType: 'todo' | 'schedule',
-    entityId: string
-  ) => Promise<IpcResponse<void>>
+  removeByEntity: (entityType: 'todo' | 'schedule', entityId: string) => Promise<IpcResponse<void>>
   onFired: (
     callback: (data: { entityType: string; entityId: string; title: string }) => void
   ) => () => void
@@ -620,14 +618,8 @@ interface TagAPI {
 }
 
 interface ItemTagAPI {
-  getTagsByItem: (
-    itemType: TaggableEntityType,
-    itemId: string
-  ) => Promise<IpcResponse<TagItem[]>>
-  getItemIdsByTag: (
-    tagId: string,
-    itemType: TaggableEntityType
-  ) => Promise<IpcResponse<string[]>>
+  getTagsByItem: (itemType: TaggableEntityType, itemId: string) => Promise<IpcResponse<TagItem[]>>
+  getItemIdsByTag: (tagId: string, itemType: TaggableEntityType) => Promise<IpcResponse<string[]>>
   attach: (
     itemType: TaggableEntityType,
     tagId: string,

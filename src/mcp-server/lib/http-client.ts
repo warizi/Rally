@@ -9,13 +9,13 @@ const socketPath =
 
 interface HttpResponse {
   status: number
-  data: any
+  data: unknown
 }
 
 export async function mcpRequest(
   method: string,
   urlPath: string,
-  body?: any
+  body?: Record<string, unknown>
 ): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
     const options: http.RequestOptions = {

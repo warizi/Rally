@@ -2,7 +2,12 @@ import { useDraggable } from '@dnd-kit/core'
 import { format } from 'date-fns'
 import type { ScheduleItem } from '@entities/schedule'
 import { getScheduleColor } from '../model/schedule-color'
-import { DEFAULT_START_HOUR, timeToPosition, scheduleHeight, isTodoItem } from '../model/calendar-utils'
+import {
+  DEFAULT_START_HOUR,
+  timeToPosition,
+  scheduleHeight,
+  isTodoItem
+} from '../model/calendar-utils'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
 
 interface Props {

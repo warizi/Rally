@@ -1,7 +1,17 @@
 import { useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
-import { Bell, Calendar, Clock, MapPin, FileText, Link, Pencil, Trash2, CheckSquare } from 'lucide-react'
+import {
+  Bell,
+  Calendar,
+  Clock,
+  MapPin,
+  FileText,
+  Link,
+  Pencil,
+  Trash2,
+  CheckSquare
+} from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
 import type { ScheduleItem } from '@entities/schedule'

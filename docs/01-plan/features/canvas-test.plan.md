@@ -14,10 +14,10 @@ Repository → Service → Renderer Queries 계층의 테스트를 추가하여 
 
 ### 이미 테스트됨 (작성 불필요)
 
-| 파일 | 비고 |
-| ---- | ---- |
-| `src/renderer/src/entities/canvas/model/__tests__/converters.test.ts` | 순수 함수 ~20건 |
-| `src/renderer/src/widgets/canvas/model/__tests__/canvas-layout.test.ts` | 순수 함수 ~6건 |
+| 파일                                                                    | 비고            |
+| ----------------------------------------------------------------------- | --------------- |
+| `src/renderer/src/entities/canvas/model/__tests__/converters.test.ts`   | 순수 함수 ~20건 |
+| `src/renderer/src/widgets/canvas/model/__tests__/canvas-layout.test.ts` | 순수 함수 ~6건  |
 
 ---
 
@@ -25,21 +25,21 @@ Repository → Service → Renderer Queries 계층의 테스트를 추가하여 
 
 ### 2-1. Main Process — `vitest.config.node.mts` (`npm run test`)
 
-| 파일 | 비고 |
-| ---- | ---- |
-| `src/main/repositories/__tests__/canvas.test.ts` | testDb (in-memory SQLite) 사용 |
-| `src/main/repositories/__tests__/canvas-node.test.ts` | testDb + canvas FK 의존 |
+| 파일                                                  | 비고                           |
+| ----------------------------------------------------- | ------------------------------ |
+| `src/main/repositories/__tests__/canvas.test.ts`      | testDb (in-memory SQLite) 사용 |
+| `src/main/repositories/__tests__/canvas-node.test.ts` | testDb + canvas FK 의존        |
 | `src/main/repositories/__tests__/canvas-edge.test.ts` | testDb + canvas + node FK 의존 |
-| `src/main/services/__tests__/canvas.test.ts` | repository 전체 vi.mock |
-| `src/main/services/__tests__/canvas-node.test.ts` | repository 전체 vi.mock |
-| `src/main/services/__tests__/canvas-edge.test.ts` | repository 전체 vi.mock |
+| `src/main/services/__tests__/canvas.test.ts`          | repository 전체 vi.mock        |
+| `src/main/services/__tests__/canvas-node.test.ts`     | repository 전체 vi.mock        |
+| `src/main/services/__tests__/canvas-edge.test.ts`     | repository 전체 vi.mock        |
 
 > ⚠️ Node 환경은 `globals: false` → `describe`, `it`, `expect`, `vi`, `beforeEach` 모두 명시적 import
 
 ### 2-2. Renderer — `vitest.config.web.mts` (`npm run test:web`)
 
-| 파일 | 비고 |
-| ---- | ---- |
+| 파일                                                               | 비고                                       |
+| ------------------------------------------------------------------ | ------------------------------------------ |
 | `src/renderer/src/entities/canvas/model/__tests__/queries.test.ts` | renderHook + QueryClientProvider + waitFor |
 
 ---
@@ -100,11 +100,11 @@ function makeCanvas(overrides?: Partial<CanvasInsert>): CanvasInsert {
 
 #### `findByWorkspaceId`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 캔버스 없음 | `[]` |
-| 2 | 캔버스 여러 개 | 전체 반환 |
-| 3 | 다른 워크스페이스 캔버스 배제 | 해당 workspaceId만 반환 |
+| #   | 케이스                        | 기대값                  |
+| --- | ----------------------------- | ----------------------- |
+| 1   | 캔버스 없음                   | `[]`                    |
+| 2   | 캔버스 여러 개                | 전체 반환               |
+| 3   | 다른 워크스페이스 캔버스 배제 | 해당 workspaceId만 반환 |
 
 #### `findById`
 
@@ -175,10 +175,10 @@ function makeNode(overrides?: Partial<CanvasNodeInsert>): CanvasNodeInsert {
 
 #### `findByCanvasId`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 노드 없음 | `[]` |
-| 2 | 노드 여러 개 | 전체 반환 |
+| #   | 케이스       | 기대값    |
+| --- | ------------ | --------- |
+| 1   | 노드 없음    | `[]`      |
+| 2   | 노드 여러 개 | 전체 반환 |
 
 #### `findById`
 
@@ -187,10 +187,10 @@ function makeNode(overrides?: Partial<CanvasNodeInsert>): CanvasNodeInsert {
 
 #### `findByIds`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 빈 배열 | `[]` |
-| 2 | 정상 (2개 ID) | 해당 2개 반환 |
+| #   | 케이스        | 기대값        |
+| --- | ------------- | ------------- |
+| 1   | 빈 배열       | `[]`          |
+| 2   | 정상 (2개 ID) | 해당 2개 반환 |
 
 > chunking(900) 테스트는 실질적으로 불필요 (메모리 DB에 900개 insert 비효율적)
 
@@ -205,10 +205,10 @@ function makeNode(overrides?: Partial<CanvasNodeInsert>): CanvasNodeInsert {
 
 #### `bulkUpdatePositions`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 빈 배열 → no-op | DB 변화 없음 |
-| 2 | 여러 노드 position 변경 | x, y 갱신 + `updatedAt` 갱신 |
+| #   | 케이스                  | 기대값                       |
+| --- | ----------------------- | ---------------------------- |
+| 1   | 빈 배열 → no-op         | DB 변화 없음                 |
+| 2   | 여러 노드 position 변경 | x, y 갱신 + `updatedAt` 갱신 |
 
 > `bulkUpdatePositions`는 raw SQL로 `Date.now()` (integer) 저장.
 > Drizzle ORM이 `mode: 'timestamp_ms'`로 읽어올 때 `Date` 인스턴스로 변환됨.
@@ -221,10 +221,10 @@ function makeNode(overrides?: Partial<CanvasNodeInsert>): CanvasNodeInsert {
 
 #### `deleteByRef`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 해당 type + refId 노드 삭제 | 대상 노드만 삭제 |
-| 2 | 같은 refId지만 다른 type | 삭제 안 됨 |
+| #   | 케이스                      | 기대값           |
+| --- | --------------------------- | ---------------- |
+| 1   | 해당 type + refId 노드 삭제 | 대상 노드만 삭제 |
+| 2   | 같은 refId지만 다른 type    | 삭제 안 됨       |
 
 ---
 
@@ -346,51 +346,51 @@ beforeEach(() => {
 
 #### `findByWorkspace`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 정상 | `CanvasItem[]` 반환, Date 타입 확인 |
-| 2 | workspace 없음 | `NotFoundError` |
+| #   | 케이스         | 기대값                              |
+| --- | -------------- | ----------------------------------- |
+| 1   | 정상           | `CanvasItem[]` 반환, Date 타입 확인 |
+| 2   | workspace 없음 | `NotFoundError`                     |
 
 #### `findById`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 정상 | `CanvasItem` 반환, `createdAt`/`updatedAt`이 Date 인스턴스 |
-| 2 | canvas 없음 | `NotFoundError` |
+| #   | 케이스      | 기대값                                                     |
+| --- | ----------- | ---------------------------------------------------------- |
+| 1   | 정상        | `CanvasItem` 반환, `createdAt`/`updatedAt`이 Date 인스턴스 |
+| 2   | canvas 없음 | `NotFoundError`                                            |
 
 #### `create`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | 정상 생성 | `canvasRepository.create` 호출, nanoid ID, timestamps = Date |
-| 2 | `title='  제목  '` 전달 | `title: '제목'` (trim 적용) |
-| 3 | `description` 미전달 | `description: ''` 전달 |
-| 4 | `description='  설명  '` 전달 | `description: '설명'` (trim 적용) |
-| 5 | workspace 없음 | `NotFoundError` |
+| #   | 케이스                        | 검증 포인트                                                  |
+| --- | ----------------------------- | ------------------------------------------------------------ |
+| 1   | 정상 생성                     | `canvasRepository.create` 호출, nanoid ID, timestamps = Date |
+| 2   | `title='  제목  '` 전달       | `title: '제목'` (trim 적용)                                  |
+| 3   | `description` 미전달          | `description: ''` 전달                                       |
+| 4   | `description='  설명  '` 전달 | `description: '설명'` (trim 적용)                            |
+| 5   | workspace 없음                | `NotFoundError`                                              |
 
 #### `update`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | title만 변경 | `title.trim()` 적용, `updatedAt` 설정 |
-| 2 | description만 변경 | `description.trim()` 적용 |
-| 3 | canvas findById 없음 | `NotFoundError` |
-| 4 | canvas update 반환 undefined | `NotFoundError` |
+| #   | 케이스                       | 검증 포인트                           |
+| --- | ---------------------------- | ------------------------------------- |
+| 1   | title만 변경                 | `title.trim()` 적용, `updatedAt` 설정 |
+| 2   | description만 변경           | `description.trim()` 적용             |
+| 3   | canvas findById 없음         | `NotFoundError`                       |
+| 4   | canvas update 반환 undefined | `NotFoundError`                       |
 
 #### `updateViewport`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | 정상 | `x/y/zoom → viewportX/viewportY/viewportZoom` 매핑 확인 |
-| 2 | 정상 | `updatedAt`이 repository 호출 인자에 **미포함** (viewport만 변경) |
-| 3 | canvas 없음 | `NotFoundError` |
+| #   | 케이스      | 검증 포인트                                                       |
+| --- | ----------- | ----------------------------------------------------------------- |
+| 1   | 정상        | `x/y/zoom → viewportX/viewportY/viewportZoom` 매핑 확인           |
+| 2   | 정상        | `updatedAt`이 repository 호출 인자에 **미포함** (viewport만 변경) |
+| 3   | canvas 없음 | `NotFoundError`                                                   |
 
 #### `remove`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | 정상 | `canvasRepository.delete` 호출 |
-| 2 | canvas 없음 | `NotFoundError` |
+| #   | 케이스      | 검증 포인트                    |
+| --- | ----------- | ------------------------------ |
+| 1   | 정상        | `canvasRepository.delete` 호출 |
+| 2   | canvas 없음 | `NotFoundError`                |
 
 ---
 
@@ -457,45 +457,45 @@ const MOCK_NODE_ROW = {
 
 #### `findByCanvas`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | canvas 없음 | `NotFoundError` |
-| 2 | 노드 없음 (빈 배열) | `[]` |
-| 3 | text 노드만 | refTitle/refPreview/refMeta 전부 `undefined` |
-| 4 | todo ref 노드 | `refTitle`, `refPreview`, `refMeta.isDone/status/priority` 존재 |
-| 5 | note ref 노드 | `refTitle`, `refPreview` (preview 200자 제한) |
-| 6 | schedule ref 노드 | `refMeta.allDay/startAt/endAt/color/priority` 존재 |
-| 7 | csv ref 노드 | `refTitle=c.title`, `refPreview=c.preview ?? ''` |
-| 8 | pdf ref 노드 | `refTitle=p.title`, `refPreview=p.preview ?? ''` |
-| 9 | image ref 노드 | `refTitle=img.title`, `refPreview=img.description ?? ''` ← **description** 사용 (preview 아님) |
-| 10 | refId 없는 ref 타입 | `batchFetchRefs`에서 skip됨, ref 필드 `undefined` |
+| #   | 케이스              | 기대값                                                                                         |
+| --- | ------------------- | ---------------------------------------------------------------------------------------------- |
+| 1   | canvas 없음         | `NotFoundError`                                                                                |
+| 2   | 노드 없음 (빈 배열) | `[]`                                                                                           |
+| 3   | text 노드만         | refTitle/refPreview/refMeta 전부 `undefined`                                                   |
+| 4   | todo ref 노드       | `refTitle`, `refPreview`, `refMeta.isDone/status/priority` 존재                                |
+| 5   | note ref 노드       | `refTitle`, `refPreview` (preview 200자 제한)                                                  |
+| 6   | schedule ref 노드   | `refMeta.allDay/startAt/endAt/color/priority` 존재                                             |
+| 7   | csv ref 노드        | `refTitle=c.title`, `refPreview=c.preview ?? ''`                                               |
+| 8   | pdf ref 노드        | `refTitle=p.title`, `refPreview=p.preview ?? ''`                                               |
+| 9   | image ref 노드      | `refTitle=img.title`, `refPreview=img.description ?? ''` ← **description** 사용 (preview 아님) |
+| 10  | refId 없는 ref 타입 | `batchFetchRefs`에서 skip됨, ref 필드 `undefined`                                              |
 
 > `batchFetchRefs` 테스트가 핵심 — type별 repository 호출 여부 + refMap 매핑
 
 #### `create`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | canvas 없음 | `NotFoundError` |
-| 2 | 정상 (text) | nanoid ID, defaults: width=260, height=160, zIndex=0, refId=null, color=null, content=null |
-| 3 | 정상 (ref) | `refId` 전달됨 |
-| 4 | custom width/height | 전달값 사용 (260/160 아닌 값) |
+| #   | 케이스              | 검증 포인트                                                                                |
+| --- | ------------------- | ------------------------------------------------------------------------------------------ |
+| 1   | canvas 없음         | `NotFoundError`                                                                            |
+| 2   | 정상 (text)         | nanoid ID, defaults: width=260, height=160, zIndex=0, refId=null, color=null, content=null |
+| 3   | 정상 (ref)          | `refId` 전달됨                                                                             |
+| 4   | custom width/height | 전달값 사용 (260/160 아닌 값)                                                              |
 
 #### `update`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | node 없음 (findById) | `NotFoundError` |
-| 2 | node 없음 (update 반환 undefined) | `NotFoundError` |
-| 3 | content만 변경 | `content` 필드만 포함, `updatedAt` 설정 |
-| 4 | width + height 변경 | 부분 업데이트 확인 |
+| #   | 케이스                            | 검증 포인트                             |
+| --- | --------------------------------- | --------------------------------------- |
+| 1   | node 없음 (findById)              | `NotFoundError`                         |
+| 2   | node 없음 (update 반환 undefined) | `NotFoundError`                         |
+| 3   | content만 변경                    | `content` 필드만 포함, `updatedAt` 설정 |
+| 4   | width + height 변경               | 부분 업데이트 확인                      |
 
 #### `fetchRefData`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | 정상 (ref 노드 있음) | `Map<string, RefData>` 반환 |
-| 2 | 노드 없음 | 빈 `Map` 반환 (**NotFoundError 아님** — canvas 존재 확인 없음) |
+| #   | 케이스               | 기대값                                                         |
+| --- | -------------------- | -------------------------------------------------------------- |
+| 1   | 정상 (ref 노드 있음) | `Map<string, RefData>` 반환                                    |
+| 2   | 노드 없음            | 빈 `Map` 반환 (**NotFoundError 아님** — canvas 존재 확인 없음) |
 
 > `findByCanvas`와 달리 `fetchRefData`는 canvas 존재 확인을 하지 않음.
 > `canvasNodeRepository.findByCanvasId`를 직접 호출하여 빈 배열이면 빈 Map 반환.
@@ -506,10 +506,10 @@ const MOCK_NODE_ROW = {
 
 #### `remove`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | node 없음 | `NotFoundError` |
-| 2 | 정상 | `canvasNodeRepository.delete` 호출 |
+| #   | 케이스    | 검증 포인트                        |
+| --- | --------- | ---------------------------------- |
+| 1   | node 없음 | `NotFoundError`                    |
+| 2   | 정상      | `canvasNodeRepository.delete` 호출 |
 
 ---
 
@@ -557,23 +557,23 @@ const MOCK_EDGE_ROW = {
 
 #### `findByCanvas`
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | canvas 없음 | `NotFoundError` |
-| 2 | 정상 | `CanvasEdgeItem[]` 반환, `createdAt`이 Date 인스턴스 |
+| #   | 케이스      | 기대값                                               |
+| --- | ----------- | ---------------------------------------------------- |
+| 1   | canvas 없음 | `NotFoundError`                                      |
+| 2   | 정상        | `CanvasEdgeItem[]` 반환, `createdAt`이 Date 인스턴스 |
 
 #### `create` — 가장 풍부한 검증 대상
 
-| # | 케이스 | 기대값 |
-| - | ------ | ------ |
-| 1 | canvas 없음 | `NotFoundError` |
-| 2 | `fromNode === toNode` (self-loop) | `ValidationError('Cannot create self-loop edge')` |
-| 3 | fromNode 없음 | `NotFoundError('From node not found: ...')` |
-| 4 | toNode 없음 | `NotFoundError('To node not found: ...')` |
-| 5 | 중복 엣지 (같은 fromNode+toNode 방향) | `ValidationError('Duplicate edge already exists')` |
-| 6 | 역방향 엣지 (A→B 존재 시 B→A 생성) | **정상 생성** (중복 아님 — 방향성 체크) |
-| 7 | 정상 + 기본값 | defaults: `fromSide='right'`, `toSide='left'`, `style='solid'`, `arrow='end'`, `label=null`, `color=null` |
-| 8 | 정상 + 커스텀 값 | `fromSide='top'`, `toSide='bottom'`, `style='dashed'`, `arrow='both'` 전달 |
+| #   | 케이스                                | 기대값                                                                                                    |
+| --- | ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| 1   | canvas 없음                           | `NotFoundError`                                                                                           |
+| 2   | `fromNode === toNode` (self-loop)     | `ValidationError('Cannot create self-loop edge')`                                                         |
+| 3   | fromNode 없음                         | `NotFoundError('From node not found: ...')`                                                               |
+| 4   | toNode 없음                           | `NotFoundError('To node not found: ...')`                                                                 |
+| 5   | 중복 엣지 (같은 fromNode+toNode 방향) | `ValidationError('Duplicate edge already exists')`                                                        |
+| 6   | 역방향 엣지 (A→B 존재 시 B→A 생성)    | **정상 생성** (중복 아님 — 방향성 체크)                                                                   |
+| 7   | 정상 + 기본값                         | defaults: `fromSide='right'`, `toSide='left'`, `style='solid'`, `arrow='end'`, `label=null`, `color=null` |
+| 8   | 정상 + 커스텀 값                      | `fromSide='top'`, `toSide='bottom'`, `style='dashed'`, `arrow='both'` 전달                                |
 
 > **검증 순서가 중요**: canvas → self-loop → fromNode → toNode → duplicate → create
 > **중복 체크는 방향성(directional)**: `e.fromNode === data.fromNode && e.toNode === data.toNode`
@@ -581,18 +581,18 @@ const MOCK_EDGE_ROW = {
 
 #### `update`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | edge 없음 (findById) | `NotFoundError` |
-| 2 | edge 없음 (update 반환 undefined) | `NotFoundError` |
-| 3 | style만 변경 | 해당 필드만 포함 |
+| #   | 케이스                            | 검증 포인트      |
+| --- | --------------------------------- | ---------------- |
+| 1   | edge 없음 (findById)              | `NotFoundError`  |
+| 2   | edge 없음 (update 반환 undefined) | `NotFoundError`  |
+| 3   | style만 변경                      | 해당 필드만 포함 |
 
 #### `remove`
 
-| # | 케이스 | 검증 포인트 |
-| - | ------ | ----------- |
-| 1 | edge 없음 | `NotFoundError` |
-| 2 | 정상 | `canvasEdgeRepository.delete` 호출 |
+| #   | 케이스    | 검증 포인트                        |
+| --- | --------- | ---------------------------------- |
+| 1   | edge 없음 | `NotFoundError`                    |
+| 2   | 정상      | `canvasEdgeRepository.delete` 호출 |
 
 ---
 
@@ -668,65 +668,64 @@ function createWrapper() {
 #### queryKey 구조
 
 ```typescript
-['canvas', 'workspace', workspaceId]    // useCanvasesByWorkspace
-['canvas', 'detail', canvasId]          // useCanvasById
-['canvasNode', 'canvas', canvasId]      // useCanvasNodes
-['canvasEdge', 'canvas', canvasId]      // useCanvasEdges
+;['canvas', 'workspace', workspaceId][('canvas', 'detail', canvasId)][ // useCanvasesByWorkspace // useCanvasById
+  ('canvasNode', 'canvas', canvasId)
+][('canvasEdge', 'canvas', canvasId)] // useCanvasNodes // useCanvasEdges
 ```
 
 #### `useCanvasesByWorkspace`
 
-| # | 케이스 |
-| - | ------ |
-| 1 | 성공 → data 배열 반환 |
-| 2 | `success:false` → `isError=true` |
-| 3 | `workspaceId=''` → queryFn 미호출 (enabled=false) |
-| 4 | `res.data=null` → `[]` 반환 (`?? []` 처리) |
+| #   | 케이스                                            |
+| --- | ------------------------------------------------- |
+| 1   | 성공 → data 배열 반환                             |
+| 2   | `success:false` → `isError=true`                  |
+| 3   | `workspaceId=''` → queryFn 미호출 (enabled=false) |
+| 4   | `res.data=null` → `[]` 반환 (`?? []` 처리)        |
 
 #### `useCanvasById`
 
-| # | 케이스 |
-| - | ------ |
-| 1 | 성공 → CanvasItem 반환 |
-| 2 | `success:false` → `isError=true` |
-| 3 | `canvasId=undefined` → enabled=false |
+| #   | 케이스                               |
+| --- | ------------------------------------ |
+| 1   | 성공 → CanvasItem 반환               |
+| 2   | `success:false` → `isError=true`     |
+| 3   | `canvasId=undefined` → enabled=false |
 
 > `useCanvasById`는 `res.data!` 반환 (non-null assertion).
 > list 쿼리(`?? []` fallback)와 달리 `res.data=null` 시 `null` 그대로 반환됨.
 
 #### `useCanvasNodes`
 
-| # | 케이스 |
-| - | ------ |
-| 1 | 성공 → CanvasNodeItem[] 반환 |
-| 2 | `success:false` → `isError=true` |
-| 3 | `canvasId=undefined` → enabled=false |
-| 4 | `res.data=null` → `[]` 반환 |
+| #   | 케이스                               |
+| --- | ------------------------------------ |
+| 1   | 성공 → CanvasNodeItem[] 반환         |
+| 2   | `success:false` → `isError=true`     |
+| 3   | `canvasId=undefined` → enabled=false |
+| 4   | `res.data=null` → `[]` 반환          |
 
 #### `useCanvasEdges`
 
-| # | 케이스 |
-| - | ------ |
-| 1 | 성공 → CanvasEdgeItem[] 반환 |
-| 2 | `success:false` → `isError=true` |
-| 3 | `canvasId=undefined` → enabled=false |
-| 4 | `res.data=null` → `[]` 반환 |
+| #   | 케이스                               |
+| --- | ------------------------------------ |
+| 1   | 성공 → CanvasEdgeItem[] 반환         |
+| 2   | `success:false` → `isError=true`     |
+| 3   | `canvasId=undefined` → enabled=false |
+| 4   | `res.data=null` → `[]` 반환          |
 
 #### 뮤테이션 hooks — IPC 인자 및 invalidation
 
-| Hook | mutationFn IPC 호출 | invalidate queryKey |
-| ---- | -------------------- | ------------------- |
-| `useCreateCanvas` | `canvas.create(workspaceId, data)` | `['canvas', 'workspace', workspaceId]` |
-| `useUpdateCanvas` | `canvas.update(canvasId, data)` | workspace list + `setQueryData(['canvas', 'detail', result.id], result)` — **`result.id`** 사용 |
-| `useUpdateCanvasViewport` | `canvas.updateViewport(canvasId, viewport)` | 없음 (fire-and-forget, `useQueryClient` 미호출) |
-| `useRemoveCanvas` | `canvas.remove(canvasId)` | `['canvas', 'workspace', workspaceId]` |
-| `useCreateCanvasNode` | `canvasNode.create(canvasId, data)` | `['canvasNode', 'canvas', canvasId]` |
-| `useUpdateCanvasNode` | `canvasNode.update(nodeId, data)` | `['canvasNode', 'canvas', canvasId]` |
-| `useUpdateCanvasNodePositions` | `canvasNode.updatePositions(updates)` — **canvasId 미전달** (invalidation에만 사용) | `['canvasNode', 'canvas', canvasId]` |
-| `useRemoveCanvasNode` | `canvasNode.remove(nodeId)` | node list **+ edge list** (FK cascade) |
-| `useCreateCanvasEdge` | `canvasEdge.create(canvasId, data)` | `['canvasEdge', 'canvas', canvasId]` |
-| `useUpdateCanvasEdge` | `canvasEdge.update(edgeId, data)` | `['canvasEdge', 'canvas', canvasId]` |
-| `useRemoveCanvasEdge` | `canvasEdge.remove(edgeId)` | `['canvasEdge', 'canvas', canvasId]` |
+| Hook                           | mutationFn IPC 호출                                                                 | invalidate queryKey                                                                             |
+| ------------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `useCreateCanvas`              | `canvas.create(workspaceId, data)`                                                  | `['canvas', 'workspace', workspaceId]`                                                          |
+| `useUpdateCanvas`              | `canvas.update(canvasId, data)`                                                     | workspace list + `setQueryData(['canvas', 'detail', result.id], result)` — **`result.id`** 사용 |
+| `useUpdateCanvasViewport`      | `canvas.updateViewport(canvasId, viewport)`                                         | 없음 (fire-and-forget, `useQueryClient` 미호출)                                                 |
+| `useRemoveCanvas`              | `canvas.remove(canvasId)`                                                           | `['canvas', 'workspace', workspaceId]`                                                          |
+| `useCreateCanvasNode`          | `canvasNode.create(canvasId, data)`                                                 | `['canvasNode', 'canvas', canvasId]`                                                            |
+| `useUpdateCanvasNode`          | `canvasNode.update(nodeId, data)`                                                   | `['canvasNode', 'canvas', canvasId]`                                                            |
+| `useUpdateCanvasNodePositions` | `canvasNode.updatePositions(updates)` — **canvasId 미전달** (invalidation에만 사용) | `['canvasNode', 'canvas', canvasId]`                                                            |
+| `useRemoveCanvasNode`          | `canvasNode.remove(nodeId)`                                                         | node list **+ edge list** (FK cascade)                                                          |
+| `useCreateCanvasEdge`          | `canvasEdge.create(canvasId, data)`                                                 | `['canvasEdge', 'canvas', canvasId]`                                                            |
+| `useUpdateCanvasEdge`          | `canvasEdge.update(edgeId, data)`                                                   | `['canvasEdge', 'canvas', canvasId]`                                                            |
+| `useRemoveCanvasEdge`          | `canvasEdge.remove(edgeId)`                                                         | `['canvasEdge', 'canvas', canvasId]`                                                            |
 
 > `useRemoveCanvasNode`: edge list도 함께 invalidate — FK cascade로 연결 엣지 자동 삭제되므로
 
@@ -748,13 +747,13 @@ function createWrapper() {
 
 ## 6. 코드 스타일 규칙
 
-| 항목 | 규칙 |
-| ---- | ---- |
-| Node 테스트 | `describe`, `it`, `expect`, `vi`, `beforeEach` 모두 명시적 import |
+| 항목            | 규칙                                                                |
+| --------------- | ------------------------------------------------------------------- |
+| Node 테스트     | `describe`, `it`, `expect`, `vi`, `beforeEach` 모두 명시적 import   |
 | Renderer 테스트 | `import { renderHook, act, waitFor } from '@testing-library/react'` |
-| Service mock | `vi.mock(경로, () => ({ ... }))` 최상단 선언 (hoisting 필요) |
-| 언어 | 한국어 describe/it 메시지 |
-| 코드 스타일 | 세미콜론 없음, 작은따옴표, trailing comma 없음 |
+| Service mock    | `vi.mock(경로, () => ({ ... }))` 최상단 선언 (hoisting 필요)        |
+| 언어            | 한국어 describe/it 메시지                                           |
+| 코드 스타일     | 세미콜론 없음, 작은따옴표, trailing comma 없음                      |
 
 ---
 

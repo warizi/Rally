@@ -172,9 +172,7 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <PanePickerSubmenu
-                      onPaneSelect={(paneId) => handleOpenInPane(canvas, paneId)}
-                    >
+                    <PanePickerSubmenu onPaneSelect={(paneId) => handleOpenInPane(canvas, paneId)}>
                       {({ onClick }) => (
                         <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
                           상세 보기

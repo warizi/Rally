@@ -223,9 +223,9 @@ describe('create', () => {
 
   it('canvas 없음 → NotFoundError', () => {
     vi.mocked(canvasRepository.findById).mockReturnValue(undefined)
-    expect(() =>
-      canvasNodeService.create('bad', { type: 'text', x: 0, y: 0 })
-    ).toThrow(NotFoundError)
+    expect(() => canvasNodeService.create('bad', { type: 'text', x: 0, y: 0 })).toThrow(
+      NotFoundError
+    )
   })
 
   it('정상 (text) — defaults 확인', () => {

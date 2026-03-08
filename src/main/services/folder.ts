@@ -78,7 +78,6 @@ export async function readDirRecursiveAsync(
 
 // ─── 파일 내 private 헬퍼 ────────────────────────────────────
 
-
 /** 부모의 절대 경로 계산 (parentRelPath null = 워크스페이스 루트) */
 function resolveParentAbsPath(workspacePath: string, parentRelPath: string | null): string {
   return parentRelPath ? path.join(workspacePath, parentRelPath) : workspacePath

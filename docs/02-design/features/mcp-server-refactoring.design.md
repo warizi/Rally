@@ -149,8 +149,7 @@ const tools: ToolDefinition[] = [
     schema: {
       workspaceId: z.string().describe('Workspace ID')
     },
-    handler: ({ workspaceId }) =>
-      callTool('GET', `/api/workspaces/${enc(workspaceId)}/folders`)
+    handler: ({ workspaceId }) => callTool('GET', `/api/workspaces/${enc(workspaceId)}/folders`)
   },
   {
     name: 'list_notes',
@@ -158,8 +157,7 @@ const tools: ToolDefinition[] = [
     schema: {
       workspaceId: z.string().describe('Workspace ID')
     },
-    handler: ({ workspaceId }) =>
-      callTool('GET', `/api/workspaces/${enc(workspaceId)}/notes`)
+    handler: ({ workspaceId }) => callTool('GET', `/api/workspaces/${enc(workspaceId)}/notes`)
   },
   {
     name: 'read_note',
@@ -169,10 +167,7 @@ const tools: ToolDefinition[] = [
       noteId: z.string().describe('Note ID')
     },
     handler: ({ workspaceId, noteId }) =>
-      callTool(
-        'GET',
-        `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/content`
-      )
+      callTool('GET', `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/content`)
   },
   {
     name: 'write_note',
@@ -184,11 +179,9 @@ WARNING: This operation will delete any image files (![](/.images/xxx.png)) that
       content: z.string().describe('New markdown content (preserve existing image references)')
     },
     handler: ({ workspaceId, noteId, content }) =>
-      callTool(
-        'PUT',
-        `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/content`,
-        { content }
-      )
+      callTool('PUT', `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/content`, {
+        content
+      })
   },
   {
     name: 'create_note',
@@ -215,11 +208,9 @@ WARNING: This operation will delete any image files (![](/.images/xxx.png)) that
       newName: z.string().describe('New note name (without .md extension)')
     },
     handler: ({ workspaceId, noteId, newName }) =>
-      callTool(
-        'PATCH',
-        `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/rename`,
-        { newName }
-      )
+      callTool('PATCH', `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/rename`, {
+        newName
+      })
   },
   {
     name: 'move_note',
@@ -228,17 +219,12 @@ WARNING: This operation will delete any image files (![](/.images/xxx.png)) that
     schema: {
       workspaceId: z.string().describe('Workspace ID'),
       noteId: z.string().describe('Note ID'),
-      targetFolderId: z
-        .string()
-        .optional()
-        .describe('Target folder ID (omit for root level)')
+      targetFolderId: z.string().optional().describe('Target folder ID (omit for root level)')
     },
     handler: ({ workspaceId, noteId, targetFolderId }) =>
-      callTool(
-        'PATCH',
-        `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/move`,
-        { targetFolderId }
-      )
+      callTool('PATCH', `/api/workspaces/${enc(workspaceId)}/notes/${enc(noteId)}/move`, {
+        targetFolderId
+      })
   },
   {
     name: 'search_notes',
@@ -249,10 +235,7 @@ WARNING: This operation will delete any image files (![](/.images/xxx.png)) that
       query: z.string().describe('Search query (case-insensitive)')
     },
     handler: ({ workspaceId, query }) =>
-      callTool(
-        'GET',
-        `/api/workspaces/${enc(workspaceId)}/notes/search?q=${enc(query)}`
-      )
+      callTool('GET', `/api/workspaces/${enc(workspaceId)}/notes/search?q=${enc(query)}`)
   }
 ]
 
@@ -264,6 +247,7 @@ export function registerAllTools(server: McpServer): void {
 ```
 
 **검증 사항** (기존 코드와 1:1 대조 완료):
+
 - `list_workspaces`: schema `{}`, GET `/api/workspaces` — 일치
 - `list_folders`: schema `{ workspaceId }`, GET `.../folders` — 일치
 - `list_notes`: schema `{ workspaceId }`, GET `.../notes` — 일치
@@ -328,12 +312,7 @@ const MAX_BODY_SIZE = 10 * 1024 * 1024
 ```typescript
 import http from 'http'
 import { parseBody } from './lib/body-parser'
-import {
-  NotFoundError,
-  ValidationError,
-  ConflictError,
-  PayloadTooLargeError
-} from '../lib/errors'
+import { NotFoundError, ValidationError, ConflictError, PayloadTooLargeError } from '../lib/errors'
 
 type RouteParams = Record<string, string>
 
@@ -381,10 +360,7 @@ export function createRouter() {
     })
   }
 
-  async function handle(
-    req: http.IncomingMessage,
-    res: http.ServerResponse
-  ): Promise<void> {
+  async function handle(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
     const urlObj = new URL(req.url || '/', 'http://localhost')
     const pathname = urlObj.pathname
     const query = urlObj.searchParams
@@ -430,6 +406,7 @@ export type Router = ReturnType<typeof createRouter>
 ```
 
 **변경 요약**:
+
 - `routes` 배열이 `createRouter()` 클로저 내부로 이동 → 전역 상태 제거
 - `addRoute()`에 `<TBody>` 제네릭 추가 — handler의 body 파라미터에 타입 전달
 - `addRoute()` 내부에서 `handler as Route['handler']`로 캐스팅 — `Route.handler`는 `any` body이므로 제네릭 handler를 안전하게 저장
@@ -661,6 +638,7 @@ export function registerNoteRoutes(router: Router): void {
 ```
 
 **변경 요약**:
+
 - `addRoute` → `router.addRoute`
 - `registerNoteRoutes()` → `registerNoteRoutes(router: Router)`
 - PUT/POST/PATCH 핸들러에 body 타입 제네릭 적용
@@ -769,6 +747,7 @@ export function stopMcpApiServer(): void {
 ```
 
 **변경 요약**:
+
 - `import { router } from './router'` → `import { createRouter } from './router'` + `import { registerAllRoutes } from './routes'`
 - `startMcpApiServer()` 내부에서 `createRouter()` + `registerAllRoutes(router)` 수행
 - `http.createServer(router)` → `http.createServer(router.handle)`
@@ -800,49 +779,49 @@ startMcpApiServer()
 
 ### 4.1 New Files (2)
 
-| File | Lines (approx) |
-|------|---------------|
-| `src/mcp-server/lib/call-tool.ts` | ~20 |
-| `src/mcp-server/tool-definitions.ts` | ~120 |
+| File                                 | Lines (approx) |
+| ------------------------------------ | -------------- |
+| `src/mcp-server/lib/call-tool.ts`    | ~20            |
+| `src/mcp-server/tool-definitions.ts` | ~120           |
 
 ### 4.2 Modified Files (11)
 
-| File | Change Type |
-|------|------------|
-| `src/main/lib/errors.ts` | `PayloadTooLargeError` class 추가 |
-| `src/main/mcp-api/lib/body-parser.ts` | `PayloadTooLargeError` class 제거, import 변경 |
-| `src/main/mcp-api/router.ts` | 전면 재작성 → `createRouter()` 팩토리 |
-| `src/main/mcp-api/server.ts` | import 변경 + 내부에서 router 생성/등록 |
-| `src/main/mcp-api/routes/index.ts` | 시그니처 `(router: Router)` + router 전달 |
-| `src/main/mcp-api/routes/workspace.ts` | 시그니처 `(router: Router)` + `router.addRoute` |
-| `src/main/mcp-api/routes/folder.ts` | 시그니처 `(router: Router)` + `router.addRoute` |
-| `src/main/mcp-api/routes/search.ts` | 시그니처 `(router: Router)` + `router.addRoute` |
-| `src/main/mcp-api/routes/note.ts` | 시그니처 `(router: Router)` + `router.addRoute` + body 제네릭 |
-| `src/main/index.ts` | `registerAllRoutes` import/호출 제거 |
-| `src/mcp-server/index.ts` | import 경로 `'./tools'` → `'./tool-definitions'` |
+| File                                   | Change Type                                                   |
+| -------------------------------------- | ------------------------------------------------------------- |
+| `src/main/lib/errors.ts`               | `PayloadTooLargeError` class 추가                             |
+| `src/main/mcp-api/lib/body-parser.ts`  | `PayloadTooLargeError` class 제거, import 변경                |
+| `src/main/mcp-api/router.ts`           | 전면 재작성 → `createRouter()` 팩토리                         |
+| `src/main/mcp-api/server.ts`           | import 변경 + 내부에서 router 생성/등록                       |
+| `src/main/mcp-api/routes/index.ts`     | 시그니처 `(router: Router)` + router 전달                     |
+| `src/main/mcp-api/routes/workspace.ts` | 시그니처 `(router: Router)` + `router.addRoute`               |
+| `src/main/mcp-api/routes/folder.ts`    | 시그니처 `(router: Router)` + `router.addRoute`               |
+| `src/main/mcp-api/routes/search.ts`    | 시그니처 `(router: Router)` + `router.addRoute`               |
+| `src/main/mcp-api/routes/note.ts`      | 시그니처 `(router: Router)` + `router.addRoute` + body 제네릭 |
+| `src/main/index.ts`                    | `registerAllRoutes` import/호출 제거                          |
+| `src/mcp-server/index.ts`              | import 경로 `'./tools'` → `'./tool-definitions'`              |
 
 ### 4.2.1 Unchanged Files (확인 완료)
 
-| File | Reason |
-|------|--------|
-| `src/mcp-server/tsup.config.ts` | entry point `src/mcp-server/index.ts` 동일 — 변경 불필요 |
-| `src/mcp-server/lib/http-client.ts` | 변경 없음 |
-| `src/main/mcp-api/lib/broadcast.ts` | 변경 없음 |
+| File                                | Reason                                                   |
+| ----------------------------------- | -------------------------------------------------------- |
+| `src/mcp-server/tsup.config.ts`     | entry point `src/mcp-server/index.ts` 동일 — 변경 불필요 |
+| `src/mcp-server/lib/http-client.ts` | 변경 없음                                                |
+| `src/main/mcp-api/lib/broadcast.ts` | 변경 없음                                                |
 
 ### 4.3 Deleted Files (10)
 
-| File |
-|------|
+| File                                      |
+| ----------------------------------------- |
 | `src/mcp-server/tools/list-workspaces.ts` |
-| `src/mcp-server/tools/list-folders.ts` |
-| `src/mcp-server/tools/list-notes.ts` |
-| `src/mcp-server/tools/read-note.ts` |
-| `src/mcp-server/tools/write-note.ts` |
-| `src/mcp-server/tools/create-note.ts` |
-| `src/mcp-server/tools/rename-note.ts` |
-| `src/mcp-server/tools/move-note.ts` |
-| `src/mcp-server/tools/search-notes.ts` |
-| `src/mcp-server/tools/index.ts` |
+| `src/mcp-server/tools/list-folders.ts`    |
+| `src/mcp-server/tools/list-notes.ts`      |
+| `src/mcp-server/tools/read-note.ts`       |
+| `src/mcp-server/tools/write-note.ts`      |
+| `src/mcp-server/tools/create-note.ts`     |
+| `src/mcp-server/tools/rename-note.ts`     |
+| `src/mcp-server/tools/move-note.ts`       |
+| `src/mcp-server/tools/search-notes.ts`    |
+| `src/mcp-server/tools/index.ts`           |
 
 ---
 
@@ -850,38 +829,38 @@ startMcpApiServer()
 
 ### Block A: MCP Server (src/mcp-server/) — Tool 통합
 
-| Step | Files |
-|------|-------|
-| A-1 | `src/mcp-server/lib/call-tool.ts` 생성 |
-| A-2 | `src/mcp-server/tool-definitions.ts` 생성 |
-| A-3 | `src/mcp-server/index.ts` import 변경 |
-| A-4 | `src/mcp-server/tools/` 디렉토리 삭제 |
-| A-5 | `npm run build:mcp` 확인 |
+| Step | Files                                     |
+| ---- | ----------------------------------------- |
+| A-1  | `src/mcp-server/lib/call-tool.ts` 생성    |
+| A-2  | `src/mcp-server/tool-definitions.ts` 생성 |
+| A-3  | `src/mcp-server/index.ts` import 변경     |
+| A-4  | `src/mcp-server/tools/` 디렉토리 삭제     |
+| A-5  | `npm run build:mcp` 확인                  |
 
 ### Block B: MCP API (src/main/mcp-api/) — Router + 에러 정리
 
-| Step | Files |
-|------|-------|
-| B-1 | `src/main/lib/errors.ts` + `src/main/mcp-api/lib/body-parser.ts` |
-| B-2 | `src/main/mcp-api/router.ts` 재작성 |
-| B-3 | `src/main/mcp-api/routes/workspace.ts`, `folder.ts`, `search.ts`, `note.ts` |
-| B-4 | `src/main/mcp-api/routes/index.ts` |
-| B-5 | `src/main/mcp-api/server.ts` |
-| B-6 | `src/main/index.ts` |
-| B-7 | `npm run typecheck` 확인 |
+| Step | Files                                                                       |
+| ---- | --------------------------------------------------------------------------- |
+| B-1  | `src/main/lib/errors.ts` + `src/main/mcp-api/lib/body-parser.ts`            |
+| B-2  | `src/main/mcp-api/router.ts` 재작성                                         |
+| B-3  | `src/main/mcp-api/routes/workspace.ts`, `folder.ts`, `search.ts`, `note.ts` |
+| B-4  | `src/main/mcp-api/routes/index.ts`                                          |
+| B-5  | `src/main/mcp-api/server.ts`                                                |
+| B-6  | `src/main/index.ts`                                                         |
+| B-7  | `npm run typecheck` 확인                                                    |
 
 ---
 
 ## 6. Verification Checklist
 
-| # | Check |
-|---|-------|
-| 1 | 9개 Tool의 name이 기존과 동일한가 |
-| 2 | 9개 Tool의 description이 기존과 동일한가 (write_note의 이미지 WARNING 포함) |
-| 3 | 9개 Tool의 zod schema가 기존과 동일한가 (optional/describe 포함) |
-| 4 | 9개 Tool의 HTTP method + URL 패턴이 기존과 동일한가 |
-| 5 | 9개 Tool의 body 필드 구성이 기존과 동일한가 |
-| 6 | search route가 note route보다 먼저 등록되는가 |
-| 7 | `startMcpApiServer()` / `stopMcpApiServer()` 시그니처가 유지되는가 |
-| 8 | `npm run build:mcp` 통과하는가 |
-| 9 | `npm run typecheck` 통과하는가 |
+| #   | Check                                                                       |
+| --- | --------------------------------------------------------------------------- |
+| 1   | 9개 Tool의 name이 기존과 동일한가                                           |
+| 2   | 9개 Tool의 description이 기존과 동일한가 (write_note의 이미지 WARNING 포함) |
+| 3   | 9개 Tool의 zod schema가 기존과 동일한가 (optional/describe 포함)            |
+| 4   | 9개 Tool의 HTTP method + URL 패턴이 기존과 동일한가                         |
+| 5   | 9개 Tool의 body 필드 구성이 기존과 동일한가                                 |
+| 6   | search route가 note route보다 먼저 등록되는가                               |
+| 7   | `startMcpApiServer()` / `stopMcpApiServer()` 시그니처가 유지되는가          |
+| 8   | `npm run build:mcp` 통과하는가                                              |
+| 9   | `npm run typecheck` 통과하는가                                              |

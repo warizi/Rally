@@ -30,7 +30,7 @@ interface Props {
   itemId: string
 }
 
-export function TagList({ workspaceId, itemType, itemId }: Props) {
+export function TagList({ workspaceId, itemType, itemId }: Props): React.JSX.Element {
   const { data: itemTags = [] } = useItemTags(itemType, itemId)
   const { data: allTags = [] } = useTags(workspaceId)
   const attachTag = useAttachTag()
@@ -157,8 +157,8 @@ export function TagList({ workspaceId, itemType, itemId }: Props) {
           <AlertDialogHeader>
             <AlertDialogTitle>태그 삭제</AlertDialogTitle>
             <AlertDialogDescription>
-              &lsquo;{deleteTarget?.name}&rsquo; 태그를 삭제하면 모든 항목에서 이 태그가
-              제거됩니다. 이 작업은 되돌릴 수 없습니다.
+              &lsquo;{deleteTarget?.name}&rsquo; 태그를 삭제하면 모든 항목에서 이 태그가 제거됩니다.
+              이 작업은 되돌릴 수 없습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

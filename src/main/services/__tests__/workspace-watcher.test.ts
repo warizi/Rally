@@ -46,6 +46,7 @@ vi.mock('../../lib/fs-utils', async (importOriginal) => {
 // ─── 테스트 대상 (mock 등록 후 import) ───────────────────────
 // dynamic import로 mock이 적용된 모듈 로드
 const { workspaceWatcher } = await import('../workspace-watcher')
+const { applyEvents } = await import('../workspace-watcher/event-processor')
 
 // ─── 픽스처 헬퍼 ─────────────────────────────────────────────
 const WS_ID = 'ws-test'
@@ -108,7 +109,6 @@ function makeEvent(
   return { type, path: `${WS_PATH}/${relPath}` }
 }
 
-// ─── applyEvents 접근용 (private 메서드 우회) ─────────────────
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const watcher = workspaceWatcher as any
 
@@ -129,7 +129,7 @@ beforeEach(() => {
 // ─── applyEvents: standalone MD create ───────────────────────
 describe('applyEvents — standalone MD create', () => {
   it('새 .md 파일 create 이벤트 → DB에 note row가 추가된다', async () => {
-    await watcher.applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'new-note.md')])
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'new-note.md')])
 
     const note = noteRepository.findByRelativePath(WS_ID, 'new-note.md')
     expect(note).toBeDefined()
@@ -139,7 +139,7 @@ describe('applyEvents — standalone MD create', () => {
 
   it('하위 폴더의 .md 파일 create — 폴더가 DB에 있으면 folderId 자동 연결', async () => {
     insertFolder('f-docs', 'docs')
-    await watcher.applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'docs/my-note.md')])
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'docs/my-note.md')])
 
     const note = noteRepository.findByRelativePath(WS_ID, 'docs/my-note.md')
     expect(note).toBeDefined()
@@ -148,7 +148,7 @@ describe('applyEvents — standalone MD create', () => {
 
   it('이미 DB에 있는 경로는 중복 insert하지 않는다', async () => {
     insertNote('n-existing', 'exists.md')
-    await watcher.applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'exists.md')])
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'exists.md')])
 
     const all = noteRepository.findByWorkspaceId(WS_ID)
     expect(all.filter((n) => n.relativePath === 'exists.md')).toHaveLength(1)
@@ -156,7 +156,7 @@ describe('applyEvents — standalone MD create', () => {
 
   it('stat 실패 시 (이미 삭제된 파일) DB insert를 건너뛴다', async () => {
     statMock().mockRejectedValueOnce(new Error('ENOENT'))
-    await watcher.applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'ghost.md')])
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'ghost.md')])
 
     expect(noteRepository.findByRelativePath(WS_ID, 'ghost.md')).toBeUndefined()
   })
@@ -166,14 +166,14 @@ describe('applyEvents — standalone MD create', () => {
 describe('applyEvents — standalone MD delete', () => {
   it('.md 파일 delete 이벤트 → DB에서 note row가 삭제된다', async () => {
     insertNote('n1', 'to-delete.md')
-    await watcher.applyEvents(WS_ID, WS_PATH, [makeEvent('delete', 'to-delete.md')])
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('delete', 'to-delete.md')])
 
     expect(noteRepository.findById('n1')).toBeUndefined()
   })
 
   it('DB에 없는 경로 delete 이벤트 → 에러 없이 무시된다', async () => {
     await expect(
-      watcher.applyEvents(WS_ID, WS_PATH, [makeEvent('delete', 'ghost.md')])
+      applyEvents(WS_ID, WS_PATH, [makeEvent('delete', 'ghost.md')])
     ).resolves.not.toThrow()
   })
 })
@@ -182,7 +182,7 @@ describe('applyEvents — standalone MD delete', () => {
 describe('applyEvents — MD rename (delete+create pair)', () => {
   it('같은 디렉토리의 delete+create 쌍 → ID 보존, relativePath 변경', async () => {
     insertNote('n1', 'old-name.md')
-    await watcher.applyEvents(WS_ID, WS_PATH, [
+    await applyEvents(WS_ID, WS_PATH, [
       makeEvent('delete', 'old-name.md'),
       makeEvent('create', 'new-name.md')
     ])
@@ -198,7 +198,7 @@ describe('applyEvents — MD rename (delete+create pair)', () => {
   it('다른 폴더로 이동 (delete+create 쌍, 파일명 동일) → ID 보존, folderId 갱신', async () => {
     insertNote('n1', 'note.md')
     insertFolder('f-dest', 'dest')
-    await watcher.applyEvents(WS_ID, WS_PATH, [
+    await applyEvents(WS_ID, WS_PATH, [
       makeEvent('delete', 'note.md'),
       makeEvent('create', 'dest/note.md')
     ])

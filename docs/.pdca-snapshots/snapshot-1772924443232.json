@@ -1,9 +1,9 @@
 {
-  "timestamp": "2026-03-07T00:42:35.327Z",
+  "timestamp": "2026-03-07T23:00:43.231Z",
   "reason": "compaction",
   "status": {
     "version": "2.0",
-    "lastUpdated": "2026-03-07T00:41:41.784Z",
+    "lastUpdated": "2026-03-07T22:56:58.721Z",
     "activeFeatures": [
       "ui",
       "workspace",
@@ -76,7 +76,13 @@
       "tag",
       "dashboard",
       "terminal.ts",
-      "terminal"
+      "terminal",
+      "codebase-refactoring gap analysis",
+      "mcp-api",
+      "routes",
+      "mcp-server",
+      "tools",
+      "mcp"
     ],
     "primaryFeature": "pdf-viewer",
     "features": {
@@ -128,7 +134,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T02:49:14.086Z",
-          "lastUpdated": "2026-03-07T00:41:41.784Z"
+          "lastUpdated": "2026-03-07T00:44:32.520Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/__tests__/note.test.ts"
       },
@@ -193,9 +199,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:26:01.950Z",
-          "lastUpdated": "2026-03-07T00:40:51.607Z"
+          "lastUpdated": "2026-03-07T06:13:06.765Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/lib/leaf-reindex.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/lib/errors.ts"
       },
       "preload": {
         "phase": "do",
@@ -206,9 +212,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-22T15:26:20.139Z",
-          "lastUpdated": "2026-03-07T00:38:08.709Z"
+          "lastUpdated": "2026-03-07T06:15:27.727Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
       },
       "tap-system": {
         "phase": "do",
@@ -232,9 +238,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:07:54.661Z",
-          "lastUpdated": "2026-03-07T00:34:47.151Z"
+          "lastUpdated": "2026-03-07T01:58:46.721Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/image-file.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/repositories/note.ts"
       },
       "model": {
         "phase": "do",
@@ -245,9 +251,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:08:45.193Z",
-          "lastUpdated": "2026-03-07T00:36:06.333Z"
+          "lastUpdated": "2026-03-07T06:15:37.549Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/image-file/model/use-image-watcher.ts"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/todo/model/use-todo-watcher.ts"
       },
       "api": {
         "phase": "do",
@@ -297,7 +303,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-24T07:34:47.807Z",
-          "lastUpdated": "2026-03-05T01:18:00.477Z"
+          "lastUpdated": "2026-03-07T06:15:50.606Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainLayout.tsx"
       },
@@ -365,7 +371,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:39:22.268Z",
-          "lastUpdated": "2026-03-07T00:40:08.109Z"
+          "lastUpdated": "2026-03-07T01:58:58.861Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/note.ts"
       },
@@ -378,7 +384,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-25T22:39:57.455Z",
-          "lastUpdated": "2026-03-07T00:39:44.392Z"
+          "lastUpdated": "2026-03-07T06:13:20.578Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/workspace-watcher.ts"
       },
@@ -420,7 +426,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-26T13:01:02.919Z",
-          "lastUpdated": "2026-03-04T22:58:15.142Z"
+          "lastUpdated": "2026-03-07T11:05:01.004Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/todo.ts"
       },
@@ -433,9 +439,9 @@
         "documents": {},
         "timestamps": {
           "started": "2026-02-26T13:02:22.456Z",
-          "lastUpdated": "2026-03-03T11:17:45.283Z"
+          "lastUpdated": "2026-03-07T06:15:41.258Z"
         },
-        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/todo/create-todo/ui/CreateTodoDialog.tsx"
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/todo/index.ts"
       },
       "todo-detail": {
         "phase": "do",
@@ -815,7 +821,7 @@
         "documents": {},
         "timestamps": {
           "started": "2026-03-02T10:36:11.745Z",
-          "lastUpdated": "2026-03-04T21:44:54.251Z"
+          "lastUpdated": "2026-03-07T05:05:04.016Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/canvas/index.ts"
       },
@@ -1029,6 +1035,85 @@
           "lastUpdated": "2026-03-06T23:58:56.107Z"
         },
         "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/terminal/use-terminal.ts"
+      },
+      "codebase-refactoring gap analysis": {
+        "phase": "act",
+        "phaseNumber": 5,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T00:51:05.871Z",
+          "lastUpdated": "2026-03-07T00:51:05.872Z"
+        },
+        "previousPhase": "check",
+        "autoAdvanced": true
+      },
+      "mcp-api": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T01:58:01.805Z",
+          "lastUpdated": "2026-03-07T06:16:08.220Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/mcp-api/router.ts"
+      },
+      "routes": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T01:58:19.517Z",
+          "lastUpdated": "2026-03-07T22:50:08.670Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/mcp-api/routes/index.ts"
+      },
+      "mcp-server": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T01:59:24.209Z",
+          "lastUpdated": "2026-03-07T11:10:09.201Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/mcp-server/tool-definitions.ts"
+      },
+      "tools": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T01:59:27.961Z",
+          "lastUpdated": "2026-03-07T01:59:59.517Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/mcp-server/tools/index.ts"
+      },
+      "mcp": {
+        "phase": "do",
+        "phaseNumber": 3,
+        "matchRate": null,
+        "iterationCount": 0,
+        "requirements": [],
+        "documents": {},
+        "timestamps": {
+          "started": "2026-03-07T22:28:00.836Z",
+          "lastUpdated": "2026-03-07T22:56:58.720Z"
+        },
+        "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/mcp-api/routes/mcp/index.ts"
       }
     },
     "pipeline": {
@@ -1039,7 +1124,7 @@
     "session": {
       "startedAt": "2026-02-21T22:18:14.791Z",
       "onboardingCompleted": false,
-      "lastActivity": "2026-03-07T00:41:41.784Z"
+      "lastActivity": "2026-03-07T22:56:58.721Z"
     },
     "history": [
       {
@@ -20023,6 +20108,804 @@
       {
         "timestamp": "2026-03-07T00:41:41.784Z",
         "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T00:44:32.520Z",
+        "feature": "__tests__",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T00:50:08.183Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T00:51:05.872Z",
+        "feature": "codebase-refactoring gap analysis",
+        "phase": "act",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:01.805Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:03.561Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:13.524Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:19.517Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:22.189Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:24.014Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:37.264Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:38.842Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:42.738Z",
+        "feature": "repositories",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:46.721Z",
+        "feature": "repositories",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:58:58.861Z",
+        "feature": "note.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:06.561Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:10.798Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:12.197Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:13.583Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:24.209Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:27.961Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:32.977Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:34.445Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:37.425Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:42.183Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:46.054Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:51.731Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:54.064Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:57.185Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T01:59:59.517Z",
+        "feature": "tools",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T02:00:05.150Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T02:00:06.648Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T02:00:34.503Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:00.412Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:16.939Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:21.464Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:41.447Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:44.106Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:55.485Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:30:59.915Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:02.638Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:04.835Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:18.674Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:20.514Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:27.761Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:28.974Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:31:30.358Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:32:33.831Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:32:38.617Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:32:38.676Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:32:45.774Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T04:33:55.730Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:04:49.807Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:04:51.249Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:04:58.032Z",
+        "feature": "model",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:05:04.016Z",
+        "feature": "canvas",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:05:12.435Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:05:13.802Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:07:39.239Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:07:53.940Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:08:09.342Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:08:13.198Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:08:50.704Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T05:09:02.528Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:13:06.765Z",
+        "feature": "main",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:13:12.089Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:13:20.578Z",
+        "feature": "workspace-watcher.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:14:31.848Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:14:38.306Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:15.205Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:20.836Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:27.727Z",
+        "feature": "preload",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:37.549Z",
+        "feature": "model",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:41.258Z",
+        "feature": "todo",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:45.899Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:50.606Z",
+        "feature": "layout",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:15:58.066Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T06:16:08.220Z",
+        "feature": "mcp-api",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T09:53:46.788Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T09:53:53.727Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T09:54:00.581Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T10:08:03.196Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T10:12:02.355Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T10:15:22.304Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T10:15:35.364Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T10:15:41.159Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T10:28:58.439Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:04:38.967Z",
+        "feature": "todo.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:05:01.004Z",
+        "feature": "todo.ts",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:05:09.921Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:09:32.426Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:09:55.806Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:10:02.528Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T11:10:09.201Z",
+        "feature": "mcp-server",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:28:00.836Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:36:08.527Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:36:24.151Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:36:50.555Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:37:12.976Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:37:19.507Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:37:35.316Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:37:43.191Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:37:58.113Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:05.774Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:22.983Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:30.323Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:43.786Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:49.248Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:55.070Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:38:59.155Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:39:08.189Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:39:12.677Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:39:16.185Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:39:20.329Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:50:08.670Z",
+        "feature": "routes",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:51:37.130Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:51:43.873Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:51:56.871Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:52:03.942Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:52:09.808Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:52:16.850Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:52:24.603Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:52:29.816Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:52:55.157Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:53:01.558Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:53:52.085Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:53:56.474Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:55:19.901Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:55:40.124Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:55:59.545Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:56:21.619Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:56:32.443Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:56:51.962Z",
+        "feature": "mcp",
+        "phase": "do",
+        "action": "updated"
+      },
+      {
+        "timestamp": "2026-03-07T22:56:58.720Z",
+        "feature": "mcp",
         "phase": "do",
         "action": "updated"
       }

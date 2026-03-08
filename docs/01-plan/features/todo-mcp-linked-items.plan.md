@@ -43,15 +43,15 @@ AI가 todo를 조회할 때 연결된 항목의 타입과 ID를 알 수 있어, 
 
 ### AI가 linked item 조회에 사용할 수 있는 기존 MCP 도구
 
-| linked item 타입 | 사용 가능한 MCP 도구 |
-|---|---|
-| `note` | `read_content` (id로 조회) |
-| `csv` (table) | `read_content` (id로 조회) |
-| `canvas` | `read_canvas` (canvasId로 조회) |
-| `todo` | `list_todos`에서 이미 포함 |
-| `schedule` | 현재 MCP 도구 없음 (metadata만 인지) |
-| `pdf` | 현재 MCP 도구 없음 (metadata만 인지) |
-| `image` | 현재 MCP 도구 없음 (metadata만 인지) |
+| linked item 타입 | 사용 가능한 MCP 도구                 |
+| ---------------- | ------------------------------------ |
+| `note`           | `read_content` (id로 조회)           |
+| `csv` (table)    | `read_content` (id로 조회)           |
+| `canvas`         | `read_canvas` (canvasId로 조회)      |
+| `todo`           | `list_todos`에서 이미 포함           |
+| `schedule`       | 현재 MCP 도구 없음 (metadata만 인지) |
+| `pdf`            | 현재 MCP 도구 없음 (metadata만 인지) |
+| `image`          | 현재 MCP 도구 없음 (metadata만 인지) |
 
 ## 3. 목표 응답 구조
 
@@ -131,9 +131,9 @@ AI가 todo를 조회할 때 연결된 항목의 타입과 ID를 알 수 있어, 
 
 ### N+1 쿼리 구조
 
-| 단계 | 쿼리 내용 | 횟수 |
-|---|---|---|
-| 1단계 | `getLinked('todo', todoId)` — 링크 조회 | todo 수 (N) |
+| 단계  | 쿼리 내용                                                           | 횟수               |
+| ----- | ------------------------------------------------------------------- | ------------------ |
+| 1단계 | `getLinked('todo', todoId)` — 링크 조회                             | todo 수 (N)        |
 | 2단계 | `findEntity(linkedType, linkedId)` — title resolve (getLinked 내부) | linked item 수 (M) |
 
 - 총 쿼리: N + M회 (todo 100개 × 평균 2개 링크 = 약 300회)

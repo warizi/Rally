@@ -75,6 +75,7 @@ export function CsvTable({
   )
 
   // --- Virtualizers ---
+  // eslint-disable-next-line react-hooks/incompatible-library
   const rowVirtualizer = useVirtualizer({
     count: data.length,
     getScrollElement: () => scrollRef.current,
@@ -223,11 +224,7 @@ export function CsvTable({
       {/* ── Body ── */}
       <div className="flex flex-1 min-h-0">
         {/* Row numbers */}
-        <div
-          ref={rowNumRef}
-          className="shrink-0 overflow-hidden"
-          style={{ width: ROW_NUM_WIDTH }}
-        >
+        <div ref={rowNumRef} className="shrink-0 overflow-hidden" style={{ width: ROW_NUM_WIDTH }}>
           <div style={{ height: rowTotalSize, position: 'relative' }}>
             {virtualRows.map((vr) => (
               <div

@@ -3,7 +3,7 @@ import { ValidationError, PayloadTooLargeError } from '../../lib/errors'
 
 const MAX_BODY_SIZE = 10 * 1024 * 1024 // 10MB
 
-export function parseBody(req: http.IncomingMessage): Promise<any> {
+export function parseBody(req: http.IncomingMessage): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const contentLength = parseInt(req.headers['content-length'] || '0', 10)
     if (contentLength > MAX_BODY_SIZE) {

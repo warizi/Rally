@@ -29,7 +29,15 @@ interface EntityOption {
   title: string
 }
 
-const LINKABLE_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv', 'image', 'canvas']
+const LINKABLE_TABS: LinkableEntityType[] = [
+  'todo',
+  'schedule',
+  'note',
+  'pdf',
+  'csv',
+  'image',
+  'canvas'
+]
 
 export function LinkEntityPopover({
   entityType,
@@ -123,6 +131,7 @@ export function LinkEntityPopover({
 
   // Reset focus when filtered list or tab changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFocusIndex(-1)
   }, [filtered.length, activeTab])
 
@@ -199,7 +208,10 @@ export function LinkEntityPopover({
 
           {availableTabs.map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0">
-              <div ref={tab === activeTab ? listRef : undefined} className="h-[200px] overflow-y-auto">
+              <div
+                ref={tab === activeTab ? listRef : undefined}
+                className="h-[200px] overflow-y-auto"
+              >
                 {filtered.length === 0 ? (
                   <div className="text-xs text-muted-foreground text-center py-4">
                     항목이 없습니다

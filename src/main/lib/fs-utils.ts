@@ -106,10 +106,8 @@ export const readPdfFilesRecursiveAsync = (abs: string, rel: string): Promise<Pd
 export const readImageFilesRecursive = (abs: string, rel: string): ImageFileEntry[] =>
   readFilesRecursive(abs, rel, isImageFile)
 
-export const readImageFilesRecursiveAsync = (
-  abs: string,
-  rel: string
-): Promise<ImageFileEntry[]> => readFilesRecursiveAsync(abs, rel, isImageFile)
+export const readImageFilesRecursiveAsync = (abs: string, rel: string): Promise<ImageFileEntry[]> =>
+  readFilesRecursiveAsync(abs, rel, isImageFile)
 
 // ─── Image helpers ────────────────────────────────────
 

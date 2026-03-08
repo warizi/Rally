@@ -41,6 +41,7 @@ The codebase refactoring feature has been **successfully completed** with except
 **Document**: [codebase-refactoring.plan.md](../01-plan/features/codebase-refactoring.plan.md) (v3 - Final Verified)
 
 **Goals**:
+
 - Reduce code duplication by 60%+
 - Improve code quality from 58/100 to 85+/100
 - Fix 3 identified bugs without side effects
@@ -49,6 +50,7 @@ The codebase refactoring feature has been **successfully completed** with except
 **Scope**: 7 main refactoring phases + 3 bug fixes
 
 **Risks**:
+
 - Workspace watcher refactoring (highest risk)
 - Repository factory type safety
 - Image-specific logic preservation
@@ -60,6 +62,7 @@ The codebase refactoring feature has been **successfully completed** with except
 **Document**: [codebase-refactoring.design.md](../02-design/features/codebase-refactoring.design.md)
 
 **8 Implementation Steps**:
+
 1. Bug Fixes (3 items)
 2. fs-utils Generic Scanner
 3. Service path-utils Extraction
@@ -70,6 +73,7 @@ The codebase refactoring feature has been **successfully completed** with except
 8. Performance Improvements (N+1 queries, leaf-reindex optimization)
 
 **Key Design Decisions**:
+
 - Repository factory excludes `update()` method due to type differences
 - Service layer **not abstracted** (differences too significant)
 - Configuration-based workspace-watcher design for file-type flexibility
@@ -81,14 +85,14 @@ The codebase refactoring feature has been **successfully completed** with except
 
 **Analysis Results**:
 
-| Metric | Result |
-|--------|--------|
-| **Overall Match Rate** | 100% (88/88 items) |
-| **Design Compliance** | ✅ PASS |
-| **Architecture Compliance** | ✅ PASS |
-| **Convention Compliance** | ✅ PASS |
-| **Cosmetic Differences** | 4 (non-functional improvements) |
-| **Missing Features** | 0 |
+| Metric                      | Result                          |
+| --------------------------- | ------------------------------- |
+| **Overall Match Rate**      | 100% (88/88 items)              |
+| **Design Compliance**       | ✅ PASS                         |
+| **Architecture Compliance** | ✅ PASS                         |
+| **Convention Compliance**   | ✅ PASS                         |
+| **Cosmetic Differences**    | 4 (non-functional improvements) |
+| **Missing Features**        | 0                               |
 
 ---
 
@@ -101,10 +105,12 @@ Three critical bugs fixed with zero side effects:
 #### BUG-1: Note own-write-tracker Set → Map (Timer Leak Fix)
 
 **Problem**: Note entity used `Set<string>` to track pending writes, losing timer references.
+
 - Rapid saves caused stale entries from previous timeouts
 - External change notifications incorrectly ignored
 
 **Solution**: Changed to `Map<string, ReturnType<typeof setTimeout>>` pattern
+
 - Stores timer references
 - Clears previous timers with `clearTimeout()` before setting new ones
 
@@ -114,6 +120,7 @@ Three critical bugs fixed with zero side effects:
 #### BUG-2: Missing markAsOwnWrite in Note Rename
 
 **Problem**: Note `useRenameNote` mutation didn't mark item as own-write
+
 - Rename file → filesystem event → incorrectly treated as external change
 - CSV/PDF/Image rename mutations called `markAsOwnWrite(id)` but note didn't
 
@@ -127,6 +134,7 @@ Three critical bugs fixed with zero side effects:
 **Problem**: Note entity barrel export incomplete compared to CSV/PDF/Image
 
 **Solution**: Added exports:
+
 - `isOwnWrite` from `own-write-tracker`
 - `NOTE_EXTERNAL_CHANGED_EVENT` from `use-note-watcher`
 
@@ -140,11 +148,13 @@ Three critical bugs fixed with zero side effects:
 ### 3.2 Step 1: fs-utils Generic Scanner
 
 **Problem**: 8 file-reading functions with duplicate code
+
 - 4 sync functions (readMdFilesRecursive, readCsvFilesRecursive, etc.)
 - 4 async functions (same pattern, async/await)
 - Only difference: file matcher function
 
 **Solution**:
+
 - Created 2 internal generic functions (not exported):
   - `readFilesRecursive(absBase, parentRel, matcher): FileEntry[]`
   - `readFilesRecursiveAsync(absBase, parentRel, matcher): Promise<FileEntry[]>`
@@ -155,6 +165,7 @@ Three critical bugs fixed with zero side effects:
 **Files Modified**: `src/main/lib/fs-utils.ts`
 
 **Type Safety**:
+
 - `FileEntry` interface unified
 - Old type aliases (`MdFileEntry`, etc.) preserved as `FileEntry` alias
 - No breaking changes to callers
@@ -166,21 +177,25 @@ Three critical bugs fixed with zero side effects:
 ### 3.3 Step 2: Service Utility Extraction
 
 **Problem**: 4 services duplicated 8 utility functions
+
 - `normalizePath()`: Windows `\` → `/` conversion
 - `parentRelPath()`: Extract parent directory from relative path
 - Both functions copied in note.ts, csv-file.ts, pdf-file.ts, image-file.ts
 
 **Solution**:
+
 - Created `src/main/lib/path-utils.ts` with both functions
 - Services import from shared module instead of duplicating
 
 **Design Decision**: `toXxxNode` mappers **not extracted**
+
 - CSV has `columnWidths` field → different type signatures
 - Maintaining type safety per service rather than unsafe generic mapper
 
 **Code Reduction**: ~120 lines removed
 
 **Files Modified**:
+
 - New: `src/main/lib/path-utils.ts`
 - Changed: 4 services (note.ts, csv-file.ts, pdf-file.ts, image-file.ts) + folder.ts
 
@@ -191,14 +206,17 @@ Three critical bugs fixed with zero side effects:
 ### 3.4 Step 3: Repository Factory
 
 **Problem**: 4 file repositories duplicated 11 of 12 methods
+
 - 100% identical code: findByWorkspaceId, findById, findByRelativePath, findByIds, create, createMany, delete, deleteOrphans, bulkDeleteByPrefix, bulkUpdatePathPrefix, reindexSiblings
 - Only difference: target table and table name
 
 **Solution**: `createFileRepository<T>(table, tableName)` factory function
+
 - Returns object with all 11 common methods
 - Each repository spreads factory result + adds custom `update()` method
 
 **Design Decision**: `update()` excluded from factory
+
 - CSV has `columnWidths` field → unique signature
 - Each repository maintains custom `update()` for type safety
 
@@ -207,17 +225,20 @@ Three critical bugs fixed with zero side effects:
 **Files Created**: `src/main/repositories/create-file-repository.ts`
 
 **Files Modified**:
+
 - `src/main/repositories/note.ts` (60 → 15 lines)
 - `src/main/repositories/csv-file.ts` (65 → 20 lines)
 - `src/main/repositories/pdf-file.ts` (60 → 15 lines)
 - `src/main/repositories/image-file.ts` (60 → 15 lines)
 
 **Type Safety**:
+
 - Generic constraints require id, workspaceId, relativePath, folderId fields
 - Drizzle ORM type inference used for row/insert types
 - External API signatures unchanged
 
 **New Method**: `findByFolderId(workspaceId, folderId)` (for Step 7 performance)
+
 - Handles null folderId case with `isNull()` condition
 
 **Step 3 Summary**: 1 new file + 4 modified = 19/19 design items ✅
@@ -229,6 +250,7 @@ Three critical bugs fixed with zero side effects:
 #### 4-1. Own-Write Tracker Factory
 
 **Problem**: 4 entity own-write trackers had redundant code
+
 - All followed same pattern: markAsOwnWrite(id), isOwnWrite(id)
 - Note originally had Set bug → fixed in Step 0
 
@@ -245,6 +267,7 @@ export function createOwnWriteTracker(timeoutMs = 2000) {
 ```
 
 **Each Entity** (4 files):
+
 - Import factory
 - Create tracker instance
 - Re-export markAsOwnWrite, isOwnWrite
@@ -254,6 +277,7 @@ export function createOwnWriteTracker(timeoutMs = 2000) {
 **Files Created**: `src/renderer/src/shared/lib/create-own-write-tracker.ts`
 
 **Files Modified**:
+
 - `src/renderer/src/entities/note/model/own-write-tracker.ts`
 - `src/renderer/src/entities/csv-file/model/own-write-tracker.ts`
 - `src/renderer/src/entities/pdf-file/model/own-write-tracker.ts`
@@ -262,6 +286,7 @@ export function createOwnWriteTracker(timeoutMs = 2000) {
 #### 4-2. File Watcher Hook Factory
 
 **Problem**: 4 file-watcher hooks duplicated complex logic
+
 - 100% identical: readyRef, invalidation, toast notification, CustomEvent dispatch
 - Only differences: icon, event channel, queryKey prefix, idField name, isOwnWrite function
 
@@ -279,6 +304,7 @@ interface FileWatcherConfig {
 ```
 
 **Each Entity** (4 files):
+
 - Implement hook with config
 - Pass icon, channel, prefix, idField, isOwnWrite function
 
@@ -287,6 +313,7 @@ interface FileWatcherConfig {
 **Files Created**: `src/renderer/src/shared/hooks/use-file-watcher.ts`
 
 **Files Modified**:
+
 - `src/renderer/src/entities/note/model/use-note-watcher.ts` (50 → 15 lines)
 - `src/renderer/src/entities/csv-file/model/use-csv-watcher.ts` (50 → 15 lines)
 - `src/renderer/src/entities/pdf-file/model/use-pdf-watcher.ts` (50 → 15 lines)
@@ -308,6 +335,7 @@ interface Props {
 **Files Created**: `src/renderer/src/features/folder/manage-folder/ui/FileContextMenu.tsx`
 
 **Files Deleted**:
+
 - `src/renderer/src/features/folder/manage-folder/ui/NoteContextMenu.tsx`
 - `src/renderer/src/features/folder/manage-folder/ui/CsvContextMenu.tsx`
 - `src/renderer/src/features/folder/manage-folder/ui/PdfContextMenu.tsx`
@@ -340,6 +368,7 @@ function createOnChangedListener(channel: string) {
 **Usage**: 5 entities use the helper (note, csv, pdf, image, folder)
 
 **Entity-Link Exception**: `entity-link:changed` has different signature `() => void`
+
 - Kept manual implementation (not using helper)
 
 **Code Reduction**: ~35 lines removed
@@ -364,6 +393,7 @@ function createOnChangedListener(channel: string) {
 #### Solution: Config-Based Design
 
 **FileTypeConfig Interface**:
+
 ```typescript
 interface FileTypeConfig {
   matchExtension: (fileName: string) => boolean
@@ -382,7 +412,7 @@ const fileTypeConfigs: FileTypeConfig[] = [
     repository: noteRepository,
     channelName: 'note:changed',
     entityType: 'note',
-    readFilesAsync: readMdFilesRecursiveAsync,
+    readFilesAsync: readMdFilesRecursiveAsync
   },
   // ... csv, pdf
   {
@@ -392,26 +422,29 @@ const fileTypeConfigs: FileTypeConfig[] = [
     channelName: 'image:changed',
     entityType: 'image',
     readFilesAsync: readImageFilesRecursiveAsync,
-    skipFilter: (rel) => rel.startsWith('.images/') || rel.includes('/.images/'),
-  },
+    skipFilter: (rel) => rel.startsWith('.images/') || rel.includes('/.images/')
+  }
 ]
 ```
 
 #### Extracted Methods
 
 **1. processFileTypeEvents(events, config)** - Steps 3-14
+
 - Rename detection: delete+create pair matching
 - Standalone create: fs.stat check → DB lookup → create if missing
 - Standalone delete: DB lookup → entityLink cleanup → delete
 - Handles image `.images/` filtering via config
 
 **2. reconcileFileType(config)** - Reconciliation
+
 - FS scan with `readFilesAsync` from config
 - DB comparison
 - NewFiles → `createMany()`
 - Orphans → `deleteOrphans()`
 
 **3. pushChanged(channelName, workspaceId, paths)** - IPC broadcast
+
 - Single unified method
 - All 5 previous methods removed
 
@@ -440,20 +473,20 @@ private async applyEvents(events) {
 const changedByType = new Map<string, string[]>()
 for (const config of fileTypeConfigs) {
   const paths = events
-    .filter(e => config.matchExtension(path.basename(e.path)))
-    .filter(e => !config.skipFilter?.(e.relativePath))
-    .map(e => e.relativePath)
+    .filter((e) => config.matchExtension(path.basename(e.path)))
+    .filter((e) => !config.skipFilter?.(e.relativePath))
+    .map((e) => e.relativePath)
   if (paths.length > 0) changedByType.set(config.channelName, paths)
 }
 ```
 
 #### Image-Specific Logic Preservation
 
-| Feature | Mechanism | Location |
-|---------|-----------|----------|
-| `.images/` filtering | config.skipFilter | Applied in rename/create/delete/handleEvents |
-| Dynamic title extraction | config.extractTitle | Path.basename(name, path.extname(name)) |
-| isImageFile matching | config.matchExtension | Direct function reference (7 extensions, case-insensitive) |
+| Feature                  | Mechanism             | Location                                                   |
+| ------------------------ | --------------------- | ---------------------------------------------------------- |
+| `.images/` filtering     | config.skipFilter     | Applied in rename/create/delete/handleEvents               |
+| Dynamic title extraction | config.extractTitle   | Path.basename(name, path.extname(name))                    |
+| isImageFile matching     | config.matchExtension | Direct function reference (7 extensions, case-insensitive) |
 
 **Code Reduction**: ~400 lines removed
 
@@ -481,7 +514,7 @@ for (const entry of newFsEntries) {
 ```typescript
 // After: 1 DB query + Map lookups
 const allFolders = folderRepository.findByWorkspaceId(workspaceId)
-const folderMap = new Map(allFolders.map(f => [f.relativePath, f]))
+const folderMap = new Map(allFolders.map((f) => [f.relativePath, f]))
 for (const entry of newFsEntries) {
   const folder = folderMap.get(parentRel)
 }
@@ -498,7 +531,7 @@ for (const entry of newFsEntries) {
 ```typescript
 // Before: 2000 files loaded, 50 needed
 const allNotes = noteRepository.findByWorkspaceId(workspaceId)
-const filtered = allNotes.filter(n => n.folderId === folderId)
+const filtered = allNotes.filter((n) => n.folderId === folderId)
 ```
 
 **Solution**: Add `findByFolderId()` to factory
@@ -509,10 +542,12 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 ```
 
 **Files Modified**:
+
 - `src/main/repositories/create-file-repository.ts` (added findByFolderId)
 - `src/main/lib/leaf-reindex.ts` (uses new method)
 
 **Handles Null FolderId**:
+
 - Uses `isNull()` condition for root items
 - `import { isNull } from 'drizzle-orm'` in factory
 
@@ -528,38 +563,38 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 
 **Overall Design Match**: 100% (88/88 items)
 
-| Step | Items | Match Rate | Status |
-|------|-------|-----------|--------|
-| Step 0 (Bug Fixes) | 6 | 100% | ✅ |
-| Step 1 (fs-utils) | 7 | 100% | ✅ |
-| Step 2 (path-utils) | 10 | 100% | ✅ |
-| Step 3 (Repository Factory) | 19 | 100% | ✅ |
-| Step 4 (Renderer) | 21 | 100% | ✅ |
-| Step 5 (Preload) | 7 | 100% | ✅ |
-| Step 6 (Workspace Watcher) | 12 | 100% | ✅ |
-| Step 7 (Performance) | 6 | 100% | ✅ |
-| **TOTAL** | **88** | **100%** | **✅** |
+| Step                        | Items  | Match Rate | Status |
+| --------------------------- | ------ | ---------- | ------ |
+| Step 0 (Bug Fixes)          | 6      | 100%       | ✅     |
+| Step 1 (fs-utils)           | 7      | 100%       | ✅     |
+| Step 2 (path-utils)         | 10     | 100%       | ✅     |
+| Step 3 (Repository Factory) | 19     | 100%       | ✅     |
+| Step 4 (Renderer)           | 21     | 100%       | ✅     |
+| Step 5 (Preload)            | 7      | 100%       | ✅     |
+| Step 6 (Workspace Watcher)  | 12     | 100%       | ✅     |
+| Step 7 (Performance)        | 6      | 100%       | ✅     |
+| **TOTAL**                   | **88** | **100%**   | **✅** |
 
 ### 4.2 Quality Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Match Rate | ≥ 90% | 100% | ✅ PASS |
-| Test Coverage | All pass | 647/647 | ✅ PASS |
-| Side Effects | Zero | Zero | ✅ PASS |
-| Iterations | ≤ 5 | 0 | ✅ PASS |
-| New Dependencies | Zero | Zero | ✅ PASS |
-| Code Reduction | ≥ 2,000 lines | 2,500+ lines | ✅ PASS |
+| Metric           | Target        | Actual       | Status  |
+| ---------------- | ------------- | ------------ | ------- |
+| Match Rate       | ≥ 90%         | 100%         | ✅ PASS |
+| Test Coverage    | All pass      | 647/647      | ✅ PASS |
+| Side Effects     | Zero          | Zero         | ✅ PASS |
+| Iterations       | ≤ 5           | 0            | ✅ PASS |
+| New Dependencies | Zero          | Zero         | ✅ PASS |
+| Code Reduction   | ≥ 2,000 lines | 2,500+ lines | ✅ PASS |
 
 ### 4.3 Compliance Analysis
 
-| Category | Result | Notes |
-|----------|--------|-------|
-| **Architecture** | ✅ PASS | FSD maintained, layer imports correct |
-| **Type Safety** | ✅ PASS | Drizzle generics, union types, null handling |
-| **Convention** | ✅ PASS | File naming, function naming, import paths |
-| **Performance** | ✅ PASS | N+1 fixed, leaf-reindex optimized |
-| **Testing** | ✅ PASS | All 647 tests pass (no regressions) |
+| Category         | Result  | Notes                                        |
+| ---------------- | ------- | -------------------------------------------- |
+| **Architecture** | ✅ PASS | FSD maintained, layer imports correct        |
+| **Type Safety**  | ✅ PASS | Drizzle generics, union types, null handling |
+| **Convention**   | ✅ PASS | File naming, function naming, import paths   |
+| **Performance**  | ✅ PASS | N+1 fixed, leaf-reindex optimized            |
+| **Testing**      | ✅ PASS | All 647 tests pass (no regressions)          |
 
 ---
 
@@ -567,39 +602,39 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 
 ### 5.1 Files Modified/Created/Deleted
 
-| Category | Count |
-|----------|-------|
-| Files Created | 5 |
-| Files Modified | 25+ |
-| Files Deleted | 4 |
+| Category           | Count   |
+| ------------------ | ------- |
+| Files Created      | 5       |
+| Files Modified     | 25+     |
+| Files Deleted      | 4       |
 | **Total Affected** | **30+** |
 
 ### 5.2 Lines of Code
 
-| Metric | Value |
-|--------|-------|
-| **Total Lines Removed** | 2,500+ |
-| **Step 0 (bugs)** | +15 (bug fixes) |
-| **Step 1** | -200 |
-| **Step 2** | -120 |
-| **Step 3** | -520 |
-| **Step 4** | -220 |
-| **Step 5** | -35 |
-| **Step 6** | -400 |
-| **Step 7** | (performance, negligible LOC impact) |
+| Metric                  | Value                                |
+| ----------------------- | ------------------------------------ |
+| **Total Lines Removed** | 2,500+                               |
+| **Step 0 (bugs)**       | +15 (bug fixes)                      |
+| **Step 1**              | -200                                 |
+| **Step 2**              | -120                                 |
+| **Step 3**              | -520                                 |
+| **Step 4**              | -220                                 |
+| **Step 5**              | -35                                  |
+| **Step 6**              | -400                                 |
+| **Step 7**              | (performance, negligible LOC impact) |
 
 ### 5.3 Code Duplication Reduction
 
-| Category | Before | After | Reduction |
-|----------|--------|-------|-----------|
-| fs-utils functions | 8 (200 LOC) | 2 (50 LOC) | 75% |
-| Path utilities | 8 copies (120 LOC) | 1 (20 LOC) | 83% |
-| Repositories | 4 duplicated (520 LOC) | 1 factory (150 LOC) | 71% |
-| Renderer trackers | 4 copies (80 LOC) | 1 factory (30 LOC) | 63% |
-| File watchers | 4 copies (200 LOC) | 1 hook (85 LOC) | 58% |
-| Context menus | 4 copies (80 LOC) | 1 component (30 LOC) | 63% |
-| Workspace watcher | Monolith (944 LOC) | Config-based (550 LOC) | 42% |
-| **Total** | **2,500+ LOC** | **Eliminated** | **60%+ reduction** |
+| Category           | Before                 | After                  | Reduction          |
+| ------------------ | ---------------------- | ---------------------- | ------------------ |
+| fs-utils functions | 8 (200 LOC)            | 2 (50 LOC)             | 75%                |
+| Path utilities     | 8 copies (120 LOC)     | 1 (20 LOC)             | 83%                |
+| Repositories       | 4 duplicated (520 LOC) | 1 factory (150 LOC)    | 71%                |
+| Renderer trackers  | 4 copies (80 LOC)      | 1 factory (30 LOC)     | 63%                |
+| File watchers      | 4 copies (200 LOC)     | 1 hook (85 LOC)        | 58%                |
+| Context menus      | 4 copies (80 LOC)      | 1 component (30 LOC)   | 63%                |
+| Workspace watcher  | Monolith (944 LOC)     | Config-based (550 LOC) | 42%                |
+| **Total**          | **2,500+ LOC**         | **Eliminated**         | **60%+ reduction** |
 
 ---
 
@@ -698,11 +733,13 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 ### 7.1 Developer Experience
 
 **Before Refactoring**:
+
 - Adding new file type required changes to 15+ files
 - Pattern duplication made bug fixes tedious (fix 4 places)
 - Workspace-watcher 944 lines difficult to modify
 
 **After Refactoring**:
+
 - Adding new file type requires 5-6 files
   - New repository (or factory config)
   - New service (unavoidable — domain logic)
@@ -717,33 +754,35 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 
 ### 7.2 Code Maintainability
 
-| Aspect | Before | After |
-|--------|--------|-------|
-| **Duplicate Code** | 2,500+ lines | Eliminated |
-| **Bug Fix Locations** | 4 per bug | 1 (factory) |
-| **File Type Extension Points** | 15+ files | 5-6 files |
-| **Workspace Watcher Size** | 944 lines | ~550 lines |
-| **Type Safety** | Maintained | Improved (generics) |
-| **Test Complexity** | Stable | Stable (647 tests all pass) |
+| Aspect                         | Before       | After                       |
+| ------------------------------ | ------------ | --------------------------- |
+| **Duplicate Code**             | 2,500+ lines | Eliminated                  |
+| **Bug Fix Locations**          | 4 per bug    | 1 (factory)                 |
+| **File Type Extension Points** | 15+ files    | 5-6 files                   |
+| **Workspace Watcher Size**     | 944 lines    | ~550 lines                  |
+| **Type Safety**                | Maintained   | Improved (generics)         |
+| **Test Complexity**            | Stable       | Stable (647 tests all pass) |
 
 ### 7.3 Performance Impact
 
-| Scenario | Before | After | Improvement |
-|----------|--------|-------|-------------|
-| **100-file import** | 100+ DB queries | 1 query | 100x |
-| **Folder siblings lookup** | 2000-file scan | Direct query | Variable |
-| **New file type add** | Manual duplication | Config | N/A (DX, not perf) |
+| Scenario                   | Before             | After        | Improvement        |
+| -------------------------- | ------------------ | ------------ | ------------------ |
+| **100-file import**        | 100+ DB queries    | 1 query      | 100x               |
+| **Folder siblings lookup** | 2000-file scan     | Direct query | Variable           |
+| **New file type add**      | Manual duplication | Config       | N/A (DX, not perf) |
 
 **User-Facing**: Import speed noticeably faster for large workspaces
 
 ### 7.4 Risk Reduction
 
 **Risks Eliminated**:
+
 - Inconsistent bug fixes (same issue in multiple files)
 - Typos in repeated code patterns
 - Feature drift (e.g., Image handling diverges from others)
 
 **Risks Mitigated**:
+
 - Type safety through generics
 - Configuration validates structure
 - Tests catch regressions
@@ -763,6 +802,7 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 ### 8.2 Files Modified (25+)
 
 **Main Process**:
+
 - `src/main/repositories/note.ts`
 - `src/main/repositories/csv-file.ts`
 - `src/main/repositories/pdf-file.ts`
@@ -777,9 +817,11 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 - `src/main/lib/leaf-reindex.ts`
 
 **Preload & IPC**:
+
 - `src/preload/index.ts`
 
 **Renderer**:
+
 - `src/renderer/src/entities/note/model/own-write-tracker.ts`
 - `src/renderer/src/entities/note/model/use-note-watcher.ts`
 - `src/renderer/src/entities/note/api/queries.ts`
@@ -859,11 +901,11 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 
 ## 10. Sign-Off
 
-| Role | Name | Date | Status |
-|------|------|------|--------|
-| Implementer | Rally Team | 2026-03-07 | ✅ Complete |
-| Reviewer | gap-detector | 2026-03-07 | ✅ Approved (100% match) |
-| Approver | | 2026-03-07 | ✅ Ready for Production |
+| Role        | Name         | Date       | Status                   |
+| ----------- | ------------ | ---------- | ------------------------ |
+| Implementer | Rally Team   | 2026-03-07 | ✅ Complete              |
+| Reviewer    | gap-detector | 2026-03-07 | ✅ Approved (100% match) |
+| Approver    |              | 2026-03-07 | ✅ Ready for Production  |
 
 ---
 
@@ -879,17 +921,17 @@ const notes = noteRepository.findByFolderId(workspaceId, folderId)
 
 ### Step Completion Summary
 
-| Step | Changes | Lines Removed | Files Modified | Status |
-|------|---------|---------------|----------------|--------|
-| 0 | Bug Fixes | +15 | 3 | ✅ |
-| 1 | fs-utils | -200 | 1 | ✅ |
-| 2 | path-utils | -120 | 5 | ✅ |
-| 3 | Repository | -520 | 4 | ✅ |
-| 4 | Renderer | -220 | 8 | ✅ |
-| 5 | Preload | -35 | 1 | ✅ |
-| 6 | Watcher | -400 | 1 | ✅ |
-| 7 | Performance | Neg | 6 | ✅ |
-| **TOTAL** | **2,500+** | **25+** | **100%** |
+| Step      | Changes     | Lines Removed | Files Modified | Status |
+| --------- | ----------- | ------------- | -------------- | ------ |
+| 0         | Bug Fixes   | +15           | 3              | ✅     |
+| 1         | fs-utils    | -200          | 1              | ✅     |
+| 2         | path-utils  | -120          | 5              | ✅     |
+| 3         | Repository  | -520          | 4              | ✅     |
+| 4         | Renderer    | -220          | 8              | ✅     |
+| 5         | Preload     | -35           | 1              | ✅     |
+| 6         | Watcher     | -400          | 1              | ✅     |
+| 7         | Performance | Neg           | 6              | ✅     |
+| **TOTAL** | **2,500+**  | **25+**       | **100%**       |
 
 ### Key Design Patterns Introduced
 

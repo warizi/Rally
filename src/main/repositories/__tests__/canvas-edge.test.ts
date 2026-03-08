@@ -85,7 +85,10 @@ describe('findByCanvasId', () => {
   })
 
   it('엣지 여러 개 반환', () => {
-    testDb.insert(schema.canvasEdges).values(makeEdge({ id: 'e-1' })).run()
+    testDb
+      .insert(schema.canvasEdges)
+      .values(makeEdge({ id: 'e-1' }))
+      .run()
     testDb
       .insert(schema.canvasEdges)
       .values(makeEdge({ id: 'e-2', fromNode: NODE_B, toNode: NODE_A }))

@@ -111,7 +111,8 @@ export function registerMcpRoutes(router: Router): void {
 // registerMcpRoutes 함수 내부
 function resolveActiveWorkspace(): string {
   const wsId = workspaceWatcher.getActiveWorkspaceId()
-  if (!wsId) throw new ValidationError('활성 워크스페이스가 없습니다. Rally에서 워크스페이스를 열어주세요.')
+  if (!wsId)
+    throw new ValidationError('활성 워크스페이스가 없습니다. Rally에서 워크스페이스를 열어주세요.')
   // 존재 검증
   const ws = workspaceRepository.findById(wsId)
   if (!ws) throw new ValidationError('활성 워크스페이스를 찾을 수 없습니다.')
@@ -163,20 +164,30 @@ router.addRoute('GET', '/api/mcp/items', () => {
     workspace: { id: workspace.id, name: workspace.name, path: workspace.path },
     folders: folders.map((f) => ({ id: f.id, relativePath: f.relativePath, order: f.order })),
     notes: notes.map((n) => ({
-      id: n.id, title: n.title, relativePath: n.relativePath,
-      preview: n.preview, folderId: n.folderId,
-      folderPath: n.folderId ? folderMap.get(n.folderId) ?? null : null,
+      id: n.id,
+      title: n.title,
+      relativePath: n.relativePath,
+      preview: n.preview,
+      folderId: n.folderId,
+      folderPath: n.folderId ? (folderMap.get(n.folderId) ?? null) : null,
       updatedAt: n.updatedAt.toISOString()
     })),
     tables: tables.map((t) => ({
-      id: t.id, title: t.title, relativePath: t.relativePath,
-      description: t.description, preview: t.preview, folderId: t.folderId,
-      folderPath: t.folderId ? folderMap.get(t.folderId) ?? null : null,
+      id: t.id,
+      title: t.title,
+      relativePath: t.relativePath,
+      description: t.description,
+      preview: t.preview,
+      folderId: t.folderId,
+      folderPath: t.folderId ? (folderMap.get(t.folderId) ?? null) : null,
       updatedAt: t.updatedAt.toISOString()
     })),
     canvases: canvases.map((c) => ({
-      id: c.id, title: c.title, description: c.description,
-      createdAt: c.createdAt.toISOString(), updatedAt: c.updatedAt.toISOString()
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      createdAt: c.createdAt.toISOString(),
+      updatedAt: c.updatedAt.toISOString()
     })),
     todos: {
       active: allTodos.filter((t) => !t.isDone).length,
@@ -211,7 +222,14 @@ router.addRoute('GET', '/api/mcp/content/:id', (params) => {
     return { type: 'note', title: row.title, relativePath: row.relativePath, content }
   } else {
     const { content, encoding, columnWidths } = csvFileService.readContent(wsId, params.id)
-    return { type: 'table', title: row.title, relativePath: row.relativePath, content, encoding, columnWidths }
+    return {
+      type: 'table',
+      title: row.title,
+      relativePath: row.relativePath,
+      content,
+      encoding,
+      columnWidths
+    }
   }
 })
 ```
@@ -239,8 +257,15 @@ router.addRoute<{
       csvFileService.writeContent(wsId, body.id, body.content)
       broadcastChanged('csv:changed', wsId, [row.relativePath])
     }
-    const updated = type === 'note' ? noteRepository.findById(body.id) : csvFileRepository.findById(body.id)
-    return { type, id: body.id, title: updated!.title, relativePath: updated!.relativePath, created: false }
+    const updated =
+      type === 'note' ? noteRepository.findById(body.id) : csvFileRepository.findById(body.id)
+    return {
+      type,
+      id: body.id,
+      title: updated!.title,
+      relativePath: updated!.relativePath,
+      created: false
+    }
   } else {
     // CREATE
     if (!body.type) throw new ValidationError('type is required for create')
@@ -251,12 +276,24 @@ router.addRoute<{
       const result = noteService.create(wsId, folderId, body.title)
       if (body.content) noteService.writeContent(wsId, result.id, body.content)
       broadcastChanged('note:changed', wsId, [result.relativePath])
-      return { type: 'note', id: result.id, title: result.title, relativePath: result.relativePath, created: true }
+      return {
+        type: 'note',
+        id: result.id,
+        title: result.title,
+        relativePath: result.relativePath,
+        created: true
+      }
     } else {
       const result = csvFileService.create(wsId, folderId, body.title)
       if (body.content) csvFileService.writeContent(wsId, result.id, body.content)
       broadcastChanged('csv:changed', wsId, [result.relativePath])
-      return { type: 'table', id: result.id, title: result.title, relativePath: result.relativePath, created: true }
+      return {
+        type: 'table',
+        id: result.id,
+        title: result.title,
+        relativePath: result.relativePath,
+        created: true
+      }
     }
   }
 })
@@ -391,16 +428,20 @@ router.addRoute<{ actions: any[] }>('POST', '/api/mcp/folders/batch', (_, body) 
 
 ```typescript
 router.addRoute('GET', '/api/mcp/canvases/:canvasId', (params) => {
-  resolveActiveWorkspace()  // 활성 워크스페이스 검증만
+  resolveActiveWorkspace() // 활성 워크스페이스 검증만
   const canvas = canvasService.findById(params.canvasId)
   const nodes = canvasNodeService.findByCanvas(params.canvasId)
   const edges = canvasEdgeService.findByCanvas(params.canvasId)
   return {
     canvas: {
-      id: canvas.id, title: canvas.title, description: canvas.description,
-      createdAt: canvas.createdAt.toISOString(), updatedAt: canvas.updatedAt.toISOString()
+      id: canvas.id,
+      title: canvas.title,
+      description: canvas.description,
+      createdAt: canvas.createdAt.toISOString(),
+      updatedAt: canvas.updatedAt.toISOString()
     },
-    nodes, edges
+    nodes,
+    edges
   }
 })
 ```
@@ -409,8 +450,10 @@ router.addRoute('GET', '/api/mcp/canvases/:canvasId', (params) => {
 
 ```typescript
 router.addRoute<{
-  title: string; description?: string
-  nodes?: any[]; edges?: any[]
+  title: string
+  description?: string
+  nodes?: any[]
+  edges?: any[]
 }>('POST', '/api/mcp/canvases', (_, body) => {
   requireBody(body)
   const wsId = resolveActiveWorkspace()
@@ -429,9 +472,14 @@ router.addRoute<{
   if (body.nodes?.length) {
     for (const [index, node] of body.nodes.entries()) {
       const result = canvasNodeService.create(canvas.id, {
-        type: node.type, x: node.x, y: node.y,
-        width: node.width, height: node.height,
-        content: node.content, refId: node.refId, color: node.color
+        type: node.type,
+        x: node.x,
+        y: node.y,
+        width: node.width,
+        height: node.height,
+        content: node.content,
+        refId: node.refId,
+        color: node.color
       })
       createdNodes.push({ index, id: result.id, type: result.type, x: result.x, y: result.y })
     }
@@ -448,10 +496,14 @@ router.addRoute<{
       if (!toNode) throw new ValidationError(`Invalid toNodeIndex: ${edge.toNodeIndex}`)
 
       const result = canvasEdgeService.create(canvas.id, {
-        fromNode, toNode,
-        fromSide: edge.fromSide, toSide: edge.toSide,
-        label: edge.label, color: edge.color,
-        style: edge.style, arrow: edge.arrow
+        fromNode,
+        toNode,
+        fromSide: edge.fromSide,
+        toSide: edge.toSide,
+        label: edge.label,
+        color: edge.color,
+        style: edge.style,
+        arrow: edge.arrow
       })
       createdEdges.push(result)
     }
@@ -470,68 +522,74 @@ router.addRoute<{
 #### POST `/api/mcp/canvases/:canvasId/edit` → edit_canvas
 
 ```typescript
-router.addRoute<{ actions: any[] }>(
-  'POST', '/api/mcp/canvases/:canvasId/edit',
-  (params, body) => {
-    requireBody(body)
-    const wsId = resolveActiveWorkspace()
-    if (!Array.isArray(body.actions) || body.actions.length === 0)
-      throw new ValidationError('actions array is required')
-    const actions = body.actions
+router.addRoute<{ actions: any[] }>('POST', '/api/mcp/canvases/:canvasId/edit', (params, body) => {
+  requireBody(body)
+  const wsId = resolveActiveWorkspace()
+  if (!Array.isArray(body.actions) || body.actions.length === 0)
+    throw new ValidationError('actions array is required')
+  const actions = body.actions
 
-    // delete 단독 실행 검증
-    const hasDelete = actions.some((a: any) => a.action === 'delete')
-    if (hasDelete && actions.length > 1)
-      throw new ValidationError('delete action must be used alone')
+  // delete 단독 실행 검증
+  const hasDelete = actions.some((a: any) => a.action === 'delete')
+  if (hasDelete && actions.length > 1) throw new ValidationError('delete action must be used alone')
 
-    if (hasDelete) {
-      canvasService.remove(params.canvasId)
-      broadcastChanged('canvas:changed', wsId, [])
-      return { results: [{ action: 'delete', success: true }] }
-    }
-
-    // tempId → realId 매핑
-    const tempIdMap = new Map<string, string>()
-    const results: any[] = []
-
-    for (const action of actions) {
-      if (action.action === 'update') {
-        canvasService.update(params.canvasId, {
-          title: action.title, description: action.description
-        })
-        results.push({ action: 'update', success: true })
-      } else if (action.action === 'add_node') {
-        const result = canvasNodeService.create(params.canvasId, {
-          type: action.type, x: action.x, y: action.y,
-          width: action.width, height: action.height,
-          content: action.content, refId: action.refId, color: action.color
-        })
-        if (action.tempId) tempIdMap.set(action.tempId, result.id)
-        results.push({ action: 'add_node', tempId: action.tempId || undefined, id: result.id })
-      } else if (action.action === 'remove_node') {
-        canvasNodeService.remove(action.nodeId)
-        results.push({ action: 'remove_node', nodeId: action.nodeId, success: true })
-      } else if (action.action === 'add_edge') {
-        // tempId 치환
-        const fromNode = tempIdMap.get(action.fromNode) ?? action.fromNode
-        const toNode = tempIdMap.get(action.toNode) ?? action.toNode
-        const result = canvasEdgeService.create(params.canvasId, {
-          fromNode, toNode,
-          fromSide: action.fromSide, toSide: action.toSide,
-          label: action.label, color: action.color,
-          style: action.style, arrow: action.arrow
-        })
-        results.push({ action: 'add_edge', id: result.id })
-      } else if (action.action === 'remove_edge') {
-        canvasEdgeService.remove(action.edgeId)
-        results.push({ action: 'remove_edge', edgeId: action.edgeId, success: true })
-      }
-    }
-
+  if (hasDelete) {
+    canvasService.remove(params.canvasId)
     broadcastChanged('canvas:changed', wsId, [])
-    return { results }
+    return { results: [{ action: 'delete', success: true }] }
   }
-)
+
+  // tempId → realId 매핑
+  const tempIdMap = new Map<string, string>()
+  const results: any[] = []
+
+  for (const action of actions) {
+    if (action.action === 'update') {
+      canvasService.update(params.canvasId, {
+        title: action.title,
+        description: action.description
+      })
+      results.push({ action: 'update', success: true })
+    } else if (action.action === 'add_node') {
+      const result = canvasNodeService.create(params.canvasId, {
+        type: action.type,
+        x: action.x,
+        y: action.y,
+        width: action.width,
+        height: action.height,
+        content: action.content,
+        refId: action.refId,
+        color: action.color
+      })
+      if (action.tempId) tempIdMap.set(action.tempId, result.id)
+      results.push({ action: 'add_node', tempId: action.tempId || undefined, id: result.id })
+    } else if (action.action === 'remove_node') {
+      canvasNodeService.remove(action.nodeId)
+      results.push({ action: 'remove_node', nodeId: action.nodeId, success: true })
+    } else if (action.action === 'add_edge') {
+      // tempId 치환
+      const fromNode = tempIdMap.get(action.fromNode) ?? action.fromNode
+      const toNode = tempIdMap.get(action.toNode) ?? action.toNode
+      const result = canvasEdgeService.create(params.canvasId, {
+        fromNode,
+        toNode,
+        fromSide: action.fromSide,
+        toSide: action.toSide,
+        label: action.label,
+        color: action.color,
+        style: action.style,
+        arrow: action.arrow
+      })
+      results.push({ action: 'add_edge', id: result.id })
+    } else if (action.action === 'remove_edge') {
+      canvasEdgeService.remove(action.edgeId)
+      results.push({ action: 'remove_edge', edgeId: action.edgeId, success: true })
+    }
+  }
+
+  broadcastChanged('canvas:changed', wsId, [])
+  return { results }
+})
 ```
 
 #### GET `/api/mcp/todos` → list_todos
@@ -543,9 +601,13 @@ router.addRoute('GET', '/api/mcp/todos', (_params, _body, query) => {
   const todos = todoService.findByWorkspace(wsId, filter)
   return {
     todos: todos.map((t) => ({
-      id: t.id, parentId: t.parentId, title: t.title,
-      description: t.description, status: t.status,
-      priority: t.priority, isDone: t.isDone,
+      id: t.id,
+      parentId: t.parentId,
+      title: t.title,
+      description: t.description,
+      status: t.status,
+      priority: t.priority,
+      isDone: t.isDone,
       dueDate: t.dueDate?.toISOString() ?? null,
       startDate: t.startDate?.toISOString() ?? null,
       createdAt: t.createdAt.toISOString(),
@@ -586,8 +648,14 @@ router.addRoute<{ actions: any[] }>('POST', '/api/mcp/todos/batch', (_, body) =>
           status: action.status,
           priority: action.priority,
           isDone: action.isDone,
-          dueDate: action.dueDate === null ? null : action.dueDate ? new Date(action.dueDate) : undefined,
-          startDate: action.startDate === null ? null : action.startDate ? new Date(action.startDate) : undefined
+          dueDate:
+            action.dueDate === null ? null : action.dueDate ? new Date(action.dueDate) : undefined,
+          startDate:
+            action.startDate === null
+              ? null
+              : action.startDate
+                ? new Date(action.startDate)
+                : undefined
         })
         results.push({ action: 'update', id: action.id, success: true })
       } else if (action.action === 'delete') {
@@ -614,6 +682,7 @@ router.addRoute<{ actions: any[] }>('POST', '/api/mcp/todos/batch', (_, body) =>
 현재 `todo:changed` 브로드캐스트 채널이 renderer에 등록되어 있지 않아, MCP를 통한 todo 변경이 UI에 반영되지 않음. 아래 추가 필요:
 
 **preload/index.ts:**
+
 ```typescript
 todo: {
   // ... 기존 IPC 메서드 유지
@@ -622,6 +691,7 @@ todo: {
 ```
 
 **preload/index.d.ts — TodoAPI에 onChanged 추가:**
+
 ```typescript
 interface TodoAPI {
   // ... 기존 메서드 유지
@@ -630,6 +700,7 @@ interface TodoAPI {
 ```
 
 **renderer에 use-todo-watcher.ts 추가:**
+
 ```typescript
 // src/renderer/src/entities/todo/model/use-todo-watcher.ts
 import { useEffect } from 'react'
@@ -648,11 +719,13 @@ export function useTodoWatcher(): void {
 ```
 
 **entities/todo/index.ts — barrel export 추가:**
+
 ```typescript
 export { useTodoWatcher } from './model/use-todo-watcher'
 ```
 
 **MainLayout.tsx에 watcher 등록:**
+
 ```typescript
 import { useTodoWatcher } from '@entities/todo'
 // ... 컴포넌트 내부
@@ -699,7 +772,8 @@ if (status !== 200) {
 const tools: ToolDefinition[] = [
   {
     name: 'list_items',
-    description: 'List all items (folders, notes, tables, canvases, todo summary) in the active workspace',
+    description:
+      'List all items (folders, notes, tables, canvases, todo summary) in the active workspace',
     schema: {},
     handler: () => callTool('GET', '/api/mcp/items')
   },
@@ -713,7 +787,8 @@ const tools: ToolDefinition[] = [
   },
   {
     name: 'read_content',
-    description: 'Read the full content of a note (markdown) or table (CSV). Auto-detects type by ID.',
+    description:
+      'Read the full content of a note (markdown) or table (CSV). Auto-detects type by ID.',
     schema: {
       id: z.string().describe('Note or table ID (from list_items)')
     },
@@ -724,7 +799,10 @@ const tools: ToolDefinition[] = [
     description: `Create or update a note/table. If id is provided, updates existing content. If not, creates new.
 WARNING: When updating a note, image references (![](/.images/xxx.png)) removed from new content will be permanently deleted from disk. Always preserve existing image references.`,
     schema: {
-      type: z.enum(['note', 'table']).optional().describe('Required for create, auto-detected for update'),
+      type: z
+        .enum(['note', 'table'])
+        .optional()
+        .describe('Required for create, auto-detected for update'),
       id: z.string().optional().describe('Item ID — provide to update, omit to create'),
       title: z.string().optional().describe('Title — required for create'),
       folderId: z.string().optional().describe('Folder ID for create (omit for root)'),
@@ -736,11 +814,19 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
     name: 'manage_items',
     description: 'Batch rename, move, or delete notes and tables. Type is auto-detected by ID.',
     schema: {
-      actions: z.array(z.union([
-        z.object({ action: z.literal('rename'), id: z.string(), newName: z.string() }),
-        z.object({ action: z.literal('move'), id: z.string(), targetFolderId: z.string().optional() }),
-        z.object({ action: z.literal('delete'), id: z.string() })
-      ])).describe('Array of actions to execute')
+      actions: z
+        .array(
+          z.union([
+            z.object({ action: z.literal('rename'), id: z.string(), newName: z.string() }),
+            z.object({
+              action: z.literal('move'),
+              id: z.string(),
+              targetFolderId: z.string().optional()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of actions to execute')
     },
     handler: (args) => callTool('POST', '/api/mcp/items/batch', args)
   },
@@ -748,18 +834,31 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
     name: 'manage_folders',
     description: 'Batch create, rename, move, or delete folders. Actions execute sequentially.',
     schema: {
-      actions: z.array(z.union([
-        z.object({ action: z.literal('create'), name: z.string(), parentFolderId: z.string().optional() }),
-        z.object({ action: z.literal('rename'), folderId: z.string(), newName: z.string() }),
-        z.object({ action: z.literal('move'), folderId: z.string(), parentFolderId: z.string().optional() }),
-        z.object({ action: z.literal('delete'), folderId: z.string() })
-      ])).describe('Array of folder actions')
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              name: z.string(),
+              parentFolderId: z.string().optional()
+            }),
+            z.object({ action: z.literal('rename'), folderId: z.string(), newName: z.string() }),
+            z.object({
+              action: z.literal('move'),
+              folderId: z.string(),
+              parentFolderId: z.string().optional()
+            }),
+            z.object({ action: z.literal('delete'), folderId: z.string() })
+          ])
+        )
+        .describe('Array of folder actions')
     },
     handler: (args) => callTool('POST', '/api/mcp/folders/batch', args)
   },
   {
     name: 'read_canvas',
-    description: 'Read a canvas with all nodes and edges. Nodes include reference data for linked items.',
+    description:
+      'Read a canvas with all nodes and edges. Nodes include reference data for linked items.',
     schema: {
       canvasId: z.string().describe('Canvas ID')
     },
@@ -767,25 +866,41 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
   },
   {
     name: 'create_canvas',
-    description: 'Create a canvas with optional nodes and edges in one call. Edges reference nodes by array index.',
+    description:
+      'Create a canvas with optional nodes and edges in one call. Edges reference nodes by array index.',
     schema: {
       title: z.string().describe('Canvas title'),
       description: z.string().optional().describe('Canvas description'),
-      nodes: z.array(z.object({
-        type: z.enum(['text', 'todo', 'note', 'schedule', 'csv', 'pdf', 'image']),
-        x: z.number(), y: z.number(),
-        width: z.number().optional(), height: z.number().optional(),
-        content: z.string().optional(), refId: z.string().optional(), color: z.string().optional()
-      })).optional().describe('Nodes to create'),
-      edges: z.array(z.object({
-        fromNodeIndex: z.number().describe('Source node index in nodes array'),
-        toNodeIndex: z.number().describe('Target node index in nodes array'),
-        fromSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
-        toSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
-        label: z.string().optional(), color: z.string().optional(),
-        style: z.enum(['solid', 'dashed', 'dotted']).optional(),
-        arrow: z.enum(['none', 'end', 'both']).optional()
-      })).optional().describe('Edges connecting nodes by index')
+      nodes: z
+        .array(
+          z.object({
+            type: z.enum(['text', 'todo', 'note', 'schedule', 'csv', 'pdf', 'image']),
+            x: z.number(),
+            y: z.number(),
+            width: z.number().optional(),
+            height: z.number().optional(),
+            content: z.string().optional(),
+            refId: z.string().optional(),
+            color: z.string().optional()
+          })
+        )
+        .optional()
+        .describe('Nodes to create'),
+      edges: z
+        .array(
+          z.object({
+            fromNodeIndex: z.number().describe('Source node index in nodes array'),
+            toNodeIndex: z.number().describe('Target node index in nodes array'),
+            fromSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
+            toSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
+            label: z.string().optional(),
+            color: z.string().optional(),
+            style: z.enum(['solid', 'dashed', 'dotted']).optional(),
+            arrow: z.enum(['none', 'end', 'both']).optional()
+          })
+        )
+        .optional()
+        .describe('Edges connecting nodes by index')
     },
     handler: (args) => callTool('POST', '/api/mcp/canvases', args)
   },
@@ -795,28 +910,43 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
 Delete must be the only action. Use tempId on add_node to reference new nodes in add_edge.`,
     schema: {
       canvasId: z.string().describe('Canvas ID'),
-      actions: z.array(z.union([
-        z.object({ action: z.literal('update'), title: z.string().optional(), description: z.string().optional() }),
-        z.object({ action: z.literal('delete') }),
-        z.object({
-          action: z.literal('add_node'), tempId: z.string().optional(),
-          type: z.enum(['text', 'todo', 'note', 'schedule', 'csv', 'pdf', 'image']),
-          x: z.number(), y: z.number(),
-          width: z.number().optional(), height: z.number().optional(),
-          content: z.string().optional(), refId: z.string().optional(), color: z.string().optional()
-        }),
-        z.object({ action: z.literal('remove_node'), nodeId: z.string() }),
-        z.object({
-          action: z.literal('add_edge'),
-          fromNode: z.string(), toNode: z.string(),
-          fromSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
-          toSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
-          label: z.string().optional(), color: z.string().optional(),
-          style: z.enum(['solid', 'dashed', 'dotted']).optional(),
-          arrow: z.enum(['none', 'end', 'both']).optional()
-        }),
-        z.object({ action: z.literal('remove_edge'), edgeId: z.string() })
-      ])).describe('Actions to perform on the canvas')
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('update'),
+              title: z.string().optional(),
+              description: z.string().optional()
+            }),
+            z.object({ action: z.literal('delete') }),
+            z.object({
+              action: z.literal('add_node'),
+              tempId: z.string().optional(),
+              type: z.enum(['text', 'todo', 'note', 'schedule', 'csv', 'pdf', 'image']),
+              x: z.number(),
+              y: z.number(),
+              width: z.number().optional(),
+              height: z.number().optional(),
+              content: z.string().optional(),
+              refId: z.string().optional(),
+              color: z.string().optional()
+            }),
+            z.object({ action: z.literal('remove_node'), nodeId: z.string() }),
+            z.object({
+              action: z.literal('add_edge'),
+              fromNode: z.string(),
+              toNode: z.string(),
+              fromSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
+              toSide: z.enum(['top', 'right', 'bottom', 'left']).optional(),
+              label: z.string().optional(),
+              color: z.string().optional(),
+              style: z.enum(['solid', 'dashed', 'dotted']).optional(),
+              arrow: z.enum(['none', 'end', 'both']).optional()
+            }),
+            z.object({ action: z.literal('remove_edge'), edgeId: z.string() })
+          ])
+        )
+        .describe('Actions to perform on the canvas')
     },
     handler: ({ canvasId, ...rest }) =>
       callTool('POST', `/api/mcp/canvases/${e(canvasId)}/edit`, rest)
@@ -827,34 +957,41 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
     schema: {
       filter: z.enum(['all', 'active', 'completed']).optional().describe('Filter (default: all)')
     },
-    handler: ({ filter }) =>
-      callTool('GET', `/api/mcp/todos${filter ? `?filter=${filter}` : ''}`)
+    handler: ({ filter }) => callTool('GET', `/api/mcp/todos${filter ? `?filter=${filter}` : ''}`)
   },
   {
     name: 'manage_todos',
-    description: 'Batch create, update, or delete todos. Supports subtodos via parentId. Status/isDone auto-sync.',
+    description:
+      'Batch create, update, or delete todos. Supports subtodos via parentId. Status/isDone auto-sync.',
     schema: {
-      actions: z.array(z.union([
-        z.object({
-          action: z.literal('create'), title: z.string(),
-          description: z.string().optional(),
-          status: z.enum(['할일', '진행중', '완료', '보류']).optional(),
-          priority: z.enum(['high', 'medium', 'low']).optional(),
-          parentId: z.string().optional(),
-          dueDate: z.string().optional().describe('ISO 8601 date'),
-          startDate: z.string().optional().describe('ISO 8601 date')
-        }),
-        z.object({
-          action: z.literal('update'), id: z.string(),
-          title: z.string().optional(), description: z.string().optional(),
-          status: z.enum(['할일', '진행중', '완료', '보류']).optional(),
-          priority: z.enum(['high', 'medium', 'low']).optional(),
-          isDone: z.boolean().optional(),
-          dueDate: z.string().nullable().optional(),
-          startDate: z.string().nullable().optional()
-        }),
-        z.object({ action: z.literal('delete'), id: z.string() })
-      ])).describe('Array of todo actions')
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              title: z.string(),
+              description: z.string().optional(),
+              status: z.enum(['할일', '진행중', '완료', '보류']).optional(),
+              priority: z.enum(['high', 'medium', 'low']).optional(),
+              parentId: z.string().optional(),
+              dueDate: z.string().optional().describe('ISO 8601 date'),
+              startDate: z.string().optional().describe('ISO 8601 date')
+            }),
+            z.object({
+              action: z.literal('update'),
+              id: z.string(),
+              title: z.string().optional(),
+              description: z.string().optional(),
+              status: z.enum(['할일', '진행중', '완료', '보류']).optional(),
+              priority: z.enum(['high', 'medium', 'low']).optional(),
+              isDone: z.boolean().optional(),
+              dueDate: z.string().nullable().optional(),
+              startDate: z.string().nullable().optional()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of todo actions')
     },
     handler: (args) => callTool('POST', '/api/mcp/todos/batch', args)
   }
@@ -863,19 +1000,19 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
 
 ## 5. 변경 파일 요약
 
-| 파일 | 변경 | 신규/수정 |
-|------|------|----------|
-| `src/main/lib/errors.ts` | `ValidationError`에 `details?` 필드 추가 | 수정 (2줄) |
-| `src/main/mcp-api/router.ts` | 에러 응답에 `details` 포함 | 수정 (1줄) |
-| `src/main/services/workspace-watcher.ts` | `getActiveWorkspaceId()` getter 추가 | 수정 (3줄) |
-| `src/main/mcp-api/routes/mcp.ts` | MCP 전용 라우트 11개 엔드포인트 | **신규** |
-| `src/main/mcp-api/routes/index.ts` | `registerMcpRoutes` 호출 추가 | 수정 (2줄) |
-| `src/mcp-server/lib/call-tool.ts` | 에러 응답에 details 포함 (JSON 전체 반환) | 수정 (1줄) |
-| `src/mcp-server/tool-definitions.ts` | 29개 → 11개 도구 전면 재작성 | 수정 (전체) |
-| `src/preload/index.ts` | `todo.onChanged` 리스너 추가 | 수정 (1줄) |
-| `src/preload/index.d.ts` | `TodoAPI`에 `onChanged` 타입 추가 | 수정 (1줄) |
-| `src/renderer/src/entities/todo/model/use-todo-watcher.ts` | todo:changed 구독 + invalidation | **신규** |
-| `src/renderer/src/entities/todo/index.ts` | `useTodoWatcher` barrel export 추가 | 수정 (1줄) |
-| `src/renderer/src/app/layout/MainLayout.tsx` | `useTodoWatcher()` 호출 + import 추가 | 수정 (2줄) |
+| 파일                                                       | 변경                                      | 신규/수정   |
+| ---------------------------------------------------------- | ----------------------------------------- | ----------- |
+| `src/main/lib/errors.ts`                                   | `ValidationError`에 `details?` 필드 추가  | 수정 (2줄)  |
+| `src/main/mcp-api/router.ts`                               | 에러 응답에 `details` 포함                | 수정 (1줄)  |
+| `src/main/services/workspace-watcher.ts`                   | `getActiveWorkspaceId()` getter 추가      | 수정 (3줄)  |
+| `src/main/mcp-api/routes/mcp.ts`                           | MCP 전용 라우트 11개 엔드포인트           | **신규**    |
+| `src/main/mcp-api/routes/index.ts`                         | `registerMcpRoutes` 호출 추가             | 수정 (2줄)  |
+| `src/mcp-server/lib/call-tool.ts`                          | 에러 응답에 details 포함 (JSON 전체 반환) | 수정 (1줄)  |
+| `src/mcp-server/tool-definitions.ts`                       | 29개 → 11개 도구 전면 재작성              | 수정 (전체) |
+| `src/preload/index.ts`                                     | `todo.onChanged` 리스너 추가              | 수정 (1줄)  |
+| `src/preload/index.d.ts`                                   | `TodoAPI`에 `onChanged` 타입 추가         | 수정 (1줄)  |
+| `src/renderer/src/entities/todo/model/use-todo-watcher.ts` | todo:changed 구독 + invalidation          | **신규**    |
+| `src/renderer/src/entities/todo/index.ts`                  | `useTodoWatcher` barrel export 추가       | 수정 (1줄)  |
+| `src/renderer/src/app/layout/MainLayout.tsx`               | `useTodoWatcher()` 호출 + import 추가     | 수정 (2줄)  |
 
 기존 파일 변경 최소화. 신규 파일 2개 + 전면 재작성 1개.

@@ -17,6 +17,7 @@ export const useCurrentWorkspaceStore = create<CurrentWorkspaceStore>()((set) =>
   setCurrentWorkspaceId: (id: string): void => {
     set({ currentWorkspaceId: id })
     window.api.settings.set('currentWorkspaceId', id).catch(console.error)
+    window.api.workspace.activate(id).catch(console.error)
   },
   clearCurrentWorkspaceId: (): void => {
     set({ currentWorkspaceId: null })

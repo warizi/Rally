@@ -13,7 +13,13 @@ interface Props {
   onRemove?: (tag: TagItem) => void
 }
 
-export function TagPicker({ allTags, attachedTagIds, onToggle, onCreateClick, onRemove }: Props) {
+export function TagPicker({
+  allTags,
+  attachedTagIds,
+  onToggle,
+  onCreateClick,
+  onRemove
+}: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
 
@@ -39,17 +45,12 @@ export function TagPicker({ allTags, attachedTagIds, onToggle, onCreateClick, on
         />
         <div className="max-h-48 overflow-y-auto space-y-0.5">
           {filtered.length === 0 ? (
-            <div className="text-xs text-muted-foreground text-center py-4">
-              태그가 없습니다
-            </div>
+            <div className="text-xs text-muted-foreground text-center py-4">태그가 없습니다</div>
           ) : (
             filtered.map((tag) => {
               const isAttached = attachedTagIds.has(tag.id)
               return (
-                <div
-                  key={tag.id}
-                  className="group flex items-center rounded hover:bg-accent"
-                >
+                <div key={tag.id} className="group flex items-center rounded hover:bg-accent">
                   <button
                     type="button"
                     onClick={() => onToggle(tag)}
@@ -92,8 +93,7 @@ export function TagPicker({ allTags, attachedTagIds, onToggle, onCreateClick, on
             }}
             className="w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left hover:bg-accent cursor-pointer text-muted-foreground"
           >
-            <Plus className="size-3" />
-            새 태그 만들기
+            <Plus className="size-3" />새 태그 만들기
           </button>
         </div>
       </PopoverContent>

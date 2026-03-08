@@ -46,7 +46,13 @@ function getOrCreateStore(canvasId: string): StoreApi<CanvasFlowState> {
 
 // ─── Hook ───────────────────────────────────────────────
 
-export function useCanvasStore(canvasId: string) {
+export function useCanvasStore(canvasId: string): {
+  store: StoreApi<CanvasFlowState>
+  nodes: CanvasNode[]
+  edges: CanvasEdge[]
+  hydrated: boolean
+  hydratedRef: React.MutableRefObject<boolean>
+} {
   const store = useMemo(() => getOrCreateStore(canvasId), [canvasId])
   const nodes = useStore(store, (s) => s.nodes)
   const edges = useStore(store, (s) => s.edges)

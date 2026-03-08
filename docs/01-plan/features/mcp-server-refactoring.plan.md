@@ -5,21 +5,22 @@
 기존 MCP 서버 구현(`src/mcp-server/`, `src/main/mcp-api/`)의 코드 중복을 제거하고 구조를 개선한다. 2-계층 프록시 아키텍처(UDS HTTP)와 기능은 유지하면서, 반복 패턴 추출과 모듈 구조 정리에 집중한다.
 
 **핵심 원칙**:
+
 - 기존 기능과 동작을 변경하지 않는다 (순수 리펙토링)
 - 아키텍처(MCP Server → UDS HTTP → Electron Main)는 유지
 - 코드 중복 제거 + 타입 안전성 강화 + 모듈 응집도 향상
 
 ## 2. Goals
 
-| # | Goal | Priority |
-|---|------|----------|
-| G-1 | MCP Tool 9개 파일의 반복 패턴(try-catch, mcpRequest, isError) 공통 유틸 추출 | Must |
-| G-2 | MCP Tool 등록을 선언적 방식으로 전환 (1 Tool = 1 config 객체) | Must |
-| G-3 | HTTP API router의 전역 상태(`routes` 배열) 제거 — 인스턴스 기반으로 전환 | Should |
-| G-4 | HTTP API route 핸들러의 body 타입 안전성 강화 (any → typed) | Should |
-| G-5 | 에러 타입 통합 — `PayloadTooLargeError`를 `src/main/lib/errors.ts`로 이동 | Should |
-| G-6 | MCP Tool 파일 9개 → 단일 파일 통합 (각 Tool이 config 객체 하나이므로) | Could |
-| G-7 | `server.tool()` deprecated API → `registerTool()` 전환 | Could |
+| #   | Goal                                                                         | Priority |
+| --- | ---------------------------------------------------------------------------- | -------- |
+| G-1 | MCP Tool 9개 파일의 반복 패턴(try-catch, mcpRequest, isError) 공통 유틸 추출 | Must     |
+| G-2 | MCP Tool 등록을 선언적 방식으로 전환 (1 Tool = 1 config 객체)                | Must     |
+| G-3 | HTTP API router의 전역 상태(`routes` 배열) 제거 — 인스턴스 기반으로 전환     | Should   |
+| G-4 | HTTP API route 핸들러의 body 타입 안전성 강화 (any → typed)                  | Should   |
+| G-5 | 에러 타입 통합 — `PayloadTooLargeError`를 `src/main/lib/errors.ts`로 이동    | Should   |
+| G-6 | MCP Tool 파일 9개 → 단일 파일 통합 (각 Tool이 config 객체 하나이므로)        | Could    |
+| G-7 | `server.tool()` deprecated API → `registerTool()` 전환                       | Could    |
 
 ## 3. Current Problems
 
@@ -29,7 +30,7 @@
 
 ```typescript
 // 모든 Tool에서 반복되는 패턴 (약 15줄)
-async () => {
+;async () => {
   try {
     const { status, data } = await mcpRequest(METHOD, URL)
     if (status !== 200) {
@@ -50,6 +51,7 @@ async () => {
 ### 3.2 Tool 등록 방식의 비효율
 
 각 Tool이 별도 파일 + `register*` 함수로 분리되어 있어:
+
 - 파일 11개 (9 tool + index.ts + http-client.ts)
 - import 9개 + 호출 9개 = barrel export 18줄
 - Tool 추가 시 파일 생성 + index.ts import/호출 추가 필요
@@ -86,24 +88,24 @@ type RouteHandler = (params: RouteParams, body: any, query: URLSearchParams) => 
 
 ### 4.1 In Scope
 
-| Item | Description |
-|------|-------------|
-| Tool 핸들러 공통화 | `callTool()` 유틸 — mcpRequest + 에러 처리 + MCP 응답 포맷 통합 |
-| Tool 선언적 등록 | Tool 정의를 config 객체 배열로 전환 |
-| Tool 파일 통합 | 9개 개별 파일 → `tool-definitions.ts` 단일 파일 |
-| Router 인스턴스화 | `createRouter()` 팩토리 함수로 전환 |
-| Body 타입 강화 | route 핸들러에서 typed body 사용 |
-| 에러 타입 통합 | `PayloadTooLargeError`를 `errors.ts`로 이동 |
-| tools/index.ts 제거 | 통합 후 불필요 |
+| Item                | Description                                                     |
+| ------------------- | --------------------------------------------------------------- |
+| Tool 핸들러 공통화  | `callTool()` 유틸 — mcpRequest + 에러 처리 + MCP 응답 포맷 통합 |
+| Tool 선언적 등록    | Tool 정의를 config 객체 배열로 전환                             |
+| Tool 파일 통합      | 9개 개별 파일 → `tool-definitions.ts` 단일 파일                 |
+| Router 인스턴스화   | `createRouter()` 팩토리 함수로 전환                             |
+| Body 타입 강화      | route 핸들러에서 typed body 사용                                |
+| 에러 타입 통합      | `PayloadTooLargeError`를 `errors.ts`로 이동                     |
+| tools/index.ts 제거 | 통합 후 불필요                                                  |
 
 ### 4.2 Out of Scope
 
-| Item | Reason |
-|------|--------|
-| 새 Tool 추가 | 리펙토링 범위 밖 |
-| UDS → 다른 통신 방식 변경 | 아키텍처 유지 |
-| HTTP API 엔드포인트 변경 | 기능 유지 |
-| 테스트 작성 | 리펙토링 후 별도 작업 |
+| Item                      | Reason                |
+| ------------------------- | --------------------- |
+| 새 Tool 추가              | 리펙토링 범위 밖      |
+| UDS → 다른 통신 방식 변경 | 아키텍처 유지         |
+| HTTP API 엔드포인트 변경  | 기능 유지             |
+| 테스트 작성               | 리펙토링 후 별도 작업 |
 
 ## 5. Refactoring Details
 
@@ -133,6 +135,7 @@ export async function callTool(
 ```
 
 **핵심 포인트**:
+
 - `CallToolResult` 타입은 **SDK에서 직접 import** — 로컬 타입 정의 시 SDK 타입과 이름 충돌 방지
 - `callTool()`의 반환 타입이 SDK의 `CallToolResult`와 일치하여 `server.tool()` 콜백에서 바로 사용 가능
 
@@ -168,9 +171,8 @@ const tools: ToolDefinition[] = [
     name: 'list_folders',
     description: 'List all folders in a workspace. Use folder IDs for move_note.',
     schema: { workspaceId: z.string().describe('Workspace ID') },
-    handler: ({ workspaceId }) =>
-      callTool('GET', `/api/workspaces/${enc(workspaceId)}/folders`)
-  },
+    handler: ({ workspaceId }) => callTool('GET', `/api/workspaces/${enc(workspaceId)}/folders`)
+  }
   // ... 나머지 7개 Tool (동일 패턴)
 ]
 
@@ -184,6 +186,7 @@ export function registerAllTools(server: McpServer): void {
 ```
 
 **핵심 포인트**:
+
 - **`as any` 캐스팅 필요**: SDK의 `ToolCallback<Args>`는 `(args: ShapeOutput<Args>, extra: Extra) => CallToolResult`로 2개 파라미터를 받지만, `ToolDefinition.handler`는 `extra`를 사용하지 않으므로 1개 파라미터만 정의. `server.tool()` 호출 시 타입 불일치를 `as any`로 해소
 - **파일명 `tool-definitions.ts`**: `tools/` 디렉토리와 충돌 회피. 삭제 순서에 의존하지 않음
 - **효과**: 9개 파일 삭제, ~270줄 → ~120줄. 새 Tool 추가 시 config 객체 1개만 추가
@@ -288,41 +291,41 @@ import { PayloadTooLargeError } from '../../lib/errors'
 
 ### 6.1 New Files
 
-| File | Description |
-|------|-------------|
-| `src/mcp-server/lib/call-tool.ts` | Tool 공통 유틸 (mcpRequest + 에러 처리 + SDK CallToolResult 반환) |
-| `src/mcp-server/tool-definitions.ts` | 9개 Tool 선언적 정의 + `registerAllTools()` |
+| File                                 | Description                                                       |
+| ------------------------------------ | ----------------------------------------------------------------- |
+| `src/mcp-server/lib/call-tool.ts`    | Tool 공통 유틸 (mcpRequest + 에러 처리 + SDK CallToolResult 반환) |
+| `src/mcp-server/tool-definitions.ts` | 9개 Tool 선언적 정의 + `registerAllTools()`                       |
 
 ### 6.2 Modified Files
 
-| File | Changes |
-|------|---------|
-| `src/main/mcp-api/router.ts` | 전역 `routes` 배열 + `addRoute()` + `router()` → `createRouter()` 팩토리 (addRoute에 `<TBody>` 제네릭 포함) |
-| `src/main/mcp-api/server.ts` | 내부에서 `createRouter()` + `registerAllRoutes(router)` 수행. import 추가: `createRouter`, `registerAllRoutes` |
-| `src/main/mcp-api/routes/index.ts` | `registerAllRoutes()` → `registerAllRoutes(router: Router)` 시그니처 변경 |
-| `src/main/mcp-api/routes/workspace.ts` | `registerWorkspaceRoutes()` → `registerWorkspaceRoutes(router: Router)`, `addRoute` → `router.addRoute` |
-| `src/main/mcp-api/routes/folder.ts` | `registerFolderRoutes()` → `registerFolderRoutes(router: Router)`, `addRoute` → `router.addRoute` |
-| `src/main/mcp-api/routes/note.ts` | `registerNoteRoutes()` → `registerNoteRoutes(router: Router)`, `addRoute` → `router.addRoute` + body 타입 제네릭 적용 |
-| `src/main/mcp-api/routes/search.ts` | `registerSearchRoutes()` → `registerSearchRoutes(router: Router)`, `addRoute` → `router.addRoute` |
-| `src/main/mcp-api/lib/body-parser.ts` | `PayloadTooLargeError` class 제거 → `import { PayloadTooLargeError } from '../../lib/errors'` |
-| `src/main/lib/errors.ts` | `PayloadTooLargeError` class 추가 |
-| `src/main/index.ts` | `registerAllRoutes()` 호출 제거 (server.ts 내부로 이동). `import { registerAllRoutes }` 제거 |
-| `src/mcp-server/index.ts` | import 경로 변경: `'./tools'` → `'./tool-definitions'` |
+| File                                   | Changes                                                                                                               |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `src/main/mcp-api/router.ts`           | 전역 `routes` 배열 + `addRoute()` + `router()` → `createRouter()` 팩토리 (addRoute에 `<TBody>` 제네릭 포함)           |
+| `src/main/mcp-api/server.ts`           | 내부에서 `createRouter()` + `registerAllRoutes(router)` 수행. import 추가: `createRouter`, `registerAllRoutes`        |
+| `src/main/mcp-api/routes/index.ts`     | `registerAllRoutes()` → `registerAllRoutes(router: Router)` 시그니처 변경                                             |
+| `src/main/mcp-api/routes/workspace.ts` | `registerWorkspaceRoutes()` → `registerWorkspaceRoutes(router: Router)`, `addRoute` → `router.addRoute`               |
+| `src/main/mcp-api/routes/folder.ts`    | `registerFolderRoutes()` → `registerFolderRoutes(router: Router)`, `addRoute` → `router.addRoute`                     |
+| `src/main/mcp-api/routes/note.ts`      | `registerNoteRoutes()` → `registerNoteRoutes(router: Router)`, `addRoute` → `router.addRoute` + body 타입 제네릭 적용 |
+| `src/main/mcp-api/routes/search.ts`    | `registerSearchRoutes()` → `registerSearchRoutes(router: Router)`, `addRoute` → `router.addRoute`                     |
+| `src/main/mcp-api/lib/body-parser.ts`  | `PayloadTooLargeError` class 제거 → `import { PayloadTooLargeError } from '../../lib/errors'`                         |
+| `src/main/lib/errors.ts`               | `PayloadTooLargeError` class 추가                                                                                     |
+| `src/main/index.ts`                    | `registerAllRoutes()` 호출 제거 (server.ts 내부로 이동). `import { registerAllRoutes }` 제거                          |
+| `src/mcp-server/index.ts`              | import 경로 변경: `'./tools'` → `'./tool-definitions'`                                                                |
 
 ### 6.3 Deleted Files
 
-| File | Reason |
-|------|--------|
+| File                                      | Reason                     |
+| ----------------------------------------- | -------------------------- |
 | `src/mcp-server/tools/list-workspaces.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/list-folders.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/list-notes.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/read-note.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/write-note.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/create-note.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/rename-note.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/move-note.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/search-notes.ts` | tool-definitions.ts로 통합 |
-| `src/mcp-server/tools/index.ts` | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/list-folders.ts`    | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/list-notes.ts`      | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/read-note.ts`       | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/write-note.ts`      | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/create-note.ts`     | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/rename-note.ts`     | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/move-note.ts`       | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/search-notes.ts`    | tool-definitions.ts로 통합 |
+| `src/mcp-server/tools/index.ts`           | tool-definitions.ts로 통합 |
 
 ## 7. Implementation Order
 
@@ -330,54 +333,54 @@ import { PayloadTooLargeError } from '../../lib/errors'
 
 ### Block A: MCP Server (src/mcp-server/) — Tool 통합
 
-| Step | Description | Files |
-|------|-------------|-------|
-| A-1 | `callTool()` 공통 유틸 생성 (SDK `CallToolResult` import) | `src/mcp-server/lib/call-tool.ts` |
-| A-2 | 9개 Tool → `tool-definitions.ts` 단일 파일로 통합 (`as any` 캐스팅 포함) | `src/mcp-server/tool-definitions.ts` |
-| A-3 | `src/mcp-server/index.ts` import 경로 변경: `'./tools'` → `'./tool-definitions'` | `src/mcp-server/index.ts` |
-| A-4 | 기존 `tools/` 디렉토리 삭제 (10개 파일) | `src/mcp-server/tools/` |
-| A-5 | `npm run build:mcp` 확인 | - |
+| Step | Description                                                                      | Files                                |
+| ---- | -------------------------------------------------------------------------------- | ------------------------------------ |
+| A-1  | `callTool()` 공통 유틸 생성 (SDK `CallToolResult` import)                        | `src/mcp-server/lib/call-tool.ts`    |
+| A-2  | 9개 Tool → `tool-definitions.ts` 단일 파일로 통합 (`as any` 캐스팅 포함)         | `src/mcp-server/tool-definitions.ts` |
+| A-3  | `src/mcp-server/index.ts` import 경로 변경: `'./tools'` → `'./tool-definitions'` | `src/mcp-server/index.ts`            |
+| A-4  | 기존 `tools/` 디렉토리 삭제 (10개 파일)                                          | `src/mcp-server/tools/`              |
+| A-5  | `npm run build:mcp` 확인                                                         | -                                    |
 
 ### Block B: MCP API (src/main/mcp-api/) — Router + 에러 정리
 
-| Step | Description | Files |
-|------|-------------|-------|
-| B-1 | `PayloadTooLargeError`를 `errors.ts`로 이동, `body-parser.ts` import 변경 | `errors.ts`, `body-parser.ts` |
-| B-2 | `router.ts` → `createRouter()` 팩토리 전환 (`<TBody>` 제네릭 포함) | `router.ts` |
-| B-3 | route 파일 4개: 함수 시그니처에 `(router: Router)` 파라미터 추가 + `router.addRoute` 방식으로 변경 | `workspace.ts`, `folder.ts`, `search.ts`, `note.ts` |
-| B-4 | `routes/index.ts`: `registerAllRoutes(router: Router)` 시그니처 변경 + 하위 함수에 router 전달 | `routes/index.ts` |
-| B-5 | `server.ts`: 내부에서 `createRouter()` + `registerAllRoutes(router)` 수행 | `server.ts` |
-| B-6 | `index.ts`: `registerAllRoutes()` 호출 및 import 제거 | `index.ts` |
-| B-7 | Route 핸들러 body 타입 제네릭 적용 (PUT/POST/PATCH 핸들러) | `routes/note.ts` |
-| B-8 | `npm run typecheck` 확인 | - |
+| Step | Description                                                                                        | Files                                               |
+| ---- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| B-1  | `PayloadTooLargeError`를 `errors.ts`로 이동, `body-parser.ts` import 변경                          | `errors.ts`, `body-parser.ts`                       |
+| B-2  | `router.ts` → `createRouter()` 팩토리 전환 (`<TBody>` 제네릭 포함)                                 | `router.ts`                                         |
+| B-3  | route 파일 4개: 함수 시그니처에 `(router: Router)` 파라미터 추가 + `router.addRoute` 방식으로 변경 | `workspace.ts`, `folder.ts`, `search.ts`, `note.ts` |
+| B-4  | `routes/index.ts`: `registerAllRoutes(router: Router)` 시그니처 변경 + 하위 함수에 router 전달     | `routes/index.ts`                                   |
+| B-5  | `server.ts`: 내부에서 `createRouter()` + `registerAllRoutes(router)` 수행                          | `server.ts`                                         |
+| B-6  | `index.ts`: `registerAllRoutes()` 호출 및 import 제거                                              | `index.ts`                                          |
+| B-7  | Route 핸들러 body 타입 제네릭 적용 (PUT/POST/PATCH 핸들러)                                         | `routes/note.ts`                                    |
+| B-8  | `npm run typecheck` 확인                                                                           | -                                                   |
 
 ## 8. Success Criteria
 
-| # | Criteria |
-|---|---------|
-| SC-1 | `npm run build:mcp` 성공 |
-| SC-2 | `npm run typecheck` 성공 |
-| SC-3 | MCP 서버 9개 Tool 정상 동작 (기존과 동일) |
-| SC-4 | `src/mcp-server/tools/` 디렉토리 삭제됨 |
-| SC-5 | MCP Tool 코드량 ~270줄 → ~120줄 이하 |
-| SC-6 | `router.ts`에 모듈 레벨 전역 상태 없음 |
+| #    | Criteria                                      |
+| ---- | --------------------------------------------- |
+| SC-1 | `npm run build:mcp` 성공                      |
+| SC-2 | `npm run typecheck` 성공                      |
+| SC-3 | MCP 서버 9개 Tool 정상 동작 (기존과 동일)     |
+| SC-4 | `src/mcp-server/tools/` 디렉토리 삭제됨       |
+| SC-5 | MCP Tool 코드량 ~270줄 → ~120줄 이하          |
+| SC-6 | `router.ts`에 모듈 레벨 전역 상태 없음        |
 | SC-7 | `PayloadTooLargeError`가 `errors.ts`에 통합됨 |
 
 ## 9. Risks
 
-| # | Risk | Impact | Mitigation |
-|---|------|--------|-----------|
-| R-1 | Tool 통합 시 개별 Tool의 고유 로직 누락 | 높음 | write_note의 이미지 경고 description 등 9개 Tool 개별 확인 |
-| R-2 | Router 인스턴스화 시 기존 route 등록 순서 변경 | 중간 | search → note 순서 `routes/index.ts`에서 명시적 유지 |
-| R-3 | 제네릭 body 타입이 과도한 타입 복잡도 유발 | 낮음 | 복잡한 경우 as 캐스팅 허용 |
-| R-4 | `server.tool()` → `as any` 캐스팅이 런타임 오류를 숨길 수 있음 | 낮음 | SDK가 zod schema로 args를 런타임 검증하므로 실질적 위험 없음 |
-| R-5 | SDK `CallToolResult` import 경로가 버전에 따라 다를 수 있음 | 낮음 | `@modelcontextprotocol/sdk/types.js` 경로 확인 후 사용 |
+| #   | Risk                                                           | Impact | Mitigation                                                   |
+| --- | -------------------------------------------------------------- | ------ | ------------------------------------------------------------ |
+| R-1 | Tool 통합 시 개별 Tool의 고유 로직 누락                        | 높음   | write_note의 이미지 경고 description 등 9개 Tool 개별 확인   |
+| R-2 | Router 인스턴스화 시 기존 route 등록 순서 변경                 | 중간   | search → note 순서 `routes/index.ts`에서 명시적 유지         |
+| R-3 | 제네릭 body 타입이 과도한 타입 복잡도 유발                     | 낮음   | 복잡한 경우 as 캐스팅 허용                                   |
+| R-4 | `server.tool()` → `as any` 캐스팅이 런타임 오류를 숨길 수 있음 | 낮음   | SDK가 zod schema로 args를 런타임 검증하므로 실질적 위험 없음 |
+| R-5 | SDK `CallToolResult` import 경로가 버전에 따라 다를 수 있음    | 낮음   | `@modelcontextprotocol/sdk/types.js` 경로 확인 후 사용       |
 
 ## 10. Constraints
 
-| # | Constraint |
-|---|-----------|
+| #   | Constraint                                                                        |
+| --- | --------------------------------------------------------------------------------- |
 | C-1 | 기존 9개 MCP Tool의 name, description, schema, HTTP 매핑이 **정확히** 동일해야 함 |
 | C-2 | `startMcpApiServer()` / `stopMcpApiServer()`의 외부 API(시그니처)는 변경하지 않음 |
-| C-3 | HTTP API 엔드포인트 경로/메서드는 변경하지 않음 |
-| C-4 | `npm run build:mcp` + `npm run typecheck` 모두 통과해야 함 |
+| C-3 | HTTP API 엔드포인트 경로/메서드는 변경하지 않음                                   |
+| C-4 | `npm run build:mcp` + `npm run typecheck` 모두 통과해야 함                        |

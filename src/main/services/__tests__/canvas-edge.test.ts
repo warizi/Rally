@@ -77,9 +77,9 @@ describe('create', () => {
 
   it('canvas 없음 → NotFoundError', () => {
     vi.mocked(canvasRepository.findById).mockReturnValue(undefined)
-    expect(() =>
-      canvasEdgeService.create('bad', { fromNode: 'node-a', toNode: 'node-b' })
-    ).toThrow(NotFoundError)
+    expect(() => canvasEdgeService.create('bad', { fromNode: 'node-a', toNode: 'node-b' })).toThrow(
+      NotFoundError
+    )
   })
 
   it('self-loop → ValidationError', () => {

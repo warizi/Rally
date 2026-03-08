@@ -154,6 +154,7 @@ const api = {
     create: (name: string, path: string) => ipcRenderer.invoke('workspace:create', name, path),
     update: (id: string, data: unknown) => ipcRenderer.invoke('workspace:update', id, data),
     delete: (id: string) => ipcRenderer.invoke('workspace:delete', id),
+    activate: (id: string) => ipcRenderer.invoke('workspace:activate', id),
     selectDirectory: () => ipcRenderer.invoke('workspace:selectDirectory')
   },
 
@@ -294,8 +295,7 @@ const api = {
     write: (args: { data: string }) => ipcRenderer.send('terminal:write', args),
     resize: (args: { cols: number; rows: number }) => ipcRenderer.send('terminal:resize', args),
     onData: (callback: (data: { data: string }) => void) => {
-      const handler = (_: Electron.IpcRendererEvent, data: { data: string }): void =>
-        callback(data)
+      const handler = (_: Electron.IpcRendererEvent, data: { data: string }): void => callback(data)
       ipcRenderer.on('terminal:data', handler)
       return () => ipcRenderer.removeListener('terminal:data', handler)
     },

@@ -40,6 +40,9 @@ beforeEach(() => {
   ;(window as unknown as Record<string, unknown>).api = {
     settings: {
       set: vi.fn().mockResolvedValue({ success: true })
+    },
+    workspace: {
+      activate: vi.fn().mockResolvedValue({ success: true })
     }
   }
 })

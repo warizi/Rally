@@ -7,12 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
-import type {
-  TagItem,
-  TaggableEntityType,
-  CreateTagInput,
-  UpdateTagInput
-} from './types'
+import type { TagItem, TaggableEntityType, CreateTagInput, UpdateTagInput } from './types'
 
 export const TAG_KEY = 'tag'
 export const ITEM_TAG_KEY = 'itemTag'
@@ -36,10 +31,7 @@ export function useItemTags(
   return useQuery({
     queryKey: [ITEM_TAG_KEY, itemType, itemId],
     queryFn: async (): Promise<TagItem[]> => {
-      const res: IpcResponse<TagItem[]> = await window.api.itemTag.getTagsByItem(
-        itemType,
-        itemId!
-      )
+      const res: IpcResponse<TagItem[]> = await window.api.itemTag.getTagsByItem(itemType, itemId!)
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },
@@ -54,10 +46,7 @@ export function useItemIdsByTag(
   return useQuery({
     queryKey: [ITEM_TAG_KEY, 'byTag', tagId, itemType],
     queryFn: async (): Promise<string[]> => {
-      const res: IpcResponse<string[]> = await window.api.itemTag.getItemIdsByTag(
-        tagId!,
-        itemType
-      )
+      const res: IpcResponse<string[]> = await window.api.itemTag.getItemIdsByTag(tagId!, itemType)
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },

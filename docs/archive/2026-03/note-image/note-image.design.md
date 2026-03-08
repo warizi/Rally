@@ -186,6 +186,7 @@ export const noteImageService = {
 ```
 
 **설계 포인트**:
+
 - `saveFromPath`: DnD 전용, `webUtils.getPathForFile()`로 획득한 경로를 `fs.copyFileSync` — 바이너리 IPC 전송 없음
 - `saveFromBuffer`: Paste 전용, `ArrayBuffer` → `Buffer.from()` → `fs.writeFileSync`
 - `readImage`: path traversal 방지 검증 후 `fs.readFileSync` → `{ data: Buffer }`
@@ -225,6 +226,7 @@ export function registerNoteImageHandlers(): void {
 ```
 
 **설계 포인트**:
+
 - 기존 `handle()` 동기 래퍼 활용 — 모든 서비스 메서드가 동기
 - IPC 채널 네이밍: `noteImage:action` — 기존 `image:action` (image entity)과 분리
 
@@ -305,6 +307,7 @@ const imageCreates = events.filter((e) => {
 ```
 
 **설계 포인트**:
+
 - `.images/` 하위 이미지 파일 이벤트가 image entity DB에 등록되는 것을 방지
 - `rel.startsWith('.images/')` — 최상위 `.images/` 폴더
 - `rel.includes('/.images/')` — 중첩 `.images/` 폴더 (방어적)
@@ -356,7 +359,7 @@ interface API {
   csv: CsvAPI
   pdf: PdfAPI
   image: ImageAPI
-  noteImage: NoteImageAPI  // 추가
+  noteImage: NoteImageAPI // 추가
   folder: FolderAPI
   // ... 나머지 동일
 }
@@ -387,7 +390,7 @@ class NoteImageNodeView implements NodeView {
   dom: HTMLElement
   private blobUrl: string | null = null
   private img: HTMLImageElement
-  private currentSrc: string = ''  // 원본 src 추적용 (blob URL과 별도)
+  private currentSrc: string = '' // 원본 src 추적용 (blob URL과 별도)
 
   constructor(
     node: Node,
@@ -481,6 +484,7 @@ class NoteImageNodeView implements NodeView {
 ```
 
 **설계 포인트**:
+
 - `createNoteImageNodeViewFactory(workspaceId)` — 팩토리 패턴으로 `workspaceId` 클로저 캡처
 - `$view(imageSchema.node, (_ctx) => factory)` 형태로 Milkdown에 등록 — `$view`는 `(ctx: Ctx) => NodeViewConstructor` 시그니처
 - `.images/` 경로만 blob URL 변환, 외부 URL은 그대로 렌더링
@@ -585,6 +589,7 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
 ```
 
 **설계 포인트**:
+
 - `workspaceId`를 `MilkdownEditor`에 prop으로 전달 → uploader 클로저 + nodeView 팩토리에서 캡처
 - `ctx.update(uploadConfig.key, (prev) => ({ ...prev, uploader }))` — 기본 옵션(`enableHtmlFileUploader`, `uploadWidgetFactory` 등) 보존
 - `window.electron.webUtils.getPathForFile(file)` — Electron 39+ 공식 API (`File.path` 폐지됨, `@electron-toolkit/preload`가 이미 `webUtils`를 `window.electron`에 노출)
@@ -636,13 +641,13 @@ Milkdown 출력: text\n\n![alt](...)\n\nnext
 
 ## 6. File Change Summary
 
-| File | Type | Description |
-|------|------|-------------|
-| `src/main/services/note-image.ts` | 신규 | saveFromPath, saveFromBuffer, readImage |
-| `src/main/ipc/note-image.ts` | 신규 | IPC 핸들러 3개 등록 |
-| `src/main/index.ts` | 수정 | `registerNoteImageHandlers()` 1줄 추가 |
-| `src/main/services/workspace-watcher.ts` | 수정 | `.images/` 필터 3곳 |
-| `src/preload/index.ts` | 수정 | `noteImage` 블록 추가 |
-| `src/preload/index.d.ts` | 수정 | `NoteImageAPI` 인터페이스 + API 확장 |
-| `src/renderer/src/features/note/edit-note/model/note-image-node-view.ts` | 신규 | vanilla DOM NodeView |
-| `src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx` | 수정 | upload 플러그인 + $view 등록 |
+| File                                                                     | Type | Description                             |
+| ------------------------------------------------------------------------ | ---- | --------------------------------------- |
+| `src/main/services/note-image.ts`                                        | 신규 | saveFromPath, saveFromBuffer, readImage |
+| `src/main/ipc/note-image.ts`                                             | 신규 | IPC 핸들러 3개 등록                     |
+| `src/main/index.ts`                                                      | 수정 | `registerNoteImageHandlers()` 1줄 추가  |
+| `src/main/services/workspace-watcher.ts`                                 | 수정 | `.images/` 필터 3곳                     |
+| `src/preload/index.ts`                                                   | 수정 | `noteImage` 블록 추가                   |
+| `src/preload/index.d.ts`                                                 | 수정 | `NoteImageAPI` 인터페이스 + API 확장    |
+| `src/renderer/src/features/note/edit-note/model/note-image-node-view.ts` | 신규 | vanilla DOM NodeView                    |
+| `src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx`             | 수정 | upload 플러그인 + $view 등록            |

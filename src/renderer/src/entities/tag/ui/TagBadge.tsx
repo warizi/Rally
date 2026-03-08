@@ -9,7 +9,7 @@ interface TagBadgeProps {
   className?: string
 }
 
-export function TagBadge({ tag, onRemove, className }: TagBadgeProps) {
+export function TagBadge({ tag, onRemove, className }: TagBadgeProps): React.JSX.Element {
   const badge = (
     <span
       className={cn(
@@ -18,10 +18,7 @@ export function TagBadge({ tag, onRemove, className }: TagBadgeProps) {
       )}
       style={{ backgroundColor: `${tag.color}20`, color: tag.color }}
     >
-      <span
-        className="size-2 rounded-full shrink-0"
-        style={{ backgroundColor: tag.color }}
-      />
+      <span className="size-2 rounded-full shrink-0" style={{ backgroundColor: tag.color }} />
       {tag.name}
       {onRemove && (
         <button

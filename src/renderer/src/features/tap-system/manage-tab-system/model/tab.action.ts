@@ -155,6 +155,7 @@ export const createTabActions = (
 
     // 핀 탭이 없고 다른 패인이 있으면 패인 닫기
     if (pinnedTabIds.length === 0 && Object.keys(panes).length > 1) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [paneId]: _removedPane, ...remainingPanes } = panes
       const newLayout = removePaneFromLayout(layout, paneId)
       const newActivePaneId =

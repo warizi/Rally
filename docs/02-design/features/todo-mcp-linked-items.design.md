@@ -4,10 +4,10 @@
 
 ## 1. 변경 파일 및 구현 순서
 
-| 순서 | 파일 | 변경 내용 |
-|---|---|---|
-| 1 | `src/main/mcp-api/routes/mcp.ts` | `GET /api/mcp/todos` 라우트에 linkedItems 추가 |
-| 2 | `src/mcp-server/tool-definitions.ts` | `list_todos` description에 linkedItems 안내 추가 |
+| 순서 | 파일                                 | 변경 내용                                        |
+| ---- | ------------------------------------ | ------------------------------------------------ |
+| 1    | `src/main/mcp-api/routes/mcp.ts`     | `GET /api/mcp/todos` 라우트에 linkedItems 추가   |
+| 2    | `src/mcp-server/tool-definitions.ts` | `list_todos` description에 linkedItems 안내 추가 |
 
 ## 2. 상세 설계
 
@@ -22,6 +22,7 @@ import { entityLinkService } from '../../services/entity-link'
 #### `GET /api/mcp/todos` 라우트 변경
 
 **Before** (L479-498):
+
 ```typescript
 router.addRoute('GET', '/api/mcp/todos', (_params, _body, query) => {
   const wsId = resolveActiveWorkspace()
@@ -46,6 +47,7 @@ router.addRoute('GET', '/api/mcp/todos', (_params, _body, query) => {
 ```
 
 **After**:
+
 ```typescript
 router.addRoute('GET', '/api/mcp/todos', (_params, _body, query) => {
   const wsId = resolveActiveWorkspace()
@@ -89,6 +91,7 @@ router.addRoute('GET', '/api/mcp/todos', (_params, _body, query) => {
 #### `list_todos` description 변경
 
 **Before**:
+
 ```typescript
 {
   name: 'list_todos',
@@ -99,6 +102,7 @@ router.addRoute('GET', '/api/mcp/todos', (_params, _body, query) => {
 ```
 
 **After**:
+
 ```typescript
 {
   name: 'list_todos',
@@ -149,12 +153,13 @@ interface ListTodosResponse {
     status: '할일' | '진행중' | '완료' | '보류'
     priority: 'high' | 'medium' | 'low'
     isDone: boolean
-    dueDate: string | null      // ISO 8601
-    startDate: string | null    // ISO 8601
-    createdAt: string           // ISO 8601
-    updatedAt: string           // ISO 8601
-    linkedItems: {              // NEW
-      type: LinkableEntityType  // 'note' | 'csv' | 'canvas' | 'todo' | 'schedule' | 'pdf' | 'image'
+    dueDate: string | null // ISO 8601
+    startDate: string | null // ISO 8601
+    createdAt: string // ISO 8601
+    updatedAt: string // ISO 8601
+    linkedItems: {
+      // NEW
+      type: LinkableEntityType // 'note' | 'csv' | 'canvas' | 'todo' | 'schedule' | 'pdf' | 'image'
       id: string
       title: string
     }[]
@@ -164,10 +169,10 @@ interface ListTodosResponse {
 
 ## 5. 엣지 케이스
 
-| 케이스 | 동작 |
-|---|---|
-| 링크 없는 todo | `linkedItems: []` (빈 배열) |
-| orphan 링크 (삭제된 entity) | `getLinked()` 내부에서 필터링 + DB 정리 |
-| todo-todo 링크 | 정상 반환 (type: "todo", 해당 todo의 title 포함) |
-| 링크된 entity가 다른 workspace | 발생 불가 (link 생성 시 workspace 검증) |
+| 케이스                            | 동작                                                        |
+| --------------------------------- | ----------------------------------------------------------- |
+| 링크 없는 todo                    | `linkedItems: []` (빈 배열)                                 |
+| orphan 링크 (삭제된 entity)       | `getLinked()` 내부에서 필터링 + DB 정리                     |
+| todo-todo 링크                    | 정상 반환 (type: "todo", 해당 todo의 title 포함)            |
+| 링크된 entity가 다른 workspace    | 발생 불가 (link 생성 시 workspace 검증)                     |
 | filter=completed 시 sub-todo 링크 | 최상위 완료 todo만 반환, sub-todo는 미포함 (기존 동작 유지) |

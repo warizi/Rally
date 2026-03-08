@@ -25,7 +25,6 @@ export interface CsvFileNode {
   updatedAt: Date
 }
 
-
 function toCsvFileNode(row: {
   id: string
   title: string
@@ -95,7 +94,7 @@ export const csvFileService = {
     for (const entry of newFsEntries) {
       const matchedOrphan = orphanByBasename.get(entry.name)
       const parentRel = parentRelPath(entry.relativePath)
-      const folder = parentRel ? folderMap.get(parentRel) ?? null : null
+      const folder = parentRel ? (folderMap.get(parentRel) ?? null) : null
       if (matchedOrphan) {
         csvFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,

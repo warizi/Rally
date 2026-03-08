@@ -1,6 +1,7 @@
 # Codebase Refactoring Design Document
 
 ## Reference
+
 - Plan: `docs/01-plan/features/codebase-refactoring.plan.md` (v3)
 
 ---
@@ -10,6 +11,7 @@
 ### BUG-1: Note own-write-tracker Set → Map
 
 **Before:**
+
 ```typescript
 // src/renderer/src/entities/note/model/own-write-tracker.ts
 const pendingWrites = new Set<string>()
@@ -20,6 +22,7 @@ export function markAsOwnWrite(noteId: string): void {
 ```
 
 **After:**
+
 ```typescript
 const pendingWrites = new Map<string, ReturnType<typeof setTimeout>>()
 export function markAsOwnWrite(noteId: string): void {
@@ -40,6 +43,7 @@ export function isOwnWrite(noteId: string): boolean {
 
 **변경 파일**: `src/renderer/src/entities/note/api/queries.ts`
 **변경 내용**: `useRenameNote` mutation의 `onMutate`에 `markAsOwnWrite(noteId)` 추가
+
 ```typescript
 // useRenameNote의 onMutate
 onMutate: ({ workspaceId, noteId }) => {
@@ -47,12 +51,14 @@ onMutate: ({ workspaceId, noteId }) => {
   markAsOwnWrite(noteId) // 추가
 }
 ```
+
 **import 추가**: `import { markAsOwnWrite } from '../model/own-write-tracker'`
 
 ### BUG-3: Note entity barrel export에 isOwnWrite + EVENT 상수 추가
 
 **변경 파일**: `src/renderer/src/entities/note/index.ts`
 **변경 내용**: 누락된 export 2개 추가 (csv-file의 barrel export 패턴과 일치시킴)
+
 ```typescript
 export { isOwnWrite } from './model/own-write-tracker'
 export { NOTE_EXTERNAL_CHANGED_EVENT } from './model/use-note-watcher'
@@ -167,6 +173,7 @@ export const readImageFilesRecursiveAsync = (abs: string, rel: string): Promise<
 ```
 
 ### 호출부 영향: 없음
+
 - 함수명, 시그니처, 반환 타입 모두 동일
 - `MdFileEntry` 등 타입도 `FileEntry` alias로 호환
 
@@ -197,11 +204,13 @@ export function parentRelPath(relativePath: string): string | null {
 ### 변경 파일: 4개 서비스
 
 각 서비스에서:
+
 1. `normalizePath`, `parentRelPath` 로컬 함수 삭제
 2. `import { normalizePath, parentRelPath } from '../lib/path-utils'` 추가
 3. `toXxxNode` 함수는 **변경 없이 유지**
 
 ### 호출부 영향: 없음
+
 - path 유틸만 import 경로 변경, 동작 동일
 
 ---
@@ -247,7 +256,11 @@ export function createFileRepository<
     },
 
     create(data: Insert): Row {
-      return db.insert(table).values(data as any).returning().get() as Row
+      return db
+        .insert(table)
+        .values(data as any)
+        .returning()
+        .get() as Row
     },
 
     createMany(items: Insert[]): void {
@@ -286,9 +299,7 @@ export function createFileRepository<
 
     bulkDeleteByPrefix(workspaceId: string, prefix: string): void {
       db.delete(table)
-        .where(
-          and(eq(table.workspaceId, workspaceId), like(table.relativePath, `${prefix}/%`))
-        )
+        .where(and(eq(table.workspaceId, workspaceId), like(table.relativePath, `${prefix}/%`)))
         .run()
     },
 
@@ -325,16 +336,14 @@ export function createFileRepository<
       const results: Row[] = []
       for (let i = 0; i < ids.length; i += CHUNK) {
         const chunk = ids.slice(i, i + CHUNK)
-        results.push(
-          ...(db.select().from(table).where(inArray(table.id, chunk)).all() as Row[])
-        )
+        results.push(...(db.select().from(table).where(inArray(table.id, chunk)).all() as Row[]))
       }
       return results
     },
 
     delete(id: string): void {
       db.delete(table).where(eq(table.id, id)).run()
-    },
+    }
   }
 }
 ```
@@ -342,6 +351,7 @@ export function createFileRepository<
 ### 변경 파일: 4개 repository
 
 **note.ts (리팩토링 후):**
+
 ```typescript
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
@@ -358,15 +368,19 @@ export const noteRepository = {
   update(
     id: string,
     data: Partial<
-      Pick<Note, 'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'>
+      Pick<
+        Note,
+        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+      >
     >
   ): Note | undefined {
     return db.update(notes).set(data).where(eq(notes.id, id)).returning().get()
-  },
+  }
 }
 ```
 
 **csv-file.ts (리팩토링 후):**
+
 ```typescript
 import { eq } from 'drizzle-orm'
 import { db } from '../db'
@@ -383,22 +397,34 @@ export const csvFileRepository = {
   update(
     id: string,
     data: Partial<
-      Pick<CsvFile, 'relativePath' | 'title' | 'description' | 'preview' | 'columnWidths' | 'folderId' | 'order' | 'updatedAt'>
+      Pick<
+        CsvFile,
+        | 'relativePath'
+        | 'title'
+        | 'description'
+        | 'preview'
+        | 'columnWidths'
+        | 'folderId'
+        | 'order'
+        | 'updatedAt'
+      >
     >
   ): CsvFile | undefined {
     return db.update(csvFiles).set(data).where(eq(csvFiles.id, id)).returning().get()
-  },
+  }
 }
 ```
 
 **pdf-file.ts, image-file.ts:** note.ts와 동일 패턴 (update 필드에 columnWidths 없음)
 
 ### 호출부 영향: 없음
+
 - repository 객체의 메서드 시그니처 완전 동일
 - `noteRepository.findByWorkspaceId(...)` 등 모든 호출 그대로 동작
 - `leaf-reindex.ts`는 repository를 직접 import하므로 변경 없음
 
 ### 주의사항
+
 - Drizzle의 테이블 타입 제네릭이 복잡할 수 있음 → 구현 시 `as any` 캐스팅이 필요할 수 있으나, 외부 API 타입은 정확히 유지
 - `tableName` 문자열은 실제 SQLite 테이블명과 일치해야 함 (notes, csv_files, pdf_files, image_files)
 
@@ -424,7 +450,7 @@ export function createOwnWriteTracker(timeoutMs = 2000) {
     },
     isOwnWrite(id: string): boolean {
       return pendingWrites.has(id)
-    },
+    }
   }
 }
 ```
@@ -432,6 +458,7 @@ export function createOwnWriteTracker(timeoutMs = 2000) {
 **변경 파일**: 4개 entity own-write-tracker
 
 각 파일을 다음으로 교체:
+
 ```typescript
 // src/renderer/src/entities/note/model/own-write-tracker.ts
 import { createOwnWriteTracker } from '@shared/lib/create-own-write-tracker'
@@ -478,12 +505,12 @@ export function useFileWatcher(config: FileWatcherConfig): void {
 
     const unsub = config.onChanged((workspaceId, changedRelPaths) => {
       queryClient.invalidateQueries({
-        queryKey: [config.queryKeyPrefix, 'workspace', workspaceId],
+        queryKey: [config.queryKeyPrefix, 'workspace', workspaceId]
       })
 
-      const items = queryClient.getQueryData<Array<{ id: string; relativePath: string; title: string }>>(
-        [config.queryKeyPrefix, 'workspace', workspaceId]
-      )
+      const items = queryClient.getQueryData<
+        Array<{ id: string; relativePath: string; title: string }>
+      >([config.queryKeyPrefix, 'workspace', workspaceId])
 
       if (items && changedRelPaths.length > 0) {
         const externalItems = items.filter(
@@ -506,19 +533,19 @@ export function useFileWatcher(config: FileWatcherConfig): void {
                   item.title
                 )
               )
-            ),
+            )
           })
         }
 
         externalItems.forEach((item) => {
           queryClient
             .refetchQueries({
-              queryKey: [config.queryKeyPrefix, 'content', item.id],
+              queryKey: [config.queryKeyPrefix, 'content', item.id]
             })
             .then(() => {
               window.dispatchEvent(
                 new CustomEvent(config.externalChangedEvent, {
-                  detail: { [config.idField]: item.id },
+                  detail: { [config.idField]: item.id }
                 })
               )
             })
@@ -551,7 +578,7 @@ export function useNoteWatcher(): void {
     icon: FileText,
     externalChangedEvent: NOTE_EXTERNAL_CHANGED_EVENT,
     idField: 'noteId',
-    isOwnWrite,
+    isOwnWrite
   })
 }
 ```
@@ -569,7 +596,7 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
-  ContextMenuTrigger,
+  ContextMenuTrigger
 } from '@shared/ui/context-menu'
 
 interface Props {
@@ -619,12 +646,12 @@ function createOnChangedListener(channel: string) {
 const api = {
   note: {
     // ... 기존 메서드
-    onChanged: createOnChangedListener('note:changed'),
+    onChanged: createOnChangedListener('note:changed')
   },
   csv: {
     // ... 기존 메서드
-    onChanged: createOnChangedListener('csv:changed'),
-  },
+    onChanged: createOnChangedListener('csv:changed')
+  }
   // pdf, image, folder 동일
   // entity-link는 시그니처가 다르므로 제외 (파라미터 없음)
 }
@@ -670,21 +697,21 @@ const fileTypeConfigs: FileTypeConfig[] = [
     extractTitle: (n) => path.basename(n, '.md'),
     repository: noteRepository,
     channelName: 'note:changed',
-    entityType: 'note',
+    entityType: 'note'
   },
   {
     matchExtension: (n) => n.endsWith('.csv'),
     extractTitle: (n) => path.basename(n, '.csv'),
     repository: csvFileRepository,
     channelName: 'csv:changed',
-    entityType: 'csv',
+    entityType: 'csv'
   },
   {
     matchExtension: (n) => n.endsWith('.pdf'),
     extractTitle: (n) => path.basename(n, '.pdf'),
     repository: pdfFileRepository,
     channelName: 'pdf:changed',
-    entityType: 'pdf',
+    entityType: 'pdf'
   },
   {
     matchExtension: isImageFile,
@@ -692,8 +719,8 @@ const fileTypeConfigs: FileTypeConfig[] = [
     repository: imageFileRepository,
     channelName: 'image:changed',
     entityType: 'image',
-    skipFilter: (rel) => rel.startsWith('.images/') || rel.includes('/.images/'),
-  },
+    skipFilter: (rel) => rel.startsWith('.images/') || rel.includes('/.images/')
+  }
 ]
 ```
 
@@ -702,6 +729,7 @@ const fileTypeConfigs: FileTypeConfig[] = [
 **1. `processFileTypeEvents(events, config)` — applyEvents의 Steps 3-14 통합**
 
 각 파일 타입의 rename/create/delete 처리를 제네릭화:
+
 - rename 감지: delete+create 쌍 매칭 (동일 디렉토리, 동일 basename)
 - standalone create: fs.stat 확인 → DB 조회 → 없으면 create
 - standalone delete: DB 조회 → entityLink 삭제 → repository.delete
@@ -735,6 +763,7 @@ private async applyEvents(events: Event[]) {
 ```
 
 ### 순서 보장
+
 - 폴더 처리가 반드시 먼저 실행됨 (for-of 루프 앞에 위치)
 - 파일 타입 간에는 순서 의존성 없음 (확인 완료)
 - 각 타입 내에서 rename→create→delete 순서는 `processFileTypeEvents` 내부에서 유지
@@ -745,17 +774,17 @@ private async applyEvents(events: Event[]) {
 
 ```typescript
 // 변경 전: 4번 반복되는 path 수집 로직
-const mdPaths = events.filter(e => e.path.endsWith('.md')).map(e => e.relativePath)
-const csvPaths = events.filter(e => e.path.endsWith('.csv')).map(e => e.relativePath)
+const mdPaths = events.filter((e) => e.path.endsWith('.md')).map((e) => e.relativePath)
+const csvPaths = events.filter((e) => e.path.endsWith('.csv')).map((e) => e.relativePath)
 // ... pdf, image 동일
 
 // 변경 후: fileTypeConfigs 기반 루프
 const changedByType = new Map<string, string[]>()
 for (const config of fileTypeConfigs) {
   const paths = events
-    .filter(e => config.matchExtension(path.basename(e.path)))
-    .filter(e => !config.skipFilter?.(e.relativePath))
-    .map(e => e.relativePath)
+    .filter((e) => config.matchExtension(path.basename(e.path)))
+    .filter((e) => !config.skipFilter?.(e.relativePath))
+    .map((e) => e.relativePath)
   if (paths.length > 0) {
     changedByType.set(config.channelName, paths)
   }
@@ -784,7 +813,7 @@ for (const entry of newFsEntries) {
 const allFolders = folderRepository.findByWorkspaceId(workspaceId)
 const folderMap = new Map(allFolders.map((f) => [f.relativePath, f]))
 for (const entry of newFsEntries) {
-  const folder = parentRel ? folderMap.get(parentRel) ?? null : null
+  const folder = parentRel ? (folderMap.get(parentRel) ?? null) : null
 }
 ```
 
@@ -810,9 +839,11 @@ findByFolderId(workspaceId: string, folderId: string | null): Row[] {
 ```
 
 leaf-reindex.ts 변경:
+
 ```typescript
 export function getLeafSiblings(workspaceId: string, folderId: string | null): LeafSibling[] {
-  const notes = noteRepository.findByFolderId(workspaceId, folderId)
+  const notes = noteRepository
+    .findByFolderId(workspaceId, folderId)
     .map((n) => ({ id: n.id, kind: 'note' as const, order: n.order }))
   // ... 나머지 동일
 }
@@ -822,20 +853,21 @@ export function getLeafSiblings(workspaceId: string, folderId: string | null): L
 
 ## Implementation Order
 
-| 순서 | 단계 | 변경 파일 수 | 신규 파일 수 | 삭제 파일 수 |
-|------|------|------------|------------|------------|
-| 0 | Bug Fixes | 3 | 0 | 0 |
-| 1 | fs-utils 통합 | 1 | 0 | 0 |
-| 2 | Service 유틸 추출 | 4 | 1 | 0 |
-| 3 | Repository Factory | 4 | 1 | 0 |
-| 4 | Renderer 통합 | 10+ | 3 | 4 |
-| 5 | Preload Helper | 1 | 0 | 0 |
-| 6 | Workspace Watcher | 1 | 0 | 0 |
-| 7 | Performance | 6 | 0 | 0 |
+| 순서 | 단계               | 변경 파일 수 | 신규 파일 수 | 삭제 파일 수 |
+| ---- | ------------------ | ------------ | ------------ | ------------ |
+| 0    | Bug Fixes          | 3            | 0            | 0            |
+| 1    | fs-utils 통합      | 1            | 0            | 0            |
+| 2    | Service 유틸 추출  | 4            | 1            | 0            |
+| 3    | Repository Factory | 4            | 1            | 0            |
+| 4    | Renderer 통합      | 10+          | 3            | 4            |
+| 5    | Preload Helper     | 1            | 0            | 0            |
+| 6    | Workspace Watcher  | 1            | 0            | 0            |
+| 7    | Performance        | 6            | 0            | 0            |
 
 ## 검증 계획
 
 각 Step 완료 후 다음을 실행:
+
 1. `npm run typecheck` — 타입 오류 없음 확인
 2. `npm run test` — 기존 테스트 통과
 3. `npm run dev` — 수동 테스트 체크리스트 실행

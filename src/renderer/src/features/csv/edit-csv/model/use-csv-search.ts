@@ -15,7 +15,19 @@ function useDebouncedValue<T>(value: T, delay: number): T {
   return debounced
 }
 
-export function useCsvSearch(data: string[][], headers: string[]) {
+export function useCsvSearch(
+  data: string[][],
+  headers: string[]
+): {
+  query: string
+  setQuery: (q: string) => void
+  matches: CellPos[]
+  currentIndex: number
+  currentMatch: CellPos | null
+  matchedCells: Set<string>
+  next: () => void
+  prev: () => void
+} {
   const [query, setQuery] = useState('')
   const [currentIndex, setCurrentIndex] = useState(0)
   const debouncedQuery = useDebouncedValue(query, 200)

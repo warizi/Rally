@@ -56,8 +56,14 @@ describe('findByCanvasId', () => {
   })
 
   it('노드 여러 개 반환', () => {
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-1' })).run()
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-2' })).run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-1' }))
+      .run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-2' }))
+      .run()
     const result = canvasNodeRepository.findByCanvasId(CANVAS_ID)
     expect(result).toHaveLength(2)
   })
@@ -82,9 +88,18 @@ describe('findByIds', () => {
   })
 
   it('정상 — 2개 ID 조회', () => {
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-1' })).run()
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-2' })).run()
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-3' })).run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-1' }))
+      .run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-2' }))
+      .run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-3' }))
+      .run()
     const result = canvasNodeRepository.findByIds(['n-1', 'n-3'])
     expect(result).toHaveLength(2)
     const ids = result.map((n) => n.id).sort()
@@ -176,8 +191,14 @@ describe('delete', () => {
   })
 
   it('FK cascade — 노드 삭제 시 연결된 edge도 삭제', () => {
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-a' })).run()
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-b' })).run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-a' }))
+      .run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-b' }))
+      .run()
     testDb
       .insert(schema.canvasEdges)
       .values({
@@ -208,7 +229,10 @@ describe('deleteByRef', () => {
       .insert(schema.canvasNodes)
       .values(makeNode({ id: 'n-todo', type: 'todo', refId: 'ref-1' }))
       .run()
-    testDb.insert(schema.canvasNodes).values(makeNode({ id: 'n-text' })).run()
+    testDb
+      .insert(schema.canvasNodes)
+      .values(makeNode({ id: 'n-text' }))
+      .run()
     canvasNodeRepository.deleteByRef('todo', 'ref-1')
     expect(canvasNodeRepository.findById('n-todo')).toBeUndefined()
     expect(canvasNodeRepository.findById('n-text')).toBeDefined()

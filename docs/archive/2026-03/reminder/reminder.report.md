@@ -32,24 +32,28 @@
 ## 2. PDCA Cycle Summary
 
 ### 2.1 Plan Phase
+
 - **Document**: `docs/01-plan/features/reminder.plan.md`
 - **Duration**: Planning completed
 - **Scope**: 8 major requirements + 11 exclusions clearly defined
 - **Success Criteria**: Met — feature fully implemented as specified
 
 ### 2.2 Design Phase
+
 - **Document**: `docs/02-design/features/reminder.design.md`
 - **Structure**: 13 sections covering architecture, data model, IPC, scheduler, UI, and integration
 - **Implementation Order**: Clearly defined 9 stages (0-8), each with specific files and tasks
 - **Design Validation**: 151 design items specified across all sections
 
 ### 2.3 Do Phase (Implementation)
+
 - **Duration**: Completed across 9 stages
 - **Files Created**: 13 new files (DB, repository, service, IPC, scheduler, entities, features, migration)
 - **Files Modified**: 9 existing files (schema index, main.ts, preload, todo/schedule services, UI components)
 - **Code Quality**: TypeScript strictly typed, FSD-compliant imports, error handling with custom exceptions
 
 ### 2.4 Check Phase (Gap Analysis)
+
 - **Document**: `docs/03-analysis/reminder.analysis.md`
 - **Analysis Method**: Section-by-section comparison of design vs. implementation
 - **Result**: 151/151 design items matched (100%)
@@ -63,10 +67,12 @@
 ### 3.1 Database Layer (Stage 0)
 
 **Files Created**:
+
 - `src/main/db/schema/reminder.ts` — Drizzle ORM table definition
 - `src/main/db/migrations/0016_elite_wraith.sql` — Generated migration
 
 **Schema Design**:
+
 ```
 reminders table:
   id (TEXT, primary key)
@@ -89,6 +95,7 @@ Indexes:
 **File Created**: `src/main/repositories/reminder.ts` (11 CRUD methods)
 
 **Methods**:
+
 1. `findByEntity()` — Fetch reminders for a specific entity
 2. `findPending()` — Find unfired reminders before given timestamp (for scheduler)
 3. `findById()` — Lookup single reminder
@@ -107,6 +114,7 @@ Indexes:
 **File Created**: `src/main/services/reminder.ts` (5 business methods)
 
 **Key Logic**:
+
 - **VALID_OFFSETS**: Maintains set of 5 allowed offset values for validation
 - **getBaseTime()**: Calculates reference time
   - Todo: prioritizes `dueDate` over `startDate`
@@ -130,6 +138,7 @@ Indexes:
 **File Created**: `src/main/ipc/reminder.ts` (4 channels)
 
 **Channels**:
+
 1. `reminder:findByEntity` — Query reminders for todo/schedule
 2. `reminder:set` — Create or update reminder
 3. `reminder:remove` — Delete single reminder
@@ -142,6 +151,7 @@ Indexes:
 **File Created**: `src/main/services/reminder-scheduler.ts`
 
 **Design**:
+
 - Polling interval: 60 seconds
 - Stale threshold: 5 minutes (reminders older than this are marked fired without notification)
 - Startup behavior: Immediate check on app start, then periodic
@@ -150,6 +160,7 @@ Indexes:
 - Lifecycle: Started after window creation, stopped in `before-quit` handler
 
 **Key Code Path**:
+
 ```
 checkAndFire() {
   pending = findPendingWithTitle(now)
@@ -164,10 +175,12 @@ checkAndFire() {
 ### 3.6 Preload Bridge (Stage 2)
 
 **Files Modified**:
+
 - `src/preload/index.ts` — Runtime bridge implementation
 - `src/preload/index.d.ts` — TypeScript type definitions
 
 **API Exposed**:
+
 ```typescript
 window.api.reminder = {
   findByEntity(entityType, entityId): Promise<IpcResponse<ReminderItem[]>>
@@ -185,6 +198,7 @@ window.api.reminder = {
 **Files Created**: `src/renderer/src/entities/reminder/`
 
 **Contents**:
+
 1. **types.ts**:
    - `ReminderItem` interface (mirrors service domain model)
    - `SetReminderData` interface
@@ -232,17 +246,20 @@ window.api.reminder = {
 ### 3.9 Todo Integration (Stage 6)
 
 **Files Modified**:
+
 - `src/renderer/src/features/todo/create-todo/ui/CreateTodoDialog.tsx`
 - `src/renderer/src/widgets/todo/ui/TodoDetailFields.tsx`
 
 **CreateTodoDialog Changes**:
+
 - Added `pendingReminders` state to track selected offsets before todo creation
 - `ReminderPendingSelect` rendered when `!titleOnly && (dueDate || startDate)`
 - On date removal (both dueDate and startDate null), `pendingReminders` reset
 - In `onSuccess` callback: Loop through `pendingReminders` and call `useSetReminder().mutate()` for each offset
-- Ensures reminders created *after* todo exists (separate IPC call)
+- Ensures reminders created _after_ todo exists (separate IPC call)
 
 **TodoDetailFields Changes**:
+
 - Added `ReminderSelect` component below date fields
 - Conditional: `disabled={!todo.dueDate && !todo.startDate}`
 - Allows viewing and modifying reminders on existing todos
@@ -250,10 +267,12 @@ window.api.reminder = {
 ### 3.10 Schedule Integration (Stage 7)
 
 **Files Modified**:
+
 - `src/renderer/src/features/schedule/manage-schedule/ui/ScheduleFormDialog.tsx`
 - `src/renderer/src/features/schedule/manage-schedule/ui/ScheduleDetailPopover.tsx`
 
 **ScheduleFormDialog Changes**:
+
 - Added `pendingReminders` state
 - Create mode: Uses `ReminderPendingSelect` (entity doesn't exist yet)
 - Edit mode: Uses `ReminderSelect` (entity has ID)
@@ -261,6 +280,7 @@ window.api.reminder = {
 - Reset on dialog open/close
 
 **ScheduleDetailPopover Changes**:
+
 - Displays existing reminders as read-only
 - Only shown if `!isTodoItem(schedule) && reminders.length > 0`
 - Format: Bell icon + comma-joined labels (e.g., "10분 전, 1시간 전")
@@ -269,6 +289,7 @@ window.api.reminder = {
 ### 3.11 Service Integration (Stage 8)
 
 **todo.ts Changes** (3 completion paths):
+
 1. **update() with isDone flag**:
    - When `isDone=true` or `status='완료'`: `removeUnfiredByEntity('todo', todoId)`
    - When date changes (not completing): check if both dates null → delete all reminders, else recalculate
@@ -286,6 +307,7 @@ window.api.reminder = {
    - Calls: `removeByEntities('todo', [parentId, ...subtodoIds])`
 
 **schedule.ts Changes**:
+
 1. **update()** (startAt or allDay change):
    - `recalculate('schedule', scheduleId)` to adjust reminder times
 
@@ -310,45 +332,27 @@ window.api.reminder = {
 ### 4.1 New Files (13)
 
 **Database** (2):
+
 1. `src/main/db/schema/reminder.ts` — Table definition
 2. `src/main/db/migrations/0016_elite_wraith.sql` — Auto-generated migration
 
-**Main Process** (4):
-3. `src/main/repositories/reminder.ts` — CRUD operations
-4. `src/main/services/reminder.ts` — Business logic + calculations
-5. `src/main/ipc/reminder.ts` — IPC handlers
-6. `src/main/services/reminder-scheduler.ts` — Polling + Notification
+**Main Process** (4): 3. `src/main/repositories/reminder.ts` — CRUD operations 4. `src/main/services/reminder.ts` — Business logic + calculations 5. `src/main/ipc/reminder.ts` — IPC handlers 6. `src/main/services/reminder-scheduler.ts` — Polling + Notification
 
-**Renderer** (7):
-7. `src/renderer/src/entities/reminder/model/types.ts` — Types & constants
-8. `src/renderer/src/entities/reminder/model/queries.ts` — React Query hooks
-9. `src/renderer/src/entities/reminder/index.ts` — Barrel export
-10. `src/renderer/src/features/reminder/ui/ReminderSelect.tsx` — Component
-11. `src/renderer/src/features/reminder/ui/ReminderPendingSelect.tsx` — Creation UI
-12. `src/renderer/src/features/reminder/model/use-reminder-watcher.ts` — Watcher hook
-13. `src/renderer/src/features/reminder/index.ts` — Barrel export
+**Renderer** (7): 7. `src/renderer/src/entities/reminder/model/types.ts` — Types & constants 8. `src/renderer/src/entities/reminder/model/queries.ts` — React Query hooks 9. `src/renderer/src/entities/reminder/index.ts` — Barrel export 10. `src/renderer/src/features/reminder/ui/ReminderSelect.tsx` — Component 11. `src/renderer/src/features/reminder/ui/ReminderPendingSelect.tsx` — Creation UI 12. `src/renderer/src/features/reminder/model/use-reminder-watcher.ts` — Watcher hook 13. `src/renderer/src/features/reminder/index.ts` — Barrel export
 
 ### 4.2 Modified Files (9)
 
 **Schema** (1):
+
 1. `src/main/db/schema/index.ts` — Added reminder export
 
-**Main Process** (3):
-2. `src/main/index.ts` — Handler registration + scheduler lifecycle
-3. `src/main/services/todo.ts` — Reminder integration (3 completion paths + deletion)
-4. `src/main/services/schedule.ts` — Reminder recalculation + deletion
+**Main Process** (3): 2. `src/main/index.ts` — Handler registration + scheduler lifecycle 3. `src/main/services/todo.ts` — Reminder integration (3 completion paths + deletion) 4. `src/main/services/schedule.ts` — Reminder recalculation + deletion
 
-**Preload** (2):
-5. `src/preload/index.ts` — Runtime bridge
-6. `src/preload/index.d.ts` — Type definitions
+**Preload** (2): 5. `src/preload/index.ts` — Runtime bridge 6. `src/preload/index.d.ts` — Type definitions
 
-**Renderer** (3):
-7. `src/renderer/src/features/todo/create-todo/ui/CreateTodoDialog.tsx` — Pending reminder UI
-8. `src/renderer/src/widgets/todo/ui/TodoDetailFields.tsx` — Reminder display
-9. `src/renderer/src/features/schedule/manage-schedule/ui/ScheduleFormDialog.tsx` — Schedule reminder UI
+**Renderer** (3): 7. `src/renderer/src/features/todo/create-todo/ui/CreateTodoDialog.tsx` — Pending reminder UI 8. `src/renderer/src/widgets/todo/ui/TodoDetailFields.tsx` — Reminder display 9. `src/renderer/src/features/schedule/manage-schedule/ui/ScheduleFormDialog.tsx` — Schedule reminder UI
 
-**No Changes** (0):
-10. `src/renderer/src/features/schedule/manage-schedule/ui/ScheduleDetailPopover.tsx` — Added popover reminder display
+**No Changes** (0): 10. `src/renderer/src/features/schedule/manage-schedule/ui/ScheduleDetailPopover.tsx` — Added popover reminder display
 
 ---
 
@@ -356,32 +360,32 @@ window.api.reminder = {
 
 ### 5.1 Overall Metrics
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Design Match Rate | 100% | 100% | PASS |
-| Items Implemented | 151 | 151 | PASS |
-| Architecture Violations | 0 | 0 | PASS |
-| Convention Violations | 0 | 0 | PASS |
-| Cosmetic Improvements | - | 4 | OK |
+| Metric                  | Target | Actual | Status |
+| ----------------------- | ------ | ------ | ------ |
+| Design Match Rate       | 100%   | 100%   | PASS   |
+| Items Implemented       | 151    | 151    | PASS   |
+| Architecture Violations | 0      | 0      | PASS   |
+| Convention Violations   | 0      | 0      | PASS   |
+| Cosmetic Improvements   | -      | 4      | OK     |
 
 ### 5.2 Match Rate by Component
 
-| Component | Items | Matched | Rate |
-|-----------|:-----:|:-------:|:----:|
-| DB Schema + schema/index.ts | 13 | 13 | 100% |
-| Repository (11 methods) | 11 | 11 | 100% |
-| Service (offset validation, calculations, lifecycle) | 21 | 21 | 100% |
-| IPC Handlers (4 channels) | 5 | 5 | 100% |
-| Scheduler (polling, stale filter, notification) | 12 | 12 | 100% |
-| index.ts registration + lifecycle | 6 | 6 | 100% |
-| Preload bridge + types | 9 | 9 | 100% |
-| entities/reminder (types + queries) | 10 | 10 | 100% |
-| features/reminder (UI + watcher) | 20 | 20 | 100% |
-| Todo integration (dialogs + detail) | 15 | 15 | 100% |
-| Schedule integration (form + popover) | 15 | 15 | 100% |
-| Service integration (todo.ts + schedule.ts) | 12 | 12 | 100% |
-| MainLayout watcher | 2 | 2 | 100% |
-| **TOTAL** | **151** | **151** | **100%** |
+| Component                                            |  Items  | Matched |   Rate   |
+| ---------------------------------------------------- | :-----: | :-----: | :------: |
+| DB Schema + schema/index.ts                          |   13    |   13    |   100%   |
+| Repository (11 methods)                              |   11    |   11    |   100%   |
+| Service (offset validation, calculations, lifecycle) |   21    |   21    |   100%   |
+| IPC Handlers (4 channels)                            |    5    |    5    |   100%   |
+| Scheduler (polling, stale filter, notification)      |   12    |   12    |   100%   |
+| index.ts registration + lifecycle                    |    6    |    6    |   100%   |
+| Preload bridge + types                               |    9    |    9    |   100%   |
+| entities/reminder (types + queries)                  |   10    |   10    |   100%   |
+| features/reminder (UI + watcher)                     |   20    |   20    |   100%   |
+| Todo integration (dialogs + detail)                  |   15    |   15    |   100%   |
+| Schedule integration (form + popover)                |   15    |   15    |   100%   |
+| Service integration (todo.ts + schedule.ts)          |   12    |   12    |   100%   |
+| MainLayout watcher                                   |    2    |    2    |   100%   |
+| **TOTAL**                                            | **151** | **151** | **100%** |
 
 ### 5.3 Cosmetic Improvements (Type Safety)
 
@@ -397,18 +401,21 @@ All improvements strengthen compile-time safety.
 ### 5.4 Architecture Compliance
 
 **FSD Import Rules**: All imports follow Feature-Sliced Design hierarchy:
+
 - `app` → `pages` → `widgets` → `features` → `entities` → `shared` ✓
 - No upward/circular imports ✓
 - `useReminderWatcher` correctly placed in features (uses `openTab` from features) ✓
 - MainLayout correctly imports from features ✓
 
 **Naming Conventions**:
+
 - Components: PascalCase (ReminderSelect, ReminderPendingSelect) ✓
 - Functions: camelCase (useReminders, useSetReminder, useReminderWatcher) ✓
 - Constants: UPPER_SNAKE_CASE (REMINDER_OFFSETS, CHECK_INTERVAL) ✓
 - Folders: kebab-case (reminder-scheduler, use-reminder-watcher) ✓
 
 **Code Quality**:
+
 - TypeScript: Fully typed, no `any` ✓
 - Error handling: Custom `ValidationError`, `NotFoundError` ✓
 - Cleanup: IPC unsubscribe returns cleanup function ✓
@@ -423,6 +430,7 @@ All improvements strengthen compile-time safety.
 **Decision**: Store `entity_type` + `entity_id` instead of separate FK columns.
 
 **Rationale**:
+
 - Single schema supports both todo and schedule entities
 - Avoids nullable FK columns or schema duplication
 - Matches project pattern (e.g., entity-link system)
@@ -434,6 +442,7 @@ All improvements strengthen compile-time safety.
 **Decision**: Store `offsetMs` (milliseconds before base time) instead of absolute `remindAt`.
 
 **Rationale**:
+
 - When entity time changes, recalculate all reminders automatically
 - Preserves user intent (e.g., "1 hour before") across date changes
 - Matches Plan requirement for date-change handling
@@ -447,9 +456,10 @@ All improvements strengthen compile-time safety.
 **Rationale**: User expectation for an all-day event is to be reminded in the morning, not midnight.
 
 **Code**: `getBaseTime()` adjusts allDay schedules:
+
 ```typescript
 if (schedule.allDay) {
-  adjusted.setHours(9, 0, 0, 0)  // 09:00 of same day
+  adjusted.setHours(9, 0, 0, 0) // 09:00 of same day
 }
 ```
 
@@ -458,6 +468,7 @@ if (schedule.allDay) {
 **Decision**: Skip notification if reminder is more than 5 minutes past due.
 
 **Rationale**:
+
 - Prevents spam if scheduler polling is delayed
 - Balances reliability vs. user experience
 - Marks as fired to prevent re-queuing
@@ -465,6 +476,7 @@ if (schedule.allDay) {
 ### 6.5 Three Todo Completion Paths
 
 **Decision**: Handle reminder cleanup in all three ways a todo can complete:
+
 1. Direct `update(isDone=true)`
 2. Kanban drag-to-complete (`reorderKanban`)
 3. Parent auto-complete (all subtodos done)
@@ -476,11 +488,13 @@ if (schedule.allDay) {
 ### 6.6 Separate Pending vs. Active Reminder UI
 
 **Decision**: Two components
+
 - `ReminderPendingSelect` — For creation dialogs (no entity ID yet)
 - `ReminderSelect` — For existing entities (fetch from API)
 
 **Rationale**:
-- Creation requires local state (reminders created *after* entity)
+
+- Creation requires local state (reminders created _after_ entity)
 - Existing entities fetch from DB
 - Pattern matches form state management best practices
 
@@ -491,17 +505,20 @@ if (schedule.allDay) {
 ### 7.1 Recommended Test Coverage
 
 **Main Process**:
+
 - `reminder.ts` service: offset validation, base time calculation, recalculate logic
 - `reminder-scheduler.ts`: stale threshold filtering, notification dispatch
 - `todo.ts`, `schedule.ts`: reminder cleanup on all 3 todo paths, deletion scenarios
 
 **Renderer**:
+
 - `ReminderSelect.tsx`: toggle reminders, fired state display
 - `ReminderPendingSelect.tsx`: local state management
 - `useReminderWatcher.ts`: tab navigation on reminder:fired event
 - Integration: CreateTodoDialog, ScheduleFormDialog reminder persistence
 
 **Key Test Scenarios**:
+
 1. Create reminder, verify `remind_at` calculation with base time
 2. Change entity time, verify `remind_at` recalculation
 3. Delete entity, verify all reminders removed
@@ -527,7 +544,7 @@ if (schedule.allDay) {
    - Service: business logic + calculations
    - IPC: request/response wrapping
    - UI: presentation only
-   Clear boundaries made debugging easier.
+     Clear boundaries made debugging easier.
 
 5. **FSD Compliance**: Placing `useReminderWatcher` in features (not entities) and using correct import hierarchy prevented circular dependencies.
 
@@ -565,31 +582,31 @@ if (schedule.allDay) {
 
 ### 9.1 Implementation Metrics
 
-| Metric | Value |
-|--------|-------|
-| Total Files Created | 13 |
-| Total Files Modified | 9 |
-| Total Lines of Code (est.) | ~1500 |
-| Database Tables | 1 (reminders) |
-| Database Indexes | 2 (entity, pending) |
-| IPC Channels | 4 |
-| React Query Hooks | 3 |
-| UI Components | 2 |
-| Service Methods | 18 |
-| Repository Methods | 11 |
+| Metric                     | Value               |
+| -------------------------- | ------------------- |
+| Total Files Created        | 13                  |
+| Total Files Modified       | 9                   |
+| Total Lines of Code (est.) | ~1500               |
+| Database Tables            | 1 (reminders)       |
+| Database Indexes           | 2 (entity, pending) |
+| IPC Channels               | 4                   |
+| React Query Hooks          | 3                   |
+| UI Components              | 2                   |
+| Service Methods            | 18                  |
+| Repository Methods         | 11                  |
 
 ### 9.2 Design Coverage
 
-| Category | Planned | Implemented | Coverage |
-|----------|---------|-------------|----------|
-| DB Schema | 1 table | 1 table | 100% |
-| CRUD Operations | 11 methods | 11 methods | 100% |
-| Business Logic Methods | 5 methods | 5 methods | 100% |
-| IPC Channels | 4 channels | 4 channels | 100% |
-| Scheduler Features | 3 (polling, stale, notification) | 3 | 100% |
-| UI Components | 3 (Select, PendingSelect, Watcher) | 3 | 100% |
-| Integration Points | 4 (Todo create, Todo detail, Schedule form, Schedule detail) | 4 | 100% |
-| Service Hooks | 2 services (todo, schedule) | 2 | 100% |
+| Category               | Planned                                                      | Implemented | Coverage |
+| ---------------------- | ------------------------------------------------------------ | ----------- | -------- |
+| DB Schema              | 1 table                                                      | 1 table     | 100%     |
+| CRUD Operations        | 11 methods                                                   | 11 methods  | 100%     |
+| Business Logic Methods | 5 methods                                                    | 5 methods   | 100%     |
+| IPC Channels           | 4 channels                                                   | 4 channels  | 100%     |
+| Scheduler Features     | 3 (polling, stale, notification)                             | 3           | 100%     |
+| UI Components          | 3 (Select, PendingSelect, Watcher)                           | 3           | 100%     |
+| Integration Points     | 4 (Todo create, Todo detail, Schedule form, Schedule detail) | 4           | 100%     |
+| Service Hooks          | 2 services (todo, schedule)                                  | 2           | 100%     |
 
 ### 9.3 Code Distribution
 
@@ -712,6 +729,7 @@ The Reminder feature represents a complete PDCA cycle with exceptional results:
 - **Analysis**: 100% design match with 4 cosmetic type-safety improvements
 
 The implementation demonstrates:
+
 - ✓ Proper separation of concerns (repository → service → IPC → UI)
 - ✓ FSD-compliant architecture with correct import hierarchy
 - ✓ Robust error handling and validation
@@ -724,9 +742,9 @@ The feature is production-ready for user testing and deployment.
 
 ## 13. Version History
 
-| Version | Date | Changes | Author |
-|---------|------|---------|--------|
-| 1.0 | 2026-03-03 | Initial completion report | report-generator |
+| Version | Date       | Changes                   | Author           |
+| ------- | ---------- | ------------------------- | ---------------- |
+| 1.0     | 2026-03-03 | Initial completion report | report-generator |
 
 ---
 

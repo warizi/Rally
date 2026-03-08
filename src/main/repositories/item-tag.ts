@@ -25,11 +25,7 @@ export const itemTagRepository = {
   detach(itemType: string, tagId: string, itemId: string): void {
     db.delete(itemTags)
       .where(
-        and(
-          eq(itemTags.itemType, itemType),
-          eq(itemTags.tagId, tagId),
-          eq(itemTags.itemId, itemId)
-        )
+        and(eq(itemTags.itemType, itemType), eq(itemTags.tagId, tagId), eq(itemTags.itemId, itemId))
       )
       .run()
   },

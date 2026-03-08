@@ -22,7 +22,6 @@ export interface PdfFileNode {
   updatedAt: Date
 }
 
-
 function toPdfFileNode(row: {
   id: string
   title: string
@@ -83,7 +82,7 @@ export const pdfFileService = {
     for (const entry of newFsEntries) {
       const matchedOrphan = orphanByBasename.get(entry.name)
       const parentRel = parentRelPath(entry.relativePath)
-      const folder = parentRel ? folderMap.get(parentRel) ?? null : null
+      const folder = parentRel ? (folderMap.get(parentRel) ?? null) : null
       if (matchedOrphan) {
         pdfFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,

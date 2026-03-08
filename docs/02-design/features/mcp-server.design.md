@@ -81,11 +81,11 @@ DB 스키마 변경 없음. 기존 테이블만 사용한다.
 
 ### 3.1 사용하는 기존 테이블
 
-| Table | Used By | Key Columns |
-|-------|---------|-------------|
-| `workspaces` | list_workspaces | `id`, `name`, `path` |
-| `folders` | list_folders, list_notes, move_note | `id`, `workspaceId`, `relativePath`, `order` |
-| `notes` | 모든 note Tool | `id`, `workspaceId`, `folderId`, `relativePath`, `title`, `preview`, `order` |
+| Table        | Used By                             | Key Columns                                                                  |
+| ------------ | ----------------------------------- | ---------------------------------------------------------------------------- |
+| `workspaces` | list_workspaces                     | `id`, `name`, `path`                                                         |
+| `folders`    | list_folders, list_notes, move_note | `id`, `workspaceId`, `relativePath`, `order`                                 |
+| `notes`      | 모든 note Tool                      | `id`, `workspaceId`, `folderId`, `relativePath`, `title`, `preview`, `order` |
 
 ### 3.2 HTTP API 응답 타입 (TypeScript)
 
@@ -108,8 +108,8 @@ interface ListNotesResponse {
     relativePath: string
     preview: string
     folderId: string | null
-    folderPath: string | null  // folder Map 조인
-    updatedAt: string          // ISO string
+    folderPath: string | null // folder Map 조인
+    updatedAt: string // ISO string
   }[]
 }
 
@@ -163,7 +163,7 @@ interface SearchNotesResponse {
 // Error Response (4xx/5xx)
 interface ErrorResponse {
   error: string
-  errorType: string  // 'NotFoundError' | 'ValidationError' | 'ConflictError' | 'PayloadTooLargeError' | 'UnknownError'
+  errorType: string // 'NotFoundError' | 'ValidationError' | 'ConflictError' | 'PayloadTooLargeError' | 'UnknownError'
 }
 ```
 
@@ -173,17 +173,17 @@ interface ErrorResponse {
 
 ### 4.1 Routing Table
 
-| Method | Path | Handler | Service Call |
-|--------|------|---------|-------------|
-| GET | `/api/workspaces` | `workspace.ts` | `workspaceRepository.findAll()` |
-| GET | `/api/workspaces/:wsId/folders` | `folder.ts` | `workspaceRepository.findById()` + `folderRepository.findByWorkspaceId()` |
-| GET | `/api/workspaces/:wsId/notes` | `note.ts` | `noteService.readByWorkspaceFromDb()` + folder Map 조인 |
-| GET | `/api/workspaces/:wsId/notes/search` | `search.ts` | `noteService.search()` |
-| GET | `/api/workspaces/:wsId/notes/:noteId/content` | `note.ts` | `noteRepository.findById()` + `noteService.readContent()` |
-| PUT | `/api/workspaces/:wsId/notes/:noteId/content` | `note.ts` | `noteRepository.findById()` + `noteService.writeContent()` |
-| POST | `/api/workspaces/:wsId/notes` | `note.ts` | `noteService.create()` + optional `noteService.writeContent()` |
-| PATCH | `/api/workspaces/:wsId/notes/:noteId/rename` | `note.ts` | `noteRepository.findById()` + `noteService.rename()` |
-| PATCH | `/api/workspaces/:wsId/notes/:noteId/move` | `note.ts` | `noteRepository.findById()` + `noteService.move()` |
+| Method | Path                                          | Handler        | Service Call                                                              |
+| ------ | --------------------------------------------- | -------------- | ------------------------------------------------------------------------- |
+| GET    | `/api/workspaces`                             | `workspace.ts` | `workspaceRepository.findAll()`                                           |
+| GET    | `/api/workspaces/:wsId/folders`               | `folder.ts`    | `workspaceRepository.findById()` + `folderRepository.findByWorkspaceId()` |
+| GET    | `/api/workspaces/:wsId/notes`                 | `note.ts`      | `noteService.readByWorkspaceFromDb()` + folder Map 조인                   |
+| GET    | `/api/workspaces/:wsId/notes/search`          | `search.ts`    | `noteService.search()`                                                    |
+| GET    | `/api/workspaces/:wsId/notes/:noteId/content` | `note.ts`      | `noteRepository.findById()` + `noteService.readContent()`                 |
+| PUT    | `/api/workspaces/:wsId/notes/:noteId/content` | `note.ts`      | `noteRepository.findById()` + `noteService.writeContent()`                |
+| POST   | `/api/workspaces/:wsId/notes`                 | `note.ts`      | `noteService.create()` + optional `noteService.writeContent()`            |
+| PATCH  | `/api/workspaces/:wsId/notes/:noteId/rename`  | `note.ts`      | `noteRepository.findById()` + `noteService.rename()`                      |
+| PATCH  | `/api/workspaces/:wsId/notes/:noteId/move`    | `note.ts`      | `noteRepository.findById()` + `noteService.move()`                        |
 
 ### 4.2 URL 매칭 순서 (중요)
 
@@ -244,6 +244,7 @@ export function stopMcpApiServer(): void {
 ```
 
 **핵심 포인트**:
+
 - `socketPath`: macOS/Linux는 `~/.rally/mcp.sock`, Windows는 Named Pipe
 - `startMcpApiServer()`: `mkdirSync({ recursive: true })` → `unlinkSync` → `listen`
 - `stopMcpApiServer()`: `server.close()` → `unlinkSync`
@@ -268,11 +269,7 @@ interface Route {
 
 const routes: Route[] = []
 
-export function addRoute(
-  method: string,
-  pathPattern: string,
-  handler: RouteHandler
-): void {
+export function addRoute(method: string, pathPattern: string, handler: RouteHandler): void {
   // '/api/workspaces/:wsId/notes/:noteId' → RegExp + paramNames ['wsId', 'noteId']
   const paramNames: string[] = []
   const regexStr = pathPattern.replace(/:([^/]+)/g, (_, name) => {
@@ -303,10 +300,7 @@ function mapErrorToType(error: Error): string {
   return 'UnknownError'
 }
 
-export async function router(
-  req: http.IncomingMessage,
-  res: http.ServerResponse
-): Promise<void> {
+export async function router(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   const urlObj = new URL(req.url || '/', 'http://localhost')
   const pathname = urlObj.pathname
   const query = urlObj.searchParams
@@ -350,6 +344,7 @@ export async function router(
 ```
 
 **핵심 포인트**:
+
 - `addRoute()`: 경로 패턴 → RegExp 변환. `:param` → `([^/]+)` 매핑
 - `mapErrorToStatus()`: 기존 `errors.ts`의 3가지 에러 타입 → HTTP 상태 코드
 - `parseBody()`는 별도 모듈 (5.3)
@@ -417,6 +412,7 @@ export function parseBody(req: http.IncomingMessage): Promise<any> {
 ```
 
 **핵심 포인트**:
+
 - 10MB 제한 (C-11): Content-Length 사전 체크 + 스트리밍 중 크기 체크 이중 방어
 - body 크기 초과 시 `PayloadTooLargeError` → router에서 **413** 반환 (Plan C-11 준수)
 - `destroyed` 플래그로 `req.destroy()` 후 `end`/`error` 이벤트의 이중 reject 방지
@@ -436,6 +432,7 @@ export function broadcastChanged(channel: string, wsId: string, paths: string[])
 ```
 
 **핵심 포인트**:
+
 - `workspace-watcher.ts`의 `pushChanged()` (L543-547)와 동일 로직이지만, private 메서드이므로 별도 유틸로 추출
 - `channel`은 `'note:changed'` 사용 (기존 watcher 패턴과 동일)
 - Renderer의 `use-file-watcher.ts`가 `queryClient.invalidateQueries()` 호출 → re-fetch
@@ -625,6 +622,7 @@ export function registerNoteRoutes(): void {
 ```
 
 **핵심 포인트**:
+
 - **requireBody()**: PUT/POST/PATCH 핸들러에서 body null 체크. null body → `ValidationError` (400) 반환. TypeError(500) 방지
 - **old path 캡처**: rename/move 핸들러에서 서비스 호출 **전에** `noteRepository.findById()`로 old path를 저장. 서비스 호출 후에는 DB가 이미 변경되어 old path 소실
 - **타입 매핑**: `body.folderId ?? null` — MCP Tool의 optional string → service의 `string | null`
@@ -670,6 +668,7 @@ export function registerAllRoutes(): void {
 ```
 
 **핵심 포인트**:
+
 - `registerSearchRoutes()`를 `registerNoteRoutes()`보다 **먼저** 호출
 - `/api/workspaces/:wsId/notes/search`가 `/api/workspaces/:wsId/notes/:noteId/content`보다 먼저 매칭되어야 "search"가 `:noteId`로 캡처되지 않음
 
@@ -762,6 +761,7 @@ async search(
 ```
 
 **핵심 포인트**:
+
 - `search()`는 **async** 메서드 — `fs.promises.readFile` 사용으로 인해 기존 service 메서드(모두 동기)와 다름
 - title 검색: `noteRepository.searchByTitle()` 사용 — 기존 `canvasRepository.findByWorkspaceId(wsId, search?)` 패턴과 일관
 - content 검색: 10개씩 `Promise.all` 청크 처리 — main process 이벤트 루프 블로킹 최소화 (R-7 대응)
@@ -796,7 +796,7 @@ app.on('before-quit', (event) => {
   isQuitting = true
   reminderScheduler.stop()
   terminalService.destroy()
-  stopMcpApiServer()  // <-- 추가
+  stopMcpApiServer() // <-- 추가
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   session.defaultSession.flushStorageData()
   Promise.race([workspaceWatcher.stop(), timeout]).finally(() => app.quit())
@@ -866,6 +866,7 @@ export async function mcpRequest(
 ```
 
 **핵심 포인트**:
+
 - Lazy connection: 상태 변수 없음. 매 호출마다 새 `http.request` 생성
 - `ECONNREFUSED`/`ENOENT` → "Rally 앱이 실행 중이 아닙니다" 에러 메시지
 - Rally 재시작 → 소켓 파일 재생성 → 다음 호출 시 자동 재연결
@@ -1039,6 +1040,7 @@ export function registerSearchNotes(server: McpServer): void {
 ```
 
 나머지 Tool (list_folders, list_notes, read_note, rename_note, move_note)도 동일한 패턴으로 구현한다. 각 Tool은:
+
 1. `z.object`로 입력 스키마 정의
 2. `mcpRequest()`로 HTTP 호출
 3. `status !== 200` → `isError: true`
@@ -1092,6 +1094,7 @@ export default defineConfig({
 ```
 
 **핵심 포인트**:
+
 - 출력: `dist-mcp/index.js` (Electron 빌드 출력 `out/`과 분리)
 - `noExternal: [/.*/]` — 모든 의존성 번들에 포함. Claude Desktop이 `node dist-mcp/index.js`만으로 실행 가능
 - `#!/usr/bin/env node` 배너 — 직접 실행 가능
@@ -1121,17 +1124,17 @@ export default defineConfig({
 
 각 Tool의 `description`은 AI가 올바르게 사용할 수 있도록 명확하게 작성한다.
 
-| Tool | Description |
-|------|-------------|
-| `list_workspaces` | List all Rally workspaces with their names and paths |
-| `list_folders` | List all folders in a workspace. Use folder IDs for move_note. |
-| `list_notes` | List all notes in a workspace with title, path, preview, and folder info |
-| `read_note` | Read the full markdown content of a note |
-| `write_note` | Update note content. **WARNING: Removing image references (![](/.images/...)) will permanently delete those image files.** Always preserve existing image tags unless intentionally removing them. |
-| `create_note` | Create a new note. Optionally set initial content. Omit folderId for root level. |
-| `rename_note` | Rename a note (changes file name on disk) |
-| `move_note` | Move a note to a different folder. Use null targetFolderId for root. Note is placed at the top of the target folder. |
-| `search_notes` | Search notes by title or content (case-insensitive, max 50 results). Title matches are prioritized. |
+| Tool              | Description                                                                                                                                                                                        |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `list_workspaces` | List all Rally workspaces with their names and paths                                                                                                                                               |
+| `list_folders`    | List all folders in a workspace. Use folder IDs for move_note.                                                                                                                                     |
+| `list_notes`      | List all notes in a workspace with title, path, preview, and folder info                                                                                                                           |
+| `read_note`       | Read the full markdown content of a note                                                                                                                                                           |
+| `write_note`      | Update note content. **WARNING: Removing image references (![](/.images/...)) will permanently delete those image files.** Always preserve existing image tags unless intentionally removing them. |
+| `create_note`     | Create a new note. Optionally set initial content. Omit folderId for root level.                                                                                                                   |
+| `rename_note`     | Rename a note (changes file name on disk)                                                                                                                                                          |
+| `move_note`       | Move a note to a different folder. Use null targetFolderId for root. Note is placed at the top of the target folder.                                                                               |
+| `search_notes`    | Search notes by title or content (case-insensitive, max 50 results). Title matches are prioritized.                                                                                                |
 
 ---
 
@@ -1139,15 +1142,15 @@ export default defineConfig({
 
 ### 7.1 이벤트별 동작
 
-| 이벤트 | 동작 | 안전성 |
-|--------|------|--------|
-| Rally 시작 | `registerAllRoutes()` → `startMcpApiServer()` | `mkdirSync` + `unlinkSync` + `listen` |
-| MCP Tool 호출 | MCP 서버 → `mcpRequest()` → UDS HTTP → router → handler | Lazy, 상태 없음 |
-| 쓰기 Tool 호출 | handler → service → `broadcastChanged()` → Renderer re-fetch | 2중 push 가능하나 부작용 없음 |
-| Rally 종료 | `stopMcpApiServer()` → `server.close()` + `unlinkSync` | `before-quit`에서 동기적 호출 |
-| Rally 비정상 종료 | 소켓 파일 남음 | 다음 시작 시 `unlinkSync` 후 재생성 |
-| Rally 미실행 시 Tool 호출 | `ECONNREFUSED`/`ENOENT` → 에러 반환 | "Rally 앱이 실행 중이 아닙니다" |
-| Rally 이후 실행 | 다음 Tool 호출 시 자동 연결 | Lazy connection, 재시도 불필요 |
+| 이벤트                    | 동작                                                         | 안전성                                |
+| ------------------------- | ------------------------------------------------------------ | ------------------------------------- |
+| Rally 시작                | `registerAllRoutes()` → `startMcpApiServer()`                | `mkdirSync` + `unlinkSync` + `listen` |
+| MCP Tool 호출             | MCP 서버 → `mcpRequest()` → UDS HTTP → router → handler      | Lazy, 상태 없음                       |
+| 쓰기 Tool 호출            | handler → service → `broadcastChanged()` → Renderer re-fetch | 2중 push 가능하나 부작용 없음         |
+| Rally 종료                | `stopMcpApiServer()` → `server.close()` + `unlinkSync`       | `before-quit`에서 동기적 호출         |
+| Rally 비정상 종료         | 소켓 파일 남음                                               | 다음 시작 시 `unlinkSync` 후 재생성   |
+| Rally 미실행 시 Tool 호출 | `ECONNREFUSED`/`ENOENT` → 에러 반환                          | "Rally 앱이 실행 중이 아닙니다"       |
+| Rally 이후 실행           | 다음 Tool 호출 시 자동 연결                                  | Lazy connection, 재시도 불필요        |
 
 ### 7.2 서버 시작 시퀀스
 
@@ -1180,44 +1183,44 @@ before-quit
 
 ### 8.1 New Packages
 
-| Package | Layer | Purpose |
-|---------|-------|---------|
+| Package                     | Layer      | Purpose                                   |
+| --------------------------- | ---------- | ----------------------------------------- |
 | `@modelcontextprotocol/sdk` | mcp-server | MCP 서버 SDK (stdio transport, Tool 정의) |
-| `tsup` | devDep | MCP 서버 독립 빌드 번들러 |
+| `tsup`                      | devDep     | MCP 서버 독립 빌드 번들러                 |
 
 ### 8.2 Existing Packages Used
 
-| Package | Layer | Usage |
-|---------|-------|-------|
-| `zod` | mcp-server | MCP Tool 입력 스키마 정의 (이미 설치됨) |
-| `drizzle-orm` | main | `like()` 검색 쿼리 (noteService.search) |
-| `better-sqlite3` | main | DB 접근 (기존) |
+| Package          | Layer      | Usage                                   |
+| ---------------- | ---------- | --------------------------------------- |
+| `zod`            | mcp-server | MCP Tool 입력 스키마 정의 (이미 설치됨) |
+| `drizzle-orm`    | main       | `like()` 검색 쿼리 (noteService.search) |
+| `better-sqlite3` | main       | DB 접근 (기존)                          |
 
 ---
 
 ## 9. Implementation Order
 
-| Step | File(s) | Description |
-|------|---------|-------------|
-| 1 | `package.json` | `npm install @modelcontextprotocol/sdk` + `npm install -D tsup` |
-| 2 | `src/main/mcp-api/lib/body-parser.ts` | JSON body 파서 (10MB 제한) |
-| 3 | `src/main/mcp-api/lib/broadcast.ts` | broadcastChanged 유틸 |
-| 4 | `src/main/mcp-api/router.ts` | URL 패턴 매칭 + 에러 핸들링 |
-| 5 | `src/main/mcp-api/routes/workspace.ts` | GET /api/workspaces |
-| 6 | `src/main/mcp-api/routes/folder.ts` | GET /api/workspaces/:wsId/folders |
-| 7 | `src/main/mcp-api/routes/search.ts` | GET /api/workspaces/:wsId/notes/search |
-| 8 | `src/main/mcp-api/routes/note.ts` | 6개 note 엔드포인트 |
-| 9 | `src/main/mcp-api/routes/index.ts` | 라우트 등록 (search 먼저) |
-| 10 | `src/main/repositories/note.ts` | `searchByTitle()` 메서드 추가 |
-| 11 | `src/main/services/note.ts` | `search()` 메서드 추가 |
-| 12 | `src/main/mcp-api/server.ts` | UDS HTTP 서버 start/stop |
-| 13 | `src/main/index.ts` | import + registerAllRoutes + startMcpApiServer + stopMcpApiServer |
-| 14 | `src/mcp-server/lib/http-client.ts` | UDS HTTP 클라이언트 |
-| 15 | `src/mcp-server/tools/*.ts` | 9개 MCP Tool 정의 |
-| 16 | `src/mcp-server/tools/index.ts` | Tool 등록 barrel |
-| 17 | `src/mcp-server/index.ts` | MCP 서버 엔트리포인트 |
-| 18 | `src/mcp-server/tsup.config.ts` | 빌드 설정 |
-| 19 | `package.json` | `build:mcp` 스크립트 추가 |
+| Step | File(s)                                | Description                                                       |
+| ---- | -------------------------------------- | ----------------------------------------------------------------- |
+| 1    | `package.json`                         | `npm install @modelcontextprotocol/sdk` + `npm install -D tsup`   |
+| 2    | `src/main/mcp-api/lib/body-parser.ts`  | JSON body 파서 (10MB 제한)                                        |
+| 3    | `src/main/mcp-api/lib/broadcast.ts`    | broadcastChanged 유틸                                             |
+| 4    | `src/main/mcp-api/router.ts`           | URL 패턴 매칭 + 에러 핸들링                                       |
+| 5    | `src/main/mcp-api/routes/workspace.ts` | GET /api/workspaces                                               |
+| 6    | `src/main/mcp-api/routes/folder.ts`    | GET /api/workspaces/:wsId/folders                                 |
+| 7    | `src/main/mcp-api/routes/search.ts`    | GET /api/workspaces/:wsId/notes/search                            |
+| 8    | `src/main/mcp-api/routes/note.ts`      | 6개 note 엔드포인트                                               |
+| 9    | `src/main/mcp-api/routes/index.ts`     | 라우트 등록 (search 먼저)                                         |
+| 10   | `src/main/repositories/note.ts`        | `searchByTitle()` 메서드 추가                                     |
+| 11   | `src/main/services/note.ts`            | `search()` 메서드 추가                                            |
+| 12   | `src/main/mcp-api/server.ts`           | UDS HTTP 서버 start/stop                                          |
+| 13   | `src/main/index.ts`                    | import + registerAllRoutes + startMcpApiServer + stopMcpApiServer |
+| 14   | `src/mcp-server/lib/http-client.ts`    | UDS HTTP 클라이언트                                               |
+| 15   | `src/mcp-server/tools/*.ts`            | 9개 MCP Tool 정의                                                 |
+| 16   | `src/mcp-server/tools/index.ts`        | Tool 등록 barrel                                                  |
+| 17   | `src/mcp-server/index.ts`              | MCP 서버 엔트리포인트                                             |
+| 18   | `src/mcp-server/tsup.config.ts`        | 빌드 설정                                                         |
+| 19   | `package.json`                         | `build:mcp` 스크립트 추가                                         |
 
 ---
 
@@ -1225,36 +1228,36 @@ before-quit
 
 ### 10.1 New Files (22)
 
-| File | Layer |
-|------|-------|
-| `src/main/mcp-api/server.ts` | main/mcp-api |
-| `src/main/mcp-api/router.ts` | main/mcp-api |
-| `src/main/mcp-api/lib/body-parser.ts` | main/mcp-api/lib |
-| `src/main/mcp-api/lib/broadcast.ts` | main/mcp-api/lib |
-| `src/main/mcp-api/routes/workspace.ts` | main/mcp-api/routes |
-| `src/main/mcp-api/routes/folder.ts` | main/mcp-api/routes |
-| `src/main/mcp-api/routes/note.ts` | main/mcp-api/routes |
-| `src/main/mcp-api/routes/search.ts` | main/mcp-api/routes |
-| `src/main/mcp-api/routes/index.ts` | main/mcp-api/routes |
-| `src/mcp-server/index.ts` | mcp-server |
-| `src/mcp-server/lib/http-client.ts` | mcp-server/lib |
-| `src/mcp-server/tools/list-workspaces.ts` | mcp-server/tools |
-| `src/mcp-server/tools/list-folders.ts` | mcp-server/tools |
-| `src/mcp-server/tools/list-notes.ts` | mcp-server/tools |
-| `src/mcp-server/tools/read-note.ts` | mcp-server/tools |
-| `src/mcp-server/tools/write-note.ts` | mcp-server/tools |
-| `src/mcp-server/tools/create-note.ts` | mcp-server/tools |
-| `src/mcp-server/tools/rename-note.ts` | mcp-server/tools |
-| `src/mcp-server/tools/move-note.ts` | mcp-server/tools |
-| `src/mcp-server/tools/search-notes.ts` | mcp-server/tools |
-| `src/mcp-server/tools/index.ts` | mcp-server/tools |
-| `src/mcp-server/tsup.config.ts` | mcp-server |
+| File                                      | Layer               |
+| ----------------------------------------- | ------------------- |
+| `src/main/mcp-api/server.ts`              | main/mcp-api        |
+| `src/main/mcp-api/router.ts`              | main/mcp-api        |
+| `src/main/mcp-api/lib/body-parser.ts`     | main/mcp-api/lib    |
+| `src/main/mcp-api/lib/broadcast.ts`       | main/mcp-api/lib    |
+| `src/main/mcp-api/routes/workspace.ts`    | main/mcp-api/routes |
+| `src/main/mcp-api/routes/folder.ts`       | main/mcp-api/routes |
+| `src/main/mcp-api/routes/note.ts`         | main/mcp-api/routes |
+| `src/main/mcp-api/routes/search.ts`       | main/mcp-api/routes |
+| `src/main/mcp-api/routes/index.ts`        | main/mcp-api/routes |
+| `src/mcp-server/index.ts`                 | mcp-server          |
+| `src/mcp-server/lib/http-client.ts`       | mcp-server/lib      |
+| `src/mcp-server/tools/list-workspaces.ts` | mcp-server/tools    |
+| `src/mcp-server/tools/list-folders.ts`    | mcp-server/tools    |
+| `src/mcp-server/tools/list-notes.ts`      | mcp-server/tools    |
+| `src/mcp-server/tools/read-note.ts`       | mcp-server/tools    |
+| `src/mcp-server/tools/write-note.ts`      | mcp-server/tools    |
+| `src/mcp-server/tools/create-note.ts`     | mcp-server/tools    |
+| `src/mcp-server/tools/rename-note.ts`     | mcp-server/tools    |
+| `src/mcp-server/tools/move-note.ts`       | mcp-server/tools    |
+| `src/mcp-server/tools/search-notes.ts`    | mcp-server/tools    |
+| `src/mcp-server/tools/index.ts`           | mcp-server/tools    |
+| `src/mcp-server/tsup.config.ts`           | mcp-server          |
 
 ### 10.2 Modified Files (4)
 
-| File | Changes |
-|------|---------|
-| `src/main/index.ts` | import 2개 + `registerAllRoutes()` + `startMcpApiServer()` + `stopMcpApiServer()` in before-quit |
-| `src/main/repositories/note.ts` | `searchByTitle()` 메서드 추가 + `and`, `like` import 추가 |
-| `src/main/services/note.ts` | `search()` async 메서드 추가 (repository 패턴 사용) |
-| `package.json` | dependencies + devDependencies + `build:mcp` script |
+| File                            | Changes                                                                                          |
+| ------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `src/main/index.ts`             | import 2개 + `registerAllRoutes()` + `startMcpApiServer()` + `stopMcpApiServer()` in before-quit |
+| `src/main/repositories/note.ts` | `searchByTitle()` 메서드 추가 + `and`, `like` import 추가                                        |
+| `src/main/services/note.ts`     | `search()` async 메서드 추가 (repository 패턴 사용)                                              |
+| `package.json`                  | dependencies + devDependencies + `build:mcp` script                                              |

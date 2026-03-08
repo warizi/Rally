@@ -106,10 +106,10 @@ export const sidebar_items: SidebarItem[] = [
     pathname: ROUTES.CANVAS,
     icon: TAB_ICON['canvas']
   },
-  {
-    title: '터미널',
-    tabType: 'terminal',
-    pathname: ROUTES.TERMINAL,
-    icon: TAB_ICON['terminal']
-  }
+  // {
+  //   title: '터미널',
+  //   tabType: 'terminal',
+  //   pathname: ROUTES.TERMINAL,
+  //   icon: TAB_ICON['terminal']
+  // }
 ]

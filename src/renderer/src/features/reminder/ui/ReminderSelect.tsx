@@ -2,7 +2,12 @@ import { Bell } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Checkbox } from '@shared/ui/checkbox'
-import { useReminders, useSetReminder, useRemoveReminder, REMINDER_OFFSETS } from '@entities/reminder'
+import {
+  useReminders,
+  useSetReminder,
+  useRemoveReminder,
+  REMINDER_OFFSETS
+} from '@entities/reminder'
 import type { ReminderItem } from '@entities/reminder'
 
 interface Props {
@@ -17,9 +22,7 @@ export function ReminderSelect({ entityType, entityId, disabled }: Props): React
   const removeReminder = useRemoveReminder()
 
   // offset별 상태: unfired(활성) / fired(발송됨) / 없음
-  const reminderByOffset = new Map<number, ReminderItem>(
-    reminders.map((r) => [r.offsetMs, r])
-  )
+  const reminderByOffset = new Map<number, ReminderItem>(reminders.map((r) => [r.offsetMs, r]))
 
   const activeCount = reminders.filter((r) => !r.isFired).length
 
@@ -37,12 +40,7 @@ export function ReminderSelect({ entityType, entityId, disabled }: Props): React
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          className="gap-1.5"
-        >
+        <Button variant="outline" size="sm" disabled={disabled} className="gap-1.5">
           <Bell className="size-3.5" />
           {activeCount > 0 ? `${activeCount}개` : '알림'}
         </Button>

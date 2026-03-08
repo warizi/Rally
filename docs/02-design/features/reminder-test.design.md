@@ -8,12 +8,12 @@
 
 ## 1. 구현 순서
 
-| 순서 | 파일 | 설명 |
-| ---- | ---- | ---- |
-| 1 | `src/main/repositories/__tests__/reminder.test.ts` | reminderRepository 10개 메서드 통합 테스트 (22 cases) |
-| 2 | `src/main/services/__tests__/reminder.test.ts` | reminderService 9개 메서드 단위 테스트 (23 cases) |
-| 3 | `src/main/services/__tests__/todo.test.ts` | todo.ts reminder 연동 (기존 파일에 mock+10 cases 추가) |
-| 4 | `src/main/services/__tests__/schedule.test.ts` | schedule.ts reminder 연동 (신규 파일, 6 cases) |
+| 순서 | 파일                                               | 설명                                                   |
+| ---- | -------------------------------------------------- | ------------------------------------------------------ |
+| 1    | `src/main/repositories/__tests__/reminder.test.ts` | reminderRepository 10개 메서드 통합 테스트 (22 cases)  |
+| 2    | `src/main/services/__tests__/reminder.test.ts`     | reminderService 9개 메서드 단위 테스트 (23 cases)      |
+| 3    | `src/main/services/__tests__/todo.test.ts`         | todo.ts reminder 연동 (기존 파일에 mock+10 cases 추가) |
+| 4    | `src/main/services/__tests__/schedule.test.ts`     | schedule.ts reminder 연동 (신규 파일, 6 cases)         |
 
 환경 설정 변경 없음.
 
@@ -55,6 +55,7 @@ function makeReminder(overrides?: Partial<typeof schema.reminders.$inferInsert>)
 ```
 
 **핵심 설계 판단:**
+
 - `setup.ts`가 `reminders` 테이블을 초기화하지 않으므로 자체 `beforeEach` 추가
 - `reminders` 테이블은 FK 없음 → workspace/todo/schedule 행 삽입 불필요
 - `remindAt`는 `timestamp_ms` 모드 → Drizzle가 Date 객체로 반환
@@ -66,17 +67,23 @@ function makeReminder(overrides?: Partial<typeof schema.reminders.$inferInsert>)
 
 **findByEntity** (3건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | entity에 알림 2개 존재 | 2개 배열 반환 |
-| 2 | entity에 알림 없음 | 빈 배열 |
-| 3 | 다른 entityType의 동일 entityId | 해당 타입만 반환 |
+| #   | Case                            | 핵심 assertion   |
+| --- | ------------------------------- | ---------------- |
+| 1   | entity에 알림 2개 존재          | 2개 배열 반환    |
+| 2   | entity에 알림 없음              | 빈 배열          |
+| 3   | 다른 entityType의 동일 entityId | 해당 타입만 반환 |
 
 ```typescript
 describe('findByEntity', () => {
   it('entity에 알림 2개 존재 → 2개 반환', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1' })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r2', offsetMs: 1800000 })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', offsetMs: 1800000 }))
+      .run()
     const result = reminderRepository.findByEntity('todo', 'todo-1')
     expect(result).toHaveLength(2)
   })
@@ -87,10 +94,14 @@ describe('findByEntity', () => {
   })
 
   it('다른 entityType의 동일 entityId → 해당 타입만 반환', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', entityType: 'todo' })).run()
-    testDb.insert(schema.reminders).values(
-      makeReminder({ id: 'r2', entityType: 'schedule' })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', entityType: 'todo' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', entityType: 'schedule' }))
+      .run()
     const result = reminderRepository.findByEntity('todo', 'todo-1')
     expect(result).toHaveLength(1)
     expect(result[0].entityType).toBe('todo')
@@ -102,36 +113,39 @@ describe('findByEntity', () => {
 
 **findPending** (3건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | remindAt <= now, isFired=false | 해당 알림 반환 |
-| 2 | remindAt > now | 미반환 |
-| 3 | remindAt <= now, isFired=true | 미반환 |
+| #   | Case                           | 핵심 assertion |
+| --- | ------------------------------ | -------------- |
+| 1   | remindAt <= now, isFired=false | 해당 알림 반환 |
+| 2   | remindAt > now                 | 미반환         |
+| 3   | remindAt <= now, isFired=true  | 미반환         |
 
 ```typescript
 describe('findPending', () => {
   const now = new Date('2026-06-01T10:00:00Z')
 
   it('remindAt <= now, isFired=false → 반환', () => {
-    testDb.insert(schema.reminders).values(
-      makeReminder({ remindAt: new Date('2026-06-01T09:00:00Z'), isFired: false })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ remindAt: new Date('2026-06-01T09:00:00Z'), isFired: false }))
+      .run()
     const result = reminderRepository.findPending(now)
     expect(result).toHaveLength(1)
   })
 
   it('remindAt > now → 미반환', () => {
-    testDb.insert(schema.reminders).values(
-      makeReminder({ remindAt: new Date('2026-06-01T11:00:00Z') })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ remindAt: new Date('2026-06-01T11:00:00Z') }))
+      .run()
     const result = reminderRepository.findPending(now)
     expect(result).toHaveLength(0)
   })
 
   it('remindAt <= now, isFired=true → 미반환', () => {
-    testDb.insert(schema.reminders).values(
-      makeReminder({ remindAt: new Date('2026-06-01T09:00:00Z'), isFired: true })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ remindAt: new Date('2026-06-01T09:00:00Z'), isFired: true }))
+      .run()
     const result = reminderRepository.findPending(now)
     expect(result).toHaveLength(0)
   })
@@ -142,10 +156,10 @@ describe('findPending', () => {
 
 **findById** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 존재하는 ID | Reminder 객체 반환 |
-| 2 | 없는 ID | undefined |
+| #   | Case        | 핵심 assertion     |
+| --- | ----------- | ------------------ |
+| 1   | 존재하는 ID | Reminder 객체 반환 |
+| 2   | 없는 ID     | undefined          |
 
 ```typescript
 describe('findById', () => {
@@ -166,9 +180,9 @@ describe('findById', () => {
 
 **create** (1건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 모든 필드 포함 생성 | returning()으로 반환, Date 타입 확인 |
+| #   | Case                | 핵심 assertion                       |
+| --- | ------------------- | ------------------------------------ |
+| 1   | 모든 필드 포함 생성 | returning()으로 반환, Date 타입 확인 |
 
 ```typescript
 describe('create', () => {
@@ -188,10 +202,10 @@ describe('create', () => {
 
 **update** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | remindAt + isFired 부분 업데이트 | 변경된 값 반환 |
-| 2 | 존재하지 않는 ID | undefined |
+| #   | Case                             | 핵심 assertion |
+| --- | -------------------------------- | -------------- |
+| 1   | remindAt + isFired 부분 업데이트 | 변경된 값 반환 |
+| 2   | 존재하지 않는 ID                 | undefined      |
 
 ```typescript
 describe('update', () => {
@@ -219,14 +233,17 @@ describe('update', () => {
 
 **markFired** (1건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | isFired=false → true | findById로 확인 |
+| #   | Case                 | 핵심 assertion  |
+| --- | -------------------- | --------------- |
+| 1   | isFired=false → true | findById로 확인 |
 
 ```typescript
 describe('markFired', () => {
   it('isFired=false → true 전환, updatedAt 갱신', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ isFired: false })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ isFired: false }))
+      .run()
     const now = new Date()
     reminderRepository.markFired('rem-1', now)
     const row = reminderRepository.findById('rem-1')
@@ -240,9 +257,9 @@ describe('markFired', () => {
 
 **delete** (1건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 삭제 후 findById | undefined |
+| #   | Case             | 핵심 assertion |
+| --- | ---------------- | -------------- |
+| 1   | 삭제 후 findById | undefined      |
 
 ```typescript
 describe('delete', () => {
@@ -258,24 +275,39 @@ describe('delete', () => {
 
 **deleteByEntity** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | entity 알림 3개 → 전부 삭제 | findByEntity 빈 배열 |
-| 2 | 다른 entity 알림은 유지 | 다른 entity 건재 |
+| #   | Case                        | 핵심 assertion       |
+| --- | --------------------------- | -------------------- |
+| 1   | entity 알림 3개 → 전부 삭제 | findByEntity 빈 배열 |
+| 2   | 다른 entity 알림은 유지     | 다른 entity 건재     |
 
 ```typescript
 describe('deleteByEntity', () => {
   it('entity 알림 3개 → 전부 삭제', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1' })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r2', offsetMs: 1800000 })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r3', offsetMs: 3600000 })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', offsetMs: 1800000 }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r3', offsetMs: 3600000 }))
+      .run()
     reminderRepository.deleteByEntity('todo', 'todo-1')
     expect(reminderRepository.findByEntity('todo', 'todo-1')).toEqual([])
   })
 
   it('다른 entity 알림은 유지', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', entityId: 'todo-1' })).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r2', entityId: 'todo-2' })).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', entityId: 'todo-1' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', entityId: 'todo-2' }))
+      .run()
     reminderRepository.deleteByEntity('todo', 'todo-1')
     expect(reminderRepository.findByEntity('todo', 'todo-2')).toHaveLength(1)
   })
@@ -286,22 +318,30 @@ describe('deleteByEntity', () => {
 
 **deleteByEntities** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | entityIds 2개 → 4개 전부 삭제 | 모두 삭제 확인 |
-| 2 | 빈 배열 전달 | 아무것도 삭제하지 않음 |
+| #   | Case                          | 핵심 assertion         |
+| --- | ----------------------------- | ---------------------- |
+| 1   | entityIds 2개 → 4개 전부 삭제 | 모두 삭제 확인         |
+| 2   | 빈 배열 전달                  | 아무것도 삭제하지 않음 |
 
 ```typescript
 describe('deleteByEntities', () => {
   it('entityIds 2개, 각 알림 2개 → 4개 전부 삭제', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', entityId: 'a' })).run()
-    testDb.insert(schema.reminders).values(
-      makeReminder({ id: 'r2', entityId: 'a', offsetMs: 1800000 })
-    ).run()
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r3', entityId: 'b' })).run()
-    testDb.insert(schema.reminders).values(
-      makeReminder({ id: 'r4', entityId: 'b', offsetMs: 1800000 })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', entityId: 'a' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', entityId: 'a', offsetMs: 1800000 }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r3', entityId: 'b' }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r4', entityId: 'b', offsetMs: 1800000 }))
+      .run()
     reminderRepository.deleteByEntities('todo', ['a', 'b'])
     expect(reminderRepository.findByEntity('todo', 'a')).toEqual([])
     expect(reminderRepository.findByEntity('todo', 'b')).toEqual([])
@@ -319,21 +359,26 @@ describe('deleteByEntities', () => {
 
 **deleteUnfiredByEntity** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | fired 1개 + unfired 2개 → unfired만 삭제 | fired 1개만 남음 |
-| 2 | 전부 fired → 삭제 없음 | 전부 유지 |
+| #   | Case                                     | 핵심 assertion   |
+| --- | ---------------------------------------- | ---------------- |
+| 1   | fired 1개 + unfired 2개 → unfired만 삭제 | fired 1개만 남음 |
+| 2   | 전부 fired → 삭제 없음                   | 전부 유지        |
 
 ```typescript
 describe('deleteUnfiredByEntity', () => {
   it('fired 1개 + unfired 2개 → unfired만 삭제', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', isFired: true })).run()
-    testDb.insert(schema.reminders).values(
-      makeReminder({ id: 'r2', isFired: false, offsetMs: 1800000 })
-    ).run()
-    testDb.insert(schema.reminders).values(
-      makeReminder({ id: 'r3', isFired: false, offsetMs: 3600000 })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', isFired: true }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', isFired: false, offsetMs: 1800000 }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r3', isFired: false, offsetMs: 3600000 }))
+      .run()
     reminderRepository.deleteUnfiredByEntity('todo', 'todo-1')
     const remaining = reminderRepository.findByEntity('todo', 'todo-1')
     expect(remaining).toHaveLength(1)
@@ -341,10 +386,14 @@ describe('deleteUnfiredByEntity', () => {
   })
 
   it('전부 fired → 삭제 없음', () => {
-    testDb.insert(schema.reminders).values(makeReminder({ id: 'r1', isFired: true })).run()
-    testDb.insert(schema.reminders).values(
-      makeReminder({ id: 'r2', isFired: true, offsetMs: 1800000 })
-    ).run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r1', isFired: true }))
+      .run()
+    testDb
+      .insert(schema.reminders)
+      .values(makeReminder({ id: 'r2', isFired: true, offsetMs: 1800000 }))
+      .run()
     reminderRepository.deleteUnfiredByEntity('todo', 'todo-1')
     expect(reminderRepository.findByEntity('todo', 'todo-1')).toHaveLength(2)
   })
@@ -455,6 +504,7 @@ beforeEach(() => {
 ```
 
 **핵심 설계 판단:**
+
 - `FUTURE`는 `Date.now() + 1일`로 항상 미래 → 과거 시각 검증에서 별도 과거 Date 사용
 - `MOCK_TODO.dueDate = FUTURE` → `getBaseTime`이 dueDate 반환
 - `MOCK_SCHEDULE.allDay = false` → `getBaseTime`이 startAt 그대로 반환
@@ -466,19 +516,21 @@ beforeEach(() => {
 
 **findByEntity** (1건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | repo 반환값을 ReminderItem으로 변환 | Date 변환 확인 |
+| #   | Case                                | 핵심 assertion |
+| --- | ----------------------------------- | -------------- |
+| 1   | repo 반환값을 ReminderItem으로 변환 | Date 변환 확인 |
 
 ```typescript
 describe('findByEntity', () => {
   it('repo 반환값을 ReminderItem으로 변환 — Date 타입', () => {
-    vi.mocked(reminderRepository.findByEntity).mockReturnValue([{
-      ...MOCK_REMINDER_ROW,
-      remindAt: 1717225200000 as unknown as Date,
-      createdAt: 1704067200000 as unknown as Date,
-      updatedAt: 1704067200000 as unknown as Date
-    }])
+    vi.mocked(reminderRepository.findByEntity).mockReturnValue([
+      {
+        ...MOCK_REMINDER_ROW,
+        remindAt: 1717225200000 as unknown as Date,
+        createdAt: 1704067200000 as unknown as Date,
+        updatedAt: 1704067200000 as unknown as Date
+      }
+    ])
     const result = reminderService.findByEntity('todo', 'todo-1')
     expect(result).toHaveLength(1)
     expect(result[0].remindAt).toBeInstanceOf(Date)
@@ -491,18 +543,18 @@ describe('findByEntity', () => {
 
 **set** (10건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 정상 생성 (유효 offset, 미래 시각) | ReminderItem 반환, create 호출 |
-| 2 | 유효하지 않은 offset (15분=900000) | ValidationError |
-| 3 | entity 없음 (getBaseTime null) | NotFoundError |
-| 4 | 과거 시각 (baseTime 이미 지남) | ValidationError |
-| 5 | 동일 entity+offset 중복 → update | create 미호출, update 호출 |
-| 6 | todo: dueDate 우선 (dueDate+startDate 존재) | dueDate 기반 remindAt |
-| 7 | schedule allDay: 09:00 보정 | 00:00→09:00 기반 |
-| 8 | todo: startDate만 존재 (dueDate null) | startDate 기반 remindAt |
-| 9 | 중복 + isFired=true → update | isFired=false 리셋 확인 |
-| 10 | schedule non-allDay → startAt 그대로 | 보정 없이 startAt 기반 |
+| #   | Case                                        | 핵심 assertion                 |
+| --- | ------------------------------------------- | ------------------------------ |
+| 1   | 정상 생성 (유효 offset, 미래 시각)          | ReminderItem 반환, create 호출 |
+| 2   | 유효하지 않은 offset (15분=900000)          | ValidationError                |
+| 3   | entity 없음 (getBaseTime null)              | NotFoundError                  |
+| 4   | 과거 시각 (baseTime 이미 지남)              | ValidationError                |
+| 5   | 동일 entity+offset 중복 → update            | create 미호출, update 호출     |
+| 6   | todo: dueDate 우선 (dueDate+startDate 존재) | dueDate 기반 remindAt          |
+| 7   | schedule allDay: 09:00 보정                 | 00:00→09:00 기반               |
+| 8   | todo: startDate만 존재 (dueDate null)       | startDate 기반 remindAt        |
+| 9   | 중복 + isFired=true → update                | isFired=false 리셋 확인        |
+| 10  | schedule non-allDay → startAt 그대로        | 보정 없이 startAt 기반         |
 
 ```typescript
 describe('set', () => {
@@ -519,20 +571,24 @@ describe('set', () => {
   })
 
   it('유효하지 않은 offset (15분=900000) → ValidationError', () => {
-    expect(() => reminderService.set({
-      entityType: 'todo',
-      entityId: 'todo-1',
-      offsetMs: 15 * 60 * 1000
-    })).toThrow(ValidationError)
+    expect(() =>
+      reminderService.set({
+        entityType: 'todo',
+        entityId: 'todo-1',
+        offsetMs: 15 * 60 * 1000
+      })
+    ).toThrow(ValidationError)
   })
 
   it('entity 없음 → NotFoundError', () => {
     vi.mocked(todoRepository.findById).mockReturnValue(undefined)
-    expect(() => reminderService.set({
-      entityType: 'todo',
-      entityId: 'no-todo',
-      offsetMs: TEN_MIN
-    })).toThrow(NotFoundError)
+    expect(() =>
+      reminderService.set({
+        entityType: 'todo',
+        entityId: 'no-todo',
+        offsetMs: TEN_MIN
+      })
+    ).toThrow(NotFoundError)
   })
 
   it('과거 시각 → ValidationError', () => {
@@ -541,11 +597,13 @@ describe('set', () => {
       ...MOCK_TODO,
       dueDate: pastDate
     } as never)
-    expect(() => reminderService.set({
-      entityType: 'todo',
-      entityId: 'todo-1',
-      offsetMs: TEN_MIN
-    })).toThrow(ValidationError)
+    expect(() =>
+      reminderService.set({
+        entityType: 'todo',
+        entityId: 'todo-1',
+        offsetMs: TEN_MIN
+      })
+    ).toThrow(ValidationError)
   })
 
   it('동일 entity+offset 중복 → create 미호출, update 호출', () => {
@@ -644,10 +702,10 @@ describe('set', () => {
 
 **remove** (2건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | 존재하는 알림 삭제 | repo.delete 호출 |
-| 2 | 없는 알림 | NotFoundError |
+| #   | Case               | 핵심 assertion   |
+| --- | ------------------ | ---------------- |
+| 1   | 존재하는 알림 삭제 | repo.delete 호출 |
+| 2   | 없는 알림          | NotFoundError    |
 
 ```typescript
 describe('remove', () => {
@@ -706,11 +764,11 @@ describe('removeUnfiredByEntity', () => {
 
 **recalculate** (3건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | baseTime 존재 → remindAt 재계산 | update 호출, isFired=false |
-| 2 | baseTime null → 전체 삭제 | deleteByEntity 호출 |
-| 3 | 알림 2개 → update 2회 | update 호출 횟수 |
+| #   | Case                            | 핵심 assertion             |
+| --- | ------------------------------- | -------------------------- |
+| 1   | baseTime 존재 → remindAt 재계산 | update 호출, isFired=false |
+| 2   | baseTime null → 전체 삭제       | deleteByEntity 호출        |
+| 3   | 알림 2개 → update 2회           | update 호출 횟수           |
 
 ```typescript
 describe('recalculate', () => {
@@ -748,11 +806,11 @@ describe('recalculate', () => {
 
 **findPendingWithTitle** (3건)
 
-| # | Case | 핵심 assertion |
-|---|------|----------------|
-| 1 | todo 알림 → todo.title 포함 | title 필드 확인 |
-| 2 | schedule 알림 → schedule.title 포함 | title 필드 확인 |
-| 3 | 삭제된 entity → 폴백 제목 | '(삭제된 할 일)' |
+| #   | Case                                | 핵심 assertion   |
+| --- | ----------------------------------- | ---------------- |
+| 1   | todo 알림 → todo.title 포함         | title 필드 확인  |
+| 2   | schedule 알림 → schedule.title 포함 | title 필드 확인  |
+| 3   | 삭제된 entity → 폴백 제목           | '(삭제된 할 일)' |
 
 ```typescript
 describe('findPendingWithTitle', () => {
@@ -827,6 +885,7 @@ import { reminderService } from '../reminder'
 ```
 
 **핵심 설계 판단:**
+
 - 기존 30+ 테스트는 `reminderService`를 호출하는 경로를 통과하지만 mock이 no-op이므로 영향 없음
 - `canvasNodeRepository.deleteByRef`도 `remove()`에서 호출되므로 mock 필수
 - `canvasNodeRepository` import는 불필요 (직접 assertion 안 함) — `reminderService`만 import
@@ -874,9 +933,7 @@ describe('update — reminder 연동', () => {
     const subTodo = { ...MOCK_TODO_ROW, id: 'sub-1', parentId: 'par-1' }
     vi.mocked(todoRepository.findById).mockReturnValue(subTodo)
     vi.mocked(todoRepository.update).mockReturnValue(subTodo)
-    vi.mocked(todoRepository.findByParentId).mockReturnValue([
-      { ...subTodo, isDone: false }
-    ])
+    vi.mocked(todoRepository.findByParentId).mockReturnValue([{ ...subTodo, isDone: false }])
     todoService.update('sub-1', { isDone: true })
     expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'sub-1')
     expect(reminderService.removeUnfiredByEntity).toHaveBeenCalledWith('todo', 'par-1')
@@ -923,10 +980,11 @@ describe('remove — reminder 연동', () => {
   it('removeByEntities 호출 (본인 + 하위)', () => {
     vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue(['sub-1', 'sub-2'])
     todoService.remove('todo-1')
-    expect(reminderService.removeByEntities).toHaveBeenCalledWith(
-      'todo',
-      ['todo-1', 'sub-1', 'sub-2']
-    )
+    expect(reminderService.removeByEntities).toHaveBeenCalledWith('todo', [
+      'todo-1',
+      'sub-1',
+      'sub-2'
+    ])
   })
 })
 ```
@@ -1080,34 +1138,34 @@ describe('remove — reminder 연동', () => {
 
 ## 3. 테스트 케이스 요약
 
-| 파일 | describe | cases |
-|------|----------|:-----:|
-| reminder.test.ts (repository) | findByEntity | 3 |
-| | findPending | 3 |
-| | findById | 2 |
-| | create | 1 |
-| | update | 2 |
-| | markFired | 1 |
-| | delete | 1 |
-| | deleteByEntity | 2 |
-| | deleteByEntities | 2 |
-| | deleteUnfiredByEntity | 2 |
-| reminder.test.ts (service) | findByEntity | 1 |
-| | set | 10 |
-| | remove | 2 |
-| | removeByEntity | 1 |
-| | removeByEntities | 1 |
-| | removeUnfiredByEntity | 1 |
-| | recalculate | 3 |
-| | findPendingWithTitle | 3 |
-| | markFired | 1 |
-| todo.test.ts (추가) | update — reminder 연동 | 7 |
-| | reorderKanban — reminder 연동 | 2 |
-| | remove — reminder 연동 | 1 |
-| schedule.test.ts (신규) | update — reminder 연동 | 4 |
-| | move — reminder 연동 | 1 |
-| | remove — reminder 연동 | 1 |
-| **Total** | | **61** |
+| 파일                          | describe                      | cases  |
+| ----------------------------- | ----------------------------- | :----: |
+| reminder.test.ts (repository) | findByEntity                  |   3    |
+|                               | findPending                   |   3    |
+|                               | findById                      |   2    |
+|                               | create                        |   1    |
+|                               | update                        |   2    |
+|                               | markFired                     |   1    |
+|                               | delete                        |   1    |
+|                               | deleteByEntity                |   2    |
+|                               | deleteByEntities              |   2    |
+|                               | deleteUnfiredByEntity         |   2    |
+| reminder.test.ts (service)    | findByEntity                  |   1    |
+|                               | set                           |   10   |
+|                               | remove                        |   2    |
+|                               | removeByEntity                |   1    |
+|                               | removeByEntities              |   1    |
+|                               | removeUnfiredByEntity         |   1    |
+|                               | recalculate                   |   3    |
+|                               | findPendingWithTitle          |   3    |
+|                               | markFired                     |   1    |
+| todo.test.ts (추가)           | update — reminder 연동        |   7    |
+|                               | reorderKanban — reminder 연동 |   2    |
+|                               | remove — reminder 연동        |   1    |
+| schedule.test.ts (신규)       | update — reminder 연동        |   4    |
+|                               | move — reminder 연동          |   1    |
+|                               | remove — reminder 연동        |   1    |
+| **Total**                     |                               | **61** |
 
 ---
 

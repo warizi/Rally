@@ -130,10 +130,7 @@ export const reminderRepository = {
   },
 
   markFired(id: string, now: Date): void {
-    db.update(reminders)
-      .set({ isFired: true, updatedAt: now })
-      .where(eq(reminders.id, id))
-      .run()
+    db.update(reminders).set({ isFired: true, updatedAt: now }).where(eq(reminders.id, id)).run()
   },
 
   delete(id: string): void {
@@ -188,10 +185,10 @@ import type { Reminder } from '../repositories/reminder'
 // === 허용 오프셋 값 (유효성 검증용) ===
 
 const VALID_OFFSETS = new Set([
-  10 * 60 * 1000,       // 10분
-  30 * 60 * 1000,       // 30분
-  60 * 60 * 1000,       // 1시간
-  24 * 60 * 60 * 1000,  // 1일
+  10 * 60 * 1000, // 10분
+  30 * 60 * 1000, // 30분
+  60 * 60 * 1000, // 1시간
+  24 * 60 * 60 * 1000, // 1일
   2 * 24 * 60 * 60 * 1000 // 2일
 ])
 
@@ -504,17 +501,17 @@ import { registerReminderHandlers } from './ipc/reminder'
 import { reminderScheduler } from './services/reminder-scheduler'
 
 // app.whenReady().then 내부에 추가:
-  registerReminderHandlers()
+registerReminderHandlers()
 
 // createWindow() 후에 추가:
-  reminderScheduler.start()
+reminderScheduler.start()
 
 // before-quit 핸들러 수정:
 app.on('before-quit', (event) => {
   if (isQuitting) return
   event.preventDefault()
   isQuitting = true
-  reminderScheduler.stop()  // 추가
+  reminderScheduler.stop() // 추가
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   session.defaultSession.flushStorageData()
   Promise.race([workspaceWatcher.stop(), timeout]).finally(() => app.quit())
@@ -575,10 +572,7 @@ interface ReminderAPI {
   ) => Promise<IpcResponse<ReminderItem[]>>
   set: (data: SetReminderData) => Promise<IpcResponse<ReminderItem>>
   remove: (reminderId: string) => Promise<IpcResponse<void>>
-  removeByEntity: (
-    entityType: 'todo' | 'schedule',
-    entityId: string
-  ) => Promise<IpcResponse<void>>
+  removeByEntity: (entityType: 'todo' | 'schedule', entityId: string) => Promise<IpcResponse<void>>
   onFired: (
     callback: (data: { entityType: string; entityId: string; title: string }) => void
   ) => () => void
@@ -948,7 +942,7 @@ if (doneFields.isDone !== true && (data.dueDate !== undefined || data.startDate 
 // update() 내부 — 부모 자동완료 블록:
 if (allDone) {
   // ... 기존 부모 업데이트 로직 ...
-  reminderService.removeUnfiredByEntity('todo', todo.parentId)  // 추가
+  reminderService.removeUnfiredByEntity('todo', todo.parentId) // 추가
 }
 
 // reorderKanban() 내부 — bulkUpdateKanbanOrder() 호출 후:
@@ -961,7 +955,7 @@ for (const u of updates) {
 
 // remove() 내부:
 const subtodoIds = todoRepository.findAllDescendantIds(todoId)
-reminderService.removeByEntities('todo', [todoId, ...subtodoIds])  // 추가
+reminderService.removeByEntities('todo', [todoId, ...subtodoIds]) // 추가
 ```
 
 ### `src/main/services/schedule.ts` 변경
@@ -976,10 +970,10 @@ if (data.startAt !== undefined || data.allDay !== undefined) {
 
 // move() 내부 — 캘린더 드래그로 시간 변경 시:
 // (move()는 update()를 거치지 않고 startAt/endAt을 직접 변경하므로 별도 처리)
-reminderService.recalculate('schedule', scheduleId)  // 추가
+reminderService.recalculate('schedule', scheduleId) // 추가
 
 // remove() 내부:
-reminderService.removeByEntity('schedule', scheduleId)  // 추가
+reminderService.removeByEntity('schedule', scheduleId) // 추가
 ```
 
 ---

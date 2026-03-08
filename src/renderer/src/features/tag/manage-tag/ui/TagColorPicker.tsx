@@ -20,7 +20,7 @@ interface Props {
   onChange: (color: string) => void
 }
 
-export function TagColorPicker({ value, onChange }: Props) {
+export function TagColorPicker({ value, onChange }: Props): React.JSX.Element {
   return (
     <div className="grid grid-cols-6 gap-1 py-1">
       {TAG_COLORS.map(({ label, value: color }) => (
@@ -38,9 +38,7 @@ export function TagColorPicker({ value, onChange }: Props) {
               borderColor: value === color ? 'hsl(var(--foreground))' : 'transparent'
             }}
           >
-            {value === color && (
-              <Check className="size-3.5" style={{ color: '#fff' }} />
-            )}
+            {value === color && <Check className="size-3.5" style={{ color: '#fff' }} />}
           </span>
         </button>
       ))}
