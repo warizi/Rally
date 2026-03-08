@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T05:22:49.297Z",
+  "lastUpdated": "2026-03-08T06:54:44.336Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -198,9 +198,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:01.950Z",
-        "lastUpdated": "2026-03-08T05:22:49.297Z"
+        "lastUpdated": "2026-03-08T06:54:44.336Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/lib/updater.ts"
     },
     "preload": {
       "phase": "do",
@@ -1149,7 +1149,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T05:22:49.297Z"
+    "lastActivity": "2026-03-08T06:54:44.336Z"
   },
   "history": [
     {
@@ -22358,6 +22358,12 @@
     },
     {
       "timestamp": "2026-03-08T05:22:49.297Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T06:54:44.336Z",
       "feature": "main",
       "phase": "do",
       "action": "updated"
