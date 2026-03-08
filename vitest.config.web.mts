@@ -5,6 +5,7 @@ import { resolve } from 'path'
 export default defineConfig({
   plugins: [react()],
   test: {
+    globals: true,
     environment: 'happy-dom',
     include: ['src/renderer/**/*.{test,spec}.{ts,tsx}'],
     setupFiles: ['./src/renderer/src/test/setup.ts']

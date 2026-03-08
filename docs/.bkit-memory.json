@@ -1,0 +1,57 @@
+{
+  "sessionCount": 242,
+  "lastSession": {
+    "startedAt": "2026-03-08T05:10:56.157Z",
+    "platform": "claude",
+    "level": "Dynamic"
+  },
+  "currentFeature": "workspace-backup",
+  "phase": "do",
+  "matchRate": null,
+  "iterationCount": 0,
+  "archivedFeatures": {
+    "reminder": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-03T20:30:00Z",
+      "archivedTo": "docs/archive/2026-03/reminder/"
+    },
+    "note-image-test": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-03T18:15:00Z",
+      "archivedTo": "docs/archive/2026-03/note-image-test/"
+    },
+    "note-image": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-03T12:00:00Z",
+      "archivedTo": "docs/archive/2026-03/note-image/"
+    },
+    "calendar-refactor": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-02T04:30:00Z",
+      "archivedTo": "docs/archive/2026-03/calendar-refactor/"
+    },
+    "schedule-test": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-02T05:10:00Z",
+      "archivedTo": "docs/archive/2026-03/schedule-test/"
+    },
+    "link-test": {
+      "phase": "archived",
+      "matchRate": 100,
+      "archivedAt": "2026-03-02T09:30:00Z",
+      "archivedTo": "docs/archive/2026-03/link-test/"
+    },
+    "canvas-visualization": {
+      "phase": "archived",
+      "matchRate": 93,
+      "iterationCount": 1,
+      "archivedAt": "2026-03-03T00:00:00Z",
+      "archivedTo": "docs/archive/2026-03/canvas-visualization/"
+    }
+  }
+}

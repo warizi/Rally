@@ -1,5 +1,5 @@
-appId: com.electron.app
-productName: rally
+appId: com.jin.rally
+productName: Rally
 directories:
   buildResources: build
 files:
@@ -9,6 +9,13 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+extraResources:
+  - from: src/main/db/migrations
+    to: migrations
+  - from: dist-mcp
+    to: dist-mcp
+  - from: .claude/commands
+    to: .claude/commands
 asarUnpack:
   - resources/**
 win:
@@ -19,13 +26,14 @@ nsis:
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
 mac:
+  category: public.app-category.productivity
+  hardenedRuntime: true
+  entitlements: build/entitlements.mac.plist
   entitlementsInherit: build/entitlements.mac.plist
+  notarize: true
   extendInfo:
-    - NSCameraUsageDescription: Application requests access to the device's camera.
-    - NSMicrophoneUsageDescription: Application requests access to the device's microphone.
     - NSDocumentsFolderUsageDescription: Application requests access to the user's Documents folder.
     - NSDownloadsFolderUsageDescription: Application requests access to the user's Downloads folder.
-  notarize: false
 dmg:
   artifactName: ${name}-${version}.${ext}
 linux:

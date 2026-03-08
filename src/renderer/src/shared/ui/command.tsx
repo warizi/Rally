@@ -11,7 +11,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle
-} from 'src/renderer/src/shared/ui/dialog'
+} from '@/shared/ui/dialog'
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
