@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { app, ipcMain } from 'electron'
 import { join } from 'path'
 import { readFileSync, readdirSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
@@ -11,6 +11,10 @@ export interface CommandFile {
 }
 
 export function registerAppInfoHandlers(): void {
+  ipcMain.handle('appInfo:getVersion', (): IpcResponse<string> => {
+    return handle(() => app.getVersion())
+  })
+
   ipcMain.handle('appInfo:getMcpServerPath', (): IpcResponse<string> => {
     return handle(() => {
       if (is.dev) {

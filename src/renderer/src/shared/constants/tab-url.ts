@@ -3,6 +3,7 @@ import {
   Check,
   FileText,
   FolderOpen,
+  History,
   ImageIcon,
   LayoutDashboard,
   Network,
@@ -24,6 +25,7 @@ export type TabType =
   | 'canvas'
   | 'canvas-detail'
   | 'terminal'
+  | 'changelog'
 
 export type TabIcon = TabType
 
@@ -39,7 +41,8 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   calendar: Calendar,
   canvas: Network,
   'canvas-detail': Network,
-  terminal: Terminal
+  terminal: Terminal,
+  changelog: History
 }
 
 // 정적 라우트
@@ -60,7 +63,8 @@ export const ROUTES = {
   CALENDAR: '/calendar',
   CANVAS: '/canvas',
   CANVAS_DETAIL: '/canvas/:canvasId',
-  TERMINAL: '/terminal'
+  TERMINAL: '/terminal',
+  CHANGELOG: '/changelog'
 } as const
 
 export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES]

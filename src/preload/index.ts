@@ -291,6 +291,7 @@ const api = {
   },
 
   appInfo: {
+    getVersion: () => ipcRenderer.invoke('appInfo:getVersion'),
     getMcpServerPath: () => ipcRenderer.invoke('appInfo:getMcpServerPath'),
     getCommandFiles: () => ipcRenderer.invoke('appInfo:getCommandFiles')
   },
