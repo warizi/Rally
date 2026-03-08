@@ -651,6 +651,7 @@ interface CommandFile {
 }
 
 interface AppInfoAPI {
+  getVersion: () => Promise<IpcResponse<string>>
   getMcpServerPath: () => Promise<IpcResponse<string>>
   getCommandFiles: () => Promise<IpcResponse<CommandFile[]>>
 }

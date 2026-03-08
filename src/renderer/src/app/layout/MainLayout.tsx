@@ -14,6 +14,7 @@ import { useCanvasWatcher } from '@entities/canvas'
 import { useTodoWatcher } from '@entities/todo'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
+import { UpdateChecker } from '../providers/update-checker'
 import { useState } from 'react'
 import {
   DndContext,
@@ -59,6 +60,7 @@ function MainLayout(): React.JSX.Element {
   useEntityLinkWatcher()
   // 알림 push 이벤트 구독
   useReminderWatcher()
+  // 앱 업데이트 후 changelog 탭 자동 오픈
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
   // 드래그 활성화 조건: 8px 이상 이동해야 드래그 시작
@@ -77,6 +79,7 @@ function MainLayout(): React.JSX.Element {
 
   return (
     <SidebarProvider>
+      <UpdateChecker />
       <MainSidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <DndContext
