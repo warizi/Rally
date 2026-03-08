@@ -295,6 +295,14 @@ const api = {
     getCommandFiles: () => ipcRenderer.invoke('appInfo:getCommandFiles')
   },
 
+  backup: {
+    export: (workspaceId: string) => ipcRenderer.invoke('backup:export', workspaceId),
+    selectFile: () => ipcRenderer.invoke('backup:selectFile'),
+    readManifest: (zipPath: string) => ipcRenderer.invoke('backup:readManifest', zipPath),
+    import: (zipPath: string, name: string, path: string) =>
+      ipcRenderer.invoke('backup:import', zipPath, name, path)
+  },
+
   terminal: {
     create: (args: { cwd: string; cols: number; rows: number }) =>
       ipcRenderer.invoke('terminal:create', args),

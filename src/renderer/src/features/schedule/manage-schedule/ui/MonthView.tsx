@@ -174,7 +174,10 @@ export function MonthView({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div ref={containerRef} className="flex flex-col flex-1 overflow-hidden items-center month-container">
+      <div
+        ref={containerRef}
+        className="flex flex-col flex-1 overflow-hidden items-center month-container"
+      >
         {/* 요일 헤더 */}
         <div className="grid grid-cols-7 border-b border-border w-full">
           {WEEKDAY_LABELS.map((label, i) => (
@@ -360,11 +363,20 @@ function CellContent({
       <div className="mt-1 space-y-0.5 @[400px]:hidden">
         {dayMulti.slice(0, 2).map((s) => (
           <div key={s.id} className="flex items-center gap-px">
-            {isTodoItem(s) && (
-              s.isDone
-                ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-                : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-            )}
+            {isTodoItem(s) &&
+              (s.isDone ? (
+                <Check
+                  className="size-2.5 shrink-0"
+                  strokeWidth={3}
+                  style={{ color: getScheduleColor(s) }}
+                />
+              ) : (
+                <Circle
+                  className="size-2 shrink-0"
+                  strokeWidth={3}
+                  style={{ color: getScheduleColor(s) }}
+                />
+              ))}
             <div
               className="h-[3px] flex-1 rounded-full"
               style={{ backgroundColor: getScheduleColor(s) }}
@@ -373,15 +385,29 @@ function CellContent({
         ))}
         {daySchedules.length > 0 && (
           <div className="flex gap-0.5 flex-wrap">
-            {daySchedules.slice(0, 3).map((s) =>
-              isTodoItem(s) ? (
-                s.isDone
-                  ? <Check key={s.id} className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-                  : <Circle key={s.id} className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-              ) : (
-                <ScheduleDot key={s.id} schedule={s} />
-              )
-            )}
+            {daySchedules
+              .slice(0, 3)
+              .map((s) =>
+                isTodoItem(s) ? (
+                  s.isDone ? (
+                    <Check
+                      key={s.id}
+                      className="size-2.5 shrink-0"
+                      strokeWidth={3}
+                      style={{ color: getScheduleColor(s) }}
+                    />
+                  ) : (
+                    <Circle
+                      key={s.id}
+                      className="size-2 shrink-0"
+                      strokeWidth={3}
+                      style={{ color: getScheduleColor(s) }}
+                    />
+                  )
+                ) : (
+                  <ScheduleDot key={s.id} schedule={s} />
+                )
+              )}
           </div>
         )}
         {dayMulti.length + daySchedules.length > 5 && (
@@ -402,11 +428,24 @@ function CellContent({
                 style={getItemStyle(s)}
               >
                 {isTodoItem(s) ? (
-                  s.isDone
-                    ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-                    : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                  s.isDone ? (
+                    <Check
+                      className="size-2.5 shrink-0"
+                      strokeWidth={3}
+                      style={{ color: getScheduleColor(s) }}
+                    />
+                  ) : (
+                    <Circle
+                      className="size-2 shrink-0"
+                      strokeWidth={3}
+                      style={{ color: getScheduleColor(s) }}
+                    />
+                  )
                 ) : (
-                  <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: getScheduleColor(s) }} />
+                  <div
+                    className="size-2 rounded-full shrink-0"
+                    style={{ backgroundColor: getScheduleColor(s) }}
+                  />
                 )}
                 <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
                 <span className={s.isDone ? 'line-through opacity-60' : ''}>{s.title}</span>
@@ -441,9 +480,19 @@ function SelectedDateList({
         <ScheduleDetailPopover key={s.id} schedule={s} workspaceId={workspaceId}>
           <div className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-accent rounded px-1 py-0.5">
             {isTodoItem(s) ? (
-              s.isDone
-                ? <Check className="size-3 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-                : <Circle className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+              s.isDone ? (
+                <Check
+                  className="size-3 shrink-0"
+                  strokeWidth={3}
+                  style={{ color: getScheduleColor(s) }}
+                />
+              ) : (
+                <Circle
+                  className="size-2.5 shrink-0"
+                  strokeWidth={3}
+                  style={{ color: getScheduleColor(s) }}
+                />
+              )
             ) : (
               <div className="size-2 rounded-full shrink-0" style={getItemDotStyle(s)} />
             )}

@@ -106,7 +106,10 @@ export function TodoStatsCard({ workspaceId, className }: TodoStatsCardProps): R
           <div className="grid grid-cols-2 gap-x-6 gap-y-3">
             {STATUS_CONFIG.map(({ key, label, color }) => (
               <div key={key} className="flex items-center gap-2">
-                <div className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                <div
+                  className="size-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: color }}
+                />
                 <span className="text-sm text-muted-foreground">{label}</span>
                 <span className="text-sm tabular-nums font-semibold ml-auto">
                   <CountUp value={stats.byStatus[key]} />
@@ -121,7 +124,9 @@ export function TodoStatsCard({ workspaceId, className }: TodoStatsCardProps): R
               <div key={key} className="flex items-center gap-1.5">
                 <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
                 <span className="text-xs text-muted-foreground">{label}</span>
-                <span className="text-xs tabular-nums font-semibold"><CountUp value={stats.byPriority[key]} /></span>
+                <span className="text-xs tabular-nums font-semibold">
+                  <CountUp value={stats.byPriority[key]} />
+                </span>
               </div>
             ))}
           </div>

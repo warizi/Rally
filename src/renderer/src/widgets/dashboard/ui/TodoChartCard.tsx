@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Area, AreaChart, CartesianGrid, XAxis } from 'recharts'
 import { TrendingUp } from 'lucide-react'
-import { format, subDays, subMonths, startOfDay, isAfter, isBefore, addDays } from 'date-fns'
+import { format, subDays, subMonths, startOfDay, isBefore, addDays } from 'date-fns'
 import { useCountUp } from '@shared/hooks/use-count-up'
 import { ko } from 'date-fns/locale'
 import { useTodosByWorkspace } from '@entities/todo'
@@ -52,11 +52,7 @@ export function TodoChartCard({ workspaceId, className }: Props): React.JSX.Elem
   const chartData = useMemo(() => {
     const now = new Date()
     const rangeStart =
-      range === '7d'
-        ? subDays(now, 6)
-        : range === '30d'
-          ? subDays(now, 29)
-          : subMonths(now, 3)
+      range === '7d' ? subDays(now, 6) : range === '30d' ? subDays(now, 29) : subMonths(now, 3)
 
     const start = startOfDay(rangeStart)
     const end = startOfDay(addDays(now, 1))
@@ -134,10 +130,7 @@ export function TodoChartCard({ workspaceId, className }: Props): React.JSX.Elem
         </div>
 
         <ChartContainer config={chartConfig} className="aspect-auto h-44 w-full">
-          <AreaChart
-            data={chartData}
-            margin={{ top: 4, right: 20, bottom: 0, left: 20 }}
-          >
+          <AreaChart data={chartData} margin={{ top: 4, right: 20, bottom: 0, left: 20 }}>
             <defs>
               <linearGradient id="fillCreated" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-created)" stopOpacity={0.8} />

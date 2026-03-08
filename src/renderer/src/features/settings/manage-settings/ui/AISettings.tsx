@@ -104,8 +104,8 @@ export function AISettings(): React.JSX.Element {
         <div className="space-y-2 border-t pt-4">
           <h3 className="text-sm font-medium mb-1">Claude 커맨드</h3>
           <p className="text-xs text-muted-foreground mb-3">
-            Claude Code에서 <code className="bg-muted px-1 rounded">/rally-*</code> 형태로 사용할
-            수 있는 커맨드입니다. 내용을 복사하여 다른 프로젝트에서도 활용할 수 있습니다.
+            Claude Code에서 <code className="bg-muted px-1 rounded">/rally-*</code> 형태로 사용할 수
+            있는 커맨드입니다. 내용을 복사하여 다른 프로젝트에서도 활용할 수 있습니다.
           </p>
           <div className="space-y-2">
             {commandFiles.map((file) => (

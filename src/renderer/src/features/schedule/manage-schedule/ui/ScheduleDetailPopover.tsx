@@ -88,9 +88,11 @@ export function ScheduleDetailPopover({
           <div className="space-y-2.5">
             <div className="flex items-start gap-2">
               {isTodo ? (
-                schedule.isDone
-                  ? <Check className="size-3.5 mt-0.5 shrink-0" strokeWidth={3} style={{ color }} />
-                  : <Circle className="size-3 mt-1 shrink-0" strokeWidth={3} style={{ color }} />
+                schedule.isDone ? (
+                  <Check className="size-3.5 mt-0.5 shrink-0" strokeWidth={3} style={{ color }} />
+                ) : (
+                  <Circle className="size-3 mt-1 shrink-0" strokeWidth={3} style={{ color }} />
+                )
               ) : (
                 <div
                   className="size-3 rounded-full mt-1 shrink-0"
@@ -98,7 +100,11 @@ export function ScheduleDetailPopover({
                 />
               )}
               <div className="flex-1 min-w-0">
-                <span className={`font-semibold text-sm leading-snug ${schedule.isDone ? 'line-through opacity-60' : ''}`}>{schedule.title}</span>
+                <span
+                  className={`font-semibold text-sm leading-snug ${schedule.isDone ? 'line-through opacity-60' : ''}`}
+                >
+                  {schedule.title}
+                </span>
                 {isTodo && (
                   <span className="inline-flex items-center gap-0.5 ml-1.5 text-[10px] text-muted-foreground bg-muted rounded px-1 py-px align-middle">
                     <Check className="size-2.5" />할 일

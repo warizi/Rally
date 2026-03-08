@@ -30,11 +30,12 @@ import { workspaceService } from './services/workspace'
 import { terminalService } from './services/terminal'
 import { startMcpApiServer, stopMcpApiServer } from './mcp-api/server'
 import { registerAppInfoHandlers } from './ipc/app-info'
+import { registerBackupHandlers } from './ipc/backup'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
     ? join(process.cwd(), 'src/main/db/migrations')
-    : join(__dirname, '../../resources/migrations')
+    : join(process.resourcesPath, 'migrations')
   migrate(db, { migrationsFolder })
 }
 
@@ -115,6 +116,7 @@ app.whenReady().then(() => {
   registerItemTagHandlers()
   registerTerminalHandlers()
   registerAppInfoHandlers()
+  registerBackupHandlers()
 
   startMcpApiServer()
 

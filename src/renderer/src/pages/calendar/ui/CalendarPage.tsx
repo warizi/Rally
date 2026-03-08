@@ -193,8 +193,7 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={handleToggleTodos}>
-                        <CheckSquare className="size-4 mr-2" />
-                        할 일 {showTodos ? '숨기기' : '표시'}
+                        <CheckSquare className="size-4 mr-2" />할 일 {showTodos ? '숨기기' : '표시'}
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem onClick={() => handleViewTypeChange('month')}>

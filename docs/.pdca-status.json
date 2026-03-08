@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T02:42:55.765Z",
+  "lastUpdated": "2026-03-08T04:56:46.632Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -80,7 +80,8 @@
     "mcp-server",
     "tools",
     "mcp",
-    "workspace-watcher"
+    "workspace-watcher",
+    "backup.ts"
   ],
   "primaryFeature": "pdf-viewer",
   "features": {
@@ -106,9 +107,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:43:07.402Z",
-        "lastUpdated": "2026-03-08T00:03:06.342Z"
+        "lastUpdated": "2026-03-08T04:26:48.583Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/model/__tests__/useWorkspaceSwitch.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/CreateWorkspaceDialog.tsx"
     },
     "workspace.ts": {
       "phase": "do",
@@ -184,9 +185,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:25:36.051Z",
-        "lastUpdated": "2026-03-08T02:02:35.333Z"
+        "lastUpdated": "2026-03-08T04:05:16.771Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/app-info.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/backup.ts"
     },
     "main": {
       "phase": "do",
@@ -197,7 +198,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:01.950Z",
-        "lastUpdated": "2026-03-08T01:02:29.794Z"
+        "lastUpdated": "2026-03-08T04:56:46.632Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
     },
@@ -210,7 +211,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:20.139Z",
-        "lastUpdated": "2026-03-08T02:03:14.891Z"
+        "lastUpdated": "2026-03-08T04:05:52.182Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
     },
@@ -1125,6 +1126,19 @@
         "lastUpdated": "2026-03-08T00:00:45.448Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/workspace-watcher/index.ts"
+    },
+    "backup.ts": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-08T04:05:05.110Z",
+        "lastUpdated": "2026-03-08T04:05:05.110Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/backup.ts"
     }
   },
   "pipeline": {
@@ -1135,7 +1149,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T02:42:55.765Z"
+    "lastActivity": "2026-03-08T04:56:46.632Z"
   },
   "history": [
     {
@@ -22213,6 +22227,120 @@
     {
       "timestamp": "2026-03-08T02:42:55.764Z",
       "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:03:00.711Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:05.110Z",
+      "feature": "backup.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:16.771Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:23.950Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:27.128Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:35.947Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:47.150Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:05:52.182Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:06:09.227Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:06:24.526Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:06:27.734Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:06:46.871Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:06:54.285Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:06:58.149Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:07:03.764Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:07:08.626Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:26:41.320Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:26:48.583Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T04:56:46.632Z",
+      "feature": "main",
       "phase": "do",
       "action": "updated"
     }

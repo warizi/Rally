@@ -105,7 +105,7 @@ export const sidebar_items: SidebarItem[] = [
     tabType: 'canvas',
     pathname: ROUTES.CANVAS,
     icon: TAB_ICON['canvas']
-  },
+  }
   // {
   //   title: '터미널',
   //   tabType: 'terminal',

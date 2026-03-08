@@ -83,11 +83,15 @@ export function ScheduleBlock({
         }}
       >
         <div className="flex-1 min-w-0 px-1 py-0.5">
-          <div className={`flex items-center gap-0.5 text-[11px] font-medium truncate leading-tight ${isDone ? 'line-through' : ''}`}>
+          <div
+            className={`flex items-center gap-0.5 text-[11px] font-medium truncate leading-tight ${isDone ? 'line-through' : ''}`}
+          >
             {isTodo ? (
-              isDone
-                ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color }} />
-                : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color }} />
+              isDone ? (
+                <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color }} />
+              ) : (
+                <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color }} />
+              )
             ) : (
               <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
             )}

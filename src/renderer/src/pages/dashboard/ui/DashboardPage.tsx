@@ -33,8 +33,14 @@ export function DashboardPage(): React.JSX.Element {
   return (
     <TabContainer header={<TabHeader title="대시보드" icon={LayoutDashboard} />}>
       <div className="grid grid-cols-1 @[400px]:grid-cols-2 @[800px]:grid-cols-3 gap-4 py-4">
-        <TodoChartCard workspaceId={workspaceId} className="@[400px]:col-span-2 @[800px]:col-span-2" />
-        <TodoStatsCard workspaceId={workspaceId} className="@[400px]:col-span-2 @[800px]:col-span-1" />
+        <TodoChartCard
+          workspaceId={workspaceId}
+          className="@[400px]:col-span-2 @[800px]:col-span-2"
+        />
+        <TodoStatsCard
+          workspaceId={workspaceId}
+          className="@[400px]:col-span-2 @[800px]:col-span-1"
+        />
         <UpcomingTodoCard workspaceId={workspaceId} />
         <TodayScheduleCard workspaceId={workspaceId} />
         <QuickActionsCard
@@ -64,7 +70,10 @@ export function DashboardPage(): React.JSX.Element {
           }
         />
 
-        <NoteChartCard workspaceId={workspaceId} className="@[400px]:col-span-2 @[800px]:col-span-2" />
+        <NoteChartCard
+          workspaceId={workspaceId}
+          className="@[400px]:col-span-2 @[800px]:col-span-2"
+        />
         <RecentNotesCard workspaceId={workspaceId} />
         <RecentCanvasCard workspaceId={workspaceId} />
         <FileOverviewCard workspaceId={workspaceId} />

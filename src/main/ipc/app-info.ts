@@ -1,4 +1,4 @@
-import { app, ipcMain } from 'electron'
+import { ipcMain } from 'electron'
 import { join } from 'path'
 import { readFileSync, readdirSync } from 'fs'
 import { is } from '@electron-toolkit/utils'

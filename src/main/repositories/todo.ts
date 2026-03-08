@@ -45,7 +45,12 @@ export const todoRepository = {
           or(
             and(isNotNull(todos.startDate), lte(todos.startDate, end), gte(todos.startDate, start)),
             and(isNotNull(todos.dueDate), lte(todos.dueDate, end), gte(todos.dueDate, start)),
-            and(isNotNull(todos.startDate), isNotNull(todos.dueDate), lte(todos.startDate, end), gte(todos.dueDate, start))
+            and(
+              isNotNull(todos.startDate),
+              isNotNull(todos.dueDate),
+              lte(todos.startDate, end),
+              gte(todos.dueDate, start)
+            )
           )
         )
       )

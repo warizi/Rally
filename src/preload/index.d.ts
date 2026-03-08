@@ -655,6 +655,21 @@ interface AppInfoAPI {
   getCommandFiles: () => Promise<IpcResponse<CommandFile[]>>
 }
 
+interface BackupManifest {
+  version: number
+  appVersion: string
+  workspaceName: string
+  exportedAt: string
+  tables: string[]
+}
+
+interface BackupAPI {
+  export: (workspaceId: string) => Promise<IpcResponse<null>>
+  selectFile: () => Promise<string | null>
+  readManifest: (zipPath: string) => Promise<IpcResponse<BackupManifest>>
+  import: (zipPath: string, name: string, path: string) => Promise<IpcResponse<Workspace>>
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -675,6 +690,7 @@ interface API {
   reminder: ReminderAPI
   tag: TagAPI
   itemTag: ItemTagAPI
+  backup: BackupAPI
   appInfo: AppInfoAPI
   terminal: TerminalAPI
 }

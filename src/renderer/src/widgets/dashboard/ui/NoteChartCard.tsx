@@ -45,11 +45,7 @@ export function NoteChartCard({ workspaceId, className }: Props): React.JSX.Elem
   const chartData = useMemo(() => {
     const now = new Date()
     const rangeStart =
-      range === '7d'
-        ? subDays(now, 6)
-        : range === '30d'
-          ? subDays(now, 29)
-          : subMonths(now, 3)
+      range === '7d' ? subDays(now, 6) : range === '30d' ? subDays(now, 29) : subMonths(now, 3)
 
     const start = startOfDay(rangeStart)
     const end = startOfDay(addDays(now, 1))
@@ -114,10 +110,7 @@ export function NoteChartCard({ workspaceId, className }: Props): React.JSX.Elem
         </div>
 
         <ChartContainer config={chartConfig} className="aspect-auto h-56 w-full">
-          <AreaChart
-            data={chartData}
-            margin={{ top: 4, right: 20, bottom: 0, left: 20 }}
-          >
+          <AreaChart data={chartData} margin={{ top: 4, right: 20, bottom: 0, left: 20 }}>
             <defs>
               <linearGradient id="fillNoteCreated" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="var(--color-created)" stopOpacity={0.8} />

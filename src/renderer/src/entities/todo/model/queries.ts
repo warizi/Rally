@@ -51,7 +51,13 @@ export function useTodosByDateRange(
   range: { start: Date; end: Date } | undefined
 ): UseQueryResult<TodoItem[]> {
   return useQuery({
-    queryKey: [TODO_KEY, 'dateRange', workspaceId, range?.start?.toISOString(), range?.end?.toISOString()],
+    queryKey: [
+      TODO_KEY,
+      'dateRange',
+      workspaceId,
+      range?.start?.toISOString(),
+      range?.end?.toISOString()
+    ],
     queryFn: async (): Promise<TodoItem[]> => {
       const res: IpcResponse<TodoItem[]> = await window.api.todo.findByDateRange(
         workspaceId!,

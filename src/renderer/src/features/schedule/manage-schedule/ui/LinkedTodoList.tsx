@@ -54,7 +54,9 @@ export function LinkedTodoList({
                 ) : (
                   <Circle className="size-3 shrink-0 text-muted-foreground" />
                 )}
-                <span className={cn('truncate', todo.isDone && 'line-through text-muted-foreground')}>
+                <span
+                  className={cn('truncate', todo.isDone && 'line-through text-muted-foreground')}
+                >
                   {todo.title}
                 </span>
               </div>

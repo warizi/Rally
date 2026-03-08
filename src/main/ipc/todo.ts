@@ -16,11 +16,7 @@ export function registerTodoHandlers(): void {
 
   ipcMain.handle(
     'todo:findByDateRange',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      range: { start: Date; end: Date }
-    ): IpcResponse =>
+    (_: IpcMainInvokeEvent, workspaceId: string, range: { start: Date; end: Date }): IpcResponse =>
       handle(() => todoService.findByWorkspaceAndDateRange(workspaceId, range))
   )
 

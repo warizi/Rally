@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -5,7 +6,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
+import { toast } from 'sonner'
 import { useCreateWorkspace } from '@entities/workspace'
+import { useImportBackup, BackupRestoreSection } from '@features/workspace/backup-workspace'
 import { JSX } from 'react'
 
 const schema = z.object({
@@ -22,7 +25,11 @@ interface Props {
 }
 
 export function CreateWorkspaceDialog({ open, onOpenChange, onCreated }: Props): JSX.Element {
-  const { mutate: createWorkspace, isPending } = useCreateWorkspace()
+  const { mutate: createWorkspace, isPending: isCreating } = useCreateWorkspace()
+  const { mutate: importBackup, isPending: isImporting } = useImportBackup()
+  const [backupZipPath, setBackupZipPath] = useState<string | null>(null)
+
+  const isPending = isCreating || isImporting
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -36,19 +43,48 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreated }: Props):
     }
   }
 
+  const handleBackupSelected = (zipPath: string, workspaceName: string): void => {
+    setBackupZipPath(zipPath)
+    form.setValue('name', workspaceName, { shouldValidate: true })
+  }
+
+  const handleBackupCleared = (): void => {
+    setBackupZipPath(null)
+  }
+
   const handleSubmit = (values: FormValues): void => {
-    createWorkspace(
-      { name: values.name, path: values.path },
-      {
-        onSuccess: (data) => {
-          if (data?.id) {
-            onCreated(data.id)
-            onOpenChange(false)
-            form.reset()
+    if (backupZipPath) {
+      importBackup(
+        { zipPath: backupZipPath, name: values.name, path: values.path },
+        {
+          onSuccess: (data) => {
+            if (data?.id) {
+              toast.success('백업에서 복구되었습니다.')
+              onCreated(data.id)
+              onOpenChange(false)
+              form.reset()
+              setBackupZipPath(null)
+            }
+          },
+          onError: (err) => {
+            toast.error(`복구에 실패했습니다: ${err.message}`)
           }
         }
-      }
-    )
+      )
+    } else {
+      createWorkspace(
+        { name: values.name, path: values.path },
+        {
+          onSuccess: (data) => {
+            if (data?.id) {
+              onCreated(data.id)
+              onOpenChange(false)
+              form.reset()
+            }
+          }
+        }
+      )
+    }
   }
 
   return (
@@ -93,12 +129,16 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreated }: Props):
                 </FormItem>
               )}
             />
+            <BackupRestoreSection
+              onBackupSelected={handleBackupSelected}
+              onBackupCleared={handleBackupCleared}
+            />
             <DialogFooter className="mt-4">
               <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 취소
               </Button>
               <Button type="submit" disabled={isPending}>
-                {isPending ? '생성 중...' : '생성'}
+                {isPending ? (backupZipPath ? '복구 중...' : '생성 중...') : '생성'}
               </Button>
             </DialogFooter>
           </form>

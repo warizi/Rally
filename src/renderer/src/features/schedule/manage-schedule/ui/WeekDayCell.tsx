@@ -45,11 +45,24 @@ export function WeekDayCell({
               style={getItemStyle(s)}
             >
               {isTodoItem(s) ? (
-                s.isDone
-                  ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
-                  : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                s.isDone ? (
+                  <Check
+                    className="size-2.5 shrink-0"
+                    strokeWidth={3}
+                    style={{ color: getScheduleColor(s) }}
+                  />
+                ) : (
+                  <Circle
+                    className="size-2 shrink-0"
+                    strokeWidth={3}
+                    style={{ color: getScheduleColor(s) }}
+                  />
+                )
               ) : (
-                <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: getScheduleColor(s) }} />
+                <div
+                  className="size-2 rounded-full shrink-0"
+                  style={{ backgroundColor: getScheduleColor(s) }}
+                />
               )}
               {!s.allDay && (
                 <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
