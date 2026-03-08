@@ -22,7 +22,7 @@ interface SettingsDialogProps {
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '기본' },
   { id: 'display', label: '디스플레이' },
-  { id: 'ai', label: 'AI' }
+  { id: 'ai', label: 'AI (Claude)' }
 ]
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): React.JSX.Element {

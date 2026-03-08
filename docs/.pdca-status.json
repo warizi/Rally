@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T01:59:45.586Z",
+  "lastUpdated": "2026-03-08T02:06:10.743Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -184,9 +184,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:25:36.051Z",
-        "lastUpdated": "2026-03-08T01:18:00.347Z"
+        "lastUpdated": "2026-03-08T02:02:35.333Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/todo.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/app-info.ts"
     },
     "main": {
       "phase": "do",
@@ -210,7 +210,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:20.139Z",
-        "lastUpdated": "2026-03-08T01:18:14.633Z"
+        "lastUpdated": "2026-03-08T02:03:14.891Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
     },
@@ -886,7 +886,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T06:28:58.636Z",
-        "lastUpdated": "2026-03-08T01:09:23.144Z"
+        "lastUpdated": "2026-03-08T02:06:10.743Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/manage-settings/ui/SettingsDialog.tsx"
     },
@@ -1135,7 +1135,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T01:59:45.586Z"
+    "lastActivity": "2026-03-08T02:06:10.743Z"
   },
   "history": [
     {
@@ -21865,6 +21865,42 @@
     {
       "timestamp": "2026-03-08T01:59:45.586Z",
       "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T02:02:35.333Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T02:02:56.618Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T02:03:14.891Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T02:03:40.731Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T02:04:47.213Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T02:06:10.743Z",
+      "feature": "settings",
       "phase": "do",
       "action": "updated"
     }

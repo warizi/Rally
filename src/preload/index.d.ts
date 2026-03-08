@@ -645,8 +645,14 @@ interface TerminalAPI {
   onExit: (callback: (data: { exitCode: number }) => void) => () => void
 }
 
+interface CommandFile {
+  name: string
+  content: string
+}
+
 interface AppInfoAPI {
   getMcpServerPath: () => Promise<IpcResponse<string>>
+  getCommandFiles: () => Promise<IpcResponse<CommandFile[]>>
 }
 
 interface API {

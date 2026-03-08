@@ -1,15 +1,28 @@
 import { useEffect, useState } from 'react'
-import { CopyIcon, CheckIcon } from 'lucide-react'
+import { CopyIcon, CheckIcon, FileTextIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
+import { ScrollArea } from '@/shared/ui/scroll-area'
+
+interface CommandFile {
+  name: string
+  content: string
+}
 
 export function AISettings(): React.JSX.Element {
   const [mcpServerPath, setMcpServerPath] = useState('')
-  const [copied, setCopied] = useState<'path' | 'config' | null>(null)
+  const [commandFiles, setCommandFiles] = useState<CommandFile[]>([])
+  const [copied, setCopied] = useState<string | null>(null)
+  const [expandedCommand, setExpandedCommand] = useState<string | null>(null)
 
   useEffect(() => {
     window.api.appInfo.getMcpServerPath().then((res) => {
       if (res.success && res.data) {
         setMcpServerPath(res.data)
+      }
+    })
+    window.api.appInfo.getCommandFiles().then((res) => {
+      if (res.success && res.data) {
+        setCommandFiles(res.data)
       }
     })
   }, [])
@@ -27,9 +40,9 @@ export function AISettings(): React.JSX.Element {
     2
   )
 
-  const handleCopy = async (text: string, type: 'path' | 'config'): Promise<void> => {
+  const handleCopy = async (text: string, key: string): Promise<void> => {
     await navigator.clipboard.writeText(text)
-    setCopied(type)
+    setCopied(key)
     setTimeout(() => setCopied(null), 2000)
   }
 
@@ -86,6 +99,53 @@ export function AISettings(): React.JSX.Element {
           </Button>
         </div>
       </div>
+
+      {commandFiles.length > 0 && (
+        <div className="space-y-2 border-t pt-4">
+          <h3 className="text-sm font-medium mb-1">Claude 커맨드</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            Claude Code에서 <code className="bg-muted px-1 rounded">/rally-*</code> 형태로 사용할
+            수 있는 커맨드입니다. 내용을 복사하여 다른 프로젝트에서도 활용할 수 있습니다.
+          </p>
+          <div className="space-y-2">
+            {commandFiles.map((file) => (
+              <div key={file.name} className="border rounded-md overflow-hidden">
+                <div
+                  className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm hover:bg-accent/50 transition-colors cursor-pointer"
+                  onClick={() =>
+                    setExpandedCommand(expandedCommand === file.name ? null : file.name)
+                  }
+                >
+                  <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                  <span className="font-medium flex-1">{file.name}</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCopy(file.content, `cmd-${file.name}`)
+                    }}
+                  >
+                    {copied === `cmd-${file.name}` ? (
+                      <CheckIcon className="size-3" />
+                    ) : (
+                      <CopyIcon className="size-3" />
+                    )}
+                  </Button>
+                </div>
+                {expandedCommand === file.name && (
+                  <ScrollArea className="max-h-48">
+                    <pre className="text-xs bg-muted px-3 py-2 border-t whitespace-pre-wrap">
+                      {file.content}
+                    </pre>
+                  </ScrollArea>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
