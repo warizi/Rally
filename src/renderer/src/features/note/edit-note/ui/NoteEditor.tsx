@@ -3,6 +3,7 @@ import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from '@milkdown/core'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
 import { commonmark, imageSchema, insertImageCommand } from '@milkdown/preset-commonmark'
+import { gfm } from '@milkdown/kit/preset/gfm'
 import { listener, listenerCtx } from '@milkdown/plugin-listener'
 import { history } from '@milkdown/kit/plugin/history'
 import { upload, uploadConfig } from '@milkdown/kit/plugin/upload'
@@ -119,6 +120,7 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
         }))
       })
       .use(commonmark)
+      .use(gfm)
       .use(history)
       .use(listener)
       .use(upload)

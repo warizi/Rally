@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T00:04:51.034Z",
+  "lastUpdated": "2026-03-08T00:56:21.958Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -395,9 +395,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-25T22:42:49.354Z",
-        "lastUpdated": "2026-03-07T00:31:39.347Z"
+        "lastUpdated": "2026-03-08T00:56:21.958Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/entities/note/index.ts",
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx",
       "previousPhase": "check",
       "autoAdvanced": true
     },
@@ -1135,7 +1135,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T00:04:51.034Z"
+    "lastActivity": "2026-03-08T00:56:21.958Z"
   },
   "history": [
     {
@@ -21181,6 +21181,24 @@
     {
       "timestamp": "2026-03-08T00:04:51.034Z",
       "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T00:55:34.378Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T00:55:43.506Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T00:56:21.958Z",
+      "feature": "note",
       "phase": "do",
       "action": "updated"
     }
