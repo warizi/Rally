@@ -31,6 +31,7 @@ import { terminalService } from './services/terminal'
 import { startMcpApiServer, stopMcpApiServer } from './mcp-api/server'
 import { registerAppInfoHandlers } from './ipc/app-info'
 import { registerBackupHandlers } from './ipc/backup'
+import { setupAutoUpdater } from './lib/updater'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
@@ -122,6 +123,7 @@ app.whenReady().then(() => {
 
   createWindow()
 
+  setupAutoUpdater()
   reminderScheduler.start()
 
   app.on('activate', function () {
