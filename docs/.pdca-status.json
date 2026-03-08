@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T07:17:34.741Z",
+  "lastUpdated": "2026-03-08T07:38:32.304Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -478,7 +478,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-27T01:28:10.041Z",
-        "lastUpdated": "2026-03-08T07:09:40.303Z"
+        "lastUpdated": "2026-03-08T07:38:32.304Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/providers/update-checker.tsx"
     },
@@ -1163,7 +1163,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T07:17:34.741Z"
+    "lastActivity": "2026-03-08T07:38:32.304Z"
   },
   "history": [
     {
@@ -22499,6 +22499,12 @@
     {
       "timestamp": "2026-03-08T07:17:34.741Z",
       "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T07:38:32.304Z",
+      "feature": "providers",
       "phase": "do",
       "action": "updated"
     }
