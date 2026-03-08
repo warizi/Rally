@@ -288,6 +288,10 @@ const api = {
       ipcRenderer.invoke('itemTag:detach', itemType, tagId, itemId)
   },
 
+  appInfo: {
+    getMcpServerPath: () => ipcRenderer.invoke('appInfo:getMcpServerPath')
+  },
+
   terminal: {
     create: (args: { cwd: string; cols: number; rows: number }) =>
       ipcRenderer.invoke('terminal:create', args),

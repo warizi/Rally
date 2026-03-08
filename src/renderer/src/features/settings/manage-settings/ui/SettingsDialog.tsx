@@ -10,8 +10,9 @@ import {
 } from '@/shared/ui/dialog'
 import { cn } from '@/shared/lib/utils'
 import { DisplaySettings } from './DisplaySettings'
+import { AISettings } from './AISettings'
 
-type SettingsTab = 'general' | 'display'
+type SettingsTab = 'general' | 'display' | 'ai'
 
 interface SettingsDialogProps {
   open: boolean
@@ -20,7 +21,8 @@ interface SettingsDialogProps {
 
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '기본' },
-  { id: 'display', label: '디스플레이' }
+  { id: 'display', label: '디스플레이' },
+  { id: 'ai', label: 'AI' }
 ]
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): React.JSX.Element {
@@ -34,7 +36,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
           className={cn(
             'bg-background fixed top-[50%] left-[50%] z-50',
             'translate-x-[-50%] translate-y-[-50%]',
-            'w-full max-w-2xl h-[480px]',
+            'w-full max-w-3xl h-[480px]',
             'rounded-lg border shadow-lg outline-none',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
@@ -81,6 +83,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
                 </div>
               )}
               {activeTab === 'display' && <DisplaySettings />}
+              {activeTab === 'ai' && <AISettings />}
             </div>
           </div>
         </DialogPrimitive.Content>

@@ -29,6 +29,7 @@ import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 import { terminalService } from './services/terminal'
 import { startMcpApiServer, stopMcpApiServer } from './mcp-api/server'
+import { registerAppInfoHandlers } from './ipc/app-info'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
@@ -113,6 +114,7 @@ app.whenReady().then(() => {
   registerTagHandlers()
   registerItemTagHandlers()
   registerTerminalHandlers()
+  registerAppInfoHandlers()
 
   startMcpApiServer()
 

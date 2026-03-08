@@ -1,20 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { CheckIcon } from 'lucide-react'
 import { cn } from '@/shared/lib/utils'
-import { applyTheme, type Theme } from '@/shared/lib/theme'
+import { applyTheme, applyFontSize, type Theme, type FontSize } from '@/shared/lib/theme'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Separator } from '@/shared/ui/separator'
 import { useDayViewTimeSettings } from '@/features/schedule/manage-schedule/model/use-day-view-time-settings'
+
+const FONT_SIZE_OPTIONS: { value: FontSize; label: string }[] = [
+  { value: 'small', label: '작게' },
+  { value: 'medium', label: '보통' },
+  { value: 'large', label: '크게' }
+]
 
 export function DisplaySettings(): React.JSX.Element {
   const [currentTheme, setCurrentTheme] = useState<Theme>(() =>
     document.documentElement.classList.contains('dark') ? 'dark' : 'light'
   )
+  const [currentFontSize, setCurrentFontSize] = useState<FontSize>('medium')
+
+  useEffect(() => {
+    window.api.settings.get('fontSize').then((res) => {
+      if (res.success && res.data) {
+        setCurrentFontSize(res.data as FontSize)
+      }
+    })
+  }, [])
 
   const handleThemeChange = async (theme: Theme): Promise<void> => {
     setCurrentTheme(theme)
     applyTheme(theme)
     await window.api.settings.set('theme', theme)
+  }
+
+  const handleFontSizeChange = async (size: FontSize): Promise<void> => {
+    setCurrentFontSize(size)
+    applyFontSize(size)
+    await window.api.settings.set('fontSize', size)
   }
 
   return (
@@ -35,6 +56,25 @@ export function DisplaySettings(): React.JSX.Element {
             onClick={() => handleThemeChange('dark')}
           />
         </div>
+      </div>
+
+      <Separator />
+
+      <div>
+        <h3 className="text-sm font-medium mb-1">글꼴 크기</h3>
+        <p className="text-xs text-muted-foreground mb-3">앱 전체 글꼴 크기를 조절합니다.</p>
+        <Select value={currentFontSize} onValueChange={handleFontSizeChange}>
+          <SelectTrigger className="w-40" size="sm">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {FONT_SIZE_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <Separator />

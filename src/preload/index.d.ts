@@ -641,6 +641,10 @@ interface TerminalAPI {
   onExit: (callback: (data: { exitCode: number }) => void) => () => void
 }
 
+interface AppInfoAPI {
+  getMcpServerPath: () => Promise<IpcResponse<string>>
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -661,6 +665,7 @@ interface API {
   reminder: ReminderAPI
   tag: TagAPI
   itemTag: ItemTagAPI
+  appInfo: AppInfoAPI
   terminal: TerminalAPI
 }
 
