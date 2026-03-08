@@ -14,9 +14,9 @@ describe('getScheduleColor', () => {
     expect(getScheduleColor(schedule)).toBe('#ef4444')
   })
 
-  it('color=null, priority=medium → #3b82f6', () => {
+  it('color=null, priority=medium → #6b7280', () => {
     const schedule = makeScheduleItem({ color: null, priority: 'medium' as SchedulePriority })
-    expect(getScheduleColor(schedule)).toBe('#3b82f6')
+    expect(getScheduleColor(schedule)).toBe('#6b7280')
   })
 
   it('color=null, priority=low → #6b7280', () => {

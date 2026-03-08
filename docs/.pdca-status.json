@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T01:57:36.866Z",
+  "lastUpdated": "2026-03-08T01:59:45.586Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -662,9 +662,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-01T03:00:15.939Z",
-        "lastUpdated": "2026-03-08T01:57:36.866Z"
+        "lastUpdated": "2026-03-08T01:59:45.586Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/schedule/manage-schedule/ui/ScheduleBlock.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/schedule/manage-schedule/model/__tests__/schedule-color.test.ts"
     },
     "calendar": {
       "phase": "do",
@@ -1135,7 +1135,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T01:57:36.866Z"
+    "lastActivity": "2026-03-08T01:59:45.586Z"
   },
   "history": [
     {
@@ -21846,6 +21846,24 @@
     },
     {
       "timestamp": "2026-03-08T01:57:36.866Z",
+      "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T01:59:19.874Z",
+      "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T01:59:27.735Z",
+      "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-08T01:59:45.586Z",
       "feature": "schedule",
       "phase": "do",
       "action": "updated"
