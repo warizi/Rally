@@ -1,9 +1,17 @@
-import { useMemo } from 'react'
+import { useMemo, useCallback } from 'react'
 import { addDays, addMonths, addWeeks, subDays, subMonths, subWeeks } from 'date-fns'
+import { CheckSquare, MoreHorizontal } from 'lucide-react'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from '@shared/ui/dropdown-menu'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useSchedulesByWorkspace, type ScheduleItem } from '@entities/schedule'
-import { useTodosByWorkspace, type TodoItem } from '@entities/todo'
+import { useTodosByDateRange, type TodoItem } from '@entities/todo'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { Button } from '@shared/ui/button'
@@ -48,7 +56,8 @@ function todoToScheduleItem(todo: TodoItem): ScheduleItem {
     color: null,
     priority: todo.priority,
     createdAt: todo.createdAt,
-    updatedAt: todo.updatedAt
+    updatedAt: todo.updatedAt,
+    isDone: todo.isDone
   }
 }
 
@@ -66,15 +75,25 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
     initialDate: tabSearchParams?.currentDate
   })
 
+  const showTodos = tabSearchParams?.showTodos !== 'false'
+
   const { data: schedules = [] } = useSchedulesByWorkspace(workspaceId, calendar.dateRange)
-  const { data: todos = [] } = useTodosByWorkspace(workspaceId, { filter: 'active' })
+  const { data: todos = [] } = useTodosByDateRange(workspaceId, calendar.dateRange)
 
   const allSchedules = useMemo(() => {
+    if (!showTodos) return schedules
     const todoSchedules = todos
       .filter((t) => t.startDate || t.dueDate)
       .map((t) => todoToScheduleItem(t))
     return [...schedules, ...todoSchedules]
-  }, [schedules, todos])
+  }, [schedules, todos, showTodos])
+
+  const handleToggleTodos = useCallback(() => {
+    if (!tabId) return
+    navigateTab(tabId, {
+      searchParams: { ...tabSearchParams, showTodos: showTodos ? 'false' : 'true' }
+    })
+  }, [tabId, tabSearchParams, showTodos, navigateTab])
 
   function handleViewTypeChange(type: CalendarViewType): void {
     calendar.setViewType(type)
@@ -121,8 +140,13 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
   }
 
   function handleSelectDate(date: Date): void {
-    calendar.selectDate(date)
-    syncCurrentDate(date)
+    if (calendar.viewType === 'month') {
+      // 월간뷰: 선택만, 달 이동 없음
+      calendar.setSelectedDate(date)
+    } else {
+      calendar.selectDate(date)
+      syncCurrentDate(date)
+    }
   }
 
   return (
@@ -134,16 +158,58 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
           description="일정을 관리하는 캘린더 페이지입니다."
           buttons={
             workspaceId ? (
-              <div className="flex items-center gap-2">
-                <CalendarViewToolbar
-                  viewType={calendar.viewType}
-                  onViewTypeChange={handleViewTypeChange}
-                />
-                <ScheduleFormDialog
-                  workspaceId={workspaceId}
-                  trigger={<Button size="sm">+ 추가</Button>}
-                />
-              </div>
+              <>
+                {/* 400px 이상: 펼쳐진 버튼 */}
+                <div className="hidden @[400px]:flex items-center gap-2">
+                  <Button
+                    variant={showTodos ? 'secondary' : 'ghost'}
+                    size="sm"
+                    onClick={handleToggleTodos}
+                    title="할 일 표시"
+                  >
+                    <CheckSquare className="size-4" />
+                  </Button>
+                  <CalendarViewToolbar
+                    viewType={calendar.viewType}
+                    onViewTypeChange={handleViewTypeChange}
+                  />
+                  <ScheduleFormDialog
+                    workspaceId={workspaceId}
+                    trigger={<Button size="sm">+ 추가</Button>}
+                  />
+                </div>
+
+                {/* 400px 미만: 드롭다운 */}
+                <div className="flex @[400px]:hidden items-center gap-1">
+                  <ScheduleFormDialog
+                    workspaceId={workspaceId}
+                    trigger={<Button size="sm">+ 추가</Button>}
+                  />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreHorizontal className="size-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={handleToggleTodos}>
+                        <CheckSquare className="size-4 mr-2" />
+                        할 일 {showTodos ? '숨기기' : '표시'}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => handleViewTypeChange('month')}>
+                        월간 보기 {calendar.viewType === 'month' && '✓'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleViewTypeChange('week')}>
+                        주간 보기 {calendar.viewType === 'week' && '✓'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleViewTypeChange('day')}>
+                        일간 보기 {calendar.viewType === 'day' && '✓'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </>
             ) : (
               <></>
             )

@@ -161,6 +161,8 @@ const api = {
   todo: {
     findByWorkspace: (workspaceId: string, options?: { filter?: 'all' | 'active' | 'completed' }) =>
       ipcRenderer.invoke('todo:findByWorkspace', workspaceId, options),
+    findByDateRange: (workspaceId: string, range: { start: Date; end: Date }) =>
+      ipcRenderer.invoke('todo:findByDateRange', workspaceId, range),
     create: (workspaceId: string, data: unknown) =>
       ipcRenderer.invoke('todo:create', workspaceId, data),
     update: (todoId: string, data: unknown) => ipcRenderer.invoke('todo:update', todoId, data),

@@ -138,9 +138,7 @@ export function WeekView({
                 className={`flex-1 py-1.5 text-center text-xs ${
                   selectedDate && isSameDay(d, selectedDate)
                     ? 'bg-primary text-primary-foreground'
-                    : isSameDay(d, new Date())
-                      ? 'bg-primary/10'
-                      : ''
+                    : ''
                 }`}
                 onClick={() => onSelectDate(d)}
               >
@@ -159,13 +157,11 @@ export function WeekView({
         {/* 중형/대형: 7열 그리드 */}
         <div className="hidden @[400px]:flex flex-col flex-1 overflow-hidden">
           {/* 요일 헤더 */}
-          <div className="grid grid-cols-7 border border-border">
+          <div className="grid grid-cols-7">
             {weekDates.map((d, i) => (
               <div
                 key={i}
-                className={`text-center py-1.5 border-r border-border cursor-pointer ${
-                  isSameDay(d, new Date()) ? 'bg-primary/5' : ''
-                }`}
+                className="text-center py-1.5 cursor-pointer"
                 onClick={() => onSelectDate(d)}
               >
                 <div
@@ -262,7 +258,7 @@ export function WeekView({
 
               {/* 7열 셀 */}
               <div
-                className="grid grid-cols-7 border-l border-b border-border"
+                className="grid grid-cols-7 border-l border-t border-b border-border"
                 style={{ minHeight: 500 }}
               >
                 {weekDates.map((d, i) => (
@@ -319,8 +315,8 @@ function SmallDayList({
             <div className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-accent rounded px-1 py-0.5">
               <div className="size-2 rounded-full shrink-0" style={getItemDotStyle(s)} />
               <span className="truncate">
-                {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
-                {s.title}
+                {isTodoItem(s) && <span className="opacity-60 mr-0.5">{s.isDone ? '☑' : '☐'}</span>}
+                <span className={s.isDone ? 'line-through opacity-60' : ''}>{s.title}</span>
               </span>
               {!s.allDay && (
                 <span className="text-muted-foreground shrink-0 ml-auto">

@@ -1,5 +1,6 @@
 import { useDraggable } from '@dnd-kit/core'
 import { format } from 'date-fns'
+import { Check, Circle } from 'lucide-react'
 import type { ScheduleItem } from '@entities/schedule'
 import { getScheduleColor } from '../model/schedule-color'
 import {
@@ -48,6 +49,7 @@ export function ScheduleBlock({
   const height = scheduleHeight(effectiveStart, effectiveEnd, hourHeight)
 
   const isTodo = isTodoItem(schedule)
+  const isDone = schedule.isDone === true
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `block-${schedule.id}`,
     data: { schedule, type: 'block' }
@@ -63,7 +65,7 @@ export function ScheduleBlock({
     left: `${leftPercent}%`,
     width: `${widthPercent}%`,
     height,
-    opacity: isDragging ? 0.4 : 1
+    opacity: isDragging ? 0.4 : isDone ? 0.5 : 1
   }
 
   return (
@@ -77,13 +79,18 @@ export function ScheduleBlock({
         style={{
           ...style,
           backgroundColor: `${color}${isTodo ? '08' : '20'}`,
-          border: isTodo ? `1.5px dashed ${color}40` : undefined,
-          borderLeft: isTodo ? undefined : `4px solid ${color}`
+          border: isTodo ? `1.5px dashed ${color}40` : undefined
         }}
       >
         <div className="flex-1 min-w-0 px-1 py-0.5">
-          <div className="text-[11px] font-medium truncate leading-tight">
-            {isTodo && <span className="opacity-60 mr-0.5">☑</span>}
+          <div className={`flex items-center gap-0.5 text-[11px] font-medium truncate leading-tight ${isDone ? 'line-through' : ''}`}>
+            {isTodo ? (
+              isDone
+                ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color }} />
+                : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color }} />
+            ) : (
+              <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+            )}
             {schedule.title}
           </div>
           {showTime && (

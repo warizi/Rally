@@ -46,6 +46,24 @@ export function useCompletedTodosByWorkspace(
   return useTodosByWorkspace(workspaceId, { filter: 'completed' })
 }
 
+export function useTodosByDateRange(
+  workspaceId: string | null | undefined,
+  range: { start: Date; end: Date } | undefined
+): UseQueryResult<TodoItem[]> {
+  return useQuery({
+    queryKey: [TODO_KEY, 'dateRange', workspaceId, range?.start?.toISOString(), range?.end?.toISOString()],
+    queryFn: async (): Promise<TodoItem[]> => {
+      const res: IpcResponse<TodoItem[]> = await window.api.todo.findByDateRange(
+        workspaceId!,
+        range!
+      )
+      if (!res.success) throwIpcError(res)
+      return res.data ?? []
+    },
+    enabled: !!workspaceId && !!range
+  })
+}
+
 export function useCreateTodo(): UseMutationResult<
   TodoItem | undefined,
   Error,

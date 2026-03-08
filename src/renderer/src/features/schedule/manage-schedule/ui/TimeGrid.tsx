@@ -55,7 +55,7 @@ export function TimeGrid({
             <div
               key={slot.hour}
               className={`${labelClass} text-muted-foreground text-right pr-2`}
-              style={{ height: hourHeight, lineHeight: `${hourHeight}px` }}
+              style={{ height: hourHeight, lineHeight: '1' }}
             >
               {slot.label}
             </div>

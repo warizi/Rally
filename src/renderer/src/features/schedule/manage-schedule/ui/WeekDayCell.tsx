@@ -1,5 +1,6 @@
 import { useDroppable, useDraggable } from '@dnd-kit/core'
 import { format } from 'date-fns'
+import { Check, Circle } from 'lucide-react'
 import type { ScheduleItem } from '@entities/schedule'
 import { isScheduleOnDate, isTodoItem } from '../model/calendar-predicates'
 import { getScheduleColor } from '../model/schedule-color'
@@ -40,14 +41,20 @@ export function WeekDayCell({
         <DraggableScheduleItem key={s.id} schedule={s}>
           <ScheduleDetailPopover schedule={s} workspaceId={workspaceId}>
             <div
-              className="text-[10px] @[800px]:text-[11px] truncate rounded px-1 py-px cursor-pointer"
+              className="flex items-center gap-0.5 text-[10px] @[800px]:text-[11px] truncate rounded px-1 py-px cursor-pointer"
               style={getItemStyle(s)}
             >
-              {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
+              {isTodoItem(s) ? (
+                s.isDone
+                  ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                  : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+              ) : (
+                <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: getScheduleColor(s) }} />
+              )}
               {!s.allDay && (
                 <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
               )}
-              {s.title}
+              <span className={s.isDone ? 'line-through opacity-60' : ''}>{s.title}</span>
             </div>
           </ScheduleDetailPopover>
         </DraggableScheduleItem>

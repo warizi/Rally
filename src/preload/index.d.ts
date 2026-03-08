@@ -302,6 +302,10 @@ interface TodoAPI {
     workspaceId: string,
     options?: { filter?: TodoFindFilter }
   ) => Promise<IpcResponse<TodoItem[]>>
+  findByDateRange: (
+    workspaceId: string,
+    range: { start: Date; end: Date }
+  ) => Promise<IpcResponse<TodoItem[]>>
   create: (workspaceId: string, data: CreateTodoData) => Promise<IpcResponse<TodoItem>>
   update: (todoId: string, data: UpdateTodoData) => Promise<IpcResponse<TodoItem>>
   remove: (todoId: string) => Promise<IpcResponse<void>>

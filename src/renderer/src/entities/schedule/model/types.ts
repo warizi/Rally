@@ -13,6 +13,7 @@ export interface ScheduleItem {
   priority: SchedulePriority
   createdAt: Date
   updatedAt: Date
+  isDone?: boolean
 }
 
 export interface CreateScheduleData {

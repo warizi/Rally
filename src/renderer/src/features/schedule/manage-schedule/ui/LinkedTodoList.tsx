@@ -1,4 +1,5 @@
-import { Link2Off, Plus } from 'lucide-react'
+import { CheckCircle2, Circle, Link2Off, Plus } from 'lucide-react'
+import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/ui/button'
 import { useLinkedTodos, useUnlinkTodo } from '@entities/schedule'
 import { TodoLinkPopover } from './TodoLinkPopover'
@@ -47,7 +48,16 @@ export function LinkedTodoList({
               key={todo.id}
               className="flex items-center justify-between text-xs rounded px-1 py-0.5 hover:bg-accent group"
             >
-              <span className="truncate">{todo.title}</span>
+              <div className="flex items-center gap-1.5 min-w-0">
+                {todo.isDone ? (
+                  <CheckCircle2 className="size-3 shrink-0 text-muted-foreground" />
+                ) : (
+                  <Circle className="size-3 shrink-0 text-muted-foreground" />
+                )}
+                <span className={cn('truncate', todo.isDone && 'line-through text-muted-foreground')}>
+                  {todo.title}
+                </span>
+              </div>
               <Button
                 variant="ghost"
                 size="icon-xs"

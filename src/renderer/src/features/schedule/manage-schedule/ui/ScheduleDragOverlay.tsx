@@ -32,8 +32,7 @@ export function ScheduleDragOverlay({
           style={{
             backgroundColor: `${color}${isTodo ? '08' : '20'}`,
             border: isTodo ? `1.5px dashed ${color}40` : undefined,
-            borderLeft: isTodo ? undefined : `3px solid ${color}`,
-            color,
+
             height: 20,
             width: activeWidth
           }}
@@ -47,7 +46,6 @@ export function ScheduleDragOverlay({
           style={{
             backgroundColor: `${color}${isTodo ? '08' : '20'}`,
             border: isTodo ? `1.5px dashed ${color}40` : undefined,
-            borderLeft: isTodo ? undefined : `3px solid ${color}`,
             color
           }}
         >
@@ -60,7 +58,6 @@ export function ScheduleDragOverlay({
           style={{
             backgroundColor: `${color}${isTodo ? '08' : '20'}`,
             border: isTodo ? `1.5px dashed ${color}40` : undefined,
-            borderLeft: isTodo ? undefined : `4px solid ${color}`,
             width: activeWidth,
             height: activeHeight
           }}

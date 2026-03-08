@@ -10,7 +10,7 @@ interface Props {
 
 export function CalendarNavigation({ title, onPrev, onNext, onToday }: Props): React.JSX.Element {
   return (
-    <div className="flex flex-col @[400px]:flex-row @[400px]:items-center gap-1 px-1">
+    <div className="flex \flex-row @[400px]:items-center gap-1 px-1">
       <div className="flex items-center gap-1">
         <Button variant="outline" size="sm" onClick={onToday}>
           오늘

@@ -32,8 +32,8 @@ export function MonthDayCell({
       ref={setNodeRef}
       className={`
         border-b border-r border-border p-1 overflow-hidden cursor-pointer relative
-        ${!day.isCurrentMonth ? 'bg-muted/30 text-muted-foreground' : ''}
-        ${today ? 'bg-primary/5' : ''}
+        ${!day.isCurrentMonth ? 'bg-muted/60 text-muted-foreground' : ''}
+        ${''}
         ${isSelected ? 'ring-2 ring-primary ring-inset' : ''}
         ${isOver ? 'bg-accent' : ''}
       `}

@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, isNotNull, or } from 'drizzle-orm'
+import { and, eq, inArray, isNull, isNotNull, or, gte, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { todos } from '../db/schema'
 
@@ -30,6 +30,26 @@ export const todoRepository = {
         .all()
     }
     return db.select().from(todos).where(base).all()
+  },
+
+  findByWorkspaceIdAndDateRange(workspaceId: string, start: Date, end: Date): Todo[] {
+    const base = eq(todos.workspaceId, workspaceId)
+    // startDate 또는 dueDate가 범위 내에 있는 todo
+    return db
+      .select()
+      .from(todos)
+      .where(
+        and(
+          base,
+          isNull(todos.parentId),
+          or(
+            and(isNotNull(todos.startDate), lte(todos.startDate, end), gte(todos.startDate, start)),
+            and(isNotNull(todos.dueDate), lte(todos.dueDate, end), gte(todos.dueDate, start)),
+            and(isNotNull(todos.startDate), isNotNull(todos.dueDate), lte(todos.startDate, end), gte(todos.dueDate, start))
+          )
+        )
+      )
+      .all()
   },
 
   findById(id: string): Todo | undefined {

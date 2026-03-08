@@ -66,11 +66,13 @@ export function ScheduleBarItem({
           width: `${(span / 7) * 100}%`,
           height: barHeight,
           ...style,
-          opacity: isDragging ? 0.4 : 1
+          opacity: isDragging ? 0.4 : schedule.isDone ? 0.5 : 1
         }}
       >
-        {isTodoItem(schedule) && <span className="opacity-60 mr-0.5">☑</span>}
-        {schedule.title}
+        {isTodoItem(schedule) && (
+          <span className="opacity-60 mr-0.5">{schedule.isDone ? '☑' : '☐'}</span>
+        )}
+        <span className={schedule.isDone ? 'line-through' : ''}>{schedule.title}</span>
       </div>
     </ScheduleDetailPopover>
   )

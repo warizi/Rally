@@ -116,6 +116,14 @@ export const todoService = {
     return todoRepository.findByWorkspaceId(workspaceId, filter).map(toTodoItem)
   },
 
+  findByWorkspaceAndDateRange(workspaceId: string, range: { start: Date; end: Date }): TodoItem[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+    return todoRepository
+      .findByWorkspaceIdAndDateRange(workspaceId, range.start, range.end)
+      .map(toTodoItem)
+  },
+
   create(workspaceId: string, data: CreateTodoData): TodoItem {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)

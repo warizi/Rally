@@ -7,9 +7,7 @@ export function getItemStyle(schedule: ScheduleItem): React.CSSProperties {
   const todo = isTodoItem(schedule)
   return {
     backgroundColor: `${color}${todo ? '08' : '20'}`,
-    border: todo ? `1.5px dashed ${color}40` : undefined,
-    borderLeft: todo ? undefined : `3px solid ${color}`,
-    color
+    border: todo ? `1.5px dashed ${color}40` : undefined
   }
 }
 

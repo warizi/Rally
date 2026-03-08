@@ -9,6 +9,7 @@ export type {
 export { TODO_STATUS, TODO_PRIORITY } from './model/types'
 export {
   useTodosByWorkspace,
+  useTodosByDateRange,
   useActiveTodosByWorkspace,
   useCompletedTodosByWorkspace,
   useCreateTodo,

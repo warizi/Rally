@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useRef, useEffect, useCallback } from 'react'
 import {
   DndContext,
   pointerWithin,
@@ -11,6 +11,7 @@ import {
 } from '@dnd-kit/core'
 import { format, isSameDay, differenceInCalendarDays, startOfDay } from 'date-fns'
 import { useDraggable } from '@dnd-kit/core'
+import { Circle, Check } from 'lucide-react'
 import type { ScheduleItem } from '@entities/schedule'
 import { useMoveSchedule } from '@entities/schedule'
 import { useUpdateTodo } from '@entities/todo'
@@ -31,6 +32,7 @@ import { assignLanes } from '../model/calendar-layout'
 import { applyDaysDelta } from '../model/calendar-move'
 import { getScheduleColor } from '../model/schedule-color'
 import { getItemStyle, getItemDotStyle } from '../model/schedule-style'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { MonthDayCell } from './MonthDayCell'
 import { ScheduleDot } from './ScheduleDot'
 import { ScheduleDetailPopover } from './ScheduleDetailPopover'
@@ -58,6 +60,32 @@ export function MonthView({
   const [activeType, setActiveType] = useState<DragItemType>('bar')
   const [overDate, setOverDate] = useState<Date | null>(null)
   const [grabDayOffset, setGrabDayOffset] = useState(0)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const isSmallRef = useRef(false)
+  const [isSmall, setIsSmall] = useState(false)
+
+  useEffect(() => {
+    const el = containerRef.current
+    if (!el) return
+    const check = (width: number): void => {
+      const small = width < 400
+      isSmallRef.current = small
+      setIsSmall(small)
+    }
+    check(el.clientWidth)
+    const ro = new ResizeObserver(([entry]) => {
+      check(entry.contentRect.width)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
+  const handleCellClick = useCallback(
+    (date: Date) => {
+      if (isSmall) onSelectDate(date)
+    },
+    [isSmall, onSelectDate]
+  )
 
   const grid = useMemo(
     () => getMonthGrid(currentDate.getFullYear(), currentDate.getMonth()),
@@ -146,25 +174,25 @@ export function MonthView({
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex flex-col flex-1 overflow-auto items-center">
-        <div className="w-full">
-          {/* 요일 헤더 */}
-          <div className="grid grid-cols-7 border-b border-border">
-            {WEEKDAY_LABELS.map((label, i) => (
-              <div
-                key={i}
-                className={`text-center text-xs py-1 font-medium ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'}`}
-              >
-                {label}
-              </div>
-            ))}
-          </div>
+      <div ref={containerRef} className="flex flex-col flex-1 overflow-hidden items-center month-container">
+        {/* 요일 헤더 */}
+        <div className="grid grid-cols-7 border-b border-border w-full">
+          {WEEKDAY_LABELS.map((label, i) => (
+            <div
+              key={i}
+              className={`text-center text-xs py-1 font-medium ${i === 0 ? 'text-red-500' : i === 6 ? 'text-blue-500' : 'text-muted-foreground'}`}
+            >
+              {label}
+            </div>
+          ))}
+        </div>
 
+        <ScrollArea className="flex-1 min-h-0 w-full">
           {/* 월간 그리드 */}
           <div
-            className="grid border-l border-t border-border"
+            className="grid border-l border-border month-grid"
             style={{
-              gridTemplateRows: `repeat(${grid.length}, minmax(80px, auto))`
+              gridTemplateRows: `repeat(${grid.length}, minmax(var(--month-row-min, 80px), auto))`
             }}
           >
             {grid.map((week, weekIdx) => {
@@ -256,8 +284,8 @@ export function MonthView({
                     <MonthDayCell
                       key={format(day.date, 'yyyy-MM-dd')}
                       day={day}
-                      isSelected={!!selectedDate && isSameDay(day.date, selectedDate)}
-                      onClick={onSelectDate}
+                      isSelected={isSmall && !!selectedDate && isSameDay(day.date, selectedDate)}
+                      onClick={handleCellClick}
                       previewSchedule={activeType !== 'bar' ? activeSchedule : null}
                     >
                       <CellContent
@@ -273,7 +301,7 @@ export function MonthView({
               )
             })}
           </div>
-        </div>
+        </ScrollArea>
 
         {/* 소형 하단 목록 */}
         {selectedDate && (
@@ -331,17 +359,29 @@ function CellContent({
       {/* 소형: 줄(기간) + 도트(단일) + 넘침 표시 */}
       <div className="mt-1 space-y-0.5 @[400px]:hidden">
         {dayMulti.slice(0, 2).map((s) => (
-          <div
-            key={s.id}
-            className="h-[3px] rounded-full"
-            style={{ backgroundColor: getScheduleColor(s) }}
-          />
+          <div key={s.id} className="flex items-center gap-px">
+            {isTodoItem(s) && (
+              s.isDone
+                ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+            )}
+            <div
+              className="h-[3px] flex-1 rounded-full"
+              style={{ backgroundColor: getScheduleColor(s) }}
+            />
+          </div>
         ))}
         {daySchedules.length > 0 && (
           <div className="flex gap-0.5 flex-wrap">
-            {daySchedules.slice(0, 3).map((s) => (
-              <ScheduleDot key={s.id} schedule={s} />
-            ))}
+            {daySchedules.slice(0, 3).map((s) =>
+              isTodoItem(s) ? (
+                s.isDone
+                  ? <Check key={s.id} className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                  : <Circle key={s.id} className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+              ) : (
+                <ScheduleDot key={s.id} schedule={s} />
+              )
+            )}
           </div>
         )}
         {dayMulti.length + daySchedules.length > 5 && (
@@ -358,12 +398,18 @@ function CellContent({
           <DraggableScheduleItem key={s.id} schedule={s} dayKey={dayKey}>
             <ScheduleDetailPopover schedule={s} workspaceId={workspaceId}>
               <div
-                className="text-[10px] @[800px]:text-[11px] truncate rounded px-0.5 py-px cursor-pointer"
+                className="flex items-center gap-0.5 text-[10px] @[800px]:text-[11px] truncate rounded px-0.5 py-px cursor-pointer"
                 style={getItemStyle(s)}
               >
-                {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
+                {isTodoItem(s) ? (
+                  s.isDone
+                    ? <Check className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                    : <Circle className="size-2 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                ) : (
+                  <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: getScheduleColor(s) }} />
+                )}
                 <span className="hidden @[800px]:inline">{format(s.startAt, 'HH:mm')} </span>
-                {s.title}
+                <span className={s.isDone ? 'line-through opacity-60' : ''}>{s.title}</span>
               </div>
             </ScheduleDetailPopover>
           </DraggableScheduleItem>
@@ -394,9 +440,14 @@ function SelectedDateList({
       {daySchedules.map((s) => (
         <ScheduleDetailPopover key={s.id} schedule={s} workspaceId={workspaceId}>
           <div className="flex items-center gap-1.5 text-xs cursor-pointer hover:bg-accent rounded px-1 py-0.5">
-            <div className="size-2 rounded-full shrink-0" style={getItemDotStyle(s)} />
-            <span className="truncate">
-              {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
+            {isTodoItem(s) ? (
+              s.isDone
+                ? <Check className="size-3 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+                : <Circle className="size-2.5 shrink-0" strokeWidth={3} style={{ color: getScheduleColor(s) }} />
+            ) : (
+              <div className="size-2 rounded-full shrink-0" style={getItemDotStyle(s)} />
+            )}
+            <span className={`truncate ${s.isDone ? 'line-through opacity-60' : ''}`}>
               {s.title}
             </span>
             {!s.allDay && (

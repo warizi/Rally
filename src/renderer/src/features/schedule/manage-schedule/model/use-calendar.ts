@@ -30,6 +30,7 @@ interface UseCalendarReturn {
   viewType: CalendarViewType
   setViewType: (type: CalendarViewType) => void
   selectDate: (date: Date) => void
+  setSelectedDate: (date: Date) => void
   goToday: () => void
   goPrev: () => void
   goNext: () => void
@@ -100,6 +101,7 @@ export function useCalendar(options?: UseCalendarOptions): UseCalendarReturn {
     viewType,
     setViewType,
     selectDate,
+    setSelectedDate,
     goToday,
     goPrev,
     goNext,

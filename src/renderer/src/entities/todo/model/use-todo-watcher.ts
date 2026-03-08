@@ -7,6 +7,7 @@ export function useTodoWatcher(): void {
   useEffect(() => {
     const unsub = window.api.todo.onChanged((workspaceId: string) => {
       queryClient.invalidateQueries({ queryKey: ['todo', 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['todo', 'dateRange', workspaceId] })
     })
     return () => unsub()
   }, [queryClient])

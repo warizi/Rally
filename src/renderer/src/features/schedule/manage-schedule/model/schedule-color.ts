@@ -13,7 +13,7 @@ export const SCHEDULE_COLOR_PRESETS = [
 
 export const PRIORITY_COLORS: Record<string, string> = {
   high: '#ef4444',
-  medium: '#3b82f6',
+  medium: '#6b7280',
   low: '#6b7280'
 }
 

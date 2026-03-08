@@ -10,7 +10,8 @@ import {
   Link,
   Pencil,
   Trash2,
-  CheckSquare
+  Check,
+  Circle
 } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
@@ -86,15 +87,21 @@ export function ScheduleDetailPopover({
         <PopoverContent align="start" className="w-72 p-3">
           <div className="space-y-2.5">
             <div className="flex items-start gap-2">
-              <div
-                className="size-3 rounded-full mt-1 shrink-0"
-                style={{ backgroundColor: color }}
-              />
+              {isTodo ? (
+                schedule.isDone
+                  ? <Check className="size-3.5 mt-0.5 shrink-0" strokeWidth={3} style={{ color }} />
+                  : <Circle className="size-3 mt-1 shrink-0" strokeWidth={3} style={{ color }} />
+              ) : (
+                <div
+                  className="size-3 rounded-full mt-1 shrink-0"
+                  style={{ backgroundColor: color }}
+                />
+              )}
               <div className="flex-1 min-w-0">
-                <span className="font-semibold text-sm leading-snug">{schedule.title}</span>
+                <span className={`font-semibold text-sm leading-snug ${schedule.isDone ? 'line-through opacity-60' : ''}`}>{schedule.title}</span>
                 {isTodo && (
                   <span className="inline-flex items-center gap-0.5 ml-1.5 text-[10px] text-muted-foreground bg-muted rounded px-1 py-px align-middle">
-                    <CheckSquare className="size-2.5" />할 일
+                    <Check className="size-2.5" />할 일
                   </span>
                 )}
               </div>

@@ -120,8 +120,8 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                   className="text-xs truncate rounded px-1.5 py-0.5 cursor-pointer"
                   style={getItemStyle(s)}
                 >
-                  {isTodoItem(s) && <span className="opacity-60 mr-0.5">☑</span>}
-                  {s.title}
+                  {isTodoItem(s) && <span className="opacity-60 mr-0.5">{s.isDone ? '☑' : '☐'}</span>}
+                  <span className={s.isDone ? 'line-through opacity-60' : ''}>{s.title}</span>
                 </div>
               </ScheduleDetailPopover>
             ))}
@@ -177,7 +177,6 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                     height: scheduleHeight(baseStart, baseEnd, HOUR_HEIGHT),
                     backgroundColor: `${color}${isTodo ? '06' : '15'}`,
                     border: `1.5px dashed ${color}${isTodo ? '40' : '60'}`,
-                    borderLeft: isTodo ? undefined : `3px solid ${color}60`
                   }}
                 >
                   <div className="px-1 py-0.5">
@@ -218,7 +217,6 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
                     height: scheduleHeight(previewStart, previewEnd, HOUR_HEIGHT),
                     backgroundColor: `${color}${isTodo ? '06' : '15'}`,
                     border: `1.5px dashed ${color}${isTodo ? '40' : '60'}`,
-                    borderLeft: isTodo ? undefined : `3px solid ${color}60`
                   }}
                 >
                   <div className="px-1 py-0.5">
