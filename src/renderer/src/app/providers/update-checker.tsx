@@ -15,7 +15,11 @@ export function UpdateChecker(): null {
         const currentVersion = res.data
         const lastVersion = localStorage.getItem(LAST_VERSION_KEY)
 
-        if (lastVersion && lastVersion !== currentVersion) {
+        const isUpdate = lastVersion
+          ? lastVersion !== currentVersion
+          : currentVersion !== '1.0.0'
+
+        if (isUpdate) {
           openTab({
             type: 'changelog',
             pathname: ROUTES.CHANGELOG,
