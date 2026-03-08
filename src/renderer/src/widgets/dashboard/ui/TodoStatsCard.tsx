@@ -3,47 +3,34 @@ import { Check } from 'lucide-react'
 import { useTodosByWorkspace } from '@entities/todo'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { ROUTES } from '@shared/constants/tab-url'
+import { useCountUp } from '@shared/hooks/use-count-up'
 import { Button } from '@shared/ui/button'
 import { DashboardCard } from '@shared/ui/dashboard-card'
-import { Progress } from '@shared/ui/progress'
-import { Separator } from '@shared/ui/separator'
 
 interface TodoStatsCardProps {
   workspaceId: string
+  className?: string
 }
 
 const STATUS_CONFIG = [
-  { key: '할일', label: '할일', class: 'bg-chart-1' },
-  { key: '진행중', label: '진행중', class: 'bg-chart-4' },
-  { key: '완료', label: '완료', class: 'bg-primary' },
-  { key: '보류', label: '보류', class: 'bg-muted-foreground/40' }
+  { key: '할일', label: '할일', color: 'hsl(0 70% 72%)' },
+  { key: '진행중', label: '진행중', color: 'hsl(30 85% 70%)' },
+  { key: '보류', label: '보류', color: 'hsl(270 55% 72%)' },
+  { key: '완료', label: '완료', color: 'hsl(0 0% 75%)' }
 ] as const
 
 const PRIORITY_CONFIG = [
-  {
-    key: 'high',
-    label: '높음',
-    dot: 'bg-rose-400 dark:bg-rose-500',
-    badge:
-      'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800'
-  },
-  {
-    key: 'medium',
-    label: '보통',
-    dot: 'bg-amber-400 dark:bg-amber-500',
-    badge:
-      'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800'
-  },
-  {
-    key: 'low',
-    label: '낮음',
-    dot: 'bg-sky-400 dark:bg-sky-500',
-    badge:
-      'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800'
-  }
+  { key: 'high', label: '높음', color: 'hsl(0 70% 72%)' },
+  { key: 'medium', label: '보통', color: 'hsl(40 80% 70%)' },
+  { key: 'low', label: '낮음', color: 'hsl(210 55% 72%)' }
 ] as const
 
-export function TodoStatsCard({ workspaceId }: TodoStatsCardProps): React.JSX.Element {
+function CountUp({ value }: { value: number }): React.JSX.Element {
+  const display = useCountUp(value)
+  return <>{display}</>
+}
+
+export function TodoStatsCard({ workspaceId, className }: TodoStatsCardProps): React.JSX.Element {
   const { data: todos = [], isLoading } = useTodosByWorkspace(workspaceId, { filter: 'all' })
   const openTab = useTabStore((s) => s.openTab)
 
@@ -55,6 +42,7 @@ export function TodoStatsCard({ workspaceId }: TodoStatsCardProps): React.JSX.El
       완료: 0,
       보류: 0
     }
+
     const byPriority: Record<string, number> = { high: 0, medium: 0, low: 0 }
 
     for (const t of todos) {
@@ -76,6 +64,7 @@ export function TodoStatsCard({ workspaceId }: TodoStatsCardProps): React.JSX.El
     <DashboardCard
       title="할 일 통계"
       icon={Check}
+      className={className}
       isLoading={isLoading}
       action={
         <Button variant="ghost" size="sm" className="text-xs" onClick={handleViewAll}>
@@ -86,42 +75,55 @@ export function TodoStatsCard({ workspaceId }: TodoStatsCardProps): React.JSX.El
       {stats.total === 0 ? (
         <p className="text-sm text-muted-foreground">할 일이 없습니다</p>
       ) : (
-        <div className="space-y-4">
-          <div className="space-y-1.5">
-            <div className="flex items-baseline justify-between">
-              <span className="text-2xl font-bold tracking-tight">{stats.completionRate}%</span>
-              <span className="text-xs text-muted-foreground">
-                {stats.byStatus.완료}/{stats.total} 완료
-              </span>
-            </div>
-            <Progress value={stats.completionRate} className="h-2" />
+        <div className="space-y-6">
+          {/* 완료율 */}
+          <div className="flex items-end gap-1.5">
+            <span className="text-4xl font-bold tracking-tight leading-none">
+              <CountUp value={stats.completionRate} />
+            </span>
+            <span className="text-lg text-muted-foreground mb-0.5">%</span>
+            <span className="text-sm text-muted-foreground ml-auto mb-0.5">
+              <CountUp value={stats.byStatus.완료} /> / <CountUp value={stats.total} />
+            </span>
           </div>
 
-          <Separator />
+          {/* 스택 바 */}
+          <div className="flex h-3 w-full rounded-full overflow-hidden bg-muted">
+            {STATUS_CONFIG.map(({ key, color }) => {
+              const ratio = stats.total > 0 ? (stats.byStatus[key] / stats.total) * 100 : 0
+              if (ratio === 0) return null
+              return (
+                <div
+                  key={key}
+                  className="h-full transition-all duration-300"
+                  style={{ width: `${ratio}%`, backgroundColor: color }}
+                />
+              )
+            })}
+          </div>
 
-          <div className="space-y-1.5">
-            {STATUS_CONFIG.map(({ key, label, class: cls }) => (
-              <div key={key} className="flex items-center gap-2 text-sm">
-                <div className={`size-2 rounded-full ${cls}`} />
-                <span className="text-muted-foreground">{label}</span>
-                <span className="ml-auto tabular-nums font-medium">{stats.byStatus[key]}</span>
+          {/* 상태 목록 */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+            {STATUS_CONFIG.map(({ key, label, color }) => (
+              <div key={key} className="flex items-center gap-2">
+                <div className="size-2.5 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                <span className="text-sm text-muted-foreground">{label}</span>
+                <span className="text-sm tabular-nums font-semibold ml-auto">
+                  <CountUp value={stats.byStatus[key]} />
+                </span>
               </div>
             ))}
           </div>
 
-          <Separator />
-
-          <div className="flex flex-wrap gap-1.5">
-            {PRIORITY_CONFIG.map(({ key, label, badge }) =>
-              stats.byPriority[key] > 0 ? (
-                <span
-                  key={key}
-                  className={`inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-medium ${badge}`}
-                >
-                  {label} {stats.byPriority[key]}
-                </span>
-              ) : null
-            )}
+          {/* 중요도 */}
+          <div className="flex items-center gap-3 pt-2 border-t">
+            {PRIORITY_CONFIG.map(({ key, label, color }) => (
+              <div key={key} className="flex items-center gap-1.5">
+                <div className="size-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+                <span className="text-xs text-muted-foreground">{label}</span>
+                <span className="text-xs tabular-nums font-semibold"><CountUp value={stats.byPriority[key]} /></span>
+              </div>
+            ))}
           </div>
         </div>
       )}

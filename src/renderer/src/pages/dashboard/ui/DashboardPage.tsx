@@ -7,6 +7,8 @@ import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog
 import { ScheduleFormDialog } from '@features/schedule/manage-schedule'
 import {
   TodoStatsCard,
+  TodoChartCard,
+  NoteChartCard,
   UpcomingTodoCard,
   TodayScheduleCard,
   RecentNotesCard,
@@ -31,15 +33,12 @@ export function DashboardPage(): React.JSX.Element {
   return (
     <TabContainer header={<TabHeader title="대시보드" icon={LayoutDashboard} />}>
       <div className="grid grid-cols-1 @[400px]:grid-cols-2 @[800px]:grid-cols-3 gap-4 py-4">
-        <TodoStatsCard workspaceId={workspaceId} />
+        <TodoChartCard workspaceId={workspaceId} className="@[400px]:col-span-2 @[800px]:col-span-2" />
+        <TodoStatsCard workspaceId={workspaceId} className="@[400px]:col-span-2 @[800px]:col-span-1" />
         <UpcomingTodoCard workspaceId={workspaceId} />
         <TodayScheduleCard workspaceId={workspaceId} />
-
-        <RecentNotesCard workspaceId={workspaceId} />
-        <RecentCanvasCard workspaceId={workspaceId} />
-        <FileOverviewCard workspaceId={workspaceId} />
-
         <QuickActionsCard
+          className="@[400px]:col-span-2 @[800px]:col-span-1"
           workspaceId={workspaceId}
           todoDialogTrigger={
             <CreateTodoDialog
@@ -64,6 +63,11 @@ export function DashboardPage(): React.JSX.Element {
             />
           }
         />
+
+        <NoteChartCard workspaceId={workspaceId} className="@[400px]:col-span-2 @[800px]:col-span-2" />
+        <RecentNotesCard workspaceId={workspaceId} />
+        <RecentCanvasCard workspaceId={workspaceId} />
+        <FileOverviewCard workspaceId={workspaceId} />
       </div>
     </TabContainer>
   )

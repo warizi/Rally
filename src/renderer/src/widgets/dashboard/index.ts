@@ -1,4 +1,6 @@
 export { TodoStatsCard } from './ui/TodoStatsCard'
+export { TodoChartCard } from './ui/TodoChartCard'
+export { NoteChartCard } from './ui/NoteChartCard'
 export { UpcomingTodoCard } from './ui/UpcomingTodoCard'
 export { TodayScheduleCard } from './ui/TodayScheduleCard'
 export { RecentNotesCard } from './ui/RecentNotesCard'

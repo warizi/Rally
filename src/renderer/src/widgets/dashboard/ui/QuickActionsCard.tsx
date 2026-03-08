@@ -6,11 +6,13 @@ import { DashboardCard } from '@shared/ui/dashboard-card'
 
 interface QuickActionsCardProps {
   workspaceId: string
+  className?: string
   todoDialogTrigger: React.ReactNode
   scheduleDialogTrigger: React.ReactNode
 }
 
 export function QuickActionsCard({
+  className,
   todoDialogTrigger,
   scheduleDialogTrigger
 }: QuickActionsCardProps): React.JSX.Element {
@@ -24,8 +26,8 @@ export function QuickActionsCard({
   }
 
   return (
-    <DashboardCard title="빠른 액션" icon={Zap}>
-      <div className="grid grid-cols-2 gap-2">
+    <DashboardCard title="빠른 액션" icon={Zap} className={className}>
+      <div className="grid grid-cols-4 gap-2">
         {todoDialogTrigger}
         {scheduleDialogTrigger}
         <Button variant="outline" className="h-auto flex-col gap-1 py-3" onClick={handleOpenFolder}>

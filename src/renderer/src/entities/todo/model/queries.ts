@@ -96,6 +96,7 @@ export function useUpdateTodo(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [TODO_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [TODO_KEY, 'dateRange', workspaceId] })
     }
   })
 }
