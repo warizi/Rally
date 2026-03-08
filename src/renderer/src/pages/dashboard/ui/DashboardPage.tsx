@@ -31,7 +31,15 @@ export function DashboardPage(): React.JSX.Element {
   }
 
   return (
-    <TabContainer header={<TabHeader title="대시보드" icon={LayoutDashboard} />}>
+    <TabContainer
+      header={
+        <TabHeader
+          title="대시보드"
+          description="할 일, 일정, 노트를 한눈에 확인하세요."
+          icon={LayoutDashboard}
+        />
+      }
+    >
       <div className="grid grid-cols-1 @[400px]:grid-cols-2 @[800px]:grid-cols-3 gap-4 py-4">
         <TodoChartCard
           workspaceId={workspaceId}
