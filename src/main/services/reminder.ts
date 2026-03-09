@@ -177,21 +177,26 @@ export const reminderService = {
     }
   },
 
-  /** 스케줄러용: 발송 대상 조회 + entity 제목 포함 */
-  findPendingWithTitle(now: Date): Array<ReminderItem & { title: string }> {
+  /** 스케줄러용: 발송 대상 조회 + entity 제목/워크스페이스 포함 */
+  findPendingWithTitle(
+    now: Date
+  ): Array<ReminderItem & { title: string; workspaceId: string | null }> {
     const pending = reminderRepository.findPending(now)
-    const results: Array<ReminderItem & { title: string }> = []
+    const results: Array<ReminderItem & { title: string; workspaceId: string | null }> = []
 
     for (const r of pending) {
       let title = ''
+      let workspaceId: string | null = null
       if (r.entityType === 'todo') {
         const todo = todoRepository.findById(r.entityId)
         title = todo?.title ?? '(삭제된 할 일)'
+        workspaceId = todo?.workspaceId ?? null
       } else if (r.entityType === 'schedule') {
         const schedule = scheduleRepository.findById(r.entityId)
         title = schedule?.title ?? '(삭제된 일정)'
+        workspaceId = schedule?.workspaceId ?? null
       }
-      results.push({ ...toReminderItem(r), title })
+      results.push({ ...toReminderItem(r), title, workspaceId })
     }
 
     return results
