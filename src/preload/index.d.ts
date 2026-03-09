@@ -660,6 +660,7 @@ interface AppInfoAPI {
   getVersion: () => Promise<IpcResponse<string>>
   getMcpServerPath: () => Promise<IpcResponse<string>>
   getCommandFiles: () => Promise<IpcResponse<CommandFile[]>>
+  getSkillFiles: () => Promise<IpcResponse<CommandFile[]>>
 }
 
 interface BackupManifest {

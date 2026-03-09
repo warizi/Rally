@@ -12,8 +12,10 @@ interface CommandFile {
 export function AISettings(): React.JSX.Element {
   const [mcpServerPath, setMcpServerPath] = useState('')
   const [commandFiles, setCommandFiles] = useState<CommandFile[]>([])
+  const [skillFiles, setSkillFiles] = useState<CommandFile[]>([])
   const [copied, setCopied] = useState<string | null>(null)
   const [expandedCommand, setExpandedCommand] = useState<string | null>(null)
+  const [expandedSkill, setExpandedSkill] = useState<string | null>(null)
 
   useEffect(() => {
     window.api.appInfo.getMcpServerPath().then((res) => {
@@ -24,6 +26,11 @@ export function AISettings(): React.JSX.Element {
     window.api.appInfo.getCommandFiles().then((res) => {
       if (res.success && res.data) {
         setCommandFiles(res.data)
+      }
+    })
+    window.api.appInfo.getSkillFiles().then((res) => {
+      if (res.success && res.data) {
+        setSkillFiles(res.data)
       }
     })
   }, [])
@@ -141,6 +148,58 @@ export function AISettings(): React.JSX.Element {
                   </Button>
                 </div>
                 {expandedCommand === file.name && (
+                  <ScrollArea className="max-h-48">
+                    <pre className="text-xs bg-muted px-3 py-2 border-t whitespace-pre-wrap">
+                      {file.content}
+                    </pre>
+                  </ScrollArea>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {skillFiles.length > 0 && (
+        <div className="space-y-2 border-t pt-4">
+          <h3 className="text-sm font-medium mb-1">Claude Skills</h3>
+          <p className="text-xs text-muted-foreground mb-3">
+            커맨드가 참조하는 방법론 문서입니다. 노트 작성, 캔버스 디자인, 할일 관리 등의 베스트
+            프랙티스를 정의합니다.
+          </p>
+          <div className="space-y-2">
+            {skillFiles.map((file) => (
+              <div key={file.name} className="border rounded-md overflow-hidden">
+                <div
+                  className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm hover:bg-accent/50 transition-colors cursor-pointer"
+                  onClick={() =>
+                    setExpandedSkill(expandedSkill === file.name ? null : file.name)
+                  }
+                >
+                  <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium">{file.name}</span>
+                    {file.description && (
+                      <p className="text-xs text-muted-foreground truncate">{file.description}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="size-7 shrink-0"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleCopy(file.content, `skill-${file.name}`)
+                    }}
+                  >
+                    {copied === `skill-${file.name}` ? (
+                      <CheckIcon className="size-3" />
+                    ) : (
+                      <CopyIcon className="size-3" />
+                    )}
+                  </Button>
+                </div>
+                {expandedSkill === file.name && (
                   <ScrollArea className="max-h-48">
                     <pre className="text-xs bg-muted px-3 py-2 border-t whitespace-pre-wrap">
                       {file.content}

@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-09T09:57:20.167Z",
+  "lastUpdated": "2026-03-09T11:00:12.836Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -188,7 +188,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:25:36.051Z",
-        "lastUpdated": "2026-03-09T08:44:11.276Z"
+        "lastUpdated": "2026-03-09T10:29:57.394Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/app-info.ts"
     },
@@ -214,9 +214,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:20.139Z",
-        "lastUpdated": "2026-03-09T08:44:32.352Z"
+        "lastUpdated": "2026-03-09T10:30:19.700Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.ts"
     },
     "tap-system": {
       "phase": "do",
@@ -467,9 +467,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T13:07:34.206Z",
-        "lastUpdated": "2026-03-09T07:46:28.268Z"
+        "lastUpdated": "2026-03-09T10:17:48.200Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/tab-url.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/changelog.ts"
     },
     "providers": {
       "phase": "do",
@@ -890,7 +890,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T06:28:58.636Z",
-        "lastUpdated": "2026-03-09T08:44:54.969Z"
+        "lastUpdated": "2026-03-09T10:32:53.791Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/manage-settings/ui/AISettings.tsx"
     },
@@ -1087,7 +1087,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-07T01:59:24.209Z",
-        "lastUpdated": "2026-03-07T23:10:16.543Z"
+        "lastUpdated": "2026-03-09T10:59:08.800Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/mcp-server/tool-definitions.ts"
     },
@@ -1113,9 +1113,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-07T22:28:00.836Z",
-        "lastUpdated": "2026-03-07T23:10:33.425Z"
+        "lastUpdated": "2026-03-09T11:00:12.836Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/mcp-api/routes/mcp/todos.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/mcp-api/routes/mcp/links.ts"
     },
     "workspace-watcher": {
       "phase": "do",
@@ -1178,7 +1178,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-09T08:43:15.603Z",
-        "lastUpdated": "2026-03-09T09:57:20.167Z"
+        "lastUpdated": "2026-03-09T10:27:16.154Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/claude-commands-setup.ts"
     }
@@ -1191,7 +1191,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-09T09:57:20.167Z"
+    "lastActivity": "2026-03-09T11:00:12.836Z"
   },
   "history": [
     {
@@ -23199,6 +23199,102 @@
     {
       "timestamp": "2026-03-09T09:57:20.167Z",
       "feature": "claude-commands-setup.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:17:48.200Z",
+      "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:27:10.061Z",
+      "feature": "claude-commands-setup.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:27:16.154Z",
+      "feature": "claude-commands-setup.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:29:50.615Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:29:57.394Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:30:06.483Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:30:19.700Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:32:29.819Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:32:53.791Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:58:43.295Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:58:51.319Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:58:58.619Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:59:08.800Z",
+      "feature": "mcp-server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T10:59:39.529Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T11:00:01.982Z",
+      "feature": "mcp",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T11:00:12.836Z",
+      "feature": "mcp",
       "phase": "do",
       "action": "updated"
     }

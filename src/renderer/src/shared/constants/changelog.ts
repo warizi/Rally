@@ -12,6 +12,35 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.0',
+    date: '2026-03-09',
+    changes: [
+      {
+        type: 'feature',
+        title: '터미널 사이드 패널',
+        description:
+          '터미널이 탭 대신 사이드 패널로 열립니다. 접어도 터미널 컨텍스트가 유지되며, 워크스페이스 전환 시 자동 정리됩니다.'
+      },
+      {
+        type: 'feature',
+        title: 'Claude Code 커맨드 자동 세팅',
+        description:
+          '워크스페이스 생성/활성화 시 .claude/commands에 Rally 커맨드(rally-doc, rally-task, rally-context, rally-plan, rally-organize)를 자동 배포합니다.'
+      },
+      {
+        type: 'feature',
+        title: 'MCP 서버 자동 등록',
+        description:
+          '워크스페이스 폴더에 .mcp.json을 자동 생성하여 Claude Code에서 Rally MCP 서버가 바로 연결됩니다.'
+      },
+      {
+        type: 'improvement',
+        title: 'AI 설정에 커맨드 설명 표시',
+        description: '설정 > AI 탭에서 각 Rally 커맨드의 설명을 확인하고 내용을 복사할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.1.0',
     date: '2026-03-09',
     changes: [

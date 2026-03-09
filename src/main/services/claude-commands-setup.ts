@@ -8,8 +8,13 @@ function getSourceCommandsDir(): string {
     : join(process.resourcesPath, '.claude', 'commands')
 }
 
-function getSourceCommandFiles(): { name: string; content: string }[] {
-  const dir = getSourceCommandsDir()
+function getSourceSkillsDir(): string {
+  return is.dev
+    ? join(process.cwd(), '.claude', 'skills')
+    : join(process.resourcesPath, '.claude', 'skills')
+}
+
+function getMdFiles(dir: string): { name: string; content: string }[] {
   if (!existsSync(dir)) return []
   const files = readdirSync(dir).filter((f) => f.endsWith('.md'))
   return files.map((f) => ({
@@ -55,11 +60,21 @@ export function ensureClaudeCommands(workspacePath: string): void {
 
   // commands 복사
   const commandsDir = join(workspacePath, '.claude', 'commands')
-  const commands = getSourceCommandFiles()
+  const commands = getMdFiles(getSourceCommandsDir())
   if (commands.length > 0) {
     mkdirSync(commandsDir, { recursive: true })
     for (const cmd of commands) {
       writeFileSync(join(commandsDir, cmd.name), cmd.content, 'utf-8')
+    }
+  }
+
+  // skills 복사
+  const skillsDir = join(workspacePath, '.claude', 'skills')
+  const skills = getMdFiles(getSourceSkillsDir())
+  if (skills.length > 0) {
+    mkdirSync(skillsDir, { recursive: true })
+    for (const skill of skills) {
+      writeFileSync(join(skillsDir, skill.name), skill.content, 'utf-8')
     }
   }
 

@@ -1,6 +1,6 @@
 import { app, ipcMain } from 'electron'
 import { join } from 'path'
-import { readFileSync, readdirSync } from 'fs'
+import { existsSync, readFileSync, readdirSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
@@ -9,6 +9,21 @@ export interface CommandFile {
   name: string
   description: string
   content: string
+}
+
+function readMdFiles(dir: string): CommandFile[] {
+  if (!existsSync(dir)) return []
+  const files = readdirSync(dir).filter((f) => f.endsWith('.md'))
+  return files.map((f) => {
+    const content = readFileSync(join(dir, f), 'utf-8')
+    const lines = content.split('\n').filter((l) => l.trim())
+    const description = lines.length > 1 ? lines[1].trim() : ''
+    return {
+      name: f.replace('.md', ''),
+      description,
+      content
+    }
+  })
 }
 
 export function registerAppInfoHandlers(): void {
@@ -30,17 +45,16 @@ export function registerAppInfoHandlers(): void {
       const commandsDir = is.dev
         ? join(process.cwd(), '.claude', 'commands')
         : join(process.resourcesPath, '.claude', 'commands')
-      const files = readdirSync(commandsDir).filter((f) => f.endsWith('.md'))
-      return files.map((f) => {
-        const content = readFileSync(join(commandsDir, f), 'utf-8')
-        const lines = content.split('\n').filter((l) => l.trim())
-        const description = lines.length > 1 ? lines[1].trim() : ''
-        return {
-          name: f.replace('.md', ''),
-          description,
-          content
-        }
-      })
+      return readMdFiles(commandsDir)
+    })
+  })
+
+  ipcMain.handle('appInfo:getSkillFiles', (): IpcResponse<CommandFile[]> => {
+    return handle(() => {
+      const skillsDir = is.dev
+        ? join(process.cwd(), '.claude', 'skills')
+        : join(process.resourcesPath, '.claude', 'skills')
+      return readMdFiles(skillsDir)
     })
   })
 }

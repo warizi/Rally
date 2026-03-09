@@ -4,6 +4,7 @@ import { registerMcpContentRoutes } from './content'
 import { registerMcpFolderRoutes } from './folders'
 import { registerMcpCanvasRoutes } from './canvases'
 import { registerMcpTodoRoutes } from './todos'
+import { registerMcpLinkRoutes } from './links'
 
 export function registerMcpRoutes(router: Router): void {
   registerMcpItemRoutes(router)
@@ -11,4 +12,5 @@ export function registerMcpRoutes(router: Router): void {
   registerMcpFolderRoutes(router)
   registerMcpCanvasRoutes(router)
   registerMcpTodoRoutes(router)
+  registerMcpLinkRoutes(router)
 }

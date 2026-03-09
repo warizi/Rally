@@ -16,6 +16,8 @@ extraResources:
     to: dist-mcp
   - from: .claude/commands
     to: .claude/commands
+  - from: .claude/skills
+    to: .claude/skills
 asarUnpack:
   - resources/**
 win:

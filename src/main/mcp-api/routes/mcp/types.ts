@@ -331,3 +331,41 @@ export interface DeleteTodoAction {
 }
 
 export type TodoAction = CreateTodoAction | UpdateTodoAction | DeleteTodoAction
+
+// ─── Links ──────────────────────────────────────────────────
+
+export interface LinkItemAction {
+  action: 'link'
+  sourceType: LinkableEntityType
+  sourceId: string
+  targetType: LinkableEntityType
+  targetId: string
+}
+
+export interface UnlinkItemAction {
+  action: 'unlink'
+  sourceType: LinkableEntityType
+  sourceId: string
+  targetType: LinkableEntityType
+  targetId: string
+}
+
+export interface ListLinksAction {
+  action: 'list'
+  entityType: LinkableEntityType
+  entityId: string
+}
+
+export type LinkAction = LinkItemAction | UnlinkItemAction | ListLinksAction
+
+export interface ManageLinkResult {
+  action: string
+  sourceType?: LinkableEntityType
+  sourceId?: string
+  targetType?: LinkableEntityType
+  targetId?: string
+  entityType?: LinkableEntityType
+  entityId?: string
+  success: true
+  linkedItems?: LinkedItem[]
+}

@@ -6,6 +6,12 @@
 
 $ARGUMENTS
 
+## 참조 Skills
+
+노트 작성 시 `.claude/skills/note-writing.md`의 원칙을 따른다.
+할일 분해 시 `.claude/skills/todo-management.md`의 원칙을 따른다.
+캔버스 생성 시 `.claude/skills/canvas-design.md`의 원칙을 따른다.
+
 ## 실행 규칙
 
 ### 1단계: 요구사항 분석
