@@ -17,8 +17,7 @@ export function useReminderWatcher(): void {
       }) => {
         // 해당 엔티티의 워크스페이스로 전환 (다른 워크스페이스인 경우)
         if (data.workspaceId) {
-          const { currentWorkspaceId, setCurrentWorkspaceId } =
-            useCurrentWorkspaceStore.getState()
+          const { currentWorkspaceId, setCurrentWorkspaceId } = useCurrentWorkspaceStore.getState()
           if (currentWorkspaceId !== data.workspaceId) {
             setCurrentWorkspaceId(data.workspaceId)
           }

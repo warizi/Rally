@@ -15,9 +15,7 @@ export function UpdateChecker(): null {
         const currentVersion = res.data
         const lastVersion = localStorage.getItem(LAST_VERSION_KEY)
 
-        const isUpdate = lastVersion
-          ? lastVersion !== currentVersion
-          : currentVersion !== '1.0.0'
+        const isUpdate = lastVersion ? lastVersion !== currentVersion : currentVersion !== '1.0.0'
 
         if (isUpdate) {
           openTab({

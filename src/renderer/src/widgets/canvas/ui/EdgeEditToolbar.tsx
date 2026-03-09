@@ -104,8 +104,8 @@ function EdgeEditToolbarComponent({
   useEffect(() => {
     if (edge) {
       setLabelInput((edge.label as string) ?? '') // eslint-disable-line react-hooks/set-state-in-effect
-      setShowColorPicker(false) // eslint-disable-line react-hooks/set-state-in-effect
-      setShowLabelInput(false) // eslint-disable-line react-hooks/set-state-in-effect
+      setShowColorPicker(false)
+      setShowLabelInput(false)
     }
   }, [edge?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -117,7 +117,7 @@ function EdgeEditToolbarComponent({
       const merged = {
         edgeStyle: data.style ?? edge.data.edgeStyle,
         arrow: data.arrow ?? edge.data.arrow,
-        color: data.color !== undefined ? (data.color || null) : edge.data.color,
+        color: data.color !== undefined ? data.color || null : edge.data.color,
         fromSide: data.fromSide ?? edge.data.fromSide,
         toSide: data.toSide ?? edge.data.toSide
       }
@@ -178,9 +178,8 @@ function EdgeEditToolbarComponent({
         {/* Label toggle */}
         <button
           type="button"
-          className={`size-7 rounded flex items-center justify-center transition-colors ${
-            showLabelInput ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
-          }`}
+          className={`size-7 rounded flex items-center justify-center transition-colors ${showLabelInput ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+            }`}
           title="텍스트 편집"
           onClick={() => {
             setShowLabelInput((v) => !v)
@@ -197,11 +196,10 @@ function EdgeEditToolbarComponent({
           <button
             key={opt.value}
             type="button"
-            className={`size-7 rounded flex items-center justify-center transition-colors ${
-              currentStyle === opt.value
+            className={`size-7 rounded flex items-center justify-center transition-colors ${currentStyle === opt.value
                 ? 'bg-accent text-accent-foreground'
                 : 'hover:bg-muted text-muted-foreground'
-            }`}
+              }`}
             title={opt.label}
             onClick={() => handleUpdate({ style: opt.value })}
           >
@@ -216,11 +214,10 @@ function EdgeEditToolbarComponent({
           <button
             key={opt.value}
             type="button"
-            className={`size-7 rounded flex items-center justify-center transition-colors ${
-              currentArrow === opt.value
+            className={`size-7 rounded flex items-center justify-center transition-colors ${currentArrow === opt.value
                 ? 'bg-accent text-accent-foreground'
                 : 'hover:bg-muted text-muted-foreground'
-            }`}
+              }`}
             title={opt.label}
             onClick={() => handleUpdate({ arrow: opt.value })}
           >
@@ -233,9 +230,8 @@ function EdgeEditToolbarComponent({
         {/* Color toggle */}
         <button
           type="button"
-          className={`size-7 rounded flex items-center justify-center transition-colors ${
-            showColorPicker ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
-          }`}
+          className={`size-7 rounded flex items-center justify-center transition-colors ${showColorPicker ? 'bg-accent text-accent-foreground' : 'hover:bg-muted'
+            }`}
           title="색상 변경"
           onClick={() => {
             setShowColorPicker((v) => !v)
@@ -290,9 +286,8 @@ function EdgeEditToolbarComponent({
             <button
               key={color}
               type="button"
-              className={`size-5 rounded-full border-2 transition-transform hover:scale-110 ${
-                currentColor === color ? 'border-foreground scale-110' : 'border-transparent'
-              }`}
+              className={`size-5 rounded-full border-2 transition-transform hover:scale-110 ${currentColor === color ? 'border-foreground scale-110' : 'border-transparent'
+                }`}
               style={{ backgroundColor: color }}
               onClick={() => handleUpdate({ color })}
             />

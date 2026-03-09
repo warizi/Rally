@@ -172,9 +172,7 @@ export function AISettings(): React.JSX.Element {
               <div key={file.name} className="border rounded-md overflow-hidden">
                 <div
                   className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm hover:bg-accent/50 transition-colors cursor-pointer"
-                  onClick={() =>
-                    setExpandedSkill(expandedSkill === file.name ? null : file.name)
-                  }
+                  onClick={() => setExpandedSkill(expandedSkill === file.name ? null : file.name)}
                 >
                   <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
                   <div className="flex-1 min-w-0">

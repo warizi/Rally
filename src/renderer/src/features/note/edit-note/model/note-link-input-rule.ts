@@ -20,7 +20,7 @@ function applyAutolink(view: EditorView): void {
   )
 
   // [텍스트](URL) 패턴
-  const mdMatch = textBefore.match(/\[([^\[\]]+)]\(([^()]+)\)$/)
+  const mdMatch = textBefore.match(/\[([^[\]]+)]\(([^()]+)\)$/)
   if (mdMatch) {
     const [fullMatch, linkText, href] = mdMatch
     const matchStart = from - fullMatch.length
@@ -44,9 +44,7 @@ function applyAutolink(view: EditorView): void {
     if (existingMarks.some((m) => m.type === linkType)) return
 
     const linkMark = linkType.create({ href: url })
-    const tr = state.tr
-      .addMark(urlStart, from, linkMark)
-      .removeStoredMark(linkType)
+    const tr = state.tr.addMark(urlStart, from, linkMark).removeStoredMark(linkType)
     view.dispatch(tr)
   }
 }
@@ -80,8 +78,7 @@ export const autolinkPlugin = $prose(() => {
         if (linkAtCursor) {
           // 커서 뒤에 링크가 없으면 → 링크 경계(끝)에 있음
           const nodeAfter = $from.nodeAfter
-          const hasLinkAfter =
-            nodeAfter && nodeAfter.marks.some((m) => m.type === linkType)
+          const hasLinkAfter = nodeAfter && nodeAfter.marks.some((m) => m.type === linkType)
           if (!hasLinkAfter) {
             // 링크 mark 없이 텍스트 삽입
             const marksWithoutLink = marksAtCursor.filter((m) => m.type !== linkType)
@@ -105,7 +102,7 @@ export const autolinkPlugin = $prose(() => {
         )
 
         // [텍스트](URL) 패턴
-        const mdMatch = textBefore.match(/\[([^\[\]]+)]\(([^()]+)\)$/)
+        const mdMatch = textBefore.match(/\[([^[\]]+)]\(([^()]+)\)$/)
         if (mdMatch) {
           const [fullMatch, linkText, href] = mdMatch
           const matchStart = from - fullMatch.length
@@ -114,7 +111,11 @@ export const autolinkPlugin = $prose(() => {
             .delete(matchStart, from)
             .insertText(linkText + text, matchStart)
             .addMark(matchStart, matchStart + linkText.length, linkMark)
-            .removeMark(matchStart + linkText.length, matchStart + linkText.length + text.length, linkType)
+            .removeMark(
+              matchStart + linkText.length,
+              matchStart + linkText.length + text.length,
+              linkType
+            )
             .removeStoredMark(linkType)
           view.dispatch(tr)
           return true
@@ -156,9 +157,7 @@ export const autolinkPlugin = $prose(() => {
         const { from, to } = state.selection
         if (from !== to) {
           const linkMark = linkType.create({ href: trimmed })
-          const tr = state.tr
-            .addMark(from, to, linkMark)
-            .removeStoredMark(linkType)
+          const tr = state.tr.addMark(from, to, linkMark).removeStoredMark(linkType)
           view.dispatch(tr)
           event.preventDefault()
           return true
