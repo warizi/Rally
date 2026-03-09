@@ -209,16 +209,21 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
         onSubmit={handleCreate}
       />
 
-      {deleteTarget && workspaceId && (
+      {workspaceId && (
         <DeleteCanvasDialog
-          canvasId={deleteTarget.id}
-          canvasTitle={deleteTarget.title}
+          canvasId={deleteTarget?.id ?? ''}
+          canvasTitle={deleteTarget?.title ?? ''}
           workspaceId={workspaceId}
           open={!!deleteTarget}
           onOpenChange={(open) => {
             if (!open) setDeleteTarget(null)
           }}
-          onDeleted={() => setDeleteTarget(null)}
+          onDeleted={() => {
+            if (deleteTarget) {
+              closeTabByPathname(ROUTES.CANVAS_DETAIL.replace(':canvasId', deleteTarget.id))
+            }
+            setDeleteTarget(null)
+          }}
         />
       )}
     </TabContainer>
