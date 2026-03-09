@@ -4,6 +4,7 @@ import { workspaceService } from '../services/workspace'
 import type { WorkspaceUpdate } from '../repositories/workspace'
 import { handle } from '../lib/handle'
 import { workspaceWatcher } from '../services/workspace-watcher'
+import { ensureClaudeCommands } from '../services/claude-commands-setup'
 
 export function registerWorkspaceHandlers(): void {
   ipcMain.handle('workspace:getAll', (): IpcResponse => handle(() => workspaceService.getAll()))
@@ -16,7 +17,11 @@ export function registerWorkspaceHandlers(): void {
   ipcMain.handle(
     'workspace:create',
     (_: IpcMainInvokeEvent, name: string, path: string): IpcResponse =>
-      handle(() => workspaceService.create(name, path))
+      handle(() => {
+        const ws = workspaceService.create(name, path)
+        ensureClaudeCommands(ws.path)
+        return ws
+      })
   )
 
   ipcMain.handle(
@@ -43,6 +48,7 @@ export function registerWorkspaceHandlers(): void {
     (_: IpcMainInvokeEvent, id: string): IpcResponse =>
       handle(() => {
         const ws = workspaceService.getById(id)
+        ensureClaudeCommands(ws.path)
         void workspaceWatcher.ensureWatching(ws.id, ws.path)
         return ws
       })

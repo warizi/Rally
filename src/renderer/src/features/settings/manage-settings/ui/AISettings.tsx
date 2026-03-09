@@ -5,6 +5,7 @@ import { ScrollArea } from '@/shared/ui/scroll-area'
 
 interface CommandFile {
   name: string
+  description: string
   content: string
 }
 
@@ -117,7 +118,12 @@ export function AISettings(): React.JSX.Element {
                   }
                 >
                   <FileTextIcon className="size-3.5 shrink-0 text-muted-foreground" />
-                  <span className="font-medium flex-1">{file.name}</span>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium">{file.name}</span>
+                    {file.description && (
+                      <p className="text-xs text-muted-foreground truncate">{file.description}</p>
+                    )}
+                  </div>
                   <Button
                     variant="ghost"
                     size="icon"

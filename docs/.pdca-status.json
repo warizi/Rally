@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-09T07:51:19.939Z",
+  "lastUpdated": "2026-03-09T09:57:20.167Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -83,7 +83,8 @@
     "workspace-watcher",
     "backup.ts",
     "changelog",
-    "terminal-panel"
+    "terminal-panel",
+    "claude-commands-setup.ts"
   ],
   "primaryFeature": "pdf-viewer",
   "features": {
@@ -187,7 +188,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:25:36.051Z",
-        "lastUpdated": "2026-03-08T07:01:48.281Z"
+        "lastUpdated": "2026-03-09T08:44:11.276Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/ipc/app-info.ts"
     },
@@ -200,7 +201,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:01.950Z",
-        "lastUpdated": "2026-03-09T04:32:37.602Z"
+        "lastUpdated": "2026-03-09T08:43:36.481Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
     },
@@ -213,7 +214,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:20.139Z",
-        "lastUpdated": "2026-03-09T05:13:18.595Z"
+        "lastUpdated": "2026-03-09T08:44:32.352Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
     },
@@ -889,9 +890,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T06:28:58.636Z",
-        "lastUpdated": "2026-03-08T02:06:10.743Z"
+        "lastUpdated": "2026-03-09T08:44:54.969Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/manage-settings/ui/SettingsDialog.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/manage-settings/ui/AISettings.tsx"
     },
     "note-image.ts": {
       "phase": "do",
@@ -1167,6 +1168,19 @@
         "lastUpdated": "2026-03-09T07:45:09.005Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/terminal-panel/index.ts"
+    },
+    "claude-commands-setup.ts": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-09T08:43:15.603Z",
+        "lastUpdated": "2026-03-09T09:57:20.167Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/claude-commands-setup.ts"
     }
   },
   "pipeline": {
@@ -1177,7 +1191,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-09T07:51:19.939Z"
+    "lastActivity": "2026-03-09T09:57:20.167Z"
   },
   "history": [
     {
@@ -23101,6 +23115,90 @@
     {
       "timestamp": "2026-03-09T07:51:19.939Z",
       "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:15.603Z",
+      "feature": "claude-commands-setup.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:24.098Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:31.789Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:36.481Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:43.845Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:50.302Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:43:57.387Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:44:03.563Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:44:11.276Z",
+      "feature": "ipc",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:44:32.352Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:44:38.059Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T08:44:54.969Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T09:52:29.999Z",
+      "feature": "claude-commands-setup.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T09:57:20.167Z",
+      "feature": "claude-commands-setup.ts",
       "phase": "do",
       "action": "updated"
     }

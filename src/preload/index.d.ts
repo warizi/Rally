@@ -652,6 +652,7 @@ interface TerminalAPI {
 
 interface CommandFile {
   name: string
+  description: string
   content: string
 }
 

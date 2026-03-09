@@ -7,6 +7,7 @@ import { handle } from '../lib/handle'
 
 export interface CommandFile {
   name: string
+  description: string
   content: string
 }
 
@@ -30,10 +31,16 @@ export function registerAppInfoHandlers(): void {
         ? join(process.cwd(), '.claude', 'commands')
         : join(process.resourcesPath, '.claude', 'commands')
       const files = readdirSync(commandsDir).filter((f) => f.endsWith('.md'))
-      return files.map((f) => ({
-        name: f.replace('.md', ''),
-        content: readFileSync(join(commandsDir, f), 'utf-8')
-      }))
+      return files.map((f) => {
+        const content = readFileSync(join(commandsDir, f), 'utf-8')
+        const lines = content.split('\n').filter((l) => l.trim())
+        const description = lines.length > 1 ? lines[1].trim() : ''
+        return {
+          name: f.replace('.md', ''),
+          description,
+          content
+        }
+      })
     })
   })
 }

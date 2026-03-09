@@ -32,6 +32,7 @@ import { startMcpApiServer, stopMcpApiServer } from './mcp-api/server'
 import { registerAppInfoHandlers } from './ipc/app-info'
 import { registerBackupHandlers } from './ipc/backup'
 import { setupAutoUpdater } from './lib/updater'
+import { ensureClaudeCommands } from './services/claude-commands-setup'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
@@ -45,6 +46,13 @@ function initializeDatabase(): void {
   if (workspaces.length === 0) {
     const defaultPath = join(app.getPath('documents'), 'Rally', '기본 워크스페이스')
     workspaceService.create('기본 워크스페이스', defaultPath)
+  }
+}
+
+function ensureAllWorkspaceCommands(): void {
+  const workspaces = workspaceService.getAll()
+  for (const ws of workspaces) {
+    ensureClaudeCommands(ws.path)
   }
 }
 
@@ -101,6 +109,7 @@ app.whenReady().then(() => {
 
   runMigrations()
   initializeDatabase()
+  ensureAllWorkspaceCommands()
   registerWorkspaceHandlers()
   registerTabSessionHandlers()
   registerTabSnapshotHandlers()
