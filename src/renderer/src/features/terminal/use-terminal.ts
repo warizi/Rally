@@ -3,11 +3,9 @@ import { Terminal } from '@xterm/xterm'
 import { FitAddon } from '@xterm/addon-fit'
 import '@xterm/xterm/css/xterm.css'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
 
 export function useTerminal(containerRef: React.RefObject<HTMLDivElement | null>): void {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
-  const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
   const termRef = useRef<Terminal | null>(null)
   const fitAddonRef = useRef<FitAddon | null>(null)
 
@@ -40,13 +38,8 @@ export function useTerminal(containerRef: React.RefObject<HTMLDivElement | null>
     window.api.workspace.getById(workspaceId).then((res) => {
       if (aborted) return
       if (!res.success || !res.data) return
-      window.api.terminal.create({ cwd: res.data.path, cols, rows }).then((r) => {
-        if (aborted) return
-        if (r.success) created = true
-      })
+      window.api.terminal.create({ cwd: res.data.path, cols, rows })
     })
-
-    let created = false
 
     // pty stdout → xterm 렌더링
     const unsubData = window.api.terminal.onData(({ data }) => {
@@ -58,15 +51,16 @@ export function useTerminal(containerRef: React.RefObject<HTMLDivElement | null>
       window.api.terminal.write({ data })
     })
 
-    // shell 자체 종료 → 탭 닫기
+    // shell 자체 종료 시
     const unsubExit = window.api.terminal.onExit(() => {
-      if (aborted || !created) return
-      closeTabByPathname('/terminal')
+      // shell exit — 패널은 열려 있되 pty만 종료된 상태
     })
 
-    // 리사이즈 감지
+    // 리사이즈 감지 — 컨테이너가 보이지 않으면(w=0) skip
     const resizeObserver = new ResizeObserver(() => {
       if (aborted) return
+      const { clientWidth, clientHeight } = container
+      if (clientWidth === 0 || clientHeight === 0) return
       fitAddon.fit()
       const { cols, rows } = term
       if (cols > 0 && rows > 0) {
@@ -84,8 +78,6 @@ export function useTerminal(containerRef: React.RefObject<HTMLDivElement | null>
       term.dispose()
       termRef.current = null
       fitAddonRef.current = null
-      // pty는 destroy하지 않음 — 탭 전환/pane 이동 시 프로세스 유지
-      // pty는 워크스페이스 전환(create 시 cwd 변경), 앱 종료(before-quit), shell exit 시에만 종료
     }
-  }, [workspaceId, containerRef, closeTabByPathname])
+  }, [workspaceId, containerRef])
 }

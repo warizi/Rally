@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Settings } from 'lucide-react'
+import { Settings, Terminal } from 'lucide-react'
 import { useTabStore, applySessionToStore } from '@/features/tap-system/manage-tab-system'
 import type { SerializedTab, SessionData } from '@/features/tap-system/manage-tab-system'
 import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
@@ -9,6 +9,7 @@ import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
 import { SettingsDialog } from '@/features/settings/manage-settings'
 import { sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
+import { useTerminalPanelStore } from '@/features/terminal'
 import {
   Sidebar,
   SidebarContent,
@@ -29,6 +30,8 @@ function MainSidebar(): React.JSX.Element {
   const panes = useTabStore((state) => state.panes)
   const activePaneId = useTabStore((state) => state.activePaneId)
   const currentWorkspaceId = useCurrentWorkspaceStore((state) => state.currentWorkspaceId)
+  const terminalIsOpen = useTerminalPanelStore((s) => s.isOpen)
+  const toggleTerminal = useTerminalPanelStore((s) => s.toggle)
 
   // 현재 활성 탭의 pathname 확인
   const activePane = panes[activePaneId]
@@ -84,6 +87,17 @@ function MainSidebar(): React.JSX.Element {
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+                <SidebarMenuItem>
+                  <SidebarMenuButton
+                    className="cursor-pointer"
+                    isActive={terminalIsOpen}
+                    tooltip="터미널"
+                    onClick={toggleTerminal}
+                  >
+                    <Terminal />
+                    <span>터미널</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>

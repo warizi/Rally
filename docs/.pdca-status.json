@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-09T06:15:45.854Z",
+  "lastUpdated": "2026-03-09T07:51:19.939Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -82,7 +82,8 @@
     "mcp",
     "workspace-watcher",
     "backup.ts",
-    "changelog"
+    "changelog",
+    "terminal-panel"
   ],
   "primaryFeature": "pdf-viewer",
   "features": {
@@ -95,9 +96,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-21T22:19:42.353Z",
-        "lastUpdated": "2026-03-09T06:11:18.132Z"
+        "lastUpdated": "2026-03-09T07:51:19.939Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/canvas/ui/EdgeEditToolbar.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/terminal-panel/ui/TerminalPanel.tsx"
     },
     "workspace": {
       "phase": "do",
@@ -251,7 +252,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T07:08:45.193Z",
-        "lastUpdated": "2026-03-08T07:01:33.958Z"
+        "lastUpdated": "2026-03-09T07:46:14.355Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/model/pane-routes.tsx"
     },
@@ -303,9 +304,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T07:34:47.807Z",
-        "lastUpdated": "2026-03-08T07:02:58.641Z"
+        "lastUpdated": "2026-03-09T07:46:04.229Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainLayout.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/app/layout/MainSidebar.tsx"
     },
     "folder.ts": {
       "phase": "do",
@@ -465,9 +466,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T13:07:34.206Z",
-        "lastUpdated": "2026-03-09T06:15:45.854Z"
+        "lastUpdated": "2026-03-09T07:46:28.268Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/changelog.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/tab-url.ts"
     },
     "providers": {
       "phase": "do",
@@ -1032,9 +1033,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-06T23:41:23.014Z",
-        "lastUpdated": "2026-03-06T23:58:56.107Z"
+        "lastUpdated": "2026-03-09T07:48:13.361Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/terminal/use-terminal.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/terminal/terminal-panel-store.ts"
     },
     "codebase-refactoring gap analysis": {
       "phase": "act",
@@ -1153,6 +1154,19 @@
         "lastUpdated": "2026-03-08T07:00:47.768Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/pages/changelog/index.ts"
+    },
+    "terminal-panel": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-03-09T07:45:09.005Z",
+        "lastUpdated": "2026-03-09T07:45:09.005Z"
+      },
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/terminal-panel/index.ts"
     }
   },
   "pipeline": {
@@ -1163,7 +1177,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-09T06:15:45.854Z"
+    "lastActivity": "2026-03-09T07:51:19.939Z"
   },
   "history": [
     {
@@ -22937,6 +22951,156 @@
     {
       "timestamp": "2026-03-09T06:15:45.854Z",
       "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:43:47.491Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:44:26.974Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:44:41.489Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:00.618Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:09.005Z",
+      "feature": "terminal-panel",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:26.365Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:32.423Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:38.296Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:43.765Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:49.058Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:45:55.456Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:46:04.229Z",
+      "feature": "layout",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:46:09.719Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:46:14.355Z",
+      "feature": "model",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:46:28.268Z",
+      "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:46:53.826Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:47:03.543Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:47:20.286Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:47:25.347Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:47:32.433Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:47:37.329Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:48:01.687Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:48:13.361Z",
+      "feature": "terminal",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:48:22.053Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T07:51:19.939Z",
+      "feature": "ui",
       "phase": "do",
       "action": "updated"
     }

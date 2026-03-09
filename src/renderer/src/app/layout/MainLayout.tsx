@@ -25,6 +25,7 @@ import {
   useSensors
 } from '@dnd-kit/core'
 import { PaneLayout } from '@/widgets/tab-system'
+import { TerminalPanel } from '@/widgets/terminal-panel'
 import { PANE_ROUTES } from './model/pane-routes'
 import { TAB_ICON } from '@/shared/constants/tab-url'
 
@@ -88,8 +89,11 @@ function MainLayout(): React.JSX.Element {
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
         >
-          <main className="flex-1 overflow-hidden">
-            <PaneLayout routes={PANE_ROUTES} isDragging={!!draggingTabId} />
+          <main className="flex flex-1 overflow-hidden">
+            <div className="flex-1 overflow-hidden">
+              <PaneLayout routes={PANE_ROUTES} isDragging={!!draggingTabId} />
+            </div>
+            <TerminalPanel />
           </main>
           <DragOverlay dropAnimation={null}>
             <DraggingTabOverlay tabId={draggingTabId} />
