@@ -91,6 +91,11 @@ export function CsvTable({
     overscan: 5
   })
 
+  // columnSizing 변경 시 virtualizer 재측정
+  useEffect(() => {
+    colVirtualizer.measure()
+  }, [colVirtualizer, columnSizing])
+
   // --- Scroll sync ---
   useEffect(() => {
     const el = scrollRef.current
