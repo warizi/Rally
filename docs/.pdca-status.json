@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-08T07:38:32.304Z",
+  "lastUpdated": "2026-03-09T06:15:45.854Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -95,9 +95,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-21T22:19:42.353Z",
-        "lastUpdated": "2026-03-08T07:17:34.741Z"
+        "lastUpdated": "2026-03-09T06:11:18.132Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/pages/changelog/ui/ChangelogPage.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/widgets/canvas/ui/EdgeEditToolbar.tsx"
     },
     "workspace": {
       "phase": "do",
@@ -108,9 +108,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:43:07.402Z",
-        "lastUpdated": "2026-03-08T04:26:48.583Z"
+        "lastUpdated": "2026-03-09T06:14:06.728Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/CreateWorkspaceDialog.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/__tests__/WorkspaceSwitcher.test.tsx"
     },
     "workspace.ts": {
       "phase": "do",
@@ -199,9 +199,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:01.950Z",
-        "lastUpdated": "2026-03-08T06:54:44.336Z"
+        "lastUpdated": "2026-03-09T04:32:37.602Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/lib/updater.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/index.ts"
     },
     "preload": {
       "phase": "do",
@@ -212,7 +212,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T15:26:20.139Z",
-        "lastUpdated": "2026-03-08T07:02:08.152Z"
+        "lastUpdated": "2026-03-09T05:13:18.595Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/preload/index.d.ts"
     },
@@ -397,9 +397,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-25T22:42:49.354Z",
-        "lastUpdated": "2026-03-08T00:56:21.958Z"
+        "lastUpdated": "2026-03-09T04:55:59.889Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/ui/NoteEditor.tsx",
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/note/edit-note/ui/NoteSearchBar.tsx",
       "previousPhase": "check",
       "autoAdvanced": true
     },
@@ -465,7 +465,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T13:07:34.206Z",
-        "lastUpdated": "2026-03-08T07:17:18.040Z"
+        "lastUpdated": "2026-03-09T06:15:45.854Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/changelog.ts"
     },
@@ -664,9 +664,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-01T03:00:15.939Z",
-        "lastUpdated": "2026-03-08T01:59:45.586Z"
+        "lastUpdated": "2026-03-09T05:51:19.973Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/schedule/manage-schedule/model/__tests__/schedule-color.test.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/schedule/manage-schedule/ui/ScheduleFormDialog.tsx"
     },
     "calendar": {
       "phase": "do",
@@ -914,7 +914,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T11:12:50.657Z",
-        "lastUpdated": "2026-03-03T11:23:55.617Z"
+        "lastUpdated": "2026-03-09T05:12:52.413Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/reminder.ts"
     },
@@ -927,7 +927,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T11:13:58.839Z",
-        "lastUpdated": "2026-03-05T01:56:12.366Z"
+        "lastUpdated": "2026-03-09T05:39:35.751Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/main/services/reminder-scheduler.ts"
     },
@@ -940,9 +940,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T11:14:21.502Z",
-        "lastUpdated": "2026-03-03T11:17:03.818Z"
+        "lastUpdated": "2026-03-09T05:13:43.081Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/reminder/index.ts"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/reminder/model/use-reminder-watcher.ts"
     },
     "reminder — Gap Analysis": {
       "phase": "act",
@@ -1163,7 +1163,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-08T07:38:32.304Z"
+    "lastActivity": "2026-03-09T06:15:45.854Z"
   },
   "history": [
     {
@@ -22505,6 +22505,438 @@
     {
       "timestamp": "2026-03-08T07:38:32.304Z",
       "feature": "providers",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:22:37.792Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:23:01.518Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:23:14.367Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:23:20.298Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:23:29.494Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:23:42.515Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:23:53.982Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:24:39.117Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:28:14.635Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:28:26.870Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:31:18.203Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:31:38.267Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:31:47.004Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:31:53.053Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:32:04.863Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:32:11.113Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:32:26.150Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:32:37.602Z",
+      "feature": "main",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:32:44.099Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:37:32.183Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:37:47.564Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:37:59.199Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:40:19.648Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:40:37.126Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:43:36.714Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:43:50.275Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:44:01.839Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:45:55.726Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:46:12.994Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:46:21.624Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:46:31.244Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:48:23.805Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:48:53.600Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:52:15.467Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:54:38.114Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:55:48.432Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:55:59.889Z",
+      "feature": "note",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T04:58:20.760Z",
+      "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:12:52.413Z",
+      "feature": "reminder.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:13:09.669Z",
+      "feature": "reminder-scheduler.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:13:18.595Z",
+      "feature": "preload",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:13:43.081Z",
+      "feature": "reminder",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:39:35.751Z",
+      "feature": "reminder-scheduler.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:40:38.054Z",
+      "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:51:19.973Z",
+      "feature": "schedule",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:51:52.450Z",
+      "feature": "constants",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:57:27.107Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:58:03.108Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:58:24.511Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:58:37.914Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:58:44.953Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:58:53.168Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:59:08.415Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T05:59:40.370Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:00:29.170Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:02:46.284Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:06:16.301Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:06:28.813Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:06:34.369Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:06:41.711Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:06:49.966Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:07:10.215Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:07:45.919Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:09:27.623Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:10:19.081Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:10:32.736Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:10:46.518Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:11:04.653Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:11:18.132Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:13:58.346Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:14:06.728Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:15:45.854Z",
+      "feature": "constants",
       "phase": "do",
       "action": "updated"
     }

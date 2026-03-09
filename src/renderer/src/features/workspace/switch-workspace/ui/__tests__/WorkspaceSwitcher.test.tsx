@@ -8,6 +8,10 @@ import type { JSX, ReactNode } from 'react'
 
 vi.mock('../../model/useWorkspaceSwitch')
 
+vi.mock('@features/workspace/backup-workspace', () => ({
+  useExportBackup: vi.fn(() => ({ mutate: vi.fn(), isPending: false }))
+}))
+
 vi.mock('../CreateWorkspaceDialog', () => ({
   CreateWorkspaceDialog: ({ open }: { open: boolean }) =>
     open ? createElement('div', { 'data-testid': 'create-dialog' }, 'CreateDialog') : null

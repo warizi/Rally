@@ -587,7 +587,12 @@ interface ReminderAPI {
   remove: (reminderId: string) => Promise<IpcResponse<void>>
   removeByEntity: (entityType: 'todo' | 'schedule', entityId: string) => Promise<IpcResponse<void>>
   onFired: (
-    callback: (data: { entityType: string; entityId: string; title: string }) => void
+    callback: (data: {
+      entityType: string
+      entityId: string
+      title: string
+      workspaceId: string | null
+    }) => void
   ) => () => void
 }
 
@@ -696,9 +701,14 @@ interface API {
   terminal: TerminalAPI
 }
 
+interface ShellAPI {
+  openExternal: (url: string) => Promise<void>
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
     api: API
+    shell: ShellAPI
   }
 }

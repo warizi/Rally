@@ -12,6 +12,52 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.1.0',
+    date: '2026-03-09',
+    changes: [
+      {
+        type: 'feature',
+        title: '노트 내 검색 기능',
+        description: 'Cmd+F로 노트 내 텍스트를 검색하고 하이라이트로 결과를 확인할 수 있습니다.'
+      },
+      {
+        type: 'feature',
+        title: '노트 링크 자동 변환',
+        description:
+          'URL 입력 후 스페이스/엔터 시 자동으로 링크가 적용되며, [텍스트](URL) 마크다운 문법도 지원합니다.'
+      },
+      {
+        type: 'feature',
+        title: '노트 링크 외부 브라우저 열기',
+        description: 'Cmd+Click으로 노트 내 링크를 기본 브라우저에서 열 수 있습니다.'
+      },
+      {
+        type: 'feature',
+        title: 'URL 붙여넣기 시 자동 링크',
+        description:
+          'URL을 붙여넣으면 자동으로 링크가 적용되며, 텍스트 선택 후 붙여넣으면 선택 텍스트에 링크가 적용됩니다.'
+      },
+      {
+        type: 'feature',
+        title: '캔버스 노드 색상 변경',
+        description:
+          '노드 선택 시 8가지 프리셋 색상으로 테두리 색상을 변경할 수 있습니다. 여러 노드 일괄 변경도 지원합니다.'
+      },
+      {
+        type: 'feature',
+        title: '캔버스 엣지 편집 툴바',
+        description:
+          '연결선 선택 시 텍스트 라벨, 선 스타일(실선/점선/점점선), 화살표 방향(없음/단방향/양방향), 색상을 편집할 수 있습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '알림이 모든 워크스페이스 대상으로 동작',
+        description:
+          '비활성 워크스페이스의 알림도 정상 발송되며, 알림 클릭 시 해당 워크스페이스로 자동 전환됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.0.3',
     date: '2026-03-08',
     changes: [
