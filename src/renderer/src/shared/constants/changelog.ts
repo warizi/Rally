@@ -38,6 +38,18 @@ export const CHANGELOG: ChangelogEntry[] = [
           'URL을 붙여넣으면 자동으로 링크가 적용되며, 텍스트 선택 후 붙여넣으면 선택 텍스트에 링크가 적용됩니다.'
       },
       {
+        type: 'feature',
+        title: '캔버스 노드 색상 변경',
+        description:
+          '노드 선택 시 8가지 프리셋 색상으로 테두리 색상을 변경할 수 있습니다. 여러 노드 일괄 변경도 지원합니다.'
+      },
+      {
+        type: 'feature',
+        title: '캔버스 엣지 편집 툴바',
+        description:
+          '연결선 선택 시 텍스트 라벨, 선 스타일(실선/점선/점점선), 화살표 방향(없음/단방향/양방향), 색상을 편집할 수 있습니다.'
+      },
+      {
         type: 'improvement',
         title: '알림이 모든 워크스페이스 대상으로 동작',
         description:
