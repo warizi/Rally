@@ -24,7 +24,7 @@ function TextNodeComponent({ id, data, selected }: NodeProps<TextNodeType>): Rea
         selected ? 'ring-2 ring-primary' : ''
       }`}
       style={{
-        borderColor: data.color ?? undefined
+        borderColor: data.color || undefined
       }}
     >
       <NodeResizer

@@ -79,7 +79,7 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
           selected ? 'ring-2 ring-primary' : ''
         } ${isBrokenRef ? 'border-destructive opacity-60' : ''}`}
         style={{
-          borderColor: isBrokenRef ? undefined : (data.color ?? undefined)
+          borderColor: isBrokenRef ? undefined : (data.color || undefined)
         }}
       >
         <Handle type="source" position={Position.Top} id="top" className="!w-2 !h-2" />

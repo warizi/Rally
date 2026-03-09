@@ -14,6 +14,8 @@ import { CustomEdge } from './CustomEdge'
 import { CanvasToolbar } from './CanvasToolbar'
 import { EntityPickerDialog } from './EntityPickerDialog'
 import { SelectionToolbar } from './SelectionToolbar'
+import { NodeColorToolbar } from './NodeColorToolbar'
+import { EdgeEditToolbar } from './EdgeEditToolbar'
 import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 import { findNonOverlappingPosition } from '../model/canvas-layout'
 import { useCanvasClipboard } from '../model/use-canvas-clipboard'
@@ -25,6 +27,8 @@ import type {
   CreateCanvasEdgeData
 } from '@entities/canvas'
 import type { OnNodesChange, OnEdgesChange, OnConnect, NodeChange } from '@xyflow/react'
+import type { StoreApi } from 'zustand/vanilla'
+import type { CanvasFlowState } from '../model/use-canvas-store'
 
 const NODE_TYPES = { textNode: TextNode, refNode: RefNode }
 const EDGE_TYPES = { customEdge: CustomEdge }
@@ -48,6 +52,7 @@ interface CanvasBoardInnerProps {
     canvasId: string
     data: CreateCanvasEdgeData
   }) => Promise<CanvasEdgeItem>
+  store: StoreApi<CanvasFlowState>
   hasSavedViewport: boolean
   undo: () => void
   redo: () => void
@@ -68,6 +73,7 @@ export function CanvasBoardInner({
   canvasId,
   createNodeAsync,
   createEdgeAsync,
+  store,
   hasSavedViewport,
   undo,
   redo,
@@ -251,7 +257,9 @@ export function CanvasBoardInner({
         <Controls showInteractive={false} />
         {showMinimap && <MiniMap zoomable pannable className="!bg-background !border-border" />}
       </ReactFlow>
+      <NodeColorToolbar store={store} />
       <SelectionToolbar onCopy={handleCopy} />
+      <EdgeEditToolbar canvasId={canvasId} store={store} />
       <EntityPickerDialog
         open={entityPickerOpen}
         onOpenChange={setEntityPickerOpen}

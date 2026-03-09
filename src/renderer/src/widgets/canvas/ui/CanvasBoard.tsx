@@ -40,6 +40,7 @@ export function CanvasBoard({ canvasId, tabId }: CanvasBoardProps): React.JSX.El
         canvasId={canvasId}
         createNodeAsync={canvasData.createNodeAsync}
         createEdgeAsync={canvasData.createEdgeAsync}
+        store={canvasData.store}
         undo={canvasData.undo}
         redo={canvasData.redo}
         canUndo={canvasData.canUndo}

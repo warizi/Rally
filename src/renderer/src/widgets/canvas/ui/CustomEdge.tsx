@@ -1,11 +1,5 @@
 import { memo } from 'react'
-import {
-  BaseEdge,
-  EdgeLabelRenderer,
-  getBezierPath,
-  useReactFlow,
-  type EdgeProps
-} from '@xyflow/react'
+import { BaseEdge, EdgeLabelRenderer, getBezierPath, type EdgeProps } from '@xyflow/react'
 
 function CustomEdgeComponent({
   id,
@@ -21,7 +15,6 @@ function CustomEdgeComponent({
   markerStart,
   selected
 }: EdgeProps): React.JSX.Element {
-  const { deleteElements } = useReactFlow()
   const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
@@ -42,24 +35,12 @@ function CustomEdgeComponent({
         markerEnd={markerEnd}
         markerStart={markerStart}
       />
-      {selected && (
-        <EdgeLabelRenderer>
-          <button
-            className="nodrag nopan absolute size-5 rounded-full bg-destructive/20 text-destructive
-                       flex items-center justify-center text-xs pointer-events-auto hover:bg-destructive/30"
-            style={{
-              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`
-            }}
-            onClick={() => deleteElements({ edges: [{ id }] })}
-          >
-            ✕
-          </button>
-        </EdgeLabelRenderer>
-      )}
-      {!selected && label && (
+      {label && (
         <EdgeLabelRenderer>
           <div
-            className="nodrag nopan absolute bg-background border rounded px-2 py-0.5 text-xs pointer-events-auto"
+            className={`nodrag nopan absolute bg-background border rounded px-2 py-0.5 text-xs pointer-events-auto ${
+              selected ? 'ring-1 ring-primary' : ''
+            }`}
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`
             }}
