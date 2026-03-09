@@ -1,4 +1,4 @@
-import { JSX, useCallback, useEffect, useRef } from 'react'
+import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from '@milkdown/core'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
@@ -11,6 +11,9 @@ import { $view, callCommand } from '@milkdown/kit/utils'
 import { useWriteNoteContent } from '@entities/note'
 import { useNoteExternalSync } from '../model/use-note-external-sync'
 import { createNoteImageNodeViewFactory } from '../model/note-image-node-view'
+import { noteSearchPlugin } from '../model/note-search-plugin'
+import { autolinkPlugin } from '../model/note-link-input-rule'
+import { NoteSearchBar } from './NoteSearchBar'
 
 /** 저장 시: 문단 사이 빈 줄 제거, <br /> → 빈 줄로 변환 */
 function compactMarkdown(md: string): string {
@@ -85,9 +88,19 @@ interface MilkdownEditorProps {
   workspaceId: string
   initialContent: string
   onSave: (markdown: string) => void
+  searchOpen: boolean
+  onSearchOpen: () => void
+  onSearchClose: () => void
 }
 
-function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorProps): JSX.Element {
+function MilkdownEditor({
+  workspaceId,
+  initialContent,
+  onSave,
+  searchOpen,
+  onSearchOpen,
+  onSearchClose
+}: MilkdownEditorProps): JSX.Element {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const [loading, getEditor] = useInstance()
@@ -124,6 +137,8 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
       .use(history)
       .use(listener)
       .use(upload)
+      .use(noteSearchPlugin)
+      .use(autolinkPlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
   )
 
@@ -176,9 +191,49 @@ function MilkdownEditor({ workspaceId, initialContent, onSave }: MilkdownEditorP
     })
   }, [getEditor])
 
+  // 링크 Cmd+Click → 외부 브라우저 열기 (mousedown capture로 ProseMirror보다 먼저 처리)
+  useEffect(() => {
+    const el = wrapperRef.current
+    if (!el) return
+    const onMouseDown = (e: MouseEvent): void => {
+      if (!e.metaKey && !e.ctrlKey) return
+      const target = e.target as HTMLElement
+      const anchor = target.closest('a')
+      if (!anchor) return
+      const href = anchor.getAttribute('href')
+      if (href && /^https?:\/\//.test(href)) {
+        e.preventDefault()
+        e.stopPropagation()
+        window.shell.openExternal(href)
+      }
+    }
+    el.addEventListener('mousedown', onMouseDown, true)
+    return () => el.removeEventListener('mousedown', onMouseDown, true)
+  }, [])
+
+  // Cmd+F 검색 열기 (document 레벨에서 캡처하여 Electron 내장 Find 방지)
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'f') {
+        // 에디터에 포커스가 있거나 검색바에 포커스가 있을 때만 동작
+        const el = wrapperRef.current
+        if (!el) return
+        if (!el.contains(document.activeElement)) return
+        e.preventDefault()
+        e.stopPropagation()
+        onSearchOpen()
+      }
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => document.removeEventListener('keydown', onKeyDown, true)
+  }, [onSearchOpen])
+
   return (
-    <div ref={wrapperRef} className="h-full flex flex-col">
-      <div ref={editorRef} className="flex-1">
+    <div ref={wrapperRef} className="h-full relative">
+      <div className="sticky top-0 z-10">
+        <NoteSearchBar open={searchOpen} onClose={onSearchClose} />
+      </div>
+      <div ref={editorRef}>
         <Milkdown />
       </div>
       <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
@@ -196,6 +251,7 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
   const { mutate: writeContent } = useWriteNoteContent()
   const lastSentRef = useRef<string | null>(null)
   const { editorKey, contentToMount } = useNoteExternalSync(noteId, initialContent, lastSentRef)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const handleSave = useCallback(
@@ -223,6 +279,9 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
           workspaceId={workspaceId}
           initialContent={contentToMount}
           onSave={handleSave}
+          searchOpen={searchOpen}
+          onSearchOpen={() => setSearchOpen(true)}
+          onSearchClose={() => setSearchOpen(false)}
         />
       </MilkdownProvider>
     </div>

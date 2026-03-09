@@ -696,9 +696,14 @@ interface API {
   terminal: TerminalAPI
 }
 
+interface ShellAPI {
+  openExternal: (url: string) => Promise<void>
+}
+
 declare global {
   interface Window {
     electron: ElectronAPI
     api: API
+    shell: ShellAPI
   }
 }

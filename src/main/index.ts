@@ -93,6 +93,11 @@ app.whenReady().then(() => {
   })
 
   ipcMain.on('ping', () => console.log('pong'))
+  ipcMain.handle('shell:openExternal', async (_, url: string) => {
+    if (/^https?:\/\//.test(url)) {
+      await shell.openExternal(url)
+    }
+  })
 
   runMigrations()
   initializeDatabase()
