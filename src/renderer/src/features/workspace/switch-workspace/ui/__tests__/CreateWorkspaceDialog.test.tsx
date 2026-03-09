@@ -7,6 +7,11 @@ vi.mock('@entities/workspace', () => ({
   useCreateWorkspace: vi.fn()
 }))
 
+vi.mock('@features/workspace/backup-workspace', () => ({
+  useImportBackup: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
+  BackupRestoreSection: () => null
+}))
+
 const mockMutate = vi.fn()
 const mockSelectDirectory = vi.fn()
 

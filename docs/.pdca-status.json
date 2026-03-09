@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-09T06:11:18.132Z",
+  "lastUpdated": "2026-03-09T06:14:06.728Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -108,9 +108,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-22T02:43:07.402Z",
-        "lastUpdated": "2026-03-08T04:26:48.583Z"
+        "lastUpdated": "2026-03-09T06:14:06.728Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/CreateWorkspaceDialog.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/workspace/switch-workspace/ui/__tests__/WorkspaceSwitcher.test.tsx"
     },
     "workspace.ts": {
       "phase": "do",
@@ -1163,7 +1163,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-09T06:11:18.132Z"
+    "lastActivity": "2026-03-09T06:14:06.728Z"
   },
   "history": [
     {
@@ -22919,6 +22919,18 @@
     {
       "timestamp": "2026-03-09T06:11:18.132Z",
       "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:13:58.346Z",
+      "feature": "workspace",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-09T06:14:06.728Z",
+      "feature": "workspace",
       "phase": "do",
       "action": "updated"
     }
