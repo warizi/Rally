@@ -5,7 +5,10 @@ import { NotFoundError, ValidationError } from '../lib/errors'
 import { resolveNameConflict } from '../lib/fs-utils'
 import { normalizePath } from '../lib/path-utils'
 import { folderRepository } from '../repositories/folder'
+import { csvFileRepository } from '../repositories/csv-file'
+import { imageFileRepository } from '../repositories/image-file'
 import { noteRepository } from '../repositories/note'
+import { pdfFileRepository } from '../repositories/pdf-file'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
 // ⚠️ folder-watcher.ts를 import하지 않음 — 순환 의존성 방지
@@ -295,6 +298,9 @@ export const folderService = {
     fs.renameSync(oldAbs, newAbs)
     folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
     noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+    csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+    pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+    imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
 
     const updated = folderRepository.findById(folderId)!
     return {
@@ -370,6 +376,9 @@ export const folderService = {
       fs.renameSync(oldAbs, finalAbs)
       folderRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
       noteRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
+      csvFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
+      pdfFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
+      imageFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
     }
 
     // siblings reindex
