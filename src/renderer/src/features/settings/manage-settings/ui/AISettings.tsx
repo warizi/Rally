@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 import { CopyIcon, CheckIcon, FileTextIcon } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
-import { ScrollArea } from '@/shared/ui/scroll-area'
 
 interface CommandFile {
   name: string
@@ -148,11 +147,11 @@ export function AISettings(): React.JSX.Element {
                   </Button>
                 </div>
                 {expandedCommand === file.name && (
-                  <ScrollArea className="max-h-48">
+                  <div className="max-h-48 overflow-y-auto">
                     <pre className="text-xs bg-muted px-3 py-2 border-t whitespace-pre-wrap">
                       {file.content}
                     </pre>
-                  </ScrollArea>
+                  </div>
                 )}
               </div>
             ))}
@@ -198,11 +197,11 @@ export function AISettings(): React.JSX.Element {
                   </Button>
                 </div>
                 {expandedSkill === file.name && (
-                  <ScrollArea className="max-h-48">
+                  <div className="max-h-48 overflow-y-auto">
                     <pre className="text-xs bg-muted px-3 py-2 border-t whitespace-pre-wrap">
                       {file.content}
                     </pre>
-                  </ScrollArea>
+                  </div>
                 )}
               </div>
             ))}

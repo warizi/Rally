@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.2.1',
+    date: '2026-03-11',
+    changes: [
+      {
+        type: 'fix',
+        title: '폴더 이름 변경 시 하위 파일 경로 미갱신 수정',
+        description:
+          '상위 폴더 이름 변경 시 하위 테이블(CSV), PDF, 이미지 파일의 경로가 함께 갱신되지 않던 문제를 수정했습니다.'
+      },
+      {
+        type: 'fix',
+        title: '설정 커맨드/스킬즈 상세보기 스크롤 수정',
+        description:
+          '설정 > AI 탭에서 커맨드·스킬즈 내용을 펼쳤을 때 스크롤이 되지 않던 문제를 수정했습니다.'
+      }
+    ]
+  },
+  {
     version: '1.2.0',
     date: '2026-03-09',
     changes: [
