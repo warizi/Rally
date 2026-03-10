@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-10T17:20:48.828Z",
+  "lastUpdated": "2026-03-10T17:41:01.465Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -97,9 +97,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-21T22:19:42.353Z",
-        "lastUpdated": "2026-03-09T11:52:04.106Z"
+        "lastUpdated": "2026-03-10T17:32:30.086Z"
       },
-      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/pages/canvas/ui/CanvasListPage.tsx"
+      "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/ui/scroll-area.tsx"
     },
     "workspace": {
       "phase": "do",
@@ -890,7 +890,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-03-03T06:28:58.636Z",
-        "lastUpdated": "2026-03-09T10:32:53.791Z"
+        "lastUpdated": "2026-03-10T17:41:01.465Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/features/settings/manage-settings/ui/AISettings.tsx"
     },
@@ -1191,7 +1191,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-10T17:20:48.828Z"
+    "lastActivity": "2026-03-10T17:41:01.465Z"
   },
   "history": [
     {
@@ -23331,6 +23331,96 @@
     {
       "timestamp": "2026-03-10T17:20:48.828Z",
       "feature": "folder.ts",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:25:23.407Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:25:41.397Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:28:07.425Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:29:35.586Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:29:54.271Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:30:12.333Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:30:21.215Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:30:30.976Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:31:30.464Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:31:51.261Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:31:59.519Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:32:30.086Z",
+      "feature": "ui",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:40:43.007Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:40:50.937Z",
+      "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:41:01.465Z",
+      "feature": "settings",
       "phase": "do",
       "action": "updated"
     }
