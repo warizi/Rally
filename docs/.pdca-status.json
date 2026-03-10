@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-03-10T17:41:01.465Z",
+  "lastUpdated": "2026-03-10T17:44:37.842Z",
   "activeFeatures": [
     "ui",
     "workspace",
@@ -467,7 +467,7 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-26T13:07:34.206Z",
-        "lastUpdated": "2026-03-09T10:17:48.200Z"
+        "lastUpdated": "2026-03-10T17:44:37.842Z"
       },
       "lastFile": "/Users/jinseunghyeon/Desktop/jin/project/rally/src/renderer/src/shared/constants/changelog.ts"
     },
@@ -1191,7 +1191,7 @@
   "session": {
     "startedAt": "2026-02-21T22:18:14.791Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-03-10T17:41:01.465Z"
+    "lastActivity": "2026-03-10T17:44:37.842Z"
   },
   "history": [
     {
@@ -23421,6 +23421,12 @@
     {
       "timestamp": "2026-03-10T17:41:01.465Z",
       "feature": "settings",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-03-10T17:44:37.842Z",
+      "feature": "constants",
       "phase": "do",
       "action": "updated"
     }
