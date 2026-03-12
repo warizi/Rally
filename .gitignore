@@ -11,3 +11,9 @@ out
 # env
 .env
 .env.*
+
+# ai 
+.claude
+.bkit
+.bkit-*
+.bkit-*/**
