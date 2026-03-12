@@ -142,6 +142,20 @@
   padding: 0 0 !important;
 }
 
+/* ─── Syntax Hint (Obsidian-style) ──────────── */
+
+.milkdown .syntax-hint {
+  font-size: 0.7em;
+  font-family: monospace;
+  color: var(--muted-foreground);
+  opacity: 0.5;
+  margin-right: 0.4em;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* ─── Existing Styles ───────────────────────── */
+
 .milkdown .ProseMirror ul {
   list-style-type: disc;
   padding-left: 1.5em;
@@ -156,21 +170,32 @@
   padding: 0;
 }
 
+.milkdown .ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 12px 0;
+}
+
 .milkdown .ProseMirror h1 {
   margin-top: 16px;
 }
+
 .milkdown .ProseMirror h2 {
   margin-top: 14px;
 }
+
 .milkdown .ProseMirror h3 {
   margin-top: 12px;
 }
+
 .milkdown .ProseMirror h4 {
   margin-top: 10px;
 }
+
 .milkdown .ProseMirror h5 {
   margin-top: 8px;
 }
+
 .milkdown .ProseMirror h6 {
   margin-top: 8px;
 }
@@ -261,13 +286,14 @@
 }
 
 /* scroll area 내부 동작중 컨텐츠가 커지면 부모 넓이에 넘치는 걸 방지함 */
-.scroll-area-w-content-fit [data-slot='scroll-area-viewport'] > div {
+.scroll-area-w-content-fit [data-slot='scroll-area-viewport']>div {
   display: block !important;
 }
 
 .scrollbar-hide {
   scrollbar-width: none;
 }
+
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
