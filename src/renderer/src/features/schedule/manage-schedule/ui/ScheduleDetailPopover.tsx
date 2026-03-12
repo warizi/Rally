@@ -56,6 +56,7 @@ export function ScheduleDetailPopover({
         pdf: { type: 'pdf', pathname: `/folder/pdf/${linkedId}` },
         csv: { type: 'csv', pathname: `/folder/csv/${linkedId}` },
         image: { type: 'image', pathname: `/folder/image/${linkedId}` },
+        canvas: { type: 'canvas-detail', pathname: `/canvas/${linkedId}` },
         schedule: null
       }
       const opts = map[linkedType]

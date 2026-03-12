@@ -147,6 +147,11 @@ function batchFetchRefs(
       refMap.set(img.id, { title: img.title, preview: img.description ?? '' })
     }
   }
+  if (idsByType.canvas?.length) {
+    for (const c of canvasRepository.findByIds(idsByType.canvas)) {
+      refMap.set(c.id, { title: c.title, preview: c.description ?? '' })
+    }
+  }
 
   return refMap
 }

@@ -264,6 +264,7 @@ export function CanvasBoardInner({
         open={entityPickerOpen}
         onOpenChange={setEntityPickerOpen}
         onSelect={handleEntitySelect}
+        canvasId={canvasId}
       />
     </div>
   )

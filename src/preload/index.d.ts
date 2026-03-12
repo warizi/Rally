@@ -392,7 +392,7 @@ interface EntityLinkAPI {
   onChanged: (callback: () => void) => () => void
 }
 
-type CanvasNodeType = 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image'
+type CanvasNodeType = 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image' | 'canvas'
 type CanvasEdgeSide = 'top' | 'right' | 'bottom' | 'left'
 type CanvasEdgeStyle = 'solid' | 'dashed' | 'dotted'
 type CanvasEdgeArrow = 'none' | 'end' | 'both'

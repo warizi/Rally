@@ -10,6 +10,7 @@ import { useNotesByWorkspace } from '@entities/note'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import { useImageFilesByWorkspace } from '@entities/image-file'
+import { useCanvasesByWorkspace } from '@entities/canvas'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
 
@@ -33,7 +34,7 @@ interface EntityOption {
   title: string
 }
 
-const ALL_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv', 'image']
+const ALL_TABS: LinkableEntityType[] = ['todo', 'schedule', 'note', 'pdf', 'csv', 'image', 'canvas']
 
 export function PendingLinkPicker({
   workspaceId,
@@ -53,6 +54,7 @@ export function PendingLinkPicker({
   const { data: pdfs = [] } = usePdfFilesByWorkspace(workspaceId)
   const { data: csvs = [] } = useCsvFilesByWorkspace(workspaceId)
   const { data: images = [] } = useImageFilesByWorkspace(workspaceId)
+  const { data: canvases = [] } = useCanvasesByWorkspace(workspaceId)
 
   const selectedSet = useMemo(() => {
     const s = new Set<string>()
@@ -69,9 +71,10 @@ export function PendingLinkPicker({
       note: notes.map((n) => ({ type: 'note', id: n.id, title: n.title })),
       pdf: pdfs.map((p) => ({ type: 'pdf', id: p.id, title: p.title })),
       csv: csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title })),
-      image: images.map((i) => ({ type: 'image', id: i.id, title: i.title }))
+      image: images.map((i) => ({ type: 'image', id: i.id, title: i.title })),
+      canvas: canvases.map((c) => ({ type: 'canvas', id: c.id, title: c.title }))
     }),
-    [todos, schedules, notes, pdfs, csvs, images]
+    [todos, schedules, notes, pdfs, csvs, images, canvases]
   )
 
   const filtered = useMemo(() => {

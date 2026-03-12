@@ -1,4 +1,4 @@
-import { and, eq, like, or } from 'drizzle-orm'
+import { and, eq, inArray, like, or } from 'drizzle-orm'
 import { db } from '../db'
 import { canvases } from '../db/schema'
 
@@ -21,6 +21,11 @@ export const canvasRepository = {
 
   findById(id: string): Canvas | undefined {
     return db.select().from(canvases).where(eq(canvases.id, id)).get()
+  },
+
+  findByIds(ids: string[]): Canvas[] {
+    if (ids.length === 0) return []
+    return db.select().from(canvases).where(inArray(canvases.id, ids)).all()
   },
 
   create(data: CanvasInsert): Canvas {

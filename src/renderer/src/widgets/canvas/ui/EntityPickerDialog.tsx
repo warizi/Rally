@@ -9,6 +9,7 @@ import { useAllSchedulesByWorkspace } from '@entities/schedule'
 import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useImageFilesByWorkspace } from '@entities/image-file'
+import { useCanvasesByWorkspace } from '@entities/canvas'
 import type { CanvasNodeType } from '@entities/canvas'
 import { PICKABLE_TYPES } from '../model/node-type-registry'
 
@@ -22,20 +23,27 @@ interface Props {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSelect: (type: CanvasNodeType, refId: string) => void
+  canvasId: string
 }
 
-export function EntityPickerDialog({ open, onOpenChange, onSelect }: Props): React.JSX.Element {
+export function EntityPickerDialog({
+  open,
+  onOpenChange,
+  onSelect,
+  canvasId
+}: Props): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>요소 추가</DialogTitle>
         </DialogHeader>
         {open && workspaceId ? (
           <EntityPickerContent
             workspaceId={workspaceId}
+            canvasId={canvasId}
             onSelect={onSelect}
             onOpenChange={onOpenChange}
           />
@@ -47,10 +55,12 @@ export function EntityPickerDialog({ open, onOpenChange, onSelect }: Props): Rea
 
 function EntityPickerContent({
   workspaceId,
+  canvasId,
   onSelect,
   onOpenChange
 }: {
   workspaceId: string
+  canvasId: string
   onSelect: (type: CanvasNodeType, refId: string) => void
   onOpenChange: (open: boolean) => void
 }): React.JSX.Element {
@@ -63,6 +73,7 @@ function EntityPickerContent({
   const { data: csvFiles = [] } = useCsvFilesByWorkspace(workspaceId)
   const { data: pdfFiles = [] } = usePdfFilesByWorkspace(workspaceId)
   const { data: imageFiles = [] } = useImageFilesByWorkspace(workspaceId)
+  const { data: canvases = [] } = useCanvasesByWorkspace(workspaceId)
 
   const entityMap: Record<CanvasNodeType, EntityOption[]> = useMemo(
     () => ({
@@ -76,9 +87,12 @@ function EntityPickerContent({
       })),
       csv: csvFiles.map((c) => ({ id: c.id, title: c.title, preview: c.preview })),
       pdf: pdfFiles.map((p) => ({ id: p.id, title: p.title, preview: p.preview })),
-      image: imageFiles.map((i) => ({ id: i.id, title: i.title, preview: i.description }))
+      image: imageFiles.map((i) => ({ id: i.id, title: i.title, preview: i.description })),
+      canvas: canvases
+        .filter((c) => c.id !== canvasId)
+        .map((c) => ({ id: c.id, title: c.title, preview: c.description }))
     }),
-    [todos, notes, schedules, csvFiles, pdfFiles, imageFiles]
+    [todos, notes, schedules, csvFiles, pdfFiles, imageFiles, canvases, canvasId]
   )
 
   const filtered = useMemo(() => {
@@ -97,7 +111,7 @@ function EntityPickerContent({
 
   return (
     <>
-      <div className="flex gap-1 flex-wrap">
+      <div className="flex gap-1 overflow-x-auto">
         {PICKABLE_TYPES.map(({ type, label, icon: Icon }) => (
           <button
             key={type}
