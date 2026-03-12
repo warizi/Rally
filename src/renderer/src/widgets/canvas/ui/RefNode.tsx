@@ -87,11 +87,11 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
         <Handle type="source" position={Position.Bottom} id="bottom" className="!w-2 !h-2" />
         <Handle type="source" position={Position.Left} id="left" className="!w-2 !h-2" />
 
-        <div
-          className={`flex items-center gap-2 px-3 py-2 ${ContentComponent || (!ContentComponent && data.nodeType !== 'canvas') ? 'border-b' : ''} bg-muted/30`}
-        >
-          <Icon className="size-3.5 text-muted-foreground shrink-0" />
-          <span className="text-xs text-muted-foreground flex-1 truncate">
+        <div className="flex items-center gap-2.5 px-3 py-2 border-b bg-muted/30">
+          <div className="size-6 rounded-md bg-muted flex items-center justify-center shrink-0">
+            <Icon className="size-3.5 text-muted-foreground" />
+          </div>
+          <span className="text-sm font-medium text-foreground flex-1 truncate">
             {data.refTitle || label}
           </span>
           {data.refId && (
@@ -132,7 +132,7 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
           ) : (
             <div className="flex-1 min-h-0 bg-muted/40" />
           )
-        ) : data.nodeType === 'canvas' ? null : (
+        ) : (
           <div className="p-3 flex-1 overflow-y-auto overflow-x-hidden nowheel">
             <p className="text-sm font-medium truncate">{data.refTitle || '(제목 없음)'}</p>
           </div>
