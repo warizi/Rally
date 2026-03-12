@@ -89,7 +89,9 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
 
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
           <Icon className="size-3.5 text-muted-foreground shrink-0" />
-          <span className="text-xs text-muted-foreground flex-1 truncate">{label}</span>
+          <span className="text-xs text-muted-foreground flex-1 truncate">
+            {data.refTitle || label}
+          </span>
           {data.refId && (
             <PanePickerSubmenu onPaneSelect={handleOpenInPane} className="nodrag shrink-0">
               {({ onClick }) => (
