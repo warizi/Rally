@@ -12,6 +12,33 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.2',
+    date: '2026-03-12',
+    changes: [
+      {
+        type: 'feature',
+        title: '캔버스에 캔버스 노드 추가',
+        description:
+          '캔버스 안에 다른 캔버스를 노드로 추가할 수 있으며, 참조된 캔버스의 미니맵 프리뷰가 표시됩니다.'
+      },
+      {
+        type: 'improvement',
+        title: '캔버스 노드 타이틀 표시 개선',
+        description: '노드 헤더에 노드 종류 대신 실제 요소 제목이 표시됩니다.'
+      },
+      {
+        type: 'feature',
+        title: '노트 에디터 구문 힌트',
+        description: '포커스된 줄에 마크다운 구문 마커(#, ---)가 표시됩니다.'
+      },
+      {
+        type: 'fix',
+        title: '노트 에디터 인용문·수평선 스타일 추가',
+        description: '마크다운 blockquote와 horizontal rule이 정상적으로 렌더링됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.2.1',
     date: '2026-03-11',
     changes: [
