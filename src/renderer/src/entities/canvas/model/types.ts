@@ -1,4 +1,12 @@
-export type CanvasNodeType = 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image'
+export type CanvasNodeType =
+  | 'text'
+  | 'todo'
+  | 'note'
+  | 'schedule'
+  | 'csv'
+  | 'pdf'
+  | 'image'
+  | 'canvas'
 export type CanvasEdgeSide = 'top' | 'right' | 'bottom' | 'left'
 export type CanvasEdgeStyle = 'solid' | 'dashed' | 'dotted'
 export type CanvasEdgeArrow = 'none' | 'end' | 'both'

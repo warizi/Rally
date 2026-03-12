@@ -2,7 +2,15 @@ import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core
 import { isNotNull } from 'drizzle-orm'
 import { canvases } from './canvas'
 
-export type CanvasNodeType = 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image'
+export type CanvasNodeType =
+  | 'text'
+  | 'todo'
+  | 'note'
+  | 'schedule'
+  | 'csv'
+  | 'pdf'
+  | 'image'
+  | 'canvas'
 export const CANVAS_NODE_TYPES: CanvasNodeType[] = [
   'text',
   'todo',
@@ -10,7 +18,8 @@ export const CANVAS_NODE_TYPES: CanvasNodeType[] = [
   'schedule',
   'csv',
   'pdf',
-  'image'
+  'image',
+  'canvas'
 ]
 
 export const canvasNodes = sqliteTable(
@@ -21,7 +30,7 @@ export const canvasNodes = sqliteTable(
       .notNull()
       .references(() => canvases.id, { onDelete: 'cascade' }),
     type: text('type', {
-      enum: ['text', 'todo', 'note', 'schedule', 'csv', 'pdf', 'image']
+      enum: ['text', 'todo', 'note', 'schedule', 'csv', 'pdf', 'image', 'canvas']
     }).notNull(),
     refId: text('ref_id'),
     x: real('x').notNull(),

@@ -1,4 +1,4 @@
-import { Type, Check, FileText, Calendar, Sheet, ImageIcon } from 'lucide-react'
+import { Type, Check, FileText, Calendar, Sheet, ImageIcon, Network } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { TodoNodeContent } from '../ui/node-content/TodoNodeContent'
 import { NoteNodeContent } from '../ui/node-content/NoteNodeContent'
@@ -81,6 +81,15 @@ export const NODE_TYPE_REGISTRY: Record<CanvasNodeType, NodeTypeConfig> = {
     defaultWidth: 300,
     defaultHeight: 260,
     resizable: true,
+    pickable: true
+  },
+  canvas: {
+    component: null,
+    icon: Network,
+    label: '캔버스',
+    defaultWidth: 220,
+    defaultHeight: 80,
+    resizable: false,
     pickable: true
   }
 }

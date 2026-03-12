@@ -3939,8 +3939,8 @@ var require_schemes = __commonJS({
     function getSchemeHandler(scheme) {
       return (
         (scheme &&
-          (/** @type {SchemeName} */
-          SCHEMES[scheme] ||
+          /** @type {SchemeName} */
+          (SCHEMES[scheme] ||
             SCHEMES[
               /** @type {SchemeName} */
               scheme.toLowerCase()
@@ -31395,9 +31395,8 @@ function getErrorMap2() {
   return config().customError
 }
 var ZodFirstPartyTypeKind2
-/* @__PURE__ */ ;(function (ZodFirstPartyTypeKind3) {})(
-  ZodFirstPartyTypeKind2 || (ZodFirstPartyTypeKind2 = {})
-)
+  /* @__PURE__ */
+;(function (ZodFirstPartyTypeKind3) {})(ZodFirstPartyTypeKind2 || (ZodFirstPartyTypeKind2 = {}))
 
 // node_modules/zod/v4/classic/from-json-schema.js
 var z = {
