@@ -6,6 +6,7 @@ import { ScheduleNodeContent } from '../ui/node-content/ScheduleNodeContent'
 import { CsvNodeContent } from '../ui/node-content/CsvNodeContent'
 import { PdfNodeContent } from '../ui/node-content/PdfNodeContent'
 import { ImageNodeContent } from '../ui/node-content/ImageNodeContent'
+import { CanvasNodeContent } from '../ui/node-content/CanvasNodeContent'
 import type { NodeContentProps } from './node-content-registry'
 import type { CanvasNodeType } from '@entities/canvas'
 
@@ -84,12 +85,12 @@ export const NODE_TYPE_REGISTRY: Record<CanvasNodeType, NodeTypeConfig> = {
     pickable: true
   },
   canvas: {
-    component: null,
+    component: CanvasNodeContent,
     icon: Network,
     label: '캔버스',
-    defaultWidth: 220,
-    defaultHeight: 80,
-    resizable: false,
+    defaultWidth: 280,
+    defaultHeight: 200,
+    resizable: true,
     pickable: true
   }
 }
