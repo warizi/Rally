@@ -13,6 +13,7 @@ import { useNoteExternalSync } from '../model/use-note-external-sync'
 import { createNoteImageNodeViewFactory } from '../model/note-image-node-view'
 import { noteSearchPlugin } from '../model/note-search-plugin'
 import { autolinkPlugin } from '../model/note-link-input-rule'
+import { syntaxHintPlugin } from '../model/note-syntax-hint-plugin'
 import { NoteSearchBar } from './NoteSearchBar'
 
 /** 저장 시: 문단 사이 빈 줄 제거, <br /> → 빈 줄로 변환 */
@@ -139,6 +140,7 @@ function MilkdownEditor({
       .use(upload)
       .use(noteSearchPlugin)
       .use(autolinkPlugin)
+      .use(syntaxHintPlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
   )
 
