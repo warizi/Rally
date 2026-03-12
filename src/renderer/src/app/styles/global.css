@@ -238,6 +238,12 @@
   opacity: 0.8;
 }
 
+.milkdown .ProseMirror blockquote {
+  border-left: 3px solid var(--muted-foreground);
+  padding-left: 12px;
+  margin: 8px 0;
+}
+
 .milkdown .search-highlight {
   background-color: rgba(250, 204, 21, 0.4);
   border-radius: 2px;
