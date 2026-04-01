@@ -1,6 +1,6 @@
 {
   "name": "rally",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Rally",
   "main": "./out/main/index.js",
   "author": "example.com",
