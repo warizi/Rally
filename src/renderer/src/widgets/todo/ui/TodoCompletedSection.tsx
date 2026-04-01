@@ -1,9 +1,9 @@
 import { CollapsibleSection } from '@shared/ui/collapsible-section'
 import { TodoCompletedView } from '@features/todo/todo-list/ui/TodoCompletedView'
-import type { TodoItem } from '@entities/todo'
+import type { CompletedItem } from '@entities/recurring-completion'
 
 interface Props {
-  todos: TodoItem[]
+  items: CompletedItem[]
   workspaceId: string
   filterActive: boolean
   onItemClick: (todoId: string) => void
@@ -14,7 +14,7 @@ interface Props {
 }
 
 export function TodoCompletedSection({
-  todos,
+  items,
   workspaceId,
   filterActive,
   onItemClick,
@@ -25,12 +25,12 @@ export function TodoCompletedSection({
 }: Props): React.JSX.Element {
   return (
     <CollapsibleSection
-      title={`완료된 항목 (${todos.length}개)`}
+      title={`완료된 항목 (${items.length}개)`}
       open={open}
       onOpenChange={onOpenChange}
     >
       <TodoCompletedView
-        todos={todos}
+        items={items}
         workspaceId={workspaceId}
         filterActive={filterActive}
         onItemClick={onItemClick}

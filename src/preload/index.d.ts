@@ -312,6 +312,7 @@ interface TodoAPI {
   reorderList: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
   reorderKanban: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
   reorderSub: (parentId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
+  findCompletedWithRecurring: (workspaceId: string) => Promise<IpcResponse<CompletedItem[]>>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
@@ -678,6 +679,88 @@ interface BackupAPI {
   import: (zipPath: string, name: string, path: string) => Promise<IpcResponse<Workspace>>
 }
 
+type RecurrenceType = 'daily' | 'weekday' | 'weekend' | 'custom'
+
+interface RecurringRuleItem {
+  id: string
+  workspaceId: string
+  title: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  recurrenceType: RecurrenceType
+  daysOfWeek: number[] | null
+  startDate: Date
+  endDate: Date | null
+  startTime: string | null
+  endTime: string | null
+  reminderOffsetMs: number | null
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CreateRecurringRuleData {
+  title: string
+  description?: string
+  priority?: 'high' | 'medium' | 'low'
+  recurrenceType: RecurrenceType
+  daysOfWeek?: number[]
+  startDate: Date
+  endDate?: Date | null
+  startTime?: string | null
+  endTime?: string | null
+  reminderOffsetMs?: number | null
+}
+
+interface UpdateRecurringRuleData {
+  title?: string
+  description?: string
+  priority?: 'high' | 'medium' | 'low'
+  recurrenceType?: RecurrenceType
+  daysOfWeek?: number[] | null
+  startDate?: Date
+  endDate?: Date | null
+  startTime?: string | null
+  endTime?: string | null
+  reminderOffsetMs?: number | null
+}
+
+interface RecurringRuleAPI {
+  findByWorkspace: (workspaceId: string) => Promise<IpcResponse<RecurringRuleItem[]>>
+  findToday: (workspaceId: string, date: Date) => Promise<IpcResponse<RecurringRuleItem[]>>
+  create: (
+    workspaceId: string,
+    data: CreateRecurringRuleData
+  ) => Promise<IpcResponse<RecurringRuleItem>>
+  update: (ruleId: string, data: UpdateRecurringRuleData) => Promise<IpcResponse<RecurringRuleItem>>
+  delete: (ruleId: string) => Promise<IpcResponse<void>>
+}
+
+interface RecurringCompletionItem {
+  id: string
+  ruleId: string | null
+  ruleTitle: string
+  workspaceId: string
+  completedDate: string
+  completedAt: Date
+  createdAt: Date
+}
+
+interface RecurringCompletionAPI {
+  complete: (ruleId: string, date: Date) => Promise<IpcResponse<RecurringCompletionItem>>
+  uncomplete: (completionId: string) => Promise<IpcResponse<void>>
+  findTodayByWorkspace: (
+    workspaceId: string,
+    date: Date
+  ) => Promise<IpcResponse<RecurringCompletionItem[]>>
+}
+
+interface CompletedItem {
+  type: 'todo' | 'recurring'
+  completedAt: Date
+  todo?: TodoItem
+  recurringCompletion?: RecurringCompletionItem
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -701,6 +784,8 @@ interface API {
   backup: BackupAPI
   appInfo: AppInfoAPI
   terminal: TerminalAPI
+  recurringRule: RecurringRuleAPI
+  recurringCompletion: RecurringCompletionAPI
 }
 
 interface ShellAPI {

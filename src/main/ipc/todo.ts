@@ -54,4 +54,10 @@ export function registerTodoHandlers(): void {
     (_: IpcMainInvokeEvent, parentId: string, updates: TodoOrderUpdate[]): IpcResponse =>
       handle(() => todoService.reorderSub(parentId, updates))
   )
+
+  ipcMain.handle(
+    'todo:findCompletedWithRecurring',
+    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
+      handle(() => todoService.findCompletedWithRecurring(workspaceId))
+  )
 }

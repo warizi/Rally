@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.3',
+    date: '2026-03-13',
+    changes: [
+      {
+        type: 'improvement',
+        title: '반복 할일 관리 추가',
+        description:
+          '반복 할일 관리를 추가하였습니다. 할일을 생성할 때 반복 옵션을 설정하여 매일, 매주, 매월 등 원하는 주기로 할일이 자동으로 생성되도록 할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.3.2',
     date: '2026-03-12',
     changes: [

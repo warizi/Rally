@@ -104,7 +104,7 @@ export function PendingLinkPicker({
               + 추가
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-72 p-2">
+          <PopoverContent align="start" className="w-96 p-2">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LinkableEntityType)}>
               <TabsList className="w-full h-7 mb-2">
                 {availableTabs.map((tab) => {

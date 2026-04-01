@@ -26,9 +26,15 @@ interface Props {
   schedules: ScheduleItem[]
   currentDate: Date
   workspaceId: string
+  recurringSection?: React.ReactNode
 }
 
-export function DayView({ schedules, currentDate, workspaceId }: Props): React.JSX.Element {
+export function DayView({
+  schedules,
+  currentDate,
+  workspaceId,
+  recurringSection
+}: Props): React.JSX.Element {
   const moveSchedule = useMoveSchedule()
   const updateTodo = useUpdateTodo()
   const { settings: timeSettings } = useDayViewTimeSettings()
@@ -110,6 +116,13 @@ export function DayView({ schedules, currentDate, workspaceId }: Props): React.J
       onDragEnd={dnd.handleDragEnd}
     >
       <div className="flex flex-col flex-1 overflow-hidden">
+        {/* 반복 할일 */}
+        {recurringSection && (
+          <div className="border-b border-border px-2 py-1.5 shrink-0">
+            {recurringSection}
+          </div>
+        )}
+
         {/* 종일 일정 */}
         {allDay.length > 0 && (
           <div className="border-b border-border p-2 space-y-0.5">

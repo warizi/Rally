@@ -177,6 +177,8 @@ const api = {
       ipcRenderer.invoke('todo:reorderKanban', workspaceId, updates),
     reorderSub: (parentId: string, updates: unknown[]) =>
       ipcRenderer.invoke('todo:reorderSub', parentId, updates),
+    findCompletedWithRecurring: (workspaceId: string) =>
+      ipcRenderer.invoke('todo:findCompletedWithRecurring', workspaceId),
     onChanged: createOnChangedListener('todo:changed')
   },
 
@@ -307,6 +309,27 @@ const api = {
     readManifest: (zipPath: string) => ipcRenderer.invoke('backup:readManifest', zipPath),
     import: (zipPath: string, name: string, path: string) =>
       ipcRenderer.invoke('backup:import', zipPath, name, path)
+  },
+
+  recurringRule: {
+    findByWorkspace: (workspaceId: string) =>
+      ipcRenderer.invoke('recurringRule:findByWorkspace', workspaceId),
+    findToday: (workspaceId: string, date: Date) =>
+      ipcRenderer.invoke('recurringRule:findToday', workspaceId, date),
+    create: (workspaceId: string, data: unknown) =>
+      ipcRenderer.invoke('recurringRule:create', workspaceId, data),
+    update: (ruleId: string, data: unknown) =>
+      ipcRenderer.invoke('recurringRule:update', ruleId, data),
+    delete: (ruleId: string) => ipcRenderer.invoke('recurringRule:delete', ruleId)
+  },
+
+  recurringCompletion: {
+    complete: (ruleId: string, date: Date) =>
+      ipcRenderer.invoke('recurringCompletion:complete', ruleId, date),
+    uncomplete: (completionId: string) =>
+      ipcRenderer.invoke('recurringCompletion:uncomplete', completionId),
+    findTodayByWorkspace: (workspaceId: string, date: Date) =>
+      ipcRenderer.invoke('recurringCompletion:findTodayByWorkspace', workspaceId, date)
   },
 
   terminal: {

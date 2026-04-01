@@ -12,6 +12,7 @@ import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useSchedulesByWorkspace, type ScheduleItem } from '@entities/schedule'
 import { useTodosByDateRange, type TodoItem } from '@entities/todo'
+import { RecurringTodoSection } from '@widgets/todo'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { Button } from '@shared/ui/button'
@@ -79,7 +80,6 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
 
   const { data: schedules = [] } = useSchedulesByWorkspace(workspaceId, calendar.dateRange)
   const { data: todos = [] } = useTodosByDateRange(workspaceId, calendar.dateRange)
-
   const allSchedules = useMemo(() => {
     if (!showTodos) return schedules
     const todoSchedules = todos
@@ -253,6 +253,9 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
               schedules={allSchedules}
               currentDate={calendar.currentDate}
               workspaceId={workspaceId}
+              recurringSection={
+                <RecurringTodoSection workspaceId={workspaceId} date={calendar.currentDate} />
+              }
             />
           )}
         </div>

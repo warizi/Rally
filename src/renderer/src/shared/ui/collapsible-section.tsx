@@ -3,6 +3,7 @@ import { ChevronRight } from 'lucide-react'
 
 interface Props {
   title: string
+  headerExtra?: React.ReactNode
   defaultOpen?: boolean
   open?: boolean
   onOpenChange?: (open: boolean) => void
@@ -13,6 +14,7 @@ interface Props {
 
 export function CollapsibleSection({
   title,
+  headerExtra,
   defaultOpen = true,
   open: controlledOpen,
   onOpenChange,
@@ -35,16 +37,19 @@ export function CollapsibleSection({
 
   return (
     <div className={className}>
-      <button
-        type="button"
-        onClick={handleToggle}
-        className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium mb-1.5 hover:text-foreground transition-colors shrink-0"
-      >
-        <ChevronRight
-          className={`h-3 w-3 transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
-        />
-        {title}
-      </button>
+      <div className="flex items-center justify-between mb-1.5">
+        <button
+          type="button"
+          onClick={handleToggle}
+          className="flex items-center gap-1 text-[11px] text-muted-foreground font-medium hover:text-foreground transition-colors shrink-0"
+        >
+          <ChevronRight
+            className={`h-3 w-3 transition-transform duration-150 ${open ? 'rotate-90' : ''}`}
+          />
+          {title}
+        </button>
+        {headerExtra && <div onClick={(e) => e.stopPropagation()}>{headerExtra}</div>}
+      </div>
       {open && (contentClassName ? <div className={contentClassName}>{children}</div> : children)}
     </div>
   )

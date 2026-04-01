@@ -18,6 +18,8 @@ import { canvasGroups } from './canvas-group'
 import { reminders } from './reminder'
 import { tags } from './tag'
 import { itemTags } from './item-tag'
+import { recurringRules } from './recurring-rule'
+import { recurringCompletions } from './recurring-completion'
 
 export {
   workspaces,
@@ -39,5 +41,7 @@ export {
   canvasGroups,
   reminders,
   tags,
-  itemTags
+  itemTags,
+  recurringRules,
+  recurringCompletions
 }

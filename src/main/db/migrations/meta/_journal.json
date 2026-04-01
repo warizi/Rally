@@ -127,6 +127,13 @@
       "when": 1772664862593,
       "tag": "0017_easy_klaw",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1774952031437,
+      "tag": "0018_friendly_wither",
+      "breakpoints": true
     }
   ]
 }

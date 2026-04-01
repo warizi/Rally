@@ -3,11 +3,8 @@ import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@/shared/ui/tab-header'
 import { ROUTES } from '@shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
-import {
-  useTodosByWorkspace,
-  useActiveTodosByWorkspace,
-  useCompletedTodosByWorkspace
-} from '@entities/todo'
+import { useTodosByWorkspace, useActiveTodosByWorkspace } from '@entities/todo'
+import { useCompletedWithRecurring, type CompletedItem } from '@entities/recurring-completion'
 import { useTabStore, selectPaneByTabId } from '@features/tap-system/manage-tab-system'
 import { useTodoList } from '@features/todo/todo-list/model/use-todo-list'
 import { useCompletedTodoList } from '@features/todo/todo-list/model/use-completed-todo-list'
@@ -24,7 +21,8 @@ import {
   TodoListSection,
   TodoCompletedSection,
   TodoHoldingOnSection,
-  TodoKanbanSection
+  TodoKanbanSection,
+  RecurringTodoSection
 } from '@widgets/todo'
 
 type ViewMode = 'list' | 'kanban'
@@ -40,7 +38,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
   const { data: todos = [] } = useTodosByWorkspace(workspaceId)
   const { data: activeTodos = [] } = useActiveTodosByWorkspace(workspaceId)
-  const { data: completedTodos = [] } = useCompletedTodosByWorkspace(workspaceId)
+  const { data: completedItems = [] } = useCompletedWithRecurring(workspaceId)
 
   const openTab = useTabStore((s) => s.openTab)
   const closeTab = useTabStore((s) => s.closeTab)
@@ -91,7 +89,10 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
 
   const listState = useTodoList(activeTodos, initialListFilter)
   const holdingOnState = useHoldingOnTodoList(activeTodos, listState.filter)
-  const completedState = useCompletedTodoList(completedTodos, listState.filter)
+  const completedTodoItems = completedItems
+    .filter((i): i is Extract<CompletedItem, { type: 'todo' }> => i.type === 'todo')
+    .map((i) => i.todo)
+  const completedState = useCompletedTodoList(completedTodoItems, listState.filter)
   const kanbanState = useTodoKanban(todos, initialKanbanColumn, initialKanbanFilter)
 
   const kanbanFilterOpen = tabSearchParams?.kanbanFilterOpen !== 'false'
@@ -100,6 +101,9 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
   const listViewOpen = tabSearchParams?.listViewOpen !== 'false'
   const holdingOnOpen = tabSearchParams?.holdingOnOpen === 'true'
   const completedOpen = tabSearchParams?.completedOpen === 'true'
+  const recurringOpen = tabSearchParams?.recurringOpen !== 'false'
+
+  const today = new Date()
 
   function handleSectionToggle(key: string, open: boolean): void {
     if (tabId) {
@@ -124,6 +128,14 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
       })
     }
   }
+
+  // Build filtered CompletedItem[] for the completed section
+  const filteredCompletedItems = completedState.filterActive
+    ? completedItems.filter((item) => {
+        if (item.type === 'recurring') return true
+        return completedState.filteredCompleted.some((t) => t.id === item.todo.id)
+      })
+    : completedItems
 
   return (
     <TabContainer
@@ -186,6 +198,12 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
             open={listFilterOpen}
             onOpenChange={(o) => handleSectionToggle('listFilterOpen', o)}
           />
+          <RecurringTodoSection
+            workspaceId={workspaceId}
+            date={today}
+            open={recurringOpen}
+            onOpenChange={(o) => handleSectionToggle('recurringOpen', o)}
+          />
           <TodoListSection
             todos={listState.filteredTopLevel}
             subTodoMap={listState.subTodoMap}
@@ -208,7 +226,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
             onOpenChange={(o) => handleSectionToggle('holdingOnOpen', o)}
           />
           <TodoCompletedSection
-            todos={completedState.filteredCompleted}
+            items={filteredCompletedItems}
             workspaceId={workspaceId}
             filterActive={completedState.filterActive}
             onItemClick={handleItemClick}

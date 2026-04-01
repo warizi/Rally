@@ -6,6 +6,8 @@ import { entityLinkService } from './entity-link'
 import { itemTagService } from './item-tag'
 import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
+import { recurringCompletionService } from './recurring-completion'
+import type { RecurringCompletionItem } from './recurring-completion'
 
 export interface TodoItem {
   id: string
@@ -288,5 +290,36 @@ export const todoService = {
     const parent = todoRepository.findById(parentId)
     if (!parent) throw new NotFoundError(`Parent todo not found: ${parentId}`)
     todoRepository.bulkUpdateSubOrder(updates.map((u) => ({ id: u.id, order: u.order })))
+  },
+
+  findCompletedWithRecurring(workspaceId: string): CompletedItem[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const completedTodos = todoRepository.findByWorkspaceId(workspaceId, 'completed').map(toTodoItem)
+    const recurringItems = recurringCompletionService.findByWorkspace(workspaceId)
+
+    const todoItems: CompletedItem[] = completedTodos.map((todo) => ({
+      type: 'todo' as const,
+      completedAt: todo.doneAt ?? todo.updatedAt,
+      todo
+    }))
+
+    const recurringCompletedItems: CompletedItem[] = recurringItems.map((rc) => ({
+      type: 'recurring' as const,
+      completedAt: rc.completedAt,
+      recurringCompletion: rc
+    }))
+
+    return [...todoItems, ...recurringCompletedItems].sort(
+      (a, b) => b.completedAt.getTime() - a.completedAt.getTime()
+    )
   }
+}
+
+export interface CompletedItem {
+  type: 'todo' | 'recurring'
+  completedAt: Date
+  todo?: TodoItem
+  recurringCompletion?: RecurringCompletionItem
 }
