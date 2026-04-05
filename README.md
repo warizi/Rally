@@ -54,7 +54,7 @@
 
 ## 사용 화면
 
-![Rally Architecture Overview](docs/architecture-overview.png)
+![Rally Architecture Overview](assets/architecture-overview.png)
 
 ---
 
