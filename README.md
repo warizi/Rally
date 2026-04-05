@@ -52,6 +52,12 @@
 
 ---
 
+## 사용 화면
+
+![Rally Architecture Overview](docs/architecture-overview.png)
+
+---
+
 ## 기술 스택
 
 | 영역 | 기술 |
