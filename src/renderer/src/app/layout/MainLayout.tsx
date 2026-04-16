@@ -25,7 +25,10 @@ import {
   useSensors
 } from '@dnd-kit/core'
 import { PaneLayout } from '@/widgets/tab-system'
-import { TerminalPanel } from '@/widgets/terminal-panel'
+import { TerminalBottomPanel } from '@/widgets/terminal-panel'
+import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@shared/ui/resizable'
+import { useTerminalPanelStore } from '@features/terminal'
+import { useTerminalSessionPersistence } from '@features/terminal/model/use-terminal-session-persistence'
 import { PANE_ROUTES } from './model/pane-routes'
 import { TAB_ICON } from '@/shared/constants/tab-url'
 
@@ -47,6 +50,11 @@ function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactEle
 function MainLayout(): React.JSX.Element {
   // 세션 영속성 활성화
   useSessionPersistence()
+  // 터미널 세션 영속성 활성화
+  useTerminalSessionPersistence()
+  const isTerminalOpen = useTerminalPanelStore((s) => s.isOpen)
+  const panelSize = useTerminalPanelStore((s) => s.panelSize)
+  const setPanelSize = useTerminalPanelStore((s) => s.setPanelSize)
   // 폴더/노트 변경 push 이벤트 구독
   useFolderWatcher()
   useNoteWatcher()
@@ -90,10 +98,28 @@ function MainLayout(): React.JSX.Element {
           onDragEnd={handleDragEnd}
         >
           <main className="flex flex-1 overflow-hidden">
-            <div className="flex-1 overflow-hidden">
-              <PaneLayout routes={PANE_ROUTES} isDragging={!!draggingTabId} />
-            </div>
-            <TerminalPanel />
+            <ResizablePanelGroup
+              orientation="vertical"
+              className="flex-1"
+              onLayoutChanged={(layout) => {
+                // layout[1] = 터미널 패널 크기 (드래그 완료 후 1회만 실행)
+                if (isTerminalOpen && layout[1] !== undefined) {
+                  setPanelSize(layout[1])
+                }
+              }}
+            >
+              <ResizablePanel defaultSize={isTerminalOpen ? 100 - panelSize : 100} minSize={20}>
+                <PaneLayout routes={PANE_ROUTES} isDragging={!!draggingTabId} />
+              </ResizablePanel>
+              {isTerminalOpen && (
+                <>
+                  <ResizableHandle />
+                  <ResizablePanel defaultSize={panelSize} minSize={10}>
+                    <TerminalBottomPanel />
+                  </ResizablePanel>
+                </>
+              )}
+            </ResizablePanelGroup>
           </main>
           <DragOverlay dropAnimation={null}>
             <DraggingTabOverlay tabId={draggingTabId} />

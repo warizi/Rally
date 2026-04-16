@@ -20,6 +20,8 @@ import { tags } from './tag'
 import { itemTags } from './item-tag'
 import { recurringRules } from './recurring-rule'
 import { recurringCompletions } from './recurring-completion'
+import { terminalLayouts } from './terminal-layout'
+import { terminalSessions } from './terminal-session'
 
 export {
   workspaces,
@@ -43,5 +45,7 @@ export {
   tags,
   itemTags,
   recurringRules,
-  recurringCompletions
+  recurringCompletions,
+  terminalLayouts,
+  terminalSessions
 }

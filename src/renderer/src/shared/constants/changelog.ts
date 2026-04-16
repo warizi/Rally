@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.4',
+    date: '2026-04-16',
+    changes: [
+      {
+        type: 'improvement',
+        title: '터미널 세션 영속성 개선',
+        description:
+          '앱을 재시작해도 터미널 세션이 유지됩니다. tmux를 백엔드로 사용하여 실행 중인 프로세스가 앱 종료 후에도 살아있으며, 재시작 시 자동으로 재연결됩니다.'
+      },
+      {
+        type: 'improvement',
+        title: '터미널 tab 관리',
+        description:
+          '터미널을 탭으로 관리할 수 있습니다. 여러 터미널 세션을 탭으로 구분하여 사용할 수 있으며, 탭 간 전환이 편리해집니다.'
+      }
+    ]
+  },
+  {
     version: '1.3.3',
     date: '2026-03-13',
     changes: [

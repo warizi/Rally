@@ -18,6 +18,8 @@ extraResources:
     to: .claude/commands
   - from: .claude/skills
     to: .claude/skills
+  - from: resources/bin
+    to: bin
 asarUnpack:
   - resources/**
 win:

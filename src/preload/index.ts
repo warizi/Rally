@@ -1,4 +1,15 @@
 import { contextBridge, ipcRenderer } from 'electron'
+
+// Map 기반 글로벌 터미널 리스너 — 세션별 라우팅
+const terminalDataListeners = new Map<string, (d: { data: string }) => void>()
+const terminalExitListeners = new Map<string, (d: { exitCode: number }) => void>()
+
+ipcRenderer.on('terminal:data', (_, payload: { id: string; data: string }) => {
+  terminalDataListeners.get(payload.id)?.(payload)
+})
+ipcRenderer.on('terminal:exit', (_, payload: { id: string; exitCode: number }) => {
+  terminalExitListeners.get(payload.id)?.(payload)
+})
 import { electronAPI } from '@electron-toolkit/preload'
 import type { TabSessionInsert } from '../main/repositories/tab-session'
 
@@ -333,22 +344,40 @@ const api = {
   },
 
   terminal: {
-    create: (args: { cwd: string; cols: number; rows: number }) =>
-      ipcRenderer.invoke('terminal:create', args),
-    destroy: () => ipcRenderer.invoke('terminal:destroy'),
-    write: (args: { data: string }) => ipcRenderer.send('terminal:write', args),
-    resize: (args: { cols: number; rows: number }) => ipcRenderer.send('terminal:resize', args),
-    onData: (callback: (data: { data: string }) => void) => {
-      const handler = (_: Electron.IpcRendererEvent, data: { data: string }): void => callback(data)
-      ipcRenderer.on('terminal:data', handler)
-      return () => ipcRenderer.removeListener('terminal:data', handler)
+    // id?: 복원 시 기존 DB 세션 ID 전달, 신규 탭 시 생략
+    // sortOrder?: 신규 탭 순서 (복원 시 불필요)
+    create: (args: {
+      workspaceId: string
+      cwd: string
+      shell?: string
+      cols: number
+      rows: number
+      id?: string
+      sortOrder?: number
+    }) => ipcRenderer.invoke('terminal:create', args),
+    destroy: (id: string) => ipcRenderer.invoke('terminal:destroy', id),
+    destroyAll: (workspaceId: string) => ipcRenderer.invoke('terminal:destroyAll', workspaceId),
+    write: (args: { id: string; data: string }) => ipcRenderer.send('terminal:write', args),
+    resize: (args: { id: string; cols: number; rows: number }) =>
+      ipcRenderer.send('terminal:resize', args),
+    saveSnapshot: (id: string, snapshot: string) =>
+      ipcRenderer.invoke('terminal:saveSnapshot', id, snapshot),
+    onData: (id: string, cb: (d: { data: string }) => void) => {
+      terminalDataListeners.set(id, cb)
+      return () => terminalDataListeners.delete(id)
     },
-    onExit: (callback: (data: { exitCode: number }) => void) => {
-      const handler = (_: Electron.IpcRendererEvent, data: { exitCode: number }): void =>
-        callback(data)
-      ipcRenderer.on('terminal:exit', handler)
-      return () => ipcRenderer.removeListener('terminal:exit', handler)
-    }
+    onExit: (id: string, cb: (d: { exitCode: number }) => void) => {
+      terminalExitListeners.set(id, cb)
+      return () => terminalExitListeners.delete(id)
+    },
+    getSessions: (workspaceId: string) =>
+      ipcRenderer.invoke('terminal:getSessions', workspaceId),
+    getLayout: (workspaceId: string) => ipcRenderer.invoke('terminal:getLayout', workspaceId),
+    updateSession: (id: string, data: unknown) =>
+      ipcRenderer.invoke('terminal:updateSession', id, data),
+    saveLayout: (workspaceId: string, layoutJson: string) =>
+      ipcRenderer.invoke('terminal:saveLayout', workspaceId, layoutJson),
+    closeSession: (id: string) => ipcRenderer.invoke('terminal:closeSession', id)
   }
 }
 

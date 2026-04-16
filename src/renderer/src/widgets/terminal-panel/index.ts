@@ -1,1 +1,1 @@
-export { TerminalPanel } from './ui/TerminalPanel'
+export { TerminalBottomPanel } from './ui/TerminalBottomPanel'

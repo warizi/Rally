@@ -1,69 +1,212 @@
 import * as pty from 'node-pty'
 import * as fs from 'fs'
-import { BrowserWindow } from 'electron'
+import * as path from 'path'
+import { execSync } from 'child_process'
+import { app, BrowserWindow } from 'electron'
 
-let currentPty: pty.IPty | null = null
-let currentCwd: string | null = null
+interface SessionEntry {
+  pty: pty.IPty
+  cwd: string
+  workspaceId: string
+  useTmux: boolean
+}
+
+const sessions = new Map<string, SessionEntry>()
+
+// 앱 기동 시 1회 결정: null = tmux 사용 불가 → 직접 PTY 폴백
+let tmuxBin: string | null = null
+
+function getTmuxBinaryPath(): string {
+  const platform = process.platform
+  const arch = process.arch
+
+  if (platform === 'win32') return ''
+
+  const subdir = platform === 'darwin' ? `mac-${arch}` : `linux-${arch}`
+
+  if (app.isPackaged) {
+    return path.join(process.resourcesPath, 'bin', subdir, 'tmux')
+  }
+  // 개발 환경: 프로젝트 루트 기준
+  return path.join(app.getAppPath(), 'resources', 'bin', subdir, 'tmux')
+}
+
+function initTmux(): void {
+  if (process.platform === 'win32') {
+    tmuxBin = null
+    return
+  }
+
+  // 1순위: 번들 바이너리
+  const bundled = getTmuxBinaryPath()
+  if (bundled && fs.existsSync(bundled)) {
+    try {
+      fs.accessSync(bundled, fs.constants.X_OK)
+      execSync(`"${bundled}" -V 2>/dev/null`, { stdio: 'ignore' })
+      tmuxBin = bundled
+      return
+    } catch {
+      // 번들 바이너리 실행 실패 → 다음 단계
+    }
+  }
+
+  // 2순위: 시스템 tmux
+  try {
+    const systemTmux = execSync('which tmux', { encoding: 'utf-8' }).trim()
+    if (systemTmux) {
+      execSync(`"${systemTmux}" -V 2>/dev/null`, { stdio: 'ignore' })
+      tmuxBin = systemTmux
+      return
+    }
+  } catch {
+    // 미설치
+  }
+
+  // 폴백: 직접 PTY 모드
+  tmuxBin = null
+}
+
+// 모듈 로드 시 1회 실행
+initTmux()
 
 function getDefaultShell(): string {
   return process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/zsh')
 }
 
-export const terminalService = {
-  create(cwd: string, cols: number, rows: number): void {
-    fs.accessSync(cwd, fs.constants.R_OK)
+function createWithTmux(
+  id: string,
+  workspaceId: string,
+  cwd: string,
+  cols: number,
+  rows: number
+): void {
+  const sessionName = `rally-${id}`
 
-    // 같은 cwd로 이미 pty가 있으면 resize만 하고 재사용
-    if (currentPty && currentCwd === cwd) {
-      currentPty.resize(cols, rows)
-      return
-    }
-
-    // 다른 cwd(워크스페이스 전환)면 기존 pty kill 후 새로 생성
-    if (currentPty) {
-      currentPty.kill()
-      currentPty = null
-      currentCwd = null
-    }
-
-    const shell = getDefaultShell()
-    currentPty = pty.spawn(shell, [], {
+  const p = pty.spawn(
+    tmuxBin!,
+    ['-L', 'rally', 'new-session', '-A', '-s', sessionName, '-c', cwd, '-x', String(cols), '-y', String(rows)],
+    {
       name: 'xterm-256color',
       cols,
       rows,
       cwd,
       env: process.env as Record<string, string>
-    })
-    currentCwd = cwd
-
-    currentPty.onData((data: string) => {
-      BrowserWindow.getAllWindows().forEach((win) => {
-        win.webContents.send('terminal:data', { data })
-      })
-    })
-
-    currentPty.onExit(({ exitCode }) => {
-      currentPty = null
-      currentCwd = null
-      BrowserWindow.getAllWindows().forEach((win) => {
-        win.webContents.send('terminal:exit', { exitCode })
-      })
-    })
-  },
-
-  write(data: string): void {
-    currentPty?.write(data)
-  },
-
-  resize(cols: number, rows: number): void {
-    currentPty?.resize(cols, rows)
-  },
-
-  destroy(): void {
-    if (currentPty) {
-      currentPty.kill()
-      currentPty = null
-      currentCwd = null
     }
+  )
+
+  sessions.set(id, { pty: p, cwd, workspaceId, useTmux: true })
+
+  p.onData((data: string) => {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('terminal:data', { id, data })
+    })
+  })
+
+  p.onExit(({ exitCode }) => {
+    sessions.delete(id)
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('terminal:exit', { id, exitCode })
+    })
+  })
+}
+
+function createDirect(
+  id: string,
+  workspaceId: string,
+  cwd: string,
+  shell: string | undefined,
+  cols: number,
+  rows: number
+): void {
+  const resolvedShell = shell || getDefaultShell()
+
+  const p = pty.spawn(resolvedShell, [], {
+    name: 'xterm-256color',
+    cols,
+    rows,
+    cwd,
+    env: process.env as Record<string, string>
+  })
+
+  sessions.set(id, { pty: p, cwd, workspaceId, useTmux: false })
+
+  p.onData((data: string) => {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('terminal:data', { id, data })
+    })
+  })
+
+  p.onExit(({ exitCode }) => {
+    sessions.delete(id)
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('terminal:exit', { id, exitCode })
+    })
+  })
+}
+
+export const terminalService = {
+  isTmuxAvailable(): boolean {
+    return tmuxBin !== null
+  },
+
+  // id는 IPC 핸들러에서 생성한 nanoid — PTY와 DB가 동일 ID 공유
+  create(
+    id: string,
+    workspaceId: string,
+    cwd: string,
+    shell: string | undefined,
+    cols: number,
+    rows: number
+  ): void {
+    fs.accessSync(cwd, fs.constants.R_OK)
+
+    if (tmuxBin) {
+      createWithTmux(id, workspaceId, cwd, cols, rows)
+    } else {
+      createDirect(id, workspaceId, cwd, shell, cols, rows)
+    }
+  },
+
+  write(id: string, data: string): void {
+    sessions.get(id)?.pty.write(data)
+  },
+
+  resize(id: string, cols: number, rows: number): void {
+    sessions.get(id)?.pty.resize(cols, rows)
+  },
+
+  // 탭 명시적 닫기: PTY kill + tmux 세션 제거
+  destroy(id: string): void {
+    const entry = sessions.get(id)
+    if (!entry) return
+
+    entry.pty.kill()
+    sessions.delete(id)
+
+    if (entry.useTmux && tmuxBin) {
+      try {
+        execSync(`"${tmuxBin}" -L rally kill-session -t rally-${id}`, { stdio: 'ignore' })
+      } catch {
+        // 세션이 이미 없으면 무시
+      }
+    }
+  },
+
+  // 워크스페이스 전환: PTY 클라이언트만 끊기, tmux 세션 유지
+  destroyAll(workspaceId: string): void {
+    for (const [id, entry] of sessions) {
+      if (entry.workspaceId === workspaceId) {
+        entry.pty.kill()
+        sessions.delete(id)
+        // tmux kill-session 호출하지 않음 → 세션 생존
+      }
+    }
+  },
+
+  // 앱 종료: pty.kill() 호출하지 않음
+  // V8 teardown 중 node-pty onExit 콜백이 JS 환경으로 역호출하면 SIGABRT 크래시 발생.
+  // OS가 자식 프로세스를 정리하며, tmux 클라이언트는 SIGHUP 수신 시 detach → 세션 생존.
+  destroyAllSessions(): void {
+    sessions.clear()
   }
 }

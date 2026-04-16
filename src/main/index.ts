@@ -163,7 +163,7 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   isQuitting = true
   reminderScheduler.stop()
-  terminalService.destroy()
+  terminalService.destroyAllSessions()
   stopMcpApiServer()
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))
   // localStorage 등 Web Storage를 디스크에 flush한 뒤 종료
