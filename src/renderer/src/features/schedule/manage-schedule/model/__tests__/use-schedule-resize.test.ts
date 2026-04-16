@@ -116,7 +116,7 @@ describe('useScheduleResize', () => {
       const { result } = renderHook(() => useScheduleResize(opts))
       act(() => result.current.handleResizeStart(makeMockPointerEvent(100), schedule, 'bottom'))
       act(() => document.dispatchEvent(new PointerEvent('pointerup', { clientY: 160 })))
-      const callArg = opts.onMoveSchedule.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveSchedule).mock.calls[0][0]
       expect(callArg.startAt).toBe(schedule.startAt) // 참조 동일
     })
 
@@ -145,7 +145,7 @@ describe('useScheduleResize', () => {
       act(() => result.current.handleResizeStart(makeMockPointerEvent(100), schedule, 'bottom'))
       act(() => document.dispatchEvent(new PointerEvent('pointerup', { clientY: 160 })))
       expect(opts.onMoveTodo).toHaveBeenCalled()
-      const callArg = opts.onMoveTodo.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveTodo).mock.calls[0][0]
       expect(callArg.todoId).toBe('t1')
       expect(callArg.data.dueDate.getHours()).toBe(11) // 10:00 + 60min
       expect(callArg.data.startDate.getHours()).toBe(9) // 불변
@@ -162,7 +162,7 @@ describe('useScheduleResize', () => {
       act(() => result.current.handleResizeStart(makeMockPointerEvent(100), schedule, 'top'))
       act(() => document.dispatchEvent(new PointerEvent('pointerup', { clientY: 160 })))
       expect(opts.onMoveTodo).toHaveBeenCalled()
-      const callArg = opts.onMoveTodo.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveTodo).mock.calls[0][0]
       expect(callArg.data.startDate.getHours()).toBe(10) // 09:00 + 60min
       expect(callArg.data.dueDate.getHours()).toBe(11) // 불변
     })
@@ -186,7 +186,7 @@ describe('useScheduleResize', () => {
       const { result } = renderHook(() => useScheduleResize(opts))
       act(() => result.current.handleResizeStart(makeMockPointerEvent(100), schedule, 'bottom'))
       act(() => document.dispatchEvent(new PointerEvent('pointerup', { clientY: 160 })))
-      const callArg = opts.onMoveTodo.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveTodo).mock.calls[0][0]
       // baseEnd = clamp.end(10:00) + 60min = 11:00
       expect(callArg.data.dueDate.getHours()).toBe(11)
       // startDate uses clamp.start for base but edge=bottom so no offset → 08:00 hours applied to schedule.startAt

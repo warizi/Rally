@@ -20,7 +20,8 @@ let onUpdateCells: ReturnType<typeof vi.fn>
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 function setup(selection: Selection | null, selectionRange: SelectionRange | null) {
   onUpdateCells = vi.fn()
-  return renderHook(() => useCsvClipboard(selection, selectionRange, data, headers, onUpdateCells))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return renderHook(() => useCsvClipboard(selection, selectionRange, data, headers, onUpdateCells as any))
 }
 
 beforeEach(() => {

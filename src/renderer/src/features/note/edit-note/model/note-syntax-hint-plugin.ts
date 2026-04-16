@@ -18,7 +18,6 @@ function buildDecorations(
   const resolved = doc.resolve(cursorPos)
   // 커서가 속한 최상위 블록 찾기
   let blockStart = -1
-  let blockEnd = -1
   let syntaxText = ''
 
   for (let depth = resolved.depth; depth >= 1; depth--) {
@@ -26,7 +25,6 @@ function buildDecorations(
     const typeName = node.type.name
     if (NODE_SYNTAX[typeName]) {
       blockStart = resolved.start(depth)
-      blockEnd = resolved.end(depth)
       syntaxText = NODE_SYNTAX[typeName](node)
       break
     }

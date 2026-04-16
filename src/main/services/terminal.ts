@@ -50,16 +50,38 @@ function initTmux(): void {
     }
   }
 
-  // 2순위: 시스템 tmux
+  // 2순위: login shell 경유 — 패키징 앱 PATH가 제한적이라 Homebrew 경로를 못 찾는 문제 해결
+  const loginShell = process.env.SHELL || '/bin/zsh'
   try {
-    const systemTmux = execSync('which tmux', { encoding: 'utf-8' }).trim()
-    if (systemTmux) {
-      execSync(`"${systemTmux}" -V 2>/dev/null`, { stdio: 'ignore' })
-      tmuxBin = systemTmux
+    const found = execSync(`"${loginShell}" -l -c 'which tmux' 2>/dev/null`, {
+      encoding: 'utf-8',
+      timeout: 3000
+    }).trim()
+    if (found && fs.existsSync(found)) {
+      execSync(`"${found}" -V 2>/dev/null`, { stdio: 'ignore' })
+      tmuxBin = found
       return
     }
   } catch {
-    // 미설치
+    // login shell 실패 → 다음 단계
+  }
+
+  // 3순위: 알려진 경로 직접 탐색 (Homebrew, 시스템)
+  const knownPaths = [
+    '/opt/homebrew/bin/tmux', // macOS ARM64 Homebrew
+    '/usr/local/bin/tmux',    // macOS x64 Homebrew
+    '/usr/bin/tmux'
+  ]
+  for (const p of knownPaths) {
+    if (fs.existsSync(p)) {
+      try {
+        execSync(`"${p}" -V 2>/dev/null`, { stdio: 'ignore' })
+        tmuxBin = p
+        return
+      } catch {
+        // 실행 불가 → 다음
+      }
+    }
   }
 
   // 폴백: 직접 PTY 모드
@@ -71,6 +93,15 @@ initTmux()
 
 function getDefaultShell(): string {
   return process.env.SHELL || (process.platform === 'win32' ? 'powershell.exe' : '/bin/zsh')
+}
+
+// 패키징 환경에서 LANG/LC_ALL 미설정 시 한글 깨짐 방지
+function buildPtyEnv(): Record<string, string> {
+  const env = { ...(process.env as Record<string, string>) }
+  if (!env.LANG) env.LANG = 'en_US.UTF-8'
+  if (!env.LC_ALL) env.LC_ALL = 'en_US.UTF-8'
+  if (!env.LC_CTYPE) env.LC_CTYPE = 'en_US.UTF-8'
+  return env
 }
 
 function createWithTmux(
@@ -90,7 +121,7 @@ function createWithTmux(
       cols,
       rows,
       cwd,
-      env: process.env as Record<string, string>
+      env: buildPtyEnv()
     }
   )
 

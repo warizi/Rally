@@ -13,7 +13,8 @@ function setup(initialWidth = 150) {
   onColumnSizingChange = vi.fn()
   addEventSpy = vi.spyOn(document, 'addEventListener')
   removeEventSpy = vi.spyOn(document, 'removeEventListener')
-  return renderHook(() => useCsvColumnResize(getColWidth, onColumnSizingChange))
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return renderHook(() => useCsvColumnResize(getColWidth as any, onColumnSizingChange as any))
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

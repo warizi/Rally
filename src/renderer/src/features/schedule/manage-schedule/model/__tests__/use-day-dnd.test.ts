@@ -200,7 +200,7 @@ describe('useDayDnd', () => {
       const { result } = renderHook(() => useDayDnd(opts))
       act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
       expect(opts.onMoveTodo).toHaveBeenCalled()
-      const callArg = opts.onMoveTodo.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveTodo).mock.calls[0][0]
       // clamp base used → movedStart based on 08:00, movedEnd based on 09:00
       // 60px / 60 hourHeight = 1hour = 60min
       expect(callArg.data.startDate.getHours()).toBe(9) // 08:00 + 60min
@@ -216,7 +216,7 @@ describe('useDayDnd', () => {
       const opts = createOptions()
       const { result } = renderHook(() => useDayDnd(opts))
       act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
-      const callArg = opts.onMoveTodo.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveTodo).mock.calls[0][0]
       expect(callArg.data.startDate.getHours()).toBe(10) // 09:00 + 60min
       expect(callArg.data.dueDate.getHours()).toBe(11) // 10:00 + 60min
     })
@@ -230,7 +230,7 @@ describe('useDayDnd', () => {
       const opts = createOptions()
       const { result } = renderHook(() => useDayDnd(opts))
       act(() => result.current.handleDragEnd(makeDragEndEvent(60, { schedule })))
-      const callArg = opts.onMoveTodo.mock.calls[0][0]
+      const callArg = vi.mocked(opts.onMoveTodo).mock.calls[0][0]
       // 날짜는 유지, 시간만 변경
       expect(callArg.data.startDate.getDate()).toBe(2) // 3/2 유지
       expect(callArg.data.dueDate.getDate()).toBe(5) // 3/5 유지

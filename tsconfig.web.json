@@ -9,15 +9,15 @@
   "compilerOptions": {
     "composite": true,
     "jsx": "react-jsx",
-    "baseUrl": ".",
+    "types": ["vitest/globals"],
     "paths": {
-      "@/*": ["src/renderer/src/*"],
-      "@app/*": ["src/renderer/src/app/*"],
-      "@pages/*": ["src/renderer/src/pages/*"],
-      "@widgets/*": ["src/renderer/src/widgets/*"],
-      "@features/*": ["src/renderer/src/features/*"],
-      "@entities/*": ["src/renderer/src/entities/*"],
-      "@shared/*": ["src/renderer/src/shared/*"]
+      "@/*": ["./src/renderer/src/*"],
+      "@app/*": ["./src/renderer/src/app/*"],
+      "@pages/*": ["./src/renderer/src/pages/*"],
+      "@widgets/*": ["./src/renderer/src/widgets/*"],
+      "@features/*": ["./src/renderer/src/features/*"],
+      "@entities/*": ["./src/renderer/src/entities/*"],
+      "@shared/*": ["./src/renderer/src/shared/*"]
     }
   }
 }

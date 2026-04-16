@@ -1,4 +1,5 @@
-import type { LayoutNode, Pane, TabType } from '@/entities/tab-system'
+import type { LayoutNode, Pane } from '@/entities/tab-system'
+import type { TabType } from '@/shared/constants/tab-url'
 import type { IpcResponse } from '@shared/types/ipc'
 import { throwIpcError } from '@shared/lib/ipc-error'
 
