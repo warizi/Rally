@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.5',
+    date: '2026-04-17',
+    changes: [
+      {
+        type: 'fix',
+        title: '터미널 한글 오류 수정',
+        description:
+          '터미널에서 한글이 깨져서 보이던 문제가 수정되었습니다. 이제 터미널에서 한글이 정상적으로 표시됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.3.4',
     date: '2026-04-16',
     changes: [
