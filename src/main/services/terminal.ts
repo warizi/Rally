@@ -156,7 +156,7 @@ function createDirect(
     cols,
     rows,
     cwd,
-    env: process.env as Record<string, string>
+    env: buildPtyEnv()
   })
 
   sessions.set(id, { pty: p, cwd, workspaceId, useTmux: false })
