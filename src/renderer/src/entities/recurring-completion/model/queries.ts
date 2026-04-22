@@ -93,6 +93,9 @@ export function useCompleteRecurring(): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: [TODO_KEY, 'completedWithRecurring', workspaceId]
       })
+      queryClient.invalidateQueries({
+        queryKey: [TODO_KEY, workspaceId]
+      })
     }
   })
 }
@@ -119,6 +122,9 @@ export function useUncompleteRecurring(): UseMutationResult<
       // 반복 규칙의 today 캐시도 갱신 (완료 해제 시 섹션 상태 반영)
       queryClient.invalidateQueries({
         queryKey: [RECURRING_RULE_KEY, 'today', workspaceId]
+      })
+      queryClient.invalidateQueries({
+        queryKey: [TODO_KEY, workspaceId]
       })
     }
   })
