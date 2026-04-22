@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.7',
+    date: '2026-04-22',
+    changes: [
+      {
+        type: 'fix',
+        title: '완료된 할 일 표기 오류 수정',
+        description:
+          '일반 할 일을 완료 했을 때 완료된 항목 리스트에서 나타나지 않던 문제를 수정했습니다.'
+      }
+    ]
+  },
+  {
     version: '1.3.6',
     date: '2026-04-17',
     changes: [
