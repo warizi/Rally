@@ -42,7 +42,7 @@ export function useCompletedWithRecurring(
   workspaceId: string | null | undefined
 ): UseQueryResult<CompletedItem[]> {
   return useQuery({
-    queryKey: [TODO_KEY, 'completedWithRecurring', workspaceId],
+    queryKey: [TODO_KEY, workspaceId],
     queryFn: async (): Promise<CompletedItem[]> => {
       const res = await window.api.todo.findCompletedWithRecurring(workspaceId!)
       if (!res.success) throwIpcError(res)

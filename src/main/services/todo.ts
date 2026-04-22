@@ -296,7 +296,9 @@ export const todoService = {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
-    const completedTodos = todoRepository.findByWorkspaceId(workspaceId, 'completed').map(toTodoItem)
+    const completedTodos = todoRepository
+      .findByWorkspaceId(workspaceId, 'completed')
+      .map(toTodoItem)
     const recurringItems = recurringCompletionService.findByWorkspace(workspaceId)
 
     const todoItems: CompletedItem[] = completedTodos.map((todo) => ({
