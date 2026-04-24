@@ -1,10 +1,12 @@
 import { Switch } from '@shared/ui/switch'
 import { useTodoDefaultDateSetting } from '@features/todo/create-todo'
 import { useShowExtensionSetting } from '@features/folder/manage-folder'
+import { useTabHeaderCollapsedSetting } from '@shared/hooks/use-tab-header-collapsed-setting'
 
 export function GeneralSettings(): React.JSX.Element {
   const { enabled, setEnabled } = useTodoDefaultDateSetting()
   const { enabled: showExtension, setEnabled: setShowExtension } = useShowExtensionSetting()
+  const { collapsed: headerCollapsed, setCollapsed: setHeaderCollapsed } = useTabHeaderCollapsedSetting()
 
   return (
     <div className="space-y-6">
@@ -31,6 +33,19 @@ export function GeneralSettings(): React.JSX.Element {
             </p>
           </div>
           <Switch checked={showExtension} onCheckedChange={setShowExtension} />
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">탭 헤더</h3>
+        <div className="flex items-center justify-between">
+          <div className="space-y-0.5">
+            <p className="text-sm">기본으로 접기</p>
+            <p className="text-xs text-muted-foreground">
+              탭을 열 때 헤더를 기본으로 접힌 상태로 표시합니다
+            </p>
+          </div>
+          <Switch checked={headerCollapsed} onCheckedChange={setHeaderCollapsed} />
         </div>
       </section>
     </div>
