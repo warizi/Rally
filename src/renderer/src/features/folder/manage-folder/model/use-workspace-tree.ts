@@ -17,6 +17,11 @@ import type {
   ImageTreeNode
 } from './types'
 
+function getExtension(relativePath: string): string {
+  const lastDot = relativePath.lastIndexOf('.')
+  return lastDot === -1 ? '' : relativePath.slice(lastDot)
+}
+
 /**
  * FolderNode[] + NoteNode[] → WorkspaceTreeNode[] 병합
  *
@@ -39,6 +44,7 @@ export function buildWorkspaceTree(
       id: note.id,
       name: note.title,
       relativePath: note.relativePath,
+      extension: getExtension(note.relativePath),
       description: note.description,
       preview: note.preview,
       folderId: note.folderId,
@@ -52,6 +58,7 @@ export function buildWorkspaceTree(
       id: csv.id,
       name: csv.title,
       relativePath: csv.relativePath,
+      extension: getExtension(csv.relativePath),
       description: csv.description,
       preview: csv.preview,
       folderId: csv.folderId,
@@ -65,6 +72,7 @@ export function buildWorkspaceTree(
       id: pdf.id,
       name: pdf.title,
       relativePath: pdf.relativePath,
+      extension: getExtension(pdf.relativePath),
       description: pdf.description,
       preview: pdf.preview,
       folderId: pdf.folderId,
@@ -78,6 +86,7 @@ export function buildWorkspaceTree(
       id: img.id,
       name: img.title,
       relativePath: img.relativePath,
+      extension: getExtension(img.relativePath),
       description: img.description,
       preview: img.preview,
       folderId: img.folderId,

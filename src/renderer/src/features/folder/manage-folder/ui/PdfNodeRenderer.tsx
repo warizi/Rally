@@ -2,6 +2,7 @@ import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import type { PdfTreeNode } from '../model/types'
+import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 
 interface PdfNodeRendererProps extends NodeRendererProps<PdfTreeNode> {
   onOpen: () => void
@@ -16,6 +17,7 @@ export function PdfNodeRenderer({
   isActive
 }: PdfNodeRendererProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
+  const { enabled: showExtension } = useShowExtensionSetting()
 
   useEffect(() => {
     if (isActive && ref.current) {
@@ -34,7 +36,10 @@ export function PdfNodeRenderer({
       onClick={onOpen}
     >
       <PdfIcon className="ml-1 size-4 shrink-0 text-red-500" />
-      <span className="text-sm truncate">{node.data.name}</span>
+      <span className="text-sm truncate">
+        {node.data.name}
+        {showExtension ? node.data.extension : ''}
+      </span>
     </div>
   )
 }
