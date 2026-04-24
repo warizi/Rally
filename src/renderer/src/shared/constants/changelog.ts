@@ -32,6 +32,12 @@ export const CHANGELOG: ChangelogEntry[] = [
         title: '파일 확장자 표시 설정 추가',
         description:
           '설정 > 기본 > 파일탐색기에서 파일 확장자를 표시할지 여부를 선택할 수 있습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '탭 헤더 축소 설정 추가',
+        description:
+          '설정 > 기본에서 탭 헤더를 축소하여 작은 제목과 버튼만 표시하도록 설정할 수 있습니다.'
       }
     ]
   },
