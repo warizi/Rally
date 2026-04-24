@@ -2,6 +2,7 @@ import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { FileText } from 'lucide-react'
 import type { NoteTreeNode } from '../model/types'
+import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 
 interface NoteNodeRendererProps extends NodeRendererProps<NoteTreeNode> {
   onOpen: () => void
@@ -16,6 +17,7 @@ export function NoteNodeRenderer({
   isActive
 }: NoteNodeRendererProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
+  const { enabled: showExtension } = useShowExtensionSetting()
 
   useEffect(() => {
     if (isActive && ref.current) {
@@ -34,7 +36,10 @@ export function NoteNodeRenderer({
       onClick={onOpen}
     >
       <FileText className="ml-1 size-4 shrink-0 text-muted-foreground" />
-      <span className="text-sm truncate">{node.data.name}</span>
+      <span className="text-sm truncate">
+        {node.data.name}
+        {showExtension ? node.data.extension : ''}
+      </span>
     </div>
   )
 }

@@ -2,6 +2,7 @@ import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ImageIcon } from 'lucide-react'
 import type { ImageTreeNode } from '../model/types'
+import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 
 interface ImageNodeRendererProps extends NodeRendererProps<ImageTreeNode> {
   onOpen: () => void
@@ -16,6 +17,7 @@ export function ImageNodeRenderer({
   isActive
 }: ImageNodeRendererProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
+  const { enabled: showExtension } = useShowExtensionSetting()
 
   useEffect(() => {
     if (isActive && ref.current) {
@@ -34,7 +36,10 @@ export function ImageNodeRenderer({
       onClick={onOpen}
     >
       <ImageIcon className="ml-1 size-4 shrink-0 text-sky-500" />
-      <span className="text-sm truncate">{node.data.name}</span>
+      <span className="text-sm truncate">
+        {node.data.name}
+        {showExtension ? node.data.extension : ''}
+      </span>
     </div>
   )
 }
