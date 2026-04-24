@@ -9,6 +9,7 @@ import {
   DialogDescription
 } from '@/shared/ui/dialog'
 import { cn } from '@/shared/lib/utils'
+import { GeneralSettings } from './GeneralSettings'
 import { DisplaySettings } from './DisplaySettings'
 import { AISettings } from './AISettings'
 
@@ -26,7 +27,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
 ]
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): React.JSX.Element {
-  const [activeTab, setActiveTab] = useState<SettingsTab>('display')
+  const [activeTab, setActiveTab] = useState<SettingsTab>('general')
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -77,11 +78,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
 
             {/* 우측 컨텐츠 */}
             <div className="flex-1 p-6 overflow-y-auto">
-              {activeTab === 'general' && (
-                <div className="flex items-center justify-center h-full text-muted-foreground text-sm">
-                  추후 구현 예정
-                </div>
-              )}
+              {activeTab === 'general' && <GeneralSettings />}
               {activeTab === 'display' && <DisplaySettings />}
               {activeTab === 'ai' && <AISettings />}
             </div>

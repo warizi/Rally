@@ -13,6 +13,7 @@ import type { PendingLink } from '@features/entity-link/manage-link'
 import { ReminderPendingSelect } from '@features/reminder'
 import { useSetReminder } from '@entities/reminder'
 import { TodoFormFields } from './TodoFormFields'
+import { useTodoDefaultDateSetting } from '../model/use-todo-default-date-setting'
 import type { TodoStatus } from '@entities/todo'
 
 const createTodoSchema = z.object({
@@ -45,6 +46,7 @@ export function CreateTodoDialog({
   const createTodo = useCreateTodo()
   const linkEntity = useLinkEntity()
   const setReminder = useSetReminder()
+  const { enabled: defaultDateEnabled } = useTodoDefaultDateSetting()
   const titleOnly = !!parentId
 
   const handleAddLink = useCallback(
@@ -70,8 +72,9 @@ export function CreateTodoDialog({
   function handleOpenChange(next: boolean): void {
     setOpen(next)
     if (next) {
-      setDueDate(null)
-      setStartDate(null)
+      const today = defaultDateEnabled ? new Date(new Date().setHours(0, 0, 0, 0)) : null
+      setDueDate(today)
+      setStartDate(today)
       setPendingLinks([])
       setPendingReminders([])
       form.reset({
