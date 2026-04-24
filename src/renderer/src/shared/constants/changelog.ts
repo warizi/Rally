@@ -26,6 +26,12 @@ export const CHANGELOG: ChangelogEntry[] = [
         title: '할 일 추가 시 시작일, 마감일 자동 설정 추가',
         description:
           '할 일을 추가할 때 시작일과 마감일이 오늘로 자동으로 설정됩니다. 설정 > 기본 > 할일에서 이 기능을 켜고 끌 수 있습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '파일 확장자 표시 설정 추가',
+        description:
+          '설정 > 기본 > 파일탐색기에서 파일 확장자를 표시할지 여부를 선택할 수 있습니다.'
       }
     ]
   },
