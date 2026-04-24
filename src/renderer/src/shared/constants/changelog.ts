@@ -13,13 +13,19 @@ export interface ChangelogEntry {
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.3.7',
-    date: '2026-04-22',
+    date: '2026-04-24',
     changes: [
       {
         type: 'fix',
         title: '완료된 할 일 표기 오류 수정',
         description:
           '일반 할 일을 완료 했을 때 완료된 항목 리스트에서 나타나지 않던 문제를 수정했습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '할 일 추가 시 시작일, 마감일 자동 설정 추가',
+        description:
+          '할 일을 추가할 때 시작일과 마감일이 오늘로 자동으로 설정됩니다. 설정 > 기본 > 할일에서 이 기능을 켜고 끌 수 있습니다.'
       }
     ]
   },
