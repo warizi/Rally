@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.8',
+    date: '2026-04-28',
+    changes: [
+      {
+        type: 'fix',
+        title: '대시보드 그래프 0값 표시 오류 수정',
+        description: '대시보드의 그래프가 0값 밑으로 표시되던 문제를 수정했습니다.'
+      }
+    ]
+  },
+  {
     version: '1.3.7',
     date: '2026-04-24',
     changes: [

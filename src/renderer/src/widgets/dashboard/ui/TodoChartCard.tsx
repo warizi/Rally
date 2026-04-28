@@ -162,14 +162,14 @@ export function TodoChartCard({ workspaceId, className }: Props): React.JSX.Elem
             />
             <Area
               dataKey="completed"
-              type="natural"
+              type="monotone"
               fill="url(#fillCompleted)"
               stroke="var(--color-completed)"
               stackId="a"
             />
             <Area
               dataKey="created"
-              type="natural"
+              type="monotone"
               fill="url(#fillCreated)"
               stroke="var(--color-created)"
               stackId="a"
