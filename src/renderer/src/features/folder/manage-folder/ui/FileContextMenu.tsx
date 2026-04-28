@@ -1,26 +1,48 @@
 import { JSX } from 'react'
-import { Trash2 } from 'lucide-react'
+import { FileText, ImageIcon, Sheet, Trash2, type LucideIcon } from 'lucide-react'
 import {
   ContextMenu,
   ContextMenuContent,
+  ContextMenuGroup,
   ContextMenuItem,
+  ContextMenuLabel,
+  ContextMenuSeparator,
   ContextMenuTrigger
 } from '@shared/ui/context-menu'
 
+type FileKind = 'note' | 'csv' | 'pdf' | 'image'
+
+const ICON_BY_KIND: Record<FileKind, LucideIcon> = {
+  note: FileText,
+  csv: Sheet,
+  pdf: FileText,
+  image: ImageIcon
+}
+
 interface Props {
   children: React.ReactNode
+  name: string
+  kind: FileKind
   onDelete: () => void
 }
 
-export function FileContextMenu({ children, onDelete }: Props): JSX.Element {
+export function FileContextMenu({ children, name, kind, onDelete }: Props): JSX.Element {
+  const Icon = ICON_BY_KIND[kind]
   return (
     <ContextMenu>
       <ContextMenuTrigger asChild>{children}</ContextMenuTrigger>
       <ContextMenuContent className="w-44">
-        <ContextMenuItem variant="destructive" onClick={onDelete}>
-          <Trash2 className="size-4 mr-2" />
-          삭제
-        </ContextMenuItem>
+        <ContextMenuLabel className="flex items-center gap-1.5 text-muted-foreground text-xs font-normal">
+          <Icon className="size-3 shrink-0" />
+          <span className="truncate">{name}</span>
+        </ContextMenuLabel>
+        <ContextMenuSeparator />
+        <ContextMenuGroup>
+          <ContextMenuItem variant="destructive" onClick={onDelete}>
+            <Trash2 className="size-4 mr-2" />
+            삭제
+          </ContextMenuItem>
+        </ContextMenuGroup>
       </ContextMenuContent>
     </ContextMenu>
   )

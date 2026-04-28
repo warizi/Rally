@@ -46,6 +46,31 @@ export function useCreateCsvFile(): UseMutationResult<
   })
 }
 
+export function useImportCsvFile(): UseMutationResult<
+  CsvFileNode | undefined,
+  Error,
+  { workspaceId: string; folderId: string | null; sourcePath: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
+    mutationFn: async ({ workspaceId, folderId, sourcePath }) => {
+      const res: IpcResponse<CsvFileNode> = await window.api.csv.import(
+        workspaceId,
+        folderId,
+        sourcePath
+      )
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [CSV_KEY, 'workspace', workspaceId] })
+    }
+  })
+}
+
 export function useRenameCsvFile(): UseMutationResult<
   CsvFileNode | undefined,
   Error,

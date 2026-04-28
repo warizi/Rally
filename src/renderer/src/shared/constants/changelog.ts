@@ -19,6 +19,18 @@ export const CHANGELOG: ChangelogEntry[] = [
         type: 'fix',
         title: '대시보드 그래프 0값 표시 오류 수정',
         description: '대시보드의 그래프가 0값 밑으로 표시되던 문제를 수정했습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '노트, CSV 가져오기 추가',
+        description:
+          '폴더 컨텍스트 메뉴에서 노트와 CSV 파일을 가져올 수 있는 기능이 추가되었습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '탐색기 컨텍스트 메뉴의 가독성 향상',
+        description:
+          '탐색기에서 파일과 폴더를 우클릭했을 때 나타나는 컨텍스트 메뉴의 항목들이 그룹화되고 구분선으로 나뉘어져서 가독성이 향상되었습니다.'
       }
     ]
   },

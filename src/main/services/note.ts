@@ -143,6 +143,64 @@ export const noteService = {
   },
 
   /**
+   * 외부 .md 파일을 workspace로 복사 + DB 등록
+   */
+  import(workspaceId: string, folderId: string | null, sourcePath: string): NoteNode {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    if (!sourcePath.toLowerCase().endsWith('.md')) {
+      throw new ValidationError(`Markdown(.md) 파일만 가져올 수 있습니다: ${sourcePath}`)
+    }
+
+    let folderRelPath: string | null = null
+    if (folderId) {
+      const folder = folderRepository.findById(folderId)
+      if (!folder) throw new NotFoundError(`Folder not found: ${folderId}`)
+      folderRelPath = folder.relativePath
+    }
+
+    const parentAbs = folderRelPath ? path.join(workspace.path, folderRelPath) : workspace.path
+    const sourceBaseName = path.basename(sourcePath)
+    const finalFileName = resolveNameConflict(parentAbs, sourceBaseName)
+    const title = finalFileName.replace(/\.md$/, '')
+
+    const destAbs = path.join(parentAbs, finalFileName)
+    const destRel = normalizePath(
+      folderRelPath ? `${folderRelPath}/${finalFileName}` : finalFileName
+    )
+
+    fs.copyFileSync(sourcePath, destAbs)
+
+    let preview = ''
+    try {
+      const content = fs.readFileSync(destAbs, 'utf-8')
+      preview = content.slice(0, 200).replace(/\s+/g, ' ').trim()
+    } catch {
+      // 읽기 실패 시 빈 preview로 폴백
+    }
+
+    const siblings = getLeafSiblings(workspaceId, folderId)
+    const maxOrder = siblings.length > 0 ? Math.max(...siblings.map((s) => s.order)) : -1
+    const now = new Date()
+
+    const row = noteRepository.create({
+      id: nanoid(),
+      workspaceId,
+      folderId,
+      relativePath: destRel,
+      title,
+      description: '',
+      preview,
+      order: maxOrder + 1,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    return toNoteNode(row)
+  },
+
+  /**
    * 새 노트 생성 (disk + DB)
    */
   create(workspaceId: string, folderId: string | null, name: string): NoteNode {

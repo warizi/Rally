@@ -2,6 +2,7 @@ export type { NoteNode } from './model/types'
 export {
   useNotesByWorkspace,
   useCreateNote,
+  useImportNote,
   useRenameNote,
   useRemoveNote,
   useMoveNote,

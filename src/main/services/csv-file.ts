@@ -140,6 +140,70 @@ export const csvFileService = {
   },
 
   /**
+   * 외부 .csv 파일을 workspace로 복사 + DB 등록
+   * 인코딩 변환 없이 raw byte 그대로 복사 (readContent가 chardet으로 감지)
+   */
+  import(workspaceId: string, folderId: string | null, sourcePath: string): CsvFileNode {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    if (!sourcePath.toLowerCase().endsWith('.csv')) {
+      throw new ValidationError(`CSV(.csv) 파일만 가져올 수 있습니다: ${sourcePath}`)
+    }
+
+    let folderRelPath: string | null = null
+    if (folderId) {
+      const folder = folderRepository.findById(folderId)
+      if (!folder) throw new NotFoundError(`Folder not found: ${folderId}`)
+      folderRelPath = folder.relativePath
+    }
+
+    const parentAbs = folderRelPath ? path.join(workspace.path, folderRelPath) : workspace.path
+    const sourceBaseName = path.basename(sourcePath)
+    const finalFileName = resolveNameConflict(parentAbs, sourceBaseName)
+    const title = finalFileName.replace(/\.csv$/, '')
+
+    const destAbs = path.join(parentAbs, finalFileName)
+    const destRel = normalizePath(
+      folderRelPath ? `${folderRelPath}/${finalFileName}` : finalFileName
+    )
+
+    fs.copyFileSync(sourcePath, destAbs)
+
+    let preview = ''
+    try {
+      const rawBuffer = fs.readFileSync(destAbs)
+      if (rawBuffer.length > 0) {
+        const encoding = chardet.detect(rawBuffer) ?? 'UTF-8'
+        let content = iconv.decode(rawBuffer, encoding)
+        if (content.charCodeAt(0) === 0xfeff) content = content.slice(1)
+        preview = generateCsvPreview(content)
+      }
+    } catch {
+      // 폴백
+    }
+
+    const siblings = getLeafSiblings(workspaceId, folderId)
+    const maxOrder = siblings.length > 0 ? Math.max(...siblings.map((s) => s.order)) : -1
+    const now = new Date()
+
+    const row = csvFileRepository.create({
+      id: nanoid(),
+      workspaceId,
+      folderId,
+      relativePath: destRel,
+      title,
+      description: '',
+      preview,
+      order: maxOrder + 1,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    return toCsvFileNode(row)
+  },
+
+  /**
    * CSV 생성 (disk + DB)
    */
   create(workspaceId: string, folderId: string | null, name: string): CsvFileNode {

@@ -46,6 +46,31 @@ export function useCreateNote(): UseMutationResult<
   })
 }
 
+export function useImportNote(): UseMutationResult<
+  NoteNode | undefined,
+  Error,
+  { workspaceId: string; folderId: string | null; sourcePath: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
+    mutationFn: async ({ workspaceId, folderId, sourcePath }) => {
+      const res: IpcResponse<NoteNode> = await window.api.note.import(
+        workspaceId,
+        folderId,
+        sourcePath
+      )
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+    }
+  })
+}
+
 export function useRenameNote(): UseMutationResult<
   NoteNode | undefined,
   Error,
