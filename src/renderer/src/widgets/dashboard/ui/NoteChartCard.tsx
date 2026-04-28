@@ -138,7 +138,7 @@ export function NoteChartCard({ workspaceId, className }: Props): React.JSX.Elem
             />
             <Area
               dataKey="created"
-              type="natural"
+              type="monotone"
               fill="url(#fillNoteCreated)"
               stroke="var(--color-created)"
             />
