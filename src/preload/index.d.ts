@@ -66,6 +66,12 @@ interface NoteAPI {
     noteId: string,
     data: { description?: string }
   ) => Promise<IpcResponse<NoteNode>>
+  import: (
+    workspaceId: string,
+    folderId: string | null,
+    sourcePath: string
+  ) => Promise<IpcResponse<NoteNode>>
+  selectFile: () => Promise<string[] | null>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 
@@ -107,6 +113,12 @@ interface CsvAPI {
     csvId: string,
     data: { description?: string; columnWidths?: string }
   ) => Promise<IpcResponse<CsvFileNode>>
+  import: (
+    workspaceId: string,
+    folderId: string | null,
+    sourcePath: string
+  ) => Promise<IpcResponse<CsvFileNode>>
+  selectFile: () => Promise<string[] | null>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 

@@ -2,6 +2,7 @@ export type { CsvFileNode } from './model/types'
 export {
   useCsvFilesByWorkspace,
   useCreateCsvFile,
+  useImportCsvFile,
   useRenameCsvFile,
   useRemoveCsvFile,
   useMoveCsvFile,

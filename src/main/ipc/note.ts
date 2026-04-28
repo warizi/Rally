@@ -1,4 +1,4 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
+import { dialog, ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
 import { noteService } from '../services/note'
@@ -64,4 +64,22 @@ export function registerNoteHandlers(): void {
       data: { description?: string }
     ): IpcResponse => handle(() => noteService.updateMeta(workspaceId, noteId, data))
   )
+
+  ipcMain.handle(
+    'note:import',
+    (
+      _: IpcMainInvokeEvent,
+      workspaceId: string,
+      folderId: string | null,
+      sourcePath: string
+    ): IpcResponse => handle(() => noteService.import(workspaceId, folderId, sourcePath))
+  )
+
+  ipcMain.handle('note:selectFile', async (): Promise<string[] | null> => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'Markdown', extensions: ['md'] }]
+    })
+    return result.canceled ? null : result.filePaths
+  })
 }

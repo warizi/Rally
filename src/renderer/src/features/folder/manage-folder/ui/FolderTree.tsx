@@ -3,7 +3,15 @@ import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
 import { createDragDropManager } from 'dnd-core'
 import { HTML5Backend } from 'react-dnd-html5-backend'
-import { ChevronsDownUp, FilePlus, FolderPlus } from 'lucide-react'
+import {
+  ChevronsDownUp,
+  FilePlus,
+  FileText,
+  FileUp,
+  FolderPlus,
+  ImageIcon,
+  Sheet
+} from 'lucide-react'
 
 // 여러 Tree 인스턴스(여러 폴더 탭)가 동시에 마운트될 때
 // "Cannot have two HTML5 backends" 에러 방지를 위해 공유 DnD 매니저 사용
@@ -15,12 +23,25 @@ import {
   useMoveFolder,
   useUpdateFolderMeta
 } from '@entities/folder'
-import { useCreateNote, useMoveNote, useRemoveNote } from '@entities/note'
-import { useCreateCsvFile, useMoveCsvFile, useRemoveCsvFile } from '@entities/csv-file'
+import { useCreateNote, useImportNote, useMoveNote, useRemoveNote } from '@entities/note'
+import type { NoteNode } from '@entities/note'
+import {
+  useCreateCsvFile,
+  useImportCsvFile,
+  useMoveCsvFile,
+  useRemoveCsvFile
+} from '@entities/csv-file'
+import type { CsvFileNode } from '@entities/csv-file'
 import { useImportPdfFile, useMovePdfFile, useRemovePdfFile } from '@entities/pdf-file'
 import { useImportImageFile, useMoveImageFile, useRemoveImageFile } from '@entities/image-file'
 import type { ImageFileNode } from '@entities/image-file'
 import { Button } from '@shared/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@shared/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
@@ -110,11 +131,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
 
   // Note mutations
   const { mutate: createNote } = useCreateNote()
+  const { mutateAsync: importNote } = useImportNote()
   const { mutate: moveNote } = useMoveNote()
   const { mutate: removeNote, isPending: isRemovingNote } = useRemoveNote()
 
   // CSV mutations
   const { mutate: createCsvFile } = useCreateCsvFile()
+  const { mutateAsync: importCsvFile } = useImportCsvFile()
   const { mutate: moveCsvFile } = useMoveCsvFile()
   const { mutate: removeCsvFile, isPending: isRemovingCsv } = useRemoveCsvFile()
 
@@ -212,6 +235,52 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     [workspaceId, sourcePaneId, createCsvFile, openRightTab]
   )
 
+  /** 노트 가져오기 → 다중 .md 선택 → import × N → 마지막 노트 탭 오픈 */
+  const handleImportNote = useCallback(
+    async (folderId: string | null) => {
+      const filePaths = await window.api.note.selectFile()
+      if (!filePaths || filePaths.length === 0) return
+      let lastImported: NoteNode | undefined
+      for (const sourcePath of filePaths) {
+        lastImported = await importNote({ workspaceId, folderId, sourcePath })
+      }
+      if (lastImported) {
+        openRightTab(
+          {
+            type: 'note',
+            title: lastImported.title,
+            pathname: `/folder/note/${lastImported.id}`
+          },
+          sourcePaneId
+        )
+      }
+    },
+    [workspaceId, sourcePaneId, importNote, openRightTab]
+  )
+
+  /** 테이블 가져오기 → 다중 .csv 선택 → import × N → 마지막 테이블 탭 오픈 */
+  const handleImportCsv = useCallback(
+    async (folderId: string | null) => {
+      const filePaths = await window.api.csv.selectFile()
+      if (!filePaths || filePaths.length === 0) return
+      let lastImported: CsvFileNode | undefined
+      for (const sourcePath of filePaths) {
+        lastImported = await importCsvFile({ workspaceId, folderId, sourcePath })
+      }
+      if (lastImported) {
+        openRightTab(
+          {
+            type: 'csv',
+            title: lastImported.title,
+            pathname: `/folder/csv/${lastImported.id}`
+          },
+          sourcePaneId
+        )
+      }
+    },
+    [workspaceId, sourcePaneId, importCsvFile, openRightTab]
+  )
+
   /** PDF 가져오기 → 파일 선택 다이얼로그 → import → 성공 시 오른쪽 탭에 자동 오픈 */
   const handleImportPdf = useCallback(
     async (folderId: string | null) => {
@@ -265,11 +334,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       if (props.node.data.kind === 'note') {
         return (
           <FileContextMenu
+            name={props.node.data.name}
+            kind="note"
             onDelete={() =>
               setNoteDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
           >
-            <div>
+            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <NoteNodeRenderer
                 {...(props as unknown as NodeRendererProps<NoteTreeNode>)}
                 isActive={activePathname === `/folder/note/${props.node.data.id}`}
@@ -292,11 +363,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       if (props.node.data.kind === 'csv') {
         return (
           <FileContextMenu
+            name={props.node.data.name}
+            kind="csv"
             onDelete={() =>
               setCsvDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
           >
-            <div>
+            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <CsvNodeRenderer
                 {...(props as unknown as NodeRendererProps<CsvTreeNode>)}
                 isActive={activePathname === `/folder/csv/${props.node.data.id}`}
@@ -319,11 +392,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       if (props.node.data.kind === 'pdf') {
         return (
           <FileContextMenu
+            name={props.node.data.name}
+            kind="pdf"
             onDelete={() =>
               setPdfDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
           >
-            <div>
+            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <PdfNodeRenderer
                 {...(props as unknown as NodeRendererProps<PdfTreeNode>)}
                 isActive={activePathname === `/folder/pdf/${props.node.data.id}`}
@@ -346,11 +421,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       if (props.node.data.kind === 'image') {
         return (
           <FileContextMenu
+            name={props.node.data.name}
+            kind="image"
             onDelete={() =>
               setImageDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
           >
-            <div>
+            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <ImageNodeRenderer
                 {...(props as unknown as NodeRendererProps<ImageTreeNode>)}
                 isActive={activePathname === `/folder/image/${props.node.data.id}`}
@@ -373,9 +450,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       // kind === 'folder'
       return (
         <FolderContextMenu
+          name={props.node.data.name}
+          color={(props.node.data as FolderTreeNode).color}
           onCreateChild={() => setCreateTarget({ parentFolderId: props.node.id })}
           onCreateNote={() => handleCreateNote(props.node.id)}
+          onImportNote={() => handleImportNote(props.node.id)}
           onCreateCsv={() => handleCreateCsv(props.node.id)}
+          onImportCsv={() => handleImportCsv(props.node.id)}
           onImportPdf={() => handleImportPdf(props.node.id)}
           onImportImage={() => handleImportImage(props.node.id)}
           onRename={() => setRenameTarget({ id: props.node.id, name: props.node.data.name })}
@@ -387,7 +468,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           }
           onDelete={() => setDeleteTarget({ id: props.node.id, name: props.node.data.name })}
         >
-          <div>
+          <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
             <FolderNodeRenderer {...(props as unknown as NodeRendererProps<FolderTreeNode>)} />
           </div>
         </FolderContextMenu>
@@ -399,7 +480,9 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       sourcePaneId,
       activePathname,
       handleCreateNote,
+      handleImportNote,
       handleCreateCsv,
+      handleImportCsv,
       handleImportPdf,
       handleImportImage,
       openRightTab
@@ -430,18 +513,75 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             </TooltipTrigger>
             <TooltipContent>모두 접기</TooltipContent>
           </Tooltip>
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-6 cursor-pointer">
+                    <FileText className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>노트</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => handleImportNote(null)}>
+                <FileUp className="size-4 mr-2" />
+                노트 가져오기
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleCreateNote(null)}>
+                <FilePlus className="size-4 mr-2" />
+                노트 추가하기
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <DropdownMenu>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="size-6 cursor-pointer">
+                    <Sheet className="size-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>테이블</TooltipContent>
+            </Tooltip>
+            <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuItem onClick={() => handleCreateCsv(null)}>
+                <FilePlus className="size-4 mr-2" />
+                테이블 추가하기
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleImportCsv(null)}>
+                <FileUp className="size-4 mr-2" />
+                테이블 가져오기
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
                 className="size-6 cursor-pointer"
-                onClick={() => handleCreateNote(null)}
+                onClick={() => handleImportPdf(null)}
               >
-                <FilePlus className="size-4" />
+                <FileUp className="size-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>노트 추가</TooltipContent>
+            <TooltipContent>PDF 가져오기</TooltipContent>
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-6 cursor-pointer"
+                onClick={() => handleImportImage(null)}
+              >
+                <ImageIcon className="size-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>이미지 가져오기</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>

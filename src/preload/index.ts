@@ -56,6 +56,9 @@ const api = {
       ipcRenderer.invoke('note:move', workspaceId, noteId, folderId, index),
     updateMeta: (workspaceId: string, noteId: string, data: { description?: string }) =>
       ipcRenderer.invoke('note:updateMeta', workspaceId, noteId, data),
+    import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
+      ipcRenderer.invoke('note:import', workspaceId, folderId, sourcePath),
+    selectFile: () => ipcRenderer.invoke('note:selectFile'),
     onChanged: createOnChangedListener('note:changed')
   },
 
@@ -79,6 +82,9 @@ const api = {
       csvId: string,
       data: { description?: string; columnWidths?: string }
     ) => ipcRenderer.invoke('csv:updateMeta', workspaceId, csvId, data),
+    import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
+      ipcRenderer.invoke('csv:import', workspaceId, folderId, sourcePath),
+    selectFile: () => ipcRenderer.invoke('csv:selectFile'),
     onChanged: createOnChangedListener('csv:changed')
   },
 

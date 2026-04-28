@@ -1,0 +1,14 @@
+{
+  "feature": "note-csv-import-submenu",
+  "phase": "check",
+  "matchRate": 100,
+  "updatedAt": "2026-04-28",
+  "previousFeatures": {
+    "fileexplorer-extension-display": {
+      "phase": "archived",
+      "matchRate": 98,
+      "archivedTo": "docs/archive/2026-04/fileexplorer-extension-display/",
+      "updatedAt": "2026-04-24"
+    }
+  }
+}

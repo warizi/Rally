@@ -1,4 +1,4 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
+import { dialog, ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
 import { csvFileService } from '../services/csv-file'
@@ -64,4 +64,22 @@ export function registerCsvFileHandlers(): void {
       data: { description?: string; columnWidths?: string }
     ): IpcResponse => handle(() => csvFileService.updateMeta(workspaceId, csvId, data))
   )
+
+  ipcMain.handle(
+    'csv:import',
+    (
+      _: IpcMainInvokeEvent,
+      workspaceId: string,
+      folderId: string | null,
+      sourcePath: string
+    ): IpcResponse => handle(() => csvFileService.import(workspaceId, folderId, sourcePath))
+  )
+
+  ipcMain.handle('csv:selectFile', async (): Promise<string[] | null> => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'CSV', extensions: ['csv'] }]
+    })
+    return result.canceled ? null : result.filePaths
+  })
 }
