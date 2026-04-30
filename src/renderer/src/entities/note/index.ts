@@ -3,6 +3,7 @@ export {
   useNotesByWorkspace,
   useCreateNote,
   useImportNote,
+  useDuplicateNote,
   useRenameNote,
   useRemoveNote,
   useMoveNote,

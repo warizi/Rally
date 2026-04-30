@@ -58,6 +58,8 @@ const api = {
       ipcRenderer.invoke('note:updateMeta', workspaceId, noteId, data),
     import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
       ipcRenderer.invoke('note:import', workspaceId, folderId, sourcePath),
+    duplicate: (workspaceId: string, noteId: string) =>
+      ipcRenderer.invoke('note:duplicate', workspaceId, noteId),
     selectFile: () => ipcRenderer.invoke('note:selectFile'),
     onChanged: createOnChangedListener('note:changed')
   },
@@ -84,6 +86,8 @@ const api = {
     ) => ipcRenderer.invoke('csv:updateMeta', workspaceId, csvId, data),
     import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
       ipcRenderer.invoke('csv:import', workspaceId, folderId, sourcePath),
+    duplicate: (workspaceId: string, csvId: string) =>
+      ipcRenderer.invoke('csv:duplicate', workspaceId, csvId),
     selectFile: () => ipcRenderer.invoke('csv:selectFile'),
     onChanged: createOnChangedListener('csv:changed')
   },
@@ -93,6 +97,8 @@ const api = {
       ipcRenderer.invoke('pdf:readByWorkspace', workspaceId),
     import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
       ipcRenderer.invoke('pdf:import', workspaceId, folderId, sourcePath),
+    duplicate: (workspaceId: string, pdfId: string) =>
+      ipcRenderer.invoke('pdf:duplicate', workspaceId, pdfId),
     rename: (workspaceId: string, pdfId: string, newName: string) =>
       ipcRenderer.invoke('pdf:rename', workspaceId, pdfId, newName),
     remove: (workspaceId: string, pdfId: string) =>
@@ -112,6 +118,8 @@ const api = {
       ipcRenderer.invoke('image:readByWorkspace', workspaceId),
     import: (workspaceId: string, folderId: string | null, sourcePath: string) =>
       ipcRenderer.invoke('image:import', workspaceId, folderId, sourcePath),
+    duplicate: (workspaceId: string, imageId: string) =>
+      ipcRenderer.invoke('image:duplicate', workspaceId, imageId),
     rename: (workspaceId: string, imageId: string, newName: string) =>
       ipcRenderer.invoke('image:rename', workspaceId, imageId, newName),
     remove: (workspaceId: string, imageId: string) =>

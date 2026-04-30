@@ -50,6 +50,27 @@ export function useImportPdfFile(): UseMutationResult<
   })
 }
 
+export function useDuplicatePdfFile(): UseMutationResult<
+  PdfFileNode | undefined,
+  Error,
+  { workspaceId: string; pdfId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
+    mutationFn: async ({ workspaceId, pdfId }) => {
+      const res: IpcResponse<PdfFileNode> = await window.api.pdf.duplicate(workspaceId, pdfId)
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [PDF_KEY, 'workspace', workspaceId] })
+    }
+  })
+}
+
 export function useRenamePdfFile(): UseMutationResult<
   PdfFileNode | undefined,
   Error,

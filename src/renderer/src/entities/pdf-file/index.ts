@@ -2,6 +2,7 @@ export type { PdfFileNode } from './model/types'
 export {
   usePdfFilesByWorkspace,
   useImportPdfFile,
+  useDuplicatePdfFile,
   useRenamePdfFile,
   useRemovePdfFile,
   useMovePdfFile,

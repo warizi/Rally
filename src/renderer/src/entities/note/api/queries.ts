@@ -71,6 +71,27 @@ export function useImportNote(): UseMutationResult<
   })
 }
 
+export function useDuplicateNote(): UseMutationResult<
+  NoteNode | undefined,
+  Error,
+  { workspaceId: string; noteId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
+    mutationFn: async ({ workspaceId, noteId }) => {
+      const res: IpcResponse<NoteNode> = await window.api.note.duplicate(workspaceId, noteId)
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+    }
+  })
+}
+
 export function useRenameNote(): UseMutationResult<
   NoteNode | undefined,
   Error,

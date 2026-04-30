@@ -21,6 +21,12 @@ export function registerPdfFileHandlers(): void {
   )
 
   ipcMain.handle(
+    'pdf:duplicate',
+    (_: IpcMainInvokeEvent, workspaceId: string, pdfId: string): IpcResponse =>
+      handle(() => pdfFileService.duplicate(workspaceId, pdfId))
+  )
+
+  ipcMain.handle(
     'pdf:rename',
     (_: IpcMainInvokeEvent, workspaceId: string, pdfId: string, newName: string): IpcResponse =>
       handle(() => pdfFileService.rename(workspaceId, pdfId, newName))

@@ -252,6 +252,72 @@ export const csvFileService = {
   },
 
   /**
+   * CSV 복제 — 같은 폴더에 "name (n).csv"로 복사 + DB 등록 (columnWidths도 복사)
+   */
+  duplicate(workspaceId: string, csvId: string): CsvFileNode {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const csv = csvFileRepository.findById(csvId)
+    if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+
+    const folderRel = parentRelPath(csv.relativePath)
+    const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
+
+    const sourceFileName = path.basename(csv.relativePath)
+    const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
+    const title = finalFileName.replace(/\.csv$/, '')
+
+    const sourceAbs = path.join(workspace.path, csv.relativePath)
+    const destAbs = path.join(parentAbs, finalFileName)
+    const destRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
+
+    fs.copyFileSync(sourceAbs, destAbs)
+
+    let preview = ''
+    try {
+      const rawBuffer = fs.readFileSync(destAbs)
+      if (rawBuffer.length > 0) {
+        const encoding = chardet.detect(rawBuffer) ?? 'UTF-8'
+        let content = iconv.decode(rawBuffer, encoding)
+        if (content.charCodeAt(0) === 0xfeff) content = content.slice(1)
+        preview = generateCsvPreview(content)
+      }
+    } catch {
+      // 폴백
+    }
+
+    const now = new Date()
+    const newId = nanoid()
+
+    csvFileRepository.create({
+      id: newId,
+      workspaceId,
+      folderId: csv.folderId,
+      relativePath: destRel,
+      title,
+      description: '',
+      preview,
+      columnWidths: csv.columnWidths,
+      order: 0,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    // 원본 바로 아래에 위치하도록 siblings reindex
+    const siblings = getLeafSiblings(workspaceId, csv.folderId).filter((s) => s.id !== newId)
+    const sourceIndex = siblings.findIndex((s) => s.id === csvId)
+    const insertAt = sourceIndex >= 0 ? sourceIndex + 1 : siblings.length
+    siblings.splice(insertAt, 0, { id: newId, kind: 'csv', order: 0 })
+    reindexLeafSiblings(
+      workspaceId,
+      siblings.map((s) => ({ id: s.id, kind: s.kind }))
+    )
+
+    return toCsvFileNode(csvFileRepository.findById(newId)!)
+  },
+
+  /**
    * CSV 이름 변경 (disk + DB)
    */
   rename(workspaceId: string, csvId: string, newName: string): CsvFileNode {

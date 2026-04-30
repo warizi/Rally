@@ -66,6 +66,12 @@ export function registerNoteHandlers(): void {
   )
 
   ipcMain.handle(
+    'note:duplicate',
+    (_: IpcMainInvokeEvent, workspaceId: string, noteId: string): IpcResponse =>
+      handle(() => noteService.duplicate(workspaceId, noteId))
+  )
+
+  ipcMain.handle(
     'note:import',
     (
       _: IpcMainInvokeEvent,

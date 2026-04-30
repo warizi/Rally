@@ -249,6 +249,66 @@ export const noteService = {
   },
 
   /**
+   * 노트 복제 — 같은 폴더에 "name (n).md"로 복사 + DB 등록
+   */
+  duplicate(workspaceId: string, noteId: string): NoteNode {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const note = noteRepository.findById(noteId)
+    if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
+
+    const folderRel = parentRelPath(note.relativePath)
+    const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
+
+    const sourceFileName = path.basename(note.relativePath)
+    const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
+    const title = finalFileName.replace(/\.md$/, '')
+
+    const sourceAbs = path.join(workspace.path, note.relativePath)
+    const destAbs = path.join(parentAbs, finalFileName)
+    const destRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
+
+    fs.copyFileSync(sourceAbs, destAbs)
+
+    let preview = ''
+    try {
+      const content = fs.readFileSync(destAbs, 'utf-8')
+      preview = content.slice(0, 200).replace(/\s+/g, ' ').trim()
+    } catch {
+      // 읽기 실패 시 빈 preview로 폴백
+    }
+
+    const now = new Date()
+    const newId = nanoid()
+
+    noteRepository.create({
+      id: newId,
+      workspaceId,
+      folderId: note.folderId,
+      relativePath: destRel,
+      title,
+      description: '',
+      preview,
+      order: 0,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    // 원본 바로 아래에 위치하도록 siblings reindex
+    const siblings = getLeafSiblings(workspaceId, note.folderId).filter((s) => s.id !== newId)
+    const sourceIndex = siblings.findIndex((s) => s.id === noteId)
+    const insertAt = sourceIndex >= 0 ? sourceIndex + 1 : siblings.length
+    siblings.splice(insertAt, 0, { id: newId, kind: 'note', order: 0 })
+    reindexLeafSiblings(
+      workspaceId,
+      siblings.map((s) => ({ id: s.id, kind: s.kind }))
+    )
+
+    return toNoteNode(noteRepository.findById(newId)!)
+  },
+
+  /**
    * 노트 이름 변경 (disk + DB)
    */
   rename(workspaceId: string, noteId: string, newName: string): NoteNode {

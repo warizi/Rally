@@ -169,6 +169,56 @@ export const pdfFileService = {
     return toPdfFileNode(row)
   },
 
+  /** 같은 폴더에 "name (n).pdf"로 복사 + DB 등록 */
+  duplicate(workspaceId: string, pdfId: string): PdfFileNode {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const pdf = pdfFileRepository.findById(pdfId)
+    if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
+
+    const folderRel = parentRelPath(pdf.relativePath)
+    const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
+
+    const sourceFileName = path.basename(pdf.relativePath)
+    const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
+    const title = finalFileName.replace(/\.pdf$/, '')
+
+    const sourceAbs = path.join(workspace.path, pdf.relativePath)
+    const destAbs = path.join(parentAbs, finalFileName)
+    const destRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
+
+    fs.copyFileSync(sourceAbs, destAbs)
+
+    const now = new Date()
+    const newId = nanoid()
+
+    pdfFileRepository.create({
+      id: newId,
+      workspaceId,
+      folderId: pdf.folderId,
+      relativePath: destRel,
+      title,
+      description: '',
+      preview: '',
+      order: 0,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    // 원본 바로 아래에 위치하도록 siblings reindex
+    const siblings = getLeafSiblings(workspaceId, pdf.folderId).filter((s) => s.id !== newId)
+    const sourceIndex = siblings.findIndex((s) => s.id === pdfId)
+    const insertAt = sourceIndex >= 0 ? sourceIndex + 1 : siblings.length
+    siblings.splice(insertAt, 0, { id: newId, kind: 'pdf', order: 0 })
+    reindexLeafSiblings(
+      workspaceId,
+      siblings.map((s) => ({ id: s.id, kind: s.kind }))
+    )
+
+    return toPdfFileNode(pdfFileRepository.findById(newId)!)
+  },
+
   /** 이름 변경 (disk + DB) */
   rename(workspaceId: string, pdfId: string, newName: string): PdfFileNode {
     const workspace = workspaceRepository.findById(workspaceId)

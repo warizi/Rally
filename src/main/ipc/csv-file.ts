@@ -66,6 +66,12 @@ export function registerCsvFileHandlers(): void {
   )
 
   ipcMain.handle(
+    'csv:duplicate',
+    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string): IpcResponse =>
+      handle(() => csvFileService.duplicate(workspaceId, csvId))
+  )
+
+  ipcMain.handle(
     'csv:import',
     (
       _: IpcMainInvokeEvent,
