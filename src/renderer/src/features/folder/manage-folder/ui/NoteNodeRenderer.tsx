@@ -7,6 +7,7 @@ import { cn } from '@shared/lib/utils'
 import type { NoteTreeNode } from '../model/types'
 import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
+import { useFolderDragTarget } from '../model/use-folder-drag-target'
 
 interface NoteNodeRendererProps extends NodeRendererProps<NoteTreeNode> {
   workspaceId: string
@@ -48,6 +49,8 @@ export function NoteNodeRenderer({
     isFolder: false
   })
 
+  const { isFolderDrag } = useFolderDragTarget()
+
   return (
     <div ref={ref} style={style} className="relative h-full">
       <div
@@ -76,13 +79,13 @@ export function NoteNodeRenderer({
         className="absolute bottom-0 left-0 right-0 h-1/2 pointer-events-none"
       />
 
-      {dnd.isBeforeOver && (
+      {!isFolderDrag && dnd.isBeforeOver && (
         <div
           className="absolute top-0 right-2 h-0.5 bg-primary z-10 pointer-events-none"
           style={{ left: indent + 8 }}
         />
       )}
-      {dnd.isAfterOver && (
+      {!isFolderDrag && dnd.isAfterOver && (
         <div
           className="absolute bottom-0 right-2 h-0.5 bg-primary z-10 pointer-events-none"
           style={{ left: indent + 8 }}

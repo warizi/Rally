@@ -7,6 +7,7 @@ import { cn } from '@/shared/lib/utils'
 import type { FolderTreeNode } from '../model/types'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
 import { useAutoExpandOnHover } from '../model/use-auto-expand-on-hover'
+import { useFolderDragTarget } from '../model/use-folder-drag-target'
 
 interface FolderNodeRendererProps extends NodeRendererProps<FolderTreeNode> {
   workspaceId: string
@@ -37,6 +38,10 @@ export function FolderNodeRenderer({
   // 드래그 중 폴더 위에 머무르면 자동으로 펼침
   useAutoExpandOnHover(node, dnd.isIntoOver)
 
+  // 폴더 source 드래그 시 자기가 타겟 폴더면 하이라이트
+  const { isFolderDrag, targetFolderId } = useFolderDragTarget()
+  const isFolderDragTarget = isFolderDrag && targetFolderId === node.data.id
+
   return (
     <div style={style} className="relative h-full">
       <div
@@ -45,7 +50,7 @@ export function FolderNodeRenderer({
         {...dnd.dragListeners}
         className={cn(
           'flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer select-none h-full',
-          dnd.isIntoOver ? 'bg-primary/15' : 'hover:bg-accent',
+          dnd.isIntoOver || isFolderDragTarget ? 'bg-primary/15' : 'hover:bg-accent',
           dnd.isDragging && 'opacity-30'
         )}
         onClick={() => node.toggle()}
@@ -76,13 +81,14 @@ export function FolderNodeRenderer({
         className="absolute bottom-0 left-0 right-0 h-[30%] pointer-events-none"
       />
 
-      {dnd.isBeforeOver && (
+      {/* 폴더 source 드래그 시에는 형제 라인 가이드 안 표시 (폴더는 순서 없는 모델) */}
+      {!isFolderDrag && dnd.isBeforeOver && (
         <div
           className="absolute top-0 right-2 h-0.5 bg-primary z-10 pointer-events-none"
           style={{ left: indent + 8 }}
         />
       )}
-      {dnd.isAfterOver && (
+      {!isFolderDrag && dnd.isAfterOver && (
         <div
           className="absolute bottom-0 right-2 h-0.5 bg-primary z-10 pointer-events-none"
           style={{ left: indent + 8 }}
