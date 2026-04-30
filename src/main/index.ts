@@ -1,5 +1,6 @@
 import { app, shell, BrowserWindow, ipcMain, screen, session } from 'electron'
-import { join } from 'path'
+import { dirname, join } from 'path'
+import { existsSync, mkdirSync, renameSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import icon from '../../resources/icon.png?asset'
@@ -46,7 +47,7 @@ function runMigrations(): void {
 function initializeDatabase(): void {
   const workspaces = workspaceService.getAll()
   if (workspaces.length === 0) {
-    const defaultPath = join(app.getPath('documents'), 'Rally', '기본 워크스페이스')
+    const defaultPath = join(app.getPath('home'), 'Rally', '기본 워크스페이스')
     workspaceService.create('기본 워크스페이스', defaultPath)
   }
 }
@@ -55,6 +56,66 @@ function ensureAllWorkspaceCommands(): void {
   const workspaces = workspaceService.getAll()
   for (const ws of workspaces) {
     ensureClaudeCommands(ws.path)
+  }
+}
+
+// macOS TCC가 ~/Documents를 보호하면서 발생하던 EPERM을 해결하기 위해
+// 기본 워크스페이스 위치를 ~/Documents/Rally → ~/Rally로 이동시킨다.
+// 사용자가 직접 설정한 경로는 건드리지 않고, 정확히 옛 기본 경로를 쓰는 워크스페이스만 대상.
+function migrateLegacyDefaultWorkspacePath(): void {
+  const legacyPath = join(app.getPath('documents'), 'Rally', '기본 워크스페이스')
+  const newPath = join(app.getPath('home'), 'Rally', '기본 워크스페이스')
+  if (legacyPath === newPath) return
+
+  const all = workspaceService.getAll()
+  const target = all.find((ws) => ws.path === legacyPath)
+  if (!target) return
+
+  if (all.some((ws) => ws.id !== target.id && ws.path === newPath)) {
+    console.warn(
+      `[migrate-default-path] another workspace already uses ${newPath}; skipping migration`
+    )
+    return
+  }
+
+  try {
+    mkdirSync(dirname(newPath), { recursive: true })
+  } catch (err) {
+    console.warn(`[migrate-default-path] cannot create parent dir for ${newPath}:`, err)
+    return
+  }
+
+  if (!existsSync(newPath)) {
+    let moved = false
+    try {
+      renameSync(legacyPath, newPath)
+      moved = true
+      console.log(`[migrate-default-path] moved ${legacyPath} → ${newPath}`)
+    } catch (err) {
+      const code = (err as NodeJS.ErrnoException).code
+      console.warn(
+        `[migrate-default-path] cannot move legacy dir (${code}); creating fresh dir. ` +
+          `Existing data (if any) remains at ${legacyPath}.`
+      )
+    }
+
+    if (!moved) {
+      try {
+        mkdirSync(newPath, { recursive: true })
+      } catch (err) {
+        console.warn(`[migrate-default-path] cannot create ${newPath}:`, err)
+        return
+      }
+    }
+  }
+
+  try {
+    workspaceService.update(target.id, { path: newPath })
+    console.log(
+      `[migrate-default-path] updated workspace ${target.id} path: ${legacyPath} → ${newPath}`
+    )
+  } catch (err) {
+    console.warn(`[migrate-default-path] failed to update workspace path in DB:`, err)
   }
 }
 
@@ -111,6 +172,7 @@ app.whenReady().then(() => {
 
   runMigrations()
   initializeDatabase()
+  migrateLegacyDefaultWorkspacePath()
   ensureAllWorkspaceCommands()
   registerWorkspaceHandlers()
   registerTabSessionHandlers()
