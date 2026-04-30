@@ -67,14 +67,15 @@ export function MonthView({
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
-    const check = (width: number): void => {
+    const update = (width: number): void => {
       const small = width < 400
       isSmallRef.current = small
       setIsSmall(small)
+      el.style.setProperty('--month-row-min', `${(width / 7) * 1.3}px`)
     }
-    check(el.clientWidth)
+    update(el.clientWidth)
     const ro = new ResizeObserver(([entry]) => {
-      check(entry.contentRect.width)
+      update(entry.contentRect.width)
     })
     ro.observe(el)
     return () => ro.disconnect()
