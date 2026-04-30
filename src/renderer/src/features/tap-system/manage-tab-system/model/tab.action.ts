@@ -5,7 +5,7 @@ import {
   removePaneFromLayout
 } from './layout'
 import { selectPaneByTabId, selectTabByPathname } from './selectors'
-import { GetState, NavigateOptions, SetState, TabOptions } from './types'
+import { GetState, NavigateOptions, SetState, SplitPosition, TabOptions } from './types'
 
 export const createTabActions = (
   set: SetState,
@@ -95,6 +95,20 @@ export const createTabActions = (
     }
 
     const newPaneId = get().splitPane(sourcePaneId, 'right')
+    return get().openTab(options, newPaneId)
+  },
+
+  openTabInNewSplit: (
+    sourcePaneId: string,
+    position: SplitPosition,
+    options: TabOptions
+  ): string => {
+    // 같은 pathname 탭이 이미 열려 있으면 빈 패널을 만들지 않고 기존 탭을 활성화만 한다.
+    const existingTabId = createTabId(options.pathname)
+    if (get().tabs[existingTabId]) {
+      return get().openTab(options)
+    }
+    const newPaneId = get().splitPane(sourcePaneId, position)
     return get().openTab(options, newPaneId)
   },
 
