@@ -1,5 +1,6 @@
-import { useDroppable } from '@dnd-kit/core'
+import { useDndContext, useDroppable } from '@dnd-kit/core'
 import { cn } from '@shared/lib/utils'
+import type { TreeDragData } from '@shared/types/tree-drag'
 
 export type DropPosition = 'top' | 'right' | 'bottom' | 'left' | 'center'
 
@@ -17,11 +18,26 @@ export function TabDropZone({
   // center는 탭 이동용, 나머지는 분할용
   const zoneId = position === 'center' ? `pane:${paneId}` : `split-zone:${paneId}:${position}`
 
+  const { active } = useDndContext()
+  const treeData = active?.data.current as TreeDragData | undefined
+
+  // 폴더 노드 드래그는 탭으로 열리지 않으므로 모든 위치 비활성
+  const isFolderDrag = treeData?.kind === 'folder'
+  // 트리 노드 드래그 시 그 노드가 속한 탐색기 패널의 split-zone은 비활성화
+  // (자기 패널을 분할해 자기 자신을 띄울 수 없으므로). 다른 패널은 정상 동작.
+  const isTreeDragOnSelfPane =
+    treeData?.source === 'tree-node' && treeData.sourcePaneId === paneId
+  const disabledForTreeDrag = isTreeDragOnSelfPane && position !== 'center'
+
+  const disabled = isFolderDrag || disabledForTreeDrag
+
   const { setNodeRef, isOver } = useDroppable({
-    id: zoneId
+    id: zoneId,
+    disabled
   })
 
   if (!isDragging) return null
+  if (disabled) return null
 
   // 감지 영역: 겹치지 않도록 구성
   // top-9는 탭 바 높이

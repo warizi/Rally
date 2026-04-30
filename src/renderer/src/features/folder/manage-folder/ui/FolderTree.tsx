@@ -1,8 +1,6 @@
 import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
-import { createDragDropManager } from 'dnd-core'
-import { HTML5Backend } from 'react-dnd-html5-backend'
 import {
   ChevronsDownUp,
   FilePlus,
@@ -13,21 +11,18 @@ import {
   Sheet
 } from 'lucide-react'
 
-// 여러 Tree 인스턴스(여러 폴더 탭)가 동시에 마운트될 때
-// "Cannot have two HTML5 backends" 에러 방지를 위해 공유 DnD 매니저 사용
-const sharedDndManager = createDragDropManager(HTML5Backend)
+// 트리 DnD는 @dnd-kit으로 통일 (MainLayout의 DndContext에서 처리).
+// react-arborist 내장 react-dnd 드래그/드롭은 disableDrag/disableDrop으로 비활성화한다.
 import {
   useCreateFolder,
   useRenameFolder,
   useRemoveFolder,
-  useMoveFolder,
   useUpdateFolderMeta
 } from '@entities/folder'
 import {
   useCreateNote,
   useDuplicateNote,
   useImportNote,
-  useMoveNote,
   useRemoveNote
 } from '@entities/note'
 import type { NoteNode } from '@entities/note'
@@ -35,20 +30,17 @@ import {
   useCreateCsvFile,
   useDuplicateCsvFile,
   useImportCsvFile,
-  useMoveCsvFile,
   useRemoveCsvFile
 } from '@entities/csv-file'
 import type { CsvFileNode } from '@entities/csv-file'
 import {
   useDuplicatePdfFile,
   useImportPdfFile,
-  useMovePdfFile,
   useRemovePdfFile
 } from '@entities/pdf-file'
 import {
   useDuplicateImageFile,
   useImportImageFile,
-  useMoveImageFile,
   useRemoveImageFile
 } from '@entities/image-file'
 import type { ImageFileNode } from '@entities/image-file'
@@ -63,6 +55,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
+import { useTreeMoveListener } from '../model/use-tree-move-listener'
 import type {
   WorkspaceTreeNode,
   FolderTreeNode,
@@ -136,40 +129,38 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
   const { openState, toggle, collapseAll, expandToItem } = useTreeOpenState(tabId)
 
+  // 트리 내 DnD 이동을 @dnd-kit 기반으로 처리
+  useTreeMoveListener(workspaceId)
+
   const visibleCount = useMemo(() => countVisibleNodes(tree, openState), [tree, openState])
   const treeHeight = visibleCount * ROW_HEIGHT
 
-  // Folder mutations
+  // Folder mutations (move는 useTreeMoveListener에서 사용)
   const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()
   const { mutate: rename, isPending: isRenaming } = useRenameFolder()
   const { mutate: remove, isPending: isRemoving } = useRemoveFolder()
-  const { mutate: move } = useMoveFolder()
   const { mutate: updateMeta, isPending: isUpdatingMeta } = useUpdateFolderMeta()
 
-  // Note mutations
+  // Note mutations (moveNote는 useTreeMoveListener에서 사용)
   const { mutate: createNote } = useCreateNote()
   const { mutateAsync: importNote } = useImportNote()
   const { mutate: duplicateNote } = useDuplicateNote()
-  const { mutate: moveNote } = useMoveNote()
   const { mutate: removeNote, isPending: isRemovingNote } = useRemoveNote()
 
   // CSV mutations
   const { mutate: createCsvFile } = useCreateCsvFile()
   const { mutateAsync: importCsvFile } = useImportCsvFile()
   const { mutate: duplicateCsvFile } = useDuplicateCsvFile()
-  const { mutate: moveCsvFile } = useMoveCsvFile()
   const { mutate: removeCsvFile, isPending: isRemovingCsv } = useRemoveCsvFile()
 
   // PDF mutations
   const { mutate: importPdfFile } = useImportPdfFile()
   const { mutate: duplicatePdfFile } = useDuplicatePdfFile()
-  const { mutate: movePdfFile } = useMovePdfFile()
   const { mutate: removePdfFile, isPending: isRemovingPdf } = useRemovePdfFile()
 
   // Image mutations — mutateAsync for multi-file import loop
   const { mutateAsync: importImageFile } = useImportImageFile()
   const { mutate: duplicateImageFile } = useDuplicateImageFile()
-  const { mutate: moveImageFile } = useMoveImageFile()
   const { mutate: removeImageFile, isPending: isRemovingImage } = useRemoveImageFile()
 
   // Tab store
@@ -382,6 +373,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <NoteNodeRenderer
                 {...(props as unknown as NodeRendererProps<NoteTreeNode>)}
+                workspaceId={workspaceId}
+                sourcePaneId={sourcePaneId}
                 isActive={activePathname === `/folder/note/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
@@ -429,6 +422,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <CsvNodeRenderer
                 {...(props as unknown as NodeRendererProps<CsvTreeNode>)}
+                workspaceId={workspaceId}
+                sourcePaneId={sourcePaneId}
                 isActive={activePathname === `/folder/csv/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
@@ -476,6 +471,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <PdfNodeRenderer
                 {...(props as unknown as NodeRendererProps<PdfTreeNode>)}
+                workspaceId={workspaceId}
+                sourcePaneId={sourcePaneId}
                 isActive={activePathname === `/folder/pdf/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
@@ -523,6 +520,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
             <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
               <ImageNodeRenderer
                 {...(props as unknown as NodeRendererProps<ImageTreeNode>)}
+                workspaceId={workspaceId}
+                sourcePaneId={sourcePaneId}
                 isActive={activePathname === `/folder/image/${props.node.data.id}`}
                 onOpen={() =>
                   openRightTab(
@@ -562,7 +561,11 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           onDelete={() => setDeleteTarget({ id: props.node.id, name: props.node.data.name })}
         >
           <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
-            <FolderNodeRenderer {...(props as unknown as NodeRendererProps<FolderTreeNode>)} />
+            <FolderNodeRenderer
+              {...(props as unknown as NodeRendererProps<FolderTreeNode>)}
+              workspaceId={workspaceId}
+              sourcePaneId={sourcePaneId}
+            />
           </div>
         </FolderContextMenu>
       )
@@ -707,18 +710,14 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <Tree<WorkspaceTreeNode>
             key={workspaceId}
             ref={treeRef}
-            dndManager={sharedDndManager}
             data={tree}
             idAccessor="id"
             initialOpenState={openState}
             openByDefault={false}
             childrenAccessor={(n) => (n.kind === 'folder' ? n.children : null)}
-            disableDrop={({ parentNode }) =>
-              parentNode?.data.kind === 'note' ||
-              parentNode?.data.kind === 'csv' ||
-              parentNode?.data.kind === 'pdf' ||
-              parentNode?.data.kind === 'image'
-            }
+            // 트리 내장 DnD는 비활성화. 모든 DnD는 @dnd-kit으로 통일하여 MainLayout에서 처리.
+            disableDrag
+            disableDrop
             disableEdit={(n) =>
               n.kind === 'note' || n.kind === 'csv' || n.kind === 'pdf' || n.kind === 'image'
             }
@@ -731,25 +730,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
               // react-arborist 인라인 rename은 폴더 전용 (disableEdit으로 노트 진입 차단)
               rename({ workspaceId, folderId: id, newName: name })
             }}
-            onMove={({ dragIds, dragNodes, parentId, index }) => {
-              const kind = dragNodes[0]?.data.kind
-              if (kind === 'note') {
-                moveNote({ workspaceId, noteId: dragIds[0], folderId: parentId ?? null, index })
-              } else if (kind === 'csv') {
-                moveCsvFile({ workspaceId, csvId: dragIds[0], folderId: parentId ?? null, index })
-              } else if (kind === 'pdf') {
-                movePdfFile({ workspaceId, pdfId: dragIds[0], folderId: parentId ?? null, index })
-              } else if (kind === 'image') {
-                moveImageFile({
-                  workspaceId,
-                  imageId: dragIds[0],
-                  folderId: parentId ?? null,
-                  index
-                })
-              } else {
-                move({ workspaceId, folderId: dragIds[0], parentFolderId: parentId ?? null, index })
-              }
-            }}
+            // onMove는 react-arborist의 내장 DnD가 비활성화되어 호출되지 않는다.
+            // 트리 내 이동은 @dnd-kit 기반 useTreeMoveListener (아래 hook)에서 처리한다.
             onDelete={({ ids, nodes }: { ids: string[]; nodes: NodeApi<WorkspaceTreeNode>[] }) => {
               if (nodes.length === 0) return
               const firstNode = nodes[0]

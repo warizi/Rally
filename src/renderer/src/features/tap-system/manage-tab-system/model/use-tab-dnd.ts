@@ -55,6 +55,8 @@ export function useTabDnd(options: UseTabDndOptions = {}): UseTabDndReturn {
 
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
+      // 트리 노드 드래그는 별도 listener에서 처리. 여기선 무시.
+      if (event.active.data.current?.source === 'tree-node') return
       const tabId = event.active.id as string
       options.onDragStart?.(tabId)
     },
@@ -63,6 +65,11 @@ export function useTabDnd(options: UseTabDndOptions = {}): UseTabDndReturn {
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
+      // 트리 노드 드래그는 별도 listener에서 처리.
+      if (event.active.data.current?.source === 'tree-node') {
+        options.onDragEnd?.()
+        return
+      }
       options.onDragEnd?.()
 
       const { active, over } = event
