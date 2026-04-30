@@ -91,13 +91,13 @@ export function FolderContextMenu({
               노트
             </ContextMenuSubTrigger>
             <ContextMenuSubContent className="w-40">
-              <ContextMenuItem onClick={onImportNote}>
-                <FileUp className="size-4 mr-2" />
-                노트 가져오기
-              </ContextMenuItem>
               <ContextMenuItem onClick={onCreateNote}>
                 <FilePlus className="size-4 mr-2" />
                 노트 추가하기
+              </ContextMenuItem>
+              <ContextMenuItem onClick={onImportNote}>
+                <FileUp className="size-4 mr-2" />
+                노트 가져오기
               </ContextMenuItem>
             </ContextMenuSubContent>
           </ContextMenuSub>
