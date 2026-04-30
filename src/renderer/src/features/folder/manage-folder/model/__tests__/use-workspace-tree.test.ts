@@ -220,14 +220,17 @@ describe('within-kind 정렬', () => {
     expect(result[1]).toMatchObject({ id: 'n1', order: 2 })
   })
 
-  it('루트 노트: 같은 order면 title 알파벳순으로 정렬된다', () => {
+  it('루트 노트: 같은 order면 입력 순서를 유지한다 (백엔드 getLeafSiblings와 일치)', () => {
+    // 백엔드 src/main/lib/leaf-reindex.ts의 getLeafSiblings는 `(a, b) => a.order - b.order`만
+    // 사용하는 stable sort. frontend도 동일하게 입력 순서를 보존해야 DnD 순서 변경 시
+    // index 매핑이 어긋나지 않는다.
     const n1 = makeNote({ id: 'n1', title: 'zebra', order: 0 })
     const n2 = makeNote({ id: 'n2', title: 'apple', order: 0 })
 
     const result = buildWorkspaceTree([], [n1, n2], [], [], [])
 
-    expect(result[0]).toMatchObject({ id: 'n2', name: 'apple' })
-    expect(result[1]).toMatchObject({ id: 'n1', name: 'zebra' })
+    expect(result[0]).toMatchObject({ id: 'n1', name: 'zebra' })
+    expect(result[1]).toMatchObject({ id: 'n2', name: 'apple' })
   })
 
   it('중첩 폴더 children 내부 폴더도 동일 정렬 규칙이 적용된다', () => {

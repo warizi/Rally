@@ -207,7 +207,11 @@ export function useMoveCsvFile(): UseMutationResult<
       return res.data
     },
     onSuccess: (_, { workspaceId }) => {
+      // 백엔드 move는 reindexLeafSiblings로 모든 leaf 종류 order 갱신 → 모두 invalidate
+      queryClient.invalidateQueries({ queryKey: ['note', 'workspace', workspaceId] })
       queryClient.invalidateQueries({ queryKey: [CSV_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['pdf', 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['image', 'workspace', workspaceId] })
     }
   })
 }

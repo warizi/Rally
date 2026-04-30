@@ -195,7 +195,12 @@ export function useMoveNote(): UseMutationResult<
       return res.data
     },
     onSuccess: (_, { workspaceId }) => {
+      // 백엔드 move는 reindexLeafSiblings로 모든 leaf 종류(note/csv/pdf/image) order를 갱신하므로
+      // 모든 leaf 종류 쿼리를 invalidate해야 한다 (안 하면 stale order로 표시됨).
       queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['csv', 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['pdf', 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['image', 'workspace', workspaceId] })
     }
   })
 }
