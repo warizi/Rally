@@ -36,6 +36,7 @@ import { FileText, Folder, ImageIcon, Sheet } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import type { TreeDragData, TreeNodeKind } from '@shared/types/tree-drag'
 import { useTreeToTabListener } from './model/use-tree-to-tab-listener'
+import { useTreeDragMonitor } from './model/use-tree-drag-monitor'
 
 function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactElement | null {
   const tab = useTabStore((state) => (tabId ? state.tabs[tabId] : null))
@@ -146,6 +147,8 @@ function MainLayout(): React.JSX.Element {
         >
           {/* 트리 노드를 탭 영역으로 드롭하면 새 탭 / 분할 — useDndMonitor로 별도 처리 */}
           <TreeToTabListener />
+          {/* 트리 DnD 상태를 store에 동기화 (각 렌더러는 store 셀렉터로 구독) */}
+          <TreeDragMonitor />
           <main className="flex flex-1 overflow-hidden">
             <ResizablePanelGroup
               orientation="vertical"
@@ -185,6 +188,10 @@ function MainLayout(): React.JSX.Element {
 // useDndMonitor는 DndContext 내부에서만 호출 가능하므로 이렇게 분리한 컴포넌트로 사용.
 function TreeToTabListener(): null {
   useTreeToTabListener()
+  return null
+}
+function TreeDragMonitor(): null {
+  useTreeDragMonitor()
   return null
 }
 

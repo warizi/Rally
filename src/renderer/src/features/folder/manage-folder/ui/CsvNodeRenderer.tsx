@@ -7,7 +7,7 @@ import { cn } from '@shared/lib/utils'
 import type { CsvTreeNode } from '../model/types'
 import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
-import { useFolderDragTarget } from '../model/use-folder-drag-target'
+import { useTreeDragStore } from '@shared/store/tree-drag.store'
 
 interface CsvNodeRendererProps extends NodeRendererProps<CsvTreeNode> {
   workspaceId: string
@@ -49,7 +49,7 @@ export function CsvNodeRenderer({
     isFolder: false
   })
 
-  const { isFolderDrag } = useFolderDragTarget()
+  const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
 
   return (
     <div ref={ref} style={style} className="relative h-full">

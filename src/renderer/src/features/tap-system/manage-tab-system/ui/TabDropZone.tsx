@@ -1,6 +1,6 @@
-import { useDndContext, useDroppable } from '@dnd-kit/core'
+import { useDroppable } from '@dnd-kit/core'
 import { cn } from '@shared/lib/utils'
-import type { TreeDragData } from '@shared/types/tree-drag'
+import { useTreeDragStore } from '@shared/store/tree-drag.store'
 
 export type DropPosition = 'top' | 'right' | 'bottom' | 'left' | 'center'
 
@@ -18,17 +18,14 @@ export function TabDropZone({
   // center는 탭 이동용, 나머지는 분할용
   const zoneId = position === 'center' ? `pane:${paneId}` : `split-zone:${paneId}:${position}`
 
-  const { active } = useDndContext()
-  const treeData = active?.data.current as TreeDragData | undefined
-
-  // 폴더 노드 드래그는 탭으로 열리지 않으므로 모든 위치 비활성
-  const isFolderDrag = treeData?.kind === 'folder'
-  // 트리 노드 드래그 시 그 노드가 속한 탐색기 패널의 split-zone은 비활성화
-  // (자기 패널을 분할해 자기 자신을 띄울 수 없으므로). 다른 패널은 정상 동작.
-  const isTreeDragOnSelfPane =
-    treeData?.source === 'tree-node' && treeData.sourcePaneId === paneId
+  // store 셀렉터로 boolean만 구독 (dragover 마다 모든 zone re-render되는 것 방지)
+  // - 폴더 드래그: 모든 위치 비활성
+  // - 트리 드래그가 자기 패널일 때: split-zone(top/right/bottom/left)만 비활성, center는 유지
+  const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
+  const isTreeDragOnSelfPane = useTreeDragStore(
+    (s) => s.isTreeDragActive && s.sourcePaneId === paneId
+  )
   const disabledForTreeDrag = isTreeDragOnSelfPane && position !== 'center'
-
   const disabled = isFolderDrag || disabledForTreeDrag
 
   const { setNodeRef, isOver } = useDroppable({
