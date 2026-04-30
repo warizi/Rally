@@ -12,6 +12,17 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.1',
+    date: '2026-04-30',
+    changes: [
+      {
+        type: 'fix',
+        title: '1.4.0에서 업데이트가 안 되는 문제 수정',
+        description: '1.4.0에서 업데이트 시 누락된 내용 적용'
+      }
+    ]
+  },
+  {
     version: '1.4.0',
     date: '2026-04-30',
     changes: [
