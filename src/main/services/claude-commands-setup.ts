@@ -34,11 +34,26 @@ function ensureMcpSettings(workspacePath: string): void {
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let config: Record<string, any> = {}
+  let raw: string | null = null
+
   if (existsSync(mcpPath)) {
     try {
-      config = JSON.parse(readFileSync(mcpPath, 'utf-8'))
+      raw = readFileSync(mcpPath, 'utf-8')
+    } catch (err) {
+      // 권한(EPERM) 등으로 읽을 수 없으면 이 워크스페이스는 건너뜀
+      console.warn(`[ensureMcpSettings] cannot read ${mcpPath}:`, err)
+      return
+    }
+
+    try {
+      config = JSON.parse(raw)
     } catch {
-      writeFileSync(mcpPath + '.bak', readFileSync(mcpPath, 'utf-8'), 'utf-8')
+      // 깨진 JSON: 백업은 best-effort
+      try {
+        writeFileSync(mcpPath + '.bak', raw, 'utf-8')
+      } catch (err) {
+        console.warn(`[ensureMcpSettings] failed to write backup:`, err)
+      }
       config = {}
     }
   }
@@ -52,32 +67,40 @@ function ensureMcpSettings(workspacePath: string): void {
     args: [getMcpServerPath()]
   }
 
-  writeFileSync(mcpPath, JSON.stringify(config, null, 2), 'utf-8')
+  try {
+    writeFileSync(mcpPath, JSON.stringify(config, null, 2), 'utf-8')
+  } catch (err) {
+    console.warn(`[ensureMcpSettings] cannot write ${mcpPath}:`, err)
+  }
 }
 
 export function ensureClaudeCommands(workspacePath: string): void {
   if (!workspacePath || !existsSync(workspacePath)) return
 
-  // commands 복사
-  const commandsDir = join(workspacePath, '.claude', 'commands')
-  const commands = getMdFiles(getSourceCommandsDir())
-  if (commands.length > 0) {
-    mkdirSync(commandsDir, { recursive: true })
-    for (const cmd of commands) {
-      writeFileSync(join(commandsDir, cmd.name), cmd.content, 'utf-8')
+  try {
+    // commands 복사
+    const commandsDir = join(workspacePath, '.claude', 'commands')
+    const commands = getMdFiles(getSourceCommandsDir())
+    if (commands.length > 0) {
+      mkdirSync(commandsDir, { recursive: true })
+      for (const cmd of commands) {
+        writeFileSync(join(commandsDir, cmd.name), cmd.content, 'utf-8')
+      }
     }
+
+    // skills 복사
+    const skillsDir = join(workspacePath, '.claude', 'skills')
+    const skills = getMdFiles(getSourceSkillsDir())
+    if (skills.length > 0) {
+      mkdirSync(skillsDir, { recursive: true })
+      for (const skill of skills) {
+        writeFileSync(join(skillsDir, skill.name), skill.content, 'utf-8')
+      }
+    }
+  } catch (err) {
+    console.warn(`[ensureClaudeCommands] failed for ${workspacePath}:`, err)
   }
 
-  // skills 복사
-  const skillsDir = join(workspacePath, '.claude', 'skills')
-  const skills = getMdFiles(getSourceSkillsDir())
-  if (skills.length > 0) {
-    mkdirSync(skillsDir, { recursive: true })
-    for (const skill of skills) {
-      writeFileSync(join(skillsDir, skill.name), skill.content, 'utf-8')
-    }
-  }
-
-  // MCP 서버 설정
+  // MCP 서버 설정 (내부에서 자체 에러 처리)
   ensureMcpSettings(workspacePath)
 }

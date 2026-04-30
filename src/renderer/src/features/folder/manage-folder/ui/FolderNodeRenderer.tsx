@@ -1,6 +1,7 @@
 import { JSX } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ChevronRight, Folder } from 'lucide-react'
+import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
 import type { FolderTreeNode } from '../model/types'
 import { cn } from '@/shared/lib/utils'
 
@@ -23,7 +24,9 @@ export function FolderNodeRenderer({
         )}
       />
       <Folder className="size-4 shrink-0" style={{ color: node.data.color ?? undefined }} />
-      <span className="text-sm truncate">{node.data.name}</span>
+      <TruncateTooltip content={node.data.name}>
+        <span className="text-sm truncate min-w-0">{node.data.name}</span>
+      </TruncateTooltip>
     </div>
   )
 }

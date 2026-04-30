@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.3.9',
+    date: '2026-04-30',
+    changes: [
+      {
+        type: 'improvement',
+        title: '탐색기에서 파일과 폴더 이름이 길 때 툴팁으로 전체 이름 표시',
+        description:
+          '탐색기에서 파일과 폴더 이름이 길어서 잘리는 경우, 마우스를 올리면 전체 이름이 툴팁으로 표시됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.3.8',
     date: '2026-04-28',
     changes: [

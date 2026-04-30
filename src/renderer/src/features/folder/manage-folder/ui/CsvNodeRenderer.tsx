@@ -1,6 +1,7 @@
 import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { Sheet } from 'lucide-react'
+import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
 import type { CsvTreeNode } from '../model/types'
 import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 
@@ -25,6 +26,8 @@ export function CsvNodeRenderer({
     }
   }, [isActive])
 
+  const displayName = `${node.data.name}${showExtension ? node.data.extension : ''}`
+
   return (
     <div
       ref={(el) => {
@@ -36,10 +39,9 @@ export function CsvNodeRenderer({
       onClick={onOpen}
     >
       <Sheet className="ml-1 size-4 shrink-0 text-emerald-500" />
-      <span className="text-sm truncate">
-        {node.data.name}
-        {showExtension ? node.data.extension : ''}
-      </span>
+      <TruncateTooltip content={displayName}>
+        <span className="text-sm truncate min-w-0">{displayName}</span>
+      </TruncateTooltip>
     </div>
   )
 }
