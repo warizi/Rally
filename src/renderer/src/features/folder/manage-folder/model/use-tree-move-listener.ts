@@ -45,20 +45,29 @@ function findChildrenStrict(
 }
 
 /**
- * react-arborist의 combinedIndex(children 통합 배열에서의 위치)를
- * 백엔드 mutation이 기대하는 sourceKind별 index로 변환한다.
+ * 백엔드 mutation이 기대하는 index로 변환한다.
  *
- * 같은 부모에 폴더 N개 + 노트 M개가 섞여 있을 때, 노트를 N+M번째 자리에 떨어뜨려도
- * moveNote는 "노트들 중 N+M번째"로 해석되어 잘못된 위치로 가는 버그를 방지한다.
+ * 백엔드 동작: 대상 부모의 sibling 리스트에서 source를 먼저 제거한 뒤(`withoutSelf`)
+ * `splice(index, 0, source)`로 삽입하고 전체 reindex.
+ * - folder source: folder-only sibling 리스트
+ * - leaf source(note/csv/pdf/image): leaf 전체 혼합 sibling 리스트
+ *   (note + csv + pdf + image는 단일 order space를 공유)
+ *
+ * 따라서 index = "source 자신을 제외한 관련 종류 sibling 중 combinedIndex 앞에 있는 개수".
  */
-function toKindSpecificIndex(
-  children: WorkspaceTreeNode[],
+function calculateMoveIndex(
+  siblings: WorkspaceTreeNode[],
   combinedIndex: number,
+  sourceId: string,
   sourceKind: TreeNodeKind
 ): number {
-  return children
+  const isFolderSource = sourceKind === 'folder'
+  const isRelevantKind = (kind: TreeNodeKind): boolean =>
+    isFolderSource ? kind === 'folder' : kind !== 'folder'
+
+  return siblings
     .slice(0, combinedIndex)
-    .filter((c) => c.kind === sourceKind).length
+    .filter((s) => s.id !== sourceId && isRelevantKind(s.kind)).length
 }
 
 /**
@@ -88,21 +97,30 @@ export function useTreeMoveListener(workspaceId: string): void {
 
       // tree-position / tree-into 만 처리. 그 외 (tab-list, split-zone 등)는 다른 listener가 처리
       let move: MoveParams | null = null
+      const isFolderSource = sourceData.kind === 'folder'
+      const isRelevantKind = (kind: TreeNodeKind): boolean =>
+        isFolderSource ? kind === 'folder' : kind !== 'folder'
+
       if (targetData.target === 'tree-position') {
         // 자기 자신 위/아래로 드롭은 의미 없음
         if (targetData.anchorNodeId === sourceData.id) return
-        // react-arborist의 combinedIndex를 source kind별 index로 변환.
-        // (같은 부모의 children에 폴더와 파일이 섞여 있어도 백엔드는 kind별 분리된 order를 가짐)
         const siblings = findChildrenByParentId(tree, targetData.parentId)
-        const kindIndex = toKindSpecificIndex(siblings, targetData.index, sourceData.kind)
-        move = { parentId: targetData.parentId, index: kindIndex }
+        const index = calculateMoveIndex(
+          siblings,
+          targetData.index,
+          sourceData.id,
+          sourceData.kind
+        )
+        move = { parentId: targetData.parentId, index }
       } else if (targetData.target === 'tree-into') {
         // 자기 자신 안으로 드롭 차단
         if (targetData.folderId === sourceData.id) return
-        // 폴더 안 마지막 자식으로 추가 = 같은 kind 자식의 개수
+        // 폴더 안 끝에 추가 = 관련 종류 자식 개수(자기 자신 제외)
         const folderChildren = findChildrenByParentId(tree, targetData.folderId)
-        const kindIndex = folderChildren.filter((c) => c.kind === sourceData.kind).length
-        move = { parentId: targetData.folderId, index: kindIndex }
+        const index = folderChildren.filter(
+          (c) => c.id !== sourceData.id && isRelevantKind(c.kind)
+        ).length
+        move = { parentId: targetData.folderId, index }
       } else {
         return
       }

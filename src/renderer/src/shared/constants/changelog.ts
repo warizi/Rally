@@ -12,6 +12,24 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.2',
+    date: '2026-05-01',
+    changes: [
+      {
+        type: 'improvement',
+        title: '탐색기 dnd 성능 개선',
+        description:
+          '탐색기에서 파일과 폴더를 드래그 앤 드롭할 때 발생하던 성능 저하 문제를 개선했습니다. 이제 많은 수의 파일과 폴더가 있는 경우에도 원활하게 드래그 앤 드롭이 가능합니다.'
+      },
+      {
+        type: 'fix',
+        title: '탐색기에서 파일 이동 시 간헐적으로 발생하던 오류 수정',
+        description:
+          '탐색기에서 파일이나 폴더를 다른 위치로 이동할 때 간헐적으로 발생하던 오류를 수정했습니다. 이제 파일 이동이 안정적으로 이루어집니다.'
+      }
+    ]
+  },
+  {
     version: '1.4.1',
     date: '2026-04-30',
     changes: [

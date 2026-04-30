@@ -7,7 +7,7 @@ import { cn } from '@shared/lib/utils'
 import type { NoteTreeNode } from '../model/types'
 import { useShowExtensionSetting } from '../model/use-show-extension-setting'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
-import { useFolderDragTarget } from '../model/use-folder-drag-target'
+import { useTreeDragStore } from '@shared/store/tree-drag.store'
 
 interface NoteNodeRendererProps extends NodeRendererProps<NoteTreeNode> {
   workspaceId: string
@@ -49,7 +49,8 @@ export function NoteNodeRenderer({
     isFolder: false
   })
 
-  const { isFolderDrag } = useFolderDragTarget()
+  // 폴더 드래그 시 leaf의 사이 라인 가이드는 안 띄움. boolean 셀렉터만 구독해 re-render 최소화.
+  const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
 
   return (
     <div ref={ref} style={style} className="relative h-full">

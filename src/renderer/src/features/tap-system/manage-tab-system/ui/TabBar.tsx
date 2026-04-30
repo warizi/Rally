@@ -1,6 +1,6 @@
-import { useDndContext, useDroppable } from '@dnd-kit/core'
+import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
-import type { TreeDragData } from '@shared/types/tree-drag'
+import { useTreeDragStore } from '@shared/store/tree-drag.store'
 import { AnimatePresence } from 'framer-motion'
 import { Ellipsis } from 'lucide-react'
 import { TabItem } from './TabItem'
@@ -35,10 +35,9 @@ export function TabBar({
   const closeAllTabs = useTabStore((state) => state.closeAllTabs)
   const { state: sidebarState } = useSidebar()
 
-  // 폴더 노드 드래그 시 TabBar는 비활성화 (폴더는 탭으로 열리지 않음)
-  const { active } = useDndContext()
-  const isFolderDrag =
-    (active?.data.current as TreeDragData | undefined)?.kind === 'folder'
+  // 폴더 노드 드래그 시 TabBar는 비활성화 (폴더는 탭으로 열리지 않음).
+  // boolean 셀렉터로 구독 — 드래그 시작/종료 시점에만 re-render.
+  const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
 
   const { setNodeRef, isOver } = useDroppable({
     id: `tab-list:${paneId}`,

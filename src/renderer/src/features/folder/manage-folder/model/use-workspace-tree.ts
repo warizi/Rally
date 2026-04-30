@@ -94,14 +94,19 @@ export function buildWorkspaceTree(
     }
   }
 
-  // leaf 항목(note + csv + pdf + image)을 order 기준으로 혼합 정렬
+  // leaf 항목(note + csv + pdf + image)을 order 기준으로 혼합 정렬.
+  // 백엔드 `getLeafSiblings`(src/main/lib/leaf-reindex.ts)와 동일한 정렬 규칙을 사용해야
+  // DnD 순서 변경 시 frontend가 보내는 index가 backend siblings의 같은 위치를 가리킨다.
+  // - 종류 input 순서: notes, csvs, pdfs, images (백엔드와 동일)
+  // - 정렬 키: order만(stable). 이름 tiebreaker를 쓰면 백엔드와 어긋나 multi-kind 폴더에서
+  //   순서 변경이 잘못된 자리로 가버리는 버그가 발생한다.
   function getLeafChildren(folderId: string | null): WorkspaceTreeNode[] {
     const childNotes = notes.filter((n) => n.folderId === folderId).map(convertNote)
     const childCsvs = csvFiles.filter((c) => c.folderId === folderId).map(convertCsv)
     const childPdfs = pdfFiles.filter((p) => p.folderId === folderId).map(convertPdf)
     const childImages = imageFiles.filter((i) => i.folderId === folderId).map(convertImage)
     return [...childNotes, ...childCsvs, ...childPdfs, ...childImages].sort(
-      (a, b) => a.order - b.order || a.name.localeCompare(b.name)
+      (a, b) => a.order - b.order
     )
   }
 

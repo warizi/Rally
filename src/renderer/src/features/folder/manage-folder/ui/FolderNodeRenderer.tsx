@@ -7,7 +7,7 @@ import { cn } from '@/shared/lib/utils'
 import type { FolderTreeNode } from '../model/types'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
 import { useAutoExpandOnHover } from '../model/use-auto-expand-on-hover'
-import { useFolderDragTarget } from '../model/use-folder-drag-target'
+import { useTreeDragStore } from '@shared/store/tree-drag.store'
 
 interface FolderNodeRendererProps extends NodeRendererProps<FolderTreeNode> {
   workspaceId: string
@@ -38,9 +38,13 @@ export function FolderNodeRenderer({
   // 드래그 중 폴더 위에 머무르면 자동으로 펼침
   useAutoExpandOnHover(node, dnd.isIntoOver)
 
-  // 폴더 source 드래그 시 자기가 타겟 폴더면 하이라이트
-  const { isFolderDrag, targetFolderId } = useFolderDragTarget()
-  const isFolderDragTarget = isFolderDrag && targetFolderId === node.data.id
+  // 폴더 source 드래그 시 자기가 타겟 폴더면 하이라이트.
+  // 합성 boolean 셀렉터로 구독 — 자기 폴더 match 상태가 바뀔 때만 re-render.
+  const isFolderDragTarget = useTreeDragStore(
+    (s) => s.isFolderDrag && s.targetFolderId === node.data.id
+  )
+  // 형제 라인 가이드 표시 여부도 boolean으로 구독
+  const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
 
   return (
     <div style={style} className="relative h-full">

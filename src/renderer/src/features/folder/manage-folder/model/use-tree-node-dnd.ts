@@ -1,4 +1,4 @@
-import { useDndContext, useDraggable, useDroppable } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import {
   TREE_AFTER_PREFIX,
   TREE_BEFORE_PREFIX,
@@ -8,6 +8,7 @@ import {
   type TreeDropData,
   type TreeNodeKind
 } from '@shared/types/tree-drag'
+import { useTreeDragStore } from '@shared/store/tree-drag.store'
 
 interface UseTreeNodeDndArgs {
   workspaceId: string
@@ -62,9 +63,9 @@ export function useTreeNodeDnd(args: UseTreeNodeDndArgs): UseTreeNodeDndReturn {
     data: dragData
   })
 
-  // 탭 드래그 등 트리 외부 source일 때는 트리 drop slot을 비활성화한다 (시각 인디케이터 X).
-  const { active } = useDndContext()
-  const isTreeDragActive = active?.data.current?.source === 'tree-node'
+  // 트리 외부 source(예: 탭 드래그)일 때는 트리 drop slot 비활성. store 셀렉터로 boolean만 구독해
+  // dragover 마다 모든 노드가 re-render되는 것을 막는다.
+  const isTreeDragActive = useTreeDragStore((s) => s.isTreeDragActive)
   const dropDisabled = !isTreeDragActive
 
   const beforeData: TreeDropData = {

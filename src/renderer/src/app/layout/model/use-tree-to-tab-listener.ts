@@ -24,6 +24,7 @@ const SPLIT_POSITIONS: Record<string, SplitPosition> = {
 export function useTreeToTabListener(): void {
   const openTab = useTabStore((s) => s.openTab)
   const openTabInNewSplit = useTabStore((s) => s.openTabInNewSplit)
+  const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
 
   const handleDragEnd = useCallback(
     (event: DragEndEvent) => {
@@ -40,6 +41,10 @@ export function useTreeToTabListener(): void {
         id: sourceData.id,
         title: sourceData.title
       })
+
+      // 드래그로 띄우는 건 "여기에 띄우고 싶다"가 의도. 다른 패널에 이미 열려있으면 그걸 닫고
+      // 사용자가 떨어뜨린 위치에 새로 연다 (단순 클릭의 "기존 탭 활성화"와 다른 동작).
+      closeTabByPathname(opts.pathname)
 
       if (overId.startsWith('tab-list:')) {
         const paneId = overId.slice('tab-list:'.length)
@@ -62,7 +67,7 @@ export function useTreeToTabListener(): void {
         openTabInNewSplit(paneId, position, opts)
       }
     },
-    [openTab, openTabInNewSplit]
+    [openTab, openTabInNewSplit, closeTabByPathname]
   )
 
   useDndMonitor({ onDragEnd: handleDragEnd })
