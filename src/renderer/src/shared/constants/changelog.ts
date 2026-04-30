@@ -44,6 +44,12 @@ export const CHANGELOG: ChangelogEntry[] = [
         title: '기본 워크스페이스 위치 변경',
         description:
           'macOS의 Documents 폴더 권한 문제로 워크스페이스 설정 파일을 읽지 못하던 문제를 해결하기 위해, 신규 설치 시 기본 워크스페이스 위치를 ~/Documents/Rally에서 ~/Rally로 변경했습니다. 기존 사용자도 다음 실행 시 자동으로 새 위치로 마이그레이션되며, 가능한 경우 노트·파일 데이터도 함께 이동됩니다.'
+      },
+      {
+        type: 'feature',
+        title: '탐색기에서 드래그로 파일 열기 추가',
+        description:
+          '탐색기에서 노트, CSV, PDF, 이미지 파일을 드래그하여 열 수 있습니다. 드래그한 파일이 열려 있는 탭으로 이동하며, 해당 탭이 없는 경우 새 탭으로 열립니다.'
       }
     ]
   },

@@ -34,6 +34,11 @@ export interface TabActions {
   // Tab 액션
   openTab: (options: TabOptions, targetPaneId?: string) => string
   openRightTab: (options: TabOptions, sourcePaneId: string) => string
+  openTabInNewSplit: (
+    sourcePaneId: string,
+    position: SplitPosition,
+    options: TabOptions
+  ) => string
   closeTab: (tabId: string) => void
   closeAllTabs: (paneId: string) => void
   closeOtherTabs: (paneId: string, keepTabId: string) => void
