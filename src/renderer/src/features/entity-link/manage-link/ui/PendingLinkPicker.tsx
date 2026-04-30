@@ -43,10 +43,12 @@ export function PendingLinkPicker({
   onAdd,
   onRemove
 }: Props): React.JSX.Element {
-  const availableTabs = useMemo(() => ALL_TABS.filter((t) => t !== excludeType), [excludeType])
+  const availableTabs = ALL_TABS
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
-  const [activeTab, setActiveTab] = useState<LinkableEntityType>(() => availableTabs[0])
+  const [activeTab, setActiveTab] = useState<LinkableEntityType>(
+    () => ALL_TABS.find((t) => t !== excludeType) ?? ALL_TABS[0]
+  )
 
   const { data: todos = [] } = useTodosByWorkspace(workspaceId)
   const { data: schedules = [] } = useAllSchedulesByWorkspace(workspaceId)
@@ -104,15 +106,20 @@ export function PendingLinkPicker({
               + 추가
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="w-96 p-2">
+          <PopoverContent align="start" className="w-[28rem] p-2">
             <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LinkableEntityType)}>
               <TabsList className="w-full h-7 mb-2">
                 {availableTabs.map((tab) => {
                   const TabIcon = ENTITY_TYPE_ICON[tab]
                   return (
-                    <TabsTrigger key={tab} value={tab} className="text-xs flex-1 h-6 px-1.5 gap-1">
-                      <TabIcon className="size-3" />
-                      {ENTITY_TYPE_LABEL[tab]}
+                    <TabsTrigger
+                      key={tab}
+                      value={tab}
+                      title={ENTITY_TYPE_LABEL[tab]}
+                      className="text-xs flex-1 h-6 px-1 gap-1 min-w-0"
+                    >
+                      <TabIcon className="size-3 shrink-0" />
+                      <span className="truncate">{ENTITY_TYPE_LABEL[tab]}</span>
                     </TabsTrigger>
                   )
                 })}

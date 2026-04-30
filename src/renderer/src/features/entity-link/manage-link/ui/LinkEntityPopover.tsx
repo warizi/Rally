@@ -75,24 +75,28 @@ export function LinkEntityPopover({
   const linkedSet = useMemo(() => {
     const s = new Set<string>()
     for (const l of linked) s.add(`${l.entityType}:${l.entityId}`)
-    // exclude self
-    s.add(`${entityType}:${entityId}`)
     return s
-  }, [linked, entityType, entityId])
+  }, [linked])
 
   const optionsByType = useMemo((): Record<LinkableEntityType, EntityOption[]> => {
+    const excludeSelf = <T extends EntityOption>(items: T[]): T[] =>
+      items.filter((item) => !(item.type === entityType && item.id === entityId))
     return {
-      todo: todos
-        .filter((t) => !t.parentId)
-        .map((t) => ({ type: 'todo', id: t.id, title: t.title })),
-      schedule: schedules.map((s) => ({ type: 'schedule', id: s.id, title: s.title })),
-      note: notes.map((n) => ({ type: 'note', id: n.id, title: n.title })),
-      pdf: pdfs.map((p) => ({ type: 'pdf', id: p.id, title: p.title })),
-      csv: csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title })),
-      image: images.map((i) => ({ type: 'image', id: i.id, title: i.title })),
-      canvas: canvasList.map((c) => ({ type: 'canvas', id: c.id, title: c.title }))
+      todo: excludeSelf(
+        todos
+          .filter((t) => !t.parentId)
+          .map((t) => ({ type: 'todo', id: t.id, title: t.title }))
+      ),
+      schedule: excludeSelf(
+        schedules.map((s) => ({ type: 'schedule', id: s.id, title: s.title }))
+      ),
+      note: excludeSelf(notes.map((n) => ({ type: 'note', id: n.id, title: n.title }))),
+      pdf: excludeSelf(pdfs.map((p) => ({ type: 'pdf', id: p.id, title: p.title }))),
+      csv: excludeSelf(csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title }))),
+      image: excludeSelf(images.map((i) => ({ type: 'image', id: i.id, title: i.title }))),
+      canvas: excludeSelf(canvasList.map((c) => ({ type: 'canvas', id: c.id, title: c.title })))
     }
-  }, [todos, schedules, notes, pdfs, csvs, images, canvasList])
+  }, [todos, schedules, notes, pdfs, csvs, images, canvasList, entityType, entityId])
 
   const filtered = useMemo(() => {
     const items = optionsByType[activeTab] ?? []
@@ -123,7 +127,7 @@ export function LinkEntityPopover({
     [linkedSet, entityType, entityId, workspaceId, linkEntity, unlinkEntity]
   )
 
-  const availableTabs = LINKABLE_TABS.filter((t) => t !== entityType)
+  const availableTabs = LINKABLE_TABS
 
   // --- Keyboard navigation ---
   const [focusIndex, setFocusIndex] = useState(-1)
@@ -184,15 +188,20 @@ export function LinkEntityPopover({
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-96 p-2">
+      <PopoverContent align="start" className="w-[28rem] p-2">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LinkableEntityType)}>
           <TabsList className="w-full h-7 mb-2">
             {availableTabs.map((tab) => {
               const TabIcon = ENTITY_TYPE_ICON[tab]
               return (
-                <TabsTrigger key={tab} value={tab} className="text-xs flex-1 h-6 px-1.5 gap-1">
-                  <TabIcon className="size-3" />
-                  {ENTITY_TYPE_LABEL[tab]}
+                <TabsTrigger
+                  key={tab}
+                  value={tab}
+                  title={ENTITY_TYPE_LABEL[tab]}
+                  className="text-xs flex-1 h-6 px-1 gap-1 min-w-0"
+                >
+                  <TabIcon className="size-3 shrink-0" />
+                  <span className="truncate">{ENTITY_TYPE_LABEL[tab]}</span>
                 </TabsTrigger>
               )
             })}
