@@ -165,6 +165,56 @@ export const imageFileService = {
     return toImageFileNode(row)
   },
 
+  /** 같은 폴더에 "name (n).ext"로 복사 + DB 등록 */
+  duplicate(workspaceId: string, imageId: string): ImageFileNode {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const image = imageFileRepository.findById(imageId)
+    if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
+
+    const folderRel = parentRelPath(image.relativePath)
+    const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
+
+    const sourceFileName = path.basename(image.relativePath)
+    const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
+    const title = path.basename(finalFileName, path.extname(finalFileName))
+
+    const sourceAbs = path.join(workspace.path, image.relativePath)
+    const destAbs = path.join(parentAbs, finalFileName)
+    const destRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
+
+    fs.copyFileSync(sourceAbs, destAbs)
+
+    const now = new Date()
+    const newId = nanoid()
+
+    imageFileRepository.create({
+      id: newId,
+      workspaceId,
+      folderId: image.folderId,
+      relativePath: destRel,
+      title,
+      description: '',
+      preview: '',
+      order: 0,
+      createdAt: now,
+      updatedAt: now
+    })
+
+    // 원본 바로 아래에 위치하도록 siblings reindex
+    const siblings = getLeafSiblings(workspaceId, image.folderId).filter((s) => s.id !== newId)
+    const sourceIndex = siblings.findIndex((s) => s.id === imageId)
+    const insertAt = sourceIndex >= 0 ? sourceIndex + 1 : siblings.length
+    siblings.splice(insertAt, 0, { id: newId, kind: 'image', order: 0 })
+    reindexLeafSiblings(
+      workspaceId,
+      siblings.map((s) => ({ id: s.id, kind: s.kind }))
+    )
+
+    return toImageFileNode(imageFileRepository.findById(newId)!)
+  },
+
   rename(workspaceId: string, imageId: string, newName: string): ImageFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)

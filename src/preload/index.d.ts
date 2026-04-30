@@ -71,6 +71,7 @@ interface NoteAPI {
     folderId: string | null,
     sourcePath: string
   ) => Promise<IpcResponse<NoteNode>>
+  duplicate: (workspaceId: string, noteId: string) => Promise<IpcResponse<NoteNode>>
   selectFile: () => Promise<string[] | null>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
@@ -118,6 +119,7 @@ interface CsvAPI {
     folderId: string | null,
     sourcePath: string
   ) => Promise<IpcResponse<CsvFileNode>>
+  duplicate: (workspaceId: string, csvId: string) => Promise<IpcResponse<CsvFileNode>>
   selectFile: () => Promise<string[] | null>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
@@ -141,6 +143,7 @@ interface PdfAPI {
     folderId: string | null,
     sourcePath: string
   ) => Promise<IpcResponse<PdfFileNode>>
+  duplicate: (workspaceId: string, pdfId: string) => Promise<IpcResponse<PdfFileNode>>
   rename: (workspaceId: string, pdfId: string, newName: string) => Promise<IpcResponse<PdfFileNode>>
   remove: (workspaceId: string, pdfId: string) => Promise<IpcResponse<void>>
   readContent: (workspaceId: string, pdfId: string) => Promise<IpcResponse<{ data: ArrayBuffer }>>
@@ -178,6 +181,7 @@ interface ImageAPI {
     folderId: string | null,
     sourcePath: string
   ) => Promise<IpcResponse<ImageFileNode>>
+  duplicate: (workspaceId: string, imageId: string) => Promise<IpcResponse<ImageFileNode>>
   rename: (
     workspaceId: string,
     imageId: string,

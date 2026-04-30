@@ -2,6 +2,7 @@ export type { ImageFileNode } from './model/types'
 export {
   useImageFilesByWorkspace,
   useImportImageFile,
+  useDuplicateImageFile,
   useRenameImageFile,
   useRemoveImageFile,
   useReadImageContent,

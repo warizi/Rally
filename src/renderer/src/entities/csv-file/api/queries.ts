@@ -71,6 +71,27 @@ export function useImportCsvFile(): UseMutationResult<
   })
 }
 
+export function useDuplicateCsvFile(): UseMutationResult<
+  CsvFileNode | undefined,
+  Error,
+  { workspaceId: string; csvId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
+    mutationFn: async ({ workspaceId, csvId }) => {
+      const res: IpcResponse<CsvFileNode> = await window.api.csv.duplicate(workspaceId, csvId)
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [CSV_KEY, 'workspace', workspaceId] })
+    }
+  })
+}
+
 export function useRenameCsvFile(): UseMutationResult<
   CsvFileNode | undefined,
   Error,

@@ -21,6 +21,12 @@ export function registerImageFileHandlers(): void {
   )
 
   ipcMain.handle(
+    'image:duplicate',
+    (_: IpcMainInvokeEvent, workspaceId: string, imageId: string): IpcResponse =>
+      handle(() => imageFileService.duplicate(workspaceId, imageId))
+  )
+
+  ipcMain.handle(
     'image:rename',
     (_: IpcMainInvokeEvent, workspaceId: string, imageId: string, newName: string): IpcResponse =>
       handle(() => imageFileService.rename(workspaceId, imageId, newName))

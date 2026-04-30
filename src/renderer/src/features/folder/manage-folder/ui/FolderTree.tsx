@@ -23,17 +23,34 @@ import {
   useMoveFolder,
   useUpdateFolderMeta
 } from '@entities/folder'
-import { useCreateNote, useImportNote, useMoveNote, useRemoveNote } from '@entities/note'
+import {
+  useCreateNote,
+  useDuplicateNote,
+  useImportNote,
+  useMoveNote,
+  useRemoveNote
+} from '@entities/note'
 import type { NoteNode } from '@entities/note'
 import {
   useCreateCsvFile,
+  useDuplicateCsvFile,
   useImportCsvFile,
   useMoveCsvFile,
   useRemoveCsvFile
 } from '@entities/csv-file'
 import type { CsvFileNode } from '@entities/csv-file'
-import { useImportPdfFile, useMovePdfFile, useRemovePdfFile } from '@entities/pdf-file'
-import { useImportImageFile, useMoveImageFile, useRemoveImageFile } from '@entities/image-file'
+import {
+  useDuplicatePdfFile,
+  useImportPdfFile,
+  useMovePdfFile,
+  useRemovePdfFile
+} from '@entities/pdf-file'
+import {
+  useDuplicateImageFile,
+  useImportImageFile,
+  useMoveImageFile,
+  useRemoveImageFile
+} from '@entities/image-file'
 import type { ImageFileNode } from '@entities/image-file'
 import { Button } from '@shared/ui/button'
 import {
@@ -132,22 +149,26 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   // Note mutations
   const { mutate: createNote } = useCreateNote()
   const { mutateAsync: importNote } = useImportNote()
+  const { mutate: duplicateNote } = useDuplicateNote()
   const { mutate: moveNote } = useMoveNote()
   const { mutate: removeNote, isPending: isRemovingNote } = useRemoveNote()
 
   // CSV mutations
   const { mutate: createCsvFile } = useCreateCsvFile()
   const { mutateAsync: importCsvFile } = useImportCsvFile()
+  const { mutate: duplicateCsvFile } = useDuplicateCsvFile()
   const { mutate: moveCsvFile } = useMoveCsvFile()
   const { mutate: removeCsvFile, isPending: isRemovingCsv } = useRemoveCsvFile()
 
   // PDF mutations
   const { mutate: importPdfFile } = useImportPdfFile()
+  const { mutate: duplicatePdfFile } = useDuplicatePdfFile()
   const { mutate: movePdfFile } = useMovePdfFile()
   const { mutate: removePdfFile, isPending: isRemovingPdf } = useRemovePdfFile()
 
   // Image mutations — mutateAsync for multi-file import loop
   const { mutateAsync: importImageFile } = useImportImageFile()
+  const { mutate: duplicateImageFile } = useDuplicateImageFile()
   const { mutate: moveImageFile } = useMoveImageFile()
   const { mutate: removeImageFile, isPending: isRemovingImage } = useRemoveImageFile()
 
@@ -336,6 +357,24 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <FileContextMenu
             name={props.node.data.name}
             kind="note"
+            onDuplicate={() =>
+              duplicateNote(
+                { workspaceId, noteId: props.node.data.id },
+                {
+                  onSuccess: (note) => {
+                    if (!note) return
+                    openRightTab(
+                      {
+                        type: 'note',
+                        title: note.title,
+                        pathname: `/folder/note/${note.id}`
+                      },
+                      sourcePaneId
+                    )
+                  }
+                }
+              )
+            }
             onDelete={() =>
               setNoteDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -365,6 +404,24 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <FileContextMenu
             name={props.node.data.name}
             kind="csv"
+            onDuplicate={() =>
+              duplicateCsvFile(
+                { workspaceId, csvId: props.node.data.id },
+                {
+                  onSuccess: (csv) => {
+                    if (!csv) return
+                    openRightTab(
+                      {
+                        type: 'csv',
+                        title: csv.title,
+                        pathname: `/folder/csv/${csv.id}`
+                      },
+                      sourcePaneId
+                    )
+                  }
+                }
+              )
+            }
             onDelete={() =>
               setCsvDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -394,6 +451,24 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <FileContextMenu
             name={props.node.data.name}
             kind="pdf"
+            onDuplicate={() =>
+              duplicatePdfFile(
+                { workspaceId, pdfId: props.node.data.id },
+                {
+                  onSuccess: (pdf) => {
+                    if (!pdf) return
+                    openRightTab(
+                      {
+                        type: 'pdf',
+                        title: pdf.title,
+                        pathname: `/folder/pdf/${pdf.id}`
+                      },
+                      sourcePaneId
+                    )
+                  }
+                }
+              )
+            }
             onDelete={() =>
               setPdfDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -423,6 +498,24 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <FileContextMenu
             name={props.node.data.name}
             kind="image"
+            onDuplicate={() =>
+              duplicateImageFile(
+                { workspaceId, imageId: props.node.data.id },
+                {
+                  onSuccess: (image) => {
+                    if (!image) return
+                    openRightTab(
+                      {
+                        type: 'image',
+                        title: image.title,
+                        pathname: `/folder/image/${image.id}`
+                      },
+                      sourcePaneId
+                    )
+                  }
+                }
+              )
+            }
             onDelete={() =>
               setImageDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
             }
@@ -474,9 +567,8 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
         </FolderContextMenu>
       )
     },
-    // workspaceId는 NodeRenderer 내부에서 직접 참조하지 않음
-    // (handleCreateNote가 이미 workspaceId를 capture하고 있어 deps에서 제외)
     [
+      workspaceId,
       sourcePaneId,
       activePathname,
       handleCreateNote,
@@ -485,6 +577,10 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       handleImportCsv,
       handleImportPdf,
       handleImportImage,
+      duplicateNote,
+      duplicateCsvFile,
+      duplicatePdfFile,
+      duplicateImageFile,
       openRightTab
     ]
   )

@@ -50,6 +50,27 @@ export function useImportImageFile(): UseMutationResult<
   })
 }
 
+export function useDuplicateImageFile(): UseMutationResult<
+  ImageFileNode | undefined,
+  Error,
+  { workspaceId: string; imageId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    onMutate: ({ workspaceId }) => {
+      markWorkspaceOwnWrite(workspaceId)
+    },
+    mutationFn: async ({ workspaceId, imageId }) => {
+      const res: IpcResponse<ImageFileNode> = await window.api.image.duplicate(workspaceId, imageId)
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [IMAGE_KEY, 'workspace', workspaceId] })
+    }
+  })
+}
+
 export function useRenameImageFile(): UseMutationResult<
   ImageFileNode | undefined,
   Error,

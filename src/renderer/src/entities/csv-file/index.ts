@@ -3,6 +3,7 @@ export {
   useCsvFilesByWorkspace,
   useCreateCsvFile,
   useImportCsvFile,
+  useDuplicateCsvFile,
   useRenameCsvFile,
   useRemoveCsvFile,
   useMoveCsvFile,

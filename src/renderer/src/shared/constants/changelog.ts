@@ -16,6 +16,12 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-04-30',
     changes: [
       {
+        type: 'feature',
+        title: '파일 복사 기능 추가',
+        description:
+          '탐색기에서 노트, CSV, PDF, 이미지 파일을 우클릭하여 같은 위치에 복사할 수 있습니다. 복사된 파일은 이름 끝에 "(1)", "(2)"가 붙고 원본 바로 아래에 배치됩니다.'
+      },
+      {
         type: 'improvement',
         title: '탐색기에서 파일과 폴더 이름이 길 때 툴팁으로 전체 이름 표시',
         description:
