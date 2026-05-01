@@ -38,6 +38,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
             'bg-background fixed top-[50%] left-[50%] z-50',
             'translate-x-[-50%] translate-y-[-50%]',
             'w-full max-w-3xl h-[480px]',
+            'flex flex-col',
             'rounded-lg border shadow-lg outline-none',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
             'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
@@ -46,7 +47,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
           )}
         >
           {/* 헤더 */}
-          <div className="flex items-center justify-between px-6 py-4 border-b">
+          <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b">
             <DialogTitle className="text-lg font-semibold">설정</DialogTitle>
             <DialogDescription className="sr-only">앱 설정을 변경합니다</DialogDescription>
             <DialogPrimitive.Close className="rounded-xs opacity-70 hover:opacity-100 transition-opacity">
@@ -56,9 +57,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
           </div>
 
           {/* 본문: 좌측 탭 + 우측 컨텐츠 */}
-          <div className="flex h-[calc(100%-57px)]">
+          <div className="flex flex-1 min-h-0">
             {/* 좌측 탭 */}
-            <nav className="w-44 border-r p-3 space-y-1">
+            <nav className="w-44 border-r p-3 space-y-1 shrink-0">
               {TABS.map((tab) => (
                 <button
                   key={tab.id}
@@ -77,7 +78,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
             </nav>
 
             {/* 우측 컨텐츠 */}
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 min-w-0 p-6 overflow-y-auto">
               {activeTab === 'general' && <GeneralSettings />}
               {activeTab === 'display' && <DisplaySettings />}
               {activeTab === 'ai' && <AISettings />}
