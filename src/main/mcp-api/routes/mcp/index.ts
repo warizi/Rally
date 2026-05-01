@@ -5,6 +5,9 @@ import { registerMcpFolderRoutes } from './folders'
 import { registerMcpCanvasRoutes } from './canvases'
 import { registerMcpTodoRoutes } from './todos'
 import { registerMcpLinkRoutes } from './links'
+import { registerMcpScheduleRoutes } from './schedules'
+import { registerMcpReminderRoutes } from './reminders'
+import { registerMcpRecurringRoutes } from './recurring'
 
 export function registerMcpRoutes(router: Router): void {
   registerMcpItemRoutes(router)
@@ -13,4 +16,7 @@ export function registerMcpRoutes(router: Router): void {
   registerMcpCanvasRoutes(router)
   registerMcpTodoRoutes(router)
   registerMcpLinkRoutes(router)
+  registerMcpScheduleRoutes(router)
+  registerMcpReminderRoutes(router)
+  registerMcpRecurringRoutes(router)
 }

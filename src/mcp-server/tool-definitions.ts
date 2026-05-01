@@ -460,6 +460,201 @@ Links are bidirectional — order of source/target does not matter.`,
         .describe('Array of link actions')
     },
     handler: (args) => callTool('POST', '/api/mcp/links/batch', args)
+  },
+  // ─── Schedules (calendar events) ──────────────────────────
+  {
+    name: 'list_schedules',
+    description: `List calendar events (schedules) in the active workspace.
+- from/to: ISO 8601 date range. If both omitted, returns all schedules.
+- search: substring match on title/description/location (case-insensitive)`,
+    schema: {
+      from: z.string().optional().describe('ISO 8601 start of range'),
+      to: z.string().optional().describe('ISO 8601 end of range'),
+      search: z.string().optional().describe('Substring match on title/description/location')
+    },
+    handler: ({ from, to, search }) => {
+      const params = new URLSearchParams()
+      if (from) params.set('from', from as string)
+      if (to) params.set('to', to as string)
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/schedules${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'manage_schedules',
+    description: `Batch create, update, or delete calendar events. allDay events are auto-normalized to 00:00–23:59.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              title: z.string(),
+              description: z.string().nullable().optional(),
+              location: z.string().nullable().optional(),
+              allDay: z.boolean().optional(),
+              startAt: z.string().describe('ISO 8601'),
+              endAt: z.string().describe('ISO 8601'),
+              color: z.string().nullable().optional(),
+              priority: z.enum(['low', 'medium', 'high']).optional()
+            }),
+            z.object({
+              action: z.literal('update'),
+              id: z.string(),
+              title: z.string().optional(),
+              description: z.string().nullable().optional(),
+              location: z.string().nullable().optional(),
+              allDay: z.boolean().optional(),
+              startAt: z.string().optional(),
+              endAt: z.string().optional(),
+              color: z.string().nullable().optional(),
+              priority: z.enum(['low', 'medium', 'high']).optional()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of schedule actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/schedules/batch', args)
+  },
+  // ─── Reminders ────────────────────────────────────────────
+  {
+    name: 'list_reminders',
+    description: `List reminders. If entityType+entityId are given, returns reminders only for that entity; otherwise returns reminders for all todos and schedules in the active workspace.
+pendingOnly=true filters out fired reminders.`,
+    schema: {
+      entityType: z
+        .enum(['todo', 'schedule'])
+        .optional()
+        .describe('Required together with entityId to scope by entity'),
+      entityId: z.string().optional(),
+      pendingOnly: z.boolean().optional().describe('Only un-fired reminders (default: false)')
+    },
+    handler: ({ entityType, entityId, pendingOnly }) => {
+      const params = new URLSearchParams()
+      if (entityType) params.set('entityType', entityType as string)
+      if (entityId) params.set('entityId', entityId as string)
+      if (pendingOnly) params.set('pendingOnly', 'true')
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/reminders${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'manage_reminders',
+    description: `Create or delete reminders for todos/schedules.
+offsetMs (create) must be one of: 600000 (10m), 1800000 (30m), 3600000 (1h), 86400000 (1d), 172800000 (2d).
+Reminder fires (entity start/due time - offsetMs); creation throws if that moment is in the past.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              entityType: z.enum(['todo', 'schedule']),
+              entityId: z.string(),
+              offsetMs: z.number().int().positive()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of reminder actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/reminders/batch', args)
+  },
+  // ─── Recurring rules ──────────────────────────────────────
+  {
+    name: 'list_recurring_rules',
+    description: `List recurring rules in the active workspace.
+activeOnly=true filters to rules whose endDate is null or still in the future.`,
+    schema: {
+      activeOnly: z.boolean().optional()
+    },
+    handler: ({ activeOnly }) => {
+      const params = new URLSearchParams()
+      if (activeOnly) params.set('activeOnly', 'true')
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/recurring/rules${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'list_recurring_today',
+    description: `List recurring rules that fire on the given date (default: today), with completion status for each.
+Returns { date, rules: [{ ...rule, completed }], completions: [...] }.`,
+    schema: {
+      date: z.string().optional().describe('YYYY-MM-DD or ISO 8601 (default: today)')
+    },
+    handler: ({ date }) => {
+      const params = new URLSearchParams()
+      if (date) params.set('date', date as string)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/recurring/today${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'manage_recurring_rules',
+    description: `Batch create/update/delete recurring rules.
+recurrenceType:
+- 'daily': fires every day
+- 'weekday': Mon–Fri only
+- 'weekend': Sat/Sun only
+- 'custom': fires on the daysOfWeek array (0=Sun, 1=Mon, …, 6=Sat) — required with recurrenceType='custom'
+
+startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time before startTime fires (or null to disable).`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              title: z.string(),
+              description: z.string().optional(),
+              priority: z.enum(['high', 'medium', 'low']).optional(),
+              recurrenceType: z.enum(['daily', 'weekday', 'weekend', 'custom']),
+              daysOfWeek: z.array(z.number().int().min(0).max(6)).optional(),
+              startDate: z.string().describe('ISO 8601'),
+              endDate: z.string().nullable().optional(),
+              startTime: z.string().nullable().optional(),
+              endTime: z.string().nullable().optional(),
+              reminderOffsetMs: z.number().int().nullable().optional()
+            }),
+            z.object({
+              action: z.literal('update'),
+              id: z.string(),
+              title: z.string().optional(),
+              description: z.string().optional(),
+              priority: z.enum(['high', 'medium', 'low']).optional(),
+              recurrenceType: z.enum(['daily', 'weekday', 'weekend', 'custom']).optional(),
+              daysOfWeek: z.array(z.number().int().min(0).max(6)).nullable().optional(),
+              startDate: z.string().optional(),
+              endDate: z.string().nullable().optional(),
+              startTime: z.string().nullable().optional(),
+              endTime: z.string().nullable().optional(),
+              reminderOffsetMs: z.number().int().nullable().optional()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of recurring rule actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/recurring/rules/batch', args)
+  },
+  {
+    name: 'complete_recurring',
+    description: `Mark a recurring rule as completed for a specific date. Idempotent — calling twice returns the same completion.`,
+    schema: {
+      ruleId: z.string(),
+      date: z.string().describe('YYYY-MM-DD or ISO 8601 (the day this completion belongs to)')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/recurring/complete', args)
+  },
+  {
+    name: 'uncomplete_recurring',
+    description: `Remove a recurring completion (undo). Pass the completionId from list_recurring_today or complete_recurring.`,
+    schema: {
+      completionId: z.string()
+    },
+    handler: (args) => callTool('POST', '/api/mcp/recurring/uncomplete', args)
   }
 ]
 

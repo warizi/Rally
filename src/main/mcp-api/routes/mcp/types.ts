@@ -340,3 +340,167 @@ export interface ManageLinkResult {
   success: true
   linkedItems?: LinkedItem[]
 }
+
+// ─── Schedules ──────────────────────────────────────────────
+
+export interface ScheduleSummary {
+  id: string
+  workspaceId: string | null
+  title: string
+  description: string | null
+  location: string | null
+  allDay: boolean
+  startAt: string
+  endAt: string
+  color: string | null
+  priority: 'low' | 'medium' | 'high'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateScheduleAction {
+  action: 'create'
+  title: string
+  description?: string | null
+  location?: string | null
+  allDay?: boolean
+  startAt: string
+  endAt: string
+  color?: string | null
+  priority?: 'low' | 'medium' | 'high'
+}
+
+export interface UpdateScheduleAction {
+  action: 'update'
+  id: string
+  title?: string
+  description?: string | null
+  location?: string | null
+  allDay?: boolean
+  startAt?: string
+  endAt?: string
+  color?: string | null
+  priority?: 'low' | 'medium' | 'high'
+}
+
+export interface DeleteScheduleAction {
+  action: 'delete'
+  id: string
+}
+
+export type ScheduleAction = CreateScheduleAction | UpdateScheduleAction | DeleteScheduleAction
+
+export interface ManageScheduleResult {
+  action: string
+  id: string
+  success: true
+}
+
+// ─── Reminders ──────────────────────────────────────────────
+
+export interface ReminderSummary {
+  id: string
+  entityType: 'todo' | 'schedule'
+  entityId: string
+  offsetMs: number
+  remindAt: string
+  isFired: boolean
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateReminderAction {
+  action: 'create'
+  entityType: 'todo' | 'schedule'
+  entityId: string
+  offsetMs: number
+}
+
+export interface DeleteReminderAction {
+  action: 'delete'
+  id: string
+}
+
+export type ReminderAction = CreateReminderAction | DeleteReminderAction
+
+export interface ManageReminderResult {
+  action: string
+  id: string
+  success: true
+}
+
+// ─── Recurring Rules / Completions ──────────────────────────
+
+export type RecurrenceType = 'daily' | 'weekday' | 'weekend' | 'custom'
+
+export interface RecurringRuleSummary {
+  id: string
+  workspaceId: string
+  title: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  recurrenceType: RecurrenceType
+  daysOfWeek: number[] | null
+  startDate: string
+  endDate: string | null
+  startTime: string | null
+  endTime: string | null
+  reminderOffsetMs: number | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateRecurringRuleAction {
+  action: 'create'
+  title: string
+  description?: string
+  priority?: 'high' | 'medium' | 'low'
+  recurrenceType: RecurrenceType
+  daysOfWeek?: number[]
+  startDate: string
+  endDate?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  reminderOffsetMs?: number | null
+}
+
+export interface UpdateRecurringRuleAction {
+  action: 'update'
+  id: string
+  title?: string
+  description?: string
+  priority?: 'high' | 'medium' | 'low'
+  recurrenceType?: RecurrenceType
+  daysOfWeek?: number[] | null
+  startDate?: string
+  endDate?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  reminderOffsetMs?: number | null
+}
+
+export interface DeleteRecurringRuleAction {
+  action: 'delete'
+  id: string
+}
+
+export type RecurringRuleAction =
+  | CreateRecurringRuleAction
+  | UpdateRecurringRuleAction
+  | DeleteRecurringRuleAction
+
+export interface ManageRecurringRuleResult {
+  action: string
+  id: string
+  success: true
+}
+
+export interface RecurringCompletionSummary {
+  id: string
+  ruleId: string | null
+  ruleTitle: string
+  workspaceId: string
+  completedDate: string
+  completedAt: string
+  createdAt: string
+}
