@@ -1,4 +1,4 @@
-import { and, count, eq, inArray, isNull, isNotNull, or, gte, lte } from 'drizzle-orm'
+import { and, count, eq, inArray, isNull, isNotNull, like, or, gte, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { todos } from '../db/schema'
 
@@ -186,6 +186,21 @@ export const todoRepository = {
       results.push(...db.select().from(todos).where(inArray(todos.id, chunk)).all())
     }
     return results
+  },
+
+  /** 제목/설명 LIKE 검색 — 검색 도구용 */
+  searchByTitleOrDescription(workspaceId: string, query: string): Todo[] {
+    const pattern = `%${query}%`
+    return db
+      .select()
+      .from(todos)
+      .where(
+        and(
+          eq(todos.workspaceId, workspaceId),
+          or(like(todos.title, pattern), like(todos.description, pattern))!
+        )
+      )
+      .all()
   },
 
   bulkUpdateSubOrder(updates: { id: string; order: number }[]): void {

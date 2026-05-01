@@ -37,6 +37,38 @@ export const canvasService = {
     return canvasRepository.findByWorkspaceId(workspaceId, search).map(toCanvasItem)
   },
 
+  /**
+   * 제목/설명 LIKE 검색. matchType: title이 매칭되면 'title', 아니면 'description'.
+   */
+  search(
+    workspaceId: string,
+    query: string
+  ): {
+    id: string
+    title: string
+    description: string
+    matchType: 'title' | 'description'
+    updatedAt: Date
+  }[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+    if (!query.trim()) return []
+    const rows = canvasRepository.findByWorkspaceId(workspaceId, query)
+    const lower = query.toLowerCase()
+    return rows.map((r) => {
+      const updatedAt = r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt as number)
+      return {
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        matchType: r.title.toLowerCase().includes(lower)
+          ? ('title' as const)
+          : ('description' as const),
+        updatedAt
+      }
+    })
+  },
+
   findById(canvasId: string): CanvasItem {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
