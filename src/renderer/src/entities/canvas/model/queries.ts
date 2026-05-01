@@ -21,6 +21,7 @@ import type {
 const CANVAS_KEY = 'canvas'
 const CANVAS_NODE_KEY = 'canvasNode'
 const CANVAS_EDGE_KEY = 'canvasEdge'
+const HISTORY_KEY = 'history'
 
 // ─── Canvas Queries ──────────────────────────────────────
 
@@ -123,6 +124,7 @@ export function useUpdateCanvas(): UseMutationResult<
         queryKey: [CANVAS_KEY, 'workspace', workspaceId]
       })
       queryClient.setQueryData([CANVAS_KEY, 'detail', result.id], result)
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -155,6 +157,7 @@ export function useRemoveCanvas(): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: [CANVAS_KEY, 'workspace', workspaceId]
       })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }

@@ -12,6 +12,7 @@ import type { RecurringCompletionItem, CompletedItem } from './types'
 
 export const RECURRING_COMPLETION_KEY = 'recurring-completion'
 const TODO_KEY = 'todo'
+const HISTORY_KEY = 'history'
 
 function deserializeCompletion(item: RecurringCompletionItem): RecurringCompletionItem {
   return {
@@ -96,6 +97,8 @@ export function useCompleteRecurring(): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: [TODO_KEY, workspaceId]
       })
+      // 반복 완료도 히스토리에 반영
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -126,6 +129,8 @@ export function useUncompleteRecurring(): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: [TODO_KEY, workspaceId]
       })
+      // 반복 완료 해제도 히스토리에 반영
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }

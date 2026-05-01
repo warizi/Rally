@@ -12,6 +12,7 @@ import { markWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { markAsOwnWrite } from '../model/own-write-tracker'
 
 const CSV_KEY = 'csv'
+const HISTORY_KEY = 'history'
 
 export function useCsvFilesByWorkspace(workspaceId: string): UseQueryResult<CsvFileNode[]> {
   return useQuery({
@@ -110,6 +111,7 @@ export function useRenameCsvFile(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [CSV_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -130,6 +132,7 @@ export function useRemoveCsvFile(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [CSV_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -234,6 +237,7 @@ export function useUpdateCsvMeta(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId, csvId, data }) => {
       queryClient.invalidateQueries({ queryKey: [CSV_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
       if (data.columnWidths !== undefined) {
         queryClient.setQueryData(
           [CSV_KEY, 'content', csvId],

@@ -44,6 +44,7 @@ import { registerBackupHandlers } from './ipc/backup'
 import { registerRecurringRuleHandlers } from './ipc/recurring-rule'
 import { registerRecurringCompletionHandlers } from './ipc/recurring-completion'
 import { registerTemplateHandlers } from './ipc/template'
+import { registerHistoryHandlers } from './ipc/history'
 import { setupAutoUpdater } from './lib/updater'
 import { ensureClaudeCommands } from './services/claude-commands-setup'
 
@@ -267,6 +268,7 @@ app.whenReady().then(() => {
   registerRecurringRuleHandlers()
   registerRecurringCompletionHandlers()
   registerTemplateHandlers()
+  registerHistoryHandlers()
 
   startMcpApiServer()
 

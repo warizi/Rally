@@ -12,6 +12,7 @@ import { markWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { markAsOwnWrite } from '../model/own-write-tracker'
 
 const NOTE_KEY = 'note'
+const HISTORY_KEY = 'history'
 
 export function useNotesByWorkspace(workspaceId: string): UseQueryResult<NoteNode[]> {
   return useQuery({
@@ -110,6 +111,7 @@ export function useRenameNote(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -130,6 +132,7 @@ export function useRemoveNote(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -219,6 +222,7 @@ export function useUpdateNoteMeta(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }

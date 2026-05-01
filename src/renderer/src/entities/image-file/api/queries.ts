@@ -12,6 +12,7 @@ import { markWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { markAsOwnWrite } from '../model/own-write-tracker'
 
 const IMAGE_KEY = 'image'
+const HISTORY_KEY = 'history'
 
 export function useImageFilesByWorkspace(workspaceId: string): UseQueryResult<ImageFileNode[]> {
   return useQuery({
@@ -93,6 +94,7 @@ export function useRenameImageFile(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [IMAGE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -113,6 +115,7 @@ export function useRemoveImageFile(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [IMAGE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -184,6 +187,7 @@ export function useUpdateImageMeta(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [IMAGE_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }

@@ -10,6 +10,7 @@ import type { IpcResponse } from '@shared/types/ipc'
 import type { LinkableEntityType, LinkedEntity } from '@shared/lib/entity-link'
 
 export const ENTITY_LINK_KEY = 'entityLink'
+const HISTORY_KEY = 'history'
 
 export function useLinkedEntities(
   entityType: LinkableEntityType,
@@ -46,9 +47,11 @@ export function useLinkEntity(): UseMutationResult<
       const res = await window.api.entityLink.link(typeA, idA, typeB, idB, workspaceId)
       if (!res.success) throwIpcError(res)
     },
-    onSuccess: (_, { typeA, idA, typeB, idB }) => {
+    onSuccess: (_, { typeA, idA, typeB, idB, workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [ENTITY_LINK_KEY, typeA, idA] })
       queryClient.invalidateQueries({ queryKey: [ENTITY_LINK_KEY, typeB, idB] })
+      // todo↔다른 엔티티 연결 변경 시 히스토리도 갱신
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -72,6 +75,8 @@ export function useUnlinkEntity(): UseMutationResult<
     onSuccess: (_, { typeA, idA, typeB, idB }) => {
       queryClient.invalidateQueries({ queryKey: [ENTITY_LINK_KEY, typeA, idA] })
       queryClient.invalidateQueries({ queryKey: [ENTITY_LINK_KEY, typeB, idB] })
+      // workspaceId가 인자에 없어 모든 워크스페이스 히스토리 무효화 (드물게 발생)
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY] })
     }
   })
 }

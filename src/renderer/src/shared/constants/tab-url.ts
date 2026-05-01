@@ -1,6 +1,7 @@
 import {
   Calendar,
   Check,
+  Clock,
   FileText,
   FolderOpen,
   History,
@@ -26,6 +27,7 @@ export type TabType =
   | 'canvas-detail'
   | 'terminal'
   | 'changelog'
+  | 'history'
 
 export type TabIcon = TabType
 
@@ -42,7 +44,8 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   canvas: Network,
   'canvas-detail': Network,
   terminal: Terminal,
-  changelog: History
+  changelog: History,
+  history: Clock
 }
 
 // 정적 라우트
@@ -64,7 +67,8 @@ export const ROUTES = {
   CANVAS: '/canvas',
   CANVAS_DETAIL: '/canvas/:canvasId',
   TERMINAL: '/terminal',
-  CHANGELOG: '/changelog'
+  CHANGELOG: '/changelog',
+  HISTORY: '/history'
 } as const
 
 export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES]
@@ -109,5 +113,11 @@ export const sidebar_items: SidebarItem[] = [
     tabType: 'canvas',
     pathname: ROUTES.CANVAS,
     icon: TAB_ICON['canvas']
+  },
+  {
+    title: '히스토리',
+    tabType: 'history',
+    pathname: ROUTES.HISTORY,
+    icon: TAB_ICON['history']
   }
 ]

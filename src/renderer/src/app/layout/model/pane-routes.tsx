@@ -31,6 +31,7 @@ const CalendarPage = lazy(() => import('@pages/calendar'))
 const CanvasListPage = lazy(() => import('@pages/canvas'))
 const CanvasDetailPage = lazy(() => import('@pages/canvas-detail'))
 const ChangelogPage = lazy(() => import('@pages/changelog'))
+const HistoryPage = lazy(() => import('@pages/history'))
 
 export const PANE_ROUTES: PaneRoute[] = [
   {
@@ -80,5 +81,9 @@ export const PANE_ROUTES: PaneRoute[] = [
   {
     pattern: ROUTES.CHANGELOG,
     component: ChangelogPage
+  },
+  {
+    pattern: ROUTES.HISTORY,
+    component: HistoryPage
   }
 ]

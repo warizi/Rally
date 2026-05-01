@@ -842,6 +842,49 @@ interface TemplateAPI {
   delete: (id: string) => Promise<IpcResponse<void>>
 }
 
+type HistoryLinkType = 'note' | 'csv' | 'pdf' | 'image' | 'canvas'
+
+interface HistoryLink {
+  type: HistoryLinkType
+  id: string
+  title: string
+  description: string | null
+}
+
+type HistoryEntryKind = 'todo' | 'recurring'
+
+interface HistoryTodoEntry {
+  id: string
+  title: string
+  doneAt: Date
+  links: HistoryLink[]
+  kind: HistoryEntryKind
+}
+
+interface HistoryDay {
+  date: string
+  todos: HistoryTodoEntry[]
+}
+
+interface HistoryFetchResult {
+  days: HistoryDay[]
+  hasMore: boolean
+  nextDayOffset: number
+}
+
+interface HistoryAPI {
+  fetch: (
+    workspaceId: string,
+    options?: {
+      dayOffset?: number
+      dayLimit?: number
+      fromDate?: string | null
+      toDate?: string | null
+      query?: string | null
+    }
+  ) => Promise<IpcResponse<HistoryFetchResult>>
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -868,6 +911,7 @@ interface API {
   recurringRule: RecurringRuleAPI
   recurringCompletion: RecurringCompletionAPI
   template: TemplateAPI
+  history: HistoryAPI
 }
 
 interface ShellAPI {

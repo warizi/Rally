@@ -12,6 +12,7 @@ import { markWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { markAsOwnWrite } from '../model/own-write-tracker'
 
 const PDF_KEY = 'pdf'
+const HISTORY_KEY = 'history'
 
 export function usePdfFilesByWorkspace(workspaceId: string): UseQueryResult<PdfFileNode[]> {
   return useQuery({
@@ -89,6 +90,7 @@ export function useRenamePdfFile(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [PDF_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -109,6 +111,7 @@ export function useRemovePdfFile(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [PDF_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -180,6 +183,7 @@ export function useUpdatePdfMeta(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [PDF_KEY, 'workspace', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }

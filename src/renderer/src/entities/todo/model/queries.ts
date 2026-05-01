@@ -10,6 +10,7 @@ import type { IpcResponse } from '@shared/types/ipc'
 import type { TodoItem, CreateTodoData, UpdateTodoData, TodoOrderUpdate } from './types'
 
 const TODO_KEY = 'todo'
+const HISTORY_KEY = 'history'
 
 type TodoFindFilter = 'all' | 'active' | 'completed'
 
@@ -104,6 +105,8 @@ export function useUpdateTodo(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: [TODO_KEY, 'workspace', workspaceId] })
       queryClient.invalidateQueries({ queryKey: [TODO_KEY, 'dateRange', workspaceId] })
       queryClient.invalidateQueries({ queryKey: [TODO_KEY, workspaceId] })
+      // 완료 상태 변경 시 히스토리 갱신
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }
@@ -121,6 +124,8 @@ export function useRemoveTodo(): UseMutationResult<
     },
     onSuccess: (_, { workspaceId }) => {
       queryClient.invalidateQueries({ queryKey: [TODO_KEY, 'workspace', workspaceId] })
+      // 완료된 todo 삭제도 히스토리에 반영
+      queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
     }
   })
 }

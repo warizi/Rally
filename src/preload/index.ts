@@ -369,6 +369,19 @@ const api = {
     delete: (id: string) => ipcRenderer.invoke('template:delete', id)
   },
 
+  history: {
+    fetch: (
+      workspaceId: string,
+      options?: {
+        dayOffset?: number
+        dayLimit?: number
+        fromDate?: string | null
+        toDate?: string | null
+        query?: string | null
+      }
+    ) => ipcRenderer.invoke('history:fetch', workspaceId, options)
+  },
+
   terminal: {
     // id?: 복원 시 기존 DB 세션 ID 전달, 신규 탭 시 생략
     // sortOrder?: 신규 탭 순서 (복원 시 불필요)
