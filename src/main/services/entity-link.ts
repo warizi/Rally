@@ -1,3 +1,6 @@
+import { inArray } from 'drizzle-orm'
+import { db } from '../db'
+import { todos, schedules, notes, csvFiles, pdfFiles, imageFiles, canvases } from '../db/schema'
 import { entityLinkRepository } from '../repositories/entity-link'
 import { todoRepository } from '../repositories/todo'
 import { scheduleRepository } from '../repositories/schedule'
@@ -46,6 +49,94 @@ function getWorkspaceId(type: LinkableEntityType, entity: { workspaceId: string 
 
 function getTitle(_type: LinkableEntityType, entity: { title: string }): string {
   return entity.title
+}
+
+/**
+ * 여러 entity의 메타(title)를 type별 inArray로 일괄 fetch.
+ * 반환 키: `${type}:${id}` (type 간 ID 충돌 방지)
+ */
+function fetchEntityTitlesBatch(
+  refs: { type: LinkableEntityType; id: string }[]
+): Map<string, string> {
+  const result = new Map<string, string>()
+  if (refs.length === 0) return result
+
+  const byType: Record<LinkableEntityType, string[]> = {
+    todo: [],
+    schedule: [],
+    note: [],
+    csv: [],
+    pdf: [],
+    image: [],
+    canvas: []
+  }
+  // 중복 제거
+  const seen = new Set<string>()
+  for (const { type, id } of refs) {
+    const key = `${type}:${id}`
+    if (seen.has(key)) continue
+    seen.add(key)
+    byType[type].push(id)
+  }
+
+  if (byType.todo.length > 0) {
+    const rows = db
+      .select({ id: todos.id, title: todos.title })
+      .from(todos)
+      .where(inArray(todos.id, byType.todo))
+      .all()
+    for (const r of rows) result.set(`todo:${r.id}`, r.title)
+  }
+  if (byType.schedule.length > 0) {
+    const rows = db
+      .select({ id: schedules.id, title: schedules.title })
+      .from(schedules)
+      .where(inArray(schedules.id, byType.schedule))
+      .all()
+    for (const r of rows) result.set(`schedule:${r.id}`, r.title)
+  }
+  if (byType.note.length > 0) {
+    const rows = db
+      .select({ id: notes.id, title: notes.title })
+      .from(notes)
+      .where(inArray(notes.id, byType.note))
+      .all()
+    for (const r of rows) result.set(`note:${r.id}`, r.title)
+  }
+  if (byType.csv.length > 0) {
+    const rows = db
+      .select({ id: csvFiles.id, title: csvFiles.title })
+      .from(csvFiles)
+      .where(inArray(csvFiles.id, byType.csv))
+      .all()
+    for (const r of rows) result.set(`csv:${r.id}`, r.title)
+  }
+  if (byType.pdf.length > 0) {
+    const rows = db
+      .select({ id: pdfFiles.id, title: pdfFiles.title })
+      .from(pdfFiles)
+      .where(inArray(pdfFiles.id, byType.pdf))
+      .all()
+    for (const r of rows) result.set(`pdf:${r.id}`, r.title)
+  }
+  if (byType.image.length > 0) {
+    const rows = db
+      .select({ id: imageFiles.id, title: imageFiles.title })
+      .from(imageFiles)
+      .where(inArray(imageFiles.id, byType.image))
+      .all()
+    for (const r of rows) result.set(`image:${r.id}`, r.title)
+  }
+  if (byType.canvas.length > 0) {
+    const rows = db
+      .select({ id: canvases.id, title: canvases.title })
+      .from(canvases)
+      .where(inArray(canvases.id, byType.canvas))
+      .all()
+    for (const r of rows) result.set(`canvas:${r.id}`, r.title)
+  }
+
+  return result
 }
 
 interface NormalizedLink {
@@ -183,6 +274,65 @@ export const entityLinkService = {
         orphan.targetType,
         orphan.targetId
       )
+    }
+
+    return result
+  },
+
+  /**
+   * 여러 entity의 링크를 일괄 조회 (N+1 회피).
+   * 반환: entity ID → LinkedEntity[] Map.
+   * 호출자는 워크스페이스 검증을 직접 해야 함 (이 함수는 batch 검증 미지원).
+   */
+  getLinkedBatch(entityType: LinkableEntityType, entityIds: string[]): Map<string, LinkedEntity[]> {
+    const result = new Map<string, LinkedEntity[]>()
+    if (entityIds.length === 0) return result
+
+    // 1. 단일 쿼리로 모든 link row fetch
+    const rows = entityLinkRepository.findByEntities(entityType, entityIds)
+
+    // 2. 본인 ID별로 그룹화 + 반대편 type/id 추출
+    const idSet = new Set(entityIds)
+    interface Ref {
+      myId: string
+      otherType: LinkableEntityType
+      otherId: string
+      createdAt: Date
+    }
+    const refs: Ref[] = []
+    for (const row of rows) {
+      if (row.sourceType === entityType && idSet.has(row.sourceId)) {
+        refs.push({
+          myId: row.sourceId,
+          otherType: row.targetType as LinkableEntityType,
+          otherId: row.targetId,
+          createdAt: row.createdAt
+        })
+      } else if (row.targetType === entityType && idSet.has(row.targetId)) {
+        refs.push({
+          myId: row.targetId,
+          otherType: row.sourceType as LinkableEntityType,
+          otherId: row.sourceId,
+          createdAt: row.createdAt
+        })
+      }
+    }
+
+    // 3. 반대편 entity title 일괄 fetch (type별 inArray)
+    const titleMap = fetchEntityTitlesBatch(refs.map((r) => ({ type: r.otherType, id: r.otherId })))
+
+    // 4. 결과 조립 (orphan은 batch에서 skip — cleanup은 별도 cron)
+    for (const ref of refs) {
+      const title = titleMap.get(`${ref.otherType}:${ref.otherId}`)
+      if (!title) continue
+      const arr = result.get(ref.myId) ?? []
+      arr.push({
+        entityType: ref.otherType,
+        entityId: ref.otherId,
+        title,
+        linkedAt: ref.createdAt
+      })
+      result.set(ref.myId, arr)
     }
 
     return result

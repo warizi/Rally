@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, isNotNull, or, gte, lte } from 'drizzle-orm'
+import { and, count, eq, inArray, isNull, isNotNull, or, gte, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { todos } from '../db/schema'
 
@@ -6,6 +6,20 @@ export type Todo = typeof todos.$inferSelect
 export type TodoInsert = typeof todos.$inferInsert
 
 export const todoRepository = {
+  /** 풀 fetch 없이 SQL COUNT로 active/completed/total 카운트만 반환 */
+  countByWorkspaceId(workspaceId: string): { active: number; completed: number; total: number } {
+    const base = eq(todos.workspaceId, workspaceId)
+    const totalRow = db.select({ n: count() }).from(todos).where(base).get()
+    const completedRow = db
+      .select({ n: count() })
+      .from(todos)
+      .where(and(base, eq(todos.isDone, true)))
+      .get()
+    const total = totalRow?.n ?? 0
+    const completed = completedRow?.n ?? 0
+    return { active: total - completed, completed, total }
+  },
+
   findByWorkspaceId(workspaceId: string, filter?: 'all' | 'active' | 'completed'): Todo[] {
     const base = eq(todos.workspaceId, workspaceId)
     if (filter === 'active') {

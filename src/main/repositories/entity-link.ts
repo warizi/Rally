@@ -1,4 +1,4 @@
-import { and, eq, or } from 'drizzle-orm'
+import { and, eq, inArray, or } from 'drizzle-orm'
 import { db } from '../db'
 import { entityLinks } from '../db/schema'
 
@@ -31,6 +31,24 @@ export const entityLinkRepository = {
         or(
           and(eq(entityLinks.sourceType, entityType), eq(entityLinks.sourceId, entityId)),
           and(eq(entityLinks.targetType, entityType), eq(entityLinks.targetId, entityId))
+        )
+      )
+      .all()
+  },
+
+  /**
+   * 여러 entity의 링크를 단일 쿼리로 일괄 조회 (N+1 회피용).
+   * sourceType/sourceId 또는 targetType/targetId가 매칭되는 모든 링크 반환.
+   */
+  findByEntities(entityType: string, entityIds: string[]): EntityLink[] {
+    if (entityIds.length === 0) return []
+    return db
+      .select()
+      .from(entityLinks)
+      .where(
+        or(
+          and(eq(entityLinks.sourceType, entityType), inArray(entityLinks.sourceId, entityIds)),
+          and(eq(entityLinks.targetType, entityType), inArray(entityLinks.targetId, entityIds))
         )
       )
       .all()
