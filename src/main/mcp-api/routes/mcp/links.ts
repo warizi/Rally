@@ -1,7 +1,7 @@
 import type { Router } from '../../router'
-import { requireBody, resolveActiveWorkspace } from './helpers'
+import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 import { entityLinkService } from '../../../services/entity-link'
-import { withTransaction } from '../../../lib/transaction'
+import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
 import type { LinkAction, ManageLinkResult } from './types'
 
@@ -11,59 +11,59 @@ export function registerMcpLinkRoutes(router: Router): void {
     const wsId = resolveActiveWorkspace()
     const { actions } = body as { actions: LinkAction[] }
 
-    // pure DB 작업 — 단일 트랜잭션으로 묶어 부분 commit 방지.
-    // list 액션도 같이 묶지만 read-only이므로 안전.
-    const results = withTransaction((): ManageLinkResult[] => {
-      const acc: ManageLinkResult[] = []
-      for (const action of actions) {
-        if (action.action === 'link') {
-          entityLinkService.link(
-            action.sourceType,
-            action.sourceId,
-            action.targetType,
-            action.targetId,
-            wsId
-          )
-          acc.push({
-            action: 'link',
-            sourceType: action.sourceType,
-            sourceId: action.sourceId,
-            targetType: action.targetType,
-            targetId: action.targetId,
-            success: true
-          })
-        } else if (action.action === 'unlink') {
-          entityLinkService.unlink(
-            action.sourceType,
-            action.sourceId,
-            action.targetType,
-            action.targetId,
-            wsId
-          )
-          acc.push({
-            action: 'unlink',
-            sourceType: action.sourceType,
-            sourceId: action.sourceId,
-            targetType: action.targetType,
-            targetId: action.targetId,
-            success: true
-          })
-        } else if (action.action === 'list') {
-          const linked = entityLinkService.getLinked(action.entityType, action.entityId, wsId)
-          acc.push({
-            action: 'list',
-            entityType: action.entityType,
-            entityId: action.entityId,
-            success: true,
-            linkedItems: linked.map((l) => ({
-              type: l.entityType,
-              id: l.entityId,
-              title: l.title
-            }))
-          })
+    const results = processBatchActions<LinkAction, ManageLinkResult>(actions, (action) => {
+      if (action.action === 'link') {
+        assertValidId(action.sourceId, `${action.sourceType} sourceId`)
+        assertValidId(action.targetId, `${action.targetType} targetId`)
+        entityLinkService.link(
+          action.sourceType,
+          action.sourceId,
+          action.targetType,
+          action.targetId,
+          wsId
+        )
+        return {
+          action: 'link',
+          sourceType: action.sourceType,
+          sourceId: action.sourceId,
+          targetType: action.targetType,
+          targetId: action.targetId,
+          success: true
         }
       }
-      return acc
+      if (action.action === 'unlink') {
+        assertValidId(action.sourceId, `${action.sourceType} sourceId`)
+        assertValidId(action.targetId, `${action.targetType} targetId`)
+        entityLinkService.unlink(
+          action.sourceType,
+          action.sourceId,
+          action.targetType,
+          action.targetId,
+          wsId
+        )
+        return {
+          action: 'unlink',
+          sourceType: action.sourceType,
+          sourceId: action.sourceId,
+          targetType: action.targetType,
+          targetId: action.targetId,
+          success: true
+        }
+      }
+      // list
+      assertValidId(action.entityId, `${action.entityType} entityId`)
+      const linked = entityLinkService.getLinked(action.entityType, action.entityId, wsId)
+      return {
+        action: 'list',
+        entityType: action.entityType,
+        entityId: action.entityId,
+        success: true,
+        linkedItems: linked.map((l) => ({
+          type: l.entityType,
+          id: l.entityId,
+          title: l.title
+        }))
+      }
     })
 
     // mutation 액션이 있었다면 broadcast (list 단독 호출은 read-only이므로 건너뜀)
