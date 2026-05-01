@@ -296,22 +296,65 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
   },
   {
     name: 'list_todos',
-    description: `List all todos in the active workspace. Supports filter: all, active, completed.
-Each todo includes linkedItems array with related items. To inspect a linked item:
-- type "note" or "csv" → use read_content with the id
-- type "canvas" → use read_canvas with the id as canvasId
-- type "schedule", "pdf", "image" → metadata only (no detail tool available)
-Set resolveLinks=true to include linkedItems[].preview (note/csv/pdf/image preview, canvas/todo/schedule description) in one round-trip — saves N follow-up read_content calls.`,
+    description: `List todos in the active workspace.
+Filter options (all optional, AND-combined):
+- filter: 'active' (top-level not done + all subtodos) or 'completed' (top-level done)
+- parentId: 'null' for top-level only, or a todo id to fetch its direct children
+- linkedTo: { type, id } — only todos linked to that entity
+- dueWithin: number of days from today (e.g. 7 = this week's deadlines)
+- priority: subset of ['high','medium','low']
+- search: substring match on title (case-insensitive)
+- resolveLinks: when true, linkedItems[].preview is filled (note/csv/pdf/image preview, canvas/todo/schedule description)
+
+Each todo includes linkedItems[]. To inspect a linked item:
+- type "note" or "csv" → read_content
+- type "canvas" → read_canvas
+- type "schedule"/"pdf"/"image" → metadata only
+
+Subtodos do NOT support links — those operations must target the top-level parent.`,
     schema: {
       filter: z.enum(['active', 'completed']).optional().describe('Filter (default: active)'),
+      parentId: z
+        .string()
+        .optional()
+        .describe('Pass "null" for top-level only, or a parent todo id for its children'),
+      linkedTo: z
+        .object({
+          type: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'schedule']),
+          id: z.string()
+        })
+        .optional()
+        .describe('Only return todos linked to this entity'),
+      dueWithin: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .describe('Only todos with dueDate within N days from today'),
+      priority: z
+        .array(z.enum(['high', 'medium', 'low']))
+        .optional()
+        .describe('Filter by priority (any of)'),
+      search: z.string().optional().describe('Substring match on title'),
       resolveLinks: z
         .boolean()
         .optional()
         .describe('Include preview/description for each linkedItem (default: false)')
     },
-    handler: ({ filter, resolveLinks }) => {
+    handler: ({ filter, parentId, linkedTo, dueWithin, priority, search, resolveLinks }) => {
       const params = new URLSearchParams()
       if (filter) params.set('filter', filter as string)
+      if (typeof parentId === 'string') params.set('parentId', parentId)
+      if (linkedTo && typeof linkedTo === 'object') {
+        const lt = linkedTo as { type: string; id: string }
+        params.set('linkedTo[type]', lt.type)
+        params.set('linkedTo[id]', lt.id)
+      }
+      if (typeof dueWithin === 'number') params.set('dueWithin', String(dueWithin))
+      if (Array.isArray(priority) && priority.length > 0) {
+        for (const p of priority as string[]) params.append('priority[]', p)
+      }
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
       if (resolveLinks) params.set('resolveLinks', 'true')
       const qs = params.toString()
       return callTool('GET', `/api/mcp/todos${qs ? `?${qs}` : ''}`)
@@ -320,7 +363,9 @@ Set resolveLinks=true to include linkedItems[].preview (note/csv/pdf/image previ
   {
     name: 'manage_todos',
     description: `Batch create, update, or delete todos. Status/isDone auto-sync.
-Subtodos are created inline via the subtodos array (title only). linkItems supported on top-level todos only.`,
+Subtodos: created inline via the subtodos array. Title only — matches the UI which only allows entering a title.
+Other fields (priority/dueDate/etc.) on a subtodo can be set later via a separate update action targeting the subtodo's id.
+Links: linkItems / unlinkItems are supported only on top-level todos. Subtodos cannot be linked — link the parent todo instead, or convert the subtodo to top-level (clear parentId) first.`,
     schema: {
       actions: z
         .array(

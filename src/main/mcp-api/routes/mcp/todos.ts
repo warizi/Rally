@@ -3,10 +3,38 @@ import type { TodoNode, ManageTodoResult, TodoAction } from './types'
 import { todoService } from '../../../services/todo'
 import { todoRepository } from '../../../repositories/todo'
 import { entityLinkService } from '../../../services/entity-link'
+import type { LinkableEntityType } from '../../../db/schema/entity-link'
 import { ValidationError } from '../../../lib/errors'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
+
+const VALID_LINK_TYPES: ReadonlySet<LinkableEntityType> = new Set([
+  'note',
+  'csv',
+  'canvas',
+  'todo',
+  'pdf',
+  'image',
+  'schedule'
+])
+
+const VALID_PRIORITIES: ReadonlySet<'high' | 'medium' | 'low'> = new Set(['high', 'medium', 'low'])
+
+function parsePriorityParam(query: URLSearchParams): ('high' | 'medium' | 'low')[] | undefined {
+  const csv = query.get('priority')
+  const repeat = query.getAll('priority[]')
+  const raw = repeat.length > 0 ? repeat : csv ? csv.split(',') : []
+  if (raw.length === 0) return undefined
+  const cleaned = raw.map((s) => s.trim()).filter((s) => s.length > 0)
+  if (cleaned.length === 0) return undefined
+  for (const p of cleaned) {
+    if (!VALID_PRIORITIES.has(p as 'high' | 'medium' | 'low')) {
+      throw new ValidationError(`Invalid priority: ${p}. Must be one of high, medium, low.`)
+    }
+  }
+  return cleaned as ('high' | 'medium' | 'low')[]
+}
 
 export function registerMcpTodoRoutes(router: Router): void {
   // ─── GET /api/mcp/todos → list_todos ──────────────────────
@@ -15,7 +43,61 @@ export function registerMcpTodoRoutes(router: Router): void {
     const wsId = resolveActiveWorkspace()
     const filter = (query.get('filter') as 'all' | 'active' | 'completed') || 'active'
     const resolveLinks = query.get('resolveLinks') === 'true'
-    const todos = todoService.findByWorkspace(wsId, filter)
+
+    // ── 추가 필터 파싱 ───────────────────────────────────────
+    const parentIdRaw = query.get('parentId')
+    let parentId: string | null | undefined
+    if (parentIdRaw === null) parentId = undefined
+    else if (parentIdRaw === 'null' || parentIdRaw === '') parentId = null
+    else {
+      assertValidId(parentIdRaw, 'parentId')
+      parentId = parentIdRaw
+    }
+
+    const linkedToType = query.get('linkedTo[type]') ?? query.get('linkedToType')
+    const linkedToId = query.get('linkedTo[id]') ?? query.get('linkedToId')
+    let linkedTo: { type: LinkableEntityType; id: string } | undefined
+    if (linkedToType || linkedToId) {
+      if (!linkedToType || !linkedToId) {
+        throw new ValidationError('linkedTo requires both type and id')
+      }
+      if (!VALID_LINK_TYPES.has(linkedToType as LinkableEntityType)) {
+        throw new ValidationError(`Invalid linkedTo type: ${linkedToType}`)
+      }
+      assertValidId(linkedToId, 'linkedTo[id]')
+      linkedTo = { type: linkedToType as LinkableEntityType, id: linkedToId }
+    }
+
+    const dueWithinRaw = query.get('dueWithin')
+    let dueWithin: number | undefined
+    if (dueWithinRaw !== null && dueWithinRaw !== '') {
+      const n = Number.parseInt(dueWithinRaw, 10)
+      if (!Number.isFinite(n) || n < 0 || `${n}` !== dueWithinRaw) {
+        throw new ValidationError('dueWithin must be a non-negative integer (days)')
+      }
+      dueWithin = n
+    }
+
+    const priority = parsePriorityParam(query)
+    const search = query.get('search') ?? undefined
+
+    const useFilters =
+      parentId !== undefined ||
+      linkedTo !== undefined ||
+      dueWithin !== undefined ||
+      priority !== undefined ||
+      (search !== undefined && search.trim().length > 0)
+
+    const todos = useFilters
+      ? todoService.findByWorkspaceFiltered(wsId, {
+          filter,
+          parentId,
+          linkedTo,
+          dueWithin,
+          priority,
+          search
+        })
+      : todoService.findByWorkspace(wsId, filter)
 
     // N+1 회피: 모든 todo의 링크를 단일 batch 호출로 수집
     // (link rows 1 query + type별 title 6 query 이내 → 100개 todo여도 ~7 쿼리)
@@ -121,7 +203,9 @@ export function registerMcpTodoRoutes(router: Router): void {
             const todo = todoRepository.findById(action.id)
             if (todo?.parentId) {
               throw new ValidationError(
-                'Cannot link/unlink items on a subtodo. Only top-level todos support linkedItems.'
+                `Cannot link/unlink on a subtodo (parentId=${todo.parentId}). ` +
+                  `Subtodos do not support links — link the parent todo, ` +
+                  `or convert this subtodo to a top-level todo first.`
               )
             }
             if (action.linkItems?.length) {
