@@ -6,9 +6,9 @@ import { noteService } from '../../../services/note'
 import { csvFileService } from '../../../services/csv-file'
 import { canvasService } from '../../../services/canvas'
 import { todoService } from '../../../services/todo'
-import { ValidationError } from '../../../lib/errors'
+import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
-import { requireBody, resolveActiveWorkspace, resolveItemType } from './helpers'
+import { requireBody, resolveActiveWorkspace, resolveItemType, assertValidId } from './helpers'
 
 export function registerMcpItemRoutes(router: Router): void {
   // ─── GET /api/mcp/items → list_items ───────────────────────
@@ -67,60 +67,55 @@ export function registerMcpItemRoutes(router: Router): void {
     (_, body): { results: ManageItemResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
-      if (!Array.isArray(body.actions) || body.actions.length === 0)
-        throw new ValidationError('actions array is required')
 
-      const resolved = body.actions.map((a, i) => {
-        try {
-          return { ...a, ...resolveItemType(a.id) }
-        } catch (e) {
-          throw new ValidationError((e as Error).message, { failedActionIndex: i })
-        }
-      })
-
-      const results: ManageItemResult[] = []
       const noteAffected: string[] = []
       const tableAffected: string[] = []
 
-      for (const [i, action] of resolved.entries()) {
-        try {
+      // FS + DB 혼합 작업이라 transactional: false (DB만 트랜잭션 묶어도 FS와 어긋남).
+      // 향후 service 레벨에서 atomic 보장을 추가하는 별도 작업 필요.
+      const results = processBatchActions<ItemAction, ManageItemResult>(
+        body.actions,
+        (action) => {
+          assertValidId(action.id, 'item id')
+          if (action.action === 'move' && action.targetFolderId) {
+            assertValidId(action.targetFolderId, 'targetFolderId')
+          }
+          const resolved = resolveItemType(action.id)
+
           if (action.action === 'rename') {
-            if (action.type === 'note') {
-              const old = action.row.relativePath
+            if (resolved.type === 'note') {
+              const old = resolved.row.relativePath
               const result = noteService.rename(wsId, action.id, action.newName)
               noteAffected.push(old, result.relativePath)
             } else {
-              const old = action.row.relativePath
+              const old = resolved.row.relativePath
               const result = csvFileService.rename(wsId, action.id, action.newName)
               tableAffected.push(old, result.relativePath)
             }
           } else if (action.action === 'move') {
-            if (action.type === 'note') {
-              const old = action.row.relativePath
+            if (resolved.type === 'note') {
+              const old = resolved.row.relativePath
               const result = noteService.move(wsId, action.id, action.targetFolderId ?? null, 0)
               noteAffected.push(old, result.relativePath)
             } else {
-              const old = action.row.relativePath
+              const old = resolved.row.relativePath
               const result = csvFileService.move(wsId, action.id, action.targetFolderId ?? null, 0)
               tableAffected.push(old, result.relativePath)
             }
-          } else if (action.action === 'delete') {
-            if (action.type === 'note') {
-              noteAffected.push(action.row.relativePath)
+          } else {
+            // delete
+            if (resolved.type === 'note') {
+              noteAffected.push(resolved.row.relativePath)
               noteService.remove(wsId, action.id)
             } else {
-              tableAffected.push(action.row.relativePath)
+              tableAffected.push(resolved.row.relativePath)
               csvFileService.remove(wsId, action.id)
             }
           }
-          results.push({ action: action.action, type: action.type, id: action.id, success: true })
-        } catch (e) {
-          throw new ValidationError((e as Error).message, {
-            failedActionIndex: i,
-            completedCount: results.length
-          })
-        }
-      }
+          return { action: action.action, type: resolved.type, id: action.id, success: true }
+        },
+        { transactional: false }
+      )
 
       if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected)
       if (tableAffected.length > 0) broadcastChanged('csv:changed', wsId, tableAffected)

@@ -43,3 +43,12 @@ export function assertOwnedByWorkspace<T extends { workspaceId: string }>(
     throw new NotFoundError(notFoundMessage)
   }
 }
+
+/** nanoid 기본 21자 ± 약간의 여유. 가짜/대량 garbage ID DoS 차단용 사전 검사. */
+const ID_RE = /^[A-Za-z0-9_-]{8,32}$/
+
+export function assertValidId(id: unknown, label: string = 'id'): asserts id is string {
+  if (typeof id !== 'string' || !ID_RE.test(id)) {
+    throw new ValidationError(`Invalid ${label} format`)
+  }
+}
