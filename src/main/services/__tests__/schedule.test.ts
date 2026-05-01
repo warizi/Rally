@@ -77,7 +77,9 @@ const MOCK_SCHEDULE_ROW = {
   color: null,
   priority: 'medium' as const,
   createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01')
+  updatedAt: new Date('2026-01-01'),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {

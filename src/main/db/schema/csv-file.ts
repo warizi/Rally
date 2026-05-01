@@ -1,6 +1,7 @@
-import { integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
 import { workspaces } from './workspace'
 import { folders } from './folder'
+import { trashBatches } from './trash-batch'
 
 export const csvFiles = sqliteTable(
   'csv_files',
@@ -17,7 +18,15 @@ export const csvFiles = sqliteTable(
     columnWidths: text('column_widths'),
     order: integer('order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
+    trashBatchId: text('trash_batch_id').references(() => trashBatches.id, {
+      onDelete: 'set null'
+    })
   },
-  (t) => [unique().on(t.workspaceId, t.relativePath)]
+  (t) => [
+    unique().on(t.workspaceId, t.relativePath),
+    index('idx_csv_files_deleted').on(t.deletedAt),
+    index('idx_csv_files_trash_batch').on(t.trashBatchId)
+  ]
 )

@@ -44,10 +44,10 @@ const baseDate = new Date('2026-01-01T00:00:00Z')
 const newerDate = new Date('2026-04-01T00:00:00Z')
 
 const mockFolders = [
-  { id: 'f-root', workspaceId: 'ws-1', relativePath: 'root', order: 0, color: null, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'f-child', workspaceId: 'ws-1', relativePath: 'root/child', order: 0, color: null, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'f-grand', workspaceId: 'ws-1', relativePath: 'root/child/grand', order: 0, color: null, createdAt: baseDate, updatedAt: newerDate },
-  { id: 'f-other', workspaceId: 'ws-1', relativePath: 'other', order: 1, color: null, createdAt: baseDate, updatedAt: baseDate }
+  { id: 'f-root', workspaceId: 'ws-1', relativePath: 'root', order: 0, color: null, createdAt: baseDate, updatedAt: baseDate, deletedAt: null, trashBatchId: null },
+  { id: 'f-child', workspaceId: 'ws-1', relativePath: 'root/child', order: 0, color: null, createdAt: baseDate, updatedAt: baseDate, deletedAt: null, trashBatchId: null },
+  { id: 'f-grand', workspaceId: 'ws-1', relativePath: 'root/child/grand', order: 0, color: null, createdAt: baseDate, updatedAt: newerDate, deletedAt: null, trashBatchId: null },
+  { id: 'f-other', workspaceId: 'ws-1', relativePath: 'other', order: 1, color: null, createdAt: baseDate, updatedAt: baseDate, deletedAt: null, trashBatchId: null }
 ]
 
 const mockNotes = [

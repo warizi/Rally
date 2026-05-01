@@ -56,7 +56,9 @@ const MOCK_CSV_ROW = {
   columnWidths: null,
   order: 0,
   createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01')
+  updatedAt: new Date('2026-01-01'),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 const MOCK_FOLDER = {
@@ -66,7 +68,9 @@ const MOCK_FOLDER = {
   color: null,
   order: 0,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {

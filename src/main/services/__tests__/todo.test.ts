@@ -65,7 +65,9 @@ const MOCK_TODO_ROW = {
   updatedAt: new Date('2026-01-01'),
   doneAt: null,
   dueDate: null,
-  startDate: null
+  startDate: null,
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {

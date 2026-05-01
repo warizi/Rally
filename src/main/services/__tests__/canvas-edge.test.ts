@@ -40,7 +40,9 @@ const MOCK_EDGE_ROW = {
   color: null,
   style: 'solid' as const,
   arrow: 'end' as const,
-  createdAt: new Date()
+  createdAt: new Date(),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {

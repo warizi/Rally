@@ -38,7 +38,9 @@ const MOCK_CANVAS_ROW = {
   viewportY: 0,
   viewportZoom: 1,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {
