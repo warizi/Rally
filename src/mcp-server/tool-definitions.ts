@@ -126,6 +126,18 @@ Title matches rank above content/description matches; ties break by updatedAt de
     handler: ({ id }) => callTool('GET', `/api/mcp/content/${e(id as string)}`)
   },
   {
+    name: 'read_contents',
+    description: `Batch read the contents of multiple notes/tables in one round-trip. Up to 50 IDs.
+Each result is independent: if one ID fails (not found, fs error, etc.) the others still succeed.
+Result entries:
+- success=true: { id, type: 'note'|'table', title, relativePath, content [, encoding, columnWidths] }
+- success=false: { id, error: { code, message } }`,
+    schema: {
+      ids: z.array(z.string()).min(1).max(50).describe('Note or table IDs (1–50)')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/contents/batch', args)
+  },
+  {
     name: 'write_content',
     description: `Create or update a note/table. If id is provided, updates existing content. If not, creates new.
 WARNING: When updating a note, image references (![](/.images/xxx.png)) removed from new content will be permanently deleted from disk. Always preserve existing image references.`,
@@ -288,11 +300,22 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
 Each todo includes linkedItems array with related items. To inspect a linked item:
 - type "note" or "csv" → use read_content with the id
 - type "canvas" → use read_canvas with the id as canvasId
-- type "schedule", "pdf", "image" → metadata only (no detail tool available)`,
+- type "schedule", "pdf", "image" → metadata only (no detail tool available)
+Set resolveLinks=true to include linkedItems[].preview (note/csv/pdf/image preview, canvas/todo/schedule description) in one round-trip — saves N follow-up read_content calls.`,
     schema: {
-      filter: z.enum(['active', 'completed']).optional().describe('Filter (default: active)')
+      filter: z.enum(['active', 'completed']).optional().describe('Filter (default: active)'),
+      resolveLinks: z
+        .boolean()
+        .optional()
+        .describe('Include preview/description for each linkedItem (default: false)')
     },
-    handler: ({ filter }) => callTool('GET', `/api/mcp/todos${filter ? `?filter=${filter}` : ''}`)
+    handler: ({ filter, resolveLinks }) => {
+      const params = new URLSearchParams()
+      if (filter) params.set('filter', filter as string)
+      if (resolveLinks) params.set('resolveLinks', 'true')
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/todos${qs ? `?${qs}` : ''}`)
+    }
   },
   {
     name: 'manage_todos',

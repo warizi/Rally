@@ -14,12 +14,16 @@ export function registerMcpTodoRoutes(router: Router): void {
   router.addRoute('GET', '/api/mcp/todos', (_params, _body, query): { todos: TodoNode[] } => {
     const wsId = resolveActiveWorkspace()
     const filter = (query.get('filter') as 'all' | 'active' | 'completed') || 'active'
+    const resolveLinks = query.get('resolveLinks') === 'true'
     const todos = todoService.findByWorkspace(wsId, filter)
 
     // N+1 회피: 모든 todo의 링크를 단일 batch 호출로 수집
     // (link rows 1 query + type별 title 6 query 이내 → 100개 todo여도 ~7 쿼리)
+    // resolveLinks=true면 type별 preview/description을 추가 batch fetch (+최대 6 쿼리)
     const todoIds = todos.map((t) => t.id)
-    const linksMap = entityLinkService.getLinkedBatch('todo', todoIds)
+    const linksMap = resolveLinks
+      ? entityLinkService.getLinkedBatchWithPreview('todo', todoIds)
+      : entityLinkService.getLinkedBatch('todo', todoIds)
 
     function mapTodo(t: (typeof todos)[number]): TodoNode {
       const linked = linksMap.get(t.id) ?? []
@@ -38,7 +42,8 @@ export function registerMcpTodoRoutes(router: Router): void {
         linkedItems: linked.map((l) => ({
           type: l.entityType,
           id: l.entityId,
-          title: l.title
+          title: l.title,
+          preview: 'preview' in l ? ((l as { preview: string | null }).preview ?? null) : null
         })),
         children: []
       }

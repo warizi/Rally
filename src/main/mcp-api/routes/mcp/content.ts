@@ -13,7 +13,7 @@ import { csvFileService } from '../../../services/csv-file'
 import { searchService, type SearchType } from '../../../services/search'
 import { ValidationError } from '../../../lib/errors'
 import { broadcastChanged } from '../../lib/broadcast'
-import { requireBody, resolveActiveWorkspace, resolveItemType } from './helpers'
+import { requireBody, resolveActiveWorkspace, resolveItemType, assertValidId } from './helpers'
 
 const VALID_SEARCH_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
 
@@ -100,6 +100,84 @@ export function registerMcpContentRoutes(router: Router): void {
       }
     }
   )
+
+  // ─── POST /api/mcp/contents/batch → read_contents ─────────
+  // 부분 실패 처리: 한 ID 실패해도 results[i]에 error를 채우고 진행.
+  // 트랜잭션 불필요(read-only) — processBatchActions는 mutation 전용이라 직접 루프.
+
+  router.addRoute<{ ids: string[] }>('POST', '/api/mcp/contents/batch', (_, body) => {
+    requireBody(body)
+    const wsId = resolveActiveWorkspace()
+    if (!Array.isArray(body.ids) || body.ids.length === 0) {
+      throw new ValidationError('ids array is required')
+    }
+    if (body.ids.length > 50) {
+      throw new ValidationError(`Batch size ${body.ids.length} exceeds limit 50.`)
+    }
+
+    type ReadContentResult =
+      | {
+          id: string
+          success: true
+          type: 'note'
+          title: string
+          relativePath: string
+          content: string
+        }
+      | {
+          id: string
+          success: true
+          type: 'table'
+          title: string
+          relativePath: string
+          content: string
+          encoding: string
+          columnWidths: string | null
+        }
+      | {
+          id: string
+          success: false
+          error: { code: string; message: string }
+        }
+
+    const results: ReadContentResult[] = body.ids.map((id) => {
+      try {
+        assertValidId(id, 'id')
+        const resolved = resolveItemType(id)
+        if (resolved.type === 'note') {
+          const content = noteService.readContent(wsId, id)
+          return {
+            id,
+            success: true,
+            type: 'note',
+            title: resolved.row.title,
+            relativePath: resolved.row.relativePath,
+            content
+          }
+        }
+        const { content, encoding, columnWidths } = csvFileService.readContent(wsId, id)
+        return {
+          id,
+          success: true,
+          type: 'table',
+          title: resolved.row.title,
+          relativePath: resolved.row.relativePath,
+          content,
+          encoding,
+          columnWidths
+        }
+      } catch (e) {
+        const err = e as Error
+        return {
+          id,
+          success: false,
+          error: { code: err.constructor.name, message: err.message }
+        }
+      }
+    })
+
+    return { results }
+  })
 
   // ─── POST /api/mcp/content → write_content ────────────────
 

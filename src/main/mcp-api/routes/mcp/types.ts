@@ -239,6 +239,8 @@ export interface LinkedItem {
   type: string
   id: string
   title: string | null
+  /** resolveLinks=true 시 채워짐. note/csv/pdf/image는 preview, canvas/todo/schedule은 description. */
+  preview?: string | null
 }
 
 export interface TodoNode {
