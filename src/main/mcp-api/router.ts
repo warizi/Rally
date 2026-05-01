@@ -1,6 +1,6 @@
 import http from 'http'
 import { parseBody } from './lib/body-parser'
-import { NotFoundError, ValidationError, ConflictError, PayloadTooLargeError } from '../lib/errors'
+import { normalizeError } from '../lib/errors'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { workspaceRepository } from '../repositories/workspace'
 
@@ -18,21 +18,7 @@ interface Route {
   handler: RouteHandler
 }
 
-function mapErrorToStatus(error: Error): number {
-  if (error instanceof PayloadTooLargeError) return 413
-  if (error instanceof NotFoundError) return 404
-  if (error instanceof ValidationError) return 400
-  if (error instanceof ConflictError) return 409
-  return 500
-}
-
-function mapErrorToType(error: Error): string {
-  if (error instanceof PayloadTooLargeError) return 'PayloadTooLargeError'
-  if (error instanceof NotFoundError) return 'NotFoundError'
-  if (error instanceof ValidationError) return 'ValidationError'
-  if (error instanceof ConflictError) return 'ConflictError'
-  return 'UnknownError'
-}
+// 에러 정규화는 lib/errors.ts의 normalizeError 사용
 
 interface RouterInstance {
   addRoute: <TBody = null>(
@@ -98,27 +84,24 @@ export function createRouter(): RouterInstance {
         res.writeHead(200, { 'Content-Type': 'application/json' })
         res.end(JSON.stringify(response))
       } catch (error) {
-        if (error instanceof Error) {
-          const status = mapErrorToStatus(error)
-          const details = (error as unknown as Record<string, unknown>).details
-          res.writeHead(status, { 'Content-Type': 'application/json' })
-          res.end(
-            JSON.stringify({
-              error: error.message,
-              errorType: mapErrorToType(error),
-              ...(details ? { details } : {})
-            })
-          )
-        } else {
-          res.writeHead(500, { 'Content-Type': 'application/json' })
-          res.end(JSON.stringify({ error: String(error), errorType: 'UnknownError' }))
-        }
+        const normalized = normalizeError(error)
+        res.writeHead(normalized.status, { 'Content-Type': 'application/json' })
+        res.end(
+          JSON.stringify({
+            // 새 stable contract: code (ErrorCode enum)
+            code: normalized.code,
+            error: normalized.message,
+            // 호환성: 기존 응답 필드 유지
+            errorType: normalized.name,
+            ...(normalized.details ? { details: normalized.details } : {})
+          })
+        )
       }
       return
     }
 
     res.writeHead(404, { 'Content-Type': 'application/json' })
-    res.end(JSON.stringify({ error: 'Not Found', errorType: 'NotFoundError' }))
+    res.end(JSON.stringify({ code: 'NOT_FOUND', error: 'Not Found', errorType: 'NotFoundError' }))
   }
 
   return { addRoute, handle }

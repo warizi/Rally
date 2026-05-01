@@ -30,6 +30,7 @@ import { recurringRuleRepository } from '../repositories/recurring-rule'
 import { canvasRepository } from '../repositories/canvas'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { canvasEdgeRepository } from '../repositories/canvas-edge'
+import { canvasGroupRepository } from '../repositories/canvas-group'
 import { noteRepository } from '../repositories/note'
 import { csvFileRepository } from '../repositories/csv-file'
 import { pdfFileRepository } from '../repositories/pdf-file'
@@ -295,11 +296,7 @@ function collectCanvasCascade(rootId: string): CollectedRows {
   if (!root) throw new NotFoundError(`Canvas not found: ${rootId}`)
   const nodes = canvasNodeRepository.findByCanvasIdIncludingDeleted(rootId)
   const edges = canvasEdgeRepository.findByCanvasIdIncludingDeleted(rootId)
-  const groups = db
-    .select({ id: canvasGroups.id })
-    .from(canvasGroups)
-    .where(eq(canvasGroups.canvasId, rootId))
-    .all()
+  const groups = canvasGroupRepository.findByCanvasIdIncludingDeleted(rootId)
   return {
     ...emptyCollected(),
     canvasIds: [rootId],
