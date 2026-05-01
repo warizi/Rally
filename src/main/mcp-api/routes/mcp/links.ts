@@ -2,6 +2,7 @@ import type { Router } from '../../router'
 import { requireBody, resolveActiveWorkspace } from './helpers'
 import { entityLinkService } from '../../../services/entity-link'
 import { withTransaction } from '../../../lib/transaction'
+import { broadcastChanged } from '../../lib/broadcast'
 import type { LinkAction, ManageLinkResult } from './types'
 
 export function registerMcpLinkRoutes(router: Router): void {
@@ -36,7 +37,8 @@ export function registerMcpLinkRoutes(router: Router): void {
             action.sourceType,
             action.sourceId,
             action.targetType,
-            action.targetId
+            action.targetId,
+            wsId
           )
           acc.push({
             action: 'unlink',
@@ -47,7 +49,7 @@ export function registerMcpLinkRoutes(router: Router): void {
             success: true
           })
         } else if (action.action === 'list') {
-          const linked = entityLinkService.getLinked(action.entityType, action.entityId)
+          const linked = entityLinkService.getLinked(action.entityType, action.entityId, wsId)
           acc.push({
             action: 'list',
             entityType: action.entityType,
@@ -63,6 +65,14 @@ export function registerMcpLinkRoutes(router: Router): void {
       }
       return acc
     })
+
+    // mutation 액션이 있었다면 broadcast (list 단독 호출은 read-only이므로 건너뜀)
+    const hadMutation = actions.some((a) => a.action === 'link' || a.action === 'unlink')
+    if (hadMutation) {
+      broadcastChanged('entity-link:changed', wsId, [])
+      // todo와 연결된 link 변경은 todo 목록 + 히스토리에도 영향
+      broadcastChanged('todo:changed', wsId, [])
+    }
 
     return { results }
   })

@@ -28,3 +28,18 @@ export function resolveItemType(
   if (csv) return { type: 'table', row: csv }
   throw new NotFoundError(`Item not found: ${id}`)
 }
+
+/**
+ * entity가 활성 워크스페이스에 속하는지 검증.
+ * null/undefined / 다른 워크스페이스면 NotFoundError throw — 정보 노출 방지를 위해
+ * 'forbidden' 대신 'not found'로 응답.
+ */
+export function assertOwnedByWorkspace<T extends { workspaceId: string }>(
+  entity: T | null | undefined,
+  wsId: string,
+  notFoundMessage: string
+): asserts entity is T {
+  if (!entity || entity.workspaceId !== wsId) {
+    throw new NotFoundError(notFoundMessage)
+  }
+}
