@@ -8,6 +8,8 @@ import { registerMcpLinkRoutes } from './links'
 import { registerMcpScheduleRoutes } from './schedules'
 import { registerMcpReminderRoutes } from './reminders'
 import { registerMcpRecurringRoutes } from './recurring'
+import { registerMcpTemplateRoutes } from './templates'
+import { registerMcpTagRoutes } from './tags'
 
 export function registerMcpRoutes(router: Router): void {
   registerMcpItemRoutes(router)
@@ -19,4 +21,6 @@ export function registerMcpRoutes(router: Router): void {
   registerMcpScheduleRoutes(router)
   registerMcpReminderRoutes(router)
   registerMcpRecurringRoutes(router)
+  registerMcpTemplateRoutes(router)
+  registerMcpTagRoutes(router)
 }

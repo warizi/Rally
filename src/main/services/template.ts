@@ -28,6 +28,18 @@ export const templateService = {
     return templateRepository.findByWorkspaceAndType(workspaceId, type).map(toItem)
   },
 
+  /** type 미지정 시 모든 종류. UI는 type 분기로만 호출하지만 MCP는 통합 조회를 선호. */
+  listAll(workspaceId: string, type?: TemplateType): TemplateItem[] {
+    if (type) return templateRepository.findByWorkspaceAndType(workspaceId, type).map(toItem)
+    return templateRepository.findByWorkspace(workspaceId).map(toItem)
+  },
+
+  findById(id: string): TemplateItem {
+    const row = templateRepository.findById(id)
+    if (!row) throw new NotFoundError('템플릿을 찾을 수 없습니다')
+    return toItem(row)
+  },
+
   create(input: {
     workspaceId: string
     title: string

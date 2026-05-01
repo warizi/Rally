@@ -655,6 +655,133 @@ startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time
       completionId: z.string()
     },
     handler: (args) => callTool('POST', '/api/mcp/recurring/uncomplete', args)
+  },
+  // ─── Templates ────────────────────────────────────────────
+  {
+    name: 'list_templates',
+    description: `List note/csv templates in the active workspace. jsonData is omitted from list (use read_template for full content).`,
+    schema: {
+      type: z.enum(['note', 'csv']).optional().describe('Filter by template type')
+    },
+    handler: ({ type }) => {
+      const params = new URLSearchParams()
+      if (type) params.set('type', type as string)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/templates${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'read_template',
+    description: `Read full template content (id, title, type, jsonData). jsonData is the serialized payload — for note templates a JSON string consumable by write_content's content field, for csv templates the CSV body.`,
+    schema: {
+      id: z.string().describe('Template ID from list_templates')
+    },
+    handler: ({ id }) => callTool('GET', `/api/mcp/templates/${e(id as string)}`)
+  },
+  {
+    name: 'manage_templates',
+    description: `Batch create or delete templates. Templates do not support update — delete + recreate to change content.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              title: z.string(),
+              type: z.enum(['note', 'csv']),
+              jsonData: z.string().describe('Serialized template payload (markdown JSON or CSV)')
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of template actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/templates/batch', args)
+  },
+  // ─── Tags ─────────────────────────────────────────────────
+  {
+    name: 'list_tags',
+    description: `List tags in the active workspace. Optional substring search on name/description.`,
+    schema: {
+      search: z.string().optional()
+    },
+    handler: ({ search }) => {
+      const params = new URLSearchParams()
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/tags${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'list_tagged_items',
+    description: `List items that carry a given tag. Filter by itemTypes (default: all taggable types).
+Orphan attachments (item deleted but tag link remains) are skipped from the response.`,
+    schema: {
+      tagId: z.string(),
+      itemTypes: z
+        .array(z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'folder']))
+        .optional()
+    },
+    handler: ({ tagId, itemTypes }) => {
+      const params = new URLSearchParams()
+      if (Array.isArray(itemTypes) && itemTypes.length > 0) {
+        for (const t of itemTypes as string[]) params.append('itemTypes[]', t)
+      }
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/tags/${e(tagId as string)}/items${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'list_item_tags',
+    description: `List tags attached to a specific item.`,
+    schema: {
+      itemType: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'folder']),
+      itemId: z.string()
+    },
+    handler: ({ itemType, itemId }) =>
+      callTool('GET', `/api/mcp/tagged/${e(itemType as string)}/${e(itemId as string)}`)
+  },
+  {
+    name: 'manage_tags',
+    description: `Batch tag operations:
+- create_tag / update_tag / delete_tag: tag CRUD
+- attach / detach: link a tag to a taggable item (note/csv/canvas/todo/pdf/image/folder)
+delete_tag also detaches from all items.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create_tag'),
+              name: z.string(),
+              color: z.string().optional(),
+              description: z.string().optional()
+            }),
+            z.object({
+              action: z.literal('update_tag'),
+              id: z.string(),
+              name: z.string().optional(),
+              color: z.string().optional(),
+              description: z.string().nullable().optional()
+            }),
+            z.object({ action: z.literal('delete_tag'), id: z.string() }),
+            z.object({
+              action: z.literal('attach'),
+              tagId: z.string(),
+              itemType: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'folder']),
+              itemId: z.string()
+            }),
+            z.object({
+              action: z.literal('detach'),
+              tagId: z.string(),
+              itemType: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'folder']),
+              itemId: z.string()
+            })
+          ])
+        )
+        .describe('Array of tag actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/tags/batch', args)
   }
 ]
 

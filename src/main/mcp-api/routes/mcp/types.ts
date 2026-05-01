@@ -504,3 +504,105 @@ export interface RecurringCompletionSummary {
   completedAt: string
   createdAt: string
 }
+
+// ─── Templates ──────────────────────────────────────────────
+
+export type TemplateType = 'note' | 'csv'
+
+export interface TemplateSummary {
+  id: string
+  workspaceId: string
+  title: string
+  type: TemplateType
+  createdAt: string
+}
+
+export interface TemplateDetail extends TemplateSummary {
+  jsonData: string
+}
+
+export interface CreateTemplateAction {
+  action: 'create'
+  title: string
+  type: TemplateType
+  jsonData: string
+}
+
+export interface DeleteTemplateAction {
+  action: 'delete'
+  id: string
+}
+
+export type TemplateAction = CreateTemplateAction | DeleteTemplateAction
+
+export interface ManageTemplateResult {
+  action: string
+  id: string
+  success: true
+}
+
+// ─── Tags / Item-Tags ───────────────────────────────────────
+
+import type { TaggableEntityType } from '../../../db/schema/tag'
+
+export interface TagSummary {
+  id: string
+  workspaceId: string
+  name: string
+  color: string
+  description: string | null
+  createdAt: string
+}
+
+export interface TaggedItemSummary {
+  type: TaggableEntityType
+  id: string
+  title: string
+}
+
+export interface CreateTagAction {
+  action: 'create_tag'
+  name: string
+  color?: string
+  description?: string
+}
+
+export interface UpdateTagAction {
+  action: 'update_tag'
+  id: string
+  name?: string
+  color?: string
+  description?: string | null
+}
+
+export interface DeleteTagAction {
+  action: 'delete_tag'
+  id: string
+}
+
+export interface AttachTagAction {
+  action: 'attach'
+  tagId: string
+  itemType: TaggableEntityType
+  itemId: string
+}
+
+export interface DetachTagAction {
+  action: 'detach'
+  tagId: string
+  itemType: TaggableEntityType
+  itemId: string
+}
+
+export type TagAction =
+  | CreateTagAction
+  | UpdateTagAction
+  | DeleteTagAction
+  | AttachTagAction
+  | DetachTagAction
+
+export interface ManageTagResult {
+  action: string
+  id: string
+  success: true
+}
