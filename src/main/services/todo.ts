@@ -118,6 +118,13 @@ export const todoService = {
     return todoRepository.findByWorkspaceId(workspaceId, filter).map(toTodoItem)
   },
 
+  /** 풀 fetch 없이 카운트만 반환 (list_items 등 메타용) */
+  countByWorkspace(workspaceId: string): { active: number; completed: number; total: number } {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+    return todoRepository.countByWorkspaceId(workspaceId)
+  },
+
   findByWorkspaceAndDateRange(workspaceId: string, range: { start: Date; end: Date }): TodoItem[] {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)

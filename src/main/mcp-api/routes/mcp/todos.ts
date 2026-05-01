@@ -16,8 +16,13 @@ export function registerMcpTodoRoutes(router: Router): void {
     const filter = (query.get('filter') as 'all' | 'active' | 'completed') || 'active'
     const todos = todoService.findByWorkspace(wsId, filter)
 
+    // N+1 회피: 모든 todo의 링크를 단일 batch 호출로 수집
+    // (link rows 1 query + type별 title 6 query 이내 → 100개 todo여도 ~7 쿼리)
+    const todoIds = todos.map((t) => t.id)
+    const linksMap = entityLinkService.getLinkedBatch('todo', todoIds)
+
     function mapTodo(t: (typeof todos)[number]): TodoNode {
-      const linked = entityLinkService.getLinked('todo', t.id)
+      const linked = linksMap.get(t.id) ?? []
       return {
         id: t.id,
         parentId: t.parentId,

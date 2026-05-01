@@ -23,7 +23,8 @@ export function registerMcpItemRoutes(router: Router): void {
     const notes = noteService.readByWorkspaceFromDb(wsId)
     const tables = csvFileService.readByWorkspaceFromDb(wsId)
     const canvases = canvasService.findByWorkspace(wsId)
-    const allTodos = todoService.findByWorkspace(wsId)
+    // 풀 fetch 대신 SQL COUNT — 큰 워크스페이스에서 메모리/시간 절약
+    const todoCounts = todoService.countByWorkspace(wsId)
 
     return {
       workspace: { id: workspace.id, name: workspace.name, path: workspace.path },
@@ -54,11 +55,7 @@ export function registerMcpItemRoutes(router: Router): void {
         createdAt: c.createdAt.toISOString(),
         updatedAt: c.updatedAt.toISOString()
       })),
-      todos: {
-        active: allTodos.filter((t) => !t.isDone).length,
-        completed: allTodos.filter((t) => t.isDone).length,
-        total: allTodos.length
-      }
+      todos: todoCounts
     }
   })
 
