@@ -1,4 +1,4 @@
-import { inArray } from 'drizzle-orm'
+import { and, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db'
 import { todos, schedules, notes, csvFiles, pdfFiles, imageFiles, canvases } from '../db/schema'
 import { entityLinkRepository } from '../repositories/entity-link'
@@ -41,6 +41,35 @@ function findEntity(
   }
 }
 
+/**
+ * 활성 + 휴지통(deletedAt IS NOT NULL) 모두 검색.
+ * orphan 판정 시 "휴지통 중"과 "진짜 사라짐"을 구분하기 위해 사용.
+ * trashed entity의 link도 보존해야 양쪽 모두 복구 시 link가 살아남음.
+ */
+function findEntityIncludingDeleted(
+  type: LinkableEntityType,
+  id: string
+): { workspaceId: string; title: string } | undefined {
+  switch (type) {
+    case 'todo':
+      return todoRepository.findByIdIncludingDeleted(id)
+    case 'schedule':
+      return scheduleRepository.findByIdIncludingDeleted(id) as
+        | { workspaceId: string; title: string }
+        | undefined
+    case 'note':
+      return noteRepository.findByIdIncludingDeleted(id)
+    case 'pdf':
+      return pdfFileRepository.findByIdIncludingDeleted(id)
+    case 'csv':
+      return csvFileRepository.findByIdIncludingDeleted(id)
+    case 'image':
+      return imageFileRepository.findByIdIncludingDeleted(id)
+    case 'canvas':
+      return canvasRepository.findByIdIncludingDeleted(id)
+  }
+}
+
 function getWorkspaceId(type: LinkableEntityType, entity: { workspaceId: string | null }): string {
   const wsId = entity.workspaceId
   if (!wsId) throw new ValidationError(`Entity ${type} has no workspaceId`)
@@ -79,11 +108,12 @@ function fetchEntityTitlesBatch(
     byType[type].push(id)
   }
 
+  // 트래시 entity는 결과에서 제외 (UI에 노출 안 됨). 단 link row는 보존됨.
   if (byType.todo.length > 0) {
     const rows = db
       .select({ id: todos.id, title: todos.title })
       .from(todos)
-      .where(inArray(todos.id, byType.todo))
+      .where(and(inArray(todos.id, byType.todo), isNull(todos.deletedAt)))
       .all()
     for (const r of rows) result.set(`todo:${r.id}`, r.title)
   }
@@ -91,7 +121,7 @@ function fetchEntityTitlesBatch(
     const rows = db
       .select({ id: schedules.id, title: schedules.title })
       .from(schedules)
-      .where(inArray(schedules.id, byType.schedule))
+      .where(and(inArray(schedules.id, byType.schedule), isNull(schedules.deletedAt)))
       .all()
     for (const r of rows) result.set(`schedule:${r.id}`, r.title)
   }
@@ -99,7 +129,7 @@ function fetchEntityTitlesBatch(
     const rows = db
       .select({ id: notes.id, title: notes.title })
       .from(notes)
-      .where(inArray(notes.id, byType.note))
+      .where(and(inArray(notes.id, byType.note), isNull(notes.deletedAt)))
       .all()
     for (const r of rows) result.set(`note:${r.id}`, r.title)
   }
@@ -107,7 +137,7 @@ function fetchEntityTitlesBatch(
     const rows = db
       .select({ id: csvFiles.id, title: csvFiles.title })
       .from(csvFiles)
-      .where(inArray(csvFiles.id, byType.csv))
+      .where(and(inArray(csvFiles.id, byType.csv), isNull(csvFiles.deletedAt)))
       .all()
     for (const r of rows) result.set(`csv:${r.id}`, r.title)
   }
@@ -115,7 +145,7 @@ function fetchEntityTitlesBatch(
     const rows = db
       .select({ id: pdfFiles.id, title: pdfFiles.title })
       .from(pdfFiles)
-      .where(inArray(pdfFiles.id, byType.pdf))
+      .where(and(inArray(pdfFiles.id, byType.pdf), isNull(pdfFiles.deletedAt)))
       .all()
     for (const r of rows) result.set(`pdf:${r.id}`, r.title)
   }
@@ -123,7 +153,7 @@ function fetchEntityTitlesBatch(
     const rows = db
       .select({ id: imageFiles.id, title: imageFiles.title })
       .from(imageFiles)
-      .where(inArray(imageFiles.id, byType.image))
+      .where(and(inArray(imageFiles.id, byType.image), isNull(imageFiles.deletedAt)))
       .all()
     for (const r of rows) result.set(`image:${r.id}`, r.title)
   }
@@ -131,7 +161,7 @@ function fetchEntityTitlesBatch(
     const rows = db
       .select({ id: canvases.id, title: canvases.title })
       .from(canvases)
-      .where(inArray(canvases.id, byType.canvas))
+      .where(and(inArray(canvases.id, byType.canvas), isNull(canvases.deletedAt)))
       .all()
     for (const r of rows) result.set(`canvas:${r.id}`, r.title)
   }
@@ -170,11 +200,12 @@ function fetchEntityPreviewsBatch(
 
   const norm = (s: string | null): string | null => (s && s.trim() ? s : null)
 
+  // 트래시 entity는 결과에서 제외 (UI에 노출 안 됨). link row는 보존됨.
   if (byType.note.length > 0) {
     const rows = db
       .select({ id: notes.id, preview: notes.preview })
       .from(notes)
-      .where(inArray(notes.id, byType.note))
+      .where(and(inArray(notes.id, byType.note), isNull(notes.deletedAt)))
       .all()
     for (const r of rows) result.set(`note:${r.id}`, norm(r.preview))
   }
@@ -182,7 +213,7 @@ function fetchEntityPreviewsBatch(
     const rows = db
       .select({ id: csvFiles.id, preview: csvFiles.preview })
       .from(csvFiles)
-      .where(inArray(csvFiles.id, byType.csv))
+      .where(and(inArray(csvFiles.id, byType.csv), isNull(csvFiles.deletedAt)))
       .all()
     for (const r of rows) result.set(`csv:${r.id}`, norm(r.preview))
   }
@@ -190,7 +221,7 @@ function fetchEntityPreviewsBatch(
     const rows = db
       .select({ id: pdfFiles.id, preview: pdfFiles.preview })
       .from(pdfFiles)
-      .where(inArray(pdfFiles.id, byType.pdf))
+      .where(and(inArray(pdfFiles.id, byType.pdf), isNull(pdfFiles.deletedAt)))
       .all()
     for (const r of rows) result.set(`pdf:${r.id}`, norm(r.preview))
   }
@@ -198,7 +229,7 @@ function fetchEntityPreviewsBatch(
     const rows = db
       .select({ id: imageFiles.id, preview: imageFiles.preview })
       .from(imageFiles)
-      .where(inArray(imageFiles.id, byType.image))
+      .where(and(inArray(imageFiles.id, byType.image), isNull(imageFiles.deletedAt)))
       .all()
     for (const r of rows) result.set(`image:${r.id}`, norm(r.preview))
   }
@@ -206,7 +237,7 @@ function fetchEntityPreviewsBatch(
     const rows = db
       .select({ id: canvases.id, description: canvases.description })
       .from(canvases)
-      .where(inArray(canvases.id, byType.canvas))
+      .where(and(inArray(canvases.id, byType.canvas), isNull(canvases.deletedAt)))
       .all()
     for (const r of rows) result.set(`canvas:${r.id}`, norm(r.description))
   }
@@ -214,7 +245,7 @@ function fetchEntityPreviewsBatch(
     const rows = db
       .select({ id: todos.id, description: todos.description })
       .from(todos)
-      .where(inArray(todos.id, byType.todo))
+      .where(and(inArray(todos.id, byType.todo), isNull(todos.deletedAt)))
       .all()
     for (const r of rows) result.set(`todo:${r.id}`, norm(r.description))
   }
@@ -222,7 +253,7 @@ function fetchEntityPreviewsBatch(
     const rows = db
       .select({ id: schedules.id, description: schedules.description })
       .from(schedules)
-      .where(inArray(schedules.id, byType.schedule))
+      .where(and(inArray(schedules.id, byType.schedule), isNull(schedules.deletedAt)))
       .all()
     for (const r of rows) result.set(`schedule:${r.id}`, norm(r.description))
   }
@@ -350,7 +381,13 @@ export const entityLinkService = {
 
       const entity = findEntity(linkedType, linkedId)
       if (!entity) {
-        orphanRows.push(row)
+        // 휴지통 중인 entity인지 확인 — 진짜 사라진 경우만 orphan으로 정리.
+        // trashed entity의 link는 보존돼야 양쪽 복구 시 자동으로 살아남.
+        const trashed = findEntityIncludingDeleted(linkedType, linkedId)
+        if (!trashed) {
+          orphanRows.push(row)
+        }
+        // trashed면 결과에 노출은 안 하고 (UI에서 보이지 않음) 링크 row는 유지
         continue
       }
 

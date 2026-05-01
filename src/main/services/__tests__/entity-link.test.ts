@@ -20,11 +20,21 @@ vi.mock('../../repositories/entity-link', () => ({
   }
 }))
 
-vi.mock('../../repositories/todo', () => ({ todoRepository: { findById: vi.fn() } }))
-vi.mock('../../repositories/schedule', () => ({ scheduleRepository: { findById: vi.fn() } }))
-vi.mock('../../repositories/note', () => ({ noteRepository: { findById: vi.fn() } }))
-vi.mock('../../repositories/pdf-file', () => ({ pdfFileRepository: { findById: vi.fn() } }))
-vi.mock('../../repositories/csv-file', () => ({ csvFileRepository: { findById: vi.fn() } }))
+vi.mock('../../repositories/todo', () => ({
+  todoRepository: { findById: vi.fn(), findByIdIncludingDeleted: vi.fn() }
+}))
+vi.mock('../../repositories/schedule', () => ({
+  scheduleRepository: { findById: vi.fn(), findByIdIncludingDeleted: vi.fn() }
+}))
+vi.mock('../../repositories/note', () => ({
+  noteRepository: { findById: vi.fn(), findByIdIncludingDeleted: vi.fn() }
+}))
+vi.mock('../../repositories/pdf-file', () => ({
+  pdfFileRepository: { findById: vi.fn(), findByIdIncludingDeleted: vi.fn() }
+}))
+vi.mock('../../repositories/csv-file', () => ({
+  csvFileRepository: { findById: vi.fn(), findByIdIncludingDeleted: vi.fn() }
+}))
 
 const MOCK_ENTITY = { workspaceId: 'ws-1', title: 'Test Entity' }
 
