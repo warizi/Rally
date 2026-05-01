@@ -65,7 +65,9 @@ const MOCK_TODO_ROW = {
   updatedAt: new Date('2026-01-01'),
   doneAt: null,
   dueDate: null,
-  startDate: null
+  startDate: null,
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {
@@ -308,7 +310,7 @@ describe('부모 자동완료', () => {
 
 describe('remove', () => {
   it('정상 삭제 → todoRepository.delete 1회', () => {
-    todoService.remove('todo-1')
+    todoService.remove('todo-1', { permanent: true })
     expect(todoRepository.delete).toHaveBeenCalledWith('todo-1')
     expect(todoRepository.delete).toHaveBeenCalledTimes(1)
   })
@@ -317,16 +319,16 @@ describe('remove', () => {
     expect(() => todoService.remove('ghost')).toThrow(NotFoundError)
   })
   it('삭제 시 findAllDescendantIds(todoId) 호출', () => {
-    todoService.remove('todo-1')
+    todoService.remove('todo-1', { permanent: true })
     expect(todoRepository.findAllDescendantIds).toHaveBeenCalledWith('todo-1')
   })
   it('삭제 시 entityLinkService.removeAllLinksForTodos 호출', () => {
-    todoService.remove('todo-1')
+    todoService.remove('todo-1', { permanent: true })
     expect(entityLinkService.removeAllLinksForTodos).toHaveBeenCalledWith(['todo-1'])
   })
   it('subtodo 있을 때 → 본인+subtodo ID 모두 전달', () => {
     vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue(['sub-1', 'sub-2'])
-    todoService.remove('todo-1')
+    todoService.remove('todo-1', { permanent: true })
     expect(entityLinkService.removeAllLinksForTodos).toHaveBeenCalledWith([
       'todo-1',
       'sub-1',
@@ -487,7 +489,7 @@ describe('reorderKanban — reminder 연동', () => {
 describe('remove — reminder 연동', () => {
   it('removeByEntities 호출 (본인 + 하위)', () => {
     vi.mocked(todoRepository.findAllDescendantIds).mockReturnValue(['sub-1', 'sub-2'])
-    todoService.remove('todo-1')
+    todoService.remove('todo-1', { permanent: true })
     expect(reminderService.removeByEntities).toHaveBeenCalledWith('todo', [
       'todo-1',
       'sub-1',

@@ -190,3 +190,76 @@ describe('entityLinkService.getLinkedBatchWithPreview', () => {
     expect(r.size).toBe(0)
   })
 })
+
+describe('휴지통 entity는 link 결과에서 제외 (link row는 보존)', () => {
+  it('상대편 entity가 trashed면 linkedItems에 안 보이고 link row 유지', async () => {
+    const { eq } = await import('drizzle-orm')
+    seedTodo('td-1')
+    seedNote('n-1')
+    link('note', 'n-1', 'todo', 'td-1')
+
+    // note를 휴지통으로 (deletedAt set)
+    testDb
+      .update(schema.notes)
+      .set({ deletedAt: new Date() })
+      .where(eq(schema.notes.id, 'n-1'))
+      .run()
+
+    // getLinked: trashed note는 결과에 안 보임
+    const linked = entityLinkService.getLinked('todo', 'td-1')
+    expect(linked).toHaveLength(0)
+
+    // link row는 보존됨 (orphan cleanup으로 삭제 안 됨) — note 복구 시 자동 회복
+    const links = testDb
+      .select()
+      .from(schema.entityLinks)
+      .where(eq(schema.entityLinks.workspaceId, WS_ID))
+      .all()
+    expect(links).toHaveLength(1)
+  })
+
+  it('진짜 hard-delete된 entity는 orphan으로 cleanup (link row 삭제)', async () => {
+    const { eq } = await import('drizzle-orm')
+    seedTodo('td-1')
+    seedNote('n-1')
+    link('note', 'n-1', 'todo', 'td-1')
+    // note를 hard delete (시뮬레이션 — 실제로는 휴지통 purge 후 발생)
+    testDb.delete(schema.notes).where(eq(schema.notes.id, 'n-1')).run()
+
+    const linked = entityLinkService.getLinked('todo', 'td-1')
+    expect(linked).toHaveLength(0)
+
+    // orphan link row 정리됨
+    const links = testDb
+      .select()
+      .from(schema.entityLinks)
+      .where(eq(schema.entityLinks.workspaceId, WS_ID))
+      .all()
+    expect(links).toHaveLength(0)
+  })
+
+  it('getLinkedBatch도 trashed entity 제외 + link 유지', async () => {
+    const { eq } = await import('drizzle-orm')
+    seedTodo('td-1')
+    seedNote('n-1')
+    seedNote('n-2', 'Active')
+    link('note', 'n-1', 'todo', 'td-1')
+    link('note', 'n-2', 'todo', 'td-1')
+
+    // n-1만 휴지통
+    testDb
+      .update(schema.notes)
+      .set({ deletedAt: new Date() })
+      .where(eq(schema.notes.id, 'n-1'))
+      .run()
+
+    const r = entityLinkService.getLinkedBatch('todo', ['td-1'])
+    const list = r.get('td-1') ?? []
+    // 활성 n-2만 보임
+    expect(list.map((l) => l.entityId)).toEqual(['n-2'])
+
+    // 두 link row 모두 보존
+    const links = testDb.select().from(schema.entityLinks).all()
+    expect(links).toHaveLength(2)
+  })
+})

@@ -57,7 +57,9 @@ const MOCK_PDF_ROW = {
   preview: '',
   order: 0,
   createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01')
+  updatedAt: new Date('2026-01-01'),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 const MOCK_FOLDER = {
@@ -67,7 +69,9 @@ const MOCK_FOLDER = {
   color: null,
   order: 0,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {
@@ -160,7 +164,7 @@ describe('rename', () => {
 
 describe('remove', () => {
   it('정상 삭제 — fs.unlinkSync + repository.delete 호출', () => {
-    pdfFileService.remove('ws-1', 'pdf-1')
+    pdfFileService.remove('ws-1', 'pdf-1', { permanent: true })
     expect(fs.unlinkSync).toHaveBeenCalled()
     expect(pdfFileRepository.delete).toHaveBeenCalledWith('pdf-1')
   })
@@ -169,7 +173,7 @@ describe('remove', () => {
     vi.mocked(fs.unlinkSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    pdfFileService.remove('ws-1', 'pdf-1')
+    pdfFileService.remove('ws-1', 'pdf-1', { permanent: true })
     expect(pdfFileRepository.delete).toHaveBeenCalledWith('pdf-1')
   })
 

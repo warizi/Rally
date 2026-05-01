@@ -7,7 +7,7 @@ import type { TabSnapshot } from '@/entities/tab-snapshot'
 import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
 import { SettingsDialog } from '@/features/settings/manage-settings'
-import { sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
+import { sidebar_items, system_sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { useTerminalPanelStore } from '@/features/terminal'
 import {
@@ -112,6 +112,19 @@ function MainSidebar(): React.JSX.Element {
             <SidebarGroupLabel>시스템</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
+                {system_sidebar_items.map((item) => (
+                  <SidebarMenuItem key={item.pathname}>
+                    <SidebarMenuButton
+                      className="cursor-pointer"
+                      isActive={activePathname === item.pathname}
+                      tooltip={item.title}
+                      onClick={() => handleOpenStaticTab(item)}
+                    >
+                      <item.icon />
+                      <span>{item.title}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
                 <SidebarMenuItem>
                   <SidebarMenuButton
                     className="cursor-pointer"

@@ -108,27 +108,10 @@ Title matches rank above content/description matches; ties break by updatedAt de
     }
   },
   {
-    name: 'search_notes',
-    description:
-      '[DEPRECATED — prefer `search`] Search notes by title or content. Returns up to 50 results in legacy format.',
-    schema: {
-      query: z.string().describe('Search query (case-insensitive)')
-    },
-    handler: ({ query }) => callTool('GET', `/api/mcp/notes/search?q=${e(query as string)}`)
-  },
-  {
-    name: 'read_content',
-    description:
-      'Read the full content of a note (markdown) or table (CSV). Auto-detects type by ID.',
-    schema: {
-      id: z.string().describe('Note or table ID (from list_items)')
-    },
-    handler: ({ id }) => callTool('GET', `/api/mcp/content/${e(id as string)}`)
-  },
-  {
     name: 'read_contents',
     description: `Batch read the contents of multiple notes/tables in one round-trip. Up to 50 IDs.
-Each result is independent: if one ID fails (not found, fs error, etc.) the others still succeed.
+Pass a single id in the array for one-shot reads. Each result is independent: if one ID fails
+(not found, fs error, etc.) the others still succeed.
 Result entries:
 - success=true: { id, type: 'note'|'table', title, relativePath, content [, encoding, columnWidths] }
 - success=false: { id, error: { code, message } }`,
@@ -566,11 +549,26 @@ Reminder fires (entity start/due time - offsetMs); creation throws if that momen
   {
     name: 'list_recurring_rules',
     description: `List recurring rules in the active workspace.
-activeOnly=true filters to rules whose endDate is null or still in the future.`,
+- activeOnly=true filters to rules whose endDate is null or still in the future.
+- forDate: pass a YYYY-MM-DD or ISO 8601 string to switch to the "today view" — returns only rules
+  that fire on that date along with their completion status, plus the matching completions array.
+  Response shape becomes { date, rules: [{ ...rule, completed }], completions: [...] }.
+  When forDate is omitted, returns the plain { rules: [...] } list.`,
     schema: {
-      activeOnly: z.boolean().optional()
+      activeOnly: z.boolean().optional(),
+      forDate: z
+        .string()
+        .optional()
+        .describe(
+          'YYYY-MM-DD or ISO 8601 — when set, returns only rules that fire on that date with completion status'
+        )
     },
-    handler: ({ activeOnly }) => {
+    handler: ({ activeOnly, forDate }) => {
+      if (typeof forDate === 'string' && forDate.trim()) {
+        const params = new URLSearchParams()
+        params.set('date', forDate)
+        return callTool('GET', `/api/mcp/recurring/today?${params.toString()}`)
+      }
       const params = new URLSearchParams()
       if (activeOnly) params.set('activeOnly', 'true')
       const qs = params.toString()
@@ -578,29 +576,21 @@ activeOnly=true filters to rules whose endDate is null or still in the future.`,
     }
   },
   {
-    name: 'list_recurring_today',
-    description: `List recurring rules that fire on the given date (default: today), with completion status for each.
-Returns { date, rules: [{ ...rule, completed }], completions: [...] }.`,
-    schema: {
-      date: z.string().optional().describe('YYYY-MM-DD or ISO 8601 (default: today)')
-    },
-    handler: ({ date }) => {
-      const params = new URLSearchParams()
-      if (date) params.set('date', date as string)
-      const qs = params.toString()
-      return callTool('GET', `/api/mcp/recurring/today${qs ? `?${qs}` : ''}`)
-    }
-  },
-  {
     name: 'manage_recurring_rules',
-    description: `Batch create/update/delete recurring rules.
+    description: `Batch create/update/delete recurring rules + complete/uncomplete daily occurrences.
 recurrenceType:
 - 'daily': fires every day
 - 'weekday': Mon–Fri only
 - 'weekend': Sat/Sun only
 - 'custom': fires on the daysOfWeek array (0=Sun, 1=Mon, …, 6=Sat) — required with recurrenceType='custom'
 
-startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time before startTime fires (or null to disable).`,
+startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time before startTime fires (or null to disable).
+
+Completion actions:
+- complete: { ruleId, date } — mark a rule completed for that day. Idempotent.
+- uncomplete: { completionId } — undo a completion. completionId comes from list_recurring_rules with forDate set, or from a prior complete result.
+
+All actions run in a single transaction. Result entries are { action, id, success: true } where id is the rule id (CRUD) or completion id (complete/uncomplete).`,
     schema: {
       actions: z
         .array(
@@ -632,51 +622,43 @@ startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time
               endTime: z.string().nullable().optional(),
               reminderOffsetMs: z.number().int().nullable().optional()
             }),
-            z.object({ action: z.literal('delete'), id: z.string() })
+            z.object({ action: z.literal('delete'), id: z.string() }),
+            z.object({
+              action: z.literal('complete'),
+              ruleId: z.string(),
+              date: z
+                .string()
+                .describe('YYYY-MM-DD or ISO 8601 (the day this completion belongs to)')
+            }),
+            z.object({
+              action: z.literal('uncomplete'),
+              completionId: z.string().describe('Completion id from list_recurring_rules (forDate)')
+            })
           ])
         )
         .describe('Array of recurring rule actions')
     },
     handler: (args) => callTool('POST', '/api/mcp/recurring/rules/batch', args)
   },
-  {
-    name: 'complete_recurring',
-    description: `Mark a recurring rule as completed for a specific date. Idempotent — calling twice returns the same completion.`,
-    schema: {
-      ruleId: z.string(),
-      date: z.string().describe('YYYY-MM-DD or ISO 8601 (the day this completion belongs to)')
-    },
-    handler: (args) => callTool('POST', '/api/mcp/recurring/complete', args)
-  },
-  {
-    name: 'uncomplete_recurring',
-    description: `Remove a recurring completion (undo). Pass the completionId from list_recurring_today or complete_recurring.`,
-    schema: {
-      completionId: z.string()
-    },
-    handler: (args) => callTool('POST', '/api/mcp/recurring/uncomplete', args)
-  },
   // ─── Templates ────────────────────────────────────────────
   {
     name: 'list_templates',
-    description: `List note/csv templates in the active workspace. jsonData is omitted from list (use read_template for full content).`,
+    description: `List note/csv templates in the active workspace.
+- Without id: returns metadata list (jsonData omitted to save tokens).
+- With id: returns the single template with full jsonData (the serialized payload — JSON string for note templates consumable by write_content's content field, CSV body for csv templates). When id is set, type filter is ignored.`,
     schema: {
-      type: z.enum(['note', 'csv']).optional().describe('Filter by template type')
+      type: z.enum(['note', 'csv']).optional().describe('Filter by template type (ignored when id is set)'),
+      id: z.string().optional().describe('When set, returns full content of that template instead of a list')
     },
-    handler: ({ type }) => {
+    handler: ({ type, id }) => {
+      if (typeof id === 'string' && id) {
+        return callTool('GET', `/api/mcp/templates/${e(id)}`)
+      }
       const params = new URLSearchParams()
       if (type) params.set('type', type as string)
       const qs = params.toString()
       return callTool('GET', `/api/mcp/templates${qs ? `?${qs}` : ''}`)
     }
-  },
-  {
-    name: 'read_template',
-    description: `Read full template content (id, title, type, jsonData). jsonData is the serialized payload — for note templates a JSON string consumable by write_content's content field, for csv templates the CSV body.`,
-    schema: {
-      id: z.string().describe('Template ID from list_templates')
-    },
-    handler: ({ id }) => callTool('GET', `/api/mcp/templates/${e(id as string)}`)
   },
   {
     name: 'manage_templates',
@@ -701,11 +683,22 @@ startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time
   // ─── Tags ─────────────────────────────────────────────────
   {
     name: 'list_tags',
-    description: `List tags in the active workspace. Optional substring search on name/description.`,
+    description: `List tags in the active workspace.
+- search: substring match on name/description (workspace-wide listing)
+- forItemType + forItemId: pass both to scope the response to tags attached to that specific item
+  (overrides search). Item types: note, csv, canvas, todo, pdf, image, folder.`,
     schema: {
-      search: z.string().optional()
+      search: z.string().optional(),
+      forItemType: z
+        .enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'folder'])
+        .optional()
+        .describe('Pair with forItemId to list tags attached to a specific item'),
+      forItemId: z.string().optional().describe('Pair with forItemType')
     },
-    handler: ({ search }) => {
+    handler: ({ search, forItemType, forItemId }) => {
+      if (typeof forItemType === 'string' && typeof forItemId === 'string' && forItemId) {
+        return callTool('GET', `/api/mcp/tagged/${e(forItemType)}/${e(forItemId)}`)
+      }
       const params = new URLSearchParams()
       if (typeof search === 'string' && search.trim()) params.set('search', search)
       const qs = params.toString()
@@ -730,16 +723,6 @@ Orphan attachments (item deleted but tag link remains) are skipped from the resp
       const qs = params.toString()
       return callTool('GET', `/api/mcp/tags/${e(tagId as string)}/items${qs ? `?${qs}` : ''}`)
     }
-  },
-  {
-    name: 'list_item_tags',
-    description: `List tags attached to a specific item.`,
-    schema: {
-      itemType: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'folder']),
-      itemId: z.string()
-    },
-    handler: ({ itemType, itemId }) =>
-      callTool('GET', `/api/mcp/tagged/${e(itemType as string)}/${e(itemId as string)}`)
   },
   {
     name: 'manage_tags',
@@ -807,28 +790,35 @@ query: case-insensitive substring on todo titles or linked file titles.`,
       return callTool('GET', `/api/mcp/history${qs ? `?${qs}` : ''}`)
     }
   },
-  // ─── PDFs ─────────────────────────────────────────────────
+  // ─── PDFs / Images ────────────────────────────────────────
   {
-    name: 'list_pdfs',
-    description: `List PDF files in the active workspace. folderId/recursive filter scope; search matches title/description.`,
+    name: 'list_files',
+    description: `List PDF or image files in the active workspace.
+- type: 'pdf' or 'image' (required)
+- folderId/recursive filter scope; search matches title/description
+- Pass folderId="null" for root-only`,
     schema: {
+      type: z.enum(['pdf', 'image']).describe('File type to list'),
       folderId: z.string().optional().describe('Folder id to scope to. Pass "null" for root-only.'),
       recursive: z.boolean().optional().describe('Include all descendant folders (default: false)'),
       search: z.string().optional()
     },
-    handler: ({ folderId, recursive, search }) => {
+    handler: ({ type, folderId, recursive, search }) => {
       const params = new URLSearchParams()
       if (typeof folderId === 'string') params.set('folderId', folderId)
       if (recursive) params.set('recursive', 'true')
       if (typeof search === 'string' && search.trim()) params.set('search', search)
       const qs = params.toString()
-      return callTool('GET', `/api/mcp/pdfs${qs ? `?${qs}` : ''}`)
+      const endpoint = type === 'pdf' ? '/api/mcp/pdfs' : '/api/mcp/images'
+      return callTool('GET', `${endpoint}${qs ? `?${qs}` : ''}`)
     }
   },
   {
-    name: 'manage_pdfs',
-    description: `Batch rename/move/update_meta/delete on PDF files. Importing new PDFs requires the desktop UI (file dialog).`,
+    name: 'manage_files',
+    description: `Batch rename/move/update_meta/delete on PDF or image files. Importing new files requires the desktop UI (file dialog).
+- type: 'pdf' or 'image' (required) — applies to all actions in this call`,
     schema: {
+      type: z.enum(['pdf', 'image']).describe('File type the actions target'),
       actions: z
         .array(
           z.union([
@@ -846,58 +836,20 @@ query: case-insensitive substring on todo titles or linked file titles.`,
             z.object({ action: z.literal('delete'), id: z.string() })
           ])
         )
-        .describe('Array of PDF actions')
+        .describe('Array of file actions')
     },
-    handler: (args) => callTool('POST', '/api/mcp/pdfs/batch', args)
-  },
-  // ─── Images ───────────────────────────────────────────────
-  {
-    name: 'list_images',
-    description: `List image files. Same shape as list_pdfs.`,
-    schema: {
-      folderId: z.string().optional(),
-      recursive: z.boolean().optional(),
-      search: z.string().optional()
-    },
-    handler: ({ folderId, recursive, search }) => {
-      const params = new URLSearchParams()
-      if (typeof folderId === 'string') params.set('folderId', folderId)
-      if (recursive) params.set('recursive', 'true')
-      if (typeof search === 'string' && search.trim()) params.set('search', search)
-      const qs = params.toString()
-      return callTool('GET', `/api/mcp/images${qs ? `?${qs}` : ''}`)
+    handler: ({ type, ...rest }) => {
+      const endpoint = type === 'pdf' ? '/api/mcp/pdfs/batch' : '/api/mcp/images/batch'
+      return callTool('POST', endpoint, rest)
     }
-  },
-  {
-    name: 'manage_images',
-    description: `Batch rename/move/update_meta/delete on image files. Importing requires desktop UI.`,
-    schema: {
-      actions: z
-        .array(
-          z.union([
-            z.object({ action: z.literal('rename'), id: z.string(), newName: z.string() }),
-            z.object({
-              action: z.literal('move'),
-              id: z.string(),
-              targetFolderId: z.string().optional()
-            }),
-            z.object({
-              action: z.literal('update_meta'),
-              id: z.string(),
-              description: z.string().optional()
-            }),
-            z.object({ action: z.literal('delete'), id: z.string() })
-          ])
-        )
-        .describe('Array of image actions')
-    },
-    handler: (args) => callTool('POST', '/api/mcp/images/batch', args)
   },
   // ─── Workspace info ───────────────────────────────────────
   {
     name: 'get_workspace_info',
     description: `Active workspace summary: id/name/path + cross-domain stats + recentActivity (note/table/canvas/todo, updatedAt desc).
-Use this when you want a quick overview of the workspace without paging through list_items.`,
+Use this when you want a quick overview of the workspace without paging through list_items.
+
+Lightweight stats-only mode: pass statsTypes (subset of count kinds) to skip recentActivity and return just the requested counts. Useful when you only need totals.`,
     schema: {
       recentLimit: z
         .number()
@@ -905,20 +857,8 @@ Use this when you want a quick overview of the workspace without paging through 
         .min(0)
         .max(50)
         .optional()
-        .describe('Number of recent activity entries (default: 10, max: 50)')
-    },
-    handler: ({ recentLimit }) => {
-      const params = new URLSearchParams()
-      if (typeof recentLimit === 'number') params.set('recentLimit', String(recentLimit))
-      const qs = params.toString()
-      return callTool('GET', `/api/mcp/workspace${qs ? `?${qs}` : ''}`)
-    }
-  },
-  {
-    name: 'get_stats',
-    description: `Lightweight count-only stats. Pass types[] to limit which counts are computed.`,
-    schema: {
-      types: z
+        .describe('Number of recent activity entries (default: 10, max: 50). Ignored when statsTypes is set.'),
+      statsTypes: z
         .array(
           z.enum([
             'folders',
@@ -935,15 +875,131 @@ Use this when you want a quick overview of the workspace without paging through 
           ])
         )
         .optional()
-        .describe('Subset of stats to compute (default: all)')
+        .describe('When set, returns lightweight count-only stats for these kinds (no recentActivity). Pass [] not allowed — omit instead.')
     },
-    handler: ({ types }) => {
+    handler: ({ recentLimit, statsTypes }) => {
+      if (Array.isArray(statsTypes) && statsTypes.length > 0) {
+        const params = new URLSearchParams()
+        for (const t of statsTypes as string[]) params.append('types[]', t)
+        return callTool('GET', `/api/mcp/workspace/stats?${params.toString()}`)
+      }
+      const params = new URLSearchParams()
+      if (typeof recentLimit === 'number') params.set('recentLimit', String(recentLimit))
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/workspace${qs ? `?${qs}` : ''}`)
+    }
+  },
+  // ─── Trash ────────────────────────────────────────────────
+  {
+    name: 'list_trash',
+    description: `List items in the workspace trash (deleted but recoverable).
+Each batch represents one user/AI delete action — a folder + its contents share one batch, a sub-todo tree shares one batch.
+Use restore_trash with batchId to recover, or empty_trash to permanently delete.
+
+Auto-emptied after the user-configured retention period (default 30 days).`,
+    schema: {
+      types: z
+        .array(
+          z.enum([
+            'folder',
+            'note',
+            'csv',
+            'pdf',
+            'image',
+            'canvas',
+            'todo',
+            'schedule',
+            'recurring_rule',
+            'template'
+          ])
+        )
+        .optional()
+        .describe('Filter by entity type'),
+      search: z.string().optional().describe('Substring match on root title'),
+      offset: z.number().int().min(0).optional(),
+      limit: z.number().int().min(1).max(200).optional().describe('Default 50')
+    },
+    handler: ({ types, search, offset, limit }) => {
       const params = new URLSearchParams()
       if (Array.isArray(types) && types.length > 0) {
         for (const t of types as string[]) params.append('types[]', t)
       }
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      if (typeof offset === 'number') params.set('offset', String(offset))
+      if (typeof limit === 'number') params.set('limit', String(limit))
       const qs = params.toString()
-      return callTool('GET', `/api/mcp/workspace/stats${qs ? `?${qs}` : ''}`)
+      return callTool('GET', `/api/mcp/trash${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'manage_trash',
+    description: `Restore or permanently delete trash batches.
+- action: 'restore' — recover the whole batch (root + cascade children). For folder/file domains: original location is reused if free, otherwise auto-renamed (e.g. "docs (1)"). entity-link snapshots are reattached when both endpoints are active.
+- action: 'purge' — permanently delete. Pass batchId for a single batch, or omit batchId with confirm=true to purge ALL workspace trash. Returns purgedBatchIds; if hasMore=true call again to keep purging.
+
+Multiple actions execute sequentially. Each action is independent — failures don't roll back earlier successes.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z
+              .object({
+                action: z.literal('restore'),
+                batchId: z.string().describe('Trash batch id from list_trash')
+              })
+              .describe('Restore a single trash batch'),
+            z
+              .object({
+                action: z.literal('purge'),
+                batchId: z.string().optional().describe('Single batch to purge'),
+                confirm: z
+                  .boolean()
+                  .optional()
+                  .describe('Required (true) when batchId is omitted to purge all trash')
+              })
+              .describe('Permanently delete a batch (or all trash with confirm=true)')
+          ])
+        )
+        .describe('Array of trash actions')
+    },
+    handler: async ({ actions }) => {
+      const list = (actions as Array<Record<string, unknown>>) ?? []
+      if (list.length === 0) {
+        return {
+          content: [{ type: 'text', text: JSON.stringify({ results: [] }, null, 2) }]
+        }
+      }
+      if (list.length === 1) {
+        const a = list[0]
+        if (a.action === 'restore') {
+          return callTool('POST', `/api/mcp/trash/${e(String(a.batchId))}/restore`)
+        }
+        return callTool('POST', '/api/mcp/trash/empty', {
+          ...(a.batchId ? { batchId: a.batchId } : {}),
+          ...(a.confirm ? { confirm: a.confirm } : {})
+        })
+      }
+      // 다수 actions: 순차 실행, 결과 집계
+      const results: Array<Record<string, unknown>> = []
+      for (const a of list) {
+        const res =
+          a.action === 'restore'
+            ? await callTool('POST', `/api/mcp/trash/${e(String(a.batchId))}/restore`)
+            : await callTool('POST', '/api/mcp/trash/empty', {
+                ...(a.batchId ? { batchId: a.batchId } : {}),
+                ...(a.confirm ? { confirm: a.confirm } : {})
+              })
+        const text = res.content?.[0]?.type === 'text' ? res.content[0].text : ''
+        results.push({
+          action: a.action,
+          batchId: a.batchId ?? null,
+          isError: res.isError === true,
+          result: text ? JSON.parse(text) : null
+        })
+      }
+      return {
+        content: [{ type: 'text', text: JSON.stringify({ results }, null, 2) }]
+      }
     }
   }
 ]

@@ -5,10 +5,13 @@ import { todos } from '../db/schema'
 export type Todo = typeof todos.$inferSelect
 export type TodoInsert = typeof todos.$inferInsert
 
+/** 모든 read 쿼리에서 휴지통 항목 제외 — `deleted_at IS NULL` 가드 */
+const NOT_DELETED = isNull(todos.deletedAt)
+
 export const todoRepository = {
-  /** 풀 fetch 없이 SQL COUNT로 active/completed/total 카운트만 반환 */
+  /** 풀 fetch 없이 SQL COUNT로 active/completed/total 카운트만 반환 (휴지통 제외) */
   countByWorkspaceId(workspaceId: string): { active: number; completed: number; total: number } {
-    const base = eq(todos.workspaceId, workspaceId)
+    const base = and(eq(todos.workspaceId, workspaceId), NOT_DELETED)!
     const totalRow = db.select({ n: count() }).from(todos).where(base).get()
     const completedRow = db
       .select({ n: count() })
@@ -21,7 +24,7 @@ export const todoRepository = {
   },
 
   findByWorkspaceId(workspaceId: string, filter?: 'all' | 'active' | 'completed'): Todo[] {
-    const base = eq(todos.workspaceId, workspaceId)
+    const base = and(eq(todos.workspaceId, workspaceId), NOT_DELETED)!
     if (filter === 'active') {
       // 최상위 미완료 + 모든 sub-todo (isDone 무관)
       return db
@@ -47,7 +50,7 @@ export const todoRepository = {
   },
 
   findByWorkspaceIdAndDateRange(workspaceId: string, start: Date, end: Date): Todo[] {
-    const base = eq(todos.workspaceId, workspaceId)
+    const base = and(eq(todos.workspaceId, workspaceId), NOT_DELETED)!
     // startDate 또는 dueDate가 범위 내에 있는 todo
     return db
       .select()
@@ -71,16 +74,30 @@ export const todoRepository = {
       .all()
   },
 
+  /** 활성 row만 반환 (휴지통 제외). trashService는 findByIdIncludingDeleted 사용. */
   findById(id: string): Todo | undefined {
+    return db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.id, id), NOT_DELETED))
+      .get()
+  },
+
+  /** 휴지통 포함 — trashService에서 복구·purge 시 사용 */
+  findByIdIncludingDeleted(id: string): Todo | undefined {
     return db.select().from(todos).where(eq(todos.id, id)).get()
   },
 
   findByParentId(parentId: string): Todo[] {
-    return db.select().from(todos).where(eq(todos.parentId, parentId)).all()
+    return db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.parentId, parentId), NOT_DELETED))
+      .all()
   },
 
   /**
-   * 동적 필터 검색. AND 조합.
+   * 동적 필터 검색. AND 조합. 휴지통 제외.
    * - filter: 'active'면 (top-level 미완료 OR 모든 sub-todo), 'completed'면 top-level 완료만, 그 외 전부
    * - parentId: undefined=무관, null=top-level only, string=해당 parent의 자식만
    * - dueWithin: { from, to } 범위에 dueDate가 들어가는 것만
@@ -99,7 +116,7 @@ export const todoRepository = {
       includeIds?: string[]
     }
   ): Todo[] {
-    const conditions = [eq(todos.workspaceId, workspaceId)]
+    const conditions = [eq(todos.workspaceId, workspaceId), NOT_DELETED]
 
     if (options.filter === 'active') {
       conditions.push(
@@ -150,7 +167,7 @@ export const todoRepository = {
     return db
       .select()
       .from(todos)
-      .where(and(eq(todos.workspaceId, workspaceId), isNull(todos.parentId)))
+      .where(and(eq(todos.workspaceId, workspaceId), isNull(todos.parentId), NOT_DELETED))
       .all()
   },
 
@@ -175,6 +192,8 @@ export const todoRepository = {
         | 'dueDate'
         | 'startDate'
         | 'updatedAt'
+        | 'deletedAt'
+        | 'trashBatchId'
       >
     >
   ): Todo | undefined {
@@ -224,17 +243,17 @@ export const todoRepository = {
     })()
   },
 
-  findAllDescendantIds(parentId: string): string[] {
+  /** 모든 후손 ID 반환. trashService cascade 처리에서 휴지통 row까지 포함하기 위해 raw 쿼리 사용. */
+  findAllDescendantIds(parentId: string, options: { includeDeleted?: boolean } = {}): string[] {
     const result: string[] = []
     const queue = [parentId]
 
     while (queue.length > 0) {
       const currentId = queue.shift()!
-      const children = db
-        .select({ id: todos.id })
-        .from(todos)
-        .where(eq(todos.parentId, currentId))
-        .all()
+      const where = options.includeDeleted
+        ? eq(todos.parentId, currentId)
+        : and(eq(todos.parentId, currentId), NOT_DELETED)
+      const children = db.select({ id: todos.id }).from(todos).where(where).all()
       for (const child of children) {
         result.push(child.id)
         queue.push(child.id)
@@ -250,7 +269,13 @@ export const todoRepository = {
     const results: Todo[] = []
     for (let i = 0; i < ids.length; i += CHUNK) {
       const chunk = ids.slice(i, i + CHUNK)
-      results.push(...db.select().from(todos).where(inArray(todos.id, chunk)).all())
+      results.push(
+        ...db
+          .select()
+          .from(todos)
+          .where(and(inArray(todos.id, chunk), NOT_DELETED))
+          .all()
+      )
     }
     return results
   },
@@ -264,10 +289,25 @@ export const todoRepository = {
       .where(
         and(
           eq(todos.workspaceId, workspaceId),
+          NOT_DELETED,
           or(like(todos.title, pattern), like(todos.description, pattern))!
         )
       )
       .all()
+  },
+
+  /** 휴지통(deleted_at IS NOT NULL) row만 — trashService.list 용 */
+  findInTrashByWorkspaceId(workspaceId: string): Todo[] {
+    return db
+      .select()
+      .from(todos)
+      .where(and(eq(todos.workspaceId, workspaceId), isNotNull(todos.deletedAt)))
+      .all()
+  },
+
+  /** trash batch에 묶인 모든 todo (cascade 자식 포함) */
+  findByTrashBatchId(batchId: string): Todo[] {
+    return db.select().from(todos).where(eq(todos.trashBatchId, batchId)).all()
   },
 
   bulkUpdateSubOrder(updates: { id: string; order: number }[]): void {

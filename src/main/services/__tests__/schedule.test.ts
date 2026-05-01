@@ -77,7 +77,9 @@ const MOCK_SCHEDULE_ROW = {
   color: null,
   priority: 'medium' as const,
   createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01')
+  updatedAt: new Date('2026-01-01'),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {
@@ -123,7 +125,7 @@ describe('move — reminder 연동', () => {
 
 describe('remove — reminder 연동', () => {
   it('removeByEntity 호출 후 삭제', () => {
-    scheduleService.remove('sch-1')
+    scheduleService.remove('sch-1', { permanent: true })
     expect(reminderService.removeByEntity).toHaveBeenCalledWith('schedule', 'sch-1')
   })
 })

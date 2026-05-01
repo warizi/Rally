@@ -61,7 +61,9 @@ const MOCK_NODE_ROW = {
   content: 'hello',
   zIndex: 0,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {

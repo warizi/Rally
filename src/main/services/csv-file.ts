@@ -11,6 +11,7 @@ import { resolveNameConflict, readCsvFilesRecursive } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
+import { trashService } from './trash'
 
 export interface CsvFileNode {
   id: string
@@ -385,14 +386,19 @@ export const csvFileService = {
   },
 
   /**
-   * CSV 삭제 (disk + DB)
+   * CSV 삭제. 기본은 휴지통 이동. permanent=true: 즉시 영구 삭제.
    */
-  remove(workspaceId: string, csvId: string): void {
+  remove(workspaceId: string, csvId: string, options: { permanent?: boolean } = {}): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+
+    if (!options.permanent) {
+      trashService.softRemove(workspaceId, 'csv', csvId)
+      return
+    }
 
     const absPath = path.join(workspace.path, csv.relativePath)
     try {

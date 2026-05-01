@@ -62,7 +62,9 @@ const MOCK_IMAGE_ROW = {
   preview: '',
   order: 0,
   createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01')
+  updatedAt: new Date('2026-01-01'),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 const MOCK_FOLDER = {
@@ -72,7 +74,9 @@ const MOCK_FOLDER = {
   color: null,
   order: 0,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  deletedAt: null,
+  trashBatchId: null
 }
 
 beforeEach(() => {
@@ -197,7 +201,7 @@ describe('remove', () => {
       callOrder.push('delete')
     })
 
-    imageFileService.remove('ws-1', 'img-1')
+    imageFileService.remove('ws-1', 'img-1', { permanent: true })
 
     expect(callOrder).toEqual(['unlink', 'removeLinks', 'delete'])
     expect(entityLinkService.removeAllLinks).toHaveBeenCalledWith('image', 'img-1')
@@ -207,7 +211,7 @@ describe('remove', () => {
     vi.mocked(fs.unlinkSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    imageFileService.remove('ws-1', 'img-1')
+    imageFileService.remove('ws-1', 'img-1', { permanent: true })
     expect(entityLinkService.removeAllLinks).toHaveBeenCalledWith('image', 'img-1')
     expect(imageFileRepository.delete).toHaveBeenCalledWith('img-1')
   })

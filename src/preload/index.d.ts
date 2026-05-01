@@ -829,10 +829,7 @@ interface TemplateItem {
 }
 
 interface TemplateAPI {
-  list: (
-    workspaceId: string,
-    type: 'note' | 'csv'
-  ) => Promise<IpcResponse<TemplateItem[]>>
+  list: (workspaceId: string, type: 'note' | 'csv') => Promise<IpcResponse<TemplateItem[]>>
   create: (input: {
     workspaceId: string
     title: string
@@ -885,6 +882,70 @@ interface HistoryAPI {
   ) => Promise<IpcResponse<HistoryFetchResult>>
 }
 
+type TrashEntityKind =
+  | 'folder'
+  | 'note'
+  | 'csv'
+  | 'pdf'
+  | 'image'
+  | 'canvas'
+  | 'todo'
+  | 'schedule'
+  | 'recurring_rule'
+  | 'template'
+type TrashRetentionKey = '1' | '7' | '30' | '90' | '365' | 'never'
+
+interface TrashBatchSummary {
+  id: string
+  workspaceId: string
+  rootEntityType: TrashEntityKind
+  rootEntityId: string
+  rootTitle: string
+  childCount: number
+  deletedAt: string
+  reason: string | null
+}
+
+interface TrashListResult {
+  batches: TrashBatchSummary[]
+  total: number
+  hasMore: boolean
+  nextOffset: number
+}
+
+interface TrashAPI {
+  list: (
+    workspaceId: string,
+    options?: {
+      types?: TrashEntityKind[]
+      search?: string
+      offset?: number
+      limit?: number
+    }
+  ) => Promise<IpcResponse<TrashListResult>>
+  count: (workspaceId: string) => Promise<IpcResponse<number>>
+  restore: (
+    workspaceId: string,
+    batchId: string
+  ) => Promise<
+    IpcResponse<{
+      restored: { type: TrashEntityKind; id: string; title: string }[]
+      conflicts?: { id: string; reason: string }[]
+    }>
+  >
+  purge: (workspaceId: string, batchId: string) => Promise<IpcResponse<{ success: boolean }>>
+  emptyAll: (workspaceId: string) => Promise<IpcResponse<{ purgedBatchIds: string[] }>>
+  softRemove: (
+    workspaceId: string,
+    entityType: TrashEntityKind,
+    entityId: string
+  ) => Promise<IpcResponse<{ batchId: string }>>
+  getRetention: () => Promise<IpcResponse<TrashRetentionKey>>
+  setRetention: (value: TrashRetentionKey) => Promise<IpcResponse<{ value: TrashRetentionKey }>>
+  sweepNow: () => Promise<IpcResponse<{ purged: number }>>
+  onChanged: (cb: (workspaceId: string) => void) => () => void
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -912,6 +973,7 @@ interface API {
   recurringCompletion: RecurringCompletionAPI
   template: TemplateAPI
   history: HistoryAPI
+  trash: TrashAPI
 }
 
 interface ShellAPI {

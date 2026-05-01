@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { templateRepository } from '../repositories/template'
+import { trashService } from './trash'
 import type { Template, TemplateType } from '../repositories/template'
 
 export interface TemplateItem {
@@ -68,11 +69,20 @@ export const templateService = {
     return toItem(created)
   },
 
-  delete(id: string): void {
+  /**
+   * 템플릿 삭제. 기본은 휴지통 이동. permanent=true: 즉시 영구 삭제.
+   */
+  delete(id: string, options: { permanent?: boolean } = {}): void {
     const existing = templateRepository.findById(id)
     if (!existing) {
       throw new NotFoundError('템플릿을 찾을 수 없습니다')
     }
+
+    if (!options.permanent) {
+      trashService.softRemove(existing.workspaceId, 'template', id)
+      return
+    }
+
     templateRepository.delete(id)
   }
 }

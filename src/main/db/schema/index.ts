@@ -23,6 +23,7 @@ import { recurringCompletions } from './recurring-completion'
 import { terminalLayouts } from './terminal-layout'
 import { terminalSessions } from './terminal-session'
 import { templates } from './template'
+import { trashBatches } from './trash-batch'
 
 export {
   workspaces,
@@ -49,5 +50,6 @@ export {
   recurringCompletions,
   terminalLayouts,
   terminalSessions,
-  templates
+  templates,
+  trashBatches
 }
