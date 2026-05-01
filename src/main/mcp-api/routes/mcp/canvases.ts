@@ -13,14 +13,15 @@ import { canvasEdgeService } from '../../../services/canvas-edge'
 import { ValidationError } from '../../../lib/errors'
 import { withTransaction } from '../../../lib/transaction'
 import { broadcastChanged } from '../../lib/broadcast'
-import { requireBody, resolveActiveWorkspace } from './helpers'
+import { requireBody, resolveActiveWorkspace, assertOwnedByWorkspace } from './helpers'
 
 export function registerMcpCanvasRoutes(router: Router): void {
   // ─── GET /api/mcp/canvases/:canvasId → read_canvas ────────
 
   router.addRoute('GET', '/api/mcp/canvases/:canvasId', (params): ReadCanvasResponse => {
-    resolveActiveWorkspace()
+    const wsId = resolveActiveWorkspace()
     const canvas = canvasService.findById(params.canvasId)
+    assertOwnedByWorkspace(canvas, wsId, `Canvas not found: ${params.canvasId}`)
     const nodes = canvasNodeService.findByCanvas(params.canvasId)
     const edges = canvasEdgeService.findByCanvas(params.canvasId)
     return {
@@ -123,6 +124,10 @@ export function registerMcpCanvasRoutes(router: Router): void {
       const hasDelete = actions.some((a) => a.action === 'delete')
       if (hasDelete && actions.length > 1)
         throw new ValidationError('delete action must be used alone')
+
+      // 활성 워크스페이스 소유권 검증 — 다른 워크스페이스의 canvasId 차단
+      const targetCanvas = canvasService.findById(params.canvasId)
+      assertOwnedByWorkspace(targetCanvas, wsId, `Canvas not found: ${params.canvasId}`)
 
       if (hasDelete) {
         // 단독 delete — 트랜잭션 불필요 (단일 작업)

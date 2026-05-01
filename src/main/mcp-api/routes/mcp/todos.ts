@@ -125,7 +125,7 @@ export function registerMcpTodoRoutes(router: Router): void {
                 }
                 if (action.unlinkItems?.length) {
                   for (const item of action.unlinkItems) {
-                    entityLinkService.unlink(item.type, item.id, 'todo', action.id)
+                    entityLinkService.unlink(item.type, item.id, 'todo', action.id, wsId)
                   }
                 }
               }

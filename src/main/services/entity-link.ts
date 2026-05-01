@@ -101,7 +101,32 @@ export const entityLinkService = {
     })
   },
 
-  unlink(typeA: LinkableEntityType, idA: string, typeB: LinkableEntityType, idB: string): void {
+  unlink(
+    typeA: LinkableEntityType,
+    idA: string,
+    typeB: LinkableEntityType,
+    idB: string,
+    workspaceId?: string
+  ): void {
+    // workspaceId 인자가 주어지면 양 끝 entity가 그 워크스페이스에 속하는지 검증.
+    // 미제공 시 기존 동작 유지 (backward-compat).
+    if (workspaceId) {
+      const entityA = findEntity(typeA, idA)
+      if (entityA) {
+        const wsA = getWorkspaceId(typeA, entityA)
+        if (wsA !== workspaceId) {
+          throw new NotFoundError(`${typeA} not found in active workspace: ${idA}`)
+        }
+      }
+      const entityB = findEntity(typeB, idB)
+      if (entityB) {
+        const wsB = getWorkspaceId(typeB, entityB)
+        if (wsB !== workspaceId) {
+          throw new NotFoundError(`${typeB} not found in active workspace: ${idB}`)
+        }
+      }
+    }
+
     const normalized = normalize(typeA, idA, typeB, idB)
     entityLinkRepository.unlink(
       normalized.sourceType,
@@ -111,7 +136,18 @@ export const entityLinkService = {
     )
   },
 
-  getLinked(entityType: LinkableEntityType, entityId: string): LinkedEntity[] {
+  getLinked(
+    entityType: LinkableEntityType,
+    entityId: string,
+    workspaceId?: string
+  ): LinkedEntity[] {
+    // workspaceId 인자가 주어지면 대상 entity가 그 워크스페이스에 속하는지 사전 검증.
+    if (workspaceId) {
+      const entity = findEntity(entityType, entityId)
+      if (!entity || getWorkspaceId(entityType, entity) !== workspaceId) {
+        throw new NotFoundError(`${entityType} not found in active workspace: ${entityId}`)
+      }
+    }
     const rows = entityLinkRepository.findByEntity(entityType, entityId)
     const result: LinkedEntity[] = []
     const orphanRows: {
