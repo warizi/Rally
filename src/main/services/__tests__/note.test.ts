@@ -363,7 +363,7 @@ describe('remove', () => {
 
   it('정상 삭제 → fs.unlinkSync 호출 + DB row 삭제', () => {
     insertTestNote('n1', 'to-delete.md')
-    noteService.remove('ws-1', 'n1')
+    noteService.remove('ws-1', 'n1', { permanent: true })
     expect(vi.mocked(fs.unlinkSync)).toHaveBeenCalledWith(expect.stringContaining('to-delete.md'))
     expect(noteRepository.findById('n1')).toBeUndefined()
   })
@@ -373,7 +373,7 @@ describe('remove', () => {
     vi.mocked(fs.unlinkSync).mockImplementationOnce(() => {
       throw new Error('ENOENT: no such file')
     })
-    expect(() => noteService.remove('ws-1', 'n1')).not.toThrow()
+    expect(() => noteService.remove('ws-1', 'n1', { permanent: true })).not.toThrow()
     expect(noteRepository.findById('n1')).toBeUndefined()
   })
 
@@ -381,7 +381,7 @@ describe('remove', () => {
     insertTestNote('n1', 'note.md')
     const content = '![img](.images/photo.png)'
     vi.mocked(fs.readFileSync).mockReturnValueOnce(content as never)
-    noteService.remove('ws-1', 'n1')
+    noteService.remove('ws-1', 'n1', { permanent: true })
     expect(noteImageService.deleteAllImages).toHaveBeenCalledWith('ws-1', content)
   })
 
@@ -390,7 +390,7 @@ describe('remove', () => {
     vi.mocked(fs.readFileSync).mockImplementationOnce(() => {
       throw new Error('ENOENT')
     })
-    expect(() => noteService.remove('ws-1', 'n1')).not.toThrow()
+    expect(() => noteService.remove('ws-1', 'n1', { permanent: true })).not.toThrow()
     expect(noteImageService.deleteAllImages).not.toHaveBeenCalled()
   })
 })

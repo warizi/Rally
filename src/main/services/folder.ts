@@ -11,6 +11,7 @@ import { noteRepository } from '../repositories/note'
 import { pdfFileRepository } from '../repositories/pdf-file'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
+import { trashService } from './trash'
 // ⚠️ folder-watcher.ts를 import하지 않음 — 순환 의존성 방지
 //    folderWatcher.ensureWatching 호출은 ipc/folder.ts에서 담당
 
@@ -314,15 +315,23 @@ export const folderService = {
   },
 
   /**
-   * 폴더 삭제 (disk 재귀 삭제 + DB 벌크 삭제)
+   * 폴더 삭제. 기본은 휴지통 이동 — 폴더와 모든 하위 파일을 같은 trash batch로 묶음.
+   * permanent=true: 즉시 영구 삭제 (fs.rmSync recursive + DB bulk delete).
    */
-  remove(workspaceId: string, folderId: string): void {
+  remove(workspaceId: string, folderId: string, options: { permanent?: boolean } = {}): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
     const folder = folderRepository.findById(folderId)
     if (!folder) throw new NotFoundError(`Folder not found: ${folderId}`)
 
+    if (!options.permanent) {
+      // 휴지통 — 폴더 통째 fs 이동 + 안의 모든 노트/csv/pdf/image도 같은 batch로 묶임
+      trashService.softRemove(workspaceId, 'folder', folderId)
+      return
+    }
+
+    // 영구 삭제 경로
     const absPath = path.join(workspace.path, folder.relativePath)
     fs.rmSync(absPath, { recursive: true, force: true })
     itemTagService.removeByItem('folder', folderId)

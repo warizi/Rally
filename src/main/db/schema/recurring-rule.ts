@@ -1,5 +1,6 @@
 import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { workspaces } from './workspace'
+import { trashBatches } from './trash-batch'
 
 export const recurringRules = sqliteTable(
   'recurring_rules',
@@ -10,7 +11,9 @@ export const recurringRules = sqliteTable(
       .references(() => workspaces.id, { onDelete: 'cascade' }),
     title: text('title').notNull(),
     description: text('description').notNull().default(''),
-    priority: text('priority', { enum: ['high', 'medium', 'low'] }).notNull().default('medium'),
+    priority: text('priority', { enum: ['high', 'medium', 'low'] })
+      .notNull()
+      .default('medium'),
     recurrenceType: text('recurrence_type', {
       enum: ['daily', 'weekday', 'weekend', 'custom']
     }).notNull(),
@@ -22,7 +25,15 @@ export const recurringRules = sqliteTable(
     endTime: text('end_time'),
     reminderOffsetMs: integer('reminder_offset_ms'),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
-    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull()
+    updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
+    trashBatchId: text('trash_batch_id').references(() => trashBatches.id, {
+      onDelete: 'set null'
+    })
   },
-  (t) => [index('idx_recurring_rules_workspace').on(t.workspaceId)]
+  (t) => [
+    index('idx_recurring_rules_workspace').on(t.workspaceId),
+    index('idx_recurring_rules_deleted').on(t.deletedAt),
+    index('idx_recurring_rules_trash_batch').on(t.trashBatchId)
+  ]
 )

@@ -32,7 +32,7 @@ export function DeleteFolderDialog({
           <AlertDialogTitle>폴더 삭제</AlertDialogTitle>
           <AlertDialogDescription>
             <span className="font-semibold">{`"${folderName}"`}</span> 폴더와 하위 항목이 모두
-            삭제됩니다. 이 작업은 되돌릴 수 없습니다.
+            휴지통으로 이동됩니다. 휴지통에서 복구하거나 영구 삭제할 수 있습니다.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

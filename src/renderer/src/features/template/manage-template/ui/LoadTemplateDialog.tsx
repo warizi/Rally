@@ -82,7 +82,7 @@ export function LoadTemplateDialog({
       { id: template.id, workspaceId, type },
       {
         onSuccess: () => {
-          toast.success('템플릿이 삭제되었습니다')
+          toast.success('템플릿을 휴지통으로 이동했습니다')
           if (selectedId === template.id) setSelectedId(null)
         },
         onError: (err) => {

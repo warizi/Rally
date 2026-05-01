@@ -7,6 +7,7 @@ import { todoRepository } from '../repositories/todo'
 import { entityLinkService } from './entity-link'
 import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
+import { trashService } from './trash'
 import type { Schedule } from '../repositories/schedule'
 import type { Todo } from '../repositories/todo'
 
@@ -240,9 +241,21 @@ export const scheduleService = {
     return toScheduleItem(row)
   },
 
-  remove(scheduleId: string): void {
+  /**
+   * Schedule 삭제. 기본은 휴지통 이동. permanent=true: 즉시 영구 삭제.
+   */
+  remove(scheduleId: string, options: { permanent?: boolean } = {}): void {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
+
+    if (!options.permanent) {
+      if (!existing.workspaceId) {
+        throw new ValidationError('워크스페이스 정보가 없는 일정은 휴지통으로 보낼 수 없습니다')
+      }
+      trashService.softRemove(existing.workspaceId, 'schedule', scheduleId)
+      return
+    }
+
     reminderService.removeByEntity('schedule', scheduleId)
     entityLinkService.removeAllLinks('schedule', scheduleId)
     canvasNodeRepository.deleteByRef('schedule', scheduleId)

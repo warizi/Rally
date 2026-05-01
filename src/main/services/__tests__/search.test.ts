@@ -48,7 +48,9 @@ const folderRows = [
     order: 0,
     color: null,
     createdAt: new Date(),
-    updatedAt: new Date()
+    updatedAt: new Date(),
+    deletedAt: null,
+    trashBatchId: null
   }
 ]
 

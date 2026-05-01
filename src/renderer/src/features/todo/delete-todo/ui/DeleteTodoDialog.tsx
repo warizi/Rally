@@ -43,9 +43,9 @@ export function DeleteTodoDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>할 일 삭제</AlertDialogTitle>
           <AlertDialogDescription>
-            이 할 일을 삭제하시겠습니까?
-            {hasSubTodos && ' 하위 할 일도 함께 삭제됩니다.'}
-            {' 이 작업은 되돌릴 수 없습니다.'}
+            이 할 일을 휴지통으로 이동합니다.
+            {hasSubTodos && ' 하위 할 일도 함께 이동됩니다.'}
+            {' 휴지통에서 복구하거나 영구 삭제할 수 있습니다.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -9,7 +9,8 @@ import {
   LayoutDashboard,
   Network,
   Sheet,
-  Terminal
+  Terminal,
+  Trash2
 } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 
@@ -28,6 +29,7 @@ export type TabType =
   | 'terminal'
   | 'changelog'
   | 'history'
+  | 'trash'
 
 export type TabIcon = TabType
 
@@ -45,7 +47,8 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   'canvas-detail': Network,
   terminal: Terminal,
   changelog: History,
-  history: Clock
+  history: Clock,
+  trash: Trash2
 }
 
 // 정적 라우트
@@ -68,7 +71,8 @@ export const ROUTES = {
   CANVAS_DETAIL: '/canvas/:canvasId',
   TERMINAL: '/terminal',
   CHANGELOG: '/changelog',
-  HISTORY: '/history'
+  HISTORY: '/history',
+  TRASH: '/trash'
 } as const
 
 export type RoutePattern = (typeof ROUTES)[keyof typeof ROUTES]
@@ -119,5 +123,15 @@ export const sidebar_items: SidebarItem[] = [
     tabType: 'history',
     pathname: ROUTES.HISTORY,
     icon: TAB_ICON['history']
+  }
+]
+
+/** 시스템 영역(사이드바 하단)에 노출되는 항목 — 휴지통, 설정 등 */
+export const system_sidebar_items: SidebarItem[] = [
+  {
+    title: '휴지통',
+    tabType: 'trash',
+    pathname: ROUTES.TRASH,
+    icon: TAB_ICON['trash']
   }
 ]

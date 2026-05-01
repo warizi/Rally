@@ -10,6 +10,7 @@ import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { noteImageService } from './note-image'
+import { trashService } from './trash'
 
 export interface NoteNode {
   id: string
@@ -343,25 +344,30 @@ export const noteService = {
   },
 
   /**
-   * 노트 삭제 (disk + DB)
+   * 노트 삭제. 기본은 휴지통 이동(soft delete). permanent=true: 즉시 영구 삭제 (이미지 cleanup + fs unlink).
    */
-  remove(workspaceId: string, noteId: string): void {
+  remove(workspaceId: string, noteId: string, options: { permanent?: boolean } = {}): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
 
-    const absPath = path.join(workspace.path, note.relativePath)
+    if (!options.permanent) {
+      // 휴지통 이동 — fs는 trashService가 워크스페이스 밖 .trash로 옮김.
+      // .images 참조는 그대로 보존 (복구 시 자동 작동). 영구 삭제 시(purge) 함께 정리.
+      trashService.softRemove(workspaceId, 'note', noteId)
+      return
+    }
 
-    // 노트 삭제 전 참조된 이미지 파일 정리
+    // 영구 삭제 경로
+    const absPath = path.join(workspace.path, note.relativePath)
     try {
       const content = fs.readFileSync(absPath, 'utf-8')
       noteImageService.deleteAllImages(workspaceId, content)
     } catch {
       // 파일 읽기 실패 시 무시
     }
-
     try {
       fs.unlinkSync(absPath)
     } catch {

@@ -9,6 +9,7 @@ import { resolveNameConflict, readPdfFilesRecursive } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
+import { trashService } from './trash'
 
 export interface PdfFileNode {
   id: string
@@ -251,13 +252,20 @@ export const pdfFileService = {
     return toPdfFileNode(updated)
   },
 
-  /** 삭제 (disk + DB) */
-  remove(workspaceId: string, pdfId: string): void {
+  /**
+   * PDF 삭제. 기본은 휴지통 이동. permanent=true: 즉시 영구 삭제.
+   */
+  remove(workspaceId: string, pdfId: string, options: { permanent?: boolean } = {}): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
     const pdf = pdfFileRepository.findById(pdfId)
     if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
+
+    if (!options.permanent) {
+      trashService.softRemove(workspaceId, 'pdf', pdfId)
+      return
+    }
 
     const absPath = path.join(workspace.path, pdf.relativePath)
     try {

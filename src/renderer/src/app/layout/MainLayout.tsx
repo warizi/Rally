@@ -14,6 +14,7 @@ import { useCanvasWatcher } from '@entities/canvas'
 import { useTodoWatcher } from '@entities/todo'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
+import { useTrashWatcher } from '@entities/trash'
 import { UpdateChecker } from '../providers/update-checker'
 import { useState } from 'react'
 import {
@@ -109,6 +110,8 @@ function MainLayout(): React.JSX.Element {
   useEntityLinkWatcher()
   // 알림 push 이벤트 구독
   useReminderWatcher()
+  // 휴지통 변경 push 이벤트 구독 (소프트 삭제 / 복구 / 영구 삭제 시 활성 list 캐시 무효화)
+  useTrashWatcher()
 
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
@@ -132,10 +135,7 @@ function MainLayout(): React.JSX.Element {
   // DnDContext의 onDragStart/onDragEnd는 source 종류별로 분기.
   // tree-node / history-link source는 별도 listener에서 처리.
   const handleDragStart = (event: DragStartEvent): void => {
-    const data = event.active.data.current as
-      | TreeDragData
-      | HistoryLinkDragData
-      | undefined
+    const data = event.active.data.current as TreeDragData | HistoryLinkDragData | undefined
     if (data?.source === 'tree-node') {
       setDraggingTreeNode({ kind: data.kind, title: data.title })
       return
