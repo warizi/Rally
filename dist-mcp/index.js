@@ -35849,25 +35849,79 @@ var e = encodeURIComponent;
 var tools = [
   {
     name: "list_items",
-    description: "List all items (folders, notes, tables, canvases, todo summary) in the active workspace",
-    schema: {},
-    handler: () => callTool("GET", "/api/mcp/items")
+    description: `List items (folders, notes, tables, canvases, todo summary) in the active workspace.
+All options are optional and default to a full listing for backward compatibility, but for token efficiency
+you should narrow the response when possible:
+- folderId + recursive=false: list only direct children of a specific folder
+- types: ["folder"] (or any subset) to fetch only what you need
+- summary=true: omit preview / relativePath / folderPath / description (id+title+folderId+updatedAt only)
+- updatedAfter: only items modified after the given ISO timestamp
+- limit/offset: paginate per kind (default limit 500, max 1000); response.meta.hasMore tells you when to page
+Response includes a meta block with totals, hasMore flags, and the resolved options.`,
+    schema: {
+      folderId: external_exports3.string().optional().describe("Restrict to items inside this folder"),
+      recursive: external_exports3.boolean().optional().describe("When folderId is set, include all descendants (default: direct children only)"),
+      types: external_exports3.array(external_exports3.enum(["folder", "note", "table", "canvas"])).optional().describe("Limit response to specific kinds. Omit to include all."),
+      summary: external_exports3.boolean().optional().describe(
+        "Strip heavy fields (preview, relativePath, folderPath, description) to reduce token usage"
+      ),
+      updatedAfter: external_exports3.string().optional().describe("ISO 8601 timestamp \u2014 only items updated after this moment"),
+      limit: external_exports3.number().int().min(1).max(1e3).optional().describe("Per-kind row cap (default 500, max 1000)"),
+      offset: external_exports3.number().int().min(0).optional().describe("Per-kind offset for pagination")
+    },
+    handler: ({ folderId, recursive, types, summary, updatedAfter, limit, offset }) => {
+      const params = new URLSearchParams();
+      if (folderId) params.set("folderId", folderId);
+      if (recursive) params.set("recursive", "true");
+      if (summary) params.set("summary", "true");
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types) params.append("types[]", t);
+      }
+      if (updatedAfter) params.set("updatedAfter", updatedAfter);
+      if (typeof limit === "number") params.set("limit", String(limit));
+      if (typeof offset === "number") params.set("offset", String(offset));
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/items${qs ? `?${qs}` : ""}`);
+    }
   },
   {
-    name: "search_notes",
-    description: "Search notes by title or content. Returns up to 50 results.",
+    name: "search",
+    description: `Unified search across notes, tables, canvases, and todos.
+- types: subset of ["note", "table", "canvas", "todo"]; defaults to ["note"] (search_notes-compatible)
+- offset/limit: paginate (default limit 50, max 100). Response includes total/hasMore/nextOffset
+- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)
+Title matches rank above content/description matches; ties break by updatedAt desc.`,
     schema: {
-      query: external_exports3.string().describe("Search query (case-insensitive)")
+      query: external_exports3.string().describe("Search query (case-insensitive substring)"),
+      types: external_exports3.array(external_exports3.enum(["note", "table", "canvas", "todo"])).optional().describe('Domains to search (default: ["note"])'),
+      offset: external_exports3.number().int().min(0).optional().describe("Pagination offset (default: 0)"),
+      limit: external_exports3.number().int().min(1).max(100).optional().describe("Page size (default: 50, max: 100)"),
+      highlight: external_exports3.boolean().optional().describe("Include excerpt around the match (default: false)")
     },
-    handler: ({ query }) => callTool("GET", `/api/mcp/notes/search?q=${e(query)}`)
+    handler: ({ query, types, offset, limit, highlight }) => {
+      const params = new URLSearchParams();
+      params.set("q", query);
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types) params.append("types[]", t);
+      }
+      if (typeof offset === "number") params.set("offset", String(offset));
+      if (typeof limit === "number") params.set("limit", String(limit));
+      if (highlight) params.set("highlight", "true");
+      return callTool("GET", `/api/mcp/search?${params.toString()}`);
+    }
   },
   {
-    name: "read_content",
-    description: "Read the full content of a note (markdown) or table (CSV). Auto-detects type by ID.",
+    name: "read_contents",
+    description: `Batch read the contents of multiple notes/tables in one round-trip. Up to 50 IDs.
+Pass a single id in the array for one-shot reads. Each result is independent: if one ID fails
+(not found, fs error, etc.) the others still succeed.
+Result entries:
+- success=true: { id, type: 'note'|'table', title, relativePath, content [, encoding, columnWidths] }
+- success=false: { id, error: { code, message } }`,
     schema: {
-      id: external_exports3.string().describe("Note or table ID (from list_items)")
+      ids: external_exports3.array(external_exports3.string()).min(1).max(50).describe("Note or table IDs (1\u201350)")
     },
-    handler: ({ id }) => callTool("GET", `/api/mcp/content/${e(id)}`)
+    handler: (args) => callTool("POST", "/api/mcp/contents/batch", args)
   },
   {
     name: "write_content",
@@ -36010,20 +36064,59 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
   },
   {
     name: "list_todos",
-    description: `List all todos in the active workspace. Supports filter: all, active, completed.
-Each todo includes linkedItems array with related items. To inspect a linked item:
-- type "note" or "csv" \u2192 use read_content with the id
-- type "canvas" \u2192 use read_canvas with the id as canvasId
-- type "schedule", "pdf", "image" \u2192 metadata only (no detail tool available)`,
+    description: `List todos in the active workspace.
+Filter options (all optional, AND-combined):
+- filter: 'active' (top-level not done + all subtodos) or 'completed' (top-level done)
+- parentId: 'null' for top-level only, or a todo id to fetch its direct children
+- linkedTo: { type, id } \u2014 only todos linked to that entity
+- dueWithin: number of days from today (e.g. 7 = this week's deadlines)
+- priority: subset of ['high','medium','low']
+- search: substring match on title (case-insensitive)
+- resolveLinks: when true, linkedItems[].preview is filled (note/csv/pdf/image preview, canvas/todo/schedule description)
+
+Each todo includes linkedItems[]. To inspect a linked item:
+- type "note" or "csv" \u2192 read_content
+- type "canvas" \u2192 read_canvas
+- type "schedule"/"pdf"/"image" \u2192 metadata only
+
+Subtodos do NOT support links \u2014 those operations must target the top-level parent.`,
     schema: {
-      filter: external_exports3.enum(["active", "completed"]).optional().describe("Filter (default: active)")
+      filter: external_exports3.enum(["active", "completed"]).optional().describe("Filter (default: active)"),
+      parentId: external_exports3.string().optional().describe('Pass "null" for top-level only, or a parent todo id for its children'),
+      linkedTo: external_exports3.object({
+        type: external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "schedule"]),
+        id: external_exports3.string()
+      }).optional().describe("Only return todos linked to this entity"),
+      dueWithin: external_exports3.number().int().min(0).optional().describe("Only todos with dueDate within N days from today"),
+      priority: external_exports3.array(external_exports3.enum(["high", "medium", "low"])).optional().describe("Filter by priority (any of)"),
+      search: external_exports3.string().optional().describe("Substring match on title"),
+      resolveLinks: external_exports3.boolean().optional().describe("Include preview/description for each linkedItem (default: false)")
     },
-    handler: ({ filter }) => callTool("GET", `/api/mcp/todos${filter ? `?filter=${filter}` : ""}`)
+    handler: ({ filter, parentId, linkedTo, dueWithin, priority, search, resolveLinks }) => {
+      const params = new URLSearchParams();
+      if (filter) params.set("filter", filter);
+      if (typeof parentId === "string") params.set("parentId", parentId);
+      if (linkedTo && typeof linkedTo === "object") {
+        const lt = linkedTo;
+        params.set("linkedTo[type]", lt.type);
+        params.set("linkedTo[id]", lt.id);
+      }
+      if (typeof dueWithin === "number") params.set("dueWithin", String(dueWithin));
+      if (Array.isArray(priority) && priority.length > 0) {
+        for (const p of priority) params.append("priority[]", p);
+      }
+      if (typeof search === "string" && search.trim()) params.set("search", search);
+      if (resolveLinks) params.set("resolveLinks", "true");
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/todos${qs ? `?${qs}` : ""}`);
+    }
   },
   {
     name: "manage_todos",
     description: `Batch create, update, or delete todos. Status/isDone auto-sync.
-Subtodos are created inline via the subtodos array (title only). linkItems supported on top-level todos only.`,
+Subtodos: created inline via the subtodos array. Title only \u2014 matches the UI which only allows entering a title.
+Other fields (priority/dueDate/etc.) on a subtodo can be set later via a separate update action targeting the subtodo's id.
+Links: linkItems / unlinkItems are supported only on top-level todos. Subtodos cannot be linked \u2014 link the parent todo instead, or convert the subtodo to top-level (clear parentId) first.`,
     schema: {
       actions: external_exports3.array(
         external_exports3.union([
@@ -36102,6 +36195,523 @@ Links are bidirectional \u2014 order of source/target does not matter.`,
       ).describe("Array of link actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/links/batch", args)
+  },
+  // ─── Schedules (calendar events) ──────────────────────────
+  {
+    name: "list_schedules",
+    description: `List calendar events (schedules) in the active workspace.
+- from/to: ISO 8601 date range. If both omitted, returns all schedules.
+- search: substring match on title/description/location (case-insensitive)`,
+    schema: {
+      from: external_exports3.string().optional().describe("ISO 8601 start of range"),
+      to: external_exports3.string().optional().describe("ISO 8601 end of range"),
+      search: external_exports3.string().optional().describe("Substring match on title/description/location")
+    },
+    handler: ({ from, to, search }) => {
+      const params = new URLSearchParams();
+      if (from) params.set("from", from);
+      if (to) params.set("to", to);
+      if (typeof search === "string" && search.trim()) params.set("search", search);
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/schedules${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_schedules",
+    description: `Batch create, update, or delete calendar events. allDay events are auto-normalized to 00:00\u201323:59.`,
+    schema: {
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({
+            action: external_exports3.literal("create"),
+            title: external_exports3.string(),
+            description: external_exports3.string().nullable().optional(),
+            location: external_exports3.string().nullable().optional(),
+            allDay: external_exports3.boolean().optional(),
+            startAt: external_exports3.string().describe("ISO 8601"),
+            endAt: external_exports3.string().describe("ISO 8601"),
+            color: external_exports3.string().nullable().optional(),
+            priority: external_exports3.enum(["low", "medium", "high"]).optional()
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("update"),
+            id: external_exports3.string(),
+            title: external_exports3.string().optional(),
+            description: external_exports3.string().nullable().optional(),
+            location: external_exports3.string().nullable().optional(),
+            allDay: external_exports3.boolean().optional(),
+            startAt: external_exports3.string().optional(),
+            endAt: external_exports3.string().optional(),
+            color: external_exports3.string().nullable().optional(),
+            priority: external_exports3.enum(["low", "medium", "high"]).optional()
+          }),
+          external_exports3.object({ action: external_exports3.literal("delete"), id: external_exports3.string() })
+        ])
+      ).describe("Array of schedule actions")
+    },
+    handler: (args) => callTool("POST", "/api/mcp/schedules/batch", args)
+  },
+  // ─── Reminders ────────────────────────────────────────────
+  {
+    name: "list_reminders",
+    description: `List reminders. If entityType+entityId are given, returns reminders only for that entity; otherwise returns reminders for all todos and schedules in the active workspace.
+pendingOnly=true filters out fired reminders.`,
+    schema: {
+      entityType: external_exports3.enum(["todo", "schedule"]).optional().describe("Required together with entityId to scope by entity"),
+      entityId: external_exports3.string().optional(),
+      pendingOnly: external_exports3.boolean().optional().describe("Only un-fired reminders (default: false)")
+    },
+    handler: ({ entityType, entityId, pendingOnly }) => {
+      const params = new URLSearchParams();
+      if (entityType) params.set("entityType", entityType);
+      if (entityId) params.set("entityId", entityId);
+      if (pendingOnly) params.set("pendingOnly", "true");
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/reminders${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_reminders",
+    description: `Create or delete reminders for todos/schedules.
+offsetMs (create) must be one of: 600000 (10m), 1800000 (30m), 3600000 (1h), 86400000 (1d), 172800000 (2d).
+Reminder fires (entity start/due time - offsetMs); creation throws if that moment is in the past.`,
+    schema: {
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({
+            action: external_exports3.literal("create"),
+            entityType: external_exports3.enum(["todo", "schedule"]),
+            entityId: external_exports3.string(),
+            offsetMs: external_exports3.number().int().positive()
+          }),
+          external_exports3.object({ action: external_exports3.literal("delete"), id: external_exports3.string() })
+        ])
+      ).describe("Array of reminder actions")
+    },
+    handler: (args) => callTool("POST", "/api/mcp/reminders/batch", args)
+  },
+  // ─── Recurring rules ──────────────────────────────────────
+  {
+    name: "list_recurring_rules",
+    description: `List recurring rules in the active workspace.
+- activeOnly=true filters to rules whose endDate is null or still in the future.
+- forDate: pass a YYYY-MM-DD or ISO 8601 string to switch to the "today view" \u2014 returns only rules
+  that fire on that date along with their completion status, plus the matching completions array.
+  Response shape becomes { date, rules: [{ ...rule, completed }], completions: [...] }.
+  When forDate is omitted, returns the plain { rules: [...] } list.`,
+    schema: {
+      activeOnly: external_exports3.boolean().optional(),
+      forDate: external_exports3.string().optional().describe(
+        "YYYY-MM-DD or ISO 8601 \u2014 when set, returns only rules that fire on that date with completion status"
+      )
+    },
+    handler: ({ activeOnly, forDate }) => {
+      if (typeof forDate === "string" && forDate.trim()) {
+        const params2 = new URLSearchParams();
+        params2.set("date", forDate);
+        return callTool("GET", `/api/mcp/recurring/today?${params2.toString()}`);
+      }
+      const params = new URLSearchParams();
+      if (activeOnly) params.set("activeOnly", "true");
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/recurring/rules${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_recurring_rules",
+    description: `Batch create/update/delete recurring rules + complete/uncomplete daily occurrences.
+recurrenceType:
+- 'daily': fires every day
+- 'weekday': Mon\u2013Fri only
+- 'weekend': Sat/Sun only
+- 'custom': fires on the daysOfWeek array (0=Sun, 1=Mon, \u2026, 6=Sat) \u2014 required with recurrenceType='custom'
+
+startTime/endTime are 'HH:MM' strings or null. reminderOffsetMs is the lead time before startTime fires (or null to disable).
+
+Completion actions:
+- complete: { ruleId, date } \u2014 mark a rule completed for that day. Idempotent.
+- uncomplete: { completionId } \u2014 undo a completion. completionId comes from list_recurring_rules with forDate set, or from a prior complete result.
+
+All actions run in a single transaction. Result entries are { action, id, success: true } where id is the rule id (CRUD) or completion id (complete/uncomplete).`,
+    schema: {
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({
+            action: external_exports3.literal("create"),
+            title: external_exports3.string(),
+            description: external_exports3.string().optional(),
+            priority: external_exports3.enum(["high", "medium", "low"]).optional(),
+            recurrenceType: external_exports3.enum(["daily", "weekday", "weekend", "custom"]),
+            daysOfWeek: external_exports3.array(external_exports3.number().int().min(0).max(6)).optional(),
+            startDate: external_exports3.string().describe("ISO 8601"),
+            endDate: external_exports3.string().nullable().optional(),
+            startTime: external_exports3.string().nullable().optional(),
+            endTime: external_exports3.string().nullable().optional(),
+            reminderOffsetMs: external_exports3.number().int().nullable().optional()
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("update"),
+            id: external_exports3.string(),
+            title: external_exports3.string().optional(),
+            description: external_exports3.string().optional(),
+            priority: external_exports3.enum(["high", "medium", "low"]).optional(),
+            recurrenceType: external_exports3.enum(["daily", "weekday", "weekend", "custom"]).optional(),
+            daysOfWeek: external_exports3.array(external_exports3.number().int().min(0).max(6)).nullable().optional(),
+            startDate: external_exports3.string().optional(),
+            endDate: external_exports3.string().nullable().optional(),
+            startTime: external_exports3.string().nullable().optional(),
+            endTime: external_exports3.string().nullable().optional(),
+            reminderOffsetMs: external_exports3.number().int().nullable().optional()
+          }),
+          external_exports3.object({ action: external_exports3.literal("delete"), id: external_exports3.string() }),
+          external_exports3.object({
+            action: external_exports3.literal("complete"),
+            ruleId: external_exports3.string(),
+            date: external_exports3.string().describe("YYYY-MM-DD or ISO 8601 (the day this completion belongs to)")
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("uncomplete"),
+            completionId: external_exports3.string().describe("Completion id from list_recurring_rules (forDate)")
+          })
+        ])
+      ).describe("Array of recurring rule actions")
+    },
+    handler: (args) => callTool("POST", "/api/mcp/recurring/rules/batch", args)
+  },
+  // ─── Templates ────────────────────────────────────────────
+  {
+    name: "list_templates",
+    description: `List note/csv templates in the active workspace.
+- Without id: returns metadata list (jsonData omitted to save tokens).
+- With id: returns the single template with full jsonData (the serialized payload \u2014 JSON string for note templates consumable by write_content's content field, CSV body for csv templates). When id is set, type filter is ignored.`,
+    schema: {
+      type: external_exports3.enum(["note", "csv"]).optional().describe("Filter by template type (ignored when id is set)"),
+      id: external_exports3.string().optional().describe("When set, returns full content of that template instead of a list")
+    },
+    handler: ({ type, id }) => {
+      if (typeof id === "string" && id) {
+        return callTool("GET", `/api/mcp/templates/${e(id)}`);
+      }
+      const params = new URLSearchParams();
+      if (type) params.set("type", type);
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/templates${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_templates",
+    description: `Batch create or delete templates. Templates do not support update \u2014 delete + recreate to change content.`,
+    schema: {
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({
+            action: external_exports3.literal("create"),
+            title: external_exports3.string(),
+            type: external_exports3.enum(["note", "csv"]),
+            jsonData: external_exports3.string().describe("Serialized template payload (markdown JSON or CSV)")
+          }),
+          external_exports3.object({ action: external_exports3.literal("delete"), id: external_exports3.string() })
+        ])
+      ).describe("Array of template actions")
+    },
+    handler: (args) => callTool("POST", "/api/mcp/templates/batch", args)
+  },
+  // ─── Tags ─────────────────────────────────────────────────
+  {
+    name: "list_tags",
+    description: `List tags in the active workspace.
+- search: substring match on name/description (workspace-wide listing)
+- forItemType + forItemId: pass both to scope the response to tags attached to that specific item
+  (overrides search). Item types: note, csv, canvas, todo, pdf, image, folder.`,
+    schema: {
+      search: external_exports3.string().optional(),
+      forItemType: external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "folder"]).optional().describe("Pair with forItemId to list tags attached to a specific item"),
+      forItemId: external_exports3.string().optional().describe("Pair with forItemType")
+    },
+    handler: ({ search, forItemType, forItemId }) => {
+      if (typeof forItemType === "string" && typeof forItemId === "string" && forItemId) {
+        return callTool("GET", `/api/mcp/tagged/${e(forItemType)}/${e(forItemId)}`);
+      }
+      const params = new URLSearchParams();
+      if (typeof search === "string" && search.trim()) params.set("search", search);
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/tags${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "list_tagged_items",
+    description: `List items that carry a given tag. Filter by itemTypes (default: all taggable types).
+Orphan attachments (item deleted but tag link remains) are skipped from the response.`,
+    schema: {
+      tagId: external_exports3.string(),
+      itemTypes: external_exports3.array(external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "folder"])).optional()
+    },
+    handler: ({ tagId, itemTypes }) => {
+      const params = new URLSearchParams();
+      if (Array.isArray(itemTypes) && itemTypes.length > 0) {
+        for (const t of itemTypes) params.append("itemTypes[]", t);
+      }
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/tags/${e(tagId)}/items${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_tags",
+    description: `Batch tag operations:
+- create_tag / update_tag / delete_tag: tag CRUD
+- attach / detach: link a tag to a taggable item (note/csv/canvas/todo/pdf/image/folder)
+delete_tag also detaches from all items.`,
+    schema: {
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({
+            action: external_exports3.literal("create_tag"),
+            name: external_exports3.string(),
+            color: external_exports3.string().optional(),
+            description: external_exports3.string().optional()
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("update_tag"),
+            id: external_exports3.string(),
+            name: external_exports3.string().optional(),
+            color: external_exports3.string().optional(),
+            description: external_exports3.string().nullable().optional()
+          }),
+          external_exports3.object({ action: external_exports3.literal("delete_tag"), id: external_exports3.string() }),
+          external_exports3.object({
+            action: external_exports3.literal("attach"),
+            tagId: external_exports3.string(),
+            itemType: external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "folder"]),
+            itemId: external_exports3.string()
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("detach"),
+            tagId: external_exports3.string(),
+            itemType: external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "folder"]),
+            itemId: external_exports3.string()
+          })
+        ])
+      ).describe("Array of tag actions")
+    },
+    handler: (args) => callTool("POST", "/api/mcp/tags/batch", args)
+  },
+  // ─── History ──────────────────────────────────────────────
+  {
+    name: "get_history",
+    description: `List completed todos grouped by day (most recent first). Includes recurring completions too.
+Pagination is by "day with activity" \u2014 dayOffset/dayLimit skip empty days. Use fromDate/toDate to constrain by absolute range.
+query: case-insensitive substring on todo titles or linked file titles.`,
+    schema: {
+      dayOffset: external_exports3.number().int().min(0).optional().describe("Pagination offset in active days"),
+      dayLimit: external_exports3.number().int().min(1).max(60).optional().describe("Days per page (default: 10)"),
+      fromDate: external_exports3.string().optional().describe("YYYY-MM-DD inclusive lower bound"),
+      toDate: external_exports3.string().optional().describe("YYYY-MM-DD inclusive upper bound"),
+      query: external_exports3.string().optional()
+    },
+    handler: ({ dayOffset, dayLimit, fromDate, toDate, query }) => {
+      const params = new URLSearchParams();
+      if (typeof dayOffset === "number") params.set("dayOffset", String(dayOffset));
+      if (typeof dayLimit === "number") params.set("dayLimit", String(dayLimit));
+      if (fromDate) params.set("fromDate", fromDate);
+      if (toDate) params.set("toDate", toDate);
+      if (typeof query === "string" && query.trim()) params.set("query", query);
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/history${qs ? `?${qs}` : ""}`);
+    }
+  },
+  // ─── PDFs / Images ────────────────────────────────────────
+  {
+    name: "list_files",
+    description: `List PDF or image files in the active workspace.
+- type: 'pdf' or 'image' (required)
+- folderId/recursive filter scope; search matches title/description
+- Pass folderId="null" for root-only`,
+    schema: {
+      type: external_exports3.enum(["pdf", "image"]).describe("File type to list"),
+      folderId: external_exports3.string().optional().describe('Folder id to scope to. Pass "null" for root-only.'),
+      recursive: external_exports3.boolean().optional().describe("Include all descendant folders (default: false)"),
+      search: external_exports3.string().optional()
+    },
+    handler: ({ type, folderId, recursive, search }) => {
+      const params = new URLSearchParams();
+      if (typeof folderId === "string") params.set("folderId", folderId);
+      if (recursive) params.set("recursive", "true");
+      if (typeof search === "string" && search.trim()) params.set("search", search);
+      const qs = params.toString();
+      const endpoint = type === "pdf" ? "/api/mcp/pdfs" : "/api/mcp/images";
+      return callTool("GET", `${endpoint}${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_files",
+    description: `Batch rename/move/update_meta/delete on PDF or image files. Importing new files requires the desktop UI (file dialog).
+- type: 'pdf' or 'image' (required) \u2014 applies to all actions in this call`,
+    schema: {
+      type: external_exports3.enum(["pdf", "image"]).describe("File type the actions target"),
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({ action: external_exports3.literal("rename"), id: external_exports3.string(), newName: external_exports3.string() }),
+          external_exports3.object({
+            action: external_exports3.literal("move"),
+            id: external_exports3.string(),
+            targetFolderId: external_exports3.string().optional()
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("update_meta"),
+            id: external_exports3.string(),
+            description: external_exports3.string().optional()
+          }),
+          external_exports3.object({ action: external_exports3.literal("delete"), id: external_exports3.string() })
+        ])
+      ).describe("Array of file actions")
+    },
+    handler: ({ type, ...rest }) => {
+      const endpoint = type === "pdf" ? "/api/mcp/pdfs/batch" : "/api/mcp/images/batch";
+      return callTool("POST", endpoint, rest);
+    }
+  },
+  // ─── Workspace info ───────────────────────────────────────
+  {
+    name: "get_workspace_info",
+    description: `Active workspace summary: id/name/path + cross-domain stats + recentActivity (note/table/canvas/todo, updatedAt desc).
+Use this when you want a quick overview of the workspace without paging through list_items.
+
+Lightweight stats-only mode: pass statsTypes (subset of count kinds) to skip recentActivity and return just the requested counts. Useful when you only need totals.`,
+    schema: {
+      recentLimit: external_exports3.number().int().min(0).max(50).optional().describe("Number of recent activity entries (default: 10, max: 50). Ignored when statsTypes is set."),
+      statsTypes: external_exports3.array(
+        external_exports3.enum([
+          "folders",
+          "notes",
+          "tables",
+          "canvases",
+          "todos",
+          "pdfs",
+          "images",
+          "schedules",
+          "tags",
+          "templates",
+          "recurringRules"
+        ])
+      ).optional().describe("When set, returns lightweight count-only stats for these kinds (no recentActivity). Pass [] not allowed \u2014 omit instead.")
+    },
+    handler: ({ recentLimit, statsTypes }) => {
+      if (Array.isArray(statsTypes) && statsTypes.length > 0) {
+        const params2 = new URLSearchParams();
+        for (const t of statsTypes) params2.append("types[]", t);
+        return callTool("GET", `/api/mcp/workspace/stats?${params2.toString()}`);
+      }
+      const params = new URLSearchParams();
+      if (typeof recentLimit === "number") params.set("recentLimit", String(recentLimit));
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/workspace${qs ? `?${qs}` : ""}`);
+    }
+  },
+  // ─── Trash ────────────────────────────────────────────────
+  {
+    name: "list_trash",
+    description: `List items in the workspace trash (deleted but recoverable).
+Each batch represents one user/AI delete action \u2014 a folder + its contents share one batch, a sub-todo tree shares one batch.
+Use restore_trash with batchId to recover, or empty_trash to permanently delete.
+
+Auto-emptied after the user-configured retention period (default 30 days).`,
+    schema: {
+      types: external_exports3.array(
+        external_exports3.enum([
+          "folder",
+          "note",
+          "csv",
+          "pdf",
+          "image",
+          "canvas",
+          "todo",
+          "schedule",
+          "recurring_rule",
+          "template"
+        ])
+      ).optional().describe("Filter by entity type"),
+      search: external_exports3.string().optional().describe("Substring match on root title"),
+      offset: external_exports3.number().int().min(0).optional(),
+      limit: external_exports3.number().int().min(1).max(200).optional().describe("Default 50")
+    },
+    handler: ({ types, search, offset, limit }) => {
+      const params = new URLSearchParams();
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types) params.append("types[]", t);
+      }
+      if (typeof search === "string" && search.trim()) params.set("search", search);
+      if (typeof offset === "number") params.set("offset", String(offset));
+      if (typeof limit === "number") params.set("limit", String(limit));
+      const qs = params.toString();
+      return callTool("GET", `/api/mcp/trash${qs ? `?${qs}` : ""}`);
+    }
+  },
+  {
+    name: "manage_trash",
+    description: `Restore or permanently delete trash batches.
+- action: 'restore' \u2014 recover the whole batch (root + cascade children). For folder/file domains: original location is reused if free, otherwise auto-renamed (e.g. "docs (1)"). entity-link snapshots are reattached when both endpoints are active.
+- action: 'purge' \u2014 permanently delete. Pass batchId for a single batch, or omit batchId with confirm=true to purge ALL workspace trash. Returns purgedBatchIds; if hasMore=true call again to keep purging.
+
+Multiple actions execute sequentially. Each action is independent \u2014 failures don't roll back earlier successes.`,
+    schema: {
+      actions: external_exports3.array(
+        external_exports3.union([
+          external_exports3.object({
+            action: external_exports3.literal("restore"),
+            batchId: external_exports3.string().describe("Trash batch id from list_trash")
+          }).describe("Restore a single trash batch"),
+          external_exports3.object({
+            action: external_exports3.literal("purge"),
+            batchId: external_exports3.string().optional().describe("Single batch to purge"),
+            confirm: external_exports3.boolean().optional().describe("Required (true) when batchId is omitted to purge all trash")
+          }).describe("Permanently delete a batch (or all trash with confirm=true)")
+        ])
+      ).describe("Array of trash actions")
+    },
+    handler: async ({ actions }) => {
+      const list = actions ?? [];
+      if (list.length === 0) {
+        return {
+          content: [{ type: "text", text: JSON.stringify({ results: [] }, null, 2) }]
+        };
+      }
+      if (list.length === 1) {
+        const a = list[0];
+        if (a.action === "restore") {
+          return callTool("POST", `/api/mcp/trash/${e(String(a.batchId))}/restore`);
+        }
+        return callTool("POST", "/api/mcp/trash/empty", {
+          ...a.batchId ? { batchId: a.batchId } : {},
+          ...a.confirm ? { confirm: a.confirm } : {}
+        });
+      }
+      const results = [];
+      let workspace = null;
+      for (const a of list) {
+        const res = a.action === "restore" ? await callTool("POST", `/api/mcp/trash/${e(String(a.batchId))}/restore`) : await callTool("POST", "/api/mcp/trash/empty", {
+          ...a.batchId ? { batchId: a.batchId } : {},
+          ...a.confirm ? { confirm: a.confirm } : {}
+        });
+        const text = res.content?.[0]?.type === "text" ? res.content[0].text : "";
+        const parsed = text ? JSON.parse(text) : null;
+        if (workspace === null && parsed && typeof parsed === "object" && "_workspace" in parsed) {
+          workspace = parsed._workspace;
+        }
+        const cleanResult = parsed && typeof parsed === "object" ? Object.fromEntries(
+          Object.entries(parsed).filter(([k]) => k !== "_workspace")
+        ) : parsed;
+        results.push({
+          action: a.action,
+          batchId: a.batchId ?? null,
+          isError: res.isError === true,
+          result: cleanResult
+        });
+      }
+      const payload = workspace !== null ? { _workspace: workspace, results } : { results };
+      return {
+        content: [{ type: "text", text: JSON.stringify(payload, null, 2) }]
+      };
+    }
   }
 ];
 function registerAllTools(server2) {

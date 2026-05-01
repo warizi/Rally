@@ -722,6 +722,34 @@ interface AppInfoAPI {
   getSkillFiles: () => Promise<IpcResponse<CommandFile[]>>
 }
 
+type McpClientId = 'claudeDesktop' | 'claudeCode'
+
+interface McpClientStatus {
+  configPath: string
+  supported: boolean
+  configExists: boolean
+  registered: boolean
+  outdated: boolean
+}
+
+interface McpClientStatusMap {
+  claudeDesktop: McpClientStatus
+  claudeCode: McpClientStatus
+}
+
+interface McpClientStatusBundle {
+  status: McpClientStatusMap
+  /** dev: 'rally-dev' / prod: 'rally' */
+  serverKey: string
+  serverConfig: Record<string, unknown>
+}
+
+interface McpClientAPI {
+  getStatus: () => Promise<IpcResponse<McpClientStatusBundle>>
+  register: (client: McpClientId) => Promise<IpcResponse<McpClientStatus>>
+  unregister: (client: McpClientId) => Promise<IpcResponse<McpClientStatus>>
+}
+
 interface BackupManifest {
   version: number
   appVersion: string
@@ -968,6 +996,7 @@ interface API {
   itemTag: ItemTagAPI
   backup: BackupAPI
   appInfo: AppInfoAPI
+  mcpClient: McpClientAPI
   terminal: TerminalAPI
   recurringRule: RecurringRuleAPI
   recurringCompletion: RecurringCompletionAPI

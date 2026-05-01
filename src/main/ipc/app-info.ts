@@ -4,6 +4,12 @@ import { existsSync, readFileSync, readdirSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
+import {
+  mcpClientConfigService,
+  type McpClientId,
+  type McpClientStatus,
+  type McpClientStatusMap
+} from '../services/mcp-client-config'
 
 export interface CommandFile {
   name: string
@@ -57,4 +63,33 @@ export function registerAppInfoHandlers(): void {
       return readMdFiles(skillsDir)
     })
   })
+
+  ipcMain.handle(
+    'mcpClient:getStatus',
+    (): IpcResponse<{
+      status: McpClientStatusMap
+      serverKey: string
+      serverConfig: Record<string, unknown>
+    }> => {
+      return handle(() => ({
+        status: mcpClientConfigService.getStatus(),
+        serverKey: mcpClientConfigService.getServerKey(),
+        serverConfig: mcpClientConfigService.getServerConfig()
+      }))
+    }
+  )
+
+  ipcMain.handle(
+    'mcpClient:register',
+    (_evt, client: McpClientId): IpcResponse<McpClientStatus> => {
+      return handle(() => mcpClientConfigService.register(client))
+    }
+  )
+
+  ipcMain.handle(
+    'mcpClient:unregister',
+    (_evt, client: McpClientId): IpcResponse<McpClientStatus> => {
+      return handle(() => mcpClientConfigService.unregister(client))
+    }
+  )
 }

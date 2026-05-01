@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.6.2',
+    date: '2026-05-02',
+    changes: [
+      {
+        type: 'feature',
+        title: 'MCP 자동 등록 (Claude Desktop · Claude Code)',
+        description:
+          '설정 > AI 탭에서 Claude Desktop과 Claude Code(글로벌)에 Rally MCP 서버를 한 번에 자동 등록·제거할 수 있습니다. 클라이언트별 등록 상태가 한눈에 표시되고, 앱 경로가 바뀌었을 때는 "갱신" 버튼으로 한 번에 최신 경로로 다시 등록할 수 있습니다. 기타 클라이언트(Cursor 등)를 위한 수동 설정 JSON 복사도 그대로 제공합니다.'
+      }
+    ]
+  },
+  {
     version: '1.6.1',
     date: '2026-05-02',
     changes: [
