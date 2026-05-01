@@ -10,12 +10,41 @@ import { noteRepository } from '../../../repositories/note'
 import { csvFileRepository } from '../../../repositories/csv-file'
 import { noteService } from '../../../services/note'
 import { csvFileService } from '../../../services/csv-file'
+import { searchService, type SearchType } from '../../../services/search'
 import { ValidationError } from '../../../lib/errors'
 import { broadcastChanged } from '../../lib/broadcast'
 import { requireBody, resolveActiveWorkspace, resolveItemType } from './helpers'
 
+const VALID_SEARCH_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
+
+function parseSearchTypes(query: URLSearchParams): SearchType[] {
+  const csv = query.get('types')
+  const repeat = query.getAll('types[]')
+  const raw = repeat.length > 0 ? repeat : csv ? csv.split(',') : []
+  if (raw.length === 0) return ['note']
+  const cleaned = raw.map((s) => s.trim()).filter((s) => s.length > 0)
+  if (cleaned.length === 0) return ['note']
+  for (const t of cleaned) {
+    if (!VALID_SEARCH_TYPES.has(t as SearchType)) {
+      throw new ValidationError(`Invalid type: ${t}. Must be one of note, table, canvas, todo.`)
+    }
+  }
+  return cleaned as SearchType[]
+}
+
+function parseNonNegInt(raw: string | null, label: string): number | undefined {
+  if (raw === null || raw === '') return undefined
+  const n = Number.parseInt(raw, 10)
+  if (!Number.isFinite(n) || `${n}` !== raw) {
+    throw new ValidationError(`${label} must be a non-negative integer`)
+  }
+  return n
+}
+
 export function registerMcpContentRoutes(router: Router): void {
-  // ─── GET /api/mcp/notes/search → search_notes ─────────────
+  // ─── GET /api/mcp/notes/search → search_notes (legacy) ────
+  // 호환성: 기존 호출자(레거시 search_notes 도구 등)가 의존하는 응답 형식 유지.
+  // 통합 검색은 GET /api/mcp/search 사용.
 
   router.addRoute(
     'GET',
@@ -28,6 +57,18 @@ export function registerMcpContentRoutes(router: Router): void {
       return { results }
     }
   )
+
+  // ─── GET /api/mcp/search → search (통합) ──────────────────
+
+  router.addRoute('GET', '/api/mcp/search', async (_params, _body, query) => {
+    const wsId = resolveActiveWorkspace()
+    const q = query.get('q') || ''
+    const types = parseSearchTypes(query)
+    const offset = parseNonNegInt(query.get('offset'), 'offset')
+    const limit = parseNonNegInt(query.get('limit'), 'limit')
+    const highlight = query.get('highlight') === 'true'
+    return searchService.search(wsId, q, { types, offset, limit, highlight })
+  })
 
   // ─── GET /api/mcp/content/:id → read_content ──────────────
 

@@ -133,6 +133,38 @@ export const todoService = {
       .map(toTodoItem)
   },
 
+  /** 제목/설명 LIKE 검색. matchType은 title 우선, 그 외 description. */
+  search(
+    workspaceId: string,
+    query: string
+  ): {
+    id: string
+    title: string
+    description: string
+    matchType: 'title' | 'description'
+    updatedAt: Date
+    isDone: boolean
+  }[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+    if (!query.trim()) return []
+    const rows = todoRepository.searchByTitleOrDescription(workspaceId, query)
+    const lower = query.toLowerCase()
+    return rows.map((r) => {
+      const updatedAt = r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt as number)
+      return {
+        id: r.id,
+        title: r.title,
+        description: r.description,
+        matchType: r.title.toLowerCase().includes(lower)
+          ? ('title' as const)
+          : ('description' as const),
+        updatedAt,
+        isDone: r.isDone
+      }
+    })
+  },
+
   create(workspaceId: string, data: CreateTodoData): TodoItem {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)

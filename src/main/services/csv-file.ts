@@ -140,6 +140,39 @@ export const csvFileService = {
   },
 
   /**
+   * 제목/설명/preview LIKE 검색.
+   * preview는 본문 일부 캐시이므로 본문 검색 근사치 — 노트의 fs read 폴백과는 달리 DB-only.
+   * matchType: title 우선, 그 외는 content로 분류 (description 매칭도 content로 묶음 — 사용자 관점에서 동일).
+   */
+  search(
+    workspaceId: string,
+    query: string
+  ): {
+    id: string
+    title: string
+    relativePath: string
+    preview: string
+    folderId: string | null
+    matchType: 'title' | 'content'
+    updatedAt: Date
+  }[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+    if (!query.trim()) return []
+    const rows = csvFileRepository.searchByTitleOrText(workspaceId, query)
+    const lower = query.toLowerCase()
+    return rows.map((r) => ({
+      id: r.id,
+      title: r.title,
+      relativePath: r.relativePath,
+      preview: r.preview,
+      folderId: r.folderId,
+      matchType: r.title.toLowerCase().includes(lower) ? ('title' as const) : ('content' as const),
+      updatedAt: r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt as number)
+    }))
+  },
+
+  /**
    * 외부 .csv 파일을 workspace로 복사 + DB 등록
    * 인코딩 변환 없이 raw byte 그대로 복사 (readContent가 chardet으로 감지)
    */
