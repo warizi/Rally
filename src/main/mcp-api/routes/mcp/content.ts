@@ -91,7 +91,19 @@ export function registerMcpContentRoutes(router: Router): void {
 
       if (body.type === 'note') {
         const result = noteService.create(wsId, folderId, body.title)
-        if (body.content) noteService.writeContent(wsId, result.id, body.content)
+        // body.content 쓰기 실패 시 방금 생성한 빈 노트를 정리하여 orphan 파일/DB row 방지
+        if (body.content) {
+          try {
+            noteService.writeContent(wsId, result.id, body.content)
+          } catch (e) {
+            try {
+              noteService.remove(wsId, result.id)
+            } catch {
+              // 정리 실패는 무시 — 원래 에러를 우선 보존
+            }
+            throw e
+          }
+        }
         broadcastChanged('note:changed', wsId, [result.relativePath])
         return {
           type: 'note',
@@ -102,7 +114,18 @@ export function registerMcpContentRoutes(router: Router): void {
         }
       } else {
         const result = csvFileService.create(wsId, folderId, body.title)
-        if (body.content) csvFileService.writeContent(wsId, result.id, body.content)
+        if (body.content) {
+          try {
+            csvFileService.writeContent(wsId, result.id, body.content)
+          } catch (e) {
+            try {
+              csvFileService.remove(wsId, result.id)
+            } catch {
+              // 정리 실패는 무시
+            }
+            throw e
+          }
+        }
         broadcastChanged('csv:changed', wsId, [result.relativePath])
         return {
           type: 'table',
