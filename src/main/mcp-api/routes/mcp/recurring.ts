@@ -165,6 +165,24 @@ export function registerMcpRecurringRoutes(router: Router): void {
             })
             return { action: 'update', id: action.id, success: true }
           }
+          if (action.action === 'complete') {
+            assertValidId(action.ruleId, 'ruleId')
+            const date = requireDate(action.date, 'date')
+            const rule = recurringRuleRepository.findById(action.ruleId)
+            assertOwnedByWorkspace(rule, wsId, `Recurring rule not found: ${action.ruleId}`)
+            const completion = recurringCompletionService.complete(action.ruleId, date)
+            return { action: 'complete', id: completion.id, success: true }
+          }
+          if (action.action === 'uncomplete') {
+            assertValidId(action.completionId, 'completionId')
+            const existing = recurringCompletionRepository.findById(action.completionId)
+            if (!existing) throw new NotFoundError(`Completion not found: ${action.completionId}`)
+            if (existing.workspaceId !== wsId) {
+              throw new NotFoundError(`Completion not found: ${action.completionId}`)
+            }
+            recurringCompletionService.uncomplete(action.completionId)
+            return { action: 'uncomplete', id: action.completionId, success: true }
+          }
           // delete
           assertValidId(action.id, 'rule id')
           const existing = recurringRuleRepository.findById(action.id)
@@ -175,7 +193,14 @@ export function registerMcpRecurringRoutes(router: Router): void {
         { transactional: true }
       )
 
-      broadcastChanged('recurring-rule:changed', wsId, [])
+      const hasCompletionChange = body.actions.some(
+        (a) => a.action === 'complete' || a.action === 'uncomplete'
+      )
+      const hasRuleChange = body.actions.some(
+        (a) => a.action === 'create' || a.action === 'update' || a.action === 'delete'
+      )
+      if (hasRuleChange) broadcastChanged('recurring-rule:changed', wsId, [])
+      if (hasCompletionChange) broadcastChanged('recurring-completion:changed', wsId, [])
       return { results }
     }
   )

@@ -484,10 +484,23 @@ export interface DeleteRecurringRuleAction {
   id: string
 }
 
+export interface CompleteRecurringRuleAction {
+  action: 'complete'
+  ruleId: string
+  date: string
+}
+
+export interface UncompleteRecurringRuleAction {
+  action: 'uncomplete'
+  completionId: string
+}
+
 export type RecurringRuleAction =
   | CreateRecurringRuleAction
   | UpdateRecurringRuleAction
   | DeleteRecurringRuleAction
+  | CompleteRecurringRuleAction
+  | UncompleteRecurringRuleAction
 
 export interface ManageRecurringRuleResult {
   action: string
