@@ -434,6 +434,36 @@ export const entityLinkService = {
   },
 
   /**
+   * 특정 entity에 연결된 다른 entity 중 targetType과 일치하는 ID 목록을 반환.
+   * 예: findEntityIdsLinkedTo('todo', 'note', 'n-1') → note n-1과 연결된 todo id들.
+   * list_todos의 linkedTo 필터에 사용.
+   */
+  findEntityIdsLinkedTo(
+    targetType: LinkableEntityType,
+    sourceType: LinkableEntityType,
+    sourceId: string
+  ): string[] {
+    const rows = entityLinkRepository.findByEntity(sourceType, sourceId)
+    const ids: string[] = []
+    for (const row of rows) {
+      if (
+        row.sourceType === sourceType &&
+        row.sourceId === sourceId &&
+        row.targetType === targetType
+      ) {
+        ids.push(row.targetId)
+      } else if (
+        row.targetType === sourceType &&
+        row.targetId === sourceId &&
+        row.sourceType === targetType
+      ) {
+        ids.push(row.sourceId)
+      }
+    }
+    return ids
+  },
+
+  /**
    * getLinkedBatch + 각 링크 대상의 preview/description을 일괄 fetch해 반환.
    * 추가 쿼리는 type별 1개씩 (최대 7개) — N+1 회피.
    */

@@ -125,6 +125,61 @@ export const todoService = {
     return todoRepository.countByWorkspaceId(workspaceId)
   },
 
+  /**
+   * 다중 필터로 todo 검색. 모두 AND 조합.
+   * - filter: active/completed/all (기존 의미 유지)
+   * - parentId: 'null' = top-level only, string = 해당 parent의 자식만, undefined = 무관
+   * - linkedTo: 해당 entity와 연결된 todo만 (entity-link reverse lookup)
+   * - dueWithin: today부터 N일 이내 dueDate가 있는 todo
+   * - priority: 주어진 priority들 중 하나
+   * - search: title LIKE
+   */
+  findByWorkspaceFiltered(
+    workspaceId: string,
+    options: {
+      filter?: 'all' | 'active' | 'completed'
+      parentId?: string | null
+      linkedTo?: { type: import('../db/schema/entity-link').LinkableEntityType; id: string }
+      dueWithin?: number
+      priority?: ('high' | 'medium' | 'low')[]
+      search?: string
+    }
+  ): TodoItem[] {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    let includeIds: string[] | undefined
+    if (options.linkedTo) {
+      includeIds = entityLinkService.findEntityIdsLinkedTo(
+        'todo',
+        options.linkedTo.type,
+        options.linkedTo.id
+      )
+      if (includeIds.length === 0) return []
+    }
+
+    let dueWithinRange: { from: Date; to: Date } | undefined
+    if (typeof options.dueWithin === 'number' && options.dueWithin >= 0) {
+      const from = new Date()
+      from.setHours(0, 0, 0, 0)
+      const to = new Date(from)
+      to.setDate(to.getDate() + options.dueWithin)
+      to.setHours(23, 59, 59, 999)
+      dueWithinRange = { from, to }
+    }
+
+    return todoRepository
+      .findByWorkspaceWithFilters(workspaceId, {
+        filter: options.filter,
+        parentId: options.parentId,
+        dueWithin: dueWithinRange,
+        priority: options.priority,
+        search: options.search,
+        includeIds
+      })
+      .map(toTodoItem)
+  },
+
   findByWorkspaceAndDateRange(workspaceId: string, range: { start: Date; end: Date }): TodoItem[] {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)

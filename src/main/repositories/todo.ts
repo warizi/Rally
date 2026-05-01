@@ -79,6 +79,73 @@ export const todoRepository = {
     return db.select().from(todos).where(eq(todos.parentId, parentId)).all()
   },
 
+  /**
+   * 동적 필터 검색. AND 조합.
+   * - filter: 'active'면 (top-level 미완료 OR 모든 sub-todo), 'completed'면 top-level 완료만, 그 외 전부
+   * - parentId: undefined=무관, null=top-level only, string=해당 parent의 자식만
+   * - dueWithin: { from, to } 범위에 dueDate가 들어가는 것만
+   * - priority: 주어진 priority들 중 하나
+   * - search: title LIKE %s%
+   * - includeIds: 추가로 ID 화이트리스트 (linkedTo 필터용 — 서비스 레이어에서 reverse lookup 후 ID 리스트 전달)
+   */
+  findByWorkspaceWithFilters(
+    workspaceId: string,
+    options: {
+      filter?: 'all' | 'active' | 'completed'
+      parentId?: string | null
+      dueWithin?: { from: Date; to: Date }
+      priority?: ('high' | 'medium' | 'low')[]
+      search?: string
+      includeIds?: string[]
+    }
+  ): Todo[] {
+    const conditions = [eq(todos.workspaceId, workspaceId)]
+
+    if (options.filter === 'active') {
+      conditions.push(
+        or(and(isNull(todos.parentId), eq(todos.isDone, false)), isNotNull(todos.parentId))!
+      )
+    } else if (options.filter === 'completed') {
+      conditions.push(isNull(todos.parentId))
+      conditions.push(eq(todos.isDone, true))
+    }
+
+    if (options.parentId === null) {
+      conditions.push(isNull(todos.parentId))
+    } else if (typeof options.parentId === 'string') {
+      conditions.push(eq(todos.parentId, options.parentId))
+    }
+
+    if (options.dueWithin) {
+      conditions.push(
+        and(
+          isNotNull(todos.dueDate),
+          gte(todos.dueDate, options.dueWithin.from),
+          lte(todos.dueDate, options.dueWithin.to)
+        )!
+      )
+    }
+
+    if (options.priority && options.priority.length > 0) {
+      conditions.push(inArray(todos.priority, options.priority))
+    }
+
+    if (options.search && options.search.trim()) {
+      conditions.push(like(todos.title, `%${options.search.trim()}%`))
+    }
+
+    if (options.includeIds) {
+      if (options.includeIds.length === 0) return []
+      conditions.push(inArray(todos.id, options.includeIds))
+    }
+
+    return db
+      .select()
+      .from(todos)
+      .where(and(...conditions))
+      .all()
+  },
+
   findTopLevelByWorkspaceId(workspaceId: string): Todo[] {
     return db
       .select()
