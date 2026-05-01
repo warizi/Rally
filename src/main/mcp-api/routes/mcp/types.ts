@@ -10,38 +10,7 @@ import type { canvasEdgeService } from '../../../services/canvas-edge'
 import type { noteService } from '../../../services/note'
 
 // ─── Items ──────────────────────────────────────────────────
-
-export interface ListItemsResponse {
-  workspace: { id: string; name: string; path: string }
-  folders: { id: string; relativePath: string; order: number }[]
-  notes: {
-    id: string
-    title: string
-    relativePath: string
-    preview: string | null
-    folderId: string | null
-    folderPath: string | null
-    updatedAt: string
-  }[]
-  tables: {
-    id: string
-    title: string
-    relativePath: string
-    description: string | null
-    preview: string | null
-    folderId: string | null
-    folderPath: string | null
-    updatedAt: string
-  }[]
-  canvases: {
-    id: string
-    title: string
-    description: string | null
-    createdAt: string
-    updatedAt: string
-  }[]
-  todos: { active: number; completed: number; total: number }
-}
+// list_items 응답 타입은 services/workspace-items.ts의 ListWorkspaceItemsResult 사용
 
 export interface ManageItemResult {
   action: string
