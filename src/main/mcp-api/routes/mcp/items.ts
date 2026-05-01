@@ -1,62 +1,80 @@
 import type { Router } from '../../router'
-import type { ListItemsResponse, ManageItemResult, ItemAction } from './types'
-import { workspaceRepository } from '../../../repositories/workspace'
-import { folderRepository } from '../../../repositories/folder'
+import type { ManageItemResult, ItemAction } from './types'
+import { ValidationError } from '../../../lib/errors'
 import { noteService } from '../../../services/note'
 import { csvFileService } from '../../../services/csv-file'
-import { canvasService } from '../../../services/canvas'
-import { todoService } from '../../../services/todo'
+import {
+  workspaceItemsService,
+  type ListWorkspaceItemsOptions,
+  type WorkspaceItemKind
+} from '../../../services/workspace-items'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
 import { requireBody, resolveActiveWorkspace, resolveItemType, assertValidId } from './helpers'
 
+const VALID_KINDS: ReadonlySet<WorkspaceItemKind> = new Set(['folder', 'note', 'table', 'canvas'])
+
+function parseIntParam(raw: string | null, label: string): number | undefined {
+  if (raw === null || raw === '') return undefined
+  const n = Number.parseInt(raw, 10)
+  if (!Number.isFinite(n) || `${n}` !== raw) {
+    throw new ValidationError(`${label} must be a non-negative integer`)
+  }
+  return n
+}
+
+function parseTypesParam(query: URLSearchParams): WorkspaceItemKind[] | undefined {
+  // 두 가지 입력 허용: ?types=note,canvas (CSV) 또는 ?types[]=note&types[]=canvas
+  const csv = query.get('types')
+  const repeat = query.getAll('types[]')
+  const raw = repeat.length > 0 ? repeat : csv ? csv.split(',') : []
+  if (raw.length === 0) return undefined
+  const cleaned = raw.map((s) => s.trim()).filter((s) => s.length > 0)
+  if (cleaned.length === 0) return undefined
+  for (const t of cleaned) {
+    if (!VALID_KINDS.has(t as WorkspaceItemKind)) {
+      throw new ValidationError(`Invalid type: ${t}. Must be one of folder, note, table, canvas.`)
+    }
+  }
+  return cleaned as WorkspaceItemKind[]
+}
+
 export function registerMcpItemRoutes(router: Router): void {
   // ─── GET /api/mcp/items → list_items ───────────────────────
 
-  router.addRoute('GET', '/api/mcp/items', (): ListItemsResponse => {
+  router.addRoute('GET', '/api/mcp/items', (_params, _body, query) => {
     const wsId = resolveActiveWorkspace()
-    const workspace = workspaceRepository.findById(wsId)!
 
-    const folders = folderRepository.findByWorkspaceId(wsId)
-    const folderMap = new Map(folders.map((f) => [f.id, f.relativePath]))
+    const folderId = query.get('folderId') || undefined
+    if (folderId) assertValidId(folderId, 'folderId')
 
-    const notes = noteService.readByWorkspaceFromDb(wsId)
-    const tables = csvFileService.readByWorkspaceFromDb(wsId)
-    const canvases = canvasService.findByWorkspace(wsId)
-    // 풀 fetch 대신 SQL COUNT — 큰 워크스페이스에서 메모리/시간 절약
-    const todoCounts = todoService.countByWorkspace(wsId)
+    const recursive = query.get('recursive') === 'true'
+    const summary = query.get('summary') === 'true'
+    const types = parseTypesParam(query)
 
-    return {
-      workspace: { id: workspace.id, name: workspace.name, path: workspace.path },
-      folders: folders.map((f) => ({ id: f.id, relativePath: f.relativePath, order: f.order })),
-      notes: notes.map((n) => ({
-        id: n.id,
-        title: n.title,
-        relativePath: n.relativePath,
-        preview: n.preview,
-        folderId: n.folderId,
-        folderPath: n.folderId ? (folderMap.get(n.folderId) ?? null) : null,
-        updatedAt: n.updatedAt.toISOString()
-      })),
-      tables: tables.map((t) => ({
-        id: t.id,
-        title: t.title,
-        relativePath: t.relativePath,
-        description: t.description,
-        preview: t.preview,
-        folderId: t.folderId,
-        folderPath: t.folderId ? (folderMap.get(t.folderId) ?? null) : null,
-        updatedAt: t.updatedAt.toISOString()
-      })),
-      canvases: canvases.map((c) => ({
-        id: c.id,
-        title: c.title,
-        description: c.description,
-        createdAt: c.createdAt.toISOString(),
-        updatedAt: c.updatedAt.toISOString()
-      })),
-      todos: todoCounts
+    const updatedAfterRaw = query.get('updatedAfter')
+    let updatedAfter: Date | undefined
+    if (updatedAfterRaw) {
+      const d = new Date(updatedAfterRaw)
+      if (Number.isNaN(d.getTime())) {
+        throw new ValidationError('updatedAfter must be a valid ISO 8601 date')
+      }
+      updatedAfter = d
     }
+
+    const limit = parseIntParam(query.get('limit'), 'limit')
+    const offset = parseIntParam(query.get('offset'), 'offset')
+
+    const options: ListWorkspaceItemsOptions = {
+      folderId,
+      recursive,
+      types,
+      summary,
+      updatedAfter,
+      limit,
+      offset
+    }
+    return workspaceItemsService.list(wsId, options)
   })
 
   // ─── POST /api/mcp/items/batch → manage_items ─────────────

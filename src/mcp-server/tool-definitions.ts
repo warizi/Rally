@@ -16,10 +16,58 @@ const e = encodeURIComponent
 const tools: ToolDefinition[] = [
   {
     name: 'list_items',
-    description:
-      'List all items (folders, notes, tables, canvases, todo summary) in the active workspace',
-    schema: {},
-    handler: () => callTool('GET', '/api/mcp/items')
+    description: `List items (folders, notes, tables, canvases, todo summary) in the active workspace.
+All options are optional and default to a full listing for backward compatibility, but for token efficiency
+you should narrow the response when possible:
+- folderId + recursive=false: list only direct children of a specific folder
+- types: ["folder"] (or any subset) to fetch only what you need
+- summary=true: omit preview / relativePath / folderPath / description (id+title+folderId+updatedAt only)
+- updatedAfter: only items modified after the given ISO timestamp
+- limit/offset: paginate per kind (default limit 500, max 1000); response.meta.hasMore tells you when to page
+Response includes a meta block with totals, hasMore flags, and the resolved options.`,
+    schema: {
+      folderId: z.string().optional().describe('Restrict to items inside this folder'),
+      recursive: z
+        .boolean()
+        .optional()
+        .describe('When folderId is set, include all descendants (default: direct children only)'),
+      types: z
+        .array(z.enum(['folder', 'note', 'table', 'canvas']))
+        .optional()
+        .describe('Limit response to specific kinds. Omit to include all.'),
+      summary: z
+        .boolean()
+        .optional()
+        .describe(
+          'Strip heavy fields (preview, relativePath, folderPath, description) to reduce token usage'
+        ),
+      updatedAfter: z
+        .string()
+        .optional()
+        .describe('ISO 8601 timestamp — only items updated after this moment'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(1000)
+        .optional()
+        .describe('Per-kind row cap (default 500, max 1000)'),
+      offset: z.number().int().min(0).optional().describe('Per-kind offset for pagination')
+    },
+    handler: ({ folderId, recursive, types, summary, updatedAfter, limit, offset }) => {
+      const params = new URLSearchParams()
+      if (folderId) params.set('folderId', folderId as string)
+      if (recursive) params.set('recursive', 'true')
+      if (summary) params.set('summary', 'true')
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types as string[]) params.append('types[]', t)
+      }
+      if (updatedAfter) params.set('updatedAfter', updatedAfter as string)
+      if (typeof limit === 'number') params.set('limit', String(limit))
+      if (typeof offset === 'number') params.set('offset', String(offset))
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/items${qs ? `?${qs}` : ''}`)
+    }
   },
   {
     name: 'search_notes',
