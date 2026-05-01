@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.4.3',
+    date: '2026-05-01',
+    changes: [
+      {
+        type: 'improvement',
+        title: '테이블(CSV) 툴바 가로 스크롤 적용',
+        description:
+          '테이블 상세 화면의 탭 너비가 좁아질 때 툴바가 줄바꿈되어 UI가 깨지던 문제를 개선했습니다. 이제 툴바가 가로로 스크롤되어 좁은 화면에서도 깔끔하게 표시됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.4.2',
     date: '2026-05-01',
     changes: [
