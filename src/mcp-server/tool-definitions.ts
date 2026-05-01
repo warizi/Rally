@@ -782,6 +782,169 @@ delete_tag also detaches from all items.`,
         .describe('Array of tag actions')
     },
     handler: (args) => callTool('POST', '/api/mcp/tags/batch', args)
+  },
+  // ─── History ──────────────────────────────────────────────
+  {
+    name: 'get_history',
+    description: `List completed todos grouped by day (most recent first). Includes recurring completions too.
+Pagination is by "day with activity" — dayOffset/dayLimit skip empty days. Use fromDate/toDate to constrain by absolute range.
+query: case-insensitive substring on todo titles or linked file titles.`,
+    schema: {
+      dayOffset: z.number().int().min(0).optional().describe('Pagination offset in active days'),
+      dayLimit: z.number().int().min(1).max(60).optional().describe('Days per page (default: 10)'),
+      fromDate: z.string().optional().describe('YYYY-MM-DD inclusive lower bound'),
+      toDate: z.string().optional().describe('YYYY-MM-DD inclusive upper bound'),
+      query: z.string().optional()
+    },
+    handler: ({ dayOffset, dayLimit, fromDate, toDate, query }) => {
+      const params = new URLSearchParams()
+      if (typeof dayOffset === 'number') params.set('dayOffset', String(dayOffset))
+      if (typeof dayLimit === 'number') params.set('dayLimit', String(dayLimit))
+      if (fromDate) params.set('fromDate', fromDate as string)
+      if (toDate) params.set('toDate', toDate as string)
+      if (typeof query === 'string' && query.trim()) params.set('query', query)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/history${qs ? `?${qs}` : ''}`)
+    }
+  },
+  // ─── PDFs ─────────────────────────────────────────────────
+  {
+    name: 'list_pdfs',
+    description: `List PDF files in the active workspace. folderId/recursive filter scope; search matches title/description.`,
+    schema: {
+      folderId: z.string().optional().describe('Folder id to scope to. Pass "null" for root-only.'),
+      recursive: z.boolean().optional().describe('Include all descendant folders (default: false)'),
+      search: z.string().optional()
+    },
+    handler: ({ folderId, recursive, search }) => {
+      const params = new URLSearchParams()
+      if (typeof folderId === 'string') params.set('folderId', folderId)
+      if (recursive) params.set('recursive', 'true')
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/pdfs${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'manage_pdfs',
+    description: `Batch rename/move/update_meta/delete on PDF files. Importing new PDFs requires the desktop UI (file dialog).`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({ action: z.literal('rename'), id: z.string(), newName: z.string() }),
+            z.object({
+              action: z.literal('move'),
+              id: z.string(),
+              targetFolderId: z.string().optional()
+            }),
+            z.object({
+              action: z.literal('update_meta'),
+              id: z.string(),
+              description: z.string().optional()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of PDF actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/pdfs/batch', args)
+  },
+  // ─── Images ───────────────────────────────────────────────
+  {
+    name: 'list_images',
+    description: `List image files. Same shape as list_pdfs.`,
+    schema: {
+      folderId: z.string().optional(),
+      recursive: z.boolean().optional(),
+      search: z.string().optional()
+    },
+    handler: ({ folderId, recursive, search }) => {
+      const params = new URLSearchParams()
+      if (typeof folderId === 'string') params.set('folderId', folderId)
+      if (recursive) params.set('recursive', 'true')
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/images${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'manage_images',
+    description: `Batch rename/move/update_meta/delete on image files. Importing requires desktop UI.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({ action: z.literal('rename'), id: z.string(), newName: z.string() }),
+            z.object({
+              action: z.literal('move'),
+              id: z.string(),
+              targetFolderId: z.string().optional()
+            }),
+            z.object({
+              action: z.literal('update_meta'),
+              id: z.string(),
+              description: z.string().optional()
+            }),
+            z.object({ action: z.literal('delete'), id: z.string() })
+          ])
+        )
+        .describe('Array of image actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/images/batch', args)
+  },
+  // ─── Workspace info ───────────────────────────────────────
+  {
+    name: 'get_workspace_info',
+    description: `Active workspace summary: id/name/path + cross-domain stats + recentActivity (note/table/canvas/todo, updatedAt desc).
+Use this when you want a quick overview of the workspace without paging through list_items.`,
+    schema: {
+      recentLimit: z
+        .number()
+        .int()
+        .min(0)
+        .max(50)
+        .optional()
+        .describe('Number of recent activity entries (default: 10, max: 50)')
+    },
+    handler: ({ recentLimit }) => {
+      const params = new URLSearchParams()
+      if (typeof recentLimit === 'number') params.set('recentLimit', String(recentLimit))
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/workspace${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'get_stats',
+    description: `Lightweight count-only stats. Pass types[] to limit which counts are computed.`,
+    schema: {
+      types: z
+        .array(
+          z.enum([
+            'folders',
+            'notes',
+            'tables',
+            'canvases',
+            'todos',
+            'pdfs',
+            'images',
+            'schedules',
+            'tags',
+            'templates',
+            'recurringRules'
+          ])
+        )
+        .optional()
+        .describe('Subset of stats to compute (default: all)')
+    },
+    handler: ({ types }) => {
+      const params = new URLSearchParams()
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types as string[]) params.append('types[]', t)
+      }
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/workspace/stats${qs ? `?${qs}` : ''}`)
+    }
   }
 ]
 

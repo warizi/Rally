@@ -606,3 +606,48 @@ export interface ManageTagResult {
   id: string
   success: true
 }
+
+// ─── Files (PDF / Image 공통) ───────────────────────────────
+
+export interface FileSummary {
+  id: string
+  title: string
+  relativePath: string
+  description: string
+  preview: string
+  folderId: string | null
+  order: number
+  createdAt: string
+  updatedAt: string
+}
+
+export interface RenameFileAction {
+  action: 'rename'
+  id: string
+  newName: string
+}
+
+export interface MoveFileAction {
+  action: 'move'
+  id: string
+  targetFolderId?: string
+}
+
+export interface UpdateFileMetaAction {
+  action: 'update_meta'
+  id: string
+  description?: string
+}
+
+export interface DeleteFileAction {
+  action: 'delete'
+  id: string
+}
+
+export type FileAction = RenameFileAction | MoveFileAction | UpdateFileMetaAction | DeleteFileAction
+
+export interface ManageFileResult {
+  action: string
+  id: string
+  success: true
+}
