@@ -1,6 +1,7 @@
 import { JSX } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
-import { ChevronRight, Folder } from 'lucide-react'
+import { ChevronRight } from 'lucide-react'
+import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
 import { REACT_ARBORIST_ROOT_ID } from '@shared/types/tree-drag'
 import { cn } from '@/shared/lib/utils'
@@ -46,6 +47,8 @@ export function FolderNodeRenderer({
   // 형제 라인 가이드 표시 여부도 boolean으로 구독
   const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
 
+  const FolderIcon = ENTITY_ICON.folder
+
   return (
     <div style={style} className="relative h-full">
       <div
@@ -65,7 +68,10 @@ export function FolderNodeRenderer({
             node.isOpen && 'rotate-90'
           )}
         />
-        <Folder className="size-4 shrink-0" style={{ color: node.data.color ?? undefined }} />
+        <FolderIcon
+          className="size-4 shrink-0"
+          style={{ color: node.data.color ?? ENTITY_ICON_COLOR.folder }}
+        />
         <TruncateTooltip content={node.data.name}>
           <span className="text-sm truncate min-w-0">{node.data.name}</span>
         </TruncateTooltip>

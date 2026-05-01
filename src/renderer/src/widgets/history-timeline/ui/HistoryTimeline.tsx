@@ -11,16 +11,21 @@ import {
   type RefObject
 } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, FileText, Sheet, Image as ImageIcon, Network, Loader2, Repeat2 } from 'lucide-react'
+import { useDraggable } from '@dnd-kit/core'
+import { Check, Loader2, Repeat2 } from 'lucide-react'
+import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
 import { useHistoryInfinite, type HistoryLink, type HistoryTodoEntry } from '@entities/history'
 import { useTabStore } from '@/features/tap-system/manage-tab-system'
-import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { cn } from '@shared/lib/utils'
 import { HighlightText } from '../lib/highlight'
 import { linkToTabOptions } from '../lib/link-to-tab'
+import {
+  buildHistoryLinkDragId,
+  type HistoryLinkDragData
+} from '../lib/history-link-drag'
 
 interface Props {
   workspaceId: string
@@ -29,21 +34,6 @@ interface Props {
   toDate: string | null
 }
 
-const LINK_ICON: Record<HistoryLink['type'], React.ElementType> = {
-  note: FileText,
-  csv: Sheet,
-  pdf: PdfIcon,
-  image: ImageIcon,
-  canvas: Network
-}
-
-const LINK_ICON_COLOR: Record<HistoryLink['type'], string> = {
-  note: '#3b82f6',
-  csv: '#10b981',
-  pdf: '#ef4444',
-  image: '#f59e0b',
-  canvas: '#a855f7'
-}
 
 /** ScrollArea Viewport ref를 자손 motion에 전달 (whileInView root) */
 const ScrollViewportContext = createContext<RefObject<HTMLElement | null> | null>(null)
@@ -258,7 +248,7 @@ function TodoRow({ todo, query }: { todo: HistoryTodoEntry; query: string }): JS
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
       {/* todo 노드 (좌측) */}
-      <div ref={todoRef} className="w-[250px] shrink-0">
+      <div ref={todoRef} className="w-[260px] shrink-0">
         <TodoNode title={todo.title} doneAt={todo.doneAt} kind={todo.kind} query={query} />
       </div>
 
@@ -362,8 +352,14 @@ function TodoNode({
 
 function LinkNode({ link, query }: { link: HistoryLink; query: string }): JSX.Element {
   const openTab = useTabStore((s) => s.openTab)
-  const Icon = LINK_ICON[link.type]
-  const color = LINK_ICON_COLOR[link.type]
+  const Icon = ENTITY_ICON[link.type]
+  const color = ENTITY_ICON_COLOR[link.type]
+
+  const dragData: HistoryLinkDragData = { source: 'history-link', link }
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: buildHistoryLinkDragId(link),
+    data: dragData
+  })
 
   const handleClick = (): void => {
     const opts = linkToTabOptions(link)
@@ -373,13 +369,24 @@ function LinkNode({ link, query }: { link: HistoryLink; query: string }): JSX.El
   const hasDesc = !!link.description?.trim()
 
   return (
-    <button
-      type="button"
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          handleClick()
+        }
+      }}
       className={cn(
         'group flex items-start gap-2 px-3 py-2 rounded-md border bg-background shadow-md',
-        'text-sm text-left max-w-xl w-fit',
-        'hover:bg-accent hover:border-accent-foreground/20 transition-colors cursor-pointer'
+        'text-sm text-left max-w-xl w-fit select-none',
+        'hover:bg-accent hover:border-accent-foreground/20 transition-colors cursor-pointer',
+        isDragging && 'opacity-30'
       )}
     >
       <Icon className="size-3.5 shrink-0 mt-0.5" style={{ color }} />
@@ -393,6 +400,6 @@ function LinkNode({ link, query }: { link: HistoryLink; query: string }): JSX.El
           </div>
         )}
       </div>
-    </button>
+    </div>
   )
 }

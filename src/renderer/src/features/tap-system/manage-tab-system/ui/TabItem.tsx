@@ -6,6 +6,7 @@ import { X, Pin } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { Tab } from '@/entities/tab-system'
 import { TAB_ICON } from '@/shared/constants/tab-url'
+import { getEntityColorByTabIcon } from '@shared/constants/entity-icon'
 
 interface TabItemProps {
   tab: Tab
@@ -41,6 +42,7 @@ export function TabItem({
   }
 
   const Icon = TAB_ICON[tab.icon]
+  const iconColor = getEntityColorByTabIcon(tab.icon)
 
   const handleClose = (e: React.MouseEvent): void => {
     e.stopPropagation()
@@ -77,7 +79,15 @@ export function TabItem({
       >
         {/* 아이콘 */}
         <Icon
-          className={cn('size-4 shrink-0 text-muted-foreground', tab.error && 'text-destructive')}
+          className={cn(
+            'size-4 shrink-0',
+            tab.error
+              ? 'text-destructive'
+              : iconColor
+                ? undefined
+                : 'text-muted-foreground'
+          )}
+          style={tab.error || !iconColor ? undefined : { color: iconColor }}
         />
 
         {/* 제목 */}

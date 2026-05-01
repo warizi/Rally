@@ -1,6 +1,6 @@
 import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
-import { PdfIcon } from '@shared/ui/icons/PdfIcon'
+import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
 import { REACT_ARBORIST_ROOT_ID } from '@shared/types/tree-drag'
 import { cn } from '@shared/lib/utils'
@@ -51,6 +51,8 @@ export function PdfNodeRenderer({
 
   const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
 
+  const Icon = ENTITY_ICON.pdf
+
   return (
     <div ref={ref} style={style} className="relative h-full">
       <div
@@ -64,7 +66,7 @@ export function PdfNodeRenderer({
         )}
         onClick={onOpen}
       >
-        <PdfIcon className="ml-1 size-4 shrink-0 text-red-500" />
+        <Icon className="ml-1 size-4 shrink-0" style={{ color: ENTITY_ICON_COLOR.pdf }} />
         <TruncateTooltip content={displayName}>
           <span className="text-sm truncate min-w-0">{displayName}</span>
         </TruncateTooltip>

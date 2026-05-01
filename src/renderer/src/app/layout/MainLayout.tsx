@@ -32,11 +32,13 @@ import { useTerminalPanelStore } from '@features/terminal'
 import { useTerminalSessionPersistence } from '@features/terminal/model/use-terminal-session-persistence'
 import { PANE_ROUTES } from './model/pane-routes'
 import { TAB_ICON, type TabType } from '@/shared/constants/tab-url'
-import { FileText, Folder, ImageIcon, Sheet } from 'lucide-react'
-import { PdfIcon } from '@shared/ui/icons/PdfIcon'
+import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import type { TreeDragData, TreeNodeKind } from '@shared/types/tree-drag'
 import { useTreeToTabListener } from './model/use-tree-to-tab-listener'
 import { useTreeDragMonitor } from './model/use-tree-drag-monitor'
+import { useHistoryLinkToTabListener } from './model/use-history-link-to-tab-listener'
+import type { HistoryLink } from '@entities/history'
+import type { HistoryLinkDragData } from '@/widgets/history-timeline'
 
 function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactElement | null {
   const tab = useTabStore((state) => (tabId ? state.tabs[tabId] : null))
@@ -53,25 +55,34 @@ function DraggingTabOverlay({ tabId }: { tabId: string | null }): React.ReactEle
   )
 }
 
-const TREE_KIND_ICON: Record<TreeNodeKind, React.ElementType> = {
-  folder: Folder,
-  note: FileText,
-  csv: Sheet,
-  pdf: PdfIcon,
-  image: ImageIcon
-}
-
 function DraggingTreeNodeOverlay({
   node
 }: {
   node: { kind: TreeNodeKind; title: string } | null
 }): React.ReactElement | null {
   if (!node) return null
-  const Icon = TREE_KIND_ICON[node.kind]
+  const Icon = ENTITY_ICON[node.kind]
+  const color = ENTITY_ICON_COLOR[node.kind]
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 bg-background border rounded-md shadow-lg">
-      <Icon className="size-4 text-muted-foreground" />
-      <span className="text-sm">{node.title}</span>
+    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-background border rounded-md shadow-lg max-w-xl">
+      <Icon className="size-4 shrink-0" style={{ color }} />
+      <span className="text-sm truncate">{node.title}</span>
+    </div>
+  )
+}
+
+function DraggingHistoryLinkOverlay({
+  link
+}: {
+  link: HistoryLink | null
+}): React.ReactElement | null {
+  if (!link) return null
+  const Icon = ENTITY_ICON[link.type]
+  const color = ENTITY_ICON_COLOR[link.type]
+  return (
+    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-background border rounded-md shadow-lg max-w-xl">
+      <Icon className="size-4 shrink-0" style={{ color }} />
+      <span className="text-sm truncate">{link.title}</span>
     </div>
   )
 }
@@ -105,6 +116,7 @@ function MainLayout(): React.JSX.Element {
     kind: TreeNodeKind
     title: string
   } | null>(null)
+  const [draggingHistoryLink, setDraggingHistoryLink] = useState<HistoryLink | null>(null)
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -118,21 +130,29 @@ function MainLayout(): React.JSX.Element {
   })
 
   // DnDContext의 onDragStart/onDragEnd는 source 종류별로 분기.
-  // tree-node source는 별도 listener (useTreeMoveListener / useTreeToTabListener)에서 처리.
+  // tree-node / history-link source는 별도 listener에서 처리.
   const handleDragStart = (event: DragStartEvent): void => {
-    const data = event.active.data.current as TreeDragData | undefined
+    const data = event.active.data.current as
+      | TreeDragData
+      | HistoryLinkDragData
+      | undefined
     if (data?.source === 'tree-node') {
       setDraggingTreeNode({ kind: data.kind, title: data.title })
+      return
+    }
+    if (data?.source === 'history-link') {
+      setDraggingHistoryLink(data.link)
       return
     }
     handleTabDragStart(event)
   }
   const handleDragEnd: typeof handleTabDragEnd = (event) => {
     setDraggingTreeNode(null)
+    setDraggingHistoryLink(null)
     handleTabDragEnd(event)
   }
 
-  const isAnyDragging = !!draggingTabId || !!draggingTreeNode
+  const isAnyDragging = !!draggingTabId || !!draggingTreeNode || !!draggingHistoryLink
 
   return (
     <SidebarProvider>
@@ -147,6 +167,8 @@ function MainLayout(): React.JSX.Element {
         >
           {/* 트리 노드를 탭 영역으로 드롭하면 새 탭 / 분할 — useDndMonitor로 별도 처리 */}
           <TreeToTabListener />
+          {/* 히스토리 링크 노드를 탭 영역으로 드롭 → 새 탭 / 분할 */}
+          <HistoryLinkToTabListener />
           {/* 트리 DnD 상태를 store에 동기화 (각 렌더러는 store 셀렉터로 구독) */}
           <TreeDragMonitor />
           <main className="flex flex-1 overflow-hidden">
@@ -175,6 +197,8 @@ function MainLayout(): React.JSX.Element {
           <DragOverlay dropAnimation={null}>
             {draggingTreeNode ? (
               <DraggingTreeNodeOverlay node={draggingTreeNode} />
+            ) : draggingHistoryLink ? (
+              <DraggingHistoryLinkOverlay link={draggingHistoryLink} />
             ) : (
               <DraggingTabOverlay tabId={draggingTabId} />
             )}
@@ -192,6 +216,10 @@ function TreeToTabListener(): null {
 }
 function TreeDragMonitor(): null {
   useTreeDragMonitor()
+  return null
+}
+function HistoryLinkToTabListener(): null {
+  useHistoryLinkToTabListener()
   return null
 }
 
