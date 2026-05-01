@@ -170,7 +170,7 @@ describe('rename', () => {
 
 describe('remove', () => {
   it('정상 삭제 — fs.unlinkSync + repository.delete 호출', () => {
-    csvFileService.remove('ws-1', 'csv-1')
+    csvFileService.remove('ws-1', 'csv-1', { permanent: true })
     expect(fs.unlinkSync).toHaveBeenCalled()
     expect(csvFileRepository.delete).toHaveBeenCalledWith('csv-1')
   })
@@ -179,7 +179,7 @@ describe('remove', () => {
     vi.mocked(fs.unlinkSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    csvFileService.remove('ws-1', 'csv-1')
+    csvFileService.remove('ws-1', 'csv-1', { permanent: true })
     expect(csvFileRepository.delete).toHaveBeenCalledWith('csv-1')
   })
 

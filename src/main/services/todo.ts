@@ -7,6 +7,7 @@ import { itemTagService } from './item-tag'
 import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { recurringCompletionService } from './recurring-completion'
+import { trashService } from './trash'
 import type { RecurringCompletionItem } from './recurring-completion'
 
 export interface TodoItem {
@@ -329,10 +330,21 @@ export const todoService = {
     return toTodoItem(updated)
   },
 
-  remove(todoId: string): void {
+  /**
+   * Todo 삭제. 기본은 휴지통 이동(soft delete) — 30일 후 자동 영구 삭제 (사용자 설정).
+   * permanent=true: 즉시 영구 삭제 (반환 불가). 캔버스 노드 ref / item-tag도 함께 정리.
+   */
+  remove(todoId: string, options: { permanent?: boolean } = {}): void {
     const todo = todoRepository.findById(todoId)
     if (!todo) throw new NotFoundError(`Todo not found: ${todoId}`)
 
+    if (!options.permanent) {
+      // 휴지통 이동 — entity-link / reminder snapshot은 trashService가 처리
+      trashService.softRemove(todo.workspaceId, 'todo', todoId)
+      return
+    }
+
+    // 영구 삭제 경로 — 기존 동작 유지
     const subtodoIds = todoRepository.findAllDescendantIds(todoId)
     reminderService.removeByEntities('todo', [todoId, ...subtodoIds])
     entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])

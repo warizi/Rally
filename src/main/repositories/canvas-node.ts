@@ -1,4 +1,4 @@
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, isNotNull, isNull } from 'drizzle-orm'
 import { db } from '../db'
 import { canvasNodes } from '../db/schema'
 import type { CanvasNodeType } from '../db/schema/canvas-node'
@@ -6,13 +6,23 @@ import type { CanvasNodeType } from '../db/schema/canvas-node'
 export type CanvasNode = typeof canvasNodes.$inferSelect
 export type CanvasNodeInsert = typeof canvasNodes.$inferInsert
 
+const NOT_DELETED = isNull(canvasNodes.deletedAt)
+
 export const canvasNodeRepository = {
   findByCanvasId(canvasId: string): CanvasNode[] {
-    return db.select().from(canvasNodes).where(eq(canvasNodes.canvasId, canvasId)).all()
+    return db
+      .select()
+      .from(canvasNodes)
+      .where(and(eq(canvasNodes.canvasId, canvasId), NOT_DELETED))
+      .all()
   },
 
   findById(id: string): CanvasNode | undefined {
-    return db.select().from(canvasNodes).where(eq(canvasNodes.id, id)).get()
+    return db
+      .select()
+      .from(canvasNodes)
+      .where(and(eq(canvasNodes.id, id), NOT_DELETED))
+      .get()
   },
 
   findByIds(ids: string[]): CanvasNode[] {
@@ -21,7 +31,13 @@ export const canvasNodeRepository = {
     const results: CanvasNode[] = []
     for (let i = 0; i < ids.length; i += CHUNK) {
       const chunk = ids.slice(i, i + CHUNK)
-      results.push(...db.select().from(canvasNodes).where(inArray(canvasNodes.id, chunk)).all())
+      results.push(
+        ...db
+          .select()
+          .from(canvasNodes)
+          .where(and(inArray(canvasNodes.id, chunk), NOT_DELETED))
+          .all()
+      )
     }
     return results
   },
@@ -33,7 +49,17 @@ export const canvasNodeRepository = {
   update(
     id: string,
     data: Partial<
-      Pick<CanvasNode, 'content' | 'color' | 'width' | 'height' | 'zIndex' | 'updatedAt'>
+      Pick<
+        CanvasNode,
+        | 'content'
+        | 'color'
+        | 'width'
+        | 'height'
+        | 'zIndex'
+        | 'updatedAt'
+        | 'deletedAt'
+        | 'trashBatchId'
+      >
     >
   ): CanvasNode | undefined {
     return db.update(canvasNodes).set(data).where(eq(canvasNodes.id, id)).returning().get()
@@ -64,6 +90,24 @@ export const canvasNodeRepository = {
 
   deleteByCanvasId(canvasId: string): void {
     db.delete(canvasNodes).where(eq(canvasNodes.canvasId, canvasId)).run()
+  },
+
+  /** trashService cascade — 휴지통 row 포함 */
+  findByCanvasIdIncludingDeleted(canvasId: string): CanvasNode[] {
+    return db.select().from(canvasNodes).where(eq(canvasNodes.canvasId, canvasId)).all()
+  },
+
+  findByTrashBatchId(batchId: string): CanvasNode[] {
+    return db.select().from(canvasNodes).where(eq(canvasNodes.trashBatchId, batchId)).all()
+  },
+
+  /** trashService.list가 휴지통 카드의 자식 카운트 산출용 */
+  countInTrashByCanvasId(canvasId: string): number {
+    return db
+      .select()
+      .from(canvasNodes)
+      .where(and(eq(canvasNodes.canvasId, canvasId), isNotNull(canvasNodes.deletedAt)))
+      .all().length
   },
 
   bulkCreate(nodes: CanvasNodeInsert[]): void {

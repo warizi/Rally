@@ -3,6 +3,7 @@ import { NotFoundError } from '../lib/errors'
 import { canvasRepository } from '../repositories/canvas'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
+import { trashService } from './trash'
 
 export interface CanvasItem {
   id: string
@@ -112,10 +113,16 @@ export const canvasService = {
     })
   },
 
-  remove(canvasId: string): void {
+  remove(canvasId: string, options: { permanent?: boolean } = {}): void {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
-    // Phase 2: entityLinkService.removeAllLinks('canvas', canvasId) 호출 추가
+
+    if (!options.permanent) {
+      trashService.softRemove(canvas.workspaceId, 'canvas', canvasId)
+      return
+    }
+
+    // 영구 삭제 — Phase 2: entityLinkService.removeAllLinks('canvas', canvasId) 호출 추가
     itemTagService.removeByItem('canvas', canvasId)
     canvasRepository.delete(canvasId)
   }

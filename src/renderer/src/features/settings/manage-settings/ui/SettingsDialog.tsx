@@ -12,8 +12,9 @@ import { cn } from '@/shared/lib/utils'
 import { GeneralSettings } from './GeneralSettings'
 import { DisplaySettings } from './DisplaySettings'
 import { AISettings } from './AISettings'
+import { TrashSettings } from './TrashSettings'
 
-type SettingsTab = 'general' | 'display' | 'ai'
+type SettingsTab = 'general' | 'display' | 'trash' | 'ai'
 
 interface SettingsDialogProps {
   open: boolean
@@ -23,6 +24,7 @@ interface SettingsDialogProps {
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '기본' },
   { id: 'display', label: '디스플레이' },
+  { id: 'trash', label: '휴지통' },
   { id: 'ai', label: 'AI (Claude)' }
 ]
 
@@ -81,6 +83,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
             <div className="flex-1 min-w-0 p-6 overflow-y-auto">
               {activeTab === 'general' && <GeneralSettings />}
               {activeTab === 'display' && <DisplaySettings />}
+              {activeTab === 'trash' && <TrashSettings />}
               {activeTab === 'ai' && <AISettings />}
             </div>
           </div>

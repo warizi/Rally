@@ -1,9 +1,11 @@
-import { and, eq, gte, inArray, lte } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNotNull, isNull, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { schedules } from '../db/schema'
 
 export type Schedule = typeof schedules.$inferSelect
 export type ScheduleInsert = typeof schedules.$inferInsert
+
+const NOT_DELETED = isNull(schedules.deletedAt)
 
 export const scheduleRepository = {
   findByWorkspaceId(workspaceId: string, rangeStart: Date, rangeEnd: Date): Schedule[] {
@@ -13,6 +15,7 @@ export const scheduleRepository = {
       .where(
         and(
           eq(schedules.workspaceId, workspaceId),
+          NOT_DELETED,
           lte(schedules.startAt, rangeEnd),
           gte(schedules.endAt, rangeStart)
         )
@@ -25,12 +28,20 @@ export const scheduleRepository = {
     return db
       .select()
       .from(schedules)
-      .where(eq(schedules.workspaceId, workspaceId))
+      .where(and(eq(schedules.workspaceId, workspaceId), NOT_DELETED))
       .orderBy(schedules.startAt)
       .all()
   },
 
   findById(id: string): Schedule | undefined {
+    return db
+      .select()
+      .from(schedules)
+      .where(and(eq(schedules.id, id), NOT_DELETED))
+      .get()
+  },
+
+  findByIdIncludingDeleted(id: string): Schedule | undefined {
     return db.select().from(schedules).where(eq(schedules.id, id)).get()
   },
 
@@ -52,6 +63,8 @@ export const scheduleRepository = {
         | 'color'
         | 'priority'
         | 'updatedAt'
+        | 'deletedAt'
+        | 'trashBatchId'
       >
     >
   ): Schedule | undefined {
@@ -64,9 +77,27 @@ export const scheduleRepository = {
     const results: Schedule[] = []
     for (let i = 0; i < ids.length; i += CHUNK) {
       const chunk = ids.slice(i, i + CHUNK)
-      results.push(...db.select().from(schedules).where(inArray(schedules.id, chunk)).all())
+      results.push(
+        ...db
+          .select()
+          .from(schedules)
+          .where(and(inArray(schedules.id, chunk), NOT_DELETED))
+          .all()
+      )
     }
     return results
+  },
+
+  findInTrashByWorkspaceId(workspaceId: string): Schedule[] {
+    return db
+      .select()
+      .from(schedules)
+      .where(and(eq(schedules.workspaceId, workspaceId), isNotNull(schedules.deletedAt)))
+      .all()
+  },
+
+  findByTrashBatchId(batchId: string): Schedule[] {
+    return db.select().from(schedules).where(eq(schedules.trashBatchId, batchId)).all()
   },
 
   delete(id: string): void {

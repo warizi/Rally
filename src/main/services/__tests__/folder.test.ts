@@ -301,7 +301,7 @@ describe('remove', () => {
 
   it('fs.rmSync를 호출하고 DB row를 삭제한다', () => {
     const folder = folderService.create('ws-1', null, 'to-delete')
-    folderService.remove('ws-1', folder.id)
+    folderService.remove('ws-1', folder.id, { permanent: true })
 
     expect(vi.mocked(fs.rmSync)).toHaveBeenCalledWith(
       expect.stringContaining('to-delete'),

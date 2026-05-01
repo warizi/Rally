@@ -201,7 +201,7 @@ describe('remove', () => {
       callOrder.push('delete')
     })
 
-    imageFileService.remove('ws-1', 'img-1')
+    imageFileService.remove('ws-1', 'img-1', { permanent: true })
 
     expect(callOrder).toEqual(['unlink', 'removeLinks', 'delete'])
     expect(entityLinkService.removeAllLinks).toHaveBeenCalledWith('image', 'img-1')
@@ -211,7 +211,7 @@ describe('remove', () => {
     vi.mocked(fs.unlinkSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    imageFileService.remove('ws-1', 'img-1')
+    imageFileService.remove('ws-1', 'img-1', { permanent: true })
     expect(entityLinkService.removeAllLinks).toHaveBeenCalledWith('image', 'img-1')
     expect(imageFileRepository.delete).toHaveBeenCalledWith('img-1')
   })

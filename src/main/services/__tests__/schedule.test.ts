@@ -125,7 +125,7 @@ describe('move — reminder 연동', () => {
 
 describe('remove — reminder 연동', () => {
   it('removeByEntity 호출 후 삭제', () => {
-    scheduleService.remove('sch-1')
+    scheduleService.remove('sch-1', { permanent: true })
     expect(reminderService.removeByEntity).toHaveBeenCalledWith('schedule', 'sch-1')
   })
 })

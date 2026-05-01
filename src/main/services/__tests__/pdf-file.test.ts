@@ -164,7 +164,7 @@ describe('rename', () => {
 
 describe('remove', () => {
   it('정상 삭제 — fs.unlinkSync + repository.delete 호출', () => {
-    pdfFileService.remove('ws-1', 'pdf-1')
+    pdfFileService.remove('ws-1', 'pdf-1', { permanent: true })
     expect(fs.unlinkSync).toHaveBeenCalled()
     expect(pdfFileRepository.delete).toHaveBeenCalledWith('pdf-1')
   })
@@ -173,7 +173,7 @@ describe('remove', () => {
     vi.mocked(fs.unlinkSync).mockImplementation(() => {
       throw new Error('ENOENT')
     })
-    pdfFileService.remove('ws-1', 'pdf-1')
+    pdfFileService.remove('ws-1', 'pdf-1', { permanent: true })
     expect(pdfFileRepository.delete).toHaveBeenCalledWith('pdf-1')
   })
 

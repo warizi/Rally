@@ -9,6 +9,7 @@ import { resolveNameConflict, readImageFilesRecursive } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
+import { trashService } from './trash'
 
 export interface ImageFileNode {
   id: string
@@ -247,12 +248,20 @@ export const imageFileService = {
     return toImageFileNode(updated)
   },
 
-  remove(workspaceId: string, imageId: string): void {
+  /**
+   * Image 삭제. 기본은 휴지통 이동. permanent=true: 즉시 영구 삭제.
+   */
+  remove(workspaceId: string, imageId: string, options: { permanent?: boolean } = {}): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
     const image = imageFileRepository.findById(imageId)
     if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
+
+    if (!options.permanent) {
+      trashService.softRemove(workspaceId, 'image', imageId)
+      return
+    }
 
     const absPath = path.join(workspace.path, image.relativePath)
     try {

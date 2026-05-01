@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { recurringRuleRepository } from '../repositories/recurring-rule'
+import { trashService } from './trash'
 import type { RecurringRule } from '../repositories/recurring-rule'
 
 export type RecurrenceType = 'daily' | 'weekday' | 'weekend' | 'custom'
@@ -170,7 +171,9 @@ export const recurringRuleService = {
       ...(data.recurrenceType !== undefined && { recurrenceType: data.recurrenceType }),
       ...(data.daysOfWeek !== undefined && { daysOfWeek: serializeDaysOfWeek(data.daysOfWeek) }),
       ...(data.startDate !== undefined && { startDate: toMidnight(data.startDate) }),
-      ...(data.endDate !== undefined && { endDate: data.endDate ? toMidnight(data.endDate) : null }),
+      ...(data.endDate !== undefined && {
+        endDate: data.endDate ? toMidnight(data.endDate) : null
+      }),
       ...(data.startTime !== undefined && { startTime: data.startTime }),
       ...(data.endTime !== undefined && { endTime: data.endTime }),
       ...(data.reminderOffsetMs !== undefined && { reminderOffsetMs: data.reminderOffsetMs }),
@@ -180,9 +183,16 @@ export const recurringRuleService = {
     return toItem(updated)
   },
 
-  delete(ruleId: string): void {
+  delete(ruleId: string, options: { permanent?: boolean } = {}): void {
     const existing = recurringRuleRepository.findById(ruleId)
     if (!existing) throw new NotFoundError('반복 규칙을 찾을 수 없습니다')
+
+    if (!options.permanent) {
+      // 휴지통 이동 — soft delete는 row를 안 지우니 completions의 ruleId set null이 안 트리거됨 (의도)
+      trashService.softRemove(existing.workspaceId, 'recurring_rule', ruleId)
+      return
+    }
+
     // onDelete: set null → completions는 ruleId=null로 보존
     recurringRuleRepository.delete(ruleId)
   }

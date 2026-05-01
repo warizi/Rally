@@ -13,6 +13,7 @@ import { registerMcpTagRoutes } from './tags'
 import { registerMcpHistoryRoutes } from './history'
 import { registerMcpFileRoutes } from './files'
 import { registerMcpWorkspaceRoutes } from './workspace'
+import { registerMcpTrashRoutes } from './trash'
 
 export function registerMcpRoutes(router: Router): void {
   registerMcpItemRoutes(router)
@@ -29,4 +30,5 @@ export function registerMcpRoutes(router: Router): void {
   registerMcpHistoryRoutes(router)
   registerMcpFileRoutes(router)
   registerMcpWorkspaceRoutes(router)
+  registerMcpTrashRoutes(router)
 }

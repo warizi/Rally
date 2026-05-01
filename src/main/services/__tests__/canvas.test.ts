@@ -184,7 +184,7 @@ describe('updateViewport', () => {
 describe('remove', () => {
   it('정상 — canvasRepository.delete 호출', () => {
     vi.mocked(canvasRepository.findById).mockReturnValue(MOCK_CANVAS_ROW)
-    canvasService.remove('canvas-1')
+    canvasService.remove('canvas-1', { permanent: true })
     expect(canvasRepository.delete).toHaveBeenCalledWith('canvas-1')
   })
 

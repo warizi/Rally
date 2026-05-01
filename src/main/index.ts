@@ -35,6 +35,7 @@ import { registerTagHandlers } from './ipc/tag'
 import { registerItemTagHandlers } from './ipc/item-tag'
 import { registerTerminalHandlers } from './ipc/terminal'
 import { reminderScheduler } from './services/reminder-scheduler'
+import { trashSweeper } from './services/trash-sweeper'
 import { workspaceWatcher } from './services/workspace-watcher'
 import { workspaceService } from './services/workspace'
 import { terminalService } from './services/terminal'
@@ -45,6 +46,7 @@ import { registerRecurringRuleHandlers } from './ipc/recurring-rule'
 import { registerRecurringCompletionHandlers } from './ipc/recurring-completion'
 import { registerTemplateHandlers } from './ipc/template'
 import { registerHistoryHandlers } from './ipc/history'
+import { registerTrashHandlers } from './ipc/trash'
 import { setupAutoUpdater } from './lib/updater'
 import { ensureClaudeCommands } from './services/claude-commands-setup'
 
@@ -174,10 +176,7 @@ function setupAppMenu(): void {
   viewSubmenu.push({ role: 'togglefullscreen' })
   template.push({ label: 'View', submenu: viewSubmenu })
 
-  const windowSubmenu: MenuItemConstructorOptions[] = [
-    { role: 'minimize' },
-    { role: 'zoom' }
-  ]
+  const windowSubmenu: MenuItemConstructorOptions[] = [{ role: 'minimize' }, { role: 'zoom' }]
   if (isMac) {
     windowSubmenu.push({ type: 'separator' }, { role: 'front' })
   }
@@ -269,6 +268,7 @@ app.whenReady().then(() => {
   registerRecurringCompletionHandlers()
   registerTemplateHandlers()
   registerHistoryHandlers()
+  registerTrashHandlers()
 
   startMcpApiServer()
 
@@ -276,6 +276,7 @@ app.whenReady().then(() => {
 
   setupAutoUpdater()
   reminderScheduler.start()
+  trashSweeper.start()
 
   app.on('activate', function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
@@ -296,6 +297,7 @@ app.on('before-quit', (event) => {
   event.preventDefault()
   isQuitting = true
   reminderScheduler.stop()
+  trashSweeper.stop()
   terminalService.destroyAllSessions()
   stopMcpApiServer()
   const timeout = new Promise<void>((resolve) => setTimeout(resolve, 1000))

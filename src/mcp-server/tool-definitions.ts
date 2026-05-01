@@ -945,6 +945,74 @@ Use this when you want a quick overview of the workspace without paging through 
       const qs = params.toString()
       return callTool('GET', `/api/mcp/workspace/stats${qs ? `?${qs}` : ''}`)
     }
+  },
+  // ─── Trash ────────────────────────────────────────────────
+  {
+    name: 'list_trash',
+    description: `List items in the workspace trash (deleted but recoverable).
+Each batch represents one user/AI delete action — a folder + its contents share one batch, a sub-todo tree shares one batch.
+Use restore_trash with batchId to recover, or empty_trash to permanently delete.
+
+Auto-emptied after the user-configured retention period (default 30 days).`,
+    schema: {
+      types: z
+        .array(
+          z.enum([
+            'folder',
+            'note',
+            'csv',
+            'pdf',
+            'image',
+            'canvas',
+            'todo',
+            'schedule',
+            'recurring_rule',
+            'template'
+          ])
+        )
+        .optional()
+        .describe('Filter by entity type'),
+      search: z.string().optional().describe('Substring match on root title'),
+      offset: z.number().int().min(0).optional(),
+      limit: z.number().int().min(1).max(200).optional().describe('Default 50')
+    },
+    handler: ({ types, search, offset, limit }) => {
+      const params = new URLSearchParams()
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types as string[]) params.append('types[]', t)
+      }
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      if (typeof offset === 'number') params.set('offset', String(offset))
+      if (typeof limit === 'number') params.set('limit', String(limit))
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/trash${qs ? `?${qs}` : ''}`)
+    }
+  },
+  {
+    name: 'restore_trash',
+    description: `Restore a trash batch to the active workspace.
+The whole batch (root entity + cascade children) is recovered together.
+For folder/file domains: original location is reused if free, otherwise auto-renamed (e.g. "docs (1)").
+entity-link snapshots are reattached when both endpoints are active.`,
+    schema: {
+      batchId: z.string().describe('Trash batch id from list_trash')
+    },
+    handler: ({ batchId }) => callTool('POST', `/api/mcp/trash/${e(batchId as string)}/restore`)
+  },
+  {
+    name: 'empty_trash',
+    description: `Permanently delete trash items. Cannot be undone.
+- Pass batchId to purge a single batch
+- Without batchId, must pass confirm: true to purge ALL workspace trash items (safety guard)
+Returns the list of purgedBatchIds. If hasMore=true, call again to keep purging.`,
+    schema: {
+      batchId: z.string().optional().describe('Single batch to purge'),
+      confirm: z
+        .boolean()
+        .optional()
+        .describe('Required (true) when batchId is omitted to purge all trash')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/trash/empty', args)
   }
 ]
 
