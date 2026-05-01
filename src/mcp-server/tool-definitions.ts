@@ -981,6 +981,7 @@ Multiple actions execute sequentially. Each action is independent — failures d
       }
       // 다수 actions: 순차 실행, 결과 집계
       const results: Array<Record<string, unknown>> = []
+      let workspace: unknown = null
       for (const a of list) {
         const res =
           a.action === 'restore'
@@ -990,15 +991,27 @@ Multiple actions execute sequentially. Each action is independent — failures d
                 ...(a.confirm ? { confirm: a.confirm } : {})
               })
         const text = res.content?.[0]?.type === 'text' ? res.content[0].text : ''
+        const parsed = text ? JSON.parse(text) : null
+        // _workspace는 router에서 모든 응답에 주입되는 메타 — 단일 액션 path와 shape 일관성 위해 끌어올림
+        if (workspace === null && parsed && typeof parsed === 'object' && '_workspace' in parsed) {
+          workspace = (parsed as Record<string, unknown>)._workspace
+        }
+        const cleanResult =
+          parsed && typeof parsed === 'object'
+            ? Object.fromEntries(
+                Object.entries(parsed as Record<string, unknown>).filter(([k]) => k !== '_workspace')
+              )
+            : parsed
         results.push({
           action: a.action,
           batchId: a.batchId ?? null,
           isError: res.isError === true,
-          result: text ? JSON.parse(text) : null
+          result: cleanResult
         })
       }
+      const payload = workspace !== null ? { _workspace: workspace, results } : { results }
       return {
-        content: [{ type: 'text', text: JSON.stringify({ results }, null, 2) }]
+        content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }]
       }
     }
   }

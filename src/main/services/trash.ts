@@ -704,7 +704,7 @@ export const trashService = {
           const parentAbs = parentRel ? path.join(workspace.path, parentRel) : workspace.path
           fs.mkdirSync(parentAbs, { recursive: true })
           const desiredName = rootFolder.relativePath.split('/').pop()!
-          const finalName = resolveNameConflict(parentAbs, desiredName)
+          const finalName = resolveNameConflict(parentAbs, desiredName, { treatAsFolder: true })
           const finalRel = parentRel ? `${parentRel}/${finalName}` : finalName
           const dst = path.join(workspace.path, finalRel)
           const src = path.join(batch.fsTrashPath, rootFolder.relativePath)
