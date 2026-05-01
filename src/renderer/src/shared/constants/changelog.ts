@@ -60,6 +60,18 @@ export const CHANGELOG: ChangelogEntry[] = [
     ]
   },
   {
+    version: '1.5.1',
+    date: '2026-05-01',
+    changes: [
+      {
+        type: 'improvement',
+        title: 'MCP 서버 tools 기능 개선',
+        description:
+          'MCP 서버의 tools 기능이 개편되었으며, AI가 더 직관적으로 도구를 사용할 수 있도록 개선되었습니다. 이제 각 도구는 명확한 목적과 사용법이 정의되어 있으며, AI가 상황에 맞는 도구를 선택하여 활용할 수 있습니다. 또한, 도구 사용 시 발생하는 오류 처리와 예외 상황에 대한 대응도 강화되어 안정적인 운영이 가능합니다.'
+      }
+    ]
+  },
+  {
     version: '1.5.0',
     date: '2026-05-01',
     changes: [
