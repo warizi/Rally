@@ -22,6 +22,7 @@ import { recurringRules } from './recurring-rule'
 import { recurringCompletions } from './recurring-completion'
 import { terminalLayouts } from './terminal-layout'
 import { terminalSessions } from './terminal-session'
+import { templates } from './template'
 
 export {
   workspaces,
@@ -47,5 +48,6 @@ export {
   recurringRules,
   recurringCompletions,
   terminalLayouts,
-  terminalSessions
+  terminalSessions,
+  templates
 }

@@ -12,14 +12,38 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.4.3',
+    version: '1.5.0',
     date: '2026-05-01',
     changes: [
       {
+        type: 'feature',
+        title: '노트·테이블 템플릿 기능 추가',
+        description:
+          '자주 사용하는 노트나 테이블 구성을 템플릿으로 저장하고 다시 불러올 수 있습니다. 노트와 테이블 상세 화면 헤더의 템플릿 버튼에서 현재 구성 저장, 저장된 템플릿 불러오기·삭제가 가능합니다. 테이블의 경우 본문 데이터와 함께 열 너비도 함께 저장됩니다.'
+      },
+      {
         type: 'improvement',
-        title: '테이블(CSV) 툴바 가로 스크롤 적용',
+        title: 'macOS 앱 메뉴 정리',
+        description:
+          '앱 메뉴에서 사용하지 않는 항목들(Services, 음성 입력, 자동 완성, 줌, 화면 확대 등)을 정리해 깔끔하게 표시되도록 개선했습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '테이블 툴바 가로 스크롤 적용',
         description:
           '테이블 상세 화면의 탭 너비가 좁아질 때 툴바가 줄바꿈되어 UI가 깨지던 문제를 개선했습니다. 이제 툴바가 가로로 스크롤되어 좁은 화면에서도 깔끔하게 표시됩니다.'
+      },
+      {
+        type: 'fix',
+        title: '설정 다이얼로그 스크롤 영역 깨짐 수정',
+        description:
+          '글꼴 크기를 크게로 설정했을 때 설정 다이얼로그의 콘텐츠 일부가 영역 밖으로 잘려 보이던 문제를 수정했습니다.'
+      },
+      {
+        type: 'fix',
+        title: 'macOS 풀스크린 타이틀 및 앱 정보 표시 수정',
+        description:
+          'macOS 풀스크린 모드 시 상단에 "Electron"으로 표시되던 문제와 앱 정보 보기 카피라이트 표기 오류를 수정했습니다.'
       }
     ]
   },

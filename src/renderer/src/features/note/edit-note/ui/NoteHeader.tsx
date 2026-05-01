@@ -1,9 +1,16 @@
 import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
-import { useRenameNote, useUpdateNoteMeta, useNotesByWorkspace } from '@entities/note'
+import {
+  useRenameNote,
+  useUpdateNoteMeta,
+  useNotesByWorkspace,
+  useReadNoteContent,
+  useWriteNoteContent
+} from '@entities/note'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
+import { TemplateButton } from '@features/template/manage-template'
 
 interface NoteHeaderProps {
   workspaceId: string
@@ -14,10 +21,14 @@ interface NoteHeaderProps {
 export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX.Element {
   const { data: notes } = useNotesByWorkspace(workspaceId)
   const note = notes?.find((n) => n.id === noteId)
+  const { data: content } = useReadNoteContent(workspaceId, noteId)
 
   const { mutate: renameNote } = useRenameNote()
   const { mutate: updateMeta } = useUpdateNoteMeta()
+  const { mutate: writeContent } = useWriteNoteContent()
   const setTabTitle = useTabStore((s) => s.setTabTitle)
+
+  const currentContent = content ?? ''
 
   return (
     <TabHeader
@@ -25,7 +36,20 @@ export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX
       title={note?.title ?? ''}
       description={note?.description ?? ''}
       buttons={
-        <LinkedEntityPopoverButton entityType="note" entityId={noteId} workspaceId={workspaceId} />
+        <div className="flex items-center gap-1">
+          <TemplateButton
+            workspaceId={workspaceId}
+            type="note"
+            getJsonData={() => currentContent}
+            hasContent={currentContent.trim().length > 0}
+            onApply={(jsonData) => writeContent({ workspaceId, noteId, content: jsonData })}
+          />
+          <LinkedEntityPopoverButton
+            entityType="note"
+            entityId={noteId}
+            workspaceId={workspaceId}
+          />
+        </div>
       }
       footer={<TagList workspaceId={workspaceId} itemType="note" itemId={noteId} />}
       onTitleChange={(title) => {

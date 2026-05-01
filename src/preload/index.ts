@@ -357,6 +357,18 @@ const api = {
       ipcRenderer.invoke('recurringCompletion:findTodayByWorkspace', workspaceId, date)
   },
 
+  template: {
+    list: (workspaceId: string, type: 'note' | 'csv') =>
+      ipcRenderer.invoke('template:list', workspaceId, type),
+    create: (input: {
+      workspaceId: string
+      title: string
+      type: 'note' | 'csv'
+      jsonData: string
+    }) => ipcRenderer.invoke('template:create', input),
+    delete: (id: string) => ipcRenderer.invoke('template:delete', id)
+  },
+
   terminal: {
     // id?: 복원 시 기존 DB 세션 ID 전달, 신규 탭 시 생략
     // sortOrder?: 신규 탭 순서 (복원 시 불필요)

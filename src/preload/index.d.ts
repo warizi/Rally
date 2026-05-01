@@ -819,6 +819,29 @@ interface CompletedItem {
   recurringCompletion?: RecurringCompletionItem
 }
 
+interface TemplateItem {
+  id: string
+  workspaceId: string
+  title: string
+  type: 'note' | 'csv'
+  jsonData: string
+  createdAt: Date
+}
+
+interface TemplateAPI {
+  list: (
+    workspaceId: string,
+    type: 'note' | 'csv'
+  ) => Promise<IpcResponse<TemplateItem[]>>
+  create: (input: {
+    workspaceId: string
+    title: string
+    type: 'note' | 'csv'
+    jsonData: string
+  }) => Promise<IpcResponse<TemplateItem>>
+  delete: (id: string) => Promise<IpcResponse<void>>
+}
+
 interface API {
   note: NoteAPI
   csv: CsvAPI
@@ -844,6 +867,7 @@ interface API {
   terminal: TerminalAPI
   recurringRule: RecurringRuleAPI
   recurringCompletion: RecurringCompletionAPI
+  template: TemplateAPI
 }
 
 interface ShellAPI {
