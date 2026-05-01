@@ -1,4 +1,13 @@
-import { app, shell, BrowserWindow, ipcMain, screen, session } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  ipcMain,
+  screen,
+  session,
+  Menu,
+  type MenuItemConstructorOptions
+} from 'electron'
 import { dirname, join } from 'path'
 import { existsSync, mkdirSync, renameSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
@@ -119,6 +128,62 @@ function migrateLegacyDefaultWorkspacePath(): void {
   }
 }
 
+function setupAppMenu(): void {
+  const isMac = process.platform === 'darwin'
+  const template: MenuItemConstructorOptions[] = []
+
+  if (isMac) {
+    template.push({
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    })
+  }
+
+  template.push({
+    label: 'Edit',
+    submenu: [
+      { role: 'undo' },
+      { role: 'redo' },
+      { type: 'separator' },
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { role: 'selectAll' }
+    ]
+  })
+
+  const viewSubmenu: MenuItemConstructorOptions[] = []
+  if (is.dev) {
+    viewSubmenu.push(
+      { role: 'reload' },
+      { role: 'forceReload' },
+      { role: 'toggleDevTools' },
+      { type: 'separator' }
+    )
+  }
+  viewSubmenu.push({ role: 'togglefullscreen' })
+  template.push({ label: 'View', submenu: viewSubmenu })
+
+  const windowSubmenu: MenuItemConstructorOptions[] = [
+    { role: 'minimize' },
+    { role: 'zoom' }
+  ]
+  if (isMac) {
+    windowSubmenu.push({ type: 'separator' }, { role: 'front' })
+  }
+  template.push({ role: 'windowMenu', label: 'Window', submenu: windowSubmenu })
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
 function createWindow(): void {
   const { width, height } = screen.getPrimaryDisplay().workAreaSize
 
@@ -157,7 +222,9 @@ function createWindow(): void {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.electron')
+  app.setName('Rally')
+  electronApp.setAppUserModelId('com.jin.rally')
+  setupAppMenu()
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
