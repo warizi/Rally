@@ -25,7 +25,12 @@ import {
   itemTags,
   tabSessions,
   tabSnapshots,
-  reminders
+  reminders,
+  recurringRules,
+  recurringCompletions,
+  templates,
+  terminalLayouts,
+  terminalSessions
 } from '../db/schema'
 import { workspaceService } from './workspace'
 import { app } from 'electron'
@@ -357,6 +362,31 @@ export const backupService = {
       .from(tabSnapshots)
       .where(eq(tabSnapshots.workspaceId, workspaceId))
       .all()
+    const recurringRulesData = db
+      .select()
+      .from(recurringRules)
+      .where(eq(recurringRules.workspaceId, workspaceId))
+      .all()
+    const recurringCompletionsData = db
+      .select()
+      .from(recurringCompletions)
+      .where(eq(recurringCompletions.workspaceId, workspaceId))
+      .all()
+    const templatesData = db
+      .select()
+      .from(templates)
+      .where(eq(templates.workspaceId, workspaceId))
+      .all()
+    const terminalLayoutsData = db
+      .select()
+      .from(terminalLayouts)
+      .where(eq(terminalLayouts.workspaceId, workspaceId))
+      .all()
+    const terminalSessionsData = db
+      .select()
+      .from(terminalSessions)
+      .where(eq(terminalSessions.workspaceId, workspaceId))
+      .all()
 
     // Level 2: 부모 ID 기반
     const canvasNodeData: (typeof canvasNodes.$inferSelect)[] = []
@@ -436,7 +466,12 @@ export const backupService = {
           'item-tags',
           'tab-sessions',
           'tab-snapshots',
-          'reminders'
+          'reminders',
+          'recurring-rules',
+          'recurring-completions',
+          'templates',
+          'terminal-layouts',
+          'terminal-sessions'
         ]
       }
       fs.writeFileSync(path.join(tmpDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
@@ -461,7 +496,12 @@ export const backupService = {
         ['item-tags.json', serializeForExport(itemTagData)],
         ['tab-sessions.json', serializeForExport(tabSessionData)],
         ['tab-snapshots.json', serializeForExport(tabSnapshotData)],
-        ['reminders.json', serializeForExport(reminderData)]
+        ['reminders.json', serializeForExport(reminderData)],
+        ['recurring-rules.json', serializeForExport(recurringRulesData)],
+        ['recurring-completions.json', serializeForExport(recurringCompletionsData)],
+        ['templates.json', serializeForExport(templatesData)],
+        ['terminal-layouts.json', serializeForExport(terminalLayoutsData)],
+        ['terminal-sessions.json', serializeForExport(terminalSessionsData)]
       ]
       for (const [filename, data] of dataFiles) {
         fs.writeFileSync(path.join(dataDir, filename), JSON.stringify(data, null, 2))
@@ -560,6 +600,11 @@ export const backupService = {
       const tabSessionsJson = readJson<any[]>('tab-sessions.json')
       const tabSnapshotsJson = readJson<any[]>('tab-snapshots.json')
       const remindersJson = readJson<any[]>('reminders.json')
+      const recurringRulesJson = readJson<any[]>('recurring-rules.json')
+      const recurringCompletionsJson = readJson<any[]>('recurring-completions.json')
+      const templatesJson = readJson<any[]>('templates.json')
+      const terminalLayoutsJson = readJson<any[]>('terminal-layouts.json')
+      const terminalSessionsJson = readJson<any[]>('terminal-sessions.json')
       /* eslint-enable @typescript-eslint/no-explicit-any */
 
       // ID 매퍼
@@ -902,6 +947,86 @@ export const backupService = {
             })
             .run()
         }
+
+        // 19. recurring_rules
+        batchInsert(
+          recurringRules,
+          recurringRulesJson.map((r) => ({
+            id: mapper.register(r.id),
+            workspaceId: newWorkspaceId,
+            title: r.title,
+            description: r.description,
+            priority: r.priority,
+            recurrenceType: r.recurrenceType,
+            daysOfWeek: r.daysOfWeek,
+            startDate: toDate(r.startDate),
+            endDate: toDateOrNull(r.endDate),
+            startTime: r.startTime,
+            endTime: r.endTime,
+            reminderOffsetMs: r.reminderOffsetMs,
+            createdAt: toDate(r.createdAt),
+            updatedAt: toDate(r.updatedAt)
+          }))
+        )
+
+        // 20. recurring_completions (ruleId nullable: 원본에서 rule 삭제된 케이스 보존)
+        batchInsert(
+          recurringCompletions,
+          recurringCompletionsJson.map((c) => ({
+            id: mapper.register(c.id),
+            ruleId: c.ruleId != null ? (mapper.mapOrSkip(c.ruleId) ?? null) : null,
+            ruleTitle: c.ruleTitle,
+            workspaceId: newWorkspaceId,
+            completedDate: c.completedDate,
+            completedAt: toDate(c.completedAt),
+            createdAt: toDate(c.createdAt)
+          }))
+        )
+
+        // 21. templates
+        batchInsert(
+          templates,
+          templatesJson.map((t) => ({
+            id: mapper.register(t.id),
+            workspaceId: newWorkspaceId,
+            title: t.title,
+            type: t.type,
+            jsonData: t.jsonData,
+            createdAt: toDate(t.createdAt)
+          }))
+        )
+
+        // 22. terminal_layouts (워크스페이스당 unique)
+        batchInsert(
+          terminalLayouts,
+          terminalLayoutsJson.map((l) => ({
+            id: mapper.register(l.id),
+            workspaceId: newWorkspaceId,
+            layoutJson: l.layoutJson,
+            createdAt: toDate(l.createdAt),
+            updatedAt: toDate(l.updatedAt)
+          }))
+        )
+
+        // 23. terminal_sessions (layoutId nullable: 레이아웃 삭제된 케이스 보존)
+        batchInsert(
+          terminalSessions,
+          terminalSessionsJson.map((s) => ({
+            id: mapper.register(s.id),
+            workspaceId: newWorkspaceId,
+            layoutId: s.layoutId != null ? (mapper.mapOrSkip(s.layoutId) ?? null) : null,
+            name: s.name,
+            cwd: s.cwd,
+            shell: s.shell,
+            rows: s.rows,
+            cols: s.cols,
+            screenSnapshot: s.screenSnapshot,
+            sortOrder: s.sortOrder,
+            isActive: s.isActive,
+            createdAt: toDate(s.createdAt),
+            updatedAt: toDate(s.updatedAt)
+          }))
+        )
       })()
 
       return newWorkspace!
