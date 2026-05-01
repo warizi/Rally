@@ -62,10 +62,15 @@ function ensureMcpSettings(workspacePath: string): void {
     config.mcpServers = {}
   }
 
-  config.mcpServers.rally = {
+  const serverKey = is.dev ? 'rally-dev' : 'rally'
+  const serverConfig: Record<string, unknown> = {
     command: 'node',
     args: [getMcpServerPath()]
   }
+  if (is.dev) {
+    serverConfig.env = { RALLY_DEV: '1' }
+  }
+  config.mcpServers[serverKey] = serverConfig
 
   try {
     writeFileSync(mcpPath, JSON.stringify(config, null, 2), 'utf-8')
