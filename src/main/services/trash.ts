@@ -1,7 +1,7 @@
 import { app, BrowserWindow } from 'electron'
 import fs from 'fs'
 import path from 'path'
-import { and, eq, inArray, lt } from 'drizzle-orm'
+import { and, eq, inArray, isNull, lt } from 'drizzle-orm'
 import { nanoid } from 'nanoid'
 import { db } from '../db'
 import {
@@ -704,7 +704,7 @@ export const trashService = {
           const parentAbs = parentRel ? path.join(workspace.path, parentRel) : workspace.path
           fs.mkdirSync(parentAbs, { recursive: true })
           const desiredName = rootFolder.relativePath.split('/').pop()!
-          const finalName = resolveNameConflict(parentAbs, desiredName)
+          const finalName = resolveNameConflict(parentAbs, desiredName, { treatAsFolder: true })
           const finalRel = parentRel ? `${parentRel}/${finalName}` : finalName
           const dst = path.join(workspace.path, finalRel)
           const src = path.join(batch.fsTrashPath, rootFolder.relativePath)
@@ -727,54 +727,90 @@ export const trashService = {
           }
         }
       } else if (batch.fsTrashPath) {
-        // 파일 도메인 — 단건 fs 이동 + relativePath 충돌 시 자동 rename
+        // 파일 도메인 — 단건 fs 이동 + relativePath 충돌 시 자동 rename.
+        //
+        // 부모 폴더가 trash/deleted 상태인 경우 (예: 노트만 따로 delete → 그 후 부모 폴더 delete →
+        // 노트 단독 restore) folderId가 dangling이 되므로 root로 복구해 정합성 유지.
+        const isFolderActive = (folderId: string | null): boolean => {
+          if (!folderId) return true // 이미 root
+          const f = folderRepository.findByIdIncludingDeleted(folderId)
+          return !!f && f.deletedAt === null
+        }
+
         const fsRestore = (
-          rows: { id: string; relativePath: string }[],
-          updateRelPath: (id: string, newRelPath: string) => void
+          rows: { id: string; folderId: string | null; relativePath: string }[],
+          updateRow: (
+            id: string,
+            patch: { relativePath: string; folderId?: string | null }
+          ) => void
         ): void => {
           for (const row of rows) {
+            // 부모 trash/deleted 시 root로 강등 — relativePath는 파일명만 남김
+            const parentSafe = isFolderActive(row.folderId)
+            const relativePathForMove = parentSafe
+              ? row.relativePath
+              : (row.relativePath.split('/').pop() ?? row.relativePath)
+
             const src = path.join(batch.fsTrashPath!, row.relativePath)
-            const finalRel = moveFromTrash(src, workspace.path, row.relativePath)
-            if (finalRel !== row.relativePath) {
-              updateRelPath(row.id, finalRel)
+            const finalRel = moveFromTrash(src, workspace.path, relativePathForMove)
+
+            const relPathChanged = finalRel !== row.relativePath
+            if (relPathChanged || !parentSafe) {
+              const patch: { relativePath: string; folderId?: string | null } = {
+                relativePath: finalRel
+              }
+              if (!parentSafe) patch.folderId = null
+              updateRow(row.id, patch)
             }
           }
         }
 
         const noteRows = db
-          .select({ id: notes.id, relativePath: notes.relativePath })
+          .select({ id: notes.id, folderId: notes.folderId, relativePath: notes.relativePath })
           .from(notes)
           .where(eq(notes.trashBatchId, batchId))
           .all()
-        fsRestore(noteRows, (id, rel) => {
-          db.update(notes).set({ relativePath: rel }).where(eq(notes.id, id)).run()
+        fsRestore(noteRows, (id, patch) => {
+          db.update(notes).set(patch).where(eq(notes.id, id)).run()
         })
 
         const csvRows = db
-          .select({ id: csvFiles.id, relativePath: csvFiles.relativePath })
+          .select({
+            id: csvFiles.id,
+            folderId: csvFiles.folderId,
+            relativePath: csvFiles.relativePath
+          })
           .from(csvFiles)
           .where(eq(csvFiles.trashBatchId, batchId))
           .all()
-        fsRestore(csvRows, (id, rel) => {
-          db.update(csvFiles).set({ relativePath: rel }).where(eq(csvFiles.id, id)).run()
+        fsRestore(csvRows, (id, patch) => {
+          db.update(csvFiles).set(patch).where(eq(csvFiles.id, id)).run()
         })
 
         const pdfRows = db
-          .select({ id: pdfFiles.id, relativePath: pdfFiles.relativePath })
+          .select({
+            id: pdfFiles.id,
+            folderId: pdfFiles.folderId,
+            relativePath: pdfFiles.relativePath
+          })
           .from(pdfFiles)
           .where(eq(pdfFiles.trashBatchId, batchId))
           .all()
-        fsRestore(pdfRows, (id, rel) => {
-          db.update(pdfFiles).set({ relativePath: rel }).where(eq(pdfFiles.id, id)).run()
+        fsRestore(pdfRows, (id, patch) => {
+          db.update(pdfFiles).set(patch).where(eq(pdfFiles.id, id)).run()
         })
 
         const imageRows = db
-          .select({ id: imageFiles.id, relativePath: imageFiles.relativePath })
+          .select({
+            id: imageFiles.id,
+            folderId: imageFiles.folderId,
+            relativePath: imageFiles.relativePath
+          })
           .from(imageFiles)
           .where(eq(imageFiles.trashBatchId, batchId))
           .all()
-        fsRestore(imageRows, (id, rel) => {
-          db.update(imageFiles).set({ relativePath: rel }).where(eq(imageFiles.id, id)).run()
+        fsRestore(imageRows, (id, patch) => {
+          db.update(imageFiles).set(patch).where(eq(imageFiles.id, id)).run()
         })
       }
 
@@ -834,6 +870,8 @@ export const trashService = {
 
       // 3. trash_batches row 삭제 (FK set null로 trashBatchId가 자동 NULL이 되긴 하지만
       //    이미 위에서 명시적으로 NULL 처리했으므로 그냥 삭제만)
+      // restored 배열에는 root + cascade 자식 todos를 함께 포함 (다른 도메인은 추후 확장 가능).
+      // todo의 경우 부모-자식 관계가 사용자에게 가시적이므로 응답에 명시.
       const restored: { type: TrashEntityKind; id: string; title: string }[] = [
         {
           type: batch.rootEntityType as TrashEntityKind,
@@ -841,6 +879,26 @@ export const trashService = {
           title: batch.rootTitle
         }
       ]
+      if (batch.rootEntityType === 'todo') {
+        // setActive 후 trashBatchId=null이라 trashBatchId 기준으로 못 잡음 → root id로부터 활성 후손 재수집.
+        const queue = [batch.rootEntityId]
+        const collectedIds = new Set<string>()
+        while (queue.length > 0) {
+          const cur = queue.shift()!
+          const children = db
+            .select({ id: todos.id, title: todos.title })
+            .from(todos)
+            .where(and(eq(todos.parentId, cur), isNull(todos.deletedAt)))
+            .all()
+          for (const c of children) {
+            if (!collectedIds.has(c.id)) {
+              collectedIds.add(c.id)
+              queue.push(c.id)
+              restored.push({ type: 'todo', id: c.id, title: c.title })
+            }
+          }
+        }
+      }
       db.delete(trashBatches).where(eq(trashBatches.id, batchId)).run()
 
       return { restored, conflicts: conflicts.length > 0 ? conflicts : undefined }

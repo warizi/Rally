@@ -495,6 +495,8 @@ export const noteService = {
       id: string
       title: string
       relativePath: string
+      folderId: string | null
+      updatedAt: Date
       preview: string
       matchType: 'title' | 'content'
     }[]
@@ -507,6 +509,8 @@ export const noteService = {
       id: string
       title: string
       relativePath: string
+      folderId: string | null
+      updatedAt: Date
       preview: string
       matchType: 'title' | 'content'
     }[] = []
@@ -520,6 +524,8 @@ export const noteService = {
         id: note.id,
         title: note.title,
         relativePath: note.relativePath,
+        folderId: note.folderId,
+        updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
         preview: note.preview,
         matchType: 'title'
       })
@@ -544,6 +550,9 @@ export const noteService = {
                   id: note.id,
                   title: note.title,
                   relativePath: note.relativePath,
+                  folderId: note.folderId,
+                  updatedAt:
+                    note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
                   preview: note.preview,
                   matchType: 'content' as const
                 }

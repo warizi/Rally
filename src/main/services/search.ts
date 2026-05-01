@@ -118,17 +118,16 @@ export const searchService = {
       const notes = await noteService.search(workspaceId, trimmed)
       perTypeCounts.note = notes.length
       for (const n of notes) {
-        // noteService.search는 folderId를 직접 안 줌 → relativePath에서 분해 불가, 별도 fetch 필요는 과함
-        // preview에서 excerpt 추출. 본문 매칭이지만 해당 service가 fs 일부 읽고 매칭 확인까지만 함.
         const hit: SearchHit = {
           type: 'note',
           id: n.id,
           title: n.title,
           matchType: n.matchType,
-          folderId: null,
-          folderPath: extractFolderPath(n.relativePath),
-          // noteService.search는 updatedAt를 안 돌려줌 — relative ordering만 위해 epoch 0으로 치환
-          updatedAt: new Date(0).toISOString(),
+          folderId: n.folderId,
+          folderPath: n.folderId
+            ? (folderMap.get(n.folderId) ?? extractFolderPath(n.relativePath))
+            : extractFolderPath(n.relativePath),
+          updatedAt: n.updatedAt.toISOString(),
           preview: n.preview ?? null
         }
         if (highlight) {

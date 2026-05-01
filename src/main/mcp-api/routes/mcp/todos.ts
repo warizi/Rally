@@ -138,7 +138,10 @@ export function registerMcpTodoRoutes(router: Router): void {
     for (const todo of mapped) {
       if (todo.parentId && byId.has(todo.parentId)) {
         byId.get(todo.parentId)!.children.push(todo)
-      } else if (!todo.parentId) {
+      } else {
+        // parent가 결과셋에 없거나 root → 결과 root에 포함.
+        // parentId 단독 호출(부모 자체는 결과셋에 없음) / search·priority 등 부분 매칭에서
+        // 자식만 매칭됐을 때도 누락되지 않도록 함.
         roots.push(todo)
       }
     }

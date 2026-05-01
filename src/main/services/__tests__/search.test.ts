@@ -58,6 +58,8 @@ const noteHit = {
   id: 'n-1',
   title: 'My Plan',
   relativePath: 'projects/plan.md',
+  folderId: 'fld-1',
+  updatedAt: new Date('2026-04-20T00:00:00Z'),
   preview: 'we will plan the migration carefully here',
   matchType: 'title' as const
 }
@@ -298,7 +300,9 @@ describe('searchService.search', () => {
     })
 
     it('루트 노트는 folderPath null', async () => {
-      vi.mocked(noteService.search).mockResolvedValue([{ ...noteHit, relativePath: 'plan.md' }])
+      vi.mocked(noteService.search).mockResolvedValue([
+        { ...noteHit, relativePath: 'plan.md', folderId: null }
+      ])
       const r = await searchService.search('ws-1', 'plan', { types: ['note'] })
       expect(r.results[0].folderPath).toBe(null)
     })

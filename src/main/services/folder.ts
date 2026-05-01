@@ -225,7 +225,9 @@ export const folderService = {
     }
 
     const parentAbs = resolveParentAbsPath(workspace.path, parentRelPath)
-    const finalName = resolveNameConflict(parentAbs, name.trim() || '새 폴더')
+    const finalName = resolveNameConflict(parentAbs, name.trim() || '새 폴더', {
+      treatAsFolder: true
+    })
     const newAbs = path.join(parentAbs, finalName)
     const newRel = normalizePath(parentRelPath ? `${parentRelPath}/${finalName}` : finalName)
 
@@ -290,7 +292,7 @@ export const folderService = {
       }
     }
 
-    const finalName = resolveNameConflict(parentAbs, newName.trim())
+    const finalName = resolveNameConflict(parentAbs, newName.trim(), { treatAsFolder: true })
 
     const oldAbs = path.join(workspace.path, oldRel)
     const newRel = normalizePath(parentRel ? `${parentRel}/${finalName}` : finalName)
@@ -377,7 +379,9 @@ export const folderService = {
 
     // 이름 충돌 해결 — 같은 부모로 이동(reorder)이면 이름 변경 없음
     const parentAbs = resolveParentAbsPath(workspace.path, targetParentRel)
-    const finalName = isSameParent ? folderName : resolveNameConflict(parentAbs, folderName)
+    const finalName = isSameParent
+      ? folderName
+      : resolveNameConflict(parentAbs, folderName, { treatAsFolder: true })
     const finalRel = normalizePath(targetParentRel ? `${targetParentRel}/${finalName}` : finalName)
     const finalAbs = path.join(workspace.path, finalRel)
 

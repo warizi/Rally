@@ -328,6 +328,14 @@ const api = {
     getSkillFiles: () => ipcRenderer.invoke('appInfo:getSkillFiles')
   },
 
+  mcpClient: {
+    getStatus: () => ipcRenderer.invoke('mcpClient:getStatus'),
+    register: (client: 'claudeDesktop' | 'claudeCode') =>
+      ipcRenderer.invoke('mcpClient:register', client),
+    unregister: (client: 'claudeDesktop' | 'claudeCode') =>
+      ipcRenderer.invoke('mcpClient:unregister', client)
+  },
+
   backup: {
     export: (workspaceId: string) => ipcRenderer.invoke('backup:export', workspaceId),
     selectFile: () => ipcRenderer.invoke('backup:selectFile'),

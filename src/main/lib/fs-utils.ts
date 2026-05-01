@@ -126,11 +126,16 @@ export function isImageFile(filePath: string): boolean {
  *   resolveNameConflict(parentAbs, '새로운 노트.md') → '새로운 노트 (1).md'
  *
  * 알고리즘:
- *   - 이름에 확장자가 있으면 (예: "foo.md") → suffix를 확장자 앞에 삽입
- *   - 이름에 확장자가 없으면 (폴더용) → suffix를 끝에 붙임
+ *   - treatAsFolder=true → suffix를 항상 끝에 붙임 (폴더 이름에 `.`가 있어도 분리하지 않음)
+ *   - 그 외 이름에 확장자가 있으면 (예: "foo.md") → suffix를 확장자 앞에 삽입
+ *   - 그 외 확장자가 없으면 → suffix를 끝에 붙임
  */
-export function resolveNameConflict(parentAbs: string, desiredName: string): string {
-  const extMatch = desiredName.match(/^(.*?)(\.[^.]+)$/)
+export function resolveNameConflict(
+  parentAbs: string,
+  desiredName: string,
+  options: { treatAsFolder?: boolean } = {}
+): string {
+  const extMatch = options.treatAsFolder ? null : desiredName.match(/^(.*?)(\.[^.]+)$/)
   const base = extMatch ? extMatch[1] : desiredName
   const ext = extMatch ? extMatch[2] : ''
 
