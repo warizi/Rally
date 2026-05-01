@@ -16,6 +16,15 @@ export const templateRepository = {
       .all()
   },
 
+  findByWorkspace(workspaceId: string): Template[] {
+    return db
+      .select()
+      .from(templates)
+      .where(eq(templates.workspaceId, workspaceId))
+      .orderBy(asc(templates.type), asc(templates.title))
+      .all()
+  },
+
   findById(id: string): Template | undefined {
     return db.select().from(templates).where(eq(templates.id, id)).get()
   },
