@@ -2,13 +2,17 @@ import http from 'http'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import { is } from '@electron-toolkit/utils'
 import { createRouter } from './router'
 import { registerAllRoutes } from './routes'
 
+const socketName = is.dev ? 'mcp-dev.sock' : 'mcp.sock'
+const pipeName = is.dev ? 'rally-mcp-dev' : 'rally-mcp'
+
 const socketPath =
   process.platform === 'win32'
-    ? '\\\\.\\pipe\\rally-mcp'
-    : path.join(os.homedir(), '.rally', 'mcp.sock')
+    ? `\\\\.\\pipe\\${pipeName}`
+    : path.join(os.homedir(), '.rally', socketName)
 
 let server: http.Server | null = null
 

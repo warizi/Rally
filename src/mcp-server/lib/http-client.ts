@@ -2,10 +2,14 @@ import http from 'http'
 import path from 'path'
 import os from 'os'
 
+const isDev = process.env.RALLY_DEV === '1'
+const socketName = isDev ? 'mcp-dev.sock' : 'mcp.sock'
+const pipeName = isDev ? 'rally-mcp-dev' : 'rally-mcp'
+
 const socketPath =
   process.platform === 'win32'
-    ? '\\\\.\\pipe\\rally-mcp'
-    : path.join(os.homedir(), '.rally', 'mcp.sock')
+    ? `\\\\.\\pipe\\${pipeName}`
+    : path.join(os.homedir(), '.rally', socketName)
 
 interface HttpResponse {
   status: number
