@@ -16,6 +16,8 @@ import {
   AlertDialogTrigger
 } from '@shared/ui/alert-dialog'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { useOnboardingStore } from '@shared/store/onboarding'
+import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { TAB_ICON, type TabType as TabIconKey } from '@/shared/constants/tab-url'
 import { useTrashList, trashKindLabel, type TrashEntityKind } from '@entities/trash'
 import { useRestoreTrash, usePurgeTrash, useEmptyTrash } from '@features/trash'
@@ -66,6 +68,10 @@ export function TrashPage(): JSX.Element {
   const [search, setSearch] = useState('')
   const debouncedSearch = useDebouncedValue(search, 300)
 
+  useEffect(() => {
+    useOnboardingStore.getState().markChecklistStep('view_trash').catch(console.error)
+  }, [])
+
   const trashed = useTrashList(workspaceId, {
     search: debouncedSearch.trim() || undefined,
     limit: 200
@@ -97,6 +103,13 @@ export function TrashPage(): JSX.Element {
             title="휴지통"
             description="삭제한 항목을 복구하거나 영구 삭제합니다. 자동 비우기 주기는 설정에서 변경 가능합니다."
             icon={Trash2}
+            buttons={
+              <OnboardingTipIcon
+                tipId="trash_retention"
+                title="자동 비우기 주기"
+                description="휴지통 항목은 기본 30일 후 자동으로 비워져요. 설정 > 휴지통에서 1일/1주/30일/90일/1년 또는 '안 함'으로 변경할 수 있어요."
+              />
+            }
           />
           <div className="flex items-center gap-2 flex-wrap">
             <div className="relative w-56">

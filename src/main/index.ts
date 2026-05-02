@@ -47,6 +47,7 @@ import { registerRecurringCompletionHandlers } from './ipc/recurring-completion'
 import { registerTemplateHandlers } from './ipc/template'
 import { registerHistoryHandlers } from './ipc/history'
 import { registerTrashHandlers } from './ipc/trash'
+import { registerOnboardingHandlers } from './ipc/onboarding'
 import { setupAutoUpdater } from './lib/updater'
 import { ensureClaudeCommands } from './services/claude-commands-setup'
 
@@ -269,6 +270,7 @@ app.whenReady().then(() => {
   registerTemplateHandlers()
   registerHistoryHandlers()
   registerTrashHandlers()
+  registerOnboardingHandlers()
 
   startMcpApiServer()
 

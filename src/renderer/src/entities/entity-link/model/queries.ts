@@ -8,6 +8,7 @@ import {
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
 import type { LinkableEntityType, LinkedEntity } from '@shared/lib/entity-link'
+import { useOnboardingStore } from '@shared/store/onboarding'
 
 export const ENTITY_LINK_KEY = 'entityLink'
 const HISTORY_KEY = 'history'
@@ -52,6 +53,7 @@ export function useLinkEntity(): UseMutationResult<
       queryClient.invalidateQueries({ queryKey: [ENTITY_LINK_KEY, typeB, idB] })
       // todo↔다른 엔티티 연결 변경 시 히스토리도 갱신
       queryClient.invalidateQueries({ queryKey: [HISTORY_KEY, workspaceId] })
+      useOnboardingStore.getState().markChecklistStep('link_items').catch(console.error)
     }
   })
 }

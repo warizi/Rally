@@ -1,6 +1,6 @@
 import { useMemo, useCallback } from 'react'
 import { addDays, addMonths, addWeeks, subDays, subMonths, subWeeks } from 'date-fns'
-import { CheckSquare, MoreHorizontal } from 'lucide-react'
+import { CalendarPlus, CheckSquare, MoreHorizontal } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -230,6 +230,21 @@ export function CalendarPage({ tabId }: Props): React.JSX.Element {
               onToday={handleToday}
             />
           </div>
+          {allSchedules.length === 0 && (
+            <div className="flex items-center justify-between gap-3 rounded-md border border-dashed bg-muted/30 px-3 py-2 text-xs">
+              <span className="flex items-center gap-2 text-muted-foreground">
+                <CalendarPlus className="size-3.5" />이 범위에 일정이 없어요.
+              </span>
+              <ScheduleFormDialog
+                workspaceId={workspaceId}
+                trigger={
+                  <Button size="sm" variant="ghost" className="h-6 px-2 text-xs">
+                    + 일정 만들기
+                  </Button>
+                }
+              />
+            </div>
+          )}
           {calendar.viewType === 'month' && (
             <MonthView
               schedules={allSchedules}

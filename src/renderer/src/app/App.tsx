@@ -8,6 +8,9 @@ import { RouterProvider } from 'react-router-dom'
 import { DefaultRouter } from './routes'
 import { WorkspaceInitializer } from './providers/workspace-initializer'
 import { ThemeInitializer } from './providers/theme-initializer'
+import { OnboardingInitializer } from './providers/onboarding-initializer'
+import { OnboardingStepWatcher } from './providers/onboarding-step-watcher'
+import { WelcomeModalContainer } from '@features/onboarding/welcome-modal'
 
 function App(): React.JSX.Element {
   return (
@@ -15,7 +18,10 @@ function App(): React.JSX.Element {
       <TooltipProvider>
         <WorkspaceInitializer />
         <ThemeInitializer />
+        <OnboardingInitializer />
+        <OnboardingStepWatcher />
         <RouterProvider router={DefaultRouter} />
+        <WelcomeModalContainer />
         <Toaster />
       </TooltipProvider>
     </QueryClientProviderWrapper>

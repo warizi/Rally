@@ -1,8 +1,20 @@
 import { useState } from 'react'
+import { CheckSquare, Plus } from 'lucide-react'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@/shared/ui/tab-header'
 import { ROUTES } from '@shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { Button } from '@shared/ui/button'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent
+} from '@shared/ui/empty'
+import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
+import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog'
 import { useTodosByWorkspace, useActiveTodosByWorkspace } from '@entities/todo'
 import { useCompletedWithRecurring, type CompletedItem } from '@entities/recurring-completion'
 import { useTabStore, selectPaneByTabId } from '@features/tap-system/manage-tab-system'
@@ -145,11 +157,18 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
           title="할 일"
           description="할 일 목록을 관리하는 페이지입니다."
           buttons={
-            <TodoViewToolbar
-              view={view}
-              onViewChange={handleViewChange}
-              workspaceId={workspaceId}
-            />
+            <div className="flex items-center gap-1">
+              <OnboardingTipIcon
+                tipId="todo_subtask"
+                title="서브 할 일 만들기"
+                description="할 일 항목 옆 + 버튼으로 서브 할 일을 추가할 수 있어요."
+              />
+              <TodoViewToolbar
+                view={view}
+                onViewChange={handleViewChange}
+                workspaceId={workspaceId}
+              />
+            </div>
           }
         />
       }
@@ -157,6 +176,30 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
       {!workspaceId ? (
         <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
           워크스페이스를 선택해주세요
+        </div>
+      ) : todos.length === 0 && completedItems.length === 0 ? (
+        <div className="flex h-full items-center justify-center pt-3">
+          <Empty className="border border-dashed max-w-md">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <CheckSquare className="size-5" />
+              </EmptyMedia>
+              <EmptyTitle>오늘 할 일을 적어보세요</EmptyTitle>
+              <EmptyDescription>
+                서브 할 일은 부모 할 일에서 + 버튼으로 만들 수 있어요.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <CreateTodoDialog
+                workspaceId={workspaceId}
+                trigger={
+                  <Button size="sm">
+                    <Plus className="size-3" /> 할 일 만들기
+                  </Button>
+                }
+              />
+            </EmptyContent>
+          </Empty>
         </div>
       ) : view === 'kanban' ? (
         <div className="flex flex-col gap-3 pt-3 h-full overflow-hidden">

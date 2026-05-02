@@ -941,6 +941,15 @@ interface TrashListResult {
   nextOffset: number
 }
 
+interface OnboardingSampleResult {
+  workspaceId: string
+  path: string
+}
+
+interface OnboardingAPI {
+  createSampleWorkspace: () => Promise<IpcResponse<OnboardingSampleResult>>
+}
+
 interface TrashAPI {
   list: (
     workspaceId: string,
@@ -1003,6 +1012,7 @@ interface API {
   template: TemplateAPI
   history: HistoryAPI
   trash: TrashAPI
+  onboarding: OnboardingAPI
 }
 
 interface ShellAPI {
