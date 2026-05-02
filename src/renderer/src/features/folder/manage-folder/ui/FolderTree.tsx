@@ -19,12 +19,7 @@ import {
   useRemoveFolder,
   useUpdateFolderMeta
 } from '@entities/folder'
-import {
-  useCreateNote,
-  useDuplicateNote,
-  useImportNote,
-  useRemoveNote
-} from '@entities/note'
+import { useCreateNote, useDuplicateNote, useImportNote, useRemoveNote } from '@entities/note'
 import type { NoteNode } from '@entities/note'
 import {
   useCreateCsvFile,
@@ -33,16 +28,8 @@ import {
   useRemoveCsvFile
 } from '@entities/csv-file'
 import type { CsvFileNode } from '@entities/csv-file'
-import {
-  useDuplicatePdfFile,
-  useImportPdfFile,
-  useRemovePdfFile
-} from '@entities/pdf-file'
-import {
-  useDuplicateImageFile,
-  useImportImageFile,
-  useRemoveImageFile
-} from '@entities/image-file'
+import { useDuplicatePdfFile, useImportPdfFile, useRemovePdfFile } from '@entities/pdf-file'
+import { useDuplicateImageFile, useImportImageFile, useRemoveImageFile } from '@entities/image-file'
 import type { ImageFileNode } from '@entities/image-file'
 import { Button } from '@shared/ui/button'
 import {
@@ -52,6 +39,14 @@ import {
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
+import {
+  Empty,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  EmptyDescription,
+  EmptyContent
+} from '@shared/ui/empty'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
@@ -700,11 +695,32 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
 
       {/* 트리 또는 빈 상태 */}
       {tree.length === 0 ? (
-        <div className="flex flex-col items-center justify-center flex-1 gap-2 text-muted-foreground px-4">
-          <FolderPlus className="size-8 opacity-30" />
-          <p className="text-xs text-center">폴더가 없습니다.</p>
-          <p className="text-xs text-center opacity-70">위의 + 버튼으로 폴더를 추가하세요.</p>
-        </div>
+        <Empty className="border border-dashed mt-2">
+          <EmptyHeader>
+            <EmptyMedia variant="icon">
+              <FolderPlus className="size-5" />
+            </EmptyMedia>
+            <EmptyTitle className="text-sm">첫 노트를 만들어보세요</EmptyTitle>
+            <EmptyDescription className="text-xs">노트, 표, 폴더로 시작하세요.</EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button size="sm" variant="outline" onClick={() => handleCreateNote(null)}>
+                <FilePlus className="size-3" /> 노트
+              </Button>
+              <Button size="sm" variant="outline" onClick={() => handleCreateCsv(null)}>
+                <Sheet className="size-3" /> 표
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setCreateTarget({ parentFolderId: null })}
+              >
+                <FolderPlus className="size-3" /> 폴더
+              </Button>
+            </div>
+          </EmptyContent>
+        </Empty>
       ) : (
         <div>
           <Tree<WorkspaceTreeNode>

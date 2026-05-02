@@ -8,6 +8,7 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
+import { useOnboardingStore } from '@shared/store/onboarding'
 import type {
   CanvasItem,
   CanvasNodeItem,
@@ -180,6 +181,7 @@ export function useCreateCanvasNode(): UseMutationResult<
       queryClient.invalidateQueries({
         queryKey: [CANVAS_NODE_KEY, 'canvas', canvasId]
       })
+      useOnboardingStore.getState().markChecklistStep('canvas_node').catch(console.error)
     }
   })
 }

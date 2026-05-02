@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { ROUTES } from '@shared/constants/tab-url'
 import { useTabStore, selectPaneByTabId } from '@features/tap-system/manage-tab-system'
 import { PanePickerSubmenu } from '@features/entity-link/manage-link'
@@ -120,9 +121,16 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
           icon={Network}
           isLoading={isLoading}
           buttons={
-            <Button size="sm" onClick={() => setDialogOpen(true)}>
-              <Plus className="size-4 mr-1" />새 캔버스
-            </Button>
+            <div className="flex items-center gap-1">
+              <OnboardingTipIcon
+                tipId="canvas_drag"
+                title="노드 끌어다 놓기"
+                description="캔버스 내에서 텍스트 노드를 끌어다 놓고, 노드 가장자리끼리 연결하세요."
+              />
+              <Button size="sm" onClick={() => setDialogOpen(true)}>
+                <Plus className="size-4 mr-1" />새 캔버스
+              </Button>
+            </div>
           }
         />
       }

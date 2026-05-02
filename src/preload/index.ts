@@ -390,6 +390,10 @@ const api = {
     ) => ipcRenderer.invoke('history:fetch', workspaceId, options)
   },
 
+  onboarding: {
+    createSampleWorkspace: () => ipcRenderer.invoke('onboarding:createSampleWorkspace')
+  },
+
   trash: {
     list: (
       workspaceId: string,

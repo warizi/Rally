@@ -1,5 +1,6 @@
 import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
+import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import {
   useRenameNote,
   useUpdateNoteMeta,
@@ -37,6 +38,11 @@ export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX
       description={note?.description ?? ''}
       buttons={
         <div className="flex items-center gap-1">
+          <OnboardingTipIcon
+            tipId="note_markdown"
+            title="마크다운 지원"
+            description="`# 제목`, `**굵게**`, `- 리스트`, `[링크](...)`, 코드 블록 등 마크다운 문법을 그대로 사용할 수 있어요."
+          />
           <TemplateButton
             workspaceId={workspaceId}
             type="note"

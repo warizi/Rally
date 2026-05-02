@@ -9,6 +9,8 @@ import {
   CircleIcon
 } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
+import { useOnboardingStore } from '@shared/store/onboarding'
+import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 
 interface CommandFile {
   name: string
@@ -80,11 +82,10 @@ export function AISettings(): React.JSX.Element {
   const mcpConfig = JSON.stringify(
     {
       mcpServers: {
-        [serverKey]:
-          serverConfig ?? {
-            command: 'node',
-            args: [mcpServerPath]
-          }
+        [serverKey]: serverConfig ?? {
+          command: 'node',
+          args: [mcpServerPath]
+        }
       }
     },
     null,
@@ -102,6 +103,7 @@ export function AISettings(): React.JSX.Element {
     try {
       await window.api.mcpClient.register(client)
       await refreshStatus()
+      useOnboardingStore.getState().markChecklistStep('connect_ai').catch(console.error)
     } finally {
       setBusy(null)
     }
@@ -211,6 +213,13 @@ export function AISettings(): React.JSX.Element {
               dev
             </span>
           )}
+          <OnboardingTipIcon
+            tipId="ai_register"
+            title="Claude 1-click 등록"
+            description="Claude Desktop / Claude Code 둘 다 한 번에 등록할 수 있어요. 등록 후 Claude에서 노트·할 일·캔버스를 자유롭게 다룰 수 있어요."
+            side="right"
+            align="start"
+          />
         </div>
         <p className="text-xs text-muted-foreground">
           Rally의 노트·할 일·일정 등을 Claude에서 자유롭게 다룰 수 있도록 MCP 서버를 등록합니다.
