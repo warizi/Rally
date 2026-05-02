@@ -273,27 +273,31 @@ function GroupRow({
     <motion.div
       ref={containerRef}
       className="relative flex items-start gap-20"
-      initial={{ opacity: 0, y: 16 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      viewport={{
-        once: true,
-        amount: 0.2,
-        root: viewportRef ?? undefined
-      }}
-      transition={{ duration: 0.4, ease: 'easeOut' }}
+      transition={{ duration: 0.25, ease: 'easeOut' }}
     >
-      {/* 좌측: parent + sub 노드 스택 */}
+      {/* 좌측: parent + sub 노드 스택 — entry 단위로 슬라이드 + stagger */}
       <div className="w-[260px] shrink-0 flex flex-col gap-2">
         {entries.map((entry, ei) => {
           const isSub = entry.parentId != null
           return (
-            <div
+            <motion.div
               key={entry.id}
               ref={(el) => {
                 todoRefs.current[ei] = el
               }}
               className={cn(isSub && 'pl-8')}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              viewport={{
+                once: true,
+                amount: 0.2,
+                root: viewportRef ?? undefined
+              }}
+              transition={{ duration: 0.4, ease: 'easeOut', delay: ei * 0.06 }}
             >
               <TodoNode
                 title={entry.title}
@@ -302,7 +306,7 @@ function GroupRow({
                 query={query}
                 parentTitle={entry.parentTitle}
               />
-            </div>
+            </motion.div>
           )
         })}
       </div>
