@@ -12,7 +12,7 @@ import {
 } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useDraggable } from '@dnd-kit/core'
-import { Check, Loader2, Repeat2 } from 'lucide-react'
+import { Check, CornerDownRight, Loader2, Repeat2 } from 'lucide-react'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
@@ -148,6 +148,23 @@ function DaySection({
     return new Date(y, (m ?? 1) - 1, d ?? 1)
   }, [date])
 
+  // parent + 같은 day에 완료된 sub들을 한 GroupRow로 묶는다.
+  // service에서 sub는 parent 직후로 정렬되어 들어오므로 순차 스캔으로 충분.
+  const groups = useMemo<HistoryTodoEntry[][]>(() => {
+    const result: HistoryTodoEntry[][] = []
+    let headId: string | null = null
+    for (const todo of todos) {
+      const inGroup = todo.parentId != null && todo.parentId === headId
+      if (inGroup) {
+        result[result.length - 1]!.push(todo)
+      } else {
+        result.push([todo])
+        headId = todo.id
+      }
+    }
+    return result
+  }, [todos])
+
   return (
     <motion.div
       className="flex flex-col gap-3"
@@ -165,58 +182,75 @@ function DaySection({
         </span>
       </div>
       <AnimatePresence>
-        {todos.map((todo) => (
-          <TodoRow key={todo.id} todo={todo} query={query} />
+        {groups.map((group) => (
+          <GroupRow key={group[0]!.id} entries={group} query={query} />
         ))}
       </AnimatePresence>
     </motion.div>
   )
 }
 
-function TodoRow({ todo, query }: { todo: HistoryTodoEntry; query: string }): JSX.Element {
+/**
+ * 한 그룹(부모 + 같은 day의 sub들)을 하나의 row로 렌더링.
+ *
+ * - 좌측 컬럼: 모든 entry를 세로 스택 (sub는 들여쓰기)
+ * - 우측 컬럼: 모든 entry의 link들을 평탄화하여 하나의 세로 스택
+ * - SVG: 각 entry → 그 entry의 link들로 베지어 곡선 연결
+ *
+ * 부모에 link가 많아 row가 길어져도 sub는 좌측에서 부모 바로 아래로 붙어 표시된다.
+ */
+function GroupRow({
+  entries,
+  query
+}: {
+  entries: HistoryTodoEntry[]
+  query: string
+}): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
-  const todoRef = useRef<HTMLDivElement>(null)
-  const linkRefs = useRef<Array<HTMLDivElement | null>>([])
+  const todoRefs = useRef<Array<HTMLDivElement | null>>([])
+  // entry index와 무관하게 link key로 ref 저장 — 평탄화된 우측 list와 entry 순회를 분리
+  const linkRefs = useRef<Map<string, HTMLDivElement | null>>(new Map())
   const [paths, setPaths] = useState<string[]>([])
   const [size, setSize] = useState({ width: 0, height: 0 })
   const viewportRef = useContext(ScrollViewportContext)
 
-  const linkCount = todo.links.length
+  // 평탄화된 (entry, link, key) 목록 — 우측 컬럼 렌더 + SVG path 생성에 공통 사용
+  const flatLinks = useMemo(() => {
+    const list: { entryIndex: number; link: HistoryLink; key: string }[] = []
+    entries.forEach((entry, ei) => {
+      entry.links.forEach((link) => {
+        list.push({ entryIndex: ei, link, key: `${entry.id}|${link.type}-${link.id}` })
+      })
+    })
+    return list
+  }, [entries])
 
   const measure = useCallback((): void => {
     const container = containerRef.current
-    const todoEl = todoRef.current
-    if (!container || !todoEl) return
+    if (!container) return
     const cRect = container.getBoundingClientRect()
-    const tRect = todoEl.getBoundingClientRect()
-    // 양 끝을 노드 안쪽으로 1px overshoot — 측정 sub-pixel 오차 보정 + 시각 연결 보장
-    const startX = tRect.right - cRect.left - 1
-    const startY = tRect.top + tRect.height / 2 - cRect.top
-    const newPaths: string[] = []
-    for (let i = 0; i < linkCount; i++) {
-      const el = linkRefs.current[i]
-      if (!el) {
-        newPaths.push('')
-        continue
-      }
-      const lRect = el.getBoundingClientRect()
+    const newPaths: string[] = flatLinks.map(({ entryIndex, key }) => {
+      const todoEl = todoRefs.current[entryIndex]
+      const linkEl = linkRefs.current.get(key)
+      if (!todoEl || !linkEl) return ''
+      const tRect = todoEl.getBoundingClientRect()
+      const lRect = linkEl.getBoundingClientRect()
+      const startX = tRect.right - cRect.left - 1
+      const startY = tRect.top + tRect.height / 2 - cRect.top
       const endX = lRect.left - cRect.left + 1
       const endY = lRect.top + lRect.height / 2 - cRect.top
       const dx = endX - startX
       const offset = Math.max(24, Math.abs(dx) * 0.5)
-      newPaths.push(
-        `M ${startX} ${startY} C ${startX + offset} ${startY}, ${endX - offset} ${endY}, ${endX} ${endY}`
-      )
-    }
+      return `M ${startX} ${startY} C ${startX + offset} ${startY}, ${endX - offset} ${endY}, ${endX} ${endY}`
+    })
     setPaths(newPaths)
     setSize({ width: cRect.width, height: cRect.height })
-  }, [linkCount])
+  }, [flatLinks])
 
   useLayoutEffect(() => {
     // DOM 측정 후 SVG path/size state 업데이트 — 외부(DOM) → React 동기화 패턴
     // eslint-disable-next-line react-hooks/set-state-in-effect
     measure()
-    // 폰트/이미지 로딩 등으로 인한 후속 layout shift 대응: 다음 frame 재측정
     const raf = requestAnimationFrame(() => measure())
     return () => cancelAnimationFrame(raf)
   }, [measure])
@@ -226,12 +260,14 @@ function TodoRow({ todo, query }: { todo: HistoryTodoEntry; query: string }): JS
     if (!container) return
     const ro = new ResizeObserver(() => measure())
     ro.observe(container)
-    // 각 link도 observe — 텍스트 reflow 등에 대응
-    for (const el of linkRefs.current) {
+    for (const el of linkRefs.current.values()) {
+      if (el) ro.observe(el)
+    }
+    for (const el of todoRefs.current) {
       if (el) ro.observe(el)
     }
     return () => ro.disconnect()
-  }, [measure, linkCount])
+  }, [measure, flatLinks])
 
   return (
     <motion.div
@@ -247,21 +283,41 @@ function TodoRow({ todo, query }: { todo: HistoryTodoEntry; query: string }): JS
       }}
       transition={{ duration: 0.4, ease: 'easeOut' }}
     >
-      {/* todo 노드 (좌측) */}
-      <div ref={todoRef} className="w-[260px] shrink-0">
-        <TodoNode title={todo.title} doneAt={todo.doneAt} kind={todo.kind} query={query} />
+      {/* 좌측: parent + sub 노드 스택 */}
+      <div className="w-[260px] shrink-0 flex flex-col gap-2">
+        {entries.map((entry, ei) => {
+          const isSub = entry.parentId != null
+          return (
+            <div
+              key={entry.id}
+              ref={(el) => {
+                todoRefs.current[ei] = el
+              }}
+              className={cn(isSub && 'pl-8')}
+            >
+              <TodoNode
+                title={entry.title}
+                doneAt={entry.doneAt}
+                kind={entry.kind}
+                query={query}
+                parentTitle={entry.parentTitle}
+              />
+            </div>
+          )
+        })}
       </div>
 
-      {/* 링크 노드 (우측) — 없으면 빈 채로 둠 */}
+      {/* 우측: 모든 entry의 link를 평탄화하여 스택 */}
       <div className="flex-1 min-w-0">
-        {linkCount > 0 && (
+        {flatLinks.length > 0 && (
           <div className="flex flex-col gap-2">
             <AnimatePresence>
-              {todo.links.map((link, i) => (
+              {flatLinks.map(({ link, key }, i) => (
                 <motion.div
-                  key={`${link.type}-${link.id}`}
+                  key={key}
                   ref={(el) => {
-                    linkRefs.current[i] = el
+                    if (el) linkRefs.current.set(key, el)
+                    else linkRefs.current.delete(key)
                   }}
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
@@ -282,20 +338,20 @@ function TodoRow({ todo, query }: { todo: HistoryTodoEntry; query: string }): JS
         )}
       </div>
 
-      {/* SVG 곡선 연결 (todo 우측 → 각 link 좌측) */}
-      {linkCount > 0 && size.width > 0 && (
+      {/* SVG 곡선 — 각 entry → 그 entry의 link들 */}
+      {flatLinks.length > 0 && size.width > 0 && (
         <svg
           className="absolute top-0 left-0 pointer-events-none text-border"
           width={size.width}
           height={size.height}
         >
           <AnimatePresence>
-            {todo.links.map((link, i) => {
+            {flatLinks.map(({ key }, i) => {
               const d = paths[i]
               if (!d) return null
               return (
                 <motion.path
-                  key={`${link.type}-${link.id}`}
+                  key={key}
                   d={d}
                   stroke="currentColor"
                   strokeWidth={1.5}
@@ -319,26 +375,38 @@ function TodoNode({
   title,
   doneAt,
   kind,
-  query
+  query,
+  parentTitle
 }: {
   title: string
   doneAt: Date
   kind: 'todo' | 'recurring'
   query: string
+  parentTitle: string | null
 }): JSX.Element {
   const isRecurring = kind === 'recurring'
-  const Icon = isRecurring ? Repeat2 : Check
-  const iconColor = isRecurring ? 'text-violet-500' : 'text-emerald-500'
+  const isSub = parentTitle != null
+  const Icon = isSub ? CornerDownRight : isRecurring ? Repeat2 : Check
+  const iconColor = isSub
+    ? 'text-muted-foreground'
+    : isRecurring
+      ? 'text-violet-500'
+      : 'text-emerald-500'
 
   return (
     <div
       className={cn(
-        'flex items-start gap-2 px-3 py-2 rounded-md border bg-background shadow-md',
-        'text-sm cursor-default select-none'
+        'flex items-start gap-2 rounded-md border shadow-md cursor-default select-none',
+        isSub ? 'bg-muted/40 px-2.5 py-1.5 text-xs' : 'bg-background px-3 py-2 text-sm'
       )}
     >
-      <Icon className={cn('size-3.5 shrink-0 mt-0.5', iconColor)} />
+      <Icon className={cn('shrink-0 mt-0.5', isSub ? 'size-3' : 'size-3.5', iconColor)} />
       <div className="min-w-0 flex-1">
+        {isSub && (
+          <div className="text-[10px] text-muted-foreground/70 truncate leading-tight">
+            {parentTitle}
+          </div>
+        )}
         <div className="truncate">
           <HighlightText text={title} query={query} />
         </div>

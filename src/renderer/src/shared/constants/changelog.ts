@@ -12,6 +12,18 @@ export interface ChangelogEntry {
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.1',
+    date: '2026-05-02',
+    changes: [
+      {
+        type: 'fix',
+        title: 'history 페이지에서 하위 할일 표시 오류 수정',
+        description:
+          'history 페이지에서 완료된 할 일의 하위 할 일이 제대로 표시되지 않던 문제를 수정했습니다. 이제 완료된 할 일과 함께 모든 하위 할 일이 올바르게 표시됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.7.0',
     date: '2026-05-02',
     changes: [

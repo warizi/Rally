@@ -28,6 +28,10 @@ export interface HistoryTodoEntry {
   doneAt: Date
   links: HistoryLink[]
   kind: HistoryEntryKind
+  /** subtodo인 경우 parent todo id, 아니면 null */
+  parentId: string | null
+  /** subtodo인 경우 parent todo의 현재 title, 아니면 null */
+  parentTitle: string | null
 }
 
 export interface HistoryDay {
@@ -172,13 +176,32 @@ export const historyService = {
       conditions.push(lte(todos.doneAt!, dateKeyToEndOfDay(options.toDate)))
     }
     const todoRows = db
-      .select({ id: todos.id, title: todos.title, doneAt: todos.doneAt })
+      .select({
+        id: todos.id,
+        title: todos.title,
+        doneAt: todos.doneAt,
+        parentId: todos.parentId
+      })
       .from(todos)
       .where(and(...conditions))
       .all()
 
     if (todoRows.length === 0) {
       return { days: [], hasMore: false, nextDayOffset: dayOffset }
+    }
+
+    // 1-2. subtodo의 parent title 조회 (parent는 미완료여도 필요하므로 별도 query)
+    const parentIds = Array.from(
+      new Set(todoRows.map((t) => t.parentId).filter((p): p is string => p != null && p.length > 0))
+    )
+    const parentTitleMap = new Map<string, string>()
+    if (parentIds.length > 0) {
+      const parentRows = db
+        .select({ id: todos.id, title: todos.title })
+        .from(todos)
+        .where(inArray(todos.id, parentIds))
+        .all()
+      for (const r of parentRows) parentTitleMap.set(r.id, r.title)
     }
 
     // 2. todo별 링크 fetch (한 번에 OR로)
@@ -249,7 +272,9 @@ export const historyService = {
           title: t.title,
           doneAt: t.doneAt!,
           links,
-          kind: 'todo' as const
+          kind: 'todo' as const,
+          parentId: t.parentId ?? null,
+          parentTitle: t.parentId ? (parentTitleMap.get(t.parentId) ?? null) : null
         }
       })
 
@@ -281,7 +306,9 @@ export const historyService = {
       title: r.title,
       doneAt: r.completedAt,
       links: [],
-      kind: 'recurring' as const
+      kind: 'recurring' as const,
+      parentId: null,
+      parentTitle: null
     }))
 
     const entries: HistoryTodoEntry[] = [...todoEntries, ...recurringEntries]
@@ -318,12 +345,34 @@ export const historyService = {
     const hasMore = dayOffset + dayLimit < totalDays
     const nextDayOffset = dayOffset + sliced.length
 
-    // 각 day 내 todo는 doneAt desc
+    // 각 day 내 정렬: parent가 같은 day에 있으면 그 직후에 sub 그룹화 (doneAt desc).
+    // parent가 없거나 다른 day인 sub는 자기 doneAt 기준으로 top-level 처럼 배치.
     const days: HistoryDay[] = sliced.map((key) => {
-      const dayEntries = (dayMap.get(key) ?? []).slice().sort((a, b) => {
-        return b.doneAt.getTime() - a.doneAt.getTime()
-      })
-      return { date: key, todos: dayEntries }
+      const dayEntries = dayMap.get(key) ?? []
+      const idsInDay = new Set(dayEntries.map((e) => e.id))
+      const subsByParent = new Map<string, HistoryTodoEntry[]>()
+      const anchors: HistoryTodoEntry[] = []
+      for (const e of dayEntries) {
+        // parent가 같은 day에 있는 sub만 그룹 대상 — 그 외엔 anchor
+        if (e.parentId != null && idsInDay.has(e.parentId)) {
+          const arr = subsByParent.get(e.parentId) ?? []
+          arr.push(e)
+          subsByParent.set(e.parentId, arr)
+        } else {
+          anchors.push(e)
+        }
+      }
+      anchors.sort((a, b) => b.doneAt.getTime() - a.doneAt.getTime())
+      for (const subs of subsByParent.values()) {
+        subs.sort((a, b) => b.doneAt.getTime() - a.doneAt.getTime())
+      }
+      const ordered: HistoryTodoEntry[] = []
+      for (const anchor of anchors) {
+        ordered.push(anchor)
+        const subs = subsByParent.get(anchor.id)
+        if (subs) ordered.push(...subs)
+      }
+      return { date: key, todos: ordered }
     })
 
     return { days, hasMore, nextDayOffset }
