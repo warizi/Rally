@@ -14,6 +14,10 @@ export interface HistoryTodoEntry {
   doneAt: Date
   links: HistoryLink[]
   kind: HistoryEntryKind
+  /** subtodo인 경우 parent todo id */
+  parentId: string | null
+  /** subtodo인 경우 parent todo의 title */
+  parentTitle: string | null
 }
 
 export interface HistoryDay {

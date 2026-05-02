@@ -884,6 +884,8 @@ interface HistoryTodoEntry {
   doneAt: Date
   links: HistoryLink[]
   kind: HistoryEntryKind
+  parentId: string | null
+  parentTitle: string | null
 }
 
 interface HistoryDay {
