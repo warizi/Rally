@@ -98,6 +98,20 @@ describe('MainSidebar', () => {
     expect(screen.getByTestId('settings-dialog')).toBeInTheDocument()
   })
 
+  it('S6 — 시스템 그룹에 "업데이트 내역" 항목이 렌더되고 클릭 시 changelog 탭 오픈', () => {
+    render(<MainSidebar />, { wrapper: Wrapper })
+    expect(screen.getByText('업데이트 내역')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByText('업데이트 내역'))
+    expect(openTabMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'changelog',
+        pathname: '/changelog',
+        title: '업데이트 내역'
+      })
+    )
+  })
+
   it('S5 — sidebar_items 메뉴 클릭 → openTab 호출', () => {
     render(<MainSidebar />, { wrapper: Wrapper })
     // sidebar_items 에서 가장 보편적인 항목 (대시보드) 시도
