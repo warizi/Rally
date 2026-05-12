@@ -1,5 +1,6 @@
 import http from 'http'
 import { parseBody } from './lib/body-parser'
+import { isAuthenticated, writeUnauthorized } from './lib/auth'
 import { normalizeError } from '../lib/errors'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { workspaceRepository } from '../repositories/workspace'
@@ -59,6 +60,13 @@ export function createRouter(): RouterInstance {
   }
 
   async function handle(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
+    // 보안-2 Phase 2: 모든 요청은 x-mcp-token 헤더 검증 통과 후 라우팅.
+    // ensureMcpToken() 으로 발급/캐시된 토큰과 timing-safe 비교.
+    if (!isAuthenticated(req)) {
+      writeUnauthorized(res)
+      return
+    }
+
     const urlObj = new URL(req.url || '/', 'http://localhost')
     const pathname = urlObj.pathname
     const query = urlObj.searchParams
