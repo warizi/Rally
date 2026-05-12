@@ -1,5 +1,8 @@
-import { useState, useEffect } from 'react'
-import { X, Pencil } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useSortable } from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
+import { motion } from 'framer-motion'
+import { X, Pencil, Terminal as TerminalIcon } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -30,10 +33,30 @@ interface Props {
   onActivate: () => void
 }
 
+/**
+ * 터미널 탭 아이템. 일반 TabItem 디자인과 통일 (h-8, 아이콘, padding, hover).
+ * dnd-kit useSortable 로 같은 패널 내 순서 변경 가능.
+ */
 export function TerminalTabItem({ session, isActive, onActivate }: Props): React.ReactElement {
   const [renameOpen, setRenameOpen] = useState(false)
   const removeSession = useTerminalStore((s) => s.removeSession)
   const updateSession = useTerminalStore((s) => s.updateSession)
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: session.id
+  })
+  const itemRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (isActive && itemRef.current) {
+      itemRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' })
+    }
+  }, [isActive])
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition
+  }
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -62,45 +85,68 @@ export function TerminalTabItem({ session, isActive, onActivate }: Props): React
 
   return (
     <>
-      <ContextMenu>
-        <ContextMenuTrigger asChild>
-          <div
-            className={cn(
-              'group flex items-center h-7 gap-2 px-4 mt-1 mx-0.5 rounded-t-md border-t border-x border-border',
-              'cursor-pointer select-none transition-colors shrink-0',
-              isActive
-                ? 'bg-background text-foreground'
-                : 'bg-transparent text-muted-foreground hover:bg-background/50 hover:text-foreground'
-            )}
-            onClick={onActivate}
-          >
-            <span className="text-sm truncate max-w-48">{session.name}</span>
-            <button
+      <motion.div
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.15, ease: 'easeOut' }}
+      >
+        <ContextMenu>
+          <ContextMenuTrigger asChild>
+            <div
+              ref={(node) => {
+                setNodeRef(node)
+                ;(itemRef as React.MutableRefObject<HTMLDivElement | null>).current = node
+              }}
+              style={style}
+              {...attributes}
+              {...listeners}
+              onClick={onActivate}
               className={cn(
-                'size-4 rounded-sm flex items-center justify-center shrink-0',
-                'opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground transition-colors'
+                'group flex items-center h-8 gap-2 px-3 py-1 mt-1 rounded-tl-md rounded-tr-md ml-1 border-t border-x border-border',
+                'cursor-pointer select-none transition-colors',
+                'hover:bg-background',
+                'min-w-45 max-w-45',
+                isActive && 'bg-background',
+                isDragging && 'opacity-50 z-50',
+                !isActive && 'bg-muted/30',
+                'no-drag-region'
               )}
-              onClick={handleClose}
             >
-              <X className="size-3" />
-            </button>
-          </div>
-        </ContextMenuTrigger>
-        <ContextMenuContent className="w-40">
-          <ContextMenuItem onClick={() => setRenameOpen(true)}>
-            <Pencil className="size-4 mr-2" />
-            이름 변경
-          </ContextMenuItem>
-          <ContextMenuSeparator />
-          <ContextMenuItem
-            variant="destructive"
-            onClick={(e) => handleClose(e as unknown as React.MouseEvent)}
-          >
-            <X className="size-4 mr-2" />
-            탭 닫기
-          </ContextMenuItem>
-        </ContextMenuContent>
-      </ContextMenu>
+              {/* 아이콘 */}
+              <TerminalIcon className="size-4 shrink-0 text-muted-foreground" />
+
+              {/* 제목 */}
+              <span className="text-sm truncate flex-1">{session.name}</span>
+
+              {/* 닫기 버튼 */}
+              <button
+                onClick={handleClose}
+                className={cn(
+                  'size-4 rounded-sm flex items-center justify-center shrink-0',
+                  'text-muted-foreground/50 hover:text-foreground transition-colors',
+                  'cursor-pointer'
+                )}
+              >
+                <X className="size-3" />
+              </button>
+            </div>
+          </ContextMenuTrigger>
+          <ContextMenuContent className="w-40">
+            <ContextMenuItem onClick={() => setRenameOpen(true)}>
+              <Pencil className="size-4 mr-2" />
+              이름 변경
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem
+              variant="destructive"
+              onClick={(e) => handleClose(e as unknown as React.MouseEvent)}
+            >
+              <X className="size-4 mr-2" />탭 닫기
+            </ContextMenuItem>
+          </ContextMenuContent>
+        </ContextMenu>
+      </motion.div>
 
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>
