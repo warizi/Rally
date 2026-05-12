@@ -1,6 +1,6 @@
 import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { useInstance } from '@milkdown/react'
-import { editorViewCtx } from '@milkdown/core'
+import { editorViewCtx } from '@milkdown/kit/core'
 import { Search, X, ChevronUp, ChevronDown } from 'lucide-react'
 import { searchPluginKey } from '../model/note-search-plugin'
 
