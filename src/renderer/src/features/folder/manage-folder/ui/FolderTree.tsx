@@ -36,28 +36,15 @@ import { useTreeMoveListener } from '../model/use-tree-move-listener'
 import { useFolderDialogState } from '../model/use-folder-dialog-state'
 import { useFolderCreateHandlers } from '../model/use-folder-create-handlers'
 import { useFolderMutations } from '../model/use-folder-mutations'
+import { FolderTreeNodeDispatcher } from './FolderTreeNodeDispatcher'
 import {
   collectDescendantPathnames,
   findFolderNode,
   countVisibleNodes
 } from '../model/folder-tree-helpers'
-import type {
-  WorkspaceTreeNode,
-  FolderTreeNode,
-  NoteTreeNode,
-  CsvTreeNode,
-  PdfTreeNode,
-  ImageTreeNode
-} from '../model/types'
+import type { WorkspaceTreeNode } from '../model/types'
 import { FolderColorDialog } from './FolderColorDialog'
-import { FolderContextMenu } from './FolderContextMenu'
 import { FolderNameDialog } from './FolderNameDialog'
-import { FolderNodeRenderer } from './FolderNodeRenderer'
-import { FileContextMenu } from './FileContextMenu'
-import { NoteNodeRenderer } from './NoteNodeRenderer'
-import { CsvNodeRenderer } from './CsvNodeRenderer'
-import { PdfNodeRenderer } from './PdfNodeRenderer'
-import { ImageNodeRenderer } from './ImageNodeRenderer'
 import { DeleteFolderDialog } from './DeleteFolderDialog'
 
 interface Props {
@@ -89,22 +76,17 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     isRemoving,
     updateMeta,
     isUpdatingMeta,
-    duplicateNote,
     removeNote,
     isRemovingNote,
-    duplicateCsvFile,
     removeCsvFile,
     isRemovingCsv,
-    duplicatePdfFile,
     removePdfFile,
     isRemovingPdf,
-    duplicateImageFile,
     removeImageFile,
     isRemovingImage
   } = useFolderMutations()
 
-  // Tab store
-  const openRightTab = useTabStore((s) => s.openRightTab)
+  // Tab store (duplicate 와 openRightTab 은 FolderTreeNodeDispatcher 가 직접 사용)
   const closeTabByPathname = useTabStore((s) => s.closeTabByPathname)
   const findPaneByTabId = useTabStore((s) => s.findPaneByTabId)
   const activeTab = useTabStore((s) => s.getActiveTab())
@@ -120,6 +102,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   }, [activePathname, tree, expandToItem])
 
   // Dialog states (8개 useState → use-folder-dialog-state 훅으로 묶음)
+  const dialogState = useFolderDialogState()
   const {
     createTarget,
     setCreateTarget,
@@ -137,9 +120,10 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     setPdfDeleteTarget,
     imageDeleteTarget,
     setImageDeleteTarget
-  } = useFolderDialogState()
+  } = dialogState
 
   // 6개 create/import 핸들러 (use-folder-create-handlers 훅으로 묶음)
+  const createHandlers = useFolderCreateHandlers({ workspaceId, sourcePaneId })
   const {
     handleCreateNote,
     handleCreateCsv,
@@ -147,253 +131,20 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     handleImportCsv,
     handleImportPdf,
     handleImportImage
-  } = useFolderCreateHandlers({ workspaceId, sourcePaneId })
+  } = createHandlers
 
   const NodeRenderer = useCallback(
-    (props: NodeRendererProps<WorkspaceTreeNode>) => {
-      if (props.node.data.kind === 'note') {
-        return (
-          <FileContextMenu
-            name={props.node.data.name}
-            kind="note"
-            onDuplicate={() =>
-              duplicateNote(
-                { workspaceId, noteId: props.node.data.id },
-                {
-                  onSuccess: (note) => {
-                    if (!note) return
-                    openRightTab(
-                      {
-                        type: 'note',
-                        title: note.title,
-                        pathname: `/folder/note/${note.id}`
-                      },
-                      sourcePaneId
-                    )
-                  }
-                }
-              )
-            }
-            onDelete={() =>
-              setNoteDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
-            }
-          >
-            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
-              <NoteNodeRenderer
-                {...(props as unknown as NodeRendererProps<NoteTreeNode>)}
-                workspaceId={workspaceId}
-                sourcePaneId={sourcePaneId}
-                isActive={activePathname === `/folder/note/${props.node.data.id}`}
-                onOpen={() =>
-                  openRightTab(
-                    {
-                      type: 'note',
-                      title: props.node.data.name,
-                      pathname: `/folder/note/${props.node.data.id}`
-                    },
-                    sourcePaneId
-                  )
-                }
-              />
-            </div>
-          </FileContextMenu>
-        )
-      }
-
-      if (props.node.data.kind === 'csv') {
-        return (
-          <FileContextMenu
-            name={props.node.data.name}
-            kind="csv"
-            onDuplicate={() =>
-              duplicateCsvFile(
-                { workspaceId, csvId: props.node.data.id },
-                {
-                  onSuccess: (csv) => {
-                    if (!csv) return
-                    openRightTab(
-                      {
-                        type: 'csv',
-                        title: csv.title,
-                        pathname: `/folder/csv/${csv.id}`
-                      },
-                      sourcePaneId
-                    )
-                  }
-                }
-              )
-            }
-            onDelete={() =>
-              setCsvDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
-            }
-          >
-            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
-              <CsvNodeRenderer
-                {...(props as unknown as NodeRendererProps<CsvTreeNode>)}
-                workspaceId={workspaceId}
-                sourcePaneId={sourcePaneId}
-                isActive={activePathname === `/folder/csv/${props.node.data.id}`}
-                onOpen={() =>
-                  openRightTab(
-                    {
-                      type: 'csv',
-                      title: props.node.data.name,
-                      pathname: `/folder/csv/${props.node.data.id}`
-                    },
-                    sourcePaneId
-                  )
-                }
-              />
-            </div>
-          </FileContextMenu>
-        )
-      }
-
-      if (props.node.data.kind === 'pdf') {
-        return (
-          <FileContextMenu
-            name={props.node.data.name}
-            kind="pdf"
-            onDuplicate={() =>
-              duplicatePdfFile(
-                { workspaceId, pdfId: props.node.data.id },
-                {
-                  onSuccess: (pdf) => {
-                    if (!pdf) return
-                    openRightTab(
-                      {
-                        type: 'pdf',
-                        title: pdf.title,
-                        pathname: `/folder/pdf/${pdf.id}`
-                      },
-                      sourcePaneId
-                    )
-                  }
-                }
-              )
-            }
-            onDelete={() =>
-              setPdfDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
-            }
-          >
-            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
-              <PdfNodeRenderer
-                {...(props as unknown as NodeRendererProps<PdfTreeNode>)}
-                workspaceId={workspaceId}
-                sourcePaneId={sourcePaneId}
-                isActive={activePathname === `/folder/pdf/${props.node.data.id}`}
-                onOpen={() =>
-                  openRightTab(
-                    {
-                      type: 'pdf',
-                      title: props.node.data.name,
-                      pathname: `/folder/pdf/${props.node.data.id}`
-                    },
-                    sourcePaneId
-                  )
-                }
-              />
-            </div>
-          </FileContextMenu>
-        )
-      }
-
-      if (props.node.data.kind === 'image') {
-        return (
-          <FileContextMenu
-            name={props.node.data.name}
-            kind="image"
-            onDuplicate={() =>
-              duplicateImageFile(
-                { workspaceId, imageId: props.node.data.id },
-                {
-                  onSuccess: (image) => {
-                    if (!image) return
-                    openRightTab(
-                      {
-                        type: 'image',
-                        title: image.title,
-                        pathname: `/folder/image/${image.id}`
-                      },
-                      sourcePaneId
-                    )
-                  }
-                }
-              )
-            }
-            onDelete={() =>
-              setImageDeleteTarget({ id: props.node.data.id, name: props.node.data.name })
-            }
-          >
-            <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
-              <ImageNodeRenderer
-                {...(props as unknown as NodeRendererProps<ImageTreeNode>)}
-                workspaceId={workspaceId}
-                sourcePaneId={sourcePaneId}
-                isActive={activePathname === `/folder/image/${props.node.data.id}`}
-                onOpen={() =>
-                  openRightTab(
-                    {
-                      type: 'image',
-                      title: props.node.data.name,
-                      pathname: `/folder/image/${props.node.data.id}`
-                    },
-                    sourcePaneId
-                  )
-                }
-              />
-            </div>
-          </FileContextMenu>
-        )
-      }
-
-      // kind === 'folder'
-      return (
-        <FolderContextMenu
-          name={props.node.data.name}
-          color={(props.node.data as FolderTreeNode).color}
-          onCreateChild={() => setCreateTarget({ parentFolderId: props.node.id })}
-          onCreateNote={() => handleCreateNote(props.node.id)}
-          onImportNote={() => handleImportNote(props.node.id)}
-          onCreateCsv={() => handleCreateCsv(props.node.id)}
-          onImportCsv={() => handleImportCsv(props.node.id)}
-          onImportPdf={() => handleImportPdf(props.node.id)}
-          onImportImage={() => handleImportImage(props.node.id)}
-          onRename={() => setRenameTarget({ id: props.node.id, name: props.node.data.name })}
-          onEditColor={() =>
-            setColorTarget({
-              id: props.node.id,
-              color: (props.node.data as FolderTreeNode).color
-            })
-          }
-          onDelete={() => setDeleteTarget({ id: props.node.id, name: props.node.data.name })}
-        >
-          <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
-            <FolderNodeRenderer
-              {...(props as unknown as NodeRendererProps<FolderTreeNode>)}
-              workspaceId={workspaceId}
-              sourcePaneId={sourcePaneId}
-            />
-          </div>
-        </FolderContextMenu>
-      )
-    },
-    [
-      workspaceId,
-      sourcePaneId,
-      activePathname,
-      handleCreateNote,
-      handleImportNote,
-      handleCreateCsv,
-      handleImportCsv,
-      handleImportPdf,
-      handleImportImage,
-      duplicateNote,
-      duplicateCsvFile,
-      duplicatePdfFile,
-      duplicateImageFile,
-      openRightTab
-    ]
+    (props: NodeRendererProps<WorkspaceTreeNode>) => (
+      <FolderTreeNodeDispatcher
+        arboristProps={props}
+        workspaceId={workspaceId}
+        sourcePaneId={sourcePaneId}
+        activePathname={activePathname}
+        createHandlers={createHandlers}
+        dialogState={dialogState}
+      />
+    ),
+    [workspaceId, sourcePaneId, activePathname, createHandlers, dialogState]
   )
 
   return (
