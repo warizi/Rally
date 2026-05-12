@@ -11,6 +11,7 @@ import { restrictToHorizontalAxis } from '@dnd-kit/modifiers'
 import { AnimatePresence } from 'framer-motion'
 import { useTerminalStore } from '@features/terminal/model/store'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
 import { TerminalTabItem } from './TerminalTabItem'
 
 /**
@@ -82,26 +83,34 @@ export function TerminalTabBar(): React.ReactElement {
   }
 
   return (
-    <div className="flex items-center h-9 bg-muted border-b border-border overflow-x-auto shrink-0">
-      <DndContext
-        sensors={sensors}
-        collisionDetection={closestCenter}
-        modifiers={[restrictToHorizontalAxis]}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext items={sessionIds} strategy={horizontalListSortingStrategy}>
-          <AnimatePresence initial={false}>
-            {sortedSessions.map((session) => (
-              <TerminalTabItem
-                key={session.id}
-                session={session}
-                isActive={session.id === activeSessionId}
-                onActivate={() => setActive(session.id)}
-              />
-            ))}
-          </AnimatePresence>
-        </SortableContext>
-      </DndContext>
+    <div className="flex items-center h-9 bg-muted border-b border-border shrink-0">
+      {/* 좌측: 가로 스크롤 가능한 탭 리스트 (shadcn ScrollArea 로 수직 스크롤 차단) */}
+      <ScrollArea className="flex-1 h-full min-w-0">
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToHorizontalAxis]}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={sessionIds} strategy={horizontalListSortingStrategy}>
+            <AnimatePresence initial={false}>
+              <div className="flex items-center h-full w-max">
+                {sortedSessions.map((session) => (
+                  <TerminalTabItem
+                    key={session.id}
+                    session={session}
+                    isActive={session.id === activeSessionId}
+                    onActivate={() => setActive(session.id)}
+                  />
+                ))}
+              </div>
+            </AnimatePresence>
+          </SortableContext>
+        </DndContext>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
+
+      {/* 우측 고정: 새 터미널 추가 버튼 */}
       <button
         className="shrink-0 flex items-center justify-center size-9 text-muted-foreground hover:text-foreground hover:bg-background/50 transition-colors text-base"
         onClick={handleAddTab}
