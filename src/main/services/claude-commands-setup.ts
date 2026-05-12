@@ -1,3 +1,4 @@
+import { app } from 'electron'
 import { join } from 'path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
@@ -64,14 +65,18 @@ function ensureMcpSettings(workspacePath: string): void {
   }
 
   const serverKey = is.dev ? 'rally-dev' : 'rally'
+  // 배포-1: ELECTRON_RUN_AS_NODE=1 + Electron binary 로 node 의존성 제거.
   // 보안-2: 워크스페이스 .mcp.json 에도 MCP_AUTH_TOKEN 자동 주입.
   // 외부 MCP 클라이언트가 rally HTTP API 호출 시 x-mcp-token 헤더 송신에 사용.
-  const env: Record<string, string> = { MCP_AUTH_TOKEN: ensureMcpToken() }
+  const env: Record<string, string> = {
+    ELECTRON_RUN_AS_NODE: '1',
+    MCP_AUTH_TOKEN: ensureMcpToken()
+  }
   if (is.dev) {
     env.RALLY_DEV = '1'
   }
   config.mcpServers[serverKey] = {
-    command: 'node',
+    command: app.getPath('exe'),
     args: [getMcpServerPath()],
     env
   }

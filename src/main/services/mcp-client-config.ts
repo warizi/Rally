@@ -33,14 +33,21 @@ function getMcpServerPath(): string {
 }
 
 function buildServerConfig(): Record<string, unknown> {
+  // 배포-1: 사용자 시스템에 node 가 설치되어 있지 않아도 동작하도록 Electron 의
+  // 내장 Node 를 사용한다. ELECTRON_RUN_AS_NODE=1 환경변수와 함께 Electron binary
+  // 를 spawn 하면 GUI 없이 표준 Node embedding 으로 동작 (Electron 공식 지원).
+  //
   // 보안-2: 클라이언트가 rally MCP API 에 접근할 때 사용할 인증 토큰을
   // env 로 자동 주입. 사용자가 토큰을 수동 복사할 필요 없음.
-  const env: Record<string, string> = { MCP_AUTH_TOKEN: ensureMcpToken() }
+  const env: Record<string, string> = {
+    ELECTRON_RUN_AS_NODE: '1',
+    MCP_AUTH_TOKEN: ensureMcpToken()
+  }
   if (is.dev) {
     env.RALLY_DEV = '1'
   }
   return {
-    command: 'node',
+    command: app.getPath('exe'),
     args: [getMcpServerPath()],
     env
   }
@@ -109,9 +116,17 @@ function inspectStatus(client: McpClientId): McpClientStatus {
     const args = (entry.args as unknown[] | undefined) ?? []
     const currentPath = getMcpServerPath()
     const env = (entry.env as Record<string, string> | undefined) ?? {}
+    const command = entry.command as string | undefined
+    // 배포-1: 등록된 command 가 현재 Electron binary 와 다르면 (예: 이전 'node')
+    // outdated → 재등록으로 ELECTRON_RUN_AS_NODE 모드 적용.
+    const currentCommand = app.getPath('exe')
     // 보안-2: 등록된 토큰이 현재 토큰과 다르면 outdated → 사용자 재등록 유도.
     const currentToken = ensureMcpToken()
-    outdated = !args.includes(currentPath) || env.MCP_AUTH_TOKEN !== currentToken
+    outdated =
+      command !== currentCommand ||
+      env.ELECTRON_RUN_AS_NODE !== '1' ||
+      !args.includes(currentPath) ||
+      env.MCP_AUTH_TOKEN !== currentToken
   }
   return { configPath, supported: true, configExists, registered, outdated }
 }
