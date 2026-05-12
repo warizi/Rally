@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/refs */
+// @dnd-kit callback ref setter / boolean 상태 false positive 회피.
+// 자세한 사유는 NoteNodeRenderer.tsx 상단 주석 참고.
 import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'

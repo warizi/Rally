@@ -1,3 +1,6 @@
+/* eslint-disable react-hooks/refs */
+// @dnd-kit callback ref setter / boolean 상태 false positive 회피.
+// 자세한 사유는 NoteNodeRenderer.tsx 상단 주석 참고.
 import { JSX, memo } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ChevronRight } from 'lucide-react'
