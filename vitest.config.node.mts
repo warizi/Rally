@@ -5,7 +5,8 @@ export default defineConfig({
     environment: 'node',
     include: [
       'src/main/**/*.{test,spec}.{ts,mts}',
-      'src/preload/**/*.{test,spec}.{ts,mts}'
+      'src/preload/**/*.{test,spec}.{ts,mts}',
+      'src/mcp-server/**/*.{test,spec}.{ts,mts}'
     ],
     setupFiles: ['./src/main/__tests__/setup.ts'],
     coverage: {
