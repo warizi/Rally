@@ -1,7 +1,6 @@
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import AdmZip from 'adm-zip'
 import { nanoid } from 'nanoid'
 import { z } from 'zod'
 import { db } from '../../db'
@@ -36,6 +35,7 @@ import type { BackupManifest } from './types'
 import { toDate, toDateOrNull, sortTodosByParent, copyDirSync, batchInsert } from './helpers'
 import { IdMapper, type BackupEntityType } from './id-mapper'
 import { mapTabJsons } from './tab-mapper'
+import { unpackZip, filesDirPath, manifestPath as manifestPathOf } from './archive'
 import {
   FolderImport,
   NoteImport,
@@ -81,21 +81,21 @@ export const backupDeserializer = {
     newName: string,
     newPath: string
   ): Promise<typeof workspaces.$inferSelect> {
-    const zip = new AdmZip(zipPath)
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'rally-import-'))
 
     try {
-      zip.extractAllTo(tmpDir, true)
+      // archive 모듈로 zip 해제
+      unpackZip(zipPath, tmpDir)
 
       // manifest 검증
-      const manifestStr = fs.readFileSync(path.join(tmpDir, 'manifest.json'), 'utf8')
+      const manifestStr = fs.readFileSync(manifestPathOf(tmpDir), 'utf8')
       const manifest: BackupManifest = JSON.parse(manifestStr)
       if (manifest.version !== 1) {
         throw new Error(`Unsupported backup version: ${manifest.version}`)
       }
 
       // 파일 복사 (files/ → newPath)
-      const filesDir = path.join(tmpDir, 'files')
+      const filesDir = filesDirPath(tmpDir)
       if (fs.existsSync(filesDir)) {
         copyDirSync(filesDir, newPath)
       } else {

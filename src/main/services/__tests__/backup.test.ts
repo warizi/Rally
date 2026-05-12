@@ -128,6 +128,37 @@ describe('backupService — round trip', () => {
     ).rejects.toThrow(/Invalid backup data in folders\.json/)
   })
 
+  it('S6 — large workspace (1000 notes) round-trip smoke', async () => {
+    const seeded = seedFullWorkspace({ workspacePath, name: 'Large' })
+
+    // 1000 노트 추가 시드 (smoke — 메모리/시간 폭증 없이 완주)
+    const { seed } = await import('./lib/seed')
+    for (let i = 0; i < 1000; i++) {
+      seed.note(seeded.ws.id, {
+        title: `Bulk note ${i}`,
+        relativePath: `Bulk note ${i}.md`
+      })
+    }
+
+    const start = Date.now()
+    await backupService.export(seeded.ws.id, zipPath)
+    const exportMs = Date.now() - start
+
+    const importStart = Date.now()
+    const newWs = await backupService.import(zipPath, 'LargeTarget', importPath)
+    const importMs = Date.now() - importStart
+
+    // eslint-disable-next-line no-console
+    console.log(
+      `[P0-2 S6] 1000-note round-trip: export=${exportMs}ms, import=${importMs}ms`
+    )
+
+    // 30 초 이내 (smoke threshold — 대용량 핸들링 능력 확인)
+    expect(exportMs).toBeLessThan(30_000)
+    expect(importMs).toBeLessThan(30_000)
+    expect(newWs.id).not.toBe(seeded.ws.id)
+  }, 60_000)
+
   it('S5 — import rejects non-array JSON file', async () => {
     const seeded = seedFullWorkspace({ workspacePath, name: 'Source' })
 

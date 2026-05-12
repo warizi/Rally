@@ -1,9 +1,9 @@
-import AdmZip from 'adm-zip'
 import type { workspaces } from '../../db/schema'
 
 import type { BackupManifest } from './types'
 import { backupSerializer } from './serializer'
 import { backupDeserializer } from './deserializer'
+import { readManifestFromZip } from './archive'
 
 /**
  * 백업 시스템 — 워크스페이스 export / import (zip 기반).
@@ -62,14 +62,6 @@ export const backupService = {
    * version 미지원 / manifest 누락 시 throw.
    */
   readManifest(zipPath: string): BackupManifest {
-    const zip = new AdmZip(zipPath)
-    const entry = zip.getEntry('manifest.json')
-    if (!entry) throw new Error('Invalid backup file: manifest.json not found')
-    const content = entry.getData().toString('utf8')
-    const manifest: BackupManifest = JSON.parse(content)
-    if (manifest.version !== 1) {
-      throw new Error(`Unsupported backup version: ${manifest.version}`)
-    }
-    return manifest
+    return readManifestFromZip(zipPath)
   }
 }
