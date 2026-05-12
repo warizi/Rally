@@ -56,6 +56,25 @@ jobs:
         run: npm run security:scan
         continue-on-error: true
 
+  bundle-chunks:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # 성능-1: manualChunks 설정이 잘못되어 vendor 라이브러리가 다시 메인
+      # 청크로 합쳐지면 회귀로 차단.
+      - name: Build renderer
+        run: npx electron-vite build
+      - name: Verify expected chunks exist
+        run: node scripts/verify-chunks.mjs
+      - name: Print bundle size summary
+        run: node scripts/measure-bundle.mjs >> $GITHUB_STEP_SUMMARY
+
   test-node:
     runs-on: ubuntu-latest
     needs: lint-and-typecheck
