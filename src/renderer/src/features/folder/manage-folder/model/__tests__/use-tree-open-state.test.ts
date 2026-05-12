@@ -131,3 +131,62 @@ describe('탭 간 독립성', () => {
     expect(r2.current.openState).toEqual({ f2: false })
   })
 })
+
+describe('expandIds', () => {
+  it('빈 iterable → 변화 없음', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    act(() => result.current.expandIds([], null))
+    expect(result.current.openState).toEqual({})
+  })
+
+  it('단일 id 펼침', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    act(() => result.current.expandIds(['f1'], null))
+    expect(result.current.openState).toEqual({ f1: true })
+  })
+
+  it('여러 id 일괄 펼침 (Set 도 지원)', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    act(() => result.current.expandIds(new Set(['f1', 'f2', 'f3']), null))
+    expect(result.current.openState).toEqual({ f1: true, f2: true, f3: true })
+  })
+
+  it('이미 모두 열려있으면 navigateTab 호출 안 함 (skip)', () => {
+    const tabId = useTabStore.getState().openTab({
+      type: 'folder',
+      pathname: '/folder/ws-1',
+      title: '탐색기',
+      searchParams: { folderOpenState: JSON.stringify({ f1: true, f2: true }) }
+    })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const before = useTabStore.getState().tabs[tabId]?.searchParams
+    act(() => result.current.expandIds(['f1', 'f2'], null))
+    const after = useTabStore.getState().tabs[tabId]?.searchParams
+    expect(after).toBe(before) // reference 동일 (skip)
+  })
+
+  it('기존 openState 와 병합 (다른 키 보존)', () => {
+    const tabId = useTabStore.getState().openTab({
+      type: 'folder',
+      pathname: '/folder/ws-1',
+      title: '탐색기',
+      searchParams: { folderOpenState: JSON.stringify({ existing: true }) }
+    })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    act(() => result.current.expandIds(['new-1', 'new-2'], null))
+    expect(result.current.openState).toEqual({
+      existing: true,
+      'new-1': true,
+      'new-2': true
+    })
+  })
+})

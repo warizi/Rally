@@ -57,7 +57,7 @@ export function FolderTreeSearchBar({
   if (!open) return null
 
   return (
-    <div className="flex items-center gap-1.5 px-3 py-1.5 mt-1 mb-2 mx-2 rounded-md border border-border bg-background/95 backdrop-blur-sm">
+    <div className="flex items-center gap-1.5 px-3 py-1.5 mt-1 mx-2 rounded-md border border-border bg-background/95 backdrop-blur-sm">
       <Search className="size-3.5 text-muted-foreground shrink-0" />
       <input
         ref={inputRef}

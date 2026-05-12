@@ -38,6 +38,10 @@ export function useTreeOpenState(tabId: string | undefined): {
     itemId: string,
     treeApi?: TreeApi<WorkspaceTreeNode> | null
   ) => void
+  expandIds: (
+    ids: Iterable<string>,
+    treeApi?: TreeApi<WorkspaceTreeNode> | null
+  ) => void
 } {
   const searchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
   const navigateTab = useTabStore((s) => s.navigateTab)
@@ -83,5 +87,28 @@ export function useTreeOpenState(tabId: string | undefined): {
     [tabId, searchParams, navigateTab]
   )
 
-  return { openState, toggle, collapseAll, expandToItem }
+  /**
+   * 여러 폴더 id 를 일괄 펼침. 검색 자동 펼침 등 다수 ancestor 처리용.
+   * 이미 모두 열려있으면 navigateTab 호출 없이 skip.
+   */
+  const expandIds = useCallback(
+    (ids: Iterable<string>, treeApi?: TreeApi<WorkspaceTreeNode> | null) => {
+      if (!tabId) return
+      const idArr = Array.from(ids)
+      if (idArr.length === 0) return
+      const current = parseOpenState(searchParams?.[OPEN_STATE_KEY])
+      if (idArr.every((id) => current[id])) return
+      const next = { ...current }
+      for (const id of idArr) {
+        next[id] = true
+        treeApi?.open(id)
+      }
+      navigateTab(tabId, {
+        searchParams: { ...searchParams, [OPEN_STATE_KEY]: JSON.stringify(next) }
+      })
+    },
+    [tabId, searchParams, navigateTab]
+  )
+
+  return { openState, toggle, collapseAll, expandToItem, expandIds }
 }
