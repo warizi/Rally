@@ -1,6 +1,7 @@
 import { join } from 'path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
+import { ensureMcpToken } from '../lib/mcp-token'
 
 function getSourceCommandsDir(): string {
   return is.dev
@@ -63,14 +64,17 @@ function ensureMcpSettings(workspacePath: string): void {
   }
 
   const serverKey = is.dev ? 'rally-dev' : 'rally'
-  const serverConfig: Record<string, unknown> = {
-    command: 'node',
-    args: [getMcpServerPath()]
-  }
+  // 보안-2: 워크스페이스 .mcp.json 에도 MCP_AUTH_TOKEN 자동 주입.
+  // 외부 MCP 클라이언트가 rally HTTP API 호출 시 x-mcp-token 헤더 송신에 사용.
+  const env: Record<string, string> = { MCP_AUTH_TOKEN: ensureMcpToken() }
   if (is.dev) {
-    serverConfig.env = { RALLY_DEV: '1' }
+    env.RALLY_DEV = '1'
   }
-  config.mcpServers[serverKey] = serverConfig
+  config.mcpServers[serverKey] = {
+    command: 'node',
+    args: [getMcpServerPath()],
+    env
+  }
 
   try {
     writeFileSync(mcpPath, JSON.stringify(config, null, 2), 'utf-8')

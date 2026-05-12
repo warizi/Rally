@@ -22,13 +22,22 @@ export async function mcpRequest(
   body?: Record<string, unknown>
 ): Promise<HttpResponse> {
   return new Promise((resolve, reject) => {
+    // 보안-2: rally 본체의 MCP API 인증 토큰. mcp-client-config /
+    // claude-commands-setup 이 MCP_AUTH_TOKEN 을 자동 주입한다.
+    // 누락 시 401 응답 받음 (rally 본체가 거부).
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json'
+    }
+    const token = process.env.MCP_AUTH_TOKEN
+    if (token) {
+      headers['x-mcp-token'] = token
+    }
+
     const options: http.RequestOptions = {
       socketPath,
       path: urlPath,
       method,
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers
     }
 
     const req = http.request(options, (res) => {

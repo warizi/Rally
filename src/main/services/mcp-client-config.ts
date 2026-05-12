@@ -2,6 +2,7 @@ import { app } from 'electron'
 import { join, dirname } from 'path'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
+import { ensureMcpToken } from '../lib/mcp-token'
 
 export type McpClientId = 'claudeDesktop' | 'claudeCode'
 
@@ -32,14 +33,17 @@ function getMcpServerPath(): string {
 }
 
 function buildServerConfig(): Record<string, unknown> {
-  const cfg: Record<string, unknown> = {
-    command: 'node',
-    args: [getMcpServerPath()]
-  }
+  // 보안-2: 클라이언트가 rally MCP API 에 접근할 때 사용할 인증 토큰을
+  // env 로 자동 주입. 사용자가 토큰을 수동 복사할 필요 없음.
+  const env: Record<string, string> = { MCP_AUTH_TOKEN: ensureMcpToken() }
   if (is.dev) {
-    cfg.env = { RALLY_DEV: '1' }
+    env.RALLY_DEV = '1'
   }
-  return cfg
+  return {
+    command: 'node',
+    args: [getMcpServerPath()],
+    env
+  }
 }
 
 function getConfigPath(client: McpClientId): string {
@@ -104,7 +108,10 @@ function inspectStatus(client: McpClientId): McpClientStatus {
   if (registered && entry) {
     const args = (entry.args as unknown[] | undefined) ?? []
     const currentPath = getMcpServerPath()
-    outdated = !args.includes(currentPath)
+    const env = (entry.env as Record<string, string> | undefined) ?? {}
+    // 보안-2: 등록된 토큰이 현재 토큰과 다르면 outdated → 사용자 재등록 유도.
+    const currentToken = ensureMcpToken()
+    outdated = !args.includes(currentPath) || env.MCP_AUTH_TOKEN !== currentToken
   }
   return { configPath, supported: true, configExists, registered, outdated }
 }
