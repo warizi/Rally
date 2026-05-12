@@ -1,4 +1,4 @@
-import type { JSX } from 'react'
+import { useEffect, useRef, type JSX } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { useDuplicateNote } from '@entities/note'
 import { useDuplicateCsvFile } from '@entities/csv-file'
@@ -80,6 +80,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
     isActiveMatch && 'bg-yellow-300/60 ring-2 ring-inset ring-yellow-500'
   )
 
+  // 활성 매치 wrap div 에 ref + scrollIntoView (외부 탭 스크롤 컨테이너 대응).
+  const activeMatchRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (isActiveMatch) {
+      activeMatchRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    }
+  }, [isActiveMatch])
+
   if (kind === 'note') {
     return (
       <FileContextMenu
@@ -106,6 +114,7 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         onDelete={() => dialogState.setNoteDeleteTarget({ id: node.data.id, name: node.data.name })}
       >
         <div
+          ref={activeMatchRef}
           className={cn(
             'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
             highlightClass
@@ -158,6 +167,7 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         onDelete={() => dialogState.setCsvDeleteTarget({ id: node.data.id, name: node.data.name })}
       >
         <div
+          ref={activeMatchRef}
           className={cn(
             'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
             highlightClass
@@ -210,6 +220,7 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         onDelete={() => dialogState.setPdfDeleteTarget({ id: node.data.id, name: node.data.name })}
       >
         <div
+          ref={activeMatchRef}
           className={cn(
             'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
             highlightClass
@@ -264,6 +275,7 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         }
       >
         <div
+          ref={activeMatchRef}
           className={cn(
             'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
             highlightClass
@@ -308,6 +320,7 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
       onDelete={() => dialogState.setDeleteTarget({ id: node.id, name: node.data.name })}
     >
       <div
+          ref={activeMatchRef}
         className={cn(
           'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
           highlightClass

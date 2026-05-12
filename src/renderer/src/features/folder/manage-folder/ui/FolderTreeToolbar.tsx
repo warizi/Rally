@@ -50,7 +50,7 @@ export function FolderTreeToolbar({
   } = createHandlers
 
   return (
-    <div className="flex items-center justify-between py-1 shrink-0 border-b mb-2 sticky top-0 bg-background z-10">
+    <div className="flex items-center justify-between py-1 shrink-0 border-b">
       <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
         탐색기
       </span>

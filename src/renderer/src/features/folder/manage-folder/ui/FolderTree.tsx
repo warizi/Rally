@@ -119,26 +119,29 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
 
   return (
     <div data-testid="folder-tree-root" className="flex flex-col relative px-6 pt-6 pb-2">
-      <FolderTreeToolbar
-        createHandlers={createHandlers}
-        onCollapseAll={() => {
-          treeRef.current?.closeAll()
-          collapseAll()
-        }}
-        onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
-        onToggleSearch={handleToggleSearch}
-      />
+      {/* sticky 상단 그룹: 툴바 + 검색바 — 외부 탭 스크롤 시에도 고정 */}
+      <div className="sticky top-0 z-10 bg-background pb-2">
+        <FolderTreeToolbar
+          createHandlers={createHandlers}
+          onCollapseAll={() => {
+            treeRef.current?.closeAll()
+            collapseAll()
+          }}
+          onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
+          onToggleSearch={handleToggleSearch}
+        />
 
-      <FolderTreeSearchBar
-        open={searchOpen}
-        query={search.query}
-        matchCount={search.result.orderedMatches.length}
-        activeIndex={search.activeIndex}
-        onQueryChange={search.setQuery}
-        onNext={search.goNext}
-        onPrev={search.goPrev}
-        onClose={handleCloseSearch}
-      />
+        <FolderTreeSearchBar
+          open={searchOpen}
+          query={search.query}
+          matchCount={search.result.orderedMatches.length}
+          activeIndex={search.activeIndex}
+          onQueryChange={search.setQuery}
+          onNext={search.goNext}
+          onPrev={search.goPrev}
+          onClose={handleCloseSearch}
+        />
+      </div>
 
       {tree.length === 0 ? (
         <FolderTreeEmpty
