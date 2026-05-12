@@ -24,16 +24,19 @@ interface RenderOverrides {
   createHandlers?: FolderCreateHandlers
   onCollapseAll?: () => void
   onCreateFolder?: () => void
+  onToggleSearch?: () => void
 }
 
 function renderToolbar(overrides: RenderOverrides = {}): {
   createHandlers: FolderCreateHandlers
   onCollapseAll: () => void
   onCreateFolder: () => void
+  onToggleSearch: () => void
 } {
   const createHandlers = overrides.createHandlers ?? makeHandlers()
   const onCollapseAll = overrides.onCollapseAll ?? vi.fn()
   const onCreateFolder = overrides.onCreateFolder ?? vi.fn()
+  const onToggleSearch = overrides.onToggleSearch ?? vi.fn()
 
   render(
     <TooltipProvider>
@@ -41,11 +44,12 @@ function renderToolbar(overrides: RenderOverrides = {}): {
         createHandlers={createHandlers}
         onCollapseAll={onCollapseAll}
         onCreateFolder={onCreateFolder}
+        onToggleSearch={onToggleSearch}
       />
     </TooltipProvider>
   )
 
-  return { createHandlers, onCollapseAll, onCreateFolder }
+  return { createHandlers, onCollapseAll, onCreateFolder, onToggleSearch }
 }
 
 describe('FolderTreeToolbar', () => {
@@ -54,33 +58,39 @@ describe('FolderTreeToolbar', () => {
     expect(screen.getByText('탐색기')).toBeInTheDocument()
   })
 
+  // 버튼 순서: 검색(0), 모두 접기(1), 노트 dropdown(2), 테이블 dropdown(3), PDF(4), 이미지(5), 폴더 추가(6)
+  it('"검색" button click calls onToggleSearch', () => {
+    const { onToggleSearch } = renderToolbar()
+    const buttons = screen.getAllByRole('button')
+    fireEvent.click(buttons[0])
+    expect(onToggleSearch).toHaveBeenCalledTimes(1)
+  })
+
   it('"모두 접기" button click calls onCollapseAll', () => {
     const { onCollapseAll } = renderToolbar()
     const buttons = screen.getAllByRole('button')
-    fireEvent.click(buttons[0])
+    fireEvent.click(buttons[1])
     expect(onCollapseAll).toHaveBeenCalledTimes(1)
   })
 
   it('PDF import button click calls handleImportPdf(null)', () => {
     const { createHandlers } = renderToolbar()
-    // PDF는 dropdown 없이 직접 버튼 — 4번째 ghost icon (모두 접기, 노트 dropdown, 테이블 dropdown, PDF)
     const buttons = screen.getAllByRole('button')
-    // 모두 접기(0), 노트 dropdown trigger(1), 테이블 dropdown trigger(2), PDF(3), 이미지(4), 폴더 추가(5)
-    fireEvent.click(buttons[3])
+    fireEvent.click(buttons[4])
     expect(createHandlers.handleImportPdf).toHaveBeenCalledWith(null)
   })
 
   it('이미지 import button click calls handleImportImage(null)', () => {
     const { createHandlers } = renderToolbar()
     const buttons = screen.getAllByRole('button')
-    fireEvent.click(buttons[4])
+    fireEvent.click(buttons[5])
     expect(createHandlers.handleImportImage).toHaveBeenCalledWith(null)
   })
 
   it('폴더 추가 button click calls onCreateFolder', () => {
     const { onCreateFolder } = renderToolbar()
     const buttons = screen.getAllByRole('button')
-    fireEvent.click(buttons[5])
+    fireEvent.click(buttons[6])
     expect(onCreateFolder).toHaveBeenCalledTimes(1)
   })
 })

@@ -6,6 +6,7 @@ import {
   FileUp,
   FolderPlus,
   ImageIcon,
+  Search,
   Sheet
 } from 'lucide-react'
 import { Button } from '@shared/ui/button'
@@ -22,6 +23,7 @@ interface Props {
   createHandlers: FolderCreateHandlers
   onCollapseAll: () => void
   onCreateFolder: () => void
+  onToggleSearch: () => void
 }
 
 /**
@@ -35,7 +37,8 @@ interface Props {
 export function FolderTreeToolbar({
   createHandlers,
   onCollapseAll,
-  onCreateFolder
+  onCreateFolder,
+  onToggleSearch
 }: Props): JSX.Element {
   const {
     handleCreateNote,
@@ -52,6 +55,19 @@ export function FolderTreeToolbar({
         탐색기
       </span>
       <div className="flex items-center gap-0.5">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="size-6 cursor-pointer"
+              onClick={onToggleSearch}
+            >
+              <Search className="size-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>검색</TooltipContent>
+        </Tooltip>
         <Tooltip>
           <TooltipTrigger asChild>
             <Button

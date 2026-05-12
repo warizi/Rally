@@ -41,12 +41,12 @@ export function useFolderSearch(tree: WorkspaceTreeNode[]): UseFolderSearchRetur
 
   const result = useMemo(() => searchTree(tree, debouncedQuery), [tree, debouncedQuery])
 
-  // 새 쿼리 결과 도착 시 활성 인덱스를 첫 매치로 reset.
-  // React 공식 권장 패턴 ("derived state without useEffect") — 두 setState 가
-  // 동일 render 에 호출되어 React 가 즉시 재실행, commit 은 한 번.
-  const [trackedResult, setTrackedResult] = useState(result)
-  if (trackedResult !== result) {
-    setTrackedResult(result)
+  // 새 쿼리 도착 시 활성 인덱스를 첫 매치로 reset.
+  // debouncedQuery (primitive string) 로 추적해 result 객체가 매번 새로
+  // 생성되어도 추가 setState 가 발화되지 않도록 한다 (무한 루프 방지).
+  const [lastQuery, setLastQuery] = useState(debouncedQuery)
+  if (lastQuery !== debouncedQuery) {
+    setLastQuery(debouncedQuery)
     setActiveIndex(result.orderedMatches.length > 0 ? 0 : -1)
   }
 
