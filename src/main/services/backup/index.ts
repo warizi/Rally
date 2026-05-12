@@ -44,8 +44,31 @@ import {
   copyDirSync,
   batchInsert
 } from './helpers'
-import { createIdMapper } from './id-mapper'
+import { IdMapper, type BackupEntityType } from './id-mapper'
 import { mapTabJsons } from './tab-mapper'
+
+/**
+ * canvas-node.refId 는 다른 entity (todo/note/canvas/...) 의 ID 를 참조.
+ * 원본 JSON 에는 type 정보가 없어 candidate type 들을 순회하며 매핑.
+ * 매핑 실패 시 null (orphan 으로 처리).
+ */
+function resolveCanvasNodeRef(mapper: IdMapper, oldId: string | null): string | null {
+  if (oldId == null) return null
+  const candidates: BackupEntityType[] = [
+    'todo',
+    'note',
+    'csv',
+    'pdf',
+    'image',
+    'canvas',
+    'schedule'
+  ]
+  for (const t of candidates) {
+    const newId = mapper.mapOrSkip(t, oldId)
+    if (newId) return newId
+  }
+  return null
+}
 
 /**
  * 백업 시스템 — 워크스페이스 export / import (zip 기반).
@@ -358,8 +381,8 @@ export const backupService = {
       const terminalSessionsJson = readJson<any[]>('terminal-sessions.json')
       /* eslint-enable @typescript-eslint/no-explicit-any */
 
-      // ID 매퍼
-      const mapper = createIdMapper()
+      // ID 매퍼 — entity type 별 격리, any 0
+      const mapper = new IdMapper()
 
       // 새 워크스페이스 ID
       const newWorkspaceId = nanoid()
@@ -390,7 +413,7 @@ export const backupService = {
         batchInsert(
           folders,
           sortedFolders.map((f) => ({
-            id: mapper.register(f.id),
+            id: mapper.register('folder', f.id),
             workspaceId: newWorkspaceId,
             relativePath: f.relativePath,
             color: f.color,
@@ -404,9 +427,9 @@ export const backupService = {
         batchInsert(
           notes,
           notesJson.map((n) => ({
-            id: mapper.register(n.id),
+            id: mapper.register('note', n.id),
             workspaceId: newWorkspaceId,
-            folderId: mapper.mapOrNull(n.folderId),
+            folderId: mapper.mapOrNull('folder', n.folderId),
             title: n.title,
             relativePath: n.relativePath,
             description: n.description,
@@ -421,9 +444,9 @@ export const backupService = {
         batchInsert(
           csvFiles,
           csvJson.map((c) => ({
-            id: mapper.register(c.id),
+            id: mapper.register('csv', c.id),
             workspaceId: newWorkspaceId,
-            folderId: mapper.mapOrNull(c.folderId),
+            folderId: mapper.mapOrNull('folder', c.folderId),
             title: c.title,
             relativePath: c.relativePath,
             description: c.description,
@@ -439,9 +462,9 @@ export const backupService = {
         batchInsert(
           pdfFiles,
           pdfJson.map((p) => ({
-            id: mapper.register(p.id),
+            id: mapper.register('pdf', p.id),
             workspaceId: newWorkspaceId,
-            folderId: mapper.mapOrNull(p.folderId),
+            folderId: mapper.mapOrNull('folder', p.folderId),
             title: p.title,
             relativePath: p.relativePath,
             description: p.description,
@@ -456,9 +479,9 @@ export const backupService = {
         batchInsert(
           imageFiles,
           imageJson.map((i) => ({
-            id: mapper.register(i.id),
+            id: mapper.register('image', i.id),
             workspaceId: newWorkspaceId,
-            folderId: mapper.mapOrNull(i.folderId),
+            folderId: mapper.mapOrNull('folder', i.folderId),
             title: i.title,
             relativePath: i.relativePath,
             description: i.description,
@@ -472,12 +495,12 @@ export const backupService = {
         // 6. todos (topological sort)
         const sortedTodos = sortTodosByParent(todosJson)
         for (const t of sortedTodos) {
-          const newId = mapper.register(t.id)
+          const newId = mapper.register('todo', t.id)
           db.insert(todos)
             .values({
               id: newId,
               workspaceId: newWorkspaceId,
-              parentId: mapper.mapOrNull(t.parentId),
+              parentId: mapper.mapOrNull('todo', t.parentId),
               title: t.title,
               description: t.description,
               status: t.status,
@@ -499,7 +522,7 @@ export const backupService = {
         batchInsert(
           schedules,
           schedulesJson.map((s) => ({
-            id: mapper.register(s.id),
+            id: mapper.register('schedule', s.id),
             workspaceId: newWorkspaceId,
             title: s.title,
             description: s.description,
@@ -514,12 +537,12 @@ export const backupService = {
           }))
         )
 
-        // 8. schedule_todos
+        // 8. schedule_todos (composite PK, IdMapper 등록 안 함)
         batchInsert(
           scheduleTodos,
           scheduleTodosJson.map((st) => ({
-            scheduleId: mapper.map(st.scheduleId),
-            todoId: mapper.map(st.todoId)
+            scheduleId: mapper.map('schedule', st.scheduleId),
+            todoId: mapper.map('todo', st.todoId)
           }))
         )
 
@@ -527,7 +550,7 @@ export const backupService = {
         batchInsert(
           canvases,
           canvasesJson.map((c) => ({
-            id: mapper.register(c.id),
+            id: mapper.register('canvas', c.id),
             workspaceId: newWorkspaceId,
             title: c.title,
             description: c.description,
@@ -543,10 +566,11 @@ export const backupService = {
         batchInsert(
           canvasNodes,
           canvasNodesJson.map((n) => ({
-            id: mapper.register(n.id),
-            canvasId: mapper.map(n.canvasId),
+            id: mapper.register('canvas-node', n.id),
+            canvasId: mapper.map('canvas', n.canvasId),
             type: n.type,
-            refId: mapper.mapOrNull(n.refId),
+            // refId 는 다른 entity (todo/note/canvas/...) 의 ID — type 미상 → 모든 type 후보 탐색
+            refId: resolveCanvasNodeRef(mapper, n.refId),
             x: n.x,
             y: n.y,
             width: n.width,
@@ -563,10 +587,10 @@ export const backupService = {
         batchInsert(
           canvasEdges,
           canvasEdgesJson.map((e) => ({
-            id: mapper.register(e.id),
-            canvasId: mapper.map(e.canvasId),
-            fromNode: mapper.map(e.fromNode),
-            toNode: mapper.map(e.toNode),
+            id: mapper.register('canvas-edge', e.id),
+            canvasId: mapper.map('canvas', e.canvasId),
+            fromNode: mapper.map('canvas-node', e.fromNode),
+            toNode: mapper.map('canvas-node', e.toNode),
             fromSide: e.fromSide,
             toSide: e.toSide,
             label: e.label,
@@ -581,8 +605,8 @@ export const backupService = {
         batchInsert(
           canvasGroups,
           canvasGroupsJson.map((g) => ({
-            id: mapper.register(g.id),
-            canvasId: mapper.map(g.canvasId),
+            id: mapper.register('canvas-group', g.id),
+            canvasId: mapper.map('canvas', g.canvasId),
             label: g.label,
             color: g.color,
             x: g.x,
@@ -595,10 +619,11 @@ export const backupService = {
         )
 
         // 13. entity_links (composite PK, 고아 skip)
+        //     sourceType/targetType 이 동적이므로 mapper.mapOrSkip 호출 시 type 인자도 동적.
         const mappedLinks = entityLinksJson
           .map((el) => {
-            const sourceId = mapper.mapOrSkip(el.sourceId)
-            const targetId = mapper.mapOrSkip(el.targetId)
+            const sourceId = mapper.mapOrSkip(el.sourceType as BackupEntityType, el.sourceId)
+            const targetId = mapper.mapOrSkip(el.targetType as BackupEntityType, el.targetId)
             if (!sourceId || !targetId) return null
             return {
               sourceType: el.sourceType,
@@ -616,7 +641,7 @@ export const backupService = {
         batchInsert(
           tags,
           tagsJson.map((t) => ({
-            id: mapper.register(t.id),
+            id: mapper.register('tag', t.id),
             workspaceId: newWorkspaceId,
             name: t.name,
             color: t.color,
@@ -625,15 +650,15 @@ export const backupService = {
           }))
         )
 
-        // 15. item_tags (고아 skip)
+        // 15. item_tags (고아 skip — itemType 이 동적)
         const mappedItemTags = itemTagsJson
           .map((it) => {
-            const itemId = mapper.mapOrSkip(it.itemId)
+            const itemId = mapper.mapOrSkip(it.itemType as BackupEntityType, it.itemId)
             if (!itemId) return null
             return {
-              id: mapper.register(it.id),
+              id: mapper.register('item-tag', it.id),
               itemType: it.itemType,
-              tagId: mapper.map(it.tagId),
+              tagId: mapper.map('tag', it.tagId),
               itemId,
               createdAt: toDate(it.createdAt)
             }
@@ -641,13 +666,13 @@ export const backupService = {
           .filter(Boolean) as (typeof itemTags.$inferInsert)[]
         batchInsert(itemTags, mappedItemTags)
 
-        // 16. reminders (고아 skip)
+        // 16. reminders (고아 skip — entityType 이 'todo' | 'schedule')
         const mappedReminders = remindersJson
           .map((r) => {
-            const entityId = mapper.mapOrSkip(r.entityId)
+            const entityId = mapper.mapOrSkip(r.entityType as BackupEntityType, r.entityId)
             if (!entityId) return null
             return {
-              id: mapper.register(r.id),
+              id: mapper.register('reminder', r.id),
               entityType: r.entityType,
               entityId,
               offsetMs: r.offsetMs,
@@ -686,7 +711,7 @@ export const backupService = {
           const mapped = mapTabJsons(snap.tabsJson, snap.panesJson, snap.layoutJson, null, mapper)
           db.insert(tabSnapshots)
             .values({
-              id: mapper.register(snap.id),
+              id: mapper.register('tab-snapshot', snap.id),
               workspaceId: newWorkspaceId,
               name: snap.name,
               description: snap.description,
@@ -703,7 +728,7 @@ export const backupService = {
         batchInsert(
           recurringRules,
           recurringRulesJson.map((r) => ({
-            id: mapper.register(r.id),
+            id: mapper.register('recurring-rule', r.id),
             workspaceId: newWorkspaceId,
             title: r.title,
             description: r.description,
@@ -724,8 +749,8 @@ export const backupService = {
         batchInsert(
           recurringCompletions,
           recurringCompletionsJson.map((c) => ({
-            id: mapper.register(c.id),
-            ruleId: c.ruleId != null ? (mapper.mapOrSkip(c.ruleId) ?? null) : null,
+            id: mapper.register('recurring-completion', c.id),
+            ruleId: c.ruleId != null ? mapper.mapOrSkip('recurring-rule', c.ruleId) : null,
             ruleTitle: c.ruleTitle,
             workspaceId: newWorkspaceId,
             completedDate: c.completedDate,
@@ -738,7 +763,7 @@ export const backupService = {
         batchInsert(
           templates,
           templatesJson.map((t) => ({
-            id: mapper.register(t.id),
+            id: mapper.register('template', t.id),
             workspaceId: newWorkspaceId,
             title: t.title,
             type: t.type,
@@ -751,7 +776,7 @@ export const backupService = {
         batchInsert(
           terminalLayouts,
           terminalLayoutsJson.map((l) => ({
-            id: mapper.register(l.id),
+            id: mapper.register('terminal-layout', l.id),
             workspaceId: newWorkspaceId,
             layoutJson: l.layoutJson,
             createdAt: toDate(l.createdAt),
@@ -763,9 +788,10 @@ export const backupService = {
         batchInsert(
           terminalSessions,
           terminalSessionsJson.map((s) => ({
-            id: mapper.register(s.id),
+            id: mapper.register('terminal-session', s.id),
             workspaceId: newWorkspaceId,
-            layoutId: s.layoutId != null ? (mapper.mapOrSkip(s.layoutId) ?? null) : null,
+            layoutId:
+              s.layoutId != null ? mapper.mapOrSkip('terminal-layout', s.layoutId) : null,
             name: s.name,
             cwd: s.cwd,
             shell: s.shell,

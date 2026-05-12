@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import type { IdMapper } from './id-mapper'
+import type { IdMapper, BackupEntityType } from './id-mapper'
 import type { MappedTabSession } from './types'
 
 /**
@@ -15,25 +15,26 @@ import type { MappedTabSession } from './types'
  * 으로 발전 예정. 현재는 backup.ts 원본 로직 그대로 이전.
  */
 
+/** pathname pattern 별 entity type 매핑 */
+const PATHNAME_PATTERNS: { regex: RegExp; type: BackupEntityType }[] = [
+  { regex: /^\/todo\/(.+)$/, type: 'todo' },
+  { regex: /^\/folder\/note\/(.+)$/, type: 'note' },
+  { regex: /^\/folder\/csv\/(.+)$/, type: 'csv' },
+  { regex: /^\/folder\/pdf\/(.+)$/, type: 'pdf' },
+  { regex: /^\/folder\/image\/(.+)$/, type: 'image' },
+  { regex: /^\/canvas\/(.+)$/, type: 'canvas' }
+]
+
 /** pathname 에서 마지막 세그먼트(엔티티 ID) 교체 */
 export function mapTabPathname(
   pathname: string,
   mapper: IdMapper
 ): { pathname: string; mapped: boolean } {
-  const patterns = [
-    /^\/todo\/(.+)$/,
-    /^\/folder\/note\/(.+)$/,
-    /^\/folder\/csv\/(.+)$/,
-    /^\/folder\/pdf\/(.+)$/,
-    /^\/folder\/image\/(.+)$/,
-    /^\/canvas\/(.+)$/
-  ]
-
-  for (const pattern of patterns) {
-    const match = pathname.match(pattern)
+  for (const { regex, type } of PATHNAME_PATTERNS) {
+    const match = pathname.match(regex)
     if (match) {
       const oldId = match[1]
-      const newId = mapper.mapOrSkip(oldId)
+      const newId = mapper.mapOrSkip(type, oldId)
       if (!newId) return { pathname, mapped: false }
       return {
         pathname: pathname.replace(oldId, newId),
@@ -64,7 +65,7 @@ export function mapFolderOpenState(
     const parsed: Record<string, boolean> = JSON.parse(json)
     const mapped: Record<string, boolean> = {}
     for (const [oldFolderId, value] of Object.entries(parsed)) {
-      const newId = mapper.mapOrSkip(oldFolderId)
+      const newId = mapper.mapOrSkip('folder', oldFolderId)
       if (newId) mapped[newId] = value
     }
     return JSON.stringify(mapped)
