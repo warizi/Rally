@@ -9,6 +9,7 @@ import {
   DialogDescription
 } from '@/shared/ui/dialog'
 import { cn } from '@/shared/lib/utils'
+import { ScrollArea } from '@/shared/ui/scroll-area'
 import { GeneralSettings } from './GeneralSettings'
 import { DisplaySettings } from './DisplaySettings'
 import { AISettings } from './AISettings'
@@ -80,12 +81,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
             </nav>
 
             {/* 우측 컨텐츠 */}
-            <div className="flex-1 min-w-0 p-6 overflow-y-auto">
-              {activeTab === 'general' && <GeneralSettings />}
-              {activeTab === 'display' && <DisplaySettings />}
-              {activeTab === 'trash' && <TrashSettings />}
-              {activeTab === 'ai' && <AISettings />}
-            </div>
+            <ScrollArea className="flex-1 min-w-0">
+              <div className="p-6">
+                {activeTab === 'general' && <GeneralSettings />}
+                {activeTab === 'display' && <DisplaySettings />}
+                {activeTab === 'trash' && <TrashSettings />}
+                {activeTab === 'ai' && <AISettings />}
+              </div>
+            </ScrollArea>
           </div>
         </DialogPrimitive.Content>
       </DialogPortal>
