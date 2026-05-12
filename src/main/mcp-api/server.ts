@@ -33,6 +33,16 @@ export function startMcpApiServer(): void {
 
   server = http.createServer(router.handle)
   server.listen(socketPath, () => {
+    // 보안-2: Unix 소켓 파일 권한 0600 (소유자만 r/w) — 같은 사용자가 아닌 프로세스의
+    // 접근을 OS 레벨에서 차단. Windows named pipe 는 ACL 모델이라 별도 처리 없음
+    // (자세한 내용은 리팩토링 진행 기록/11 [보안-2] Phase 3 노트 참고).
+    if (process.platform !== 'win32') {
+      try {
+        fs.chmodSync(socketPath, 0o600)
+      } catch (err) {
+        console.warn(`[MCP API] failed to chmod socket: ${err}`)
+      }
+    }
     console.log(`[MCP API] Listening on ${socketPath}`)
   })
 }
