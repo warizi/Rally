@@ -276,7 +276,7 @@ export function CsvTable({
           <ContextMenuTrigger asChild>
             <div
               ref={scrollRef}
-              className="flex-1 overflow-auto outline-none select-none"
+              className="flex-1 overflow-auto outline-none select-none scrollbar-thin"
               tabIndex={0}
               onKeyDown={handleKeyDown}
               onBlur={sel.handleBlur}

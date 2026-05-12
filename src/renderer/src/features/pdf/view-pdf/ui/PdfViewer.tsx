@@ -4,6 +4,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css'
 import 'react-pdf/dist/Page/TextLayer.css'
 import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
 import { Button } from '@shared/ui/button'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
 import { PDF_EXTERNAL_CHANGED_EVENT } from '@entities/pdf-file'
 import { useQueryClient } from '@tanstack/react-query'
@@ -156,9 +157,9 @@ export function PdfViewer({ pdfId, pdfData }: PdfViewerProps): JSX.Element {
       </div>
 
       {/* PDF 페이지 렌더링 — 확대 시 좌우 스크롤 + 드래그 패닝 */}
-      <div
-        ref={scrollRef}
-        className="flex-1 min-h-0 overflow-auto cursor-grab active:cursor-grabbing"
+      <ScrollArea
+        className="flex-1 min-h-0 cursor-grab active:cursor-grabbing"
+        viewportRef={scrollRef}
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
@@ -185,7 +186,7 @@ export function PdfViewer({ pdfId, pdfData }: PdfViewerProps): JSX.Element {
             ))}
           </Document>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   )
 }
