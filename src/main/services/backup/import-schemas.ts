@@ -324,7 +324,8 @@ export const TerminalSessionImport = z
     cols: z.number(),
     screenSnapshot: z.string().nullable(),
     sortOrder: z.number(),
-    isActive: z.boolean(),
+    // schema 가 integer (no boolean mode) — number 가 정확. 구버전 boolean 도 허용
+    isActive: z.union([z.number(), z.boolean()]),
     createdAt: Ts,
     updatedAt: Ts
   })

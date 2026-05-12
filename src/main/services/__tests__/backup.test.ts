@@ -22,6 +22,183 @@ vi.mock('electron', () => ({
 import { backupService } from '../backup'
 import { seedFullWorkspace } from './lib/seed'
 import { expectWorkspacesEquivalent } from './lib/workspace-compare'
+import { testDb } from '../../__tests__/setup'
+import * as schema from '../../db/schema'
+import { nanoid } from 'nanoid'
+
+/**
+ * P0-2 follow-up: 라운드트립 시 모든 entity insert 경로가 실행되도록
+ * seedFullWorkspace 외에 추가 entity 직접 시드 (coverage 보강).
+ */
+function seedAdditionalEntities(workspaceId: string, folderId: string, noteId: string, todoId: string, scheduleId: string): {
+  tagId: string
+  recurringRuleId: string
+  tabSnapshotId: string
+} {
+  const now = new Date()
+
+  // tag + itemTag
+  const tagId = nanoid()
+  testDb.insert(schema.tags).values({
+    id: tagId,
+    workspaceId,
+    name: 'urgent',
+    color: '#ff0000',
+    description: 'urgent tag',
+    createdAt: now
+  }).run()
+  testDb.insert(schema.itemTags).values({
+    id: nanoid(),
+    itemType: 'note',
+    itemId: noteId,
+    tagId,
+    createdAt: now
+  }).run()
+
+  // schedule_todo (composite PK)
+  testDb.insert(schema.scheduleTodos).values({
+    scheduleId,
+    todoId
+  }).run()
+
+  // entity_link (note ↔ todo 양방향)
+  testDb.insert(schema.entityLinks).values({
+    sourceType: 'note',
+    sourceId: noteId,
+    targetType: 'todo',
+    targetId: todoId,
+    workspaceId,
+    createdAt: now
+  }).run()
+
+  // reminder
+  testDb.insert(schema.reminders).values({
+    id: nanoid(),
+    entityType: 'todo',
+    entityId: todoId,
+    offsetMs: 3600000,
+    remindAt: now,
+    isFired: false,
+    createdAt: now,
+    updatedAt: now
+  }).run()
+
+  // recurring_rule + completion
+  const recurringRuleId = nanoid()
+  testDb.insert(schema.recurringRules).values({
+    id: recurringRuleId,
+    workspaceId,
+    title: 'Daily standup',
+    description: '',
+    priority: 'medium',
+    recurrenceType: 'daily',
+    daysOfWeek: null,
+    startDate: now,
+    endDate: null,
+    startTime: '09:00',
+    endTime: '09:30',
+    reminderOffsetMs: null,
+    createdAt: now,
+    updatedAt: now
+  }).run()
+  testDb.insert(schema.recurringCompletions).values({
+    id: nanoid(),
+    ruleId: recurringRuleId,
+    ruleTitle: 'Daily standup',
+    workspaceId,
+    completedDate: '2026-05-12',
+    completedAt: now,
+    createdAt: now
+  }).run()
+
+  // template
+  testDb.insert(schema.templates).values({
+    id: nanoid(),
+    workspaceId,
+    title: 'Note template',
+    type: 'note',
+    jsonData: JSON.stringify({ body: 'template body' }),
+    createdAt: now
+  }).run()
+
+  // terminal_layout + session
+  const terminalLayoutId = nanoid()
+  testDb.insert(schema.terminalLayouts).values({
+    id: terminalLayoutId,
+    workspaceId,
+    layoutJson: JSON.stringify({ type: 'single' }),
+    createdAt: now,
+    updatedAt: now
+  }).run()
+  testDb.insert(schema.terminalSessions).values({
+    id: nanoid(),
+    workspaceId,
+    layoutId: terminalLayoutId,
+    name: 'main',
+    cwd: '/tmp',
+    shell: '/bin/zsh',
+    rows: 24,
+    cols: 80,
+    screenSnapshot: null,
+    sortOrder: 0,
+    isActive: 1, // integer column (no boolean mode in schema)
+    createdAt: now,
+    updatedAt: now
+  }).run()
+
+  // tab_session — tabsJson/panesJson/layoutJson 에 노트 id 포함 (재매핑 검증)
+  const tabsJson = JSON.stringify({
+    'tab-1': {
+      id: 'tab-1',
+      type: 'note',
+      title: 'My note',
+      icon: 'file',
+      pathname: `/folder/note/${noteId}`,
+      searchParams: { folderOpenState: JSON.stringify({ [folderId]: true }) },
+      pinned: false,
+      createdAt: now.getTime(),
+      lastAccessedAt: now.getTime()
+    }
+  })
+  const panesJson = JSON.stringify({
+    'pane-1': {
+      id: 'pane-1',
+      tabIds: ['tab-1'],
+      activeTabId: 'tab-1',
+      size: 100,
+      minSize: 10
+    }
+  })
+  const layoutJson = JSON.stringify({
+    id: 'root',
+    type: 'pane',
+    paneId: 'pane-1'
+  })
+  testDb.insert(schema.tabSessions).values({
+    workspaceId,
+    activePaneId: 'pane-1',
+    tabsJson,
+    panesJson,
+    layoutJson,
+    updatedAt: now
+  }).run()
+
+  // tab_snapshot
+  const tabSnapshotId = nanoid()
+  testDb.insert(schema.tabSnapshots).values({
+    id: tabSnapshotId,
+    workspaceId,
+    name: 'Layout-A',
+    description: 'snapshot',
+    tabsJson,
+    panesJson,
+    layoutJson,
+    createdAt: now,
+    updatedAt: now
+  }).run()
+
+  return { tagId, recurringRuleId, tabSnapshotId }
+}
 
 let tmpRoot: string
 let workspacePath: string
@@ -51,6 +228,15 @@ describe('backupService — round trip', () => {
     expect(seeded.todos).toHaveLength(2)
     expect(seeded.canvasNodes).toHaveLength(2)
     expect(seeded.canvasEdges).toHaveLength(1)
+
+    // 1b. 추가 entity 시드 — deserializer 의 모든 insert 경로 실행 (coverage 보강)
+    seedAdditionalEntities(
+      seeded.ws.id,
+      seeded.folders[0].id,
+      seeded.notes[0].id,
+      seeded.todos[0].id,
+      seeded.schedules[0].id
+    )
 
     // 2. export
     await backupService.export(seeded.ws.id, zipPath)
@@ -158,6 +344,54 @@ describe('backupService — round trip', () => {
     expect(importMs).toBeLessThan(30_000)
     expect(newWs.id).not.toBe(seeded.ws.id)
   }, 60_000)
+
+  it('S7 — imports legacy backup with ISO string timestamps (pre-Phase 3 compat)', async () => {
+    const seeded = seedFullWorkspace({ workspacePath, name: 'LegacySource' })
+
+    // 1. 정상 export (신규 number 형식)
+    await backupService.export(seeded.ws.id, zipPath)
+
+    // 2. zip 풀어서 모든 data/*.json 의 number timestamp 를 ISO string 으로 변환
+    //    → Phase 3 이전 버전의 백업 형식 시뮬레이션
+    const legacyDir = path.join(tmpRoot, 'legacy-unzip')
+    fs.mkdirSync(legacyDir, { recursive: true })
+    new AdmZip(zipPath).extractAllTo(legacyDir, true)
+
+    const dataDir = path.join(legacyDir, 'data')
+    for (const filename of fs.readdirSync(dataDir)) {
+      if (!filename.endsWith('.json')) continue
+      const filePath = path.join(dataDir, filename)
+      const raw: unknown = JSON.parse(fs.readFileSync(filePath, 'utf8'))
+      // 배열의 각 row 의 number timestamp 필드 → ISO string
+      if (Array.isArray(raw)) {
+        for (const row of raw as Record<string, unknown>[]) {
+          for (const key of Object.keys(row)) {
+            if (
+              (key === 'createdAt' || key === 'updatedAt' || key.endsWith('At')) &&
+              typeof row[key] === 'number'
+            ) {
+              row[key] = new Date(row[key] as number).toISOString()
+            }
+          }
+        }
+        fs.writeFileSync(filePath, JSON.stringify(raw))
+      }
+    }
+
+    // 3. 재패키징
+    const legacyZip = path.join(tmpRoot, 'legacy.zip')
+    const out = new AdmZip()
+    out.addLocalFolder(legacyDir)
+    out.writeZip(legacyZip)
+
+    // 4. import — zod union (number | string) 으로 통과해야 함
+    const newWs = await backupService.import(legacyZip, 'LegacyTarget', importPath)
+    expect(newWs.id).not.toBe(seeded.ws.id)
+    expect(newWs.name).toBe('LegacyTarget')
+
+    // 데이터 의미적 동등 (toDate(string) 으로 정확히 복원되는지)
+    expectWorkspacesEquivalent(seeded.ws.id, newWs.id)
+  })
 
   it('S5 — import rejects non-array JSON file', async () => {
     const seeded = seedFullWorkspace({ workspacePath, name: 'Source' })
