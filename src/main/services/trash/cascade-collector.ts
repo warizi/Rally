@@ -4,10 +4,6 @@ import { workspaceRepository } from '../../repositories/workspace'
 import { todoRepository } from '../../repositories/todo'
 import { scheduleRepository } from '../../repositories/schedule'
 import { recurringRuleRepository } from '../../repositories/recurring-rule'
-import { canvasRepository } from '../../repositories/canvas'
-import { canvasNodeRepository } from '../../repositories/canvas-node'
-import { canvasEdgeRepository } from '../../repositories/canvas-edge'
-import { canvasGroupRepository } from '../../repositories/canvas-group'
 import { noteRepository } from '../../repositories/note'
 import { csvFileRepository } from '../../repositories/csv-file'
 import { pdfFileRepository } from '../../repositories/pdf-file'
@@ -15,6 +11,7 @@ import { imageFileRepository } from '../../repositories/image-file'
 import { folderRepository } from '../../repositories/folder'
 import { templateRepository } from '../../repositories/template'
 import { getTrashRoot } from './helpers'
+import { getTrashHandler } from './handlers/registry'
 import type { TrashEntityKind } from './types'
 
 /**
@@ -95,22 +92,6 @@ function collectTemplateCascade(rootId: string): CollectedRows {
   const row = templateRepository.findByIdIncludingDeleted(rootId)
   if (!row) throw new NotFoundError(`Template not found: ${rootId}`)
   return { ...emptyCollected(), templateIds: [rootId], rootTitle: row.title }
-}
-
-function collectCanvasCascade(rootId: string): CollectedRows {
-  const root = canvasRepository.findByIdIncludingDeleted(rootId)
-  if (!root) throw new NotFoundError(`Canvas not found: ${rootId}`)
-  const nodes = canvasNodeRepository.findByCanvasIdIncludingDeleted(rootId)
-  const edges = canvasEdgeRepository.findByCanvasIdIncludingDeleted(rootId)
-  const groups = canvasGroupRepository.findByCanvasIdIncludingDeleted(rootId)
-  return {
-    ...emptyCollected(),
-    canvasIds: [rootId],
-    canvasNodeIds: nodes.map((n) => n.id),
-    canvasEdgeIds: edges.map((e) => e.id),
-    canvasGroupIds: groups.map((g) => g.id),
-    rootTitle: root.title
-  }
 }
 
 /**
@@ -213,12 +194,26 @@ function collectFileCascade(
 
 // ─── dispatcher ───────────────────────────────────────────────
 
+/**
+ * entity type 에 따른 cascade 수집.
+ *
+ * 점진 이전 중 — 등록된 handler 가 있으면 registry 로 라우팅, 없으면 아래
+ * switch 의 inline `collect{X}Cascade` 함수로 fallback. Phase 3 종료 시점에
+ * 모든 entity 가 handler 로 이전되면 switch 는 제거 (handler 미등록 = 에러).
+ */
 export function collectCascade(
   workspaceId: string,
   entityType: TrashEntityKind,
   entityId: string,
   batchId: string
 ): CollectedRows {
+  // 1. handler 등록 여부 확인 — 등록되어 있으면 우회
+  const handler = getTrashHandler(entityType)
+  if (handler) {
+    return handler.collectCascade(entityId, { workspaceId, batchId })
+  }
+
+  // 2. fallback — 아직 handler 로 이전되지 않은 entity
   switch (entityType) {
     case 'todo':
       return collectTodoCascade(entityId)
@@ -229,7 +224,8 @@ export function collectCascade(
     case 'template':
       return collectTemplateCascade(entityId)
     case 'canvas':
-      return collectCanvasCascade(entityId)
+      // canvas 는 Phase 2 에서 handler 로 이전됨 — 위 경로로 처리됨
+      throw new Error('Canvas handler not registered — check trash/handlers/index.ts import')
     case 'note':
     case 'csv':
     case 'pdf':

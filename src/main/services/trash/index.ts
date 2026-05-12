@@ -59,6 +59,8 @@ import {
   purgeTrashDir
 } from './helpers'
 import { collectCascade, totalChildCount } from './cascade-collector'
+// side-effect: handler 들을 registry 에 등록 (trashService 호출 전에 반드시 import)
+import './handlers'
 
 /**
  * 휴지통 시스템 — soft delete + 복구 + 자동 정리.
