@@ -275,7 +275,7 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
   }, [])
 
   return (
-    <div className="h-full">
+    <div className="h-full" data-rally-note>
       <MilkdownProvider key={editorKey}>
         <MilkdownEditor
           workspaceId={workspaceId}
