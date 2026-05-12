@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { arrayMove } from '@dnd-kit/sortable'
 import {
   DndContext,
@@ -17,6 +17,9 @@ import { Table, TableBody, TableHead, TableHeader, TableRow } from '@shared/ui/t
 import { useReorderTodoList } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { TodoListItem } from './TodoListItem'
+
+// 빈 하위 할 일 배열을 매번 새 참조로 만들지 않도록 모듈 스코프 상수 사용 (React.memo 효과 유지)
+const EMPTY_SUB_TODOS: TodoItem[] = []
 
 interface Props {
   todos: TodoItem[]
@@ -57,25 +60,29 @@ export function TodoListView({
   )
 
   const activeTodo = activeId ? todos.find((t) => t.id === activeId) : null
+  const todoIds = useMemo(() => todos.map((t) => t.id), [todos])
 
-  function handleDragStart(event: DragStartEvent): void {
+  const handleDragStart = useCallback((event: DragStartEvent): void => {
     setActiveId(event.active.id as string)
-  }
+  }, [])
 
-  function handleDragEnd(event: DragEndEvent): void {
-    setActiveId(null)
-    if (filterActive) return
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = todos.findIndex((t) => t.id === active.id)
-    const newIndex = todos.findIndex((t) => t.id === over.id)
-    if (oldIndex === newIndex) return
-    const reordered = arrayMove(todos, oldIndex, newIndex)
-    reorderList.mutate({
-      workspaceId,
-      updates: reordered.map((t, i) => ({ id: t.id, order: i }))
-    })
-  }
+  const handleDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      setActiveId(null)
+      if (filterActive) return
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      const oldIndex = todos.findIndex((t) => t.id === active.id)
+      const newIndex = todos.findIndex((t) => t.id === over.id)
+      if (oldIndex === newIndex) return
+      const reordered = arrayMove(todos, oldIndex, newIndex)
+      reorderList.mutate({
+        workspaceId,
+        updates: reordered.map((t, i) => ({ id: t.id, order: i }))
+      })
+    },
+    [filterActive, todos, reorderList, workspaceId]
+  )
 
   if (todos.length === 0) {
     return (
@@ -93,7 +100,7 @@ export function TodoListView({
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <SortableContext items={todos.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+      <SortableContext items={todoIds} strategy={verticalListSortingStrategy}>
         <div className="rounded-md border border-border overflow-hidden">
           <Table>
             <TableHeader>
@@ -118,14 +125,12 @@ export function TodoListView({
                 <TodoListItem
                   key={todo.id}
                   todo={todo}
-                  subTodos={subTodoMap.get(todo.id) ?? []}
+                  subTodos={subTodoMap.get(todo.id) ?? EMPTY_SUB_TODOS}
                   workspaceId={workspaceId}
                   filterActive={filterActive}
-                  onTitleClick={() => onItemClick(todo.id)}
-                  onOpenInPane={
-                    onOpenInPane ? (paneId) => onOpenInPane(todo.id, paneId) : undefined
-                  }
-                  onDeleted={() => onItemDeleted?.(todo.id)}
+                  onItemClick={onItemClick}
+                  onOpenInPane={onOpenInPane}
+                  onItemDeleted={onItemDeleted}
                 />
               ))}
             </TableBody>
