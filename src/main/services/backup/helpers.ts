@@ -1,5 +1,6 @@
 import fs from 'fs'
 import path from 'path'
+import type { SQLiteTable } from 'drizzle-orm/sqlite-core'
 import { db } from '../../db'
 
 /**
@@ -14,21 +15,41 @@ import { db } from '../../db'
 
 // ─── 직렬화 ────────────────────────────────────────────────
 
-/** Drizzle timestamp_ms → number (Date → getTime). JSON.stringify replacer 활용. */
-export function serializeForExport(data: unknown): unknown {
-  return JSON.parse(
-    JSON.stringify(data, (_, value) => (value instanceof Date ? value.getTime() : value))
-  )
+/**
+ * Date 인스턴스 모두를 epoch ms (number) 로 사전 변환.
+ *
+ * JSON.stringify 의 replacer 는 Date.toJSON() 결과 (ISO string) 를 받게 되어
+ * `value instanceof Date` 매칭이 안 됨 → 명시적 재귀 변환으로 실제 number 직렬화.
+ */
+function dateToNumber(obj: unknown): unknown {
+  if (obj instanceof Date) return obj.getTime()
+  if (Array.isArray(obj)) return obj.map(dateToNumber)
+  if (obj !== null && typeof obj === 'object') {
+    const result: Record<string, unknown> = {}
+    for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+      result[k] = dateToNumber(v)
+    }
+    return result
+  }
+  return obj
 }
 
-/** number → Date (Drizzle insert 용) */
-export function toDate(ms: number): Date {
-  return new Date(ms)
+/** Drizzle timestamp_ms (Date) → number ms. JSON 직렬화 후에도 number 로 보존. */
+export function serializeForExport(data: unknown): unknown {
+  return dateToNumber(data)
+}
+
+/**
+ * number 또는 ISO string → Date (Drizzle insert 용).
+ * 구버전 백업의 ISO string 도 자연스럽게 처리.
+ */
+export function toDate(value: number | string): Date {
+  return new Date(value)
 }
 
 /** nullable timestamp */
-export function toDateOrNull(ms: number | null): Date | null {
-  return ms != null ? new Date(ms) : null
+export function toDateOrNull(value: number | string | null): Date | null {
+  return value != null ? new Date(value) : null
 }
 
 // ─── topological sort ────────────────────────────────────
@@ -74,24 +95,23 @@ export function copyDirSync(src: string, dest: string): void {
 
 // ─── batch insert ───────────────────────────────────────
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * 청크 단위 batch insert.
  *
  * SQLite 의 SQLITE_MAX_VARIABLE_NUMBER (기본 999) 제약 우회 — 99 row 씩
  * 분할 insert. onConflictDoNothing 으로 ID 충돌 (재실행) 안전.
  *
- * `any` 사용은 Drizzle table 의 동적 타입 매칭 한계 — Phase 3 에서
- * 제네릭 + zod 도입 시 함께 제거 예정.
+ * 타입: SQLiteTable + object[] 로 any 제거. Drizzle 의 동적 row 타입과 호출 측의
+ * zod-derived 타입 간 변환은 caller 책임 (deserializer 에서 명시).
  */
-export function batchInsert(table: any, items: any[]): void {
+export function batchInsert(table: SQLiteTable, items: object[]): void {
   if (items.length === 0) return
   const CHUNK = 99
   for (let i = 0; i < items.length; i += CHUNK) {
     db.insert(table)
-      .values(items.slice(i, i + CHUNK))
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      .values(items.slice(i, i + CHUNK) as any)
       .onConflictDoNothing()
       .run()
   }
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
