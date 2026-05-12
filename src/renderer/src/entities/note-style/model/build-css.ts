@@ -19,8 +19,8 @@ const SELECTOR: Record<StyleElementKey, string> = {
   blockquote: 'blockquote'
 }
 
-function ruleFor(element: StyleElementKey, style: ElementStyle): string {
-  const selector = `[data-rally-note] ${SELECTOR[element]}`
+function ruleFor(rootSelector: string, element: StyleElementKey, style: ElementStyle): string {
+  const selector = `${rootSelector} ${SELECTOR[element]}`
   return [
     `${selector} {`,
     `  font-size: ${style.fontSize};`,
@@ -32,8 +32,17 @@ function ruleFor(element: StyleElementKey, style: ElementStyle): string {
   ].join('\n')
 }
 
-export function buildNoteStyleCss(set: NoteStyleSet): string {
+/**
+ * `set` 을 CSS 문자열로 변환.
+ *
+ * 기본 root selector 는 `[data-rally-note]` — 노트 본문 영역에 부착해 사용.
+ * 미리보기 등 별도 영역에서 다른 set 을 적용하고 싶을 때 `rootSelector` 를 바꾼다.
+ */
+export function buildNoteStyleCss(
+  set: NoteStyleSet,
+  rootSelector: string = '[data-rally-note]'
+): string {
   return Object.entries(set)
-    .map(([key, style]) => ruleFor(key as StyleElementKey, style))
+    .map(([key, style]) => ruleFor(rootSelector, key as StyleElementKey, style))
     .join('\n\n')
 }

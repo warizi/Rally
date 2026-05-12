@@ -70,9 +70,7 @@ export function useNoteStyle(): {
     settings,
     isLoading: query.isLoading,
     save: (next) => mutation.mutate(next),
-    saveMode: (mode, set) =>
-      mutation.mutate({ ...settings, [mode]: set }),
-    resetMode: (mode) =>
-      mutation.mutate({ ...settings, [mode]: DEFAULT_NOTE_STYLE_SETTINGS[mode] })
+    saveMode: (mode, set) => mutation.mutate({ ...settings, [mode]: set }),
+    resetMode: (mode) => mutation.mutate({ ...settings, [mode]: DEFAULT_NOTE_STYLE_SETTINGS[mode] })
   }
 }

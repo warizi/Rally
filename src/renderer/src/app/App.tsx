@@ -10,6 +10,7 @@ import { WorkspaceInitializer } from './providers/workspace-initializer'
 import { ThemeInitializer } from './providers/theme-initializer'
 import { OnboardingInitializer } from './providers/onboarding-initializer'
 import { OnboardingStepWatcher } from './providers/onboarding-step-watcher'
+import { NoteStyleRuntime } from './providers/note-style-runtime'
 import { WelcomeModalContainer } from '@features/onboarding/welcome-modal'
 
 function App(): React.JSX.Element {
@@ -20,6 +21,7 @@ function App(): React.JSX.Element {
         <ThemeInitializer />
         <OnboardingInitializer />
         <OnboardingStepWatcher />
+        <NoteStyleRuntime />
         <RouterProvider router={DefaultRouter} />
         <WelcomeModalContainer />
         <Toaster />

@@ -12,10 +12,11 @@ import { cn } from '@/shared/lib/utils'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import { GeneralSettings } from './GeneralSettings'
 import { DisplaySettings } from './DisplaySettings'
+import { NoteSettings } from './NoteSettings'
 import { AISettings } from './AISettings'
 import { TrashSettings } from './TrashSettings'
 
-type SettingsTab = 'general' | 'display' | 'trash' | 'ai'
+type SettingsTab = 'general' | 'display' | 'note' | 'trash' | 'ai'
 
 interface SettingsDialogProps {
   open: boolean
@@ -25,6 +26,7 @@ interface SettingsDialogProps {
 const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '기본' },
   { id: 'display', label: '디스플레이' },
+  { id: 'note', label: '노트' },
   { id: 'trash', label: '휴지통' },
   { id: 'ai', label: 'AI (Claude)' }
 ]
@@ -85,6 +87,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
               <div className="p-6">
                 {activeTab === 'general' && <GeneralSettings />}
                 {activeTab === 'display' && <DisplaySettings />}
+                {activeTab === 'note' && <NoteSettings />}
                 {activeTab === 'trash' && <TrashSettings />}
                 {activeTab === 'ai' && <AISettings />}
               </div>
