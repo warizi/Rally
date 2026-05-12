@@ -32,6 +32,8 @@
     "coverage:summary": "node scripts/coverage-summary.mjs",
     "check:cleanup": "node scripts/check-cleanup-completeness.mjs",
     "build:mcp": "tsup --config src/mcp-server/tsup.config.ts",
+    "build:analyze": "ANALYZE=1 npm run build",
+    "build:size": "npm run build && node scripts/measure-bundle.mjs",
     "security:scan": "electronegativity -i src/main -i src/preload",
     "security:scan:high": "electronegativity -i src/main -i src/preload -s high"
   },
@@ -125,6 +127,7 @@
     "prettier": "^3.7.4",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vite": "^7.2.6",
