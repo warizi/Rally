@@ -200,7 +200,15 @@ function createWindow(): void {
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      // 보안-1: 렌더러 프로세스를 OS 샌드박스 안에서 실행 (Chromium 표준 모델).
+      // RCE 발생 시 임의 코드가 파일시스템 / 네이티브 모듈에 접근 못 하도록 차단.
+      // preload 는 fs/path/child_process 등 native Node 모듈을 일절 사용하지 않음
+      // (api-surface.test.ts 가 회귀 차단).
+      sandbox: true,
+      // 명시적 보안 default 선언 (Electron 기본값이지만, 회귀 가시성을 위해 박아 둠).
+      contextIsolation: true,
+      nodeIntegration: false,
+      webSecurity: true
     }
   })
 
