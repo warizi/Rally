@@ -1,4 +1,4 @@
-import { trashService } from './trash'
+import { trashService } from './index'
 
 const CHECK_INTERVAL = 60 * 60 * 1000 // 1시간
 
@@ -19,6 +19,9 @@ function runSweep(): void {
  * 자동 휴지통 비우기 cron — 1시간마다 모든 워크스페이스의 만료 batch 영구 삭제.
  * 만료 기준은 사용자 설정 (`trash.autoEmptyDays`, default 30일).
  * 'never' 설정 시 모든 sweep 건너뜀 — 사용자가 수동으로만 비울 수 있음.
+ *
+ * 책임 경계: 본 모듈은 cron timer 만 관리. 실제 sweep 로직은
+ * `trash-purger.ts.sweepAll()`. trashService 파사드를 통해 호출.
  */
 export const trashSweeper = {
   start(): void {

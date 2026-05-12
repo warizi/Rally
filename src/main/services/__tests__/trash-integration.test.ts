@@ -249,4 +249,196 @@ describe('trash integration matrix', () => {
       vi.useRealTimers()
     }
   })
+
+  // ──────────────────────────────────────────────
+  // S6: retention 경계값 — 1/7/30/90/365 일별 sweepAll 동작
+  // ──────────────────────────────────────────────
+  describe('S6 — retention 경계값', () => {
+    it.each([
+      ['1', 1],
+      ['7', 7],
+      ['30', 30],
+      ['90', 90],
+      ['365', 365]
+    ] as const)(
+      'retention=%s sweepAll → cutoff 경과 batch만 purge',
+      (retentionKey, days) => {
+        vi.useFakeTimers()
+        try {
+          const ws = seed.workspace({ path: wsDir })
+          const oldTodo = seed.todo(ws.id, { title: 'Old' })
+          const freshTodo = seed.todo(ws.id, { title: 'Fresh' })
+
+          const dayMs = 24 * 60 * 60 * 1000
+          // retention + 1 일 전 삭제 (만료 대상)
+          vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+          trashService.softRemove(ws.id, 'todo', oldTodo.id)
+
+          // 오늘 삭제 (보존)
+          const now = new Date(
+            new Date('2026-01-01T00:00:00Z').getTime() + (days + 2) * dayMs
+          )
+          vi.setSystemTime(now)
+          trashService.softRemove(ws.id, 'todo', freshTodo.id)
+
+          trashService.setRetention(retentionKey)
+          const purged = trashService.sweepAll()
+
+          expect(purged, `retention=${retentionKey}: 만료 batch 1개 purge`).toBe(1)
+
+          // Old 는 hard delete, Fresh 는 여전히 trash
+          const oldRow = testDb
+            .select()
+            .from(schema.todos)
+            .where(eq(schema.todos.id, oldTodo.id))
+            .get()
+          const freshRow = testDb
+            .select()
+            .from(schema.todos)
+            .where(eq(schema.todos.id, freshTodo.id))
+            .get()
+          expect(oldRow).toBeUndefined()
+          expect(freshRow?.deletedAt).not.toBeNull()
+        } finally {
+          vi.useRealTimers()
+        }
+      }
+    )
+
+    it("retention='never' 는 sweepAll 호출해도 0 — 오래된 batch 도 보존", () => {
+      vi.useFakeTimers()
+      try {
+        const ws = seed.workspace({ path: wsDir })
+        const todo = seed.todo(ws.id, { title: 'Ancient' })
+
+        // 10년 전 삭제
+        vi.setSystemTime(new Date('2016-01-01T00:00:00Z'))
+        trashService.softRemove(ws.id, 'todo', todo.id)
+
+        vi.setSystemTime(new Date('2026-05-12T00:00:00Z'))
+        trashService.setRetention('never')
+
+        const purged = trashService.sweepAll()
+        expect(purged).toBe(0)
+
+        // batch 여전히 존재
+        const batches = testDb
+          .select()
+          .from(schema.trashBatches)
+          .where(eq(schema.trashBatches.workspaceId, ws.id))
+          .all()
+        expect(batches.length).toBe(1)
+      } finally {
+        vi.useRealTimers()
+      }
+    })
+  })
+
+  // ──────────────────────────────────────────────
+  // S6.5: template handler — soft delete / restore (커버리지 보강)
+  // ──────────────────────────────────────────────
+  it('S6.5 — template softRemove + restore round-trip', () => {
+    const ws = seed.workspace({ path: wsDir })
+    // template entity 는 seed 헬퍼가 없으므로 직접 insert
+    const tplId = 'tpl-' + Date.now()
+    testDb
+      .insert(schema.templates)
+      .values({
+        id: tplId,
+        workspaceId: ws.id,
+        type: 'note',
+        title: 'Daily Standup',
+        jsonData: JSON.stringify({ body: 'standup template' }),
+        createdAt: new Date()
+      })
+      .run()
+
+    const batchId = trashService.softRemove(ws.id, 'template', tplId)
+    expect(batchId).toBeTruthy()
+
+    // template row 가 trash 상태
+    const trashed = testDb
+      .select()
+      .from(schema.templates)
+      .where(eq(schema.templates.id, tplId))
+      .get()
+    expect(trashed?.deletedAt).not.toBeNull()
+    expect(trashed?.trashBatchId).toBe(batchId)
+
+    // restore
+    trashService.restore(batchId)
+    const restored = testDb
+      .select()
+      .from(schema.templates)
+      .where(eq(schema.templates.id, tplId))
+      .get()
+    expect(restored?.deletedAt).toBeNull()
+    expect(restored?.trashBatchId).toBeNull()
+  })
+
+  // ──────────────────────────────────────────────
+  // S7: 양방향 entity link 정리 — note 삭제 시 양쪽 모두 정리 + snapshot 보관
+  // ──────────────────────────────────────────────
+  it('S7 — softRemove(note) cleans both directions of entity_links + captures snapshot', () => {
+    const ws = seed.workspace({ path: wsDir })
+    const note = seed.note(ws.id, { title: 'N' })
+    const todo = seed.todo(ws.id, { title: 'T' })
+
+    // note → todo (forward)
+    testDb
+      .insert(schema.entityLinks)
+      .values({
+        sourceType: 'note',
+        sourceId: note.id,
+        targetType: 'todo',
+        targetId: todo.id,
+        workspaceId: ws.id,
+        createdAt: new Date()
+      })
+      .run()
+    // todo → note (reverse) — 양방향 link 검증
+    testDb
+      .insert(schema.entityLinks)
+      .values({
+        sourceType: 'todo',
+        sourceId: todo.id,
+        targetType: 'note',
+        targetId: note.id,
+        workspaceId: ws.id,
+        createdAt: new Date()
+      })
+      .run()
+
+    const beforeLinks = testDb.select().from(schema.entityLinks).all()
+    expect(beforeLinks.length).toBe(2)
+
+    const batchId = trashService.softRemove(ws.id, 'note', note.id)
+
+    // 양방향 모두 hard delete
+    const afterLinks = testDb.select().from(schema.entityLinks).all()
+    expect(afterLinks.length).toBe(0)
+
+    // batch metadata 에 양방향 snapshot 보관
+    const batchRow = testDb
+      .select()
+      .from(schema.trashBatches)
+      .where(eq(schema.trashBatches.id, batchId))
+      .get()
+    expect(batchRow?.metadata).not.toBeNull()
+    const meta = JSON.parse(batchRow!.metadata!) as {
+      links?: Array<{
+        sourceType: string
+        sourceId: string
+        targetType: string
+        targetId: string
+      }>
+    }
+    expect(meta.links).toBeDefined()
+    expect(meta.links!.length).toBe(2)
+
+    // restore 시 양방향 모두 복원
+    trashService.restore(batchId)
+    const restoredLinks = testDb.select().from(schema.entityLinks).all()
+    expect(restoredLinks.length).toBe(2)
+  })
 })

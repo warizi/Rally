@@ -123,9 +123,15 @@ export const trashCollector = {
 
       // 3. entity-link / reminder hard delete (snapshot 은 metadata 에 있음)
       // canvas-node refId 로 연결된 노드는 손대지 않음 — orphan 표시는 UI 책임
+      // 모든 도메인에 대해 양방향 link 정리 — 누락 시 trash 상태 entity 가리키는
+      // dangling link 가 남음. snapshot 은 captureLinks 가 이미 모두 잡았으므로 안전.
       for (const id of allTodoIds) entityLinkRepository.removeAllByEntity('todo', id)
       for (const id of allScheduleIds) entityLinkRepository.removeAllByEntity('schedule', id)
       for (const id of allCanvasIds) entityLinkRepository.removeAllByEntity('canvas', id)
+      for (const id of allNoteIds) entityLinkRepository.removeAllByEntity('note', id)
+      for (const id of allCsvIds) entityLinkRepository.removeAllByEntity('csv', id)
+      for (const id of allPdfIds) entityLinkRepository.removeAllByEntity('pdf', id)
+      for (const id of allImageIds) entityLinkRepository.removeAllByEntity('image', id)
       if (allTodoIds.length > 0) {
         db.delete(reminders)
           .where(and(eq(reminders.entityType, 'todo'), inArray(reminders.entityId, allTodoIds)))
