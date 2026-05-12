@@ -61,17 +61,28 @@ export function mapFolderOpenState(
   mapper: IdMapper
 ): string | undefined {
   if (!json) return json
+  // silent fallback 제거 (P0-2 Phase 3): 손상된 JSON 은 명시적으로 throw.
+  // 호출 측은 backup deserializer 의 트랜잭션 — 실패 시 newPath 정리 + rethrow.
+  let parsed: unknown
   try {
-    const parsed: Record<string, boolean> = JSON.parse(json)
-    const mapped: Record<string, boolean> = {}
-    for (const [oldFolderId, value] of Object.entries(parsed)) {
-      const newId = mapper.mapOrSkip('folder', oldFolderId)
-      if (newId) mapped[newId] = value
-    }
-    return JSON.stringify(mapped)
-  } catch {
-    return json
+    parsed = JSON.parse(json)
+  } catch (e) {
+    throw new Error(`Invalid folderOpenState JSON: ${(e as Error).message}`)
   }
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Invalid folderOpenState: expected an object map<folderId, boolean>')
+  }
+  const mapped: Record<string, boolean> = {}
+  for (const [oldFolderId, value] of Object.entries(parsed)) {
+    if (typeof value !== 'boolean') {
+      throw new Error(
+        `Invalid folderOpenState entry: '${oldFolderId}' value is not boolean (got ${typeof value})`
+      )
+    }
+    const newId = mapper.mapOrSkip('folder', oldFolderId)
+    if (newId) mapped[newId] = value
+  }
+  return JSON.stringify(mapped)
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */

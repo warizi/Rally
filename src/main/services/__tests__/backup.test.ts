@@ -93,4 +93,63 @@ describe('backupService — round trip', () => {
 
     expect(() => backupService.readManifest(badZip)).toThrow(/Unsupported backup version/)
   })
+
+  // ──────────────────────────────────────────────
+  // P0-2 Phase 3 zod 검증 시나리오
+  // ──────────────────────────────────────────────
+
+  it('S4 — import rejects malformed JSON (zod parse fail)', async () => {
+    const seeded = seedFullWorkspace({ workspacePath, name: 'Source' })
+
+    await backupService.export(seeded.ws.id, zipPath)
+
+    // zip 풀어서 folders.json 을 손상시키고 다시 압축
+    const tmpDir = path.join(tmpRoot, 'tamper-unzip')
+    fs.mkdirSync(tmpDir, { recursive: true })
+    new AdmZip(zipPath).extractAllTo(tmpDir, true)
+
+    // folders.json 의 한 row 에 필수 필드 'relativePath' 제거 → ZodError
+    const foldersFile = path.join(tmpDir, 'data', 'folders.json')
+    const folders = JSON.parse(fs.readFileSync(foldersFile, 'utf8')) as unknown[]
+    if (folders.length > 0) {
+      const first = folders[0] as Record<string, unknown>
+      delete first.relativePath
+    }
+    fs.writeFileSync(foldersFile, JSON.stringify(folders))
+
+    // 재패키징
+    const tamperedZip = path.join(tmpRoot, 'tampered.zip')
+    const out = new AdmZip()
+    out.addLocalFolder(tmpDir)
+    out.writeZip(tamperedZip)
+
+    await expect(
+      backupService.import(tamperedZip, 'Target', importPath)
+    ).rejects.toThrow(/Invalid backup data in folders\.json/)
+  })
+
+  it('S5 — import rejects non-array JSON file', async () => {
+    const seeded = seedFullWorkspace({ workspacePath, name: 'Source' })
+
+    await backupService.export(seeded.ws.id, zipPath)
+
+    const tmpDir = path.join(tmpRoot, 'tamper-unzip-2')
+    fs.mkdirSync(tmpDir, { recursive: true })
+    new AdmZip(zipPath).extractAllTo(tmpDir, true)
+
+    // folders.json 을 객체로 치환 (배열 아님)
+    fs.writeFileSync(
+      path.join(tmpDir, 'data', 'folders.json'),
+      JSON.stringify({ malformed: true })
+    )
+
+    const tamperedZip = path.join(tmpRoot, 'tampered2.zip')
+    const out = new AdmZip()
+    out.addLocalFolder(tmpDir)
+    out.writeZip(tamperedZip)
+
+    await expect(
+      backupService.import(tamperedZip, 'Target', importPath)
+    ).rejects.toThrow(/is not an array/)
+  })
 })
