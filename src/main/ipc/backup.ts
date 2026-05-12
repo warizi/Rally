@@ -1,6 +1,8 @@
 import { ipcMain, dialog } from 'electron'
-import { handle, handleAsync } from '../lib/handle'
+import { handleAsync } from '../lib/handle'
 import { successResponse } from '../lib/ipc-response'
+import { validateIpc, validateIpcAsync } from '../lib/ipc-validate'
+import { zipPathSchema, workspaceNameSchema, workspacePathSchema } from './schemas'
 import { backupService } from '../services/backup'
 import { workspaceService } from '../services/workspace'
 
@@ -24,11 +26,18 @@ export function registerBackupHandlers(): void {
     return canceled ? null : filePaths[0]
   })
 
-  ipcMain.handle('backup:readManifest', (_, zipPath: string) =>
-    handle(() => backupService.readManifest(zipPath))
+  // 보안-1 Phase 3: zipPath path traversal 차단 + .zip 확장자 강제.
+  ipcMain.handle(
+    'backup:readManifest',
+    validateIpc([zipPathSchema], (zipPath) => backupService.readManifest(zipPath))
   )
 
-  ipcMain.handle('backup:import', async (_, zipPath: string, name: string, path: string) =>
-    handleAsync(() => backupService.import(zipPath, name, path))
+  // 보안-1 Phase 3: zipPath / name / 새 워크스페이스 path 검증.
+  ipcMain.handle(
+    'backup:import',
+    validateIpcAsync(
+      [zipPathSchema, workspaceNameSchema, workspacePathSchema],
+      (zipPath, name, path) => backupService.import(zipPath, name, path)
+    )
   )
 }

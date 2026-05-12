@@ -1,62 +1,52 @@
 import { ipcMain, IpcMainInvokeEvent, IpcMainEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { terminalCreateSchema } from './schemas'
 import { nanoid } from 'nanoid'
 import { terminalService } from '../services/terminal'
 import { terminalSessionRepository } from '../repositories/terminal-session'
 import { terminalLayoutRepository } from '../repositories/terminal-layout'
 
 export function registerTerminalHandlers(): void {
-  // PTY 생성 → 동일 ID를 PTY 서비스와 DB 세션 양쪽에 사용
+  // PTY 생성 → 동일 ID를 PTY 서비스와 DB 세션 양쪽에 사용.
+  // 보안-1 Phase 3: cwd / shell / cols / rows / id zod 검증.
   ipcMain.handle(
     'terminal:create',
-    (
-      _: IpcMainInvokeEvent,
-      args: {
-        workspaceId: string
-        cwd: string
-        shell?: string
-        cols: number
-        rows: number
-        id?: string // 복원 시 기존 DB 세션 ID 전달, 신규 시 생략
-        sortOrder?: number // 신규 탭의 순서 (기본 0)
-      }
-    ): IpcResponse<{ id: string }> =>
-      handle(() => {
-        const id = args.id ?? nanoid()
-        terminalService.create(id, args.workspaceId, args.cwd, args.shell, args.cols, args.rows)
+    validateIpc([terminalCreateSchema], (args) => {
+      const id = args.id ?? nanoid()
+      terminalService.create(id, args.workspaceId, args.cwd, args.shell, args.cols, args.rows)
 
-        if (!args.id) {
-          // 신규 탭: DB 세션 레코드도 생성 — sortOrder는 호출자가 전달
-          terminalSessionRepository.create({
-            id,
-            workspaceId: args.workspaceId,
-            layoutId: null,
-            name: 'zsh',
-            cwd: args.cwd,
-            shell: args.shell ?? 'zsh',
-            rows: args.rows,
-            cols: args.cols,
-            screenSnapshot: null,
-            sortOrder: args.sortOrder ?? 0,
-            isActive: 1
-          })
-        }
-        return { id }
-      })
+      if (!args.id) {
+        // 신규 탭: DB 세션 레코드도 생성 — sortOrder는 호출자가 전달
+        terminalSessionRepository.create({
+          id,
+          workspaceId: args.workspaceId,
+          layoutId: null,
+          name: 'zsh',
+          cwd: args.cwd,
+          shell: args.shell ?? 'zsh',
+          rows: args.rows,
+          cols: args.cols,
+          screenSnapshot: null,
+          sortOrder: args.sortOrder ?? 0,
+          isActive: 1
+        })
+      }
+      return { id }
+    })
   )
 
-  // 단일 PTY kill
+  // 단일 PTY kill — 보안-1 Phase 3: nanoid 형식 검증.
   ipcMain.handle(
     'terminal:destroy',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => terminalService.destroy(id))
+    validateIpc([idSchema], (id) => terminalService.destroy(id))
   )
 
-  // 워크스페이스의 모든 PTY kill
+  // 워크스페이스의 모든 PTY kill — 보안-1 Phase 3: nanoid 검증.
   ipcMain.handle(
     'terminal:destroyAll',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => terminalService.destroyAll(workspaceId))
+    validateIpc([idSchema], (workspaceId) => terminalService.destroyAll(workspaceId))
   )
 
   // 키 입력 (fire-and-forget)
