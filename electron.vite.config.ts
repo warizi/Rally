@@ -2,6 +2,11 @@ import { resolve } from 'path'
 import { defineConfig, externalizeDepsPlugin } from 'electron-vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
+import { visualizer } from 'rollup-plugin-visualizer'
+import type { Plugin } from 'vite'
+
+// `ANALYZE=1 npm run build` 로만 활성화. 일반 빌드에는 영향 없음.
+const ANALYZE = process.env.ANALYZE === '1'
 
 export default defineConfig({
   main: {},
@@ -23,6 +28,18 @@ export default defineConfig({
         '@shared': resolve('src/renderer/src/shared')
       }
     },
-    plugins: [react(), tailwindcss()]
+    plugins: [
+      react(),
+      tailwindcss(),
+      // 성능-1: 번들 분석. `ANALYZE=1 npm run build` 시 dist/stats.html 생성.
+      ANALYZE &&
+        (visualizer({
+          filename: 'dist/stats.html',
+          gzipSize: true,
+          brotliSize: true,
+          template: 'treemap',
+          open: false
+        }) as unknown as Plugin)
+    ].filter(Boolean) as Plugin[]
   }
 })
