@@ -1,3 +1,8 @@
+/* eslint-disable react-hooks/refs */
+// 이 파일은 `useTreeNodeDnd` 를 통해 @dnd-kit 의 callback ref setter
+// (setDragRef / setBeforeRef / setAfterRef) 와 boolean 상태 (isBeforeOver / isAfterOver
+// / isDragging) 를 사용한다. react-hooks/refs 룰이 "Ref" suffix property 와 일부
+// boolean 셀렉터를 ref 값 접근으로 잘못 인식하는 false positive 가 발생하므로 비활성화.
 import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'

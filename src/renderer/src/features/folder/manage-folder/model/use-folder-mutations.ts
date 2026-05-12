@@ -24,7 +24,30 @@ import { useDuplicateImageFile, useRemoveImageFile } from '@entities/image-file'
  *
  * 반환 형태는 flat (각 이름 유지) — 호출 측 변경 최소화.
  */
-export function useFolderMutations() {
+export type UseFolderMutationsReturn = {
+  createFolder: ReturnType<typeof useCreateFolder>['mutate']
+  isCreatingFolder: boolean
+  rename: ReturnType<typeof useRenameFolder>['mutate']
+  isRenaming: boolean
+  remove: ReturnType<typeof useRemoveFolder>['mutate']
+  isRemoving: boolean
+  updateMeta: ReturnType<typeof useUpdateFolderMeta>['mutate']
+  isUpdatingMeta: boolean
+  duplicateNote: ReturnType<typeof useDuplicateNote>['mutate']
+  removeNote: ReturnType<typeof useRemoveNote>['mutate']
+  isRemovingNote: boolean
+  duplicateCsvFile: ReturnType<typeof useDuplicateCsvFile>['mutate']
+  removeCsvFile: ReturnType<typeof useRemoveCsvFile>['mutate']
+  isRemovingCsv: boolean
+  duplicatePdfFile: ReturnType<typeof useDuplicatePdfFile>['mutate']
+  removePdfFile: ReturnType<typeof useRemovePdfFile>['mutate']
+  isRemovingPdf: boolean
+  duplicateImageFile: ReturnType<typeof useDuplicateImageFile>['mutate']
+  removeImageFile: ReturnType<typeof useRemoveImageFile>['mutate']
+  isRemovingImage: boolean
+}
+
+export function useFolderMutations(): UseFolderMutationsReturn {
   const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()
   const { mutate: rename, isPending: isRenaming } = useRenameFolder()
   const { mutate: remove, isPending: isRemoving } = useRemoveFolder()
