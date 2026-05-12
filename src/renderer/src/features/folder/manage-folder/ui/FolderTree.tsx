@@ -31,7 +31,7 @@ const ROW_HEIGHT = 36
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
-  const { openState, toggle, collapseAll, expandToItem } = useTreeOpenState(tabId)
+  const { openState, toggle, collapseAll, expandToItem, expandIds } = useTreeOpenState(tabId)
 
   // 트리 내 DnD 이동을 @dnd-kit 기반으로 처리
   useTreeMoveListener(workspaceId)
@@ -63,7 +63,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     dialogState
   })
 
-  // 검색 (Phase 2)
+  // 검색 (Phase 2 + Phase 3)
   const [searchOpen, setSearchOpen] = useState(false)
   const search = useFolderSearch(tree)
 
@@ -78,6 +78,20 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     setSearchOpen(false)
     search.clear()
   }, [search])
+
+  // Phase 3: 매치 결과의 ancestor 폴더 일괄 자동 펼침
+  const ancestorIds = search.result.ancestorIds
+  useEffect(() => {
+    if (ancestorIds.size === 0) return
+    expandIds(ancestorIds, treeRef.current)
+  }, [ancestorIds, expandIds])
+
+  // Phase 3: 활성 매치로 스크롤 (react-arborist API)
+  const activeId = search.activeId
+  useEffect(() => {
+    if (!activeId) return
+    treeRef.current?.scrollTo(activeId, 'center')
+  }, [activeId])
 
   const NodeRenderer = useCallback(
     (props: NodeRendererProps<WorkspaceTreeNode>) => (
