@@ -15,7 +15,9 @@ export function useRuntimeNoteStyles(): void {
   const mode = useThemeMode()
 
   useEffect(() => {
-    const css = buildNoteStyleCss(settings[mode])
+    // attribute selector 를 2회 반복해 specificity 를 (0,2,1) 로 끌어올려
+    // global.css 의 `.milkdown .ProseMirror h1` (0,2,1) 과 동률 → load order 로 승리.
+    const css = buildNoteStyleCss(settings[mode], '[data-rally-note][data-rally-note]')
     let tag = document.getElementById(STYLE_TAG_ID) as HTMLStyleElement | null
     if (!tag) {
       tag = document.createElement('style')

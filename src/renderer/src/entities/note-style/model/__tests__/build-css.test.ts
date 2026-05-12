@@ -35,4 +35,17 @@ describe('buildNoteStyleCss', () => {
     const ruleCount = (css.match(/\[data-rally-note\]/g) ?? []).length
     expect(ruleCount).toBe(10)
   })
+
+  it('rootSelector 인자로 다른 selector 사용 가능 (preview / specificity boost)', () => {
+    const previewCss = buildNoteStyleCss(DEFAULT_NOTE_STYLE_LIGHT, '[data-rally-note-preview]')
+    expect(previewCss).toMatch(/\[data-rally-note-preview\]\s+h1\s*\{/)
+    expect(previewCss).not.toMatch(/\[data-rally-note\]\s/)
+
+    const boostedCss = buildNoteStyleCss(
+      DEFAULT_NOTE_STYLE_LIGHT,
+      '[data-rally-note][data-rally-note]'
+    )
+    // attribute 가 2회 — global.css 의 `.milkdown .ProseMirror h1` 와 specificity 동률
+    expect(boostedCss).toMatch(/\[data-rally-note\]\[data-rally-note\]\s+h1\s*\{/)
+  })
 })
