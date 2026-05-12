@@ -40,6 +40,23 @@ export default defineConfig({
           template: 'treemap',
           open: false
         }) as unknown as Plugin)
-    ].filter(Boolean) as Plugin[]
+    ].filter(Boolean) as Plugin[],
+    build: {
+      // 성능-1 Phase 3: 무거운 vendor 라이브러리를 별도 청크로 분리해 메인 청크
+      // 비대화를 방지하고 라우트 lazy 효과를 극대화.
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            xyflow: ['@xyflow/react'],
+            'react-pdf': ['react-pdf'],
+            xterm: ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-serialize'],
+            recharts: ['recharts'],
+            milkdown: ['@milkdown/kit', '@milkdown/react'],
+            'dnd-kit': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/modifiers'],
+            'framer-motion': ['framer-motion']
+          }
+        }
+      }
+    }
   }
 })
