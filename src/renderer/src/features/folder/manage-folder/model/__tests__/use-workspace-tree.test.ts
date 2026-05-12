@@ -104,6 +104,7 @@ describe('노트만 (폴더 없음)', () => {
         id: 'n1',
         name: 'My Note', // title → name 변환
         relativePath: 'my-note.md',
+        extension: '.md',
         description: 'desc',
         preview: 'preview text',
         folderId: null,

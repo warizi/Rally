@@ -51,6 +51,11 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
 import { useTreeMoveListener } from '../model/use-tree-move-listener'
+import {
+  collectDescendantPathnames,
+  findFolderNode,
+  countVisibleNodes
+} from '../model/folder-tree-helpers'
 import type {
   WorkspaceTreeNode,
   FolderTreeNode,
@@ -76,48 +81,6 @@ interface Props {
 }
 
 const ROW_HEIGHT = 36
-
-const KIND_TO_PREFIX: Record<string, string> = {
-  note: '/folder/note/',
-  csv: '/folder/csv/',
-  pdf: '/folder/pdf/',
-  image: '/folder/image/'
-}
-
-function collectDescendantPathnames(nodes: WorkspaceTreeNode[]): string[] {
-  const result: string[] = []
-  for (const node of nodes) {
-    const prefix = KIND_TO_PREFIX[node.kind]
-    if (prefix) {
-      result.push(prefix + node.id)
-    } else if (node.kind === 'folder') {
-      result.push(...collectDescendantPathnames(node.children))
-    }
-  }
-  return result
-}
-
-function findFolderNode(nodes: WorkspaceTreeNode[], id: string): FolderTreeNode | null {
-  for (const node of nodes) {
-    if (node.id === id && node.kind === 'folder') return node as FolderTreeNode
-    if (node.kind === 'folder') {
-      const found = findFolderNode(node.children, id)
-      if (found) return found
-    }
-  }
-  return null
-}
-
-function countVisibleNodes(nodes: WorkspaceTreeNode[], openState: Record<string, boolean>): number {
-  let count = 0
-  for (const node of nodes) {
-    count++
-    if (node.kind === 'folder' && openState[node.id]) {
-      count += countVisibleNodes(node.children, openState)
-    }
-  }
-  return count
-}
 
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
@@ -584,7 +547,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   )
 
   return (
-    <div className="flex flex-col relative px-6 pt-6 pb-2">
+    <div data-testid="folder-tree-root" className="flex flex-col relative px-6 pt-6 pb-2">
       {/* 툴바 */}
       <div className="flex items-center justify-between py-1 shrink-0 border-b mb-2 sticky top-0 bg-background z-10">
         <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">

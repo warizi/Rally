@@ -1,0 +1,105 @@
+name: Test
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [develop]
+
+# 같은 PR 내 새 push가 오면 이전 실행 자동 취소.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint-and-typecheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      # lint는 기존 react-hooks 룰 위반 다수로 인해 일시 비차단.
+      # 신규 코드는 lint clean 유지하되 기존 cleanup은 별도 PR.
+      - run: npm run lint
+        continue-on-error: true
+      - run: npm run typecheck
+
+  cleanup-completeness:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Verify all schema tables in cleanup helper
+        run: npm run check:cleanup
+
+  test-node:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run main process tests with coverage
+        run: npm run test:coverage:node
+      - name: Upload coverage (node)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-node
+          path: coverage/node/
+          retention-days: 7
+
+  test-web:
+    runs-on: ubuntu-latest
+    needs: lint-and-typecheck
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run renderer tests with coverage
+        run: npm run test:coverage:web
+      - name: Upload coverage (web)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web
+          path: coverage/web/
+          retention-days: 7
+
+  coverage-summary:
+    runs-on: ubuntu-latest
+    needs: [test-node, test-web]
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-node
+          path: coverage/node/
+        continue-on-error: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: coverage-web
+          path: coverage/web/
+        continue-on-error: true
+      - name: Print summary to PR
+        run: npm run coverage:summary >> $GITHUB_STEP_SUMMARY
