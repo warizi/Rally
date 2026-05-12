@@ -10,9 +10,12 @@ import {
   PointerSensor,
   KeyboardSensor,
   type DragEndEvent,
-  type DragStartEvent
+  type DragStartEvent,
+  type DraggableAttributes,
+  type DraggableSyntheticListeners
 } from '@dnd-kit/core'
 import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import type { Transform } from '@dnd-kit/utilities'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, MoreHorizontal, ChevronDown, ChevronRight, Dot, X } from 'lucide-react'
@@ -56,17 +59,63 @@ const PRIORITY_DOT: Record<string, string> = {
 }
 const PRIORITY_LABEL: Record<string, string> = { high: '높음', medium: '보통', low: '낮음' }
 
-// 하위 할 일 행 (colSpan 내부 — div 렌더링)
+// ─────────────────────────────────────────────────────────────────────────
+// SortableWrapper 분리 패턴 (P1-4.5)
+//
+// useSortable 은 dnd-kit 의 SortableContext 를 구독해서, context 가 변경되면
+// 모든 consumer 가 강제 rerender 된다 (React.memo 로 막을 수 없음).
+//
+// 해결책: outer/inner 분리
+//   - Outer: useSortable 호출만, body 는 inner 호출 한 줄 → context 변경 시
+//     항상 rerender 되지만 비용 미미
+//   - Inner: React.memo, 모든 JSX 와 hook 보유 → props 가 같으면 skip
+//     (sortable 결과를 primitives 로 받기 때문에 stable refs 활용 가능)
+//
+// 결과: 100항목 리스트에서 한 항목만 바뀌면 그 항목 1개만 inner 렌더,
+// 나머지 99 개는 outer 만 rerender (cheap) + inner skip → 실측 -90%+ 가능.
+// ─────────────────────────────────────────────────────────────────────────
+
+// ============================================================
+// SubTodoItem — 하위 할 일 (outer/inner 분리)
+// ============================================================
+
 interface SubItemProps {
   todo: TodoItem
   workspaceId: string
 }
 
-const SubTodoItem = memo(function SubTodoItem({
-  todo,
-  workspaceId
-}: SubItemProps): React.JSX.Element {
+export function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: todo.id })
+  return (
+    <SubTodoItemContent
+      todo={todo}
+      workspaceId={workspaceId}
+      sortableAttributes={attributes}
+      sortableListeners={listeners}
+      setNodeRef={setNodeRef}
+      transform={transform}
+      transition={transition}
+    />
+  )
+}
+
+interface SubItemContentProps extends SubItemProps {
+  sortableAttributes: DraggableAttributes
+  sortableListeners: DraggableSyntheticListeners
+  setNodeRef: (node: HTMLElement | null) => void
+  transform: Transform | null
+  transition: string | undefined
+}
+
+const SubTodoItemContent = memo(function SubTodoItemContent({
+  todo,
+  workspaceId,
+  sortableAttributes,
+  sortableListeners,
+  setNodeRef,
+  transform,
+  transition
+}: SubItemContentProps): React.JSX.Element {
   const updateTodo = useUpdateTodo()
   const [menuOpen, setMenuOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
@@ -103,7 +152,11 @@ const SubTodoItem = memo(function SubTodoItem({
         style={{ transform: CSS.Transform.toString(transform), transition }}
         className="flex items-center gap-2 py-1.5 px-2 min-w-0"
       >
-        <span {...attributes} {...listeners} className="cursor-grab text-muted-foreground shrink-0">
+        <span
+          {...sortableAttributes}
+          {...sortableListeners}
+          className="cursor-grab text-muted-foreground shrink-0"
+        >
           <GripVertical className="h-3.5 w-3.5" />
         </span>
         <Checkbox checked={todo.isDone} onCheckedChange={handleToggle} />
@@ -149,29 +202,81 @@ const SubTodoItem = memo(function SubTodoItem({
   )
 })
 
+// ============================================================
+// TodoListItem — 메인 행 (outer/inner 분리)
+// ============================================================
+
 interface Props {
   todo: TodoItem
   subTodos: TodoItem[]
   workspaceId: string
   filterActive: boolean
-  // 부모로부터 받는 안정 콜백 — 자식 내부에서 todo.id로 curry
   onItemClick: (todoId: string) => void
   onOpenInPane?: (todoId: string, paneId: string) => void
   onItemDeleted?: (todoId: string) => void
 }
 
-export const TodoListItem = memo(function TodoListItem({
+/**
+ * Outer wrapper — useSortable 만 호출하고 결과를 primitives 로 destructure 해서
+ * inner 로 전달. Body 는 의도적으로 비어있음 (가벼움).
+ *
+ * dnd-kit SortableContext 의 context 가 변경되면 본 컴포넌트는 항상 rerender
+ * 되지만, inner 는 props shallow-equal 시 skip → 실질적 비용 없음.
+ */
+export function TodoListItem(props: Props): React.JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: props.todo.id
+  })
+  return (
+    <TodoListItemContent
+      {...props}
+      sortableAttributes={attributes}
+      sortableListeners={listeners}
+      setNodeRef={setNodeRef}
+      transform={transform}
+      transition={transition}
+      isDragging={isDragging}
+    />
+  )
+}
+
+interface ContentProps extends Props {
+  sortableAttributes: DraggableAttributes
+  sortableListeners: DraggableSyntheticListeners
+  setNodeRef: (node: HTMLElement | null) => void
+  transform: Transform | null
+  transition: string | undefined
+  isDragging: boolean
+}
+
+// 테스트에서 inner 의 memo 동작을 직접 검증하기 위해 export.
+// 일반 사용은 외部 wrapper `TodoListItem` 을 통해서만.
+//
+// 테스트 계측 (zero-cost in production):
+//   globalThis.__TODO_LIST_ITEM_RENDER_COUNTER__ 가 Map 이면 본 함수 호출 시
+//   카운트를 증가. React.memo 가 skip 하면 본 함수는 호출되지 않으므로
+//   카운터가 증가 안 함 → memo 효과를 정확히 측정 가능.
+//   production 에서는 globalThis 에 해당 키가 없어 if-체크 한 번으로 끝.
+export const TodoListItemContent = memo(function TodoListItemContent({
   todo,
   subTodos,
   workspaceId,
   filterActive,
   onItemClick,
   onOpenInPane,
-  onItemDeleted
-}: Props): React.JSX.Element {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id: todo.id
-  })
+  onItemDeleted,
+  sortableAttributes,
+  sortableListeners,
+  setNodeRef,
+  transform,
+  transition,
+  isDragging
+}: ContentProps): React.JSX.Element {
+  const tlicCounter = (globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
+    .__TODO_LIST_ITEM_RENDER_COUNTER__
+  if (tlicCounter) {
+    tlicCounter.set(todo.id, (tlicCounter.get(todo.id) ?? 0) + 1)
+  }
   const [isOpen, setIsOpen] = useState(false)
   const [activeSubId, setActiveSubId] = useState<string | null>(null)
   const updateTodo = useUpdateTodo()
@@ -281,8 +386,8 @@ export const TodoListItem = memo(function TodoListItem({
         {/* 드래그 핸들 */}
         <TableCell className="w-8 px-2 py-2">
           <span
-            {...(!filterActive ? attributes : {})}
-            {...(!filterActive ? listeners : {})}
+            {...(!filterActive ? sortableAttributes : {})}
+            {...(!filterActive ? sortableListeners : {})}
             className={`flex text-muted-foreground ${filterActive ? 'opacity-30 cursor-not-allowed' : 'cursor-grab hover:text-foreground'}`}
           >
             <GripVertical className="h-4 w-4" />

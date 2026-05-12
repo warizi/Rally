@@ -15,8 +15,9 @@ import { SortableContext } from '@dnd-kit/sortable'
 import { readFileSync } from 'fs'
 import path from 'path'
 
-import { TodoListItem } from '../TodoListItem'
+import { TodoListItem, TodoListItemContent } from '../TodoListItem'
 import type { TodoItem } from '@entities/todo'
+import type { DraggableAttributes, DraggableSyntheticListeners } from '@dnd-kit/core'
 import { renderWithCounter } from '@/test/render-counter'
 import { TestProviders } from '@/test/providers'
 import { mockApi, defaultApiMock } from '@/test/ipc-mock'
@@ -216,8 +217,95 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
 
     // 바뀐 항목은 반드시 재렌더
     expect(changedCount, '바뀐 항목은 재렌더').toBeGreaterThanOrEqual(1)
-    // 바뀌지 않은 항목들의 재렌더 횟수: dnd-kit context 한계로 SortableWrapper
-    // 분리 전까지 완전 0 은 불가. 상한선만 검증 — 평균 ≤2/item 이면 정상.
+    // 바뀌지 않은 항목들의 재렌더 횟수: outer 레벨 Profiler 는 dnd-kit context
+    // 변경으로 인한 outer rerender 도 계수 (실제 inner skip 여부는 S6 에서 검증).
     expect(otherTotal, '바뀌지 않은 항목 재렌더 상한선').toBeLessThanOrEqual(10)
+  })
+
+  // ──────────────────────────────────────────────
+  // S6 — P1-4.5 SortableWrapper 분리 효과 검증 (inner 직접 측정)
+  //
+  // TodoListItemContent (inner) 를 DndContext 없이 직접 렌더 →
+  // dnd-kit context 변경에 의한 강제 rerender 없음 → 순수 React.memo 만 측정.
+  //
+  // 동일 props 로 rerender 시 inner 가 완전히 skip 되어야 함 (memo 효과).
+  // 5개 중 1개만 변경 시 그 항목만 inner 렌더, 나머지는 0건 → "100항목 ≤ 2" 달성.
+  // ──────────────────────────────────────────────
+  it('S6 — TodoListItemContent inner body skips for unchanged items (P1-4.5 split effect)', () => {
+    // production-instrumentation counter: TodoListItemContent body 가 실제로
+    // 호출될 때만 증가. React.memo skip 시 호출 안 됨 → 정확한 memo 효과 측정.
+    const counter = new Map<string, number>()
+    ;(globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
+      .__TODO_LIST_ITEM_RENDER_COUNTER__ = counter
+
+    try {
+      const initial = Array.from({ length: 5 }, (_, i) => makeTodo(`t${i}`))
+
+      const stableSetNodeRef = (): void => {}
+      const stableAttrs = {} as DraggableAttributes
+      const stableListeners: DraggableSyntheticListeners = undefined
+
+      function InnerList({ todos }: { todos: TodoItem[] }): React.JSX.Element {
+        return (
+          <TestProviders>
+            <table>
+              <tbody>
+                {todos.map((todo) => (
+                  <TodoListItemContent
+                    key={todo.id}
+                    todo={todo}
+                    subTodos={EMPTY_SUB_TODOS}
+                    workspaceId="ws1"
+                    filterActive={false}
+                    onItemClick={stableOnItemClick}
+                    sortableAttributes={stableAttrs}
+                    sortableListeners={stableListeners}
+                    setNodeRef={stableSetNodeRef}
+                    transform={null}
+                    transition={undefined}
+                    isDragging={false}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </TestProviders>
+        )
+      }
+
+      const { result } = renderWithCounter(<InnerList todos={initial} />)
+      counter.clear() // 초기 마운트 제외
+
+      const changed = initial.map((t, i) => (i === 2 ? { ...t, title: 'Changed!' } : t))
+      result.rerender(<InnerList todos={changed} />)
+
+      const changedCount = counter.get('t2') ?? 0
+      const others = ['t0', 't1', 't3', 't4'].map((id) => counter.get(id) ?? 0)
+      const otherTotal = others.reduce((a, b) => a + b, 0)
+
+      // eslint-disable-next-line no-console
+      console.log(
+        `[POST-P1-4.5] Inner body executions: changed=${changedCount}, others=${otherTotal}`
+      )
+
+      expect(changedCount, '바뀐 항목 inner body 는 실행됨').toBeGreaterThanOrEqual(1)
+      expect(otherTotal, '바뀌지 않은 inner body 는 0건 실행 (P1-4.5 핵심)').toBe(0)
+    } finally {
+      ;(globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
+        .__TODO_LIST_ITEM_RENDER_COUNTER__ = undefined
+    }
+  })
+
+  // ──────────────────────────────────────────────
+  // S7 — P1-4.5 구조 검증: outer 가 inner 를 호출하는 분리 패턴 fact (grep)
+  // ──────────────────────────────────────────────
+  it('S7 — TodoListItem applies SortableWrapper split pattern (P1-4.5 fact)', () => {
+    const src = readFileSync(TODO_LIST_ITEM_PATH, 'utf-8')
+    // outer 는 일반 함수, inner 만 memo
+    expect(src, 'TodoListItemContent inner export').toMatch(/export const TodoListItemContent = memo/)
+    // SubTodoItem 도 같은 패턴
+    expect(src, 'SubTodoItemContent memo').toMatch(/const SubTodoItemContent = memo/)
+    // outer 는 useSortable 호출 + Content 한 줄 호출만
+    expect(src, 'TodoListItem outer 가 Content 호출').toMatch(/<TodoListItemContent/)
+    expect(src, 'SubTodoItem outer 가 Content 호출').toMatch(/<SubTodoItemContent/)
   })
 })
