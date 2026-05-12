@@ -13,16 +13,6 @@ import {
 
 // 트리 DnD는 @dnd-kit으로 통일 (MainLayout의 DndContext에서 처리).
 // react-arborist 내장 react-dnd 드래그/드롭은 disableDrag/disableDrop으로 비활성화한다.
-import {
-  useCreateFolder,
-  useRenameFolder,
-  useRemoveFolder,
-  useUpdateFolderMeta
-} from '@entities/folder'
-import { useDuplicateNote, useRemoveNote } from '@entities/note'
-import { useDuplicateCsvFile, useRemoveCsvFile } from '@entities/csv-file'
-import { useDuplicatePdfFile, useRemovePdfFile } from '@entities/pdf-file'
-import { useDuplicateImageFile, useRemoveImageFile } from '@entities/image-file'
 import { Button } from '@shared/ui/button'
 import {
   DropdownMenu,
@@ -45,6 +35,7 @@ import { useTreeOpenState } from '../model/use-tree-open-state'
 import { useTreeMoveListener } from '../model/use-tree-move-listener'
 import { useFolderDialogState } from '../model/use-folder-dialog-state'
 import { useFolderCreateHandlers } from '../model/use-folder-create-handlers'
+import { useFolderMutations } from '../model/use-folder-mutations'
 import {
   collectDescendantPathnames,
   findFolderNode,
@@ -87,21 +78,30 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const visibleCount = useMemo(() => countVisibleNodes(tree, openState), [tree, openState])
   const treeHeight = visibleCount * ROW_HEIGHT
 
-  // Folder mutations (move는 useTreeMoveListener에서 사용)
-  const { mutate: createFolder, isPending: isCreatingFolder } = useCreateFolder()
-  const { mutate: rename, isPending: isRenaming } = useRenameFolder()
-  const { mutate: remove, isPending: isRemoving } = useRemoveFolder()
-  const { mutate: updateMeta, isPending: isUpdatingMeta } = useUpdateFolderMeta()
-
-  // Note / file mutations — duplicate/remove 만 (create/import 는 useFolderCreateHandlers 에서 처리)
-  const { mutate: duplicateNote } = useDuplicateNote()
-  const { mutate: removeNote, isPending: isRemovingNote } = useRemoveNote()
-  const { mutate: duplicateCsvFile } = useDuplicateCsvFile()
-  const { mutate: removeCsvFile, isPending: isRemovingCsv } = useRemoveCsvFile()
-  const { mutate: duplicatePdfFile } = useDuplicatePdfFile()
-  const { mutate: removePdfFile, isPending: isRemovingPdf } = useRemovePdfFile()
-  const { mutate: duplicateImageFile } = useDuplicateImageFile()
-  const { mutate: removeImageFile, isPending: isRemovingImage } = useRemoveImageFile()
+  // 8 mutation hooks (folder 4 + note/csv/pdf/image duplicate+remove)
+  // → use-folder-mutations 훅으로 묶음. flat destructure 로 호출 측 변경 0.
+  const {
+    createFolder,
+    isCreatingFolder,
+    rename,
+    isRenaming,
+    remove,
+    isRemoving,
+    updateMeta,
+    isUpdatingMeta,
+    duplicateNote,
+    removeNote,
+    isRemovingNote,
+    duplicateCsvFile,
+    removeCsvFile,
+    isRemovingCsv,
+    duplicatePdfFile,
+    removePdfFile,
+    isRemovingPdf,
+    duplicateImageFile,
+    removeImageFile,
+    isRemovingImage
+  } = useFolderMutations()
 
   // Tab store
   const openRightTab = useTabStore((s) => s.openRightTab)
