@@ -2,7 +2,7 @@ import { History, Sparkles, Wrench, Bug } from 'lucide-react'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { Badge } from '@shared/ui/badge'
-import { CHANGELOG, type ChangelogEntry } from '@shared/constants/changelog'
+import { CHANGELOG, type ChangelogEntry } from '@entities/changelog'
 
 const TYPE_CONFIG = {
   feature: { label: '새 기능', icon: Sparkles, variant: 'default' as const },

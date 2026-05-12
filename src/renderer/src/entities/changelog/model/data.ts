@@ -1,14 +1,8 @@
-export interface ChangelogChange {
-  type: 'feature' | 'improvement' | 'fix'
-  title: string
-  description?: string
-}
-
-export interface ChangelogEntry {
-  version: string
-  date: string
-  changes: ChangelogChange[]
-}
+/**
+ * Changelog 데이터. 버전 내림차순으로 정렬되어야 한다 (data.test.ts 가 회귀 차단).
+ * P2-6: shared/constants/changelog.ts 에서 이전.
+ */
+import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
