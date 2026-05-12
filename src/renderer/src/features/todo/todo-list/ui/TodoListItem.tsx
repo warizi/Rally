@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { memo, useCallback, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { arrayMove } from '@dnd-kit/sortable'
 import {
@@ -31,7 +31,13 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
-import { useUpdateTodo, useReorderTodoSub, TODO_STATUS, TODO_PRIORITY } from '@entities/todo'
+import {
+  useUpdateTodo,
+  useReorderTodoSub,
+  TODO_STATUS,
+  TODO_PRIORITY,
+  type TodoPriority
+} from '@entities/todo'
 import type { TodoItem, TodoStatus } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { EditSubTodoDialog } from '@features/todo/todo-field/ui/EditSubTodoDialog'
@@ -56,12 +62,39 @@ interface SubItemProps {
   workspaceId: string
 }
 
-function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
+const SubTodoItem = memo(function SubTodoItem({
+  todo,
+  workspaceId
+}: SubItemProps): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: todo.id })
   const updateTodo = useUpdateTodo()
   const [menuOpen, setMenuOpen] = useState(false)
   const [editOpen, setEditOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const handleToggle = useCallback(
+    (checked: boolean | string): void => {
+      updateTodo.mutate(
+        { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
+        {
+          onSuccess: () => {
+            if (checked) toast.success(`"${todo.title}" 완료!`)
+          }
+        }
+      )
+    },
+    [updateTodo, workspaceId, todo.id, todo.title]
+  )
+
+  const handleEditSelect = useCallback((): void => {
+    setMenuOpen(false)
+    setEditOpen(true)
+  }, [])
+
+  const handleDeleteSelect = useCallback((): void => {
+    setMenuOpen(false)
+    setDeleteOpen(true)
+  }, [])
 
   return (
     <>
@@ -73,19 +106,7 @@ function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
         <span {...attributes} {...listeners} className="cursor-grab text-muted-foreground shrink-0">
           <GripVertical className="h-3.5 w-3.5" />
         </span>
-        <Checkbox
-          checked={todo.isDone}
-          onCheckedChange={(checked) =>
-            updateTodo.mutate(
-              { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
-              {
-                onSuccess: () => {
-                  if (checked) toast.success(`"${todo.title}" 완료!`)
-                }
-              }
-            )
-          }
-        />
+        <Checkbox checked={todo.isDone} onCheckedChange={handleToggle} />
         <TruncateTooltip content={todo.title}>
           <span
             className={`flex-1 text-sm truncate min-w-0 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
@@ -100,20 +121,10 @@ function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onSelect={() => {
-                setMenuOpen(false)
-                setEditOpen(true)
-              }}
-            >
-              수정
-            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={handleEditSelect}>수정</DropdownMenuItem>
             <DropdownMenuItem
               className="text-destructive focus:text-destructive"
-              onSelect={() => {
-                setMenuOpen(false)
-                setDeleteOpen(true)
-              }}
+              onSelect={handleDeleteSelect}
             >
               삭제
             </DropdownMenuItem>
@@ -136,26 +147,27 @@ function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
       />
     </>
   )
-}
+})
 
 interface Props {
   todo: TodoItem
   subTodos: TodoItem[]
   workspaceId: string
   filterActive: boolean
-  onTitleClick: () => void
-  onOpenInPane?: (paneId: string) => void
-  onDeleted?: () => void
+  // 부모로부터 받는 안정 콜백 — 자식 내부에서 todo.id로 curry
+  onItemClick: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
+  onItemDeleted?: (todoId: string) => void
 }
 
-export function TodoListItem({
+export const TodoListItem = memo(function TodoListItem({
   todo,
   subTodos,
   workspaceId,
   filterActive,
-  onTitleClick,
+  onItemClick,
   onOpenInPane,
-  onDeleted
+  onItemDeleted
 }: Props): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: todo.id
@@ -172,24 +184,91 @@ export function TodoListItem({
 
   const activeSub = activeSubId ? subTodos.find((t) => t.id === activeSubId) : null
 
-  function handleSubDragStart(event: DragStartEvent): void {
-    setActiveSubId(event.active.id as string)
-  }
+  // ─────────────────────────────────────────────────────────────
+  // 핸들러 안정화
+  // ─────────────────────────────────────────────────────────────
 
-  function handleSubDragEnd(event: DragEndEvent): void {
-    setActiveSubId(null)
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-    const oldIndex = subTodos.findIndex((t) => t.id === active.id)
-    const newIndex = subTodos.findIndex((t) => t.id === over.id)
-    if (oldIndex === newIndex) return
-    const reordered = arrayMove(subTodos, oldIndex, newIndex)
-    reorderSub.mutate({
-      workspaceId,
-      parentId: todo.id,
-      updates: reordered.map((t, i) => ({ id: t.id, order: i }))
-    })
-  }
+  const handleToggle = useCallback(
+    (checked: boolean | string): void => {
+      updateTodo.mutate(
+        { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
+        {
+          onSuccess: () => {
+            if (checked) toast.success(`"${todo.title}" 완료!`)
+          }
+        }
+      )
+    },
+    [updateTodo, workspaceId, todo.id, todo.title]
+  )
+
+  const handleToggleOpen = useCallback((): void => {
+    setIsOpen((o) => !o)
+  }, [])
+
+  const handleTitleClick = useCallback((): void => {
+    onItemClick(todo.id)
+  }, [onItemClick, todo.id])
+
+  const handlePriorityChange = useCallback(
+    (priority: TodoPriority): void => {
+      updateTodo.mutate({ workspaceId, todoId: todo.id, data: { priority } })
+    },
+    [updateTodo, workspaceId, todo.id]
+  )
+
+  const handleStatusChange = useCallback(
+    (status: TodoStatus): void => {
+      updateTodo.mutate({ workspaceId, todoId: todo.id, data: { status } })
+    },
+    [updateTodo, workspaceId, todo.id]
+  )
+
+  const handleDueDateChange = useCallback(
+    (date: Date | undefined): void => {
+      updateTodo.mutate({ workspaceId, todoId: todo.id, data: { dueDate: date ?? null } })
+    },
+    [updateTodo, workspaceId, todo.id]
+  )
+
+  const handleDueDateClear = useCallback((): void => {
+    updateTodo.mutate({ workspaceId, todoId: todo.id, data: { dueDate: null } })
+  }, [updateTodo, workspaceId, todo.id])
+
+  const handlePaneSelect = useCallback(
+    (paneId: string): void => {
+      onOpenInPane?.(todo.id, paneId)
+    },
+    [onOpenInPane, todo.id]
+  )
+
+  const handleDeleted = useCallback((): void => {
+    onItemDeleted?.(todo.id)
+  }, [onItemDeleted, todo.id])
+
+  const handleSubDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveSubId(event.active.id as string)
+  }, [])
+
+  const handleSubDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      setActiveSubId(null)
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      const oldIndex = subTodos.findIndex((t) => t.id === active.id)
+      const newIndex = subTodos.findIndex((t) => t.id === over.id)
+      if (oldIndex === newIndex) return
+      const reordered = arrayMove(subTodos, oldIndex, newIndex)
+      reorderSub.mutate({
+        workspaceId,
+        parentId: todo.id,
+        updates: reordered.map((t, i) => ({ id: t.id, order: i }))
+      })
+    },
+    [reorderSub, subTodos, workspaceId, todo.id]
+  )
+
+  const subTodoIds = useMemo(() => subTodos.map((t) => t.id), [subTodos])
 
   return (
     <>
@@ -210,19 +289,7 @@ export function TodoListItem({
           </span>
         </TableCell>
         <TableCell className="w-8 px-2 py-2">
-          <Checkbox
-            checked={todo.isDone}
-            onCheckedChange={(checked) =>
-              updateTodo.mutate(
-                { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
-                {
-                  onSuccess: () => {
-                    if (checked) toast.success(`"${todo.title}" 완료!`)
-                  }
-                }
-              )
-            }
-          />
+          <Checkbox checked={todo.isDone} onCheckedChange={handleToggle} />
         </TableCell>
 
         {/* 제목 (접기 토글 포함) */}
@@ -231,7 +298,7 @@ export function TodoListItem({
             {subTodos.length > 0 && (
               <button
                 className="shrink-0 text-muted-foreground hover:text-foreground"
-                onClick={() => setIsOpen((o) => !o)}
+                onClick={handleToggleOpen}
               >
                 {isOpen ? (
                   <ChevronDown className="h-3.5 w-3.5" />
@@ -243,7 +310,7 @@ export function TodoListItem({
             <TruncateTooltip content={todo.title}>
               <button
                 className={`text-left text-sm truncate min-w-0 flex-1 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
-                onClick={onTitleClick}
+                onClick={handleTitleClick}
               >
                 {todo.title}
               </button>
@@ -271,9 +338,7 @@ export function TodoListItem({
               {TODO_PRIORITY.map((p) => (
                 <DropdownMenuItem
                   key={p}
-                  onClick={() =>
-                    updateTodo.mutate({ workspaceId, todoId: todo.id, data: { priority: p } })
-                  }
+                  onClick={() => handlePriorityChange(p)}
                   className={todo.priority === p ? 'font-semibold' : ''}
                 >
                   <Dot className={`h-4 w-4 scale-200 ${PRIORITY_DOT[p]}`} />
@@ -296,13 +361,7 @@ export function TodoListItem({
               {TODO_STATUS.map((s) => (
                 <DropdownMenuItem
                   key={s}
-                  onClick={() =>
-                    updateTodo.mutate({
-                      workspaceId,
-                      todoId: todo.id,
-                      data: { status: s as TodoStatus }
-                    })
-                  }
+                  onClick={() => handleStatusChange(s as TodoStatus)}
                   className={todo.status === s ? 'font-semibold' : ''}
                 >
                   {s}
@@ -325,13 +384,7 @@ export function TodoListItem({
                 mode="single"
                 locale={ko}
                 selected={todo.dueDate ? new Date(todo.dueDate) : undefined}
-                onSelect={(date) =>
-                  updateTodo.mutate({
-                    workspaceId,
-                    todoId: todo.id,
-                    data: { dueDate: date ?? null }
-                  })
-                }
+                onSelect={handleDueDateChange}
               />
               {todo.dueDate && (
                 <div className="border-t px-3 py-2">
@@ -339,13 +392,7 @@ export function TodoListItem({
                     variant="ghost"
                     size="sm"
                     className="h-6 text-xs w-full text-destructive hover:text-destructive"
-                    onClick={() =>
-                      updateTodo.mutate({
-                        workspaceId,
-                        todoId: todo.id,
-                        data: { dueDate: null }
-                      })
-                    }
+                    onClick={handleDueDateClear}
                   >
                     <X className="size-3 mr-1" />
                     마감일 삭제
@@ -371,9 +418,9 @@ export function TodoListItem({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <PanePickerSubmenu onPaneSelect={(paneId) => onOpenInPane?.(paneId)}>
+                <PanePickerSubmenu onPaneSelect={handlePaneSelect}>
                   {({ onClick }) => (
-                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
+                    <DropdownMenuItem onSelect={preventDefault} onClick={onClick}>
                       상세 보기
                     </DropdownMenuItem>
                   )}
@@ -382,11 +429,11 @@ export function TodoListItem({
                   todoId={todo.id}
                   workspaceId={workspaceId}
                   hasSubTodos={subTodos.length > 0}
-                  onDeleted={onDeleted}
+                  onDeleted={handleDeleted}
                   trigger={
                     <DropdownMenuItem
                       className="text-destructive focus:text-destructive"
-                      onSelect={(e) => e.preventDefault()}
+                      onSelect={preventDefault}
                     >
                       삭제
                     </DropdownMenuItem>
@@ -409,10 +456,7 @@ export function TodoListItem({
               onDragStart={handleSubDragStart}
               onDragEnd={handleSubDragEnd}
             >
-              <SortableContext
-                items={subTodos.map((t) => t.id)}
-                strategy={verticalListSortingStrategy}
-              >
+              <SortableContext items={subTodoIds} strategy={verticalListSortingStrategy}>
                 <div className="pl-10 py-1 divide-y divide-border/50">
                   {subTodos.map((sub) => (
                     <SubTodoItem key={sub.id} todo={sub} workspaceId={workspaceId} />
@@ -437,4 +481,8 @@ export function TodoListItem({
       )}
     </>
   )
+})
+
+function preventDefault(e: Event): void {
+  e.preventDefault()
 }
