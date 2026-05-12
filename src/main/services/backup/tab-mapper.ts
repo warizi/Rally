@@ -1,6 +1,14 @@
 import { nanoid } from 'nanoid'
 import type { IdMapper, BackupEntityType } from './id-mapper'
 import type { MappedTabSession } from './types'
+import {
+  TabsMapSchema,
+  PanesMapSchema,
+  LayoutNodeSchema,
+  type TabImport,
+  type PaneImport,
+  type LayoutNodeImport
+} from './tab-schemas'
 
 /**
  * 탭 세션 JSON 내부 ID 재매핑.
@@ -11,8 +19,8 @@ import type { MappedTabSession } from './types'
  * import 시 IdMapper 로 entity ID 가 새 ID 로 바뀌면, JSON 내부 참조도
  * 함께 재매핑해야 탭이 올바른 entity 를 가리킨다.
  *
- * Phase 4 의 tab-session-remapper.ts 에서 더 정밀한 RefSchema 기반 매핑
- * 으로 발전 예정. 현재는 backup.ts 원본 로직 그대로 이전.
+ * P0-2 Phase 4: tab-schemas.ts 의 zod 스키마로 any 제거. 손상된 tab JSON 은
+ * 즉시 throw (silent fallback 0).
  */
 
 /** pathname pattern 별 entity type 매핑 */
@@ -55,14 +63,12 @@ export function createTabId(pathname: string): string {
     .replace(/^-|-$/g, '')}`
 }
 
-/** folderOpenState JSON 키 매핑 */
+/** folderOpenState JSON 키 매핑. 손상된 JSON 은 throw (silent fallback 0). */
 export function mapFolderOpenState(
   json: string | undefined,
   mapper: IdMapper
 ): string | undefined {
   if (!json) return json
-  // silent fallback 제거 (P0-2 Phase 3): 손상된 JSON 은 명시적으로 throw.
-  // 호출 측은 backup deserializer 의 트랜잭션 — 실패 시 newPath 정리 + rethrow.
   let parsed: unknown
   try {
     parsed = JSON.parse(json)
@@ -85,13 +91,10 @@ export function mapFolderOpenState(
   return JSON.stringify(mapped)
 }
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 /**
  * tab_sessions / tab_snapshots JSON 전체 매핑.
  *
- * `any` 사용은 tab/pane JSON 의 동적 구조 — Phase 3-4 에서 zod 스키마
- * + 제네릭 도입 시 함께 제거 예정. 현재는 원본 동작 보존이 우선.
+ * zod 스키마로 입력 검증 — 손상된 구조는 ZodError throw.
  */
 export function mapTabJsons(
   tabsJsonStr: string,
@@ -101,9 +104,14 @@ export function mapTabJsons(
   mapper: IdMapper
 ): MappedTabSession {
   // 1. tabs 매핑
-  const oldTabs: Record<string, any> = JSON.parse(tabsJsonStr)
+  const oldTabsRaw: unknown = JSON.parse(tabsJsonStr)
+  const tabsParsed = TabsMapSchema.safeParse(oldTabsRaw)
+  if (!tabsParsed.success) {
+    throw new Error(`Invalid tabsJson: ${tabsParsed.error.message}`)
+  }
+  const oldTabs = tabsParsed.data
   const tabIdMap = new Map<string, string>()
-  const newTabs: Record<string, any> = {}
+  const newTabs: Record<string, TabImport> = {}
 
   for (const [oldTabId, tab] of Object.entries(oldTabs)) {
     const result = mapTabPathname(tab.pathname, mapper)
@@ -113,9 +121,12 @@ export function mapTabJsons(
     const newTabId = createTabId(newPathname)
     tabIdMap.set(oldTabId, newTabId)
 
-    const searchParams = tab.searchParams ? { ...tab.searchParams } : undefined
+    let searchParams = tab.searchParams ? { ...tab.searchParams } : undefined
     if (searchParams?.folderOpenState) {
-      searchParams.folderOpenState = mapFolderOpenState(searchParams.folderOpenState, mapper)
+      const mapped = mapFolderOpenState(searchParams.folderOpenState, mapper)
+      if (mapped !== undefined) {
+        searchParams = { ...searchParams, folderOpenState: mapped }
+      }
     }
 
     newTabs[newTabId] = {
@@ -127,15 +138,22 @@ export function mapTabJsons(
   }
 
   // 2. panes 매핑
-  const oldPanes: Record<string, any> = JSON.parse(panesJsonStr)
+  const oldPanesRaw: unknown = JSON.parse(panesJsonStr)
+  const panesParsed = PanesMapSchema.safeParse(oldPanesRaw)
+  if (!panesParsed.success) {
+    throw new Error(`Invalid panesJson: ${panesParsed.error.message}`)
+  }
+  const oldPanes = panesParsed.data
   const paneIdMap = new Map<string, string>()
-  const newPanes: Record<string, any> = {}
+  const newPanes: Record<string, PaneImport> = {}
 
   for (const [oldPaneId, pane] of Object.entries(oldPanes)) {
     const newPaneId = nanoid()
     paneIdMap.set(oldPaneId, newPaneId)
 
-    const newTabIds = pane.tabIds.map((oldId: string) => tabIdMap.get(oldId)).filter(Boolean)
+    const newTabIds = pane.tabIds
+      .map((oldId) => tabIdMap.get(oldId))
+      .filter((v): v is string => v !== undefined)
 
     const newActiveTabId = pane.activeTabId ? (tabIdMap.get(pane.activeTabId) ?? null) : null
 
@@ -148,18 +166,20 @@ export function mapTabJsons(
   }
 
   // 3. layout 매핑 (재귀)
-  function mapLayout(node: any): any {
+  function mapLayout(node: LayoutNodeImport): LayoutNodeImport {
     if (node.type === 'pane') {
       return { ...node, id: nanoid(), paneId: paneIdMap.get(node.paneId) ?? node.paneId }
     }
-    if (node.type === 'split') {
-      return { ...node, id: nanoid(), children: node.children.map(mapLayout) }
-    }
-    return node
+    // type === 'split'
+    return { ...node, id: nanoid(), children: node.children.map(mapLayout) }
   }
 
-  const oldLayout = JSON.parse(layoutJsonStr)
-  const newLayout = mapLayout(oldLayout)
+  const oldLayoutRaw: unknown = JSON.parse(layoutJsonStr)
+  const layoutParsed = LayoutNodeSchema.safeParse(oldLayoutRaw)
+  if (!layoutParsed.success) {
+    throw new Error(`Invalid layoutJson: ${layoutParsed.error.message}`)
+  }
+  const newLayout = mapLayout(layoutParsed.data)
 
   // 4. activePaneId 매핑
   const newActivePaneId = activePaneId
@@ -173,5 +193,3 @@ export function mapTabJsons(
     activePaneId: newActivePaneId
   }
 }
-
-/* eslint-enable @typescript-eslint/no-explicit-any */

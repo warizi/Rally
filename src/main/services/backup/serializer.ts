@@ -1,7 +1,6 @@
 import fs from 'fs'
 import os from 'os'
 import path from 'path'
-import archiver from 'archiver'
 import { and, eq } from 'drizzle-orm'
 import { app } from 'electron'
 import { db } from '../../db'
@@ -34,6 +33,7 @@ import { workspaceService } from '../workspace'
 
 import type { BackupManifest } from './types'
 import { serializeForExport } from './helpers'
+import { packZip } from './archive'
 
 /**
  * 백업 export — 워크스페이스 → zip.
@@ -230,24 +230,12 @@ export const backupSerializer = {
         fs.writeFileSync(path.join(dataDir, filename), JSON.stringify(data, null, 2))
       }
 
-      // ZIP 생성 (스트리밍)
-      await new Promise<void>((resolve, reject) => {
-        const output = fs.createWriteStream(savePath)
-        const archive = archiver('zip', { zlib: { level: 6 } })
-
-        output.on('close', resolve)
-        archive.on('error', reject)
-
-        archive.pipe(output)
-        archive.directory(dataDir, 'data')
-        archive.file(path.join(tmpDir, 'manifest.json'), { name: 'manifest.json' })
-
-        // files/ — workspace.path 전체
-        if (fs.existsSync(workspace.path)) {
-          archive.directory(workspace.path, 'files')
-        }
-
-        archive.finalize()
+      // ZIP 생성 — archive 모듈에 위임
+      await packZip({
+        savePath,
+        dataDir,
+        manifestPath: path.join(tmpDir, 'manifest.json'),
+        workspacePath: workspace.path
       })
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true })
