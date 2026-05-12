@@ -3,6 +3,8 @@ import type { IpcResponse } from '../lib/ipc-response'
 import { workspaceService } from '../services/workspace'
 import type { WorkspaceUpdate } from '../repositories/workspace'
 import { handle } from '../lib/handle'
+import { validateIpc } from '../lib/ipc-validate'
+import { workspaceNameSchema, workspacePathSchema } from './schemas'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 
@@ -14,14 +16,14 @@ export function registerWorkspaceHandlers(): void {
     (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => workspaceService.getById(id))
   )
 
+  // 보안-1 Phase 3: name / path 검증 (path traversal 차단, 길이 제한).
   ipcMain.handle(
     'workspace:create',
-    (_: IpcMainInvokeEvent, name: string, path: string): IpcResponse =>
-      handle(() => {
-        const ws = workspaceService.create(name, path)
-        ensureClaudeCommands(ws.path)
-        return ws
-      })
+    validateIpc([workspaceNameSchema, workspacePathSchema], (name, path) => {
+      const ws = workspaceService.create(name, path)
+      ensureClaudeCommands(ws.path)
+      return ws
+    })
   )
 
   ipcMain.handle(
