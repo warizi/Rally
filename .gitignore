@@ -8,6 +8,9 @@ out
 .eslintcache
 *.log*
 
+# coverage
+coverage
+
 # env
 .env
 .env.*

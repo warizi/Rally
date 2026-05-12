@@ -13,6 +13,8 @@ export default defineConfig(
       '**/dist',
       '**/dist-mcp',
       '**/out',
+      '**/coverage',
+      'scripts/**',
       'src/renderer/src/shared/ui/**'
     ]
   },

@@ -8,7 +8,22 @@ export default defineConfig({
     globals: true,
     environment: 'happy-dom',
     include: ['src/renderer/**/*.{test,spec}.{ts,tsx}'],
-    setupFiles: ['./src/renderer/src/test/setup.ts']
+    setupFiles: ['./src/renderer/src/test/setup.ts'],
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'html', 'json-summary', 'lcov'],
+      reportsDirectory: 'coverage/web',
+      include: ['src/renderer/src/**/*.{ts,tsx}'],
+      exclude: [
+        '**/*.test.{ts,tsx}',
+        '**/*.spec.{ts,tsx}',
+        '**/__tests__/**',
+        '**/*.d.ts',
+        'src/renderer/src/test/**',
+        'src/renderer/src/app/main.tsx',
+        'src/renderer/src/shared/ui/**'
+      ]
+    }
   },
   resolve: {
     alias: {
