@@ -27,6 +27,7 @@ import { settingsApi } from './settings'
 import { appInfoApi } from './app-info'
 import { mcpClientApi } from './mcp-client'
 import { terminalApi } from './terminal'
+import { noteStyleTemplateApi } from './note-style-template'
 
 export { shellApi } from './shell'
 
@@ -59,5 +60,6 @@ export const api = {
   settings: settingsApi,
   appInfo: appInfoApi,
   mcpClient: mcpClientApi,
-  terminal: terminalApi
+  terminal: terminalApi,
+  noteStyleTemplate: noteStyleTemplateApi
 }

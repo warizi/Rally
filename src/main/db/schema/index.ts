@@ -24,6 +24,7 @@ import { terminalLayouts } from './terminal-layout'
 import { terminalSessions } from './terminal-session'
 import { templates } from './template'
 import { trashBatches } from './trash-batch'
+import { noteStyleTemplates } from './note-style-template'
 
 export {
   workspaces,
@@ -51,5 +52,6 @@ export {
   terminalLayouts,
   terminalSessions,
   templates,
-  trashBatches
+  trashBatches,
+  noteStyleTemplates
 }

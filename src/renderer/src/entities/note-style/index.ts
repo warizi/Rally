@@ -14,3 +14,9 @@ export {
 } from './model/defaults'
 export { buildNoteStyleCss } from './model/build-css'
 export { useNoteStyle } from './model/use-note-style'
+export {
+  useNoteStyleTemplates,
+  useCreateNoteStyleTemplate,
+  useDeleteNoteStyleTemplate,
+  type NoteStyleTemplate
+} from './api/templates'
