@@ -5,6 +5,7 @@ import { useDuplicateCsvFile } from '@entities/csv-file'
 import { useDuplicatePdfFile } from '@entities/pdf-file'
 import { useDuplicateImageFile } from '@entities/image-file'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { cn } from '@shared/lib/utils'
 import { FolderContextMenu } from './FolderContextMenu'
 import { FileContextMenu } from './FileContextMenu'
 import { FolderNodeRenderer } from './FolderNodeRenderer'
@@ -42,6 +43,10 @@ interface Props {
   activePathname: string
   createHandlers: FolderCreateHandlers
   dialogState: FolderDialogState
+  /** 검색 매치된 노드 id 집합 (Phase 2). */
+  matchedIds?: Set<string>
+  /** 현재 ↑↓ 활성 매치 노드 id (Phase 2). */
+  activeMatchId?: string | null
 }
 
 export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
@@ -51,8 +56,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
     sourcePaneId,
     activePathname,
     createHandlers,
-    dialogState
+    dialogState,
+    matchedIds,
+    activeMatchId
   } = props
+
+  const node = arboristProps.node
+  const isMatch = matchedIds?.has(node.data.id) ?? false
+  const isActiveMatch = activeMatchId === node.data.id
 
   const openRightTab = useTabStore((s) => s.openRightTab)
   const { mutate: duplicateNote } = useDuplicateNote()
@@ -60,8 +71,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
   const { mutate: duplicatePdfFile } = useDuplicatePdfFile()
   const { mutate: duplicateImageFile } = useDuplicateImageFile()
 
-  const node = arboristProps.node
   const kind = node.data.kind
+
+  // 검색 하이라이트 (Phase 2). active 매치는 더 진한 색 + inner ring
+  // (좌우가 컨테이너에 잘리지 않도록 ring-inset 사용).
+  const highlightClass = cn(
+    isMatch && 'bg-yellow-200/40',
+    isActiveMatch && 'bg-yellow-300/60 ring-2 ring-inset ring-yellow-500'
+  )
 
   if (kind === 'note') {
     return (
@@ -88,7 +105,12 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         }
         onDelete={() => dialogState.setNoteDeleteTarget({ id: node.data.id, name: node.data.name })}
       >
-        <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
+        <div
+          className={cn(
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
+            highlightClass
+          )}
+        >
           <NoteNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<NoteTreeNode>)}
             workspaceId={workspaceId}
@@ -135,7 +157,12 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         }
         onDelete={() => dialogState.setCsvDeleteTarget({ id: node.data.id, name: node.data.name })}
       >
-        <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
+        <div
+          className={cn(
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
+            highlightClass
+          )}
+        >
           <CsvNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<CsvTreeNode>)}
             workspaceId={workspaceId}
@@ -182,7 +209,12 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         }
         onDelete={() => dialogState.setPdfDeleteTarget({ id: node.data.id, name: node.data.name })}
       >
-        <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
+        <div
+          className={cn(
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
+            highlightClass
+          )}
+        >
           <PdfNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<PdfTreeNode>)}
             workspaceId={workspaceId}
@@ -231,7 +263,12 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
           dialogState.setImageDeleteTarget({ id: node.data.id, name: node.data.name })
         }
       >
-        <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
+        <div
+          className={cn(
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
+            highlightClass
+          )}
+        >
           <ImageNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<ImageTreeNode>)}
             workspaceId={workspaceId}
@@ -270,7 +307,12 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
       onEditColor={() => dialogState.setColorTarget({ id: node.id, color: folderColor })}
       onDelete={() => dialogState.setDeleteTarget({ id: node.id, name: node.data.name })}
     >
-      <div className="rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring">
+      <div
+        className={cn(
+          'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
+          highlightClass
+        )}
+      >
         <FolderNodeRenderer
           {...(arboristProps as unknown as NodeRendererProps<FolderTreeNode>)}
           workspaceId={workspaceId}

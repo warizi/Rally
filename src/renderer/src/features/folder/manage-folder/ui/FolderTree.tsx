@@ -1,4 +1,4 @@
-import { JSX, useCallback, useEffect, useMemo, useRef } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeRendererProps, TreeApi } from 'react-arborist'
 
@@ -12,10 +12,12 @@ import { useFolderDialogState } from '../model/use-folder-dialog-state'
 import { useFolderCreateHandlers } from '../model/use-folder-create-handlers'
 import { useFolderMutations } from '../model/use-folder-mutations'
 import { useFolderTreeHandlers } from '../model/use-folder-tree-handlers'
+import { useFolderSearch } from '../model/use-folder-search'
 import { countVisibleNodes } from '../model/folder-tree-helpers'
 import type { WorkspaceTreeNode } from '../model/types'
 import { FolderTreeNodeDispatcher } from './FolderTreeNodeDispatcher'
 import { FolderTreeToolbar } from './FolderTreeToolbar'
+import { FolderTreeSearchBar } from './FolderTreeSearchBar'
 import { FolderTreeEmpty } from './FolderTreeEmpty'
 import { FolderTreeDialogs } from './FolderTreeDialogs'
 
@@ -61,6 +63,22 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     dialogState
   })
 
+  // 검색 (Phase 2)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const search = useFolderSearch(tree)
+
+  const handleToggleSearch = useCallback(() => {
+    setSearchOpen((open) => {
+      if (open) search.clear()
+      return !open
+    })
+  }, [search])
+
+  const handleCloseSearch = useCallback(() => {
+    setSearchOpen(false)
+    search.clear()
+  }, [search])
+
   const NodeRenderer = useCallback(
     (props: NodeRendererProps<WorkspaceTreeNode>) => (
       <FolderTreeNodeDispatcher
@@ -70,9 +88,19 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
         activePathname={activePathname}
         createHandlers={createHandlers}
         dialogState={dialogState}
+        matchedIds={search.result.matchedIds}
+        activeMatchId={search.activeId}
       />
     ),
-    [workspaceId, sourcePaneId, activePathname, createHandlers, dialogState]
+    [
+      workspaceId,
+      sourcePaneId,
+      activePathname,
+      createHandlers,
+      dialogState,
+      search.result.matchedIds,
+      search.activeId
+    ]
   )
 
   return (
@@ -84,6 +112,18 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           collapseAll()
         }}
         onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
+        onToggleSearch={handleToggleSearch}
+      />
+
+      <FolderTreeSearchBar
+        open={searchOpen}
+        query={search.query}
+        matchCount={search.result.orderedMatches.length}
+        activeIndex={search.activeIndex}
+        onQueryChange={search.setQuery}
+        onNext={search.goNext}
+        onPrev={search.goPrev}
+        onClose={handleCloseSearch}
       />
 
       {tree.length === 0 ? (
