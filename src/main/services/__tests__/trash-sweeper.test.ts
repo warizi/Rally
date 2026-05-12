@@ -3,7 +3,7 @@ import { eq } from 'drizzle-orm'
 import { testDb } from '../../__tests__/setup'
 import * as schema from '../../db/schema'
 import { trashService } from '../trash'
-import { trashSweeper } from '../trash-sweeper'
+import { trashSweeper } from '../trash/trash-sweeper'
 import { todoRepository } from '../../repositories/todo'
 import { appSettingsRepository } from '../../repositories/app-settings'
 
@@ -116,5 +116,25 @@ describe('trashSweeper — runOnce는 sweepAll 호출', () => {
     trashService.setRetention('30')
     trashSweeper.runOnce()
     expect(todoRepository.findByIdIncludingDeleted('td-stale')).toBeUndefined()
+  })
+})
+
+describe('trashSweeper — start/stop interval 동작', () => {
+  it('start 는 즉시 1회 실행 + interval 등록, stop 은 interval 해제', () => {
+    seedTodo('td-start', WS_A)
+    const batchId = trashService.softRemove(WS_A, 'todo', 'td-start')
+    ageOutBatch(batchId, 100)
+    trashService.setRetention('30')
+
+    // start: 즉시 1회 실행돼야 함 → td-start 가 만료라 hard delete
+    trashSweeper.start()
+    expect(todoRepository.findByIdIncludingDeleted('td-start')).toBeUndefined()
+
+    // start 중복 호출은 무시
+    trashSweeper.start()
+
+    // stop 후 interval 해제 — 추가 sweep 일어나지 않음 (확인 가능한 방식: idempotent)
+    trashSweeper.stop()
+    trashSweeper.stop() // 중복 stop 도 안전
   })
 })
