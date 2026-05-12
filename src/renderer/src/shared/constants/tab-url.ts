@@ -126,8 +126,14 @@ export const sidebar_items: SidebarItem[] = [
   }
 ]
 
-/** 시스템 영역(사이드바 하단)에 노출되는 항목 — 휴지통, 설정 등 */
+/** 시스템 영역(사이드바 하단)에 노출되는 항목 — 휴지통, 업데이트 내역, 설정 등 */
 export const system_sidebar_items: SidebarItem[] = [
+  {
+    title: '업데이트 내역',
+    tabType: 'changelog',
+    pathname: ROUTES.CHANGELOG,
+    icon: TAB_ICON['changelog']
+  },
   {
     title: '휴지통',
     tabType: 'trash',

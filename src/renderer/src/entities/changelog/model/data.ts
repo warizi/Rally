@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.7.3',
+    date: '2026-05-13',
+    changes: [
+      {
+        type: 'feature',
+        title: '사이드바에 "업데이트 내역" 메뉴 추가',
+        description:
+          '사이드바 시스템 그룹(휴지통 위)에 업데이트 내역 메뉴가 추가되었습니다. 클릭하면 새 탭에서 changelog 페이지가 열립니다.'
+      }
+    ]
+  },
+  {
     version: '1.7.2',
     date: '2026-05-02',
     changes: [
