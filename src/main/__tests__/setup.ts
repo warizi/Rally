@@ -42,6 +42,7 @@ const TABLES = [
   'notes',
   'tags',
   'templates',
+  'noteStyleTemplates',
   'folders',
   'trashBatches',
   'workspaces',

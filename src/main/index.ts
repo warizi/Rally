@@ -45,6 +45,7 @@ import { registerBackupHandlers } from './ipc/backup'
 import { registerRecurringRuleHandlers } from './ipc/recurring-rule'
 import { registerRecurringCompletionHandlers } from './ipc/recurring-completion'
 import { registerTemplateHandlers } from './ipc/template'
+import { registerNoteStyleTemplateHandlers } from './ipc/note-style-template'
 import { registerHistoryHandlers } from './ipc/history'
 import { registerTrashHandlers } from './ipc/trash'
 import { registerOnboardingHandlers } from './ipc/onboarding'
@@ -276,6 +277,7 @@ app.whenReady().then(() => {
   registerRecurringRuleHandlers()
   registerRecurringCompletionHandlers()
   registerTemplateHandlers()
+  registerNoteStyleTemplateHandlers()
   registerHistoryHandlers()
   registerTrashHandlers()
   registerOnboardingHandlers()

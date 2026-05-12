@@ -1,11 +1,16 @@
 import { useState } from 'react'
-import { RotateCcwIcon } from 'lucide-react'
+import { RotateCcwIcon, TrashIcon, BookmarkPlusIcon } from 'lucide-react'
 import {
+  DEFAULT_NOTE_STYLE_SETTINGS,
   STYLE_ELEMENT_KEYS,
   buildNoteStyleCss,
+  useCreateNoteStyleTemplate,
+  useDeleteNoteStyleTemplate,
   useNoteStyle,
+  useNoteStyleTemplates,
   type ElementStyle,
   type NoteStyleSet,
+  type NoteStyleSettings,
   type StyleElementKey,
   type ThemeMode
 } from '@entities/note-style'
@@ -30,7 +35,7 @@ const ELEMENT_LABEL: Record<StyleElementKey, string> = {
 }
 
 export function NoteSettings(): React.JSX.Element {
-  const { settings, isLoading, saveMode, resetMode } = useNoteStyle()
+  const { settings, isLoading, save, saveMode, resetMode } = useNoteStyle()
   const [mode, setMode] = useState<ThemeMode>('light')
   const [activeElement, setActiveElement] = useState<StyleElementKey>('h1')
 
@@ -169,6 +174,118 @@ export function NoteSettings(): React.JSX.Element {
         <Label className="text-xs text-muted-foreground mb-2 block">미리보기</Label>
         <NoteStylePreview set={currentSet} mode={mode} />
       </div>
+
+      <Separator />
+
+      {/* 템플릿 */}
+      <TemplateSection settings={settings} onApply={save} />
+    </div>
+  )
+}
+
+function TemplateSection({
+  settings,
+  onApply
+}: {
+  settings: NoteStyleSettings
+  onApply: (next: NoteStyleSettings) => void
+}): React.JSX.Element {
+  const { templates } = useNoteStyleTemplates()
+  const { create, isPending: isCreating } = useCreateNoteStyleTemplate()
+  const { remove } = useDeleteNoteStyleTemplate()
+  const [newName, setNewName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+
+  const handleCreate = async (): Promise<void> => {
+    setError(null)
+    const trimmed = newName.trim()
+    if (!trimmed) {
+      setError('템플릿 이름을 입력하세요.')
+      return
+    }
+    try {
+      await create({ name: trimmed, settingsJson: JSON.stringify(settings) })
+      setNewName('')
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '템플릿 저장 실패')
+    }
+  }
+
+  const handleApply = (template: { settingsJson: string }): void => {
+    try {
+      const parsed = JSON.parse(template.settingsJson) as NoteStyleSettings
+      onApply({
+        light: { ...DEFAULT_NOTE_STYLE_SETTINGS.light, ...(parsed.light ?? {}) },
+        dark: { ...DEFAULT_NOTE_STYLE_SETTINGS.dark, ...(parsed.dark ?? {}) }
+      })
+    } catch {
+      setError('템플릿 데이터가 손상되었습니다.')
+    }
+  }
+
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground mb-2 block">템플릿</Label>
+
+      <div className="flex items-center gap-2 mb-2">
+        <Input
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          placeholder="현재 설정을 템플릿으로 저장 (이름 입력)"
+          className="h-8 text-sm flex-1"
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault()
+              void handleCreate()
+            }
+          }}
+        />
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => void handleCreate()}
+          disabled={isCreating}
+          className="h-8 gap-1.5"
+        >
+          <BookmarkPlusIcon className="size-3" />
+          저장
+        </Button>
+      </div>
+
+      {error && <div className="text-xs text-destructive mb-2">{error}</div>}
+
+      {templates.length === 0 ? (
+        <div className="text-xs text-muted-foreground italic py-2">저장된 템플릿이 없습니다.</div>
+      ) : (
+        <ul className="space-y-1 max-h-40 overflow-y-auto border rounded-md p-1.5">
+          {templates.map((t) => (
+            <li
+              key={t.id}
+              className="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-accent/40"
+            >
+              <span className="text-sm truncate flex-1">{t.name}</span>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs"
+                  onClick={() => handleApply(t)}
+                >
+                  적용
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+                  onClick={() => void remove(t.id)}
+                >
+                  <TrashIcon className="size-3" />
+                </Button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

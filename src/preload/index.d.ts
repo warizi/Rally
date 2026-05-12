@@ -952,6 +952,22 @@ interface OnboardingAPI {
   createSampleWorkspace: () => Promise<IpcResponse<OnboardingSampleResult>>
 }
 
+interface NoteStyleTemplateItem {
+  id: string
+  name: string
+  settingsJson: string
+  createdAt: Date
+}
+
+interface NoteStyleTemplateAPI {
+  list: () => Promise<IpcResponse<NoteStyleTemplateItem[]>>
+  create: (input: {
+    name: string
+    settingsJson: string
+  }) => Promise<IpcResponse<NoteStyleTemplateItem>>
+  remove: (id: string) => Promise<IpcResponse<void>>
+}
+
 interface TrashAPI {
   list: (
     workspaceId: string,
@@ -1015,6 +1031,7 @@ interface API {
   history: HistoryAPI
   trash: TrashAPI
   onboarding: OnboardingAPI
+  noteStyleTemplate: NoteStyleTemplateAPI
 }
 
 interface ShellAPI {
