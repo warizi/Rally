@@ -31,7 +31,9 @@
     "test:coverage:web": "vitest run --coverage --config vitest.config.web.mts",
     "coverage:summary": "node scripts/coverage-summary.mjs",
     "check:cleanup": "node scripts/check-cleanup-completeness.mjs",
-    "build:mcp": "tsup --config src/mcp-server/tsup.config.ts"
+    "build:mcp": "tsup --config src/mcp-server/tsup.config.ts",
+    "security:scan": "electronegativity -i src/main -i src/preload",
+    "security:scan:high": "electronegativity -i src/main -i src/preload -s high"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -98,6 +100,7 @@
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@doyensec/electronegativity": "^1.10.3",
     "@electron-toolkit/eslint-config-prettier": "^3.0.0",
     "@electron-toolkit/eslint-config-ts": "^3.1.0",
     "@electron-toolkit/tsconfig": "^2.0.0",
