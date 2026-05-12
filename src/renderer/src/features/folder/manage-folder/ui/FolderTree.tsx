@@ -1,4 +1,4 @@
-import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useRef } from 'react'
 import { Tree } from 'react-arborist'
 import type { NodeApi, NodeRendererProps, TreeApi } from 'react-arborist'
 import {
@@ -19,18 +19,10 @@ import {
   useRemoveFolder,
   useUpdateFolderMeta
 } from '@entities/folder'
-import { useCreateNote, useDuplicateNote, useImportNote, useRemoveNote } from '@entities/note'
-import type { NoteNode } from '@entities/note'
-import {
-  useCreateCsvFile,
-  useDuplicateCsvFile,
-  useImportCsvFile,
-  useRemoveCsvFile
-} from '@entities/csv-file'
-import type { CsvFileNode } from '@entities/csv-file'
-import { useDuplicatePdfFile, useImportPdfFile, useRemovePdfFile } from '@entities/pdf-file'
-import { useDuplicateImageFile, useImportImageFile, useRemoveImageFile } from '@entities/image-file'
-import type { ImageFileNode } from '@entities/image-file'
+import { useDuplicateNote, useRemoveNote } from '@entities/note'
+import { useDuplicateCsvFile, useRemoveCsvFile } from '@entities/csv-file'
+import { useDuplicatePdfFile, useRemovePdfFile } from '@entities/pdf-file'
+import { useDuplicateImageFile, useRemoveImageFile } from '@entities/image-file'
 import { Button } from '@shared/ui/button'
 import {
   DropdownMenu,
@@ -51,6 +43,8 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
 import { useTreeMoveListener } from '../model/use-tree-move-listener'
+import { useFolderDialogState } from '../model/use-folder-dialog-state'
+import { useFolderCreateHandlers } from '../model/use-folder-create-handlers'
 import {
   collectDescendantPathnames,
   findFolderNode,
@@ -99,25 +93,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { mutate: remove, isPending: isRemoving } = useRemoveFolder()
   const { mutate: updateMeta, isPending: isUpdatingMeta } = useUpdateFolderMeta()
 
-  // Note mutations (moveNote는 useTreeMoveListener에서 사용)
-  const { mutate: createNote } = useCreateNote()
-  const { mutateAsync: importNote } = useImportNote()
+  // Note / file mutations — duplicate/remove 만 (create/import 는 useFolderCreateHandlers 에서 처리)
   const { mutate: duplicateNote } = useDuplicateNote()
   const { mutate: removeNote, isPending: isRemovingNote } = useRemoveNote()
-
-  // CSV mutations
-  const { mutate: createCsvFile } = useCreateCsvFile()
-  const { mutateAsync: importCsvFile } = useImportCsvFile()
   const { mutate: duplicateCsvFile } = useDuplicateCsvFile()
   const { mutate: removeCsvFile, isPending: isRemovingCsv } = useRemoveCsvFile()
-
-  // PDF mutations
-  const { mutate: importPdfFile } = useImportPdfFile()
   const { mutate: duplicatePdfFile } = useDuplicatePdfFile()
   const { mutate: removePdfFile, isPending: isRemovingPdf } = useRemovePdfFile()
-
-  // Image mutations — mutateAsync for multi-file import loop
-  const { mutateAsync: importImageFile } = useImportImageFile()
   const { mutate: duplicateImageFile } = useDuplicateImageFile()
   const { mutate: removeImageFile, isPending: isRemovingImage } = useRemoveImageFile()
 
@@ -137,167 +119,35 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     expandToItem(tree, itemId, treeRef.current)
   }, [activePathname, tree, expandToItem])
 
-  // Folder dialog states
-  const [createTarget, setCreateTarget] = useState<{ parentFolderId: string | null } | null>(null)
-  const [renameTarget, setRenameTarget] = useState<{ id: string; name: string } | null>(null)
-  const [colorTarget, setColorTarget] = useState<{ id: string; color: string | null } | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null)
+  // Dialog states (8개 useState → use-folder-dialog-state 훅으로 묶음)
+  const {
+    createTarget,
+    setCreateTarget,
+    renameTarget,
+    setRenameTarget,
+    colorTarget,
+    setColorTarget,
+    deleteTarget,
+    setDeleteTarget,
+    noteDeleteTarget,
+    setNoteDeleteTarget,
+    csvDeleteTarget,
+    setCsvDeleteTarget,
+    pdfDeleteTarget,
+    setPdfDeleteTarget,
+    imageDeleteTarget,
+    setImageDeleteTarget
+  } = useFolderDialogState()
 
-  // Note dialog states
-  const [noteDeleteTarget, setNoteDeleteTarget] = useState<{ id: string; name: string } | null>(
-    null
-  )
-
-  // CSV dialog states
-  const [csvDeleteTarget, setCsvDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-
-  // PDF dialog states
-  const [pdfDeleteTarget, setPdfDeleteTarget] = useState<{ id: string; name: string } | null>(null)
-
-  // Image dialog states
-  const [imageDeleteTarget, setImageDeleteTarget] = useState<{ id: string; name: string } | null>(
-    null
-  )
-
-  /** 노트 생성 → 성공 시 오른쪽 탭에 자동 오픈 */
-  const handleCreateNote = useCallback(
-    (folderId: string | null) => {
-      createNote(
-        { workspaceId, folderId, name: '새로운 노트' },
-        {
-          onSuccess: (note) => {
-            if (!note) return
-            openRightTab(
-              {
-                type: 'note',
-                title: note.title,
-                pathname: `/folder/note/${note.id}`
-              },
-              sourcePaneId
-            )
-          }
-        }
-      )
-    },
-    [workspaceId, sourcePaneId, createNote, openRightTab]
-  )
-
-  /** CSV 생성 → 성공 시 오른쪽 탭에 자동 오픈 */
-  const handleCreateCsv = useCallback(
-    (folderId: string | null) => {
-      createCsvFile(
-        { workspaceId, folderId, name: '새로운 테이블' },
-        {
-          onSuccess: (csv) => {
-            if (!csv) return
-            openRightTab(
-              {
-                type: 'csv',
-                title: csv.title,
-                pathname: `/folder/csv/${csv.id}`
-              },
-              sourcePaneId
-            )
-          }
-        }
-      )
-    },
-    [workspaceId, sourcePaneId, createCsvFile, openRightTab]
-  )
-
-  /** 노트 가져오기 → 다중 .md 선택 → import × N → 마지막 노트 탭 오픈 */
-  const handleImportNote = useCallback(
-    async (folderId: string | null) => {
-      const filePaths = await window.api.note.selectFile()
-      if (!filePaths || filePaths.length === 0) return
-      let lastImported: NoteNode | undefined
-      for (const sourcePath of filePaths) {
-        lastImported = await importNote({ workspaceId, folderId, sourcePath })
-      }
-      if (lastImported) {
-        openRightTab(
-          {
-            type: 'note',
-            title: lastImported.title,
-            pathname: `/folder/note/${lastImported.id}`
-          },
-          sourcePaneId
-        )
-      }
-    },
-    [workspaceId, sourcePaneId, importNote, openRightTab]
-  )
-
-  /** 테이블 가져오기 → 다중 .csv 선택 → import × N → 마지막 테이블 탭 오픈 */
-  const handleImportCsv = useCallback(
-    async (folderId: string | null) => {
-      const filePaths = await window.api.csv.selectFile()
-      if (!filePaths || filePaths.length === 0) return
-      let lastImported: CsvFileNode | undefined
-      for (const sourcePath of filePaths) {
-        lastImported = await importCsvFile({ workspaceId, folderId, sourcePath })
-      }
-      if (lastImported) {
-        openRightTab(
-          {
-            type: 'csv',
-            title: lastImported.title,
-            pathname: `/folder/csv/${lastImported.id}`
-          },
-          sourcePaneId
-        )
-      }
-    },
-    [workspaceId, sourcePaneId, importCsvFile, openRightTab]
-  )
-
-  /** PDF 가져오기 → 파일 선택 다이얼로그 → import → 성공 시 오른쪽 탭에 자동 오픈 */
-  const handleImportPdf = useCallback(
-    async (folderId: string | null) => {
-      const sourcePath = await window.api.pdf.selectFile()
-      if (!sourcePath) return
-      importPdfFile(
-        { workspaceId, folderId, sourcePath },
-        {
-          onSuccess: (pdf) => {
-            if (!pdf) return
-            openRightTab(
-              {
-                type: 'pdf',
-                title: pdf.title,
-                pathname: `/folder/pdf/${pdf.id}`
-              },
-              sourcePaneId
-            )
-          }
-        }
-      )
-    },
-    [workspaceId, sourcePaneId, importPdfFile, openRightTab]
-  )
-
-  /** 이미지 가져오기 → selectFile 다이얼로그 (다중 선택) → import × N → 마지막 이미지만 탭 열기 */
-  const handleImportImage = useCallback(
-    async (folderId: string | null) => {
-      const filePaths = await window.api.image.selectFile()
-      if (!filePaths || filePaths.length === 0) return
-      let lastImported: ImageFileNode | undefined
-      for (const sourcePath of filePaths) {
-        lastImported = await importImageFile({ workspaceId, folderId, sourcePath })
-      }
-      if (lastImported) {
-        openRightTab(
-          {
-            type: 'image',
-            title: lastImported.title,
-            pathname: `/folder/image/${lastImported.id}`
-          },
-          sourcePaneId
-        )
-      }
-    },
-    [workspaceId, sourcePaneId, importImageFile, openRightTab]
-  )
+  // 6개 create/import 핸들러 (use-folder-create-handlers 훅으로 묶음)
+  const {
+    handleCreateNote,
+    handleCreateCsv,
+    handleImportNote,
+    handleImportCsv,
+    handleImportPdf,
+    handleImportImage
+  } = useFolderCreateHandlers({ workspaceId, sourcePaneId })
 
   const NodeRenderer = useCallback(
     (props: NodeRendererProps<WorkspaceTreeNode>) => {
