@@ -1,4 +1,4 @@
-import { JSX } from 'react'
+import { JSX, memo } from 'react'
 import type { NodeRendererProps } from 'react-arborist'
 import { ChevronRight } from 'lucide-react'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
@@ -15,7 +15,7 @@ interface FolderNodeRendererProps extends NodeRendererProps<FolderTreeNode> {
   sourcePaneId: string
 }
 
-export function FolderNodeRenderer({
+function FolderNodeRendererImpl({
   node,
   style,
   workspaceId,
@@ -107,3 +107,12 @@ export function FolderNodeRenderer({
     </div>
   )
 }
+
+/**
+ * React.memo 적용 — react-arborist Tree 가 다른 row 변경으로 re-render 될 때,
+ * 동일한 NodeApi reference + 변경 없는 workspaceId/sourcePaneId 인 폴더 row 는
+ * 함수 본문 실행을 건너뜀. 내부 useTreeDragStore selector 는 memo 와 무관하게
+ * 자체 구독으로 동작.
+ */
+export const FolderNodeRenderer = memo(FolderNodeRendererImpl)
+FolderNodeRenderer.displayName = 'FolderNodeRenderer'
