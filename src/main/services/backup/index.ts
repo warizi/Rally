@@ -5,7 +5,8 @@ import archiver from 'archiver'
 import AdmZip from 'adm-zip'
 import { nanoid } from 'nanoid'
 import { and, eq } from 'drizzle-orm'
-import { db } from '../db'
+import { app } from 'electron'
+import { db } from '../../db'
 import {
   workspaces,
   folders,
@@ -31,289 +32,39 @@ import {
   templates,
   terminalLayouts,
   terminalSessions
-} from '../db/schema'
-import { workspaceService } from './workspace'
-import { app } from 'electron'
+} from '../../db/schema'
+import { workspaceService } from '../workspace'
 
-// ──────────────────────────────────────────────
-// Types
-// ──────────────────────────────────────────────
+import type { BackupManifest } from './types'
+import {
+  serializeForExport,
+  toDate,
+  toDateOrNull,
+  sortTodosByParent,
+  copyDirSync,
+  batchInsert
+} from './helpers'
+import { createIdMapper } from './id-mapper'
+import { mapTabJsons } from './tab-mapper'
 
-export interface BackupManifest {
-  version: number
-  appVersion: string
-  workspaceName: string
-  exportedAt: string
-  tables: string[]
-}
+/**
+ * 백업 시스템 — 워크스페이스 export / import (zip 기반).
+ *
+ * 본 파일은 공개 API 파사드. 책임은 모듈로 위임:
+ *   - `./types.ts`       — BackupManifest 등 공개 타입
+ *   - `./helpers.ts`     — 직렬화, 위상정렬, FS 복사, batch insert
+ *   - `./id-mapper.ts`   — old → new ID 매핑 (Phase 2 에서 클래스화 예정)
+ *   - `./tab-mapper.ts`  — 탭 세션 JSON 내부 ID 재매핑
+ *
+ * Phase 1 (현재): 헬퍼 분리만. backupService 본문은 Phase 3 에서
+ * serializer/deserializer 로 분리 예정.
+ *
+ * any 사용: import 의 readJson 결과 + batchInsert 인자. Phase 3 의 zod
+ * 스키마 도입 시 함께 제거 예정.
+ */
 
-// ──────────────────────────────────────────────
-// Serialization Helpers
-// ──────────────────────────────────────────────
-
-/** Drizzle timestamp_ms → number (Date → getTime) */
-function serializeForExport(data: unknown): unknown {
-  return JSON.parse(
-    JSON.stringify(data, (_, value) => (value instanceof Date ? value.getTime() : value))
-  )
-}
-
-/** number → Date (Drizzle insert 용) */
-function toDate(ms: number): Date {
-  return new Date(ms)
-}
-
-/** nullable timestamp */
-function toDateOrNull(ms: number | null): Date | null {
-  return ms != null ? new Date(ms) : null
-}
-
-// ──────────────────────────────────────────────
-// ID Mapping Helpers
-// ──────────────────────────────────────────────
-
-function createIdMapper(): {
-  register: (oldId: string) => string
-  map: (oldId: string) => string
-  mapOrNull: (oldId: string | null) => string | null
-  mapOrSkip: (oldId: string) => string | null
-} {
-  const idMap = new Map<string, string>()
-
-  return {
-    /** 새 ID 등록 */
-    register(oldId: string): string {
-      const newId = nanoid()
-      idMap.set(oldId, newId)
-      return newId
-    },
-
-    /** 필수 매핑 (실패 시 throw) */
-    map(oldId: string): string {
-      const newId = idMap.get(oldId)
-      if (!newId) throw new Error(`ID mapping not found: ${oldId}`)
-      return newId
-    },
-
-    /** nullable FK 매핑 (null → null) */
-    mapOrNull(oldId: string | null): string | null {
-      return oldId != null ? this.map(oldId) : null
-    },
-
-    /** 고아 참조 안전 매핑 (매핑 실패 → null, 레코드 skip 판단용) */
-    mapOrSkip(oldId: string): string | null {
-      return idMap.get(oldId) ?? null
-    }
-  }
-}
-
-// ──────────────────────────────────────────────
-// Tab JSON Mapping Helpers
-// ──────────────────────────────────────────────
-
-/** pathname에서 마지막 세그먼트(엔티티 ID) 교체 */
-function mapTabPathname(
-  pathname: string,
-  mapper: ReturnType<typeof createIdMapper>
-): { pathname: string; mapped: boolean } {
-  const patterns = [
-    /^\/todo\/(.+)$/,
-    /^\/folder\/note\/(.+)$/,
-    /^\/folder\/csv\/(.+)$/,
-    /^\/folder\/pdf\/(.+)$/,
-    /^\/folder\/image\/(.+)$/,
-    /^\/canvas\/(.+)$/
-  ]
-
-  for (const pattern of patterns) {
-    const match = pathname.match(pattern)
-    if (match) {
-      const oldId = match[1]
-      const newId = mapper.mapOrSkip(oldId)
-      if (!newId) return { pathname, mapped: false }
-      return {
-        pathname: pathname.replace(oldId, newId),
-        mapped: true
-      }
-    }
-  }
-
-  // 엔티티 ID 없는 경로 (dashboard, todo list, folder list 등)
-  return { pathname, mapped: true }
-}
-
-/** createTabId 알고리즘 재현 (renderer factory.ts와 동일) */
-function createTabId(pathname: string): string {
-  return `tab-${pathname
-    .replace(/[^a-zA-Z0-9]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '')}`
-}
-
-/** folderOpenState JSON 키 매핑 */
-function mapFolderOpenState(
-  json: string | undefined,
-  mapper: ReturnType<typeof createIdMapper>
-): string | undefined {
-  if (!json) return json
-  try {
-    const parsed: Record<string, boolean> = JSON.parse(json)
-    const mapped: Record<string, boolean> = {}
-    for (const [oldFolderId, value] of Object.entries(parsed)) {
-      const newId = mapper.mapOrSkip(oldFolderId)
-      if (newId) mapped[newId] = value
-    }
-    return JSON.stringify(mapped)
-  } catch {
-    return json
-  }
-}
-
-interface MappedTabSession {
-  tabsJson: string
-  panesJson: string
-  layoutJson: string
-  activePaneId: string
-}
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-/** tab_sessions / tab_snapshots JSON 전체 매핑 */
-function mapTabJsons(
-  tabsJsonStr: string,
-  panesJsonStr: string,
-  layoutJsonStr: string,
-  activePaneId: string | null,
-  mapper: ReturnType<typeof createIdMapper>
-): MappedTabSession {
-  // 1. tabs 매핑
-  const oldTabs: Record<string, any> = JSON.parse(tabsJsonStr)
-  const tabIdMap = new Map<string, string>()
-  const newTabs: Record<string, any> = {}
-
-  for (const [oldTabId, tab] of Object.entries(oldTabs)) {
-    const result = mapTabPathname(tab.pathname, mapper)
-    if (!result.mapped) continue
-
-    const newPathname = result.pathname
-    const newTabId = createTabId(newPathname)
-    tabIdMap.set(oldTabId, newTabId)
-
-    const searchParams = tab.searchParams ? { ...tab.searchParams } : undefined
-    if (searchParams?.folderOpenState) {
-      searchParams.folderOpenState = mapFolderOpenState(searchParams.folderOpenState, mapper)
-    }
-
-    newTabs[newTabId] = {
-      ...tab,
-      id: newTabId,
-      pathname: newPathname,
-      searchParams
-    }
-  }
-
-  // 2. panes 매핑
-  const oldPanes: Record<string, any> = JSON.parse(panesJsonStr)
-  const paneIdMap = new Map<string, string>()
-  const newPanes: Record<string, any> = {}
-
-  for (const [oldPaneId, pane] of Object.entries(oldPanes)) {
-    const newPaneId = nanoid()
-    paneIdMap.set(oldPaneId, newPaneId)
-
-    const newTabIds = pane.tabIds.map((oldId: string) => tabIdMap.get(oldId)).filter(Boolean)
-
-    const newActiveTabId = pane.activeTabId ? (tabIdMap.get(pane.activeTabId) ?? null) : null
-
-    newPanes[newPaneId] = {
-      ...pane,
-      id: newPaneId,
-      tabIds: newTabIds,
-      activeTabId: newActiveTabId ?? newTabIds[0] ?? null
-    }
-  }
-
-  // 3. layout 매핑 (재귀)
-  function mapLayout(node: any): any {
-    if (node.type === 'pane') {
-      return { ...node, id: nanoid(), paneId: paneIdMap.get(node.paneId) ?? node.paneId }
-    }
-    if (node.type === 'split') {
-      return { ...node, id: nanoid(), children: node.children.map(mapLayout) }
-    }
-    return node
-  }
-
-  const oldLayout = JSON.parse(layoutJsonStr)
-  const newLayout = mapLayout(oldLayout)
-
-  // 4. activePaneId 매핑
-  const newActivePaneId = activePaneId
-    ? (paneIdMap.get(activePaneId) ?? Object.keys(newPanes)[0] ?? '')
-    : (Object.keys(newPanes)[0] ?? '')
-
-  return {
-    tabsJson: JSON.stringify(newTabs),
-    panesJson: JSON.stringify(newPanes),
-    layoutJson: JSON.stringify(newLayout),
-    activePaneId: newActivePaneId
-  }
-}
-
-// ──────────────────────────────────────────────
-// Topological Sort (todos)
-// ──────────────────────────────────────────────
-
-function sortTodosByParent<T extends { id: string; parentId: string | null }>(items: T[]): T[] {
-  const sorted: T[] = []
-  const remaining = [...items]
-  const inserted = new Set<string>()
-
-  while (remaining.length > 0) {
-    const batch = remaining.filter((t) => t.parentId === null || inserted.has(t.parentId))
-    if (batch.length === 0) break // 순환 참조 방지
-    for (const t of batch) {
-      inserted.add(t.id)
-      sorted.push(t)
-    }
-    remaining.splice(0, remaining.length, ...remaining.filter((t) => !inserted.has(t.id)))
-  }
-  return sorted
-}
-
-// ──────────────────────────────────────────────
-// File Copy Helper
-// ──────────────────────────────────────────────
-
-function copyDirSync(src: string, dest: string): void {
-  fs.mkdirSync(dest, { recursive: true })
-  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
-    const srcPath = path.join(src, entry.name)
-    const destPath = path.join(dest, entry.name)
-    if (entry.isDirectory()) {
-      copyDirSync(srcPath, destPath)
-    } else {
-      fs.copyFileSync(srcPath, destPath)
-    }
-  }
-}
-
-// ──────────────────────────────────────────────
-// Batch Insert Helper
-// ──────────────────────────────────────────────
-
-function batchInsert(table: any, items: any[]): void {
-  if (items.length === 0) return
-  const CHUNK = 99
-  for (let i = 0; i < items.length; i += CHUNK) {
-    db.insert(table)
-      .values(items.slice(i, i + CHUNK))
-      .onConflictDoNothing()
-      .run()
-  }
-}
-
-/* eslint-enable @typescript-eslint/no-explicit-any */
+// 외부 호환 — BackupManifest 재노출
+export type { BackupManifest }
 
 // ──────────────────────────────────────────────
 // Backup Service
