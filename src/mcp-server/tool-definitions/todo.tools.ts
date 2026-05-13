@@ -1,7 +1,7 @@
 /**
  * MCP todo tools.
  * P3-7 — tool-definitions.ts 분할. 포함: list_todos, manage_todos.
- * MCP v2 — manage_tasks 추가 (manage_todos/schedules/recurring/reminders 통합).
+ * MCP v2 — read_tasks (work 통합 read) + manage_tasks (work 통합 manage) 추가.
  */
 import { z } from 'zod'
 import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
@@ -239,6 +239,139 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
         content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
         ...(hadError ? { isError: true } : {})
       }
+    }
+  },
+  {
+    name: 'read_tasks',
+    description: `Read tasks across the work cluster (todo + schedule + recurring + reminder + history) in one call.
+Replaces v1 list_todos / list_schedules / list_reminders / list_recurring_rules / get_history.
+
+types: subset of ['todo','schedule','recurring','reminder']; omit = all
+mode: 'active' (default) / 'completed' / 'today'
+- 'active': active todos + upcoming schedules + active recurring rules + pending reminders
+- 'today': today's due todos + today's schedules + today firing recurring (with completed flag) + today reminders
+- 'completed': day-grouped history (completed todos + recurring completions; schedule/reminder past not in scope)
+
+Filters (apply where relevant):
+- from / to: ISO 8601 range (schedules / today bounds)
+- dueWithin: integer days from today (todo)
+- priority[]: high|medium|low (todo)
+- parentId: 'null' for top-level only, or a parent todo id
+- linkedTo: { type, id } (todo)
+- search: substring on title/description/location
+- resolveLinks: include linkedItem previews
+- pendingOnly: un-fired reminders
+- activeOnly: recurring rules with endDate=null or future (default true)
+- date / dateRange (completed mode): dayOffset, dayLimit, fromDate (YYYY-MM-DD), toDate, query
+
+Response shape depends on mode:
+- active: { todos?, schedules?, recurring?, reminders? }
+- today: { date, todos?, schedules?, recurring?, recurringCompletions?, reminders? }
+- completed: { days: [{date, todos, recurringCompletions}], hasMore, nextDayOffset, schedules?, reminders? }`,
+    schema: {
+      types: z
+        .array(z.enum(['todo', 'schedule', 'recurring', 'reminder']))
+        .optional()
+        .describe('Task types to include (default: all)'),
+      mode: z
+        .enum(['active', 'completed', 'today'])
+        .optional()
+        .describe('View mode (default: active)'),
+      from: z.string().optional().describe('ISO 8601 range start (schedule)'),
+      to: z.string().optional().describe('ISO 8601 range end (schedule)'),
+      dueWithin: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .describe('Todo due within N days from today'),
+      priority: z
+        .array(z.enum(['high', 'medium', 'low']))
+        .optional()
+        .describe('Todo priority filter'),
+      parentId: z
+        .string()
+        .optional()
+        .describe('Todo parentId — "null" for top-level only, or a parent todo id'),
+      linkedTo: z
+        .object({
+          type: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'schedule']),
+          id: z.string()
+        })
+        .optional()
+        .describe('Todo filtered to those linked to this entity'),
+      search: z.string().optional().describe('Substring on title/description/location'),
+      resolveLinks: z
+        .boolean()
+        .optional()
+        .describe('Include linkedItem previews (todo only, default: false)'),
+      pendingOnly: z
+        .boolean()
+        .optional()
+        .describe('Reminder: only un-fired (default: false)'),
+      activeOnly: z
+        .boolean()
+        .optional()
+        .describe('Recurring: only rules with endDate=null or future (default: true)'),
+      date: z
+        .string()
+        .optional()
+        .describe('today mode: anchor date (YYYY-MM-DD or ISO 8601; default today)'),
+      dayOffset: z
+        .number()
+        .int()
+        .min(0)
+        .optional()
+        .describe('completed mode: pagination offset in active days'),
+      dayLimit: z
+        .number()
+        .int()
+        .min(1)
+        .max(60)
+        .optional()
+        .describe('completed mode: days per page (default 10)'),
+      fromDate: z
+        .string()
+        .optional()
+        .describe('completed mode: YYYY-MM-DD inclusive lower bound'),
+      toDate: z
+        .string()
+        .optional()
+        .describe('completed mode: YYYY-MM-DD inclusive upper bound'),
+      query: z
+        .string()
+        .optional()
+        .describe('completed mode: substring on todo titles / linked file titles')
+    },
+    handler: (args) => {
+      const params = new URLSearchParams()
+      const a = args as Record<string, unknown>
+      if (Array.isArray(a.types)) for (const t of a.types as string[]) params.append('types[]', t)
+      if (typeof a.mode === 'string') params.set('mode', a.mode)
+      if (typeof a.from === 'string') params.set('from', a.from)
+      if (typeof a.to === 'string') params.set('to', a.to)
+      if (typeof a.dueWithin === 'number') params.set('dueWithin', String(a.dueWithin))
+      if (Array.isArray(a.priority))
+        for (const p of a.priority as string[]) params.append('priority[]', p)
+      if (typeof a.parentId === 'string') params.set('parentId', a.parentId)
+      if (a.linkedTo && typeof a.linkedTo === 'object') {
+        const lt = a.linkedTo as { type: string; id: string }
+        params.set('linkedTo[type]', lt.type)
+        params.set('linkedTo[id]', lt.id)
+      }
+      if (typeof a.search === 'string' && a.search.trim()) params.set('search', a.search)
+      if (a.resolveLinks) params.set('resolveLinks', 'true')
+      if (a.pendingOnly) params.set('pendingOnly', 'true')
+      if (typeof a.activeOnly === 'boolean') params.set('activeOnly', a.activeOnly ? 'true' : 'false')
+      if (typeof a.date === 'string') params.set('date', a.date)
+      if (typeof a.dayOffset === 'number') params.set('dayOffset', String(a.dayOffset))
+      if (typeof a.dayLimit === 'number') params.set('dayLimit', String(a.dayLimit))
+      if (typeof a.fromDate === 'string') params.set('fromDate', a.fromDate)
+      if (typeof a.toDate === 'string') params.set('toDate', a.toDate)
+      if (typeof a.query === 'string' && (a.query as string).trim())
+        params.set('query', a.query as string)
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/tasks${qs ? `?${qs}` : ''}`)
     }
   },
   {
