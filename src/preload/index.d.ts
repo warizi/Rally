@@ -576,6 +576,7 @@ interface ScheduleAPI {
   linkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
   unlinkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
   getLinkedTodos: (scheduleId: string) => Promise<IpcResponse<TodoItem[]>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 interface ReminderItem {

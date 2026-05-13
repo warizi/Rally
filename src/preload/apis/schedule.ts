@@ -17,5 +17,11 @@ export const scheduleApi = {
     ipcRenderer.invoke('schedule:linkTodo', scheduleId, todoId),
   unlinkTodo: (scheduleId: string, todoId: string) =>
     ipcRenderer.invoke('schedule:unlinkTodo', scheduleId, todoId),
-  getLinkedTodos: (scheduleId: string) => ipcRenderer.invoke('schedule:getLinkedTodos', scheduleId)
+  getLinkedTodos: (scheduleId: string) => ipcRenderer.invoke('schedule:getLinkedTodos', scheduleId),
+  onChanged: (callback: (workspaceId: string) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, workspaceId: string): void =>
+      callback(workspaceId)
+    ipcRenderer.on('schedule:changed', handler)
+    return () => ipcRenderer.removeListener('schedule:changed', handler)
+  }
 }

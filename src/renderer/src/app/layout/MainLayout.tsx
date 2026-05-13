@@ -12,6 +12,7 @@ import { usePdfWatcher } from '@entities/pdf-file'
 import { useImageWatcher } from '@entities/image-file'
 import { useCanvasWatcher } from '@entities/canvas'
 import { useTodoWatcher } from '@entities/todo'
+import { useScheduleWatcher } from '@entities/schedule'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useTrashWatcher } from '@entities/trash'
@@ -106,6 +107,8 @@ function MainLayout(): React.JSX.Element {
   useCanvasWatcher()
   // todo 변경 push 이벤트 구독
   useTodoWatcher()
+  // schedule 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화)
+  useScheduleWatcher()
   // entity-link 변경 push 이벤트 구독 (orphan cleanup 시 캐시 동기화)
   useEntityLinkWatcher()
   // 알림 push 이벤트 구독
