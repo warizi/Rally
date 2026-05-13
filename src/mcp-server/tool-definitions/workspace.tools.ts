@@ -61,6 +61,11 @@ mode:
   },
   {
     name: 'get_workspace_info',
+    deprecated: {
+      replacedBy: 'read_workspace',
+      since: 'v2.0',
+      reason: "read_workspace({ mode: 'full'|'stats'|'recent' }) unifies info + stats endpoints"
+    },
     description: `Active workspace summary: id/name/path + cross-domain stats + recentActivity (note/table/canvas/todo, updatedAt desc).
 Use this when you want a quick overview of the workspace without paging through list_items.
 

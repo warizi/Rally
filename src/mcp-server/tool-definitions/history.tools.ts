@@ -9,6 +9,11 @@ import type { ToolDefinition } from './types'
 export const historyTools: ToolDefinition[] = [
   {
     name: 'get_history',
+    deprecated: {
+      replacedBy: 'read_tasks',
+      since: 'v2.0',
+      reason: "read_tasks({ mode: 'completed', dayLimit, fromDate, toDate, query })"
+    },
     description: `List completed todos grouped by day (most recent first). Includes recurring completions too.
 Pagination is by "day with activity" — dayOffset/dayLimit skip empty days. Use fromDate/toDate to constrain by absolute range.
 query: case-insensitive substring on todo titles or linked file titles.`,

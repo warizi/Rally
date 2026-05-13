@@ -376,6 +376,11 @@ Response shape depends on mode:
   },
   {
     name: 'list_todos',
+    deprecated: {
+      replacedBy: 'read_tasks',
+      since: 'v2.0',
+      reason: "read_tasks({ types: ['todo'] }) — also covers schedule/recurring/reminder"
+    },
     description: `List todos in the active workspace.
 Filter options (all optional, AND-combined):
 - filter: 'active' (top-level not done + all subtodos) or 'completed' (top-level done)
@@ -442,6 +447,11 @@ Subtodos support links — link/unlink operations work on any todo regardless of
   },
   {
     name: 'manage_todos',
+    deprecated: {
+      replacedBy: 'manage_tasks',
+      since: 'v2.0',
+      reason: "manage_tasks with type: 'todo' covers all manage_todos actions in a unified API"
+    },
     description: `Batch create, update, or delete todos. Status/isDone auto-sync.
 Subtodos: created inline via the subtodos array. Title only — matches the UI which only allows entering a title.
 Other fields (priority/dueDate/etc.) on a subtodo can be set later via a separate update action targeting the subtodo's id.

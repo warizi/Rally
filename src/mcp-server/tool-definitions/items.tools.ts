@@ -151,6 +151,11 @@ will be permanently deleted from disk. Always preserve existing image references
   },
   {
     name: 'list_items',
+    deprecated: {
+      replacedBy: 'browse',
+      since: 'v2.0',
+      reason: 'browse supports all kinds + pdf/image/tag + tagId/linkedTo filters'
+    },
     description: `List items (folders, notes, tables, canvases, todo summary) in the active workspace.
 All options are optional and default to a full listing for backward compatibility, but for token efficiency
 you should narrow the response when possible:
@@ -244,6 +249,11 @@ Title matches rank above content/description matches; ties break by updatedAt de
   },
   {
     name: 'read_contents',
+    deprecated: {
+      replacedBy: 'read',
+      since: 'v2.0',
+      reason: 'read auto-detects type (note/csv/canvas/pdf/image/template) for mixed-type batch'
+    },
     description: `Batch read the contents of multiple notes/tables in one round-trip. Up to 50 IDs.
 Pass a single id in the array for one-shot reads. Each result is independent: if one ID fails
 (not found, fs error, etc.) the others still succeed.
@@ -257,6 +267,11 @@ Result entries:
   },
   {
     name: 'write_content',
+    deprecated: {
+      replacedBy: 'manage_content',
+      since: 'v2.0',
+      reason: 'manage_content batches create/update actions in one call'
+    },
     description: `Create or update a note/table. If id is provided, updates existing content. If not, creates new.
 WARNING: When updating a note, image references (![](/.images/xxx.png)) removed from new content will be permanently deleted from disk. Always preserve existing image references.`,
     schema: {
@@ -313,6 +328,11 @@ MCP v2: replaces v1 manage_items (note/csv) + manage_folders + manage_files. Bac
   },
   {
     name: 'manage_folders',
+    deprecated: {
+      replacedBy: 'manage_items',
+      since: 'v2.0',
+      reason: 'manage_items now supports create_folder action + folder rename/move/delete via type auto-detection'
+    },
     description: 'Batch create, rename, move, or delete folders. Actions execute sequentially.',
     schema: {
       actions: z

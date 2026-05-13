@@ -9,6 +9,11 @@ import type { ToolDefinition } from './types'
 export const fileTools: ToolDefinition[] = [
   {
     name: 'list_files',
+    deprecated: {
+      replacedBy: 'browse',
+      since: 'v2.0',
+      reason: "browse({ types: ['pdf'|'image'] }) covers list_files with unified filters"
+    },
     description: `List PDF or image files in the active workspace.
 - type: 'pdf' or 'image' (required)
 - folderId/recursive filter scope; search matches title/description
@@ -31,6 +36,11 @@ export const fileTools: ToolDefinition[] = [
   },
   {
     name: 'manage_files',
+    deprecated: {
+      replacedBy: 'manage_items',
+      since: 'v2.0',
+      reason: 'manage_items auto-detects pdf/image and handles rename/move/update_meta/delete'
+    },
     description: `Batch rename/move/update_meta/delete on PDF or image files. Importing new files requires the desktop UI (file dialog).
 - type: 'pdf' or 'image' (required) — applies to all actions in this call`,
     schema: {

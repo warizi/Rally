@@ -9,6 +9,11 @@ import type { ToolDefinition } from './types'
 export const reminderTools: ToolDefinition[] = [
   {
     name: 'list_reminders',
+    deprecated: {
+      replacedBy: 'read_tasks',
+      since: 'v2.0',
+      reason: "read_tasks({ types: ['reminder'], entityType, entityId, pendingOnly })"
+    },
     description: `List reminders. If entityType+entityId are given, returns reminders only for that entity; otherwise returns reminders for all todos and schedules in the active workspace.
 pendingOnly=true filters out fired reminders.`,
     schema: {
@@ -30,6 +35,11 @@ pendingOnly=true filters out fired reminders.`,
   },
   {
     name: 'manage_reminders',
+    deprecated: {
+      replacedBy: 'manage_tasks',
+      since: 'v2.0',
+      reason: "manage_tasks with type: 'reminder' (action: 'create'|'delete'). update unsupported in both."
+    },
     description: `Create or delete reminders for todos/schedules.
 offsetMs (create) must be one of: 600000 (10m), 1800000 (30m), 3600000 (1h), 86400000 (1d), 172800000 (2d).
 Reminder fires (entity start/due time - offsetMs); creation throws if that moment is in the past.`,
