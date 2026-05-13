@@ -49,12 +49,9 @@ export function TodoKanbanBoard({
           </span>
         </div>
 
-        {/* 카드 목록 */}
-        <div
-          ref={setNodeRef}
-          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden scroll-area-w-content-fit"
-        >
-          <ScrollArea className="w-full min-w-0 flex-1">
+        {/* 카드 목록 — 세로 스크롤은 ScrollArea 가 전담 (외부 div 는 dnd-kit droppable 컨테이너 역할만) */}
+        <div ref={setNodeRef} className="flex-1 min-h-0">
+          <ScrollArea className="h-full w-full min-w-0 scroll-area-w-content-fit">
             <div className="px-2 pb-2">
               <SortableContext
                 items={todos.map((t) => t.id)}
