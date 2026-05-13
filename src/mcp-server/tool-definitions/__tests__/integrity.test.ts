@@ -4,15 +4,37 @@
  * P3-7 — 1,031L 단일 파일을 13개 도메인 파일로 분할. 등록 누락 / 중복 / 이름 형식
  * 깨짐을 자동 감지.
  *
- * MCP v2 마이그레이션 진행 중 — baseline 은 신규 도구 추가 시마다 증가한다.
- * v2 신규: browse, read, read_workspace, read_tasks, manage_content, manage_canvas, manage_tasks, read_trash, read_templates (+9).
+ * MCP v2 완료 — v1 도구 제거 후 최종 15개 도구 (read_* / manage_* / search).
  */
 import { describe, it, expect } from 'vitest'
 import { allTools } from '../index'
 
-const BASELINE_TOOL_COUNT = 38
+const BASELINE_TOOL_COUNT = 15
 
-describe('tool-definitions 무결성', () => {
+const V2_TOOLS = [
+  // Discovery (3)
+  'search',
+  'browse',
+  'read_workspace',
+  // Read content (4)
+  'read',
+  'read_tasks',
+  'read_trash',
+  'read_templates',
+  // Manage content (3)
+  'manage_content',
+  'manage_canvas',
+  'manage_templates',
+  // Manage work (1)
+  'manage_tasks',
+  // Manage organize (4)
+  'manage_items',
+  'manage_links',
+  'manage_tags',
+  'manage_trash'
+] as const
+
+describe('tool-definitions 무결성 (v2 final)', () => {
   it('전체 tool 개수가 baseline 과 동일', () => {
     expect(allTools.length).toBe(BASELINE_TOOL_COUNT)
   })
@@ -36,80 +58,63 @@ describe('tool-definitions 무결성', () => {
     }
   })
 
-  it('필수 핵심 tool 이 모두 존재한다', () => {
+  it('v2 최종 도구 15개가 모두 존재한다', () => {
     const names = new Set(allTools.map((t) => t.name))
-    const required = [
+    for (const name of V2_TOOLS) {
+      expect(names.has(name), `missing v2 tool: ${name}`).toBe(true)
+    }
+  })
+
+  it('v1 deprecated 도구는 모두 제거됨', () => {
+    const names = new Set(allTools.map((t) => t.name))
+    const removed = [
       'list_items',
-      'search',
-      'read_contents',
-      'write_content',
-      'manage_items',
-      'manage_folders',
+      'list_files',
+      'list_tagged_items',
+      'list_tags',
       'list_todos',
-      'manage_todos',
+      'list_schedules',
+      'list_reminders',
+      'list_recurring_rules',
+      'list_trash',
+      'list_templates',
+      'read_contents',
       'read_canvas',
+      'write_content',
+      'manage_folders',
+      'manage_files',
       'create_canvas',
       'edit_canvas',
-      'get_workspace_info',
-      'list_trash',
-      'manage_trash',
-      // v2
-      'browse',
-      'read',
-      'read_workspace',
-      'read_tasks',
-      'manage_content',
-      'manage_canvas',
-      'manage_tasks',
-      'read_trash',
-      'read_templates'
+      'manage_todos',
+      'manage_schedules',
+      'manage_reminders',
+      'manage_recurring_rules',
+      'get_history',
+      'get_workspace_info'
     ]
-    for (const name of required) {
-      expect(names.has(name), `missing required tool: ${name}`).toBe(true)
+    for (const name of removed) {
+      expect(names.has(name), `v1 tool '${name}' should have been removed`).toBe(false)
     }
   })
 
-  it('domain prefix 별 카운트 (구조적 회귀)', () => {
-    const counts = {
-      list_: 0,
-      manage_: 0,
-      read_: 0,
-      write_: 0,
-      create_: 0,
-      edit_: 0,
-      get_: 0,
-      search: 0
-    }
+  it('남은 도구는 모두 read*/manage* prefix 또는 prominent 단일 단어', () => {
+    // search / browse / read 는 v2 prominent 도구로 짧은 단일 단어 이름 사용
+    const standalone = new Set(['search', 'browse', 'read'])
     for (const tool of allTools) {
-      if (tool.name.startsWith('list_')) counts.list_++
-      else if (tool.name.startsWith('manage_')) counts.manage_++
-      else if (tool.name.startsWith('read_')) counts.read_++
-      else if (tool.name.startsWith('write_')) counts.write_++
-      else if (tool.name.startsWith('create_')) counts.create_++
-      else if (tool.name.startsWith('edit_')) counts.edit_++
-      else if (tool.name.startsWith('get_')) counts.get_++
-      else if (tool.name === 'search') counts.search++
-    }
-    // 분할 후에도 prefix 카운트 동일 — 누락 감지용
-    expect(counts.list_).toBeGreaterThanOrEqual(8) // list_items / files / todos 등
-    expect(counts.manage_).toBeGreaterThanOrEqual(10)
-    expect(counts.get_).toBeGreaterThanOrEqual(2) // get_history / get_workspace_info
-  })
-
-  it('deprecated tool 은 자기 자신을 가리키지 않는다', () => {
-    for (const tool of allTools) {
-      if (!tool.deprecated) continue
+      const validName =
+        standalone.has(tool.name) ||
+        tool.name.startsWith('read_') ||
+        tool.name.startsWith('manage_')
       expect(
-        tool.deprecated.replacedBy,
-        `${tool.name} 이 자기 자신을 replacedBy 로 가리킴`
-      ).not.toBe(tool.name)
+        validName,
+        `${tool.name} 은 read/read_*/manage_*/search/browse 중 하나여야 함`
+      ).toBe(true)
     }
   })
 
-  /**
-   * NOTE: v2 마이그레이션 진행 중에는 deprecated.replacedBy 가 아직 develop 에
-   * 머지되지 않은 v2 tool 을 가리킬 수 있다. v2 모든 tool 머지 완료 후 다음 검증
-   * 추가 예정 (task #13 직전):
-   *   - 모든 deprecated.replacedBy 가 실존하는 tool 을 가리켜야 함
-   */
+  it('어떤 도구도 deprecated 가 아니다 (v1 모두 제거됨)', () => {
+    for (const tool of allTools) {
+      expect(tool.deprecated, `${tool.name} 이 아직 deprecated 마킹되어 있음`).toBeUndefined()
+    }
+  })
 })
