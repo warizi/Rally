@@ -2,6 +2,9 @@
  * MCP tool-definitions 통합 export.
  * P3-7 — 도메인별 분할 후 registerAllTools 가 모든 도메인 tool 등록.
  * MCP v2 — deprecation 처리 (description banner + 응답 메타 주입).
+ * MCP v2 종료 — v1 도구 제거 후 최종 15개 도구만 남음.
+ *   포함 파일: canvas, items, link, tag, template, todo, trash, workspace
+ *   제거된 파일: file, history, recurring, reminder, schedule (모두 v1 deprecated → 삭제)
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
@@ -10,13 +13,8 @@ import { itemsTools } from './items.tools'
 import { canvasTools } from './canvas.tools'
 import { todoTools } from './todo.tools'
 import { linkTools } from './link.tools'
-import { scheduleTools } from './schedule.tools'
-import { reminderTools } from './reminder.tools'
-import { recurringTools } from './recurring.tools'
 import { templateTools } from './template.tools'
 import { tagTools } from './tag.tools'
-import { historyTools } from './history.tools'
-import { fileTools } from './file.tools'
 import { workspaceTools } from './workspace.tools'
 import { trashTools } from './trash.tools'
 import type { DeprecationInfo, ToolDefinition, ToolSchema } from './types'
@@ -26,13 +24,8 @@ export const allTools: ToolDefinition[] = [
   ...canvasTools,
   ...todoTools,
   ...linkTools,
-  ...scheduleTools,
-  ...reminderTools,
-  ...recurringTools,
   ...templateTools,
   ...tagTools,
-  ...historyTools,
-  ...fileTools,
   ...workspaceTools,
   ...trashTools
 ]

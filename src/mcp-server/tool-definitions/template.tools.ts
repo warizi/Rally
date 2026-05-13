@@ -34,36 +34,6 @@ export const templateTools: ToolDefinition[] = [
     }
   },
   {
-    name: 'list_templates',
-    deprecated: {
-      replacedBy: 'read_templates',
-      since: 'v2.0',
-      reason: 'read_templates — v2 read_* prefix alignment (same args/response)'
-    },
-    description: `List note/csv templates in the active workspace.
-- Without id: returns metadata list (jsonData omitted to save tokens).
-- With id: returns the single template with full jsonData (the serialized payload — JSON string for note templates consumable by write_content's content field, CSV body for csv templates). When id is set, type filter is ignored.`,
-    schema: {
-      type: z
-        .enum(['note', 'csv'])
-        .optional()
-        .describe('Filter by template type (ignored when id is set)'),
-      id: z
-        .string()
-        .optional()
-        .describe('When set, returns full content of that template instead of a list')
-    },
-    handler: ({ type, id }) => {
-      if (typeof id === 'string' && id) {
-        return callTool('GET', `/api/mcp/templates/${e(id)}`)
-      }
-      const params = new URLSearchParams()
-      if (type) params.set('type', type as string)
-      const qs = params.toString()
-      return callTool('GET', `/api/mcp/templates${qs ? `?${qs}` : ''}`)
-    }
-  },
-  {
     name: 'manage_templates',
     description: `Batch create or delete templates. Templates do not support update — delete + recreate to change content.`,
     schema: {

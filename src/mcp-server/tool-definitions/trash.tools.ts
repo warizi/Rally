@@ -47,52 +47,6 @@ Auto-emptied after the user-configured retention period (default 30 days).`,
     }
   },
   {
-    name: 'list_trash',
-    deprecated: {
-      replacedBy: 'read_trash',
-      since: 'v2.0',
-      reason: 'read_trash — v2 read_* prefix alignment'
-    },
-    description: `List items in the workspace trash (deleted but recoverable).
-Each batch represents one user/AI delete action — a folder + its contents share one batch, a sub-todo tree shares one batch.
-Use restore_trash with batchId to recover, or empty_trash to permanently delete.
-
-Auto-emptied after the user-configured retention period (default 30 days).`,
-    schema: {
-      types: z
-        .array(
-          z.enum([
-            'folder',
-            'note',
-            'csv',
-            'pdf',
-            'image',
-            'canvas',
-            'todo',
-            'schedule',
-            'recurring_rule',
-            'template'
-          ])
-        )
-        .optional()
-        .describe('Filter by entity type'),
-      search: z.string().optional().describe('Substring match on root title'),
-      offset: z.number().int().min(0).optional(),
-      limit: z.number().int().min(1).max(200).optional().describe('Default 50')
-    },
-    handler: ({ types, search, offset, limit }) => {
-      const params = new URLSearchParams()
-      if (Array.isArray(types) && types.length > 0) {
-        for (const t of types as string[]) params.append('types[]', t)
-      }
-      if (typeof search === 'string' && search.trim()) params.set('search', search)
-      if (typeof offset === 'number') params.set('offset', String(offset))
-      if (typeof limit === 'number') params.set('limit', String(limit))
-      const qs = params.toString()
-      return callTool('GET', `/api/mcp/trash${qs ? `?${qs}` : ''}`)
-    }
-  },
-  {
     name: 'manage_trash',
     description: `Restore trash batches (recover deleted items).
 - action: 'restore' — recover the whole batch (root + cascade children). For folder/file domains: original location is reused if free, otherwise auto-renamed (e.g. "docs (1)"). entity-link snapshots are reattached when both endpoints are active.
