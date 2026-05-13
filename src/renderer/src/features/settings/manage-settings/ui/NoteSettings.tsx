@@ -1,25 +1,64 @@
 import { useState } from 'react'
-import { RotateCcwIcon, TrashIcon, BookmarkPlusIcon } from 'lucide-react'
+import { MinusIcon, PlusIcon, RotateCcwIcon, TrashIcon, BookmarkPlusIcon } from 'lucide-react'
+import { Editor, defaultValueCtx, editorViewOptionsCtx, rootCtx } from '@milkdown/kit/core'
+import { commonmark } from '@milkdown/kit/preset/commonmark'
+import { gfm } from '@milkdown/kit/preset/gfm'
+import { Milkdown, MilkdownProvider, useEditor } from '@milkdown/react'
 import {
-  DEFAULT_NOTE_STYLE_SETTINGS,
+  ELEMENTS_WITH_BACKGROUND,
+  ELEMENTS_WITH_BORDER,
+  ELEMENTS_WITHOUT_TEXT,
   STYLE_ELEMENT_KEYS,
   buildNoteStyleCss,
+  formatSize,
+  parseNoteStyleSettings,
+  parseSize,
   useCreateNoteStyleTemplate,
   useDeleteNoteStyleTemplate,
   useNoteStyle,
   useNoteStyleTemplates,
   type ElementStyle,
-  type NoteStyleSet,
   type NoteStyleSettings,
-  type StyleElementKey,
-  type ThemeMode
+  type StyleElementKey
 } from '@entities/note-style'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Separator } from '@/shared/ui/separator'
-import { ToggleGroup, ToggleGroupItem } from '@/shared/ui/toggle-group'
 import { cn } from '@/shared/lib/utils'
+
+const PREVIEW_MARKDOWN = `# 제목 1: Rally 노트 미리보기
+
+본문 텍스트입니다. 마크다운 요소별 스타일이 실시간으로 반영됩니다. 인라인 코드는 \`inlineCode()\` 형식으로 표시됩니다.
+
+본문 텍스트 1
+
+본문 텍스트 2
+
+## 제목 2: 소제목
+
+두 번째 단락. 줄 간격과 색상도 함께 조정할 수 있습니다.
+
+### 제목 3
+
+#### 제목 4
+
+##### 제목 5
+
+###### 제목 6
+
+> 인용구는 글의 핵심을 강조할 때 사용합니다. 좌측 보더와 들여쓰기로 구분됩니다.
+
+---
+
+구분선(hr) 위/아래 본문입니다.
+
+\`\`\`
+function preview() {
+  return 'code block sample'
+}
+\`\`\`
+`
 
 const ELEMENT_LABEL: Record<StyleElementKey, string> = {
   h1: 'H1',
@@ -31,53 +70,41 @@ const ELEMENT_LABEL: Record<StyleElementKey, string> = {
   paragraph: '본문',
   codeInline: '인라인 코드',
   codeBlock: '코드 블록',
-  blockquote: '인용구'
+  blockquote: '인용구',
+  hr: '구분선'
 }
 
 export function NoteSettings(): React.JSX.Element {
-  const { settings, isLoading, save, saveMode, resetMode } = useNoteStyle()
-  const [mode, setMode] = useState<ThemeMode>('light')
+  const { settings, isLoading, save, reset } = useNoteStyle()
   const [activeElement, setActiveElement] = useState<StyleElementKey>('h1')
 
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">불러오는 중…</div>
   }
 
-  const currentSet = settings[mode]
-  const currentElement = currentSet[activeElement]
+  const currentElement = settings[activeElement]
 
   const updateElement = (patch: Partial<ElementStyle>): void => {
-    const nextSet: NoteStyleSet = {
-      ...currentSet,
+    save({
+      ...settings,
       [activeElement]: { ...currentElement, ...patch }
-    }
-    saveMode(mode, nextSet)
+    })
   }
 
   return (
     <div className="space-y-4">
-      {/* 상단: 모드 토글 + 초기화 */}
+      {/* 상단: 설명 + 초기화 버튼 */}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-sm font-medium">노트 마크다운 스타일</h3>
           <p className="text-xs text-muted-foreground">
-            라이트/다크 모드별로 각 요소의 스타일을 조절합니다.
+            각 요소의 크기·여백·색상을 조절합니다. 색상은 라이트/다크 모드별로 분리.
           </p>
         </div>
-        <ToggleGroup
-          type="single"
-          size="sm"
-          value={mode}
-          onValueChange={(v) => v && setMode(v as ThemeMode)}
-          variant="outline"
-        >
-          <ToggleGroupItem value="light" className="text-xs">
-            라이트
-          </ToggleGroupItem>
-          <ToggleGroupItem value="dark" className="text-xs">
-            다크
-          </ToggleGroupItem>
-        </ToggleGroup>
+        <Button variant="outline" size="sm" onClick={() => reset()} className="h-8 gap-1.5">
+          <RotateCcwIcon className="size-3" />
+          초기화
+        </Button>
       </div>
 
       <Separator />
@@ -103,83 +130,403 @@ export function NoteSettings(): React.JSX.Element {
         </div>
       </div>
 
-      {/* 5개 속성 컨트롤 */}
+      {/* 속성 컨트롤 */}
       <div className="grid grid-cols-2 gap-3">
-        <Field label="크기">
-          <Input
-            value={currentElement.fontSize}
-            onChange={(e) => updateElement({ fontSize: e.target.value })}
-            placeholder="예: 16px"
-            className="h-8 text-sm"
-          />
-        </Field>
-        <Field label="줄 높이">
-          <Input
-            type="number"
-            step="0.05"
-            min="0.5"
-            value={currentElement.lineHeight}
-            onChange={(e) => updateElement({ lineHeight: parseFloat(e.target.value) || 1 })}
-            className="h-8 text-sm"
-          />
-        </Field>
+        {!ELEMENTS_WITHOUT_TEXT.has(activeElement) && (
+          <>
+            <Field label="크기">
+              <SizeInput
+                value={currentElement.fontSize}
+                onChange={(next) => updateElement({ fontSize: next })}
+              />
+            </Field>
+            <Field label="줄 높이">
+              <NumberStepper
+                value={currentElement.lineHeight}
+                onChange={(next) => updateElement({ lineHeight: next })}
+                step={0.05}
+                min={0.5}
+                max={3}
+              />
+            </Field>
+          </>
+        )}
         <Field label="상단 여백">
-          <Input
+          <SizeInput
             value={currentElement.marginTop}
-            onChange={(e) => updateElement({ marginTop: e.target.value })}
-            placeholder="예: 16px"
-            className="h-8 text-sm"
+            onChange={(next) => updateElement({ marginTop: next })}
           />
         </Field>
         <Field label="하단 여백">
-          <Input
+          <SizeInput
             value={currentElement.marginBottom}
-            onChange={(e) => updateElement({ marginBottom: e.target.value })}
-            placeholder="예: 16px"
-            className="h-8 text-sm"
+            onChange={(next) => updateElement({ marginBottom: next })}
           />
         </Field>
-        <Field label="색상">
-          <div className="flex items-center gap-2">
-            <Input
-              type="color"
-              value={currentElement.color}
-              onChange={(e) => updateElement({ color: e.target.value })}
-              className="h-8 w-12 p-1 cursor-pointer"
-            />
-            <Input
-              value={currentElement.color}
-              onChange={(e) => updateElement({ color: e.target.value })}
-              className="h-8 text-sm font-mono"
-            />
-          </div>
-        </Field>
-        <div className="flex items-end justify-end">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => resetMode(mode)}
-            className="h-8 gap-1.5"
-          >
-            <RotateCcwIcon className="size-3" />
-            {mode === 'light' ? '라이트' : '다크'} 초기화
-          </Button>
-        </div>
+        {!ELEMENTS_WITHOUT_TEXT.has(activeElement) && (
+          <>
+            <Field label="글자색 (라이트)">
+              <ColorInput
+                value={currentElement.colorLight}
+                onChange={(next) => updateElement({ colorLight: next })}
+              />
+            </Field>
+            <Field label="글자색 (다크)">
+              <ColorInput
+                value={currentElement.colorDark}
+                onChange={(next) => updateElement({ colorDark: next })}
+              />
+            </Field>
+          </>
+        )}
+        {ELEMENTS_WITH_BACKGROUND.has(activeElement) && (
+          <>
+            <Field label="배경색 (라이트)">
+              <ColorInput
+                value={currentElement.backgroundLight}
+                onChange={(next) => updateElement({ backgroundLight: next })}
+              />
+            </Field>
+            <Field label="배경색 (다크)">
+              <ColorInput
+                value={currentElement.backgroundDark}
+                onChange={(next) => updateElement({ backgroundDark: next })}
+              />
+            </Field>
+          </>
+        )}
+        {ELEMENTS_WITH_BORDER.has(activeElement) && (
+          <>
+            <Field label={activeElement === 'hr' ? '선 색상 (라이트)' : '경계선 색상 (라이트)'}>
+              <ColorInput
+                value={currentElement.borderColorLight}
+                onChange={(next) => updateElement({ borderColorLight: next })}
+              />
+            </Field>
+            <Field label={activeElement === 'hr' ? '선 색상 (다크)' : '경계선 색상 (다크)'}>
+              <ColorInput
+                value={currentElement.borderColorDark}
+                onChange={(next) => updateElement({ borderColorDark: next })}
+              />
+            </Field>
+            <Field label={activeElement === 'hr' ? '선 굵기' : '경계선 굵기'}>
+              <BorderWidthInput
+                value={currentElement.borderWidth}
+                onChange={(next) => updateElement({ borderWidth: next })}
+              />
+            </Field>
+          </>
+        )}
       </div>
 
       <Separator />
 
-      {/* 미리보기 */}
-      <div>
-        <Label className="text-xs text-muted-foreground mb-2 block">미리보기</Label>
-        <NoteStylePreview set={currentSet} mode={mode} />
-      </div>
+      {/* 미리보기 — 내부 light/dark 토글로 강제 모드 표시 */}
+      <NoteStylePreview set={settings} />
 
       <Separator />
 
       {/* 템플릿 */}
       <TemplateSection settings={settings} onApply={save} />
     </div>
+  )
+}
+
+const SIZE_STEP = 0.05
+const SIZE_MIN = 0
+const SIZE_MAX = 20 // rem 기준 합리적 상한 (20rem ≈ 320px)
+
+/**
+ * 숫자 입력 + 좌우 [−][+] 스테퍼 (공통).
+ */
+function NumberStepper({
+  value,
+  onChange,
+  step,
+  min,
+  max,
+  suffix
+}: {
+  value: number
+  onChange: (next: number) => void
+  step: number
+  min?: number
+  max?: number
+  suffix?: string
+}): React.JSX.Element {
+  const clamp = (n: number): number => {
+    let v = n
+    if (typeof min === 'number') v = Math.max(min, v)
+    if (typeof max === 'number') v = Math.min(max, v)
+    return v
+  }
+  // 부동소수 누적 오차 보정 + UX (예: 1.875 + 0.05 = 1.9250000001 → 1.93)
+  const round2 = (n: number): number => Math.round(n * 100) / 100
+  const commit = (n: number): void => {
+    if (!Number.isFinite(n)) {
+      onChange(min ?? 0)
+      return
+    }
+    onChange(clamp(round2(n)))
+  }
+  // 외부에서 들어온 value 가 길면 (예: px→rem 환산 0.28125) 표시는 2자리로
+  const displayValue = round2(value)
+
+  return (
+    <div
+      className={cn(
+        'flex items-center h-8 rounded-md border border-input bg-transparent',
+        'focus-within:border-ring focus-within:ring-ring/50 focus-within:ring-[3px]',
+        'transition-[color,box-shadow]'
+      )}
+    >
+      <StepperButton ariaLabel="감소" onClick={() => commit(value - step)}>
+        <MinusIcon className="size-3" />
+      </StepperButton>
+      <input
+        type="number"
+        step={step}
+        min={min}
+        max={max}
+        value={displayValue}
+        onChange={(e) => commit(parseFloat(e.target.value))}
+        className={cn(
+          'flex-1 min-w-0 h-full bg-transparent px-1 text-sm text-center outline-none',
+          '[appearance:textfield]',
+          '[&::-webkit-inner-spin-button]:appearance-none',
+          '[&::-webkit-outer-spin-button]:appearance-none'
+        )}
+      />
+      {suffix && (
+        <span className="text-[10px] text-muted-foreground pr-1 select-none pointer-events-none">
+          {suffix}
+        </span>
+      )}
+      <StepperButton ariaLabel="증가" onClick={() => commit(value + step)}>
+        <PlusIcon className="size-3" />
+      </StepperButton>
+    </div>
+  )
+}
+
+function StepperButton({
+  ariaLabel,
+  onClick,
+  children
+}: {
+  ariaLabel: string
+  onClick: () => void
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      aria-label={ariaLabel}
+      onClick={onClick}
+      className={cn(
+        'h-full px-2 flex items-center justify-center text-muted-foreground',
+        'hover:bg-accent hover:text-foreground transition-colors cursor-pointer',
+        'first:rounded-l-md last:rounded-r-md'
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+/**
+ * 크기 input — rem 고정 + NumberStepper.
+ *
+ * - value: CSS 문자열 ("1.875rem", "16px"). px 는 16 으로 나눠 rem 환산.
+ * - onChange: "X.XXrem" 정규화 저장
+ */
+function SizeInput({
+  value,
+  onChange
+}: {
+  value: string
+  onChange: (next: string) => void
+}): React.JSX.Element {
+  const parsed = parseSize(value)
+  const remValue = parsed.unit === 'px' ? parsed.value / 16 : parsed.value
+
+  return (
+    <NumberStepper
+      value={remValue}
+      onChange={(next) => onChange(formatSize({ value: next, unit: 'rem' }))}
+      step={SIZE_STEP}
+      min={SIZE_MIN}
+      max={SIZE_MAX}
+      suffix="rem"
+    />
+  )
+}
+
+/**
+ * 경계선 굵기 input — px 고정 + NumberStepper (정수 step).
+ *
+ * - value: CSS 문자열 ("3px"). rem 인 경우 *16 환산.
+ * - onChange: "Xpx" 정규화 저장.
+ */
+function BorderWidthInput({
+  value,
+  onChange
+}: {
+  value: string
+  onChange: (next: string) => void
+}): React.JSX.Element {
+  const parsed = parseSize(value)
+  const pxValue = parsed.unit === 'rem' ? parsed.value * 16 : parsed.value
+
+  return (
+    <NumberStepper
+      value={pxValue}
+      onChange={(next) => onChange(formatSize({ value: Math.max(0, next), unit: 'px' }))}
+      step={1}
+      min={0}
+      max={20}
+      suffix="px"
+    />
+  )
+}
+
+/**
+ * 색상 input — color picker + hex 입력 한 줄.
+ */
+function ColorInput({
+  value,
+  onChange
+}: {
+  value: string
+  onChange: (next: string) => void
+}): React.JSX.Element {
+  return (
+    <div className="flex items-center gap-2">
+      <Input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 w-12 p-1 cursor-pointer"
+      />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-8 text-sm font-mono"
+      />
+    </div>
+  )
+}
+
+function Field({
+  label,
+  children
+}: {
+  label: string
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <div className="space-y-1">
+      <Label className="text-xs text-muted-foreground">{label}</Label>
+      {children}
+    </div>
+  )
+}
+
+/**
+ * Lorem preview — 내부 light/dark 토글 + 강제 모드 색상.
+ *
+ * - Milkdown 에디터 read-only 모드로 실제 노트 렌더링과 100% 일치
+ * - 앱 테마와 무관하게 사용자가 선택한 mode 색상을 표시 (편집 중인 색상 즉시 확인용)
+ * - 배경/테두리는 global.css 의 `--background` / `--border` 토큰과 동일 값을 inline 으로 사용
+ * - preview CSS 셀렉터는 [data-rally-note-preview] 2회 chain → global.css `.milkdown .ProseMirror`
+ *   (0,2,1) 와 동률 + load order 로 승리
+ */
+function NoteStylePreview({ set }: { set: NoteStyleSettings }): React.JSX.Element {
+  const [previewMode, setPreviewMode] = useState<'light' | 'dark'>('light')
+  const css = buildNoteStyleCss(
+    set,
+    '[data-rally-note-preview][data-rally-note-preview]',
+    previewMode
+  )
+
+  const previewBg = previewMode === 'dark' ? 'oklch(0.145 0 0)' : 'oklch(1 0 0)'
+  const previewBorder = previewMode === 'dark' ? 'oklch(0.269 0 0)' : 'oklch(0.922 0 0)'
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <Label className="text-xs text-muted-foreground">미리보기</Label>
+        <div className="flex rounded-md border overflow-hidden">
+          <PreviewModeButton
+            active={previewMode === 'light'}
+            onClick={() => setPreviewMode('light')}
+          >
+            라이트
+          </PreviewModeButton>
+          <PreviewModeButton active={previewMode === 'dark'} onClick={() => setPreviewMode('dark')}>
+            다크
+          </PreviewModeButton>
+        </div>
+      </div>
+      <div
+        data-rally-note-preview
+        style={{ backgroundColor: previewBg, borderColor: previewBorder }}
+        className="rounded-md border p-4 max-h-64 overflow-y-auto transition-colors"
+      >
+        <style>{css}</style>
+        <MilkdownProvider>
+          <PreviewMilkdownEditor />
+        </MilkdownProvider>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Milkdown 에디터 (read-only). 정적 PREVIEW_MARKDOWN 을 렌더하며 편집 불가.
+ * - commonmark + gfm 만 사용 (history / listener / upload 등 인터랙션 플러그인 제외)
+ * - editorViewOptionsCtx.editable: () => false 로 편집 비활성
+ */
+function PreviewMilkdownEditor(): React.JSX.Element {
+  useEditor((root) =>
+    Editor.make()
+      .config((ctx) => {
+        ctx.set(rootCtx, root)
+        ctx.set(defaultValueCtx, PREVIEW_MARKDOWN)
+        ctx.update(editorViewOptionsCtx, (prev) => ({
+          ...prev,
+          editable: () => false
+        }))
+      })
+      .use(commonmark)
+      .use(gfm)
+  )
+
+  return <Milkdown />
+}
+
+function PreviewModeButton({
+  active,
+  onClick,
+  children
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        'h-7 px-2.5 text-[11px] font-medium transition-colors cursor-pointer',
+        active
+          ? 'bg-primary text-primary-foreground'
+          : 'bg-background text-muted-foreground hover:bg-accent'
+      )}
+    >
+      {children}
+    </button>
   )
 }
 
@@ -212,15 +559,9 @@ function TemplateSection({
   }
 
   const handleApply = (template: { settingsJson: string }): void => {
-    try {
-      const parsed = JSON.parse(template.settingsJson) as NoteStyleSettings
-      onApply({
-        light: { ...DEFAULT_NOTE_STYLE_SETTINGS.light, ...(parsed.light ?? {}) },
-        dark: { ...DEFAULT_NOTE_STYLE_SETTINGS.dark, ...(parsed.dark ?? {}) }
-      })
-    } catch {
-      setError('템플릿 데이터가 손상되었습니다.')
-    }
+    // v1 / v2 모두 parseNoteStyleSettings 가 자동 처리
+    const parsed = parseNoteStyleSettings(template.settingsJson)
+    onApply(parsed)
   }
 
   return (
@@ -234,7 +575,8 @@ function TemplateSection({
           placeholder="현재 설정을 템플릿으로 저장 (이름 입력)"
           className="h-8 text-sm flex-1"
           onKeyDown={(e) => {
-            if (e.key === 'Enter') {
+            // IME 조합 중 Enter (한글 등) 는 무시 — 조합 종료용 Enter + 실제 submit Enter 가 모두 trigger 되는 중복 호출 방지
+            if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
               e.preventDefault()
               void handleCreate()
             }
@@ -286,68 +628,6 @@ function TemplateSection({
           ))}
         </ul>
       )}
-    </div>
-  )
-}
-
-function Field({
-  label,
-  children
-}: {
-  label: string
-  children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <div className="space-y-1">
-      <Label className="text-xs text-muted-foreground">{label}</Label>
-      {children}
-    </div>
-  )
-}
-
-/**
- * Lorem preview — 편집 중인 `set` 을 inline `<style>` 로 주입.
- *
- * 미리보기는 현재 화면 테마와 무관하게 사용자가 편집 중인 mode 로 표시되어야 한다.
- * `useRuntimeNoteStyles` 가 mount 한 전역 `<style>` 은 현재 화면 테마만 반영하므로,
- * 미리보기에는 별도 selector (`data-rally-note-preview`) 로 set 을 주입한다.
- */
-function NoteStylePreview({
-  set,
-  mode
-}: {
-  set: NoteStyleSet
-  mode: ThemeMode
-}): React.JSX.Element {
-  const isDark = mode === 'dark'
-  const css = buildNoteStyleCss(set, '[data-rally-note-preview]')
-
-  return (
-    <div
-      data-rally-note-preview
-      className={cn(
-        'rounded-md border p-4 max-h-64 overflow-y-auto',
-        isDark ? 'bg-zinc-900 border-zinc-700' : 'bg-white border-zinc-200'
-      )}
-    >
-      <style>{css}</style>
-      <h1>제목 1: Rally 노트 미리보기</h1>
-      <p>
-        본문 텍스트입니다. 마크다운 요소별 스타일이 실시간으로 반영됩니다. 인라인 코드는{' '}
-        <code>inlineCode()</code> 형식으로 표시됩니다.
-      </p>
-      <h2>제목 2: 소제목</h2>
-      <p>두 번째 단락. 줄 간격과 색상도 함께 조정할 수 있습니다.</p>
-      <h3>제목 3</h3>
-      <h4>제목 4</h4>
-      <h5>제목 5</h5>
-      <h6>제목 6</h6>
-      <blockquote>
-        인용구는 글의 핵심을 강조할 때 사용합니다. 좌측 보더와 들여쓰기로 구분됩니다.
-      </blockquote>
-      <pre>
-        <code>{`function preview() {\n  return 'code block sample'\n}`}</code>
-      </pre>
     </div>
   )
 }

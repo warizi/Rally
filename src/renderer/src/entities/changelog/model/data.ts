@@ -6,9 +6,15 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.7.3',
+    version: '1.8.0',
     date: '2026-05-13',
     changes: [
+      {
+        type: 'feature',
+        title: '노트 마크다운 스타일 커스텀',
+        description:
+          '설정 > 노트 탭에서 마크다운 요소별 크기·여백·색상·배경·경계선을 직접 조절할 수 있습니다. 라이트/다크 색상 분리, 실시간 미리보기, 템플릿 저장/적용 지원.'
+      },
       {
         type: 'feature',
         title: '사이드바에 "업데이트 내역" 메뉴 추가',
@@ -26,24 +32,6 @@ export const CHANGELOG: ChangelogEntry[] = [
         title: '파일 탐색기 검색 기능',
         description:
           '파일 탐색기 상단의 돋보기 아이콘을 누르면 검색바가 열립니다. 폴더와 파일 이름을 입력하면 결과가 노랗게 강조되고, 매치된 폴더는 자동으로 펼쳐집니다. ↑↓ 버튼 또는 Enter / Shift+Enter 로 다음 / 이전 매치로 이동하며 활성 매치는 화면 중앙으로 스크롤됩니다. Esc 로 검색 종료.'
-      },
-      {
-        type: 'improvement',
-        title: '터미널 탭 디자인 통일 + 스크롤 처리 개선',
-        description:
-          '터미널 탭이 일반 탭과 동일한 디자인(터미널 아이콘, 높이, 패딩, 닫기 버튼)으로 통일되었습니다. 탭이 많아질 때는 가로 스크롤만 표시되고, "+" 새 터미널 버튼은 항상 우측에 고정됩니다.'
-      },
-      {
-        type: 'improvement',
-        title: '설정 / PDF / CSV 스크롤바 스타일 통일',
-        description:
-          '설정 다이얼로그와 PDF 뷰어의 스크롤바가 더 얇고 일관된 모양으로 정리되었습니다. CSV 테이블도 같은 스타일의 얇은 스크롤바로 보입니다.'
-      },
-      {
-        type: 'improvement',
-        title: '파일 탐색기 툴바와 검색바 고정 표시',
-        description:
-          '파일 탐색기를 아래로 스크롤해도 상단의 툴바와 검색바가 항상 보이도록 고정되었습니다.'
       }
     ]
   },
