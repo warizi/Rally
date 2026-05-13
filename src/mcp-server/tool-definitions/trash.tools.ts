@@ -50,34 +50,23 @@ Auto-emptied after the user-configured retention period (default 30 days).`,
   },
   {
     name: 'manage_trash',
-    description: `Restore or permanently delete trash batches.
+    description: `Restore trash batches (recover deleted items).
 - action: 'restore' — recover the whole batch (root + cascade children). For folder/file domains: original location is reused if free, otherwise auto-renamed (e.g. "docs (1)"). entity-link snapshots are reattached when both endpoints are active.
-- action: 'purge' — permanently delete. Pass batchId for a single batch, or omit batchId with confirm=true to purge ALL workspace trash. Returns purgedBatchIds; if hasMore=true call again to keep purging.
+
+MCP v2: 'purge' (permanent delete) removed — UI 전담 for safety. Users empty trash via the desktop UI.
 
 Multiple actions execute sequentially. Each action is independent — failures don't roll back earlier successes.`,
     schema: {
       actions: z
         .array(
-          z.union([
-            z
-              .object({
-                action: z.literal('restore'),
-                batchId: z.string().describe('Trash batch id from list_trash')
-              })
-              .describe('Restore a single trash batch'),
-            z
-              .object({
-                action: z.literal('purge'),
-                batchId: z.string().optional().describe('Single batch to purge'),
-                confirm: z
-                  .boolean()
-                  .optional()
-                  .describe('Required (true) when batchId is omitted to purge all trash')
-              })
-              .describe('Permanently delete a batch (or all trash with confirm=true)')
-          ])
+          z
+            .object({
+              action: z.literal('restore'),
+              batchId: z.string().describe('Trash batch id from list_trash')
+            })
+            .describe('Restore a single trash batch')
         )
-        .describe('Array of trash actions')
+        .describe('Array of restore actions')
     },
     handler: async ({ actions }) => {
       const list = (actions as Array<Record<string, unknown>>) ?? []
@@ -88,28 +77,15 @@ Multiple actions execute sequentially. Each action is independent — failures d
       }
       if (list.length === 1) {
         const a = list[0]
-        if (a.action === 'restore') {
-          return callTool('POST', `/api/mcp/trash/${e(String(a.batchId))}/restore`)
-        }
-        return callTool('POST', '/api/mcp/trash/empty', {
-          ...(a.batchId ? { batchId: a.batchId } : {}),
-          ...(a.confirm ? { confirm: a.confirm } : {})
-        })
+        return callTool('POST', `/api/mcp/trash/${e(String(a.batchId))}/restore`)
       }
       // 다수 actions: 순차 실행, 결과 집계
       const results: Array<Record<string, unknown>> = []
       let workspace: unknown = null
       for (const a of list) {
-        const res =
-          a.action === 'restore'
-            ? await callTool('POST', `/api/mcp/trash/${e(String(a.batchId))}/restore`)
-            : await callTool('POST', '/api/mcp/trash/empty', {
-                ...(a.batchId ? { batchId: a.batchId } : {}),
-                ...(a.confirm ? { confirm: a.confirm } : {})
-              })
+        const res = await callTool('POST', `/api/mcp/trash/${e(String(a.batchId))}/restore`)
         const text = res.content?.[0]?.type === 'text' ? res.content[0].text : ''
         const parsed = text ? JSON.parse(text) : null
-        // _workspace는 router에서 모든 응답에 주입되는 메타 — 단일 액션 path와 shape 일관성 위해 끌어올림
         if (workspace === null && parsed && typeof parsed === 'object' && '_workspace' in parsed) {
           workspace = (parsed as Record<string, unknown>)._workspace
         }
