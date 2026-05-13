@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.8.2',
+    date: '2026-05-14',
+    changes: [
+      {
+        type: 'improvement',
+        title: 'MCP 도구 개선',
+        description:
+          'AI 에이전트가 사용하는 MCP 도구가 v2 로 정리되어 더 명확하고 일관된 사용성을 제공합니다.'
+      }
+    ]
+  },
+  {
     version: '1.8.1',
     date: '2026-05-13',
     changes: [
