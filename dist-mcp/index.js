@@ -35793,13 +35793,18 @@ var pipeName = isDev ? "rally-mcp-dev" : "rally-mcp";
 var socketPath = process.platform === "win32" ? `\\\\.\\pipe\\${pipeName}` : import_path.default.join(import_os.default.homedir(), ".rally", socketName);
 async function mcpRequest(method, urlPath, body) {
   return new Promise((resolve, reject) => {
+    const headers = {
+      "Content-Type": "application/json"
+    };
+    const token = process.env.MCP_AUTH_TOKEN;
+    if (token) {
+      headers["x-mcp-token"] = token;
+    }
     const options = {
       socketPath,
       path: urlPath,
       method,
-      headers: {
-        "Content-Type": "application/json"
-      }
+      headers
     };
     const req = import_http.default.request(options, (res) => {
       const chunks = [];
@@ -35844,9 +35849,8 @@ async function callTool(method, urlPath, body) {
   }
 }
 
-// src/mcp-server/tool-definitions.ts
-var e = encodeURIComponent;
-var tools = [
+// src/mcp-server/tool-definitions/items.tools.ts
+var itemsTools = [
   {
     name: "list_items",
     description: `List items (folders, notes, tables, canvases, todo summary) in the active workspace.
@@ -35976,7 +35980,14 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
       ).describe("Array of folder actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/folders/batch", args)
-  },
+  }
+];
+
+// src/mcp-server/tool-definitions/types.ts
+var e = encodeURIComponent;
+
+// src/mcp-server/tool-definitions/canvas.tools.ts
+var canvasTools = [
   {
     name: "read_canvas",
     description: "Read a canvas with all nodes and edges. Nodes include reference data for linked items.",
@@ -36061,7 +36072,11 @@ Delete must be the only action. Use tempId on add_node to reference new nodes in
       ).describe("Actions to perform on the canvas")
     },
     handler: ({ canvasId, ...rest }) => callTool("POST", `/api/mcp/canvases/${e(canvasId)}/edit`, rest)
-  },
+  }
+];
+
+// src/mcp-server/tool-definitions/todo.tools.ts
+var todoTools = [
   {
     name: "list_todos",
     description: `List todos in the active workspace.
@@ -36164,7 +36179,11 @@ Links: linkItems / unlinkItems are supported only on top-level todos. Subtodos c
       ).describe("Array of todo actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/todos/batch", args)
-  },
+  }
+];
+
+// src/mcp-server/tool-definitions/link.tools.ts
+var linkTools = [
   {
     name: "manage_links",
     description: `Batch link, unlink, or list links between any items (note, csv, canvas, todo, pdf, image, schedule).
@@ -36195,8 +36214,12 @@ Links are bidirectional \u2014 order of source/target does not matter.`,
       ).describe("Array of link actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/links/batch", args)
-  },
+  }
   // ─── Schedules (calendar events) ──────────────────────────
+];
+
+// src/mcp-server/tool-definitions/schedule.tools.ts
+var scheduleTools = [
   {
     name: "list_schedules",
     description: `List calendar events (schedules) in the active workspace.
@@ -36250,8 +36273,12 @@ Links are bidirectional \u2014 order of source/target does not matter.`,
       ).describe("Array of schedule actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/schedules/batch", args)
-  },
+  }
   // ─── Reminders ────────────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/reminder.tools.ts
+var reminderTools = [
   {
     name: "list_reminders",
     description: `List reminders. If entityType+entityId are given, returns reminders only for that entity; otherwise returns reminders for all todos and schedules in the active workspace.
@@ -36289,8 +36316,12 @@ Reminder fires (entity start/due time - offsetMs); creation throws if that momen
       ).describe("Array of reminder actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/reminders/batch", args)
-  },
+  }
   // ─── Recurring rules ──────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/recurring.tools.ts
+var recurringTools = [
   {
     name: "list_recurring_rules",
     description: `List recurring rules in the active workspace.
@@ -36377,8 +36408,12 @@ All actions run in a single transaction. Result entries are { action, id, succes
       ).describe("Array of recurring rule actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/recurring/rules/batch", args)
-  },
+  }
   // ─── Templates ────────────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/template.tools.ts
+var templateTools = [
   {
     name: "list_templates",
     description: `List note/csv templates in the active workspace.
@@ -36415,8 +36450,12 @@ All actions run in a single transaction. Result entries are { action, id, succes
       ).describe("Array of template actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/templates/batch", args)
-  },
+  }
   // ─── Tags ─────────────────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/tag.tools.ts
+var tagTools = [
   {
     name: "list_tags",
     description: `List tags in the active workspace.
@@ -36494,8 +36533,12 @@ delete_tag also detaches from all items.`,
       ).describe("Array of tag actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/tags/batch", args)
-  },
+  }
   // ─── History ──────────────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/history.tools.ts
+var historyTools = [
   {
     name: "get_history",
     description: `List completed todos grouped by day (most recent first). Includes recurring completions too.
@@ -36518,8 +36561,12 @@ query: case-insensitive substring on todo titles or linked file titles.`,
       const qs = params.toString();
       return callTool("GET", `/api/mcp/history${qs ? `?${qs}` : ""}`);
     }
-  },
+  }
   // ─── PDFs / Images ────────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/file.tools.ts
+var fileTools = [
   {
     name: "list_files",
     description: `List PDF or image files in the active workspace.
@@ -36569,8 +36616,12 @@ query: case-insensitive substring on todo titles or linked file titles.`,
       const endpoint = type === "pdf" ? "/api/mcp/pdfs/batch" : "/api/mcp/images/batch";
       return callTool("POST", endpoint, rest);
     }
-  },
+  }
   // ─── Workspace info ───────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/workspace.tools.ts
+var workspaceTools = [
   {
     name: "get_workspace_info",
     description: `Active workspace summary: id/name/path + cross-domain stats + recentActivity (note/table/canvas/todo, updatedAt desc).
@@ -36578,7 +36629,9 @@ Use this when you want a quick overview of the workspace without paging through 
 
 Lightweight stats-only mode: pass statsTypes (subset of count kinds) to skip recentActivity and return just the requested counts. Useful when you only need totals.`,
     schema: {
-      recentLimit: external_exports3.number().int().min(0).max(50).optional().describe("Number of recent activity entries (default: 10, max: 50). Ignored when statsTypes is set."),
+      recentLimit: external_exports3.number().int().min(0).max(50).optional().describe(
+        "Number of recent activity entries (default: 10, max: 50). Ignored when statsTypes is set."
+      ),
       statsTypes: external_exports3.array(
         external_exports3.enum([
           "folders",
@@ -36593,7 +36646,9 @@ Lightweight stats-only mode: pass statsTypes (subset of count kinds) to skip rec
           "templates",
           "recurringRules"
         ])
-      ).optional().describe("When set, returns lightweight count-only stats for these kinds (no recentActivity). Pass [] not allowed \u2014 omit instead.")
+      ).optional().describe(
+        "When set, returns lightweight count-only stats for these kinds (no recentActivity). Pass [] not allowed \u2014 omit instead."
+      )
     },
     handler: ({ recentLimit, statsTypes }) => {
       if (Array.isArray(statsTypes) && statsTypes.length > 0) {
@@ -36606,8 +36661,12 @@ Lightweight stats-only mode: pass statsTypes (subset of count kinds) to skip rec
       const qs = params.toString();
       return callTool("GET", `/api/mcp/workspace${qs ? `?${qs}` : ""}`);
     }
-  },
+  }
   // ─── Trash ────────────────────────────────────────────────
+];
+
+// src/mcp-server/tool-definitions/trash.tools.ts
+var trashTools = [
   {
     name: "list_trash",
     description: `List items in the workspace trash (deleted but recoverable).
@@ -36698,7 +36757,9 @@ Multiple actions execute sequentially. Each action is independent \u2014 failure
           workspace = parsed._workspace;
         }
         const cleanResult = parsed && typeof parsed === "object" ? Object.fromEntries(
-          Object.entries(parsed).filter(([k]) => k !== "_workspace")
+          Object.entries(parsed).filter(
+            ([k]) => k !== "_workspace"
+          )
         ) : parsed;
         results.push({
           action: a.action,
@@ -36714,8 +36775,25 @@ Multiple actions execute sequentially. Each action is independent \u2014 failure
     }
   }
 ];
+
+// src/mcp-server/tool-definitions/index.ts
+var allTools = [
+  ...itemsTools,
+  ...canvasTools,
+  ...todoTools,
+  ...linkTools,
+  ...scheduleTools,
+  ...reminderTools,
+  ...recurringTools,
+  ...templateTools,
+  ...tagTools,
+  ...historyTools,
+  ...fileTools,
+  ...workspaceTools,
+  ...trashTools
+];
 function registerAllTools(server2) {
-  for (const tool of tools) {
+  for (const tool of allTools) {
     server2.registerTool(
       tool.name,
       {
