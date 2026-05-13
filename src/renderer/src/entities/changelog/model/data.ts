@@ -14,6 +14,12 @@ export const CHANGELOG: ChangelogEntry[] = [
         title: 'MCP 도구 개선',
         description:
           'AI 에이전트가 사용하는 MCP 도구가 v2 로 정리되어 더 명확하고 일관된 사용성을 제공합니다.'
+      },
+      {
+        type: 'improvement',
+        title: '칸반보드 UI 개선',
+        description:
+          '컬럼 너비가 컨테이너 폭에 맞춰 균등하게 확장되고, 상태별 컬러 액센트와 우선순위 좌측 표시·마감일 임박 색상으로 한눈에 식별이 쉬워졌습니다. 드래그 앤 드롭 성능도 함께 최적화되었습니다.'
       }
     ]
   },
