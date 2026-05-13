@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.8.1',
+    date: '2026-05-13',
+    changes: [
+      {
+        type: 'improvement',
+        title: '노트 마크다운 복사/붙여넣기 개선',
+        description:
+          '노트 에디터에 클립보드 플러그인이 추가되었습니다. 외부에서 마크다운 텍스트(표, 제목, 코드블록 등)를 복사해 붙여넣으면 자동으로 서식이 적용되고, 노트 내용을 복사하면 마크다운 형식으로 클립보드에 들어갑니다.'
+      }
+    ]
+  },
+  {
     version: '1.8.0',
     date: '2026-05-13',
     changes: [
