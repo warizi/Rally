@@ -1,12 +1,51 @@
 /**
  * MCP trash tools.
  * P3-7 — tool-definitions.ts 분할. 포함: list_trash, manage_trash.
+ * MCP v2 — read_trash 추가 (list_trash rename).
  */
 import { z } from 'zod'
 import { callTool } from '../lib/call-tool'
 import { type ToolDefinition, e } from './types'
 
+const TRASH_TYPES = [
+  'folder',
+  'note',
+  'csv',
+  'pdf',
+  'image',
+  'canvas',
+  'todo',
+  'schedule',
+  'recurring_rule',
+  'template'
+] as const
+
 export const trashTools: ToolDefinition[] = [
+  {
+    name: 'read_trash',
+    description: `List items in the workspace trash (deleted but recoverable). MCP v2 rename of list_trash.
+Each batch represents one user/AI delete action — a folder + its contents share one batch, a sub-todo tree shares one batch.
+Use manage_trash with action='restore' + batchId to recover.
+
+Auto-emptied after the user-configured retention period (default 30 days).`,
+    schema: {
+      types: z.array(z.enum(TRASH_TYPES)).optional().describe('Filter by entity type'),
+      search: z.string().optional().describe('Substring match on root title'),
+      offset: z.number().int().min(0).optional(),
+      limit: z.number().int().min(1).max(200).optional().describe('Default 50')
+    },
+    handler: ({ types, search, offset, limit }) => {
+      const params = new URLSearchParams()
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types as string[]) params.append('types[]', t)
+      }
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      if (typeof offset === 'number') params.set('offset', String(offset))
+      if (typeof limit === 'number') params.set('limit', String(limit))
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/trash${qs ? `?${qs}` : ''}`)
+    }
+  },
   {
     name: 'list_trash',
     deprecated: {
