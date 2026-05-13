@@ -49,6 +49,12 @@
 ### MCP 서버 (내장)
 - 앱 내 HTTP MCP 서버를 통해 Claude 등 AI 에이전트와 연동
 - 워크스페이스·노트·캔버스·할 일 등 주요 리소스를 MCP 도구로 노출
+- **MCP v2 마이그레이션 진행 중** — 도구 prefix 통일 (read_* / manage_*) + 도메인 통합
+  - `browse` (← list_items + list_files + list_tagged_items + list_tags)
+  - `read` (← read_contents + read_canvas + list_templates(id))
+  - `read_tasks` (← list_todos + list_schedules + list_reminders + list_recurring_rules + get_history)
+  - `manage_items` 확장 (folders + files 통합), `manage_content`, `manage_canvas`, `manage_tasks`
+  - v1 도구는 유지하되 `[DEPRECATED]` 마킹 — 응답에 `_deprecation` 메타 자동 주입
 
 ---
 
