@@ -13,6 +13,10 @@ import { useImageWatcher } from '@entities/image-file'
 import { useCanvasWatcher } from '@entities/canvas'
 import { useTodoWatcher } from '@entities/todo'
 import { useScheduleWatcher } from '@entities/schedule'
+import { useRecurringRuleWatcher } from '@entities/recurring-rule'
+import { useTemplateWatcher } from '@entities/template'
+import { useTagWatcher } from '@entities/tag'
+import { useReminderChangedWatcher } from '@entities/reminder'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useTrashWatcher } from '@entities/trash'
@@ -109,6 +113,14 @@ function MainLayout(): React.JSX.Element {
   useTodoWatcher()
   // schedule 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화)
   useScheduleWatcher()
+  // recurring-rule + recurring-completion 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화)
+  useRecurringRuleWatcher()
+  // template 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화)
+  useTemplateWatcher()
+  // tag 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화)
+  useTagWatcher()
+  // reminder CRUD 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화 — reminder:fired 와 별개)
+  useReminderChangedWatcher()
   // entity-link 변경 push 이벤트 구독 (orphan cleanup 시 캐시 동기화)
   useEntityLinkWatcher()
   // 알림 push 이벤트 구독

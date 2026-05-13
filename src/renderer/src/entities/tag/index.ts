@@ -12,3 +12,4 @@ export {
   useDetachTag
 } from './model/queries'
 export { TagBadge } from './ui/TagBadge'
+export { useTagWatcher } from './model/use-tag-watcher'
