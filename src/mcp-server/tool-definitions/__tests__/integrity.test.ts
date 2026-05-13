@@ -5,12 +5,12 @@
  * 깨짐을 자동 감지.
  *
  * MCP v2 마이그레이션 진행 중 — baseline 은 신규 도구 추가 시마다 증가한다.
- * v2 신규: browse (+1).
+ * v2 신규: browse, manage_content (+2).
  */
 import { describe, it, expect } from 'vitest'
 import { allTools } from '../index'
 
-const BASELINE_TOOL_COUNT = 30
+const BASELINE_TOOL_COUNT = 31
 
 describe('tool-definitions 무결성', () => {
   it('전체 tool 개수가 baseline 과 동일', () => {
@@ -54,7 +54,8 @@ describe('tool-definitions 무결성', () => {
       'list_trash',
       'manage_trash',
       // v2
-      'browse'
+      'browse',
+      'manage_content'
     ]
     for (const name of required) {
       expect(names.has(name), `missing required tool: ${name}`).toBe(true)

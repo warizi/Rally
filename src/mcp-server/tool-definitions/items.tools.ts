@@ -94,6 +94,42 @@ Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, im
     }
   },
   {
+    name: 'manage_content',
+    description: `Batch create/update note or csv content. Replaces v1 write_content with array of actions.
+
+Actions:
+- create: { action:'create', type:'note'|'table', title, folderId?, content }
+- update: { action:'update', id, content?, title? }
+
+Per-entry result independent (one failure doesn't roll back others).
+For delete: use manage_items.delete (soft-delete to trash).
+
+WARNING: When updating note content, image references (![](/.images/xxx.png)) removed from new content
+will be permanently deleted from disk. Always preserve existing image references.`,
+    schema: {
+      actions: z
+        .array(
+          z.union([
+            z.object({
+              action: z.literal('create'),
+              type: z.enum(['note', 'table']),
+              title: z.string(),
+              folderId: z.string().optional(),
+              content: z.string()
+            }),
+            z.object({
+              action: z.literal('update'),
+              id: z.string(),
+              content: z.string().optional(),
+              title: z.string().optional()
+            })
+          ])
+        )
+        .describe('Array of create/update actions')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/content/batch', args)
+  },
+  {
     name: 'list_items',
     description: `List items (folders, notes, tables, canvases, todo summary) in the active workspace.
 All options are optional and default to a full listing for backward compatibility, but for token efficiency
