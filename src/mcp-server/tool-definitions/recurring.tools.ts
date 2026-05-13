@@ -9,6 +9,11 @@ import type { ToolDefinition } from './types'
 export const recurringTools: ToolDefinition[] = [
   {
     name: 'list_recurring_rules',
+    deprecated: {
+      replacedBy: 'read_tasks',
+      since: 'v2.0',
+      reason: "read_tasks({ types: ['recurring'], activeOnly }) — today view uses mode='today'"
+    },
     description: `List recurring rules in the active workspace.
 - activeOnly=true filters to rules whose endDate is null or still in the future.
 - forDate: pass a YYYY-MM-DD or ISO 8601 string to switch to the "today view" — returns only rules
@@ -38,6 +43,11 @@ export const recurringTools: ToolDefinition[] = [
   },
   {
     name: 'manage_recurring_rules',
+    deprecated: {
+      replacedBy: 'manage_tasks',
+      since: 'v2.0',
+      reason: "manage_tasks with type: 'recurring' covers CRUD + complete/uncomplete actions"
+    },
     description: `Batch create/update/delete recurring rules + complete/uncomplete daily occurrences.
 recurrenceType:
 - 'daily': fires every day

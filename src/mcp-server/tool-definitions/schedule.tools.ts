@@ -9,6 +9,11 @@ import type { ToolDefinition } from './types'
 export const scheduleTools: ToolDefinition[] = [
   {
     name: 'list_schedules',
+    deprecated: {
+      replacedBy: 'read_tasks',
+      since: 'v2.0',
+      reason: "read_tasks({ types: ['schedule'], from, to }) — work cluster unification"
+    },
     description: `List calendar events (schedules) in the active workspace.
 - from/to: ISO 8601 date range. If both omitted, returns all schedules.
 - search: substring match on title/description/location (case-insensitive)`,
@@ -28,6 +33,11 @@ export const scheduleTools: ToolDefinition[] = [
   },
   {
     name: 'manage_schedules',
+    deprecated: {
+      replacedBy: 'manage_tasks',
+      since: 'v2.0',
+      reason: "manage_tasks with type: 'schedule' covers all schedule CRUD"
+    },
     description: `Batch create, update, or delete calendar events. allDay events are auto-normalized to 00:00–23:59.`,
     schema: {
       actions: z

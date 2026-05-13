@@ -35,6 +35,11 @@ export const templateTools: ToolDefinition[] = [
   },
   {
     name: 'list_templates',
+    deprecated: {
+      replacedBy: 'read_templates',
+      since: 'v2.0',
+      reason: 'read_templates — v2 read_* prefix alignment (same args/response)'
+    },
     description: `List note/csv templates in the active workspace.
 - Without id: returns metadata list (jsonData omitted to save tokens).
 - With id: returns the single template with full jsonData (the serialized payload — JSON string for note templates consumable by write_content's content field, CSV body for csv templates). When id is set, type filter is ignored.`,
