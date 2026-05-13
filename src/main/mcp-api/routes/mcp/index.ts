@@ -1,5 +1,6 @@
 import type { Router } from '../../router'
 import { registerMcpItemRoutes } from './items'
+import { registerMcpBrowseRoutes } from './browse'
 import { registerMcpContentRoutes } from './content'
 import { registerMcpFolderRoutes } from './folders'
 import { registerMcpCanvasRoutes } from './canvases'
@@ -18,6 +19,7 @@ import { registerMcpTrashRoutes } from './trash'
 
 export function registerMcpRoutes(router: Router): void {
   registerMcpItemRoutes(router)
+  registerMcpBrowseRoutes(router)
   registerMcpContentRoutes(router)
   registerMcpFolderRoutes(router)
   registerMcpCanvasRoutes(router)
