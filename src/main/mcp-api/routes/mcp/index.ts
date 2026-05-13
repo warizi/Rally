@@ -11,6 +11,7 @@ import { registerMcpRecurringRoutes } from './recurring'
 import { registerMcpTemplateRoutes } from './templates'
 import { registerMcpTagRoutes } from './tags'
 import { registerMcpHistoryRoutes } from './history'
+import { registerMcpTasksRoutes } from './tasks'
 import { registerMcpFileRoutes } from './files'
 import { registerMcpWorkspaceRoutes } from './workspace'
 import { registerMcpTrashRoutes } from './trash'
@@ -28,6 +29,7 @@ export function registerMcpRoutes(router: Router): void {
   registerMcpTemplateRoutes(router)
   registerMcpTagRoutes(router)
   registerMcpHistoryRoutes(router)
+  registerMcpTasksRoutes(router)
   registerMcpFileRoutes(router)
   registerMcpWorkspaceRoutes(router)
   registerMcpTrashRoutes(router)
