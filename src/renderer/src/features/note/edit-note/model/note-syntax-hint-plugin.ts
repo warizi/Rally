@@ -6,7 +6,7 @@ const syntaxHintKey = new PluginKey<DecorationSet>('note-syntax-hint')
 
 const NODE_SYNTAX: Record<string, (node: import('@milkdown/kit/prose/model').Node) => string> = {
   heading: (node) => '#'.repeat(node.attrs.level as number),
-  horizontal_rule: () => '---',
+  horizontal_rule: () => '---'
 }
 
 function buildDecorations(
@@ -32,12 +32,16 @@ function buildDecorations(
 
   if (!syntaxText || blockStart < 0) return DecorationSet.empty
 
-  const widget = Decoration.widget(blockStart, () => {
-    const span = document.createElement('span')
-    span.className = 'syntax-hint'
-    span.textContent = syntaxText
-    return span
-  }, { side: -1 })
+  const widget = Decoration.widget(
+    blockStart,
+    () => {
+      const span = document.createElement('span')
+      span.className = 'syntax-hint'
+      span.textContent = syntaxText
+      return span
+    },
+    { side: -1 }
+  )
 
   return DecorationSet.create(doc, [widget])
 }
@@ -56,12 +60,12 @@ export const syntaxHintPlugin = $prose(() => {
         // 범위 선택 시 숨기기
         if (from !== to) return DecorationSet.empty
         return buildDecorations(newState.doc, from)
-      },
+      }
     },
     props: {
       decorations(state) {
         return syntaxHintKey.getState(state)
-      },
-    },
+      }
+    }
   })
 })

@@ -7,6 +7,7 @@ import { gfm } from '@milkdown/kit/preset/gfm'
 import { listener, listenerCtx } from '@milkdown/kit/plugin/listener'
 import { history } from '@milkdown/kit/plugin/history'
 import { upload, uploadConfig } from '@milkdown/kit/plugin/upload'
+import { clipboard } from '@milkdown/kit/plugin/clipboard'
 import { $view, callCommand } from '@milkdown/kit/utils'
 import { useWriteNoteContent } from '@entities/note'
 import { useNoteExternalSync } from '../model/use-note-external-sync'
@@ -14,6 +15,7 @@ import { createNoteImageNodeViewFactory } from '../model/note-image-node-view'
 import { noteSearchPlugin } from '../model/note-search-plugin'
 import { autolinkPlugin } from '../model/note-link-input-rule'
 import { syntaxHintPlugin } from '../model/note-syntax-hint-plugin'
+import { notePasteNormalizePlugin } from '../model/note-paste-normalize'
 import { NoteSearchBar } from './NoteSearchBar'
 
 /** 저장 시: 문단 사이 빈 줄 제거, <br /> → 빈 줄로 변환 */
@@ -138,6 +140,9 @@ function MilkdownEditor({
       .use(history)
       .use(listener)
       .use(upload)
+      // 표 줄 사이에 빈 줄을 끼워 복사하는 도구(옵시디언 등) 호환 — clipboard 전에 실행.
+      .use(notePasteNormalizePlugin)
+      .use(clipboard)
       .use(noteSearchPlugin)
       .use(autolinkPlugin)
       .use(syntaxHintPlugin)
