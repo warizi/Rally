@@ -9,6 +9,11 @@ import { type ToolDefinition, e } from './types'
 export const trashTools: ToolDefinition[] = [
   {
     name: 'list_trash',
+    deprecated: {
+      replacedBy: 'read_trash',
+      since: 'v2.0',
+      reason: 'read_trash — v2 read_* prefix alignment'
+    },
     description: `List items in the workspace trash (deleted but recoverable).
 Each batch represents one user/AI delete action — a folder + its contents share one batch, a sub-todo tree shares one batch.
 Use restore_trash with batchId to recover, or empty_trash to permanently delete.

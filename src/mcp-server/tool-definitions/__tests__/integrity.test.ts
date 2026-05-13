@@ -92,4 +92,21 @@ describe('tool-definitions 무결성', () => {
     expect(counts.manage_).toBeGreaterThanOrEqual(10)
     expect(counts.get_).toBeGreaterThanOrEqual(2) // get_history / get_workspace_info
   })
+
+  it('deprecated tool 은 자기 자신을 가리키지 않는다', () => {
+    for (const tool of allTools) {
+      if (!tool.deprecated) continue
+      expect(
+        tool.deprecated.replacedBy,
+        `${tool.name} 이 자기 자신을 replacedBy 로 가리킴`
+      ).not.toBe(tool.name)
+    }
+  })
+
+  /**
+   * NOTE: v2 마이그레이션 진행 중에는 deprecated.replacedBy 가 아직 develop 에
+   * 머지되지 않은 v2 tool 을 가리킬 수 있다. v2 모든 tool 머지 완료 후 다음 검증
+   * 추가 예정 (task #13 직전):
+   *   - 모든 deprecated.replacedBy 가 실존하는 tool 을 가리켜야 함
+   */
 })

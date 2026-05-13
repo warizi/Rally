@@ -9,6 +9,11 @@ import { type ToolDefinition, e } from './types'
 export const tagTools: ToolDefinition[] = [
   {
     name: 'list_tags',
+    deprecated: {
+      replacedBy: 'browse',
+      since: 'v2.0',
+      reason: "browse({ types: ['tag'] }) — tags as a first-class type in unified discovery"
+    },
     description: `List tags in the active workspace.
 - search: substring match on name/description (workspace-wide listing)
 - forItemType + forItemId: pass both to scope the response to tags attached to that specific item
@@ -33,6 +38,11 @@ export const tagTools: ToolDefinition[] = [
   },
   {
     name: 'list_tagged_items',
+    deprecated: {
+      replacedBy: 'browse',
+      since: 'v2.0',
+      reason: 'browse({ tagId, types? }) — items filtered by tag with type filter'
+    },
     description: `List items that carry a given tag. Filter by itemTypes (default: all taggable types).
 Orphan attachments (item deleted but tag link remains) are skipped from the response.`,
     schema: {

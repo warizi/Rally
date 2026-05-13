@@ -147,6 +147,11 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
   },
   {
     name: 'read_canvas',
+    deprecated: {
+      replacedBy: 'read',
+      since: 'v2.0',
+      reason: 'read auto-detects canvas and returns nodes+edges with the same shape'
+    },
     description:
       'Read a canvas with all nodes and edges. Nodes include reference data for linked items.',
     schema: {
@@ -156,6 +161,11 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
   },
   {
     name: 'create_canvas',
+    deprecated: {
+      replacedBy: 'manage_canvas',
+      since: 'v2.0',
+      reason: "manage_canvas with action: 'create' (single action in array)"
+    },
     description:
       'Create a canvas with optional nodes and edges in one call. Edges reference nodes by array index.',
     schema: {
@@ -196,6 +206,11 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
   },
   {
     name: 'edit_canvas',
+    deprecated: {
+      replacedBy: 'manage_canvas',
+      since: 'v2.0',
+      reason: 'manage_canvas accepts canvasId + actions and handles all v1 edit cases'
+    },
     description: `Edit a canvas: update metadata, delete canvas, add/remove nodes and edges in one batch.
 Delete must be the only action. Use tempId on add_node to reference new nodes in add_edge.`,
     schema: {
