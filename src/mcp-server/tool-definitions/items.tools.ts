@@ -288,7 +288,17 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
   },
   {
     name: 'manage_items',
-    description: 'Batch rename, move, or delete notes and tables. Type is auto-detected by ID.',
+    description: `Batch rename/move/delete/create_folder/update_meta on any workspace item.
+Type is auto-detected from id — supports note / csv / canvas / pdf / image / folder.
+
+Actions:
+- rename: { action:'rename', id, newName }
+- move: { action:'move', id, targetFolderId? }
+- delete: { action:'delete', id } — soft delete (recoverable via manage_trash)
+- create_folder: { action:'create_folder', name, parentFolderId? }
+- update_meta: { action:'update_meta', id, description? } — pdf/image only
+
+MCP v2: replaces v1 manage_items (note/csv) + manage_folders + manage_files. Backward-compatible expansion.`,
     schema: {
       actions: z
         .array(
@@ -299,12 +309,22 @@ WARNING: When updating a note, image references (![](/.images/xxx.png)) removed 
               id: z.string(),
               targetFolderId: z.string().optional()
             }),
-            z.object({ action: z.literal('delete'), id: z.string() })
+            z.object({ action: z.literal('delete'), id: z.string() }),
+            z.object({
+              action: z.literal('create_folder'),
+              name: z.string(),
+              parentFolderId: z.string().optional()
+            }),
+            z.object({
+              action: z.literal('update_meta'),
+              id: z.string(),
+              description: z.string().optional()
+            })
           ])
         )
-        .describe('Array of actions to execute')
+        .describe('Array of actions (rename/move/delete/create_folder/update_meta)')
     },
-    handler: (args) => callTool('POST', '/api/mcp/items/batch', args)
+    handler: (args) => callTool('POST', '/api/mcp/manage-items/batch', args)
   },
   {
     name: 'manage_folders',
