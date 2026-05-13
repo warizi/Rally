@@ -1,4 +1,5 @@
-import { index, integer, sqliteTable, text, unique } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core'
+import { isNull } from 'drizzle-orm'
 import { workspaces } from './workspace'
 import { trashBatches } from './trash-batch'
 
@@ -20,7 +21,10 @@ export const folders = sqliteTable(
     })
   },
   (t) => [
-    unique().on(t.workspaceId, t.relativePath),
+    // 활성 row 끼리만 (workspace_id, relative_path) 유일성. 휴지통(deleted_at != NULL) 은 제외.
+    uniqueIndex('uniq_folders_active_path')
+      .on(t.workspaceId, t.relativePath)
+      .where(isNull(t.deletedAt)),
     index('idx_folders_deleted').on(t.deletedAt),
     index('idx_folders_trash_batch').on(t.trashBatchId)
   ]

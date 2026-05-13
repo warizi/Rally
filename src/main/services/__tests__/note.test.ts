@@ -106,7 +106,12 @@ function insertTestFolder(id: string, relativePath: string): void {
 function insertTestNote(
   id: string,
   relativePath: string,
-  opts: { folderId?: string | null; title?: string; order?: number } = {}
+  opts: {
+    folderId?: string | null
+    title?: string
+    order?: number
+    deletedAt?: Date | null
+  } = {}
 ): void {
   testDb
     .insert(schema.notes)
@@ -120,7 +125,8 @@ function insertTestNote(
       preview: '',
       order: opts.order ?? 0,
       createdAt: new Date(),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      deletedAt: opts.deletedAt ?? null
     })
     .run()
 }
@@ -299,6 +305,15 @@ describe('create', () => {
     noteService.create('ws-1', null, 'second')
     const result = noteService.create('ws-1', null, 'third')
     expect(result.order).toBe(2)
+  })
+
+  it('휴지통(soft-deleted)에 같은 relativePath row 존재 — UNIQUE 충돌 없이 정상 생성', () => {
+    // 휴지통에만 row 있고 디스크는 비어있는 상태 시뮬레이션
+    insertTestNote('trashed-1', '새로운 노트.md', { deletedAt: new Date() })
+    // partial unique index 도입 후에는 활성 row 가 없으므로 같은 path 로 새 row 삽입 허용
+    const result = noteService.create('ws-1', null, '새로운 노트')
+    expect(result.relativePath).toBe('새로운 노트.md')
+    expect(result.id).not.toBe('trashed-1')
   })
 })
 
