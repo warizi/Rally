@@ -1,12 +1,33 @@
 /**
  * MCP items tools.
  * P3-7 — tool-definitions.ts 분할. 포함: list_items, search, read_contents, write_content, manage_items, manage_folders.
+ * MCP v2 — read 추가 (read_contents + read_canvas + list_templates(id) 통합 + pdf/image 메타).
  */
 import { z } from 'zod'
 import { callTool } from '../lib/call-tool'
 import type { ToolDefinition } from './types'
 
 export const itemsTools: ToolDefinition[] = [
+  {
+    name: 'read',
+    description: `Batch read item bodies/metadata by id (1–50). Type is auto-detected from id.
+
+Supported types and response shape per entry:
+- note     : { id, success:true, type:'note',     title, relativePath, content }
+- csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
+- canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
+- pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt, updatedAt }  (metadata only — no binary body)
+- image    : { id, success:true, type:'image',    title, relativePath, description, folderId, createdAt, updatedAt }  (metadata only)
+- template : { id, success:true, type:'template', title, templateType, jsonData, createdAt }
+
+Failure entries: { id, success:false, error: { code, message } } — independent per id, others still succeed.
+
+Replaces v1 read_contents (note/csv), read_canvas, list_templates(id). Mixed type ids in one call OK.`,
+    schema: {
+      ids: z.array(z.string()).min(1).max(50).describe('Mixed-type item IDs (1–50)')
+    },
+    handler: (args) => callTool('POST', '/api/mcp/read', args)
+  },
   {
     name: 'list_items',
     description: `List items (folders, notes, tables, canvases, todo summary) in the active workspace.
