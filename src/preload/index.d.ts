@@ -576,6 +576,7 @@ interface ScheduleAPI {
   linkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
   unlinkTodo: (scheduleId: string, todoId: string) => Promise<IpcResponse<void>>
   getLinkedTodos: (scheduleId: string) => Promise<IpcResponse<TodoItem[]>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 interface ReminderItem {
@@ -611,6 +612,7 @@ interface ReminderAPI {
       workspaceId: string | null
     }) => void
   ) => () => void
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 type TaggableEntityType = 'note' | 'todo' | 'image' | 'pdf' | 'csv' | 'canvas' | 'folder'
@@ -641,6 +643,7 @@ interface TagAPI {
   create: (workspaceId: string, input: CreateTagInput) => Promise<IpcResponse<TagItem>>
   update: (id: string, input: UpdateTagInput) => Promise<IpcResponse<TagItem>>
   remove: (id: string) => Promise<IpcResponse<void>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 interface ItemTagAPI {
@@ -819,6 +822,7 @@ interface RecurringRuleAPI {
   ) => Promise<IpcResponse<RecurringRuleItem>>
   update: (ruleId: string, data: UpdateRecurringRuleData) => Promise<IpcResponse<RecurringRuleItem>>
   delete: (ruleId: string) => Promise<IpcResponse<void>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 interface RecurringCompletionItem {
@@ -838,6 +842,7 @@ interface RecurringCompletionAPI {
     workspaceId: string,
     date: Date
   ) => Promise<IpcResponse<RecurringCompletionItem[]>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 interface CompletedItem {
@@ -865,6 +870,7 @@ interface TemplateAPI {
     jsonData: string
   }) => Promise<IpcResponse<TemplateItem>>
   delete: (id: string) => Promise<IpcResponse<void>>
+  onChanged: (callback: (workspaceId: string) => void) => () => void
 }
 
 type HistoryLinkType = 'note' | 'csv' | 'pdf' | 'image' | 'canvas'

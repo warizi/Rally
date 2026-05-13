@@ -13,3 +13,4 @@ export {
   useUpdateRecurringRule,
   useDeleteRecurringRule
 } from './model/queries'
+export { useRecurringRuleWatcher } from './model/use-recurring-rule-watcher'

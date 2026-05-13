@@ -14,5 +14,11 @@ export const reminderApi = {
     ): void => callback(data)
     ipcRenderer.on('reminder:fired', handler)
     return () => ipcRenderer.removeListener('reminder:fired', handler)
+  },
+  onChanged: (callback: (workspaceId: string) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, workspaceId: string): void =>
+      callback(workspaceId)
+    ipcRenderer.on('reminder:changed', handler)
+    return () => ipcRenderer.removeListener('reminder:changed', handler)
   }
 }

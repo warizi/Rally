@@ -9,5 +9,11 @@ export const recurringRuleApi = {
     ipcRenderer.invoke('recurringRule:create', workspaceId, data),
   update: (ruleId: string, data: unknown) =>
     ipcRenderer.invoke('recurringRule:update', ruleId, data),
-  delete: (ruleId: string) => ipcRenderer.invoke('recurringRule:delete', ruleId)
+  delete: (ruleId: string) => ipcRenderer.invoke('recurringRule:delete', ruleId),
+  onChanged: (callback: (workspaceId: string) => void) => {
+    const handler = (_: Electron.IpcRendererEvent, workspaceId: string): void =>
+      callback(workspaceId)
+    ipcRenderer.on('recurring-rule:changed', handler)
+    return () => ipcRenderer.removeListener('recurring-rule:changed', handler)
+  }
 }

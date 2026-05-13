@@ -17,3 +17,4 @@ export {
   useLinkTodo,
   useUnlinkTodo
 } from './model/queries'
+export { useScheduleWatcher } from './model/use-schedule-watcher'
