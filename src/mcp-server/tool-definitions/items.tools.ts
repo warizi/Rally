@@ -1,13 +1,98 @@
 /**
  * MCP items tools.
  * P3-7 — tool-definitions.ts 분할. 포함: list_items, search, read_contents, write_content, manage_items, manage_folders.
- * MCP v2 — read 추가 (read_contents + read_canvas + list_templates(id) 통합 + pdf/image 메타).
+ * MCP v2 — browse + read 추가 (list_items/files/tagged/tags + read_contents/read_canvas/list_templates(id) 통합).
  */
 import { z } from 'zod'
 import { callTool } from '../lib/call-tool'
 import type { ToolDefinition } from './types'
 
 export const itemsTools: ToolDefinition[] = [
+  {
+    name: 'browse',
+    description: `Browse items (folders, notes, tables, csv, canvases, pdfs, images, tags) in the active workspace.
+Unified discovery tool — replaces list_items + list_files + list_tagged_items + list_tags (workspace mode).
+All filters are AND-combined:
+- folderId + recursive: scope to a folder subtree (omit folderId for whole workspace; folderId="null" for root-level only)
+- types: subset of ["folder","note","csv","canvas","pdf","image","tag"]; omit to include all
+- tagId: only items carrying this tag
+- linkedTo: { type, id } — only items linked to this entity (entity-link)
+- search: substring match on title/name/description
+- updatedAfter: ISO 8601 — items modified after this moment
+- summary=true: strip heavy fields (preview / relativePath / folderPath / description)
+- limit/offset: per-kind pagination (default 500, max 1000); response.meta.hasMore tells when to page
+
+When types=["tag"], tag list is returned (substring search on name/description).
+Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.`,
+    schema: {
+      folderId: z.string().optional().describe('Folder id, "null" for root-only, omit for all'),
+      recursive: z
+        .boolean()
+        .optional()
+        .describe('When folderId is set, include all descendants (default: direct children only)'),
+      types: z
+        .array(z.enum(['folder', 'note', 'csv', 'canvas', 'pdf', 'image', 'tag']))
+        .optional()
+        .describe('Limit response to specific kinds. Omit to include all.'),
+      tagId: z.string().optional().describe('Only items carrying this tag'),
+      linkedTo: z
+        .object({
+          type: z.enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'schedule']),
+          id: z.string()
+        })
+        .optional()
+        .describe('Only items linked to this entity (entity-link)'),
+      search: z.string().optional().describe('Substring match on title/description'),
+      updatedAfter: z
+        .string()
+        .optional()
+        .describe('ISO 8601 timestamp — only items updated after this moment'),
+      summary: z
+        .boolean()
+        .optional()
+        .describe('Strip heavy fields (preview / relativePath / folderPath / description)'),
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(1000)
+        .optional()
+        .describe('Per-kind row cap (default 500, max 1000)'),
+      offset: z.number().int().min(0).optional().describe('Per-kind offset for pagination')
+    },
+    handler: ({
+      folderId,
+      recursive,
+      types,
+      tagId,
+      linkedTo,
+      search,
+      updatedAfter,
+      summary,
+      limit,
+      offset
+    }) => {
+      const params = new URLSearchParams()
+      if (typeof folderId === 'string') params.set('folderId', folderId)
+      if (recursive) params.set('recursive', 'true')
+      if (summary) params.set('summary', 'true')
+      if (Array.isArray(types) && types.length > 0) {
+        for (const t of types as string[]) params.append('types[]', t)
+      }
+      if (typeof tagId === 'string' && tagId) params.set('tagId', tagId)
+      if (linkedTo && typeof linkedTo === 'object') {
+        const lt = linkedTo as { type: string; id: string }
+        params.set('linkedTo[type]', lt.type)
+        params.set('linkedTo[id]', lt.id)
+      }
+      if (typeof search === 'string' && search.trim()) params.set('search', search)
+      if (updatedAfter) params.set('updatedAfter', updatedAfter as string)
+      if (typeof limit === 'number') params.set('limit', String(limit))
+      if (typeof offset === 'number') params.set('offset', String(offset))
+      const qs = params.toString()
+      return callTool('GET', `/api/mcp/browse${qs ? `?${qs}` : ''}`)
+    }
+  },
   {
     name: 'read',
     description: `Batch read item bodies/metadata by id (1–50). Type is auto-detected from id.
