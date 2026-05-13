@@ -1,7 +1,6 @@
 import type { Router } from '../../router'
 import type { TodoNode, ManageTodoResult, TodoAction } from './types'
 import { todoService } from '../../../services/todo'
-import { todoRepository } from '../../../repositories/todo'
 import { entityLinkService } from '../../../services/entity-link'
 import type { LinkableEntityType } from '../../../db/schema/entity-link'
 import { ValidationError } from '../../../lib/errors'
@@ -202,26 +201,16 @@ export function registerMcpTodoRoutes(router: Router): void {
                   ? new Date(action.startDate)
                   : undefined
           })
-          if (action.linkItems?.length || action.unlinkItems?.length) {
-            const todo = todoRepository.findById(action.id)
-            if (todo?.parentId) {
-              throw new ValidationError(
-                `Cannot link/unlink on a subtodo (parentId=${todo.parentId}). ` +
-                  `Subtodos do not support links — link the parent todo, ` +
-                  `or convert this subtodo to a top-level todo first.`
-              )
+          if (action.linkItems?.length) {
+            for (const item of action.linkItems) {
+              assertValidId(item.id, `linkItems[].id (${item.type})`)
+              entityLinkService.link(item.type, item.id, 'todo', action.id, wsId)
             }
-            if (action.linkItems?.length) {
-              for (const item of action.linkItems) {
-                assertValidId(item.id, `linkItems[].id (${item.type})`)
-                entityLinkService.link(item.type, item.id, 'todo', action.id, wsId)
-              }
-            }
-            if (action.unlinkItems?.length) {
-              for (const item of action.unlinkItems) {
-                assertValidId(item.id, `unlinkItems[].id (${item.type})`)
-                entityLinkService.unlink(item.type, item.id, 'todo', action.id, wsId)
-              }
+          }
+          if (action.unlinkItems?.length) {
+            for (const item of action.unlinkItems) {
+              assertValidId(item.id, `unlinkItems[].id (${item.type})`)
+              entityLinkService.unlink(item.type, item.id, 'todo', action.id, wsId)
             }
           }
           return { action: 'update', id: action.id, success: true }

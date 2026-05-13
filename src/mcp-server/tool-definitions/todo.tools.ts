@@ -24,7 +24,7 @@ Each todo includes linkedItems[]. To inspect a linked item:
 - type "canvas" → read_canvas
 - type "schedule"/"pdf"/"image" → metadata only
 
-Subtodos do NOT support links — those operations must target the top-level parent.`,
+Subtodos support links — link/unlink operations work on any todo regardless of parentId.`,
     schema: {
       filter: z.enum(['active', 'completed']).optional().describe('Filter (default: active)'),
       parentId: z
@@ -78,7 +78,7 @@ Subtodos do NOT support links — those operations must target the top-level par
     description: `Batch create, update, or delete todos. Status/isDone auto-sync.
 Subtodos: created inline via the subtodos array. Title only — matches the UI which only allows entering a title.
 Other fields (priority/dueDate/etc.) on a subtodo can be set later via a separate update action targeting the subtodo's id.
-Links: linkItems / unlinkItems are supported only on top-level todos. Subtodos cannot be linked — link the parent todo instead, or convert the subtodo to top-level (clear parentId) first.`,
+Links: linkItems / unlinkItems work on any todo, including subtodos.`,
     schema: {
       actions: z
         .array(

@@ -209,6 +209,17 @@ export function TodoKanbanCard({
               >
                 {sub.title}
               </span>
+              <div
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={(e) => e.stopPropagation()}
+                className="shrink-0"
+              >
+                <LinkedEntityPopoverButton
+                  entityType="todo"
+                  entityId={sub.id}
+                  workspaceId={workspaceId}
+                />
+              </div>
             </div>
           ))}
         </div>

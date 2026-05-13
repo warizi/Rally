@@ -11,6 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
 import type { TodoItem } from '@entities/todo'
+import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TodoCheckbox } from './TodoCheckbox'
 import { EditSubTodoDialog } from './EditSubTodoDialog'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
@@ -53,6 +54,13 @@ export function SubTodoItem({ sub, workspaceId }: Props): React.JSX.Element {
           >
             {sub.title}
           </span>
+        </TableCell>
+        <TableCell className="w-8 py-2">
+          <LinkedEntityPopoverButton
+            entityType="todo"
+            entityId={sub.id}
+            workspaceId={workspaceId}
+          />
         </TableCell>
         <TableCell className="w-8 py-2">
           <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
