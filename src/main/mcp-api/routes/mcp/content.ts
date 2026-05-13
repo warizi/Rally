@@ -179,6 +179,136 @@ export function registerMcpContentRoutes(router: Router): void {
     return { results }
   })
 
+  // ─── POST /api/mcp/content/batch → manage_content (v2) ────
+  // 배치 create/update — per-entry 격리 (한 action 실패가 다른 actions 영향 X)
+
+  type ManageContentAction =
+    | { action: 'create'; type: 'note' | 'table'; title: string; folderId?: string; content: string }
+    | { action: 'update'; id: string; content?: string; title?: string }
+
+  type ManageContentResult =
+    | {
+        action: 'create' | 'update'
+        id: string
+        type: 'note' | 'table'
+        title: string
+        relativePath: string
+        success: true
+      }
+    | { action: 'create' | 'update'; success: false; error: { code: string; message: string } }
+
+  router.addRoute<{ actions: ManageContentAction[] }>(
+    'POST',
+    '/api/mcp/content/batch',
+    (_, body): { results: ManageContentResult[] } => {
+      requireBody(body)
+      const wsId = resolveActiveWorkspace()
+      if (!Array.isArray(body.actions) || body.actions.length === 0) {
+        throw new ValidationError('actions array is required')
+      }
+      const noteAffected: string[] = []
+      const csvAffected: string[] = []
+
+      const results: ManageContentResult[] = body.actions.map((action): ManageContentResult => {
+        try {
+          if (action.action === 'create') {
+            if (!action.type) throw new ValidationError('type is required for create')
+            if (!action.title) throw new ValidationError('title is required for create')
+            const folderId = action.folderId ?? null
+            if (action.type === 'note') {
+              const result = noteService.create(wsId, folderId, action.title)
+              if (action.content) {
+                try {
+                  noteService.writeContent(wsId, result.id, action.content)
+                } catch (e) {
+                  try {
+                    noteService.remove(wsId, result.id)
+                  } catch {
+                    // 정리 실패 무시
+                  }
+                  throw e
+                }
+              }
+              noteAffected.push(result.relativePath)
+              return {
+                action: 'create',
+                id: result.id,
+                type: 'note',
+                title: result.title,
+                relativePath: result.relativePath,
+                success: true
+              }
+            }
+            const result = csvFileService.create(wsId, folderId, action.title)
+            if (action.content) {
+              try {
+                csvFileService.writeContent(wsId, result.id, action.content)
+              } catch (e) {
+                try {
+                  csvFileService.remove(wsId, result.id)
+                } catch {
+                  // 정리 실패 무시
+                }
+                throw e
+              }
+            }
+            csvAffected.push(result.relativePath)
+            return {
+              action: 'create',
+              id: result.id,
+              type: 'table',
+              title: result.title,
+              relativePath: result.relativePath,
+              success: true
+            }
+          }
+          // update
+          assertValidId(action.id, 'id')
+          const { type, row } = resolveItemType(action.id)
+          if (action.content !== undefined) {
+            if (type === 'note') {
+              noteService.writeContent(wsId, action.id, action.content)
+              noteAffected.push(row.relativePath)
+            } else {
+              csvFileService.writeContent(wsId, action.id, action.content)
+              csvAffected.push(row.relativePath)
+            }
+          }
+          if (action.title !== undefined) {
+            if (type === 'note') {
+              const updated = noteService.rename(wsId, action.id, action.title)
+              noteAffected.push(row.relativePath, updated.relativePath)
+            } else {
+              const updated = csvFileService.rename(wsId, action.id, action.title)
+              csvAffected.push(row.relativePath, updated.relativePath)
+            }
+          }
+          const refreshed =
+            type === 'note' ? noteRepository.findById(action.id) : csvFileRepository.findById(action.id)
+          return {
+            action: 'update',
+            id: action.id,
+            type,
+            title: refreshed!.title,
+            relativePath: refreshed!.relativePath,
+            success: true
+          }
+        } catch (e) {
+          const err = e as Error
+          return {
+            action: action.action,
+            success: false,
+            error: { code: err.constructor.name, message: err.message }
+          }
+        }
+      })
+
+      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected)
+      if (csvAffected.length > 0) broadcastChanged('csv:changed', wsId, csvAffected)
+      return { results }
+    }
+  )
+
   // ─── POST /api/mcp/content → write_content ────────────────
 
   router.addRoute<WriteContentBody>('POST', '/api/mcp/content', (_, body): WriteContentResult => {
