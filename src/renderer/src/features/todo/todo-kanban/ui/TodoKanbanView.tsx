@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 import {
   DndContext,
   closestCenter,
@@ -19,6 +19,9 @@ import type { TodoItem, TodoStatus } from '@entities/todo'
 import { TodoKanbanBoard } from './TodoKanbanBoard'
 import { TodoKanbanCardOverlay } from './TodoKanbanCard'
 import { KANBAN_COLUMNS } from '../model/use-todo-kanban'
+
+// 빈 컬럼/서브투두 배열을 매번 새로 만들지 않도록 reference 재사용
+const EMPTY_TODOS: TodoItem[] = []
 
 interface Props {
   todos: TodoItem[]
@@ -63,6 +66,23 @@ export function TodoKanbanView({
     return () => observer.disconnect()
   }, [])
 
+  // 부모(TodoPage) 가 콜백을 useCallback 으로 안정화하지 않으므로 ref 패턴으로 흡수.
+  // 자식 KanbanBoard / KanbanCard 의 React.memo 가 props 비교를 정상 통과하도록 stable reference 노출.
+  const callbacksRef = useRef({ onItemClick, onOpenInPane, onItemDelete })
+  callbacksRef.current = { onItemClick, onOpenInPane, onItemDelete }
+  const stableOnItemClick = useCallback(
+    (todoId: string) => callbacksRef.current.onItemClick(todoId),
+    []
+  )
+  const stableOnOpenInPane = useCallback(
+    (todoId: string, paneId: string) => callbacksRef.current.onOpenInPane?.(todoId, paneId),
+    []
+  )
+  const stableOnItemDelete = useCallback(
+    (todoId: string) => callbacksRef.current.onItemDelete(todoId),
+    []
+  )
+
   // 드래그 중이 아닐 때만 서버 데이터로 동기화
   useEffect(() => {
     if (!activeId) {
@@ -97,61 +117,55 @@ export function TodoKanbanView({
     const draggedId = active.id as string
     const overId = over.id as string
 
-    // 드래그 중인 아이템의 현재 컬럼 찾기
-    let sourceStatus: TodoStatus | undefined
-    for (const [status, items] of localColumns) {
-      if (items.some((t) => t.id === draggedId)) {
-        sourceStatus = status
-        break
-      }
-    }
-    if (!sourceStatus) return
-
-    // 타겟 컬럼 찾기
-    let targetStatus: TodoStatus | undefined
-    if (KANBAN_COLUMNS.includes(overId as TodoStatus)) {
-      targetStatus = overId as TodoStatus
-    } else {
-      for (const [status, items] of localColumns) {
-        if (items.some((t) => t.id === overId)) {
-          targetStatus = status
+    // setLocalColumns 콜백 안에서 prev 기반으로 계산 — 변경 없으면 prev 반환해
+    // React 가 동일 reference 로 인식하고 자식 재렌더를 스킵하도록 함.
+    setLocalColumns((prev) => {
+      // 드래그 중 아이템의 현재 컬럼 찾기
+      let sourceStatus: TodoStatus | undefined
+      let sourceTodo: TodoItem | undefined
+      for (const [status, items] of prev) {
+        const found = items.find((t) => t.id === draggedId)
+        if (found) {
+          sourceStatus = status
+          sourceTodo = found
           break
         }
       }
-    }
-    if (!targetStatus) return
+      if (!sourceStatus || !sourceTodo) return prev
 
-    // 같은 컬럼 내 재정렬은 SortableContext CSS transform 으로 처리
-    if (sourceStatus === targetStatus) return
-
-    // 컬럼 간 이동 — localColumns 실시간 업데이트 (미리보기)
-    setLocalColumns((prev) => {
-      const next = new Map<TodoStatus, TodoItem[]>()
-      for (const [s, items] of prev) {
-        next.set(s, [...items])
+      // 타겟 컬럼 찾기
+      let targetStatus: TodoStatus | undefined
+      if (KANBAN_COLUMNS.includes(overId as TodoStatus)) {
+        targetStatus = overId as TodoStatus
+      } else {
+        for (const [status, items] of prev) {
+          if (items.some((t) => t.id === overId)) {
+            targetStatus = status
+            break
+          }
+        }
       }
+      if (!targetStatus) return prev
 
-      const sourceTodo = next.get(sourceStatus!)!.find((t) => t.id === draggedId)
-      if (!sourceTodo) return prev
+      // 같은 컬럼 내 재정렬은 SortableContext CSS transform 이 처리
+      if (sourceStatus === targetStatus) return prev
 
-      // source 에서 제거
+      // 컬럼 간 이동 — 변경된 source/target 컬럼만 새 array, 나머지는 prev reference 유지
+      const next = new Map(prev)
       next.set(
-        sourceStatus!,
-        next.get(sourceStatus!)!.filter((t) => t.id !== draggedId)
+        sourceStatus,
+        prev.get(sourceStatus)!.filter((t) => t.id !== draggedId)
       )
 
-      // target 에 삽입
-      const targetItems = next.get(targetStatus!)!
-      const movedTodo = { ...sourceTodo, status: targetStatus! }
-
+      const targetItems = [...prev.get(targetStatus)!]
+      const movedTodo = { ...sourceTodo, status: targetStatus }
       if (KANBAN_COLUMNS.includes(overId as TodoStatus)) {
-        // 컬럼 빈 공간에 드롭 → 맨 끝에 추가
         targetItems.push(movedTodo)
       } else {
         const overIndex = targetItems.findIndex((t) => t.id === overId)
         targetItems.splice(Math.max(0, overIndex), 0, movedTodo)
       }
-
+      next.set(targetStatus, targetItems)
       return next
     })
   }
@@ -293,12 +307,12 @@ export function TodoKanbanView({
           <div className="flex-1 min-h-0">
             <TodoKanbanBoard
               status={KANBAN_COLUMNS[activeColumn]}
-              todos={localColumns.get(KANBAN_COLUMNS[activeColumn]) ?? []}
+              todos={localColumns.get(KANBAN_COLUMNS[activeColumn]) ?? EMPTY_TODOS}
               subTodoMap={subTodoMap}
               workspaceId={workspaceId}
-              onItemClick={onItemClick}
-              onOpenInPane={onOpenInPane}
-              onItemDelete={onItemDelete}
+              onItemClick={stableOnItemClick}
+              onOpenInPane={stableOnOpenInPane}
+              onItemDelete={stableOnItemDelete}
               className="w-full"
             />
           </div>
@@ -317,12 +331,13 @@ export function TodoKanbanView({
             <TodoKanbanBoard
               key={status}
               status={status}
-              todos={localColumns.get(status) ?? []}
+              todos={localColumns.get(status) ?? EMPTY_TODOS}
               subTodoMap={subTodoMap}
               workspaceId={workspaceId}
-              onItemClick={onItemClick}
-              onOpenInPane={onOpenInPane}
-              onItemDelete={onItemDelete}
+              onItemClick={stableOnItemClick}
+              onOpenInPane={stableOnOpenInPane}
+              onItemDelete={stableOnItemDelete}
+              className="flex-1 min-w-[24rem]"
             />
           ))}
         </div>

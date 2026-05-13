@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { memo, useCallback, useState } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react'
+import { CalendarDays, ChevronDown, ChevronRight, MoreHorizontal } from 'lucide-react'
 import { Checkbox } from '@shared/ui/checkbox'
 import {
   DropdownMenu,
@@ -17,9 +17,9 @@ import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
 
-const PRIORITY_DOT: Record<string, string> = {
+const PRIORITY_STRIP: Record<string, string> = {
   high: 'bg-red-500',
-  medium: 'bg-yellow-400',
+  medium: 'bg-amber-400',
   low: 'bg-blue-400'
 }
 
@@ -27,22 +27,36 @@ function formatDueDate(date: Date): string {
   return new Date(date).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })
 }
 
+/** 마감일 임박도에 따른 색상 클래스: 오늘/지남=red, 3일 이내=amber, 그 외=muted */
+function dueDateTone(date: Date, isDone: boolean): string {
+  if (isDone) return 'text-muted-foreground'
+  const due = new Date(date)
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const dueDay = new Date(due.getFullYear(), due.getMonth(), due.getDate())
+  const diffDays = Math.round((dueDay.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+  if (diffDays < 0) return 'text-red-600 dark:text-red-400 font-medium'
+  if (diffDays === 0) return 'text-red-600 dark:text-red-400 font-medium'
+  if (diffDays <= 3) return 'text-amber-600 dark:text-amber-400'
+  return 'text-muted-foreground'
+}
+
 interface Props {
   todo: TodoItem
   subTodos: TodoItem[]
   workspaceId: string
-  onTitleClick: () => void
-  onOpenInPane?: (paneId: string) => void
-  onDelete: () => void
+  onItemClick: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
+  onItemDelete: (todoId: string) => void
 }
 
-export function TodoKanbanCard({
+function TodoKanbanCardImpl({
   todo,
   subTodos,
   workspaceId,
-  onTitleClick,
+  onItemClick,
   onOpenInPane,
-  onDelete
+  onItemDelete
 }: Props): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: todo.id
@@ -51,22 +65,33 @@ export function TodoKanbanCard({
   const [isOpen, setIsOpen] = useState(false)
   const doneCount = subTodos.filter((t) => t.isDone).length
 
+  // 이벤트 핸들러는 todo.id 가 같으면 reference 안정 — 자식 DropdownMenu 등 재렌더 방지
+  const handleTitleClick = useCallback(() => onItemClick(todo.id), [onItemClick, todo.id])
+  const handleDelete = useCallback(() => onItemDelete(todo.id), [onItemDelete, todo.id])
+  const handleOpenInPane = useCallback(
+    (paneId: string) => onOpenInPane?.(todo.id, paneId),
+    [onOpenInPane, todo.id]
+  )
+
   if (isDragging) {
     return (
       <div
         ref={setNodeRef}
         style={{ transform: CSS.Transform.toString(transform), transition }}
-        className="mb-2 rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-3"
+        className="relative mb-2 overflow-hidden rounded-lg border border-dashed border-muted-foreground/30 bg-muted/10 p-3"
       >
+        <span
+          aria-hidden
+          className={`absolute inset-y-0 left-0 w-1 ${PRIORITY_STRIP[todo.priority] ?? ''}`}
+        />
         <div className="flex items-start gap-2 invisible">
           <div className="w-4 h-4 mt-0.5 shrink-0" />
-          <div className="w-2 h-2 rounded-full shrink-0 mt-1.5" />
           <span className="flex-1 text-sm leading-snug">{todo.title}</span>
         </div>
         {todo.description && (
-          <p className="text-sm mt-1.5 pl-10 line-clamp-2 invisible">{todo.description}</p>
+          <p className="text-sm mt-1.5 pl-6 line-clamp-2 invisible">{todo.description}</p>
         )}
-        <div className="flex items-center gap-2 mt-2 pl-10 invisible">
+        <div className="flex items-center gap-2 mt-2 pl-6 invisible">
           <div className="w-2 h-2 rounded-full shrink-0" />
         </div>
       </div>
@@ -80,10 +105,14 @@ export function TodoKanbanCard({
       {...attributes}
       {...listeners}
       data-kanban-card="true"
-      className="mb-2 rounded-lg border border-border bg-card p-3 cursor-grab active:cursor-grabbing shadow-sm hover:shadow-md hover:border-border/80 transition-all select-none"
-      onClick={onTitleClick}
+      className="relative mb-2 overflow-hidden rounded-lg border border-border bg-card p-3 cursor-grab active:cursor-grabbing shadow-sm transition-shadow select-none hover:shadow-md hover:bg-muted/40 hover:border-border/80"
+      onClick={handleTitleClick}
     >
-      {/* 제목 행 */}
+      <span
+        aria-hidden
+        className={`absolute inset-y-0 left-0 w-1 ${PRIORITY_STRIP[todo.priority] ?? ''}`}
+      />
+      {/* 제목 행 — priority 는 좌측 border 로 표현 */}
       <div className="flex items-start gap-2 min-w-0">
         <Checkbox
           checked={todo.isDone}
@@ -94,9 +123,8 @@ export function TodoKanbanCard({
           }
           className="mt-0.5 shrink-0"
         />
-        <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${PRIORITY_DOT[todo.priority]}`} />
         <span
-          className={`flex-1 min-w-0 text-sm leading-snug truncate ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+          className={`flex-1 min-w-0 text-sm leading-snug break-words ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
         >
           {todo.title}
         </span>
@@ -111,7 +139,7 @@ export function TodoKanbanCard({
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-            <PanePickerSubmenu onPaneSelect={(paneId) => onOpenInPane?.(paneId)}>
+            <PanePickerSubmenu onPaneSelect={handleOpenInPane}>
               {({ onClick }) => (
                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
                   상세 보기
@@ -138,7 +166,7 @@ export function TodoKanbanCard({
               todoId={todo.id}
               workspaceId={workspaceId}
               hasSubTodos={subTodos.length > 0}
-              onDeleted={onDelete}
+              onDeleted={handleDelete}
               trigger={
                 <DropdownMenuItem
                   className="text-destructive focus:text-destructive"
@@ -154,27 +182,13 @@ export function TodoKanbanCard({
 
       {/* 설명 */}
       {todo.description && (
-        <p className="text-sm text-muted-foreground mt-1.5 pl-10 line-clamp-2">
+        <p className="text-sm text-muted-foreground mt-1.5 pl-6 line-clamp-2 break-words">
           {todo.description}
         </p>
       )}
 
-      {/* 푸터: 마감일 + 연결 + sub-todo 토글 */}
-      <div className="flex items-center gap-2 mt-2 pl-10">
-        {todo.dueDate && (
-          <span className="text-xs text-muted-foreground">{formatDueDate(todo.dueDate)}</span>
-        )}
-        <span
-          className="ml-auto flex items-center gap-1"
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <LinkedEntityPopoverButton
-            entityType="todo"
-            entityId={todo.id}
-            workspaceId={workspaceId}
-          />
-        </span>
+      {/* 푸터: 좌측 — 서브투두 토글 + 마감일 / 우측 — 링크 */}
+      <div className="flex items-center gap-2 mt-2 pl-6">
         {subTodos.length > 0 && (
           <button
             className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
@@ -188,11 +202,30 @@ export function TodoKanbanCard({
             {doneCount}/{subTodos.length}
           </button>
         )}
+        {todo.dueDate && (
+          <span
+            className={`flex items-center gap-1 text-xs ${dueDateTone(todo.dueDate, todo.isDone)}`}
+          >
+            <CalendarDays className="w-3 h-3 shrink-0" />
+            {formatDueDate(todo.dueDate)}
+          </span>
+        )}
+        <span
+          className="ml-auto flex items-center gap-1"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <LinkedEntityPopoverButton
+            entityType="todo"
+            entityId={todo.id}
+            workspaceId={workspaceId}
+          />
+        </span>
       </div>
 
       {/* 서브 할 일 목록 */}
       {isOpen && subTodos.length > 0 && (
-        <div className="mt-2 pl-10 flex flex-col gap-1">
+        <div className="mt-2 pl-6 flex flex-col gap-1">
           {subTodos.map((sub) => (
             <div key={sub.id} className="flex items-center gap-2">
               <Checkbox
@@ -228,6 +261,8 @@ export function TodoKanbanCard({
   )
 }
 
+export const TodoKanbanCard = memo(TodoKanbanCardImpl)
+
 // DragOverlay 전용 — DnD 훅 없이 순수 시각만 렌더링
 export function TodoKanbanCardOverlay({
   todo,
@@ -239,29 +274,37 @@ export function TodoKanbanCardOverlay({
   const doneCount = subTodos.filter((t) => t.isDone).length
 
   return (
-    <div className="rounded-lg border border-border bg-card p-3 shadow-xl cursor-grabbing select-none rotate-1 opacity-95 w-72">
+    <div className="relative overflow-hidden rounded-lg border border-border bg-card p-3 shadow-xl cursor-grabbing select-none rotate-1 opacity-95 w-72">
+      <span
+        aria-hidden
+        className={`absolute inset-y-0 left-0 w-1 ${PRIORITY_STRIP[todo.priority] ?? ''}`}
+      />
       <div className="flex items-start gap-2 min-w-0">
         <Checkbox checked={todo.isDone} disabled className="mt-0.5 shrink-0" />
-        <div className={`w-2 h-2 rounded-full shrink-0 mt-1.5 ${PRIORITY_DOT[todo.priority]}`} />
         <span
-          className={`flex-1 text-sm leading-snug truncate ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+          className={`flex-1 text-sm leading-snug break-words ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
         >
           {todo.title}
         </span>
       </div>
       {todo.description && (
-        <p className="text-sm text-muted-foreground mt-1.5 pl-10 line-clamp-2">
+        <p className="text-sm text-muted-foreground mt-1.5 pl-6 line-clamp-2 break-words">
           {todo.description}
         </p>
       )}
-      <div className="flex items-center gap-2 mt-2 pl-10">
-        {todo.dueDate && (
-          <span className="text-xs text-muted-foreground">{formatDueDate(todo.dueDate)}</span>
-        )}
+      <div className="flex items-center gap-2 mt-2 pl-6">
         {subTodos.length > 0 && (
-          <span className="flex items-center gap-1 text-xs text-muted-foreground ml-auto">
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <ChevronRight className="w-3 h-3" />
             {doneCount}/{subTodos.length}
+          </span>
+        )}
+        {todo.dueDate && (
+          <span
+            className={`flex items-center gap-1 text-xs ${dueDateTone(todo.dueDate, todo.isDone)}`}
+          >
+            <CalendarDays className="w-3 h-3 shrink-0" />
+            {formatDueDate(todo.dueDate)}
           </span>
         )}
       </div>
