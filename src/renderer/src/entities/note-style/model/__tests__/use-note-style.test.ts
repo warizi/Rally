@@ -1,15 +1,15 @@
 /**
- * useNoteStyle 단위 테스트 (Phase 1).
+ * useNoteStyle 단위 테스트.
  *
  * IPC mock (window.api.settings) + React Query (useQuery / useMutation) 동작 검증.
+ * v1 (light/dark 분리) → v2 (flat + colorLight/colorDark) 마이그레이션 포함.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { createElement, type ReactNode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { useNoteStyle } from '../use-note-style'
+import { useNoteStyle, parseNoteStyleSettings } from '../use-note-style'
 import { DEFAULT_NOTE_STYLE_SETTINGS } from '../defaults'
-import type { NoteStyleSettings } from '../types'
 
 function createWrapper(): {
   qc: QueryClient
@@ -40,6 +40,62 @@ afterEach(() => {
   delete (window as unknown as Record<string, unknown>).api
 })
 
+describe('parseNoteStyleSettings', () => {
+  it('빈 입력 → DEFAULT', () => {
+    expect(parseNoteStyleSettings(null)).toEqual(DEFAULT_NOTE_STYLE_SETTINGS)
+    expect(parseNoteStyleSettings('')).toEqual(DEFAULT_NOTE_STYLE_SETTINGS)
+  })
+
+  it('손상된 JSON → DEFAULT fallback', () => {
+    expect(parseNoteStyleSettings('not-json')).toEqual(DEFAULT_NOTE_STYLE_SETTINGS)
+  })
+
+  it('v1 형식 (light/dark 분리) → 마이그레이션', () => {
+    const v1 = {
+      light: {
+        h1: {
+          fontSize: '3rem',
+          lineHeight: 1.2,
+          marginTop: '2rem',
+          marginBottom: '1rem',
+          color: '#ff0000'
+        }
+      },
+      dark: {
+        h1: {
+          fontSize: '3rem',
+          lineHeight: 1.2,
+          marginTop: '2rem',
+          marginBottom: '1rem',
+          color: '#00ff00'
+        }
+      }
+    }
+    const parsed = parseNoteStyleSettings(JSON.stringify(v1))
+    expect(parsed.h1.fontSize).toBe('3rem')
+    expect(parsed.h1.colorLight).toBe('#ff0000')
+    expect(parsed.h1.colorDark).toBe('#00ff00')
+    // v1 에 없던 bg 필드는 default 로 채워짐
+    expect(parsed.h1.backgroundLight).toBe(DEFAULT_NOTE_STYLE_SETTINGS.h1.backgroundLight)
+    expect(parsed.codeInline.backgroundLight).toBe(
+      DEFAULT_NOTE_STYLE_SETTINGS.codeInline.backgroundLight
+    )
+    // light 에 없던 요소는 default fallback
+    expect(parsed.paragraph).toEqual(DEFAULT_NOTE_STYLE_SETTINGS.paragraph)
+  })
+
+  it('v2 형식 (flat) → merge with defaults', () => {
+    const v2 = {
+      h1: { colorLight: '#abcdef' }
+    }
+    const parsed = parseNoteStyleSettings(JSON.stringify(v2))
+    expect(parsed.h1.colorLight).toBe('#abcdef')
+    // 나머지 속성은 default 유지
+    expect(parsed.h1.fontSize).toBe(DEFAULT_NOTE_STYLE_SETTINGS.h1.fontSize)
+    expect(parsed.h1.colorDark).toBe(DEFAULT_NOTE_STYLE_SETTINGS.h1.colorDark)
+  })
+})
+
 describe('useNoteStyle', () => {
   it('settings 없음 → DEFAULT 반환', async () => {
     const { result } = renderHook(() => useNoteStyle(), { wrapper: createWrapper().wrapper })
@@ -47,71 +103,38 @@ describe('useNoteStyle', () => {
     expect(result.current.settings).toEqual(DEFAULT_NOTE_STYLE_SETTINGS)
   })
 
-  it('settings 존재 → JSON 파싱해 반환', async () => {
-    const custom: NoteStyleSettings = {
-      ...DEFAULT_NOTE_STYLE_SETTINGS,
-      light: {
-        ...DEFAULT_NOTE_STYLE_SETTINGS.light,
-        h1: { ...DEFAULT_NOTE_STYLE_SETTINGS.light.h1, color: '#ff0000' }
-      }
+  it('save 호출 → settings:set IPC + 낙관적 갱신', async () => {
+    const { result } = renderHook(() => useNoteStyle(), { wrapper: createWrapper().wrapper })
+    await waitFor(() => expect(result.current.isLoading).toBe(false))
+
+    const next = {
+      ...result.current.settings,
+      h1: { ...result.current.settings.h1, colorLight: '#0000ff' }
     }
-    getMock.mockResolvedValueOnce({ success: true, data: JSON.stringify(custom) })
+    act(() => result.current.save(next))
 
-    const { result } = renderHook(() => useNoteStyle(), { wrapper: createWrapper().wrapper })
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.settings.light.h1.color).toBe('#ff0000')
-  })
-
-  it('손상된 JSON → DEFAULT fallback', async () => {
-    getMock.mockResolvedValueOnce({ success: true, data: 'not-valid-json' })
-    const { result } = renderHook(() => useNoteStyle(), { wrapper: createWrapper().wrapper })
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-    expect(result.current.settings).toEqual(DEFAULT_NOTE_STYLE_SETTINGS)
-  })
-
-  it('saveMode 호출 → settings:set IPC + 낙관적 갱신', async () => {
-    const { result } = renderHook(() => useNoteStyle(), { wrapper: createWrapper().wrapper })
-    await waitFor(() => expect(result.current.isLoading).toBe(false))
-
-    const newH1 = {
-      ...result.current.settings.light,
-      h1: { ...result.current.settings.light.h1, color: '#0000ff' }
-    }
-    act(() => result.current.saveMode('light', newH1))
-
-    // 낙관적 갱신 — onMutate 가 async (cancelQueries) 이므로 마이크로태스크 후 반영
-    await waitFor(() => expect(result.current.settings.light.h1.color).toBe('#0000ff'))
-
+    await waitFor(() => expect(result.current.settings.h1.colorLight).toBe('#0000ff'))
     await waitFor(() => expect(setMock).toHaveBeenCalled())
     const [key, valueStr] = setMock.mock.calls[0]
     expect(key).toBe('noteStyle')
     const parsed = JSON.parse(valueStr as string)
-    expect(parsed.light.h1.color).toBe('#0000ff')
+    expect(parsed.h1.colorLight).toBe('#0000ff')
   })
 
-  it('resetMode 호출 → 해당 mode 만 DEFAULT 로 복원, 다른 mode 는 유지', async () => {
-    const custom: NoteStyleSettings = {
-      light: {
-        ...DEFAULT_NOTE_STYLE_SETTINGS.light,
-        h1: { ...DEFAULT_NOTE_STYLE_SETTINGS.light.h1, color: '#ff0000' }
-      },
-      dark: {
-        ...DEFAULT_NOTE_STYLE_SETTINGS.dark,
-        h1: { ...DEFAULT_NOTE_STYLE_SETTINGS.dark.h1, color: '#00ff00' }
-      }
+  it('reset 호출 → DEFAULT 로 복원', async () => {
+    const custom = {
+      ...DEFAULT_NOTE_STYLE_SETTINGS,
+      h1: { ...DEFAULT_NOTE_STYLE_SETTINGS.h1, colorLight: '#ff0000' }
     }
     getMock.mockResolvedValueOnce({ success: true, data: JSON.stringify(custom) })
 
     const { result } = renderHook(() => useNoteStyle(), { wrapper: createWrapper().wrapper })
-    await waitFor(() => expect(result.current.settings.dark.h1.color).toBe('#00ff00'))
+    await waitFor(() => expect(result.current.settings.h1.colorLight).toBe('#ff0000'))
 
-    act(() => result.current.resetMode('light'))
+    act(() => result.current.reset())
 
     await waitFor(() =>
-      expect(result.current.settings.light.h1.color).toBe(
-        DEFAULT_NOTE_STYLE_SETTINGS.light.h1.color
-      )
+      expect(result.current.settings.h1.colorLight).toBe(DEFAULT_NOTE_STYLE_SETTINGS.h1.colorLight)
     )
-    expect(result.current.settings.dark.h1.color).toBe('#00ff00') // 유지
   })
 })
