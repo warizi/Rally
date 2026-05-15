@@ -1,6 +1,6 @@
 {
   "name": "rally",
-  "version": "1.8.2",
+  "version": "1.9.0",
   "description": "Rally",
   "main": "./out/main/index.js",
   "author": "warizi",
