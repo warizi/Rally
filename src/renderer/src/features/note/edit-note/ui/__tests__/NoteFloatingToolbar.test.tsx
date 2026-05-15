@@ -190,7 +190,7 @@ describe('NoteFloatingToolbar', () => {
     document.body.removeChild(host)
   })
 
-  it('색상 슬롯 클릭 시 toggleColorCommand 가 해당 hex 와 함께 호출', async () => {
+  it('색상 슬롯 클릭 시 toggleColorCommand 가 {color, slot} payload 와 함께 호출', async () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
@@ -207,10 +207,11 @@ describe('NoteFloatingToolbar', () => {
     expect(actionMock).toHaveBeenCalled()
     const lastCall = actionMock.mock.calls[actionMock.mock.calls.length - 1][0] as {
       key: unknown
-      payload: unknown
+      payload: { color: string; slot: number }
     }
     expect(lastCall.key).toBe('ToggleColorMark')
-    expect(lastCall.payload).toBe(DEFAULT_TOOLBAR_PALETTE.light[2])
+    expect(lastCall.payload.color).toBe(DEFAULT_TOOLBAR_PALETTE.light[2])
+    expect(lastCall.payload.slot).toBe(2)
     document.body.removeChild(host)
   })
 

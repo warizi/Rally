@@ -6,3 +6,4 @@ export {
 } from './model/types'
 export { DEFAULT_TOOLBAR_PALETTE } from './model/defaults'
 export { useToolbarPalette, parseToolbarPalette } from './model/use-palette'
+export { useRuntimeToolbarColors, buildToolbarColorsCss } from './lib/use-runtime-toolbar-colors'

@@ -4,51 +4,50 @@
  * 구조:
  * 1) remark 플러그인 (`colorSpanRemarkPlugin`) — 파싱된 mdast 의 paired html span 노드를
  *    커스텀 `colorSpan` mdast 노드로 wrapping
- * 2) Milkdown `colorMarkSchema` — ProseMirror mark schema. parseMarkdown 은
- *    `colorSpan` mdast 노드 매칭, toMarkdown 은 `state.withMark` 으로 `colorSpan` 출력
+ * 2) Milkdown `colorMarkSchema` — ProseMirror mark schema (attrs: color + slot).
+ *    parseMarkdown 은 `colorSpan` mdast 노드 매칭, toMarkdown 은 `state.withMark`
+ *    으로 `colorSpan` 출력
  * 3) remark-stringify 핸들러 (`colorSpanStringifyHandler`) — `colorSpan` mdast 노드를
- *    raw HTML `<span style="color:#xxx">...</span>` 으로 직렬화
+ *    raw HTML `<span style="color:#xxx" data-color-slot="N">...</span>` 으로 직렬화
  *
- * NoteEditor 에서 wiring:
- * ```ts
- * ctx.update(remarkPluginsCtx, (prev) => [...prev, { plugin: colorSpanRemarkPlugin, options: {} }])
- * ctx.update(remarkStringifyOptionsCtx, (prev) => ({
- *   ...prev,
- *   handlers: { ...prev.handlers, [COLOR_SPAN_MDAST_TYPE]: colorSpanStringifyHandler }
- * }))
- * .use(colorMarkSchema)
- * ```
+ * slot 속성: floating toolbar 의 팔레트 슬롯 인덱스 (0~7). null = 팔레트 외 색상.
+ * 다크 모드에서 `[data-color-slot]` selector 로 CSS override (use-runtime-toolbar-colors).
  */
 import { $markSchema } from '@milkdown/kit/utils'
 import { visit } from 'unist-util-visit'
 import type { Root, RootContent, PhrasingContent } from 'mdast'
 import type { Handle } from 'mdast-util-to-markdown'
 
-/** color mark 의 ProseMirror mark name. */
 export const COLOR_MARK_NAME = 'colorMark'
-
-/** remark 플러그인이 생성하는 mdast 노드 타입. */
 export const COLOR_SPAN_MDAST_TYPE = 'colorSpan'
 
-/** color span 의 시작 html 토큰 매칭 패턴. 캡처 그룹 1 = 색상 hex/색상값. */
-const OPEN_SPAN_RE = /^<span\s+style\s*=\s*["']?\s*color\s*:\s*([^;"']+?)\s*;?\s*["']?\s*>$/i
+/**
+ * color span 의 시작 html 토큰 매칭. 캡처 그룹:
+ *   1 = 색상값 (hex / rgb / 이름 등)
+ *   2 = data-color-slot 값 (있으면 — `data-color-slot="N"` 또는 `data-color-slot=N`)
+ *
+ * `style` 과 `data-color-slot` 의 순서는 무관 (양쪽 패턴 시도).
+ */
+const OPEN_SPAN_COLOR_RE = /color\s*:\s*([^;"'>]+?)\s*(?:;|["']|$)/i
+const OPEN_SPAN_SLOT_RE = /data-color-slot\s*=\s*["']?(\d+)["']?/i
 
-/** color span 의 닫는 html 토큰 매칭. */
-const CLOSE_SPAN_RE = /^<\/span\s*>$/i
-
-function matchOpenColorSpan(value: string): string | null {
-  const m = OPEN_SPAN_RE.exec(value.trim())
-  return m ? m[1].trim() : null
+function matchOpenColorSpan(value: string): { color: string; slot: number | null } | null {
+  const trimmed = value.trim()
+  if (!/^<span\s+/i.test(trimmed)) return null
+  if (!trimmed.endsWith('>')) return null
+  if (trimmed.startsWith('</')) return null
+  const colorM = OPEN_SPAN_COLOR_RE.exec(trimmed)
+  if (!colorM) return null
+  const slotM = OPEN_SPAN_SLOT_RE.exec(trimmed)
+  const slot = slotM ? Number.parseInt(slotM[1], 10) : null
+  return { color: colorM[1].trim(), slot: Number.isFinite(slot as number) ? slot : null }
 }
 
+const CLOSE_SPAN_RE = /^<\/span\s*>$/i
 function isCloseColorSpan(value: string): boolean {
   return CLOSE_SPAN_RE.test(value.trim())
 }
 
-/**
- * `<span style="color:#xxx">` ... `</span>` 페어를 찾아 `colorSpan` mdast 노드로 wrap.
- * 매칭되지 않는 span 또는 nested span 은 그대로 둠. 중첩 깊이 추적.
- */
 function pairColorSpansInChildren<T extends { children?: unknown[] }>(parent: T): void {
   const children = parent.children as PhrasingContent[] | undefined
   if (!Array.isArray(children)) return
@@ -58,8 +57,8 @@ function pairColorSpansInChildren<T extends { children?: unknown[] }>(parent: T)
   while (i < children.length) {
     const node = children[i]
     if (node.type === 'html') {
-      const color = matchOpenColorSpan(node.value)
-      if (color) {
+      const open = matchOpenColorSpan(node.value)
+      if (open) {
         let depth = 1
         let closeIdx = -1
         for (let j = i + 1; j < children.length; j++) {
@@ -77,7 +76,12 @@ function pairColorSpansInChildren<T extends { children?: unknown[] }>(parent: T)
         }
         if (closeIdx !== -1) {
           const innerChildren = children.slice(i + 1, closeIdx) as PhrasingContent[]
-          const wrapper = { type: COLOR_SPAN_MDAST_TYPE, color, children: innerChildren }
+          const wrapper = {
+            type: COLOR_SPAN_MDAST_TYPE,
+            color: open.color,
+            slot: open.slot,
+            children: innerChildren
+          }
           pairColorSpansInChildren(wrapper as unknown as { children?: unknown[] })
           out.push(wrapper as unknown as PhrasingContent)
           i = closeIdx + 1
@@ -91,9 +95,6 @@ function pairColorSpansInChildren<T extends { children?: unknown[] }>(parent: T)
   ;(parent as unknown as { children: PhrasingContent[] }).children = out
 }
 
-/**
- * remark 플러그인: mdast 트리의 모든 inline 컨테이너 노드에 대해 paired span 페어링 실행.
- */
 export function colorSpanRemarkPlugin() {
   return (tree: Root): void => {
     visit(tree, (node) => {
@@ -104,29 +105,24 @@ export function colorSpanRemarkPlugin() {
   }
 }
 
-/**
- * remark-stringify handler: `colorSpan` mdast 노드 → `<span style="color:#xxx">...</span>` raw HTML.
- */
 export const colorSpanStringifyHandler: Handle = (node, _parent, state, info) => {
-  const colorNode = node as unknown as { color: string; children: PhrasingContent[] }
+  const colorNode = node as unknown as {
+    color: string
+    slot: number | null
+    children: PhrasingContent[]
+  }
   const inner = state.containerPhrasing(
     colorNode as unknown as Parameters<typeof state.containerPhrasing>[0],
     info
   )
-  return `<span style="color:${colorNode.color}">${inner}</span>`
+  const slotAttr = typeof colorNode.slot === 'number' ? ` data-color-slot="${colorNode.slot}"` : ''
+  return `<span style="color:${colorNode.color}"${slotAttr}>${inner}</span>`
 }
 
-/**
- * Milkdown color mark schema.
- * - ProseMirror mark: attrs.color (string)
- * - parseDOM: span[style] 에서 color CSS 추출
- * - toDOM: `<span style="color: #xxx">` 렌더
- * - parseMarkdown: 위 remark 플러그인이 만든 `colorSpan` mdast 노드 매칭
- * - toMarkdown: `state.withMark` 으로 `colorSpan` mdast 노드 emit
- */
 export const colorMarkSchema = $markSchema(COLOR_MARK_NAME, () => ({
   attrs: {
-    color: { default: '#000000', validate: 'string' }
+    color: { default: '#000000', validate: 'string' },
+    slot: { default: null, validate: 'number|null' }
   },
   inclusive: true,
   parseDOM: [
@@ -137,16 +133,28 @@ export const colorMarkSchema = $markSchema(COLOR_MARK_NAME, () => ({
         const style = dom.getAttribute('style') ?? ''
         const m = /color\s*:\s*([^;]+)/i.exec(style)
         if (!m) return false
-        return { color: m[1].trim() }
+        const slotAttr = dom.getAttribute('data-color-slot')
+        const slot =
+          slotAttr !== null && /^\d+$/.test(slotAttr) ? Number.parseInt(slotAttr, 10) : null
+        return { color: m[1].trim(), slot }
       }
     }
   ],
-  toDOM: (mark) => ['span', { style: `color: ${mark.attrs.color as string}` }, 0],
+  toDOM: (mark) => {
+    const slot = mark.attrs.slot as number | null
+    const attrs: Record<string, string> = {
+      style: `color: ${mark.attrs.color as string}`
+    }
+    if (typeof slot === 'number') {
+      attrs['data-color-slot'] = String(slot)
+    }
+    return ['span', attrs, 0]
+  },
   parseMarkdown: {
     match: (node) => node.type === COLOR_SPAN_MDAST_TYPE,
     runner: (state, node, markType) => {
-      const color = (node as unknown as { color: string }).color
-      state.openMark(markType, { color })
+      const data = node as unknown as { color: string; slot: number | null }
+      state.openMark(markType, { color: data.color, slot: data.slot })
       const children = (node as unknown as { children: unknown }).children
       state.next(children as Parameters<typeof state.next>[0])
       state.closeMark(markType)
@@ -156,7 +164,8 @@ export const colorMarkSchema = $markSchema(COLOR_MARK_NAME, () => ({
     match: (mark) => mark.type.name === COLOR_MARK_NAME,
     runner: (state, mark) => {
       state.withMark(mark, COLOR_SPAN_MDAST_TYPE, undefined, {
-        color: mark.attrs.color as string
+        color: mark.attrs.color as string,
+        slot: mark.attrs.slot as number | null
       })
     }
   }

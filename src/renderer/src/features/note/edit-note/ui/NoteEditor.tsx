@@ -31,6 +31,7 @@ import {
 } from '../model/note-color-mark'
 import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
 import { toggleColorCommand } from '../model/note-toolbar-commands'
+import { useRuntimeToolbarColors } from '@entities/note-toolbar-palette'
 import { useThemeMode } from '@/shared/lib/use-theme-mode'
 import { NoteSearchBar } from './NoteSearchBar'
 import { NoteFloatingToolbar } from './NoteFloatingToolbar'
@@ -125,6 +126,8 @@ function MilkdownEditor({
   const editorRef = useRef<HTMLDivElement>(null)
   const [loading, getEditor] = useInstance()
   const themeMode = useThemeMode()
+  // 다크 모드 색상 매핑 CSS 주입 (mount 동안 한 번 + palette 변경 시 갱신).
+  useRuntimeToolbarColors()
   // editorRef.current 는 초기 렌더 시 null 이라 useState 로 mount 후 캡처
   // → NoteFloatingToolbar 가 toolbar-state 이벤트 listener 를 정확한 DOM 에 부착.
   const [toolbarHostEl, setToolbarHostEl] = useState<HTMLElement | null>(null)
