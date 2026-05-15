@@ -118,7 +118,12 @@ function dispatchState(view: EditorView): void {
       activeMarks: computeActiveMarks(view)
     }
   }
-  const event = new CustomEvent<ToolbarStateDetail>(TOOLBAR_STATE_EVENT, { detail })
+  // bubbles: true — view.dom (inner ProseMirror) 에서 dispatch 한 이벤트가
+  // editorRef wrapper 까지 올라가야 함. 기본 false 라 명시적 설정 필요.
+  const event = new CustomEvent<ToolbarStateDetail>(TOOLBAR_STATE_EVENT, {
+    detail,
+    bubbles: true
+  })
   view.dom.dispatchEvent(event)
 }
 
@@ -142,7 +147,8 @@ export const noteToolbarStatePlugin = $prose(() => {
       handleDOMEvents: {
         compositionstart(view) {
           const event = new CustomEvent<ToolbarStateDetail>(TOOLBAR_STATE_EVENT, {
-            detail: { visible: false }
+            detail: { visible: false },
+            bubbles: true
           })
           view.dom.dispatchEvent(event)
           return false
