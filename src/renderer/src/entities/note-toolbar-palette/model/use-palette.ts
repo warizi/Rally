@@ -3,40 +3,54 @@
  *
  * - 미존재 → DEFAULT
  * - 손상된 JSON → DEFAULT fallback
- * - 부분 데이터 → DEFAULT 와 merge (light / dark 각각 슬롯 단위)
+ * - 부분 데이터 → DEFAULT 와 merge (슬롯 단위)
+ * - v1 (light/dark 분리) 형식 자동 마이그레이션 → v2 (단일 배열)
+ *   - light 배열을 새 단일 배열로 채택, dark 는 폐기
  * - save 는 setQueryData 로 낙관적 갱신
  */
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { DEFAULT_TOOLBAR_PALETTE } from './defaults'
-import {
-  NOTE_TOOLBAR_PALETTE_KEY,
-  PALETTE_SLOT_COUNT,
-  type PaletteColors,
-  type ToolbarColorPalette
-} from './types'
+import { NOTE_TOOLBAR_PALETTE_KEY, PALETTE_SLOT_COUNT, type ToolbarColorPalette } from './types'
 
 const QUERY_KEY = ['note-toolbar-palette']
 
-function mergeMode(partial: unknown, defaults: PaletteColors): PaletteColors {
+function mergeArray(partial: unknown, defaults: ToolbarColorPalette): ToolbarColorPalette {
   if (!Array.isArray(partial)) return defaults
   const result = [...defaults] as string[]
   for (let i = 0; i < PALETTE_SLOT_COUNT; i++) {
     const v = partial[i]
     if (typeof v === 'string' && v.length > 0) result[i] = v
   }
-  return result as unknown as PaletteColors
+  return result as unknown as ToolbarColorPalette
+}
+
+interface V1Shape {
+  light?: unknown
+  dark?: unknown
+}
+
+function isV1(parsed: unknown): parsed is V1Shape {
+  return (
+    typeof parsed === 'object' &&
+    parsed !== null &&
+    !Array.isArray(parsed) &&
+    ('light' in parsed || 'dark' in parsed)
+  )
 }
 
 export function parseToolbarPalette(raw: string | null | undefined): ToolbarColorPalette {
   if (!raw) return DEFAULT_TOOLBAR_PALETTE
   try {
     const parsed = JSON.parse(raw) as unknown
-    if (!parsed || typeof parsed !== 'object') return DEFAULT_TOOLBAR_PALETTE
-    const obj = parsed as { light?: unknown; dark?: unknown }
-    return {
-      light: mergeMode(obj.light, DEFAULT_TOOLBAR_PALETTE.light),
-      dark: mergeMode(obj.dark, DEFAULT_TOOLBAR_PALETTE.dark)
+    // v1 → v2 마이그레이션: light 배열을 새 단일 배열로
+    if (isV1(parsed)) {
+      const source = Array.isArray(parsed.light) ? parsed.light : parsed.dark
+      return mergeArray(source, DEFAULT_TOOLBAR_PALETTE)
     }
+    if (Array.isArray(parsed)) {
+      return mergeArray(parsed, DEFAULT_TOOLBAR_PALETTE)
+    }
+    return DEFAULT_TOOLBAR_PALETTE
   } catch {
     return DEFAULT_TOOLBAR_PALETTE
   }

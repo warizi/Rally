@@ -1,24 +1,19 @@
 /**
  * 노트 toolbar 색상 팔레트 편집 UI.
  *
- * 노트 설정 탭 하단에 들어가는 섹션. 라이트/다크 모드 각각 8 슬롯의 hex
- * 색상을 사용자가 편집 가능. 기본값 초기화 (slot 별 또는 전체) 지원.
+ * 노트 설정 탭 하단에 들어가는 섹션. 8 슬롯 단일 hex 색상 편집.
+ * (다크 모드 매핑 / 라이트-다크 분리 없음 — 사용자가 양 모드에서 가독성 있는 색 선택)
  */
-import { useState } from 'react'
 import { RotateCcwIcon } from 'lucide-react'
 import {
   DEFAULT_TOOLBAR_PALETTE,
   PALETTE_SLOT_COUNT,
   useToolbarPalette,
-  type PaletteColors,
   type ToolbarColorPalette
 } from '@entities/note-toolbar-palette'
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
-import { cn } from '@/shared/lib/utils'
-
-type PaletteMode = 'light' | 'dark'
 
 function ColorSlotInput({
   value,
@@ -44,52 +39,21 @@ function ColorSlotInput({
   )
 }
 
-function ModeToggleButton({
-  active,
-  onClick,
-  children
-}: {
-  active: boolean
-  onClick: () => void
-  children: React.ReactNode
-}): React.JSX.Element {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        'px-3 py-1 text-xs transition-colors cursor-pointer',
-        active
-          ? 'bg-primary text-primary-foreground'
-          : 'bg-background hover:bg-accent hover:text-accent-foreground'
-      )}
-    >
-      {children}
-    </button>
-  )
-}
-
 export function NoteToolbarPaletteSection(): React.JSX.Element {
   const { palette, isLoading, save, reset } = useToolbarPalette()
-  const [mode, setMode] = useState<PaletteMode>('light')
 
   if (isLoading) {
     return <div className="text-sm text-muted-foreground">불러오는 중…</div>
   }
 
   const updateSlot = (index: number, next: string): void => {
-    const currentMode = palette[mode]
-    const updated = [...currentMode] as string[]
+    const updated = [...palette] as string[]
     updated[index] = next
-    const nextPalette: ToolbarColorPalette = {
-      ...palette,
-      [mode]: updated as unknown as PaletteColors
-    }
-    save(nextPalette)
+    save(updated as unknown as ToolbarColorPalette)
   }
 
   const resetSlot = (index: number): void => {
-    const defaults = DEFAULT_TOOLBAR_PALETTE[mode]
-    updateSlot(index, defaults[index])
+    updateSlot(index, DEFAULT_TOOLBAR_PALETTE[index])
   }
 
   return (
@@ -98,7 +62,7 @@ export function NoteToolbarPaletteSection(): React.JSX.Element {
         <div>
           <h3 className="text-sm font-medium">Toolbar 색상 팔레트</h3>
           <p className="text-xs text-muted-foreground">
-            에디터 floating toolbar 에 표시되는 8개 색상. 라이트/다크 모드별로 따로 지정.
+            에디터 floating toolbar 에 표시되는 8개 색상.
           </p>
         </div>
         <Button
@@ -113,20 +77,6 @@ export function NoteToolbarPaletteSection(): React.JSX.Element {
         </Button>
       </div>
 
-      {/* 모드 전환 */}
-      <div className="flex items-center gap-2">
-        <Label className="text-xs text-muted-foreground">모드</Label>
-        <div className="flex rounded-md border overflow-hidden">
-          <ModeToggleButton active={mode === 'light'} onClick={() => setMode('light')}>
-            라이트
-          </ModeToggleButton>
-          <ModeToggleButton active={mode === 'dark'} onClick={() => setMode('dark')}>
-            다크
-          </ModeToggleButton>
-        </div>
-      </div>
-
-      {/* 8 슬롯 */}
       <div className="grid grid-cols-2 gap-3" data-testid="palette-slots">
         {Array.from({ length: PALETTE_SLOT_COUNT }).map((_, i) => (
           <div key={i} className="space-y-1">
@@ -141,7 +91,7 @@ export function NoteToolbarPaletteSection(): React.JSX.Element {
                 <RotateCcwIcon className="size-3" />
               </button>
             </div>
-            <ColorSlotInput value={palette[mode][i]} onChange={(next) => updateSlot(i, next)} />
+            <ColorSlotInput value={palette[i]} onChange={(next) => updateSlot(i, next)} />
           </div>
         ))}
       </div>

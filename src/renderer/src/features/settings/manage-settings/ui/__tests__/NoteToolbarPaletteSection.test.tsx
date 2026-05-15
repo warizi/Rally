@@ -1,7 +1,7 @@
 /**
  * NoteToolbarPaletteSection 단위 테스트.
  *
- * 8 slot 렌더 + 라이트/다크 모드 전환 + 슬롯 편집 → save IPC 전송 + 초기화 동작.
+ * 단일 8 slot 단순화 후 — 모드 전환 / light/dark 분리 제거.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react'
@@ -53,7 +53,7 @@ describe('NoteToolbarPaletteSection', () => {
     expect(colorInputs).toHaveLength(8)
   })
 
-  it('기본값 라이트 모드 색상으로 시작', async () => {
+  it('기본값 색상으로 시작 (slot 1 = DEFAULT[0])', async () => {
     const { wrapper } = createWrapper()
     render(<NoteToolbarPaletteSection />, { wrapper })
 
@@ -63,27 +63,10 @@ describe('NoteToolbarPaletteSection', () => {
 
     const slots = screen.getByTestId('palette-slots')
     const firstHexInput = slots.querySelectorAll('input.font-mono')[0] as HTMLInputElement
-    expect(firstHexInput.value.toLowerCase()).toBe(DEFAULT_TOOLBAR_PALETTE.light[0].toLowerCase())
+    expect(firstHexInput.value.toLowerCase()).toBe(DEFAULT_TOOLBAR_PALETTE[0].toLowerCase())
   })
 
-  it('다크 모드 토글 시 다크 색상으로 전환', async () => {
-    const { wrapper } = createWrapper()
-    render(<NoteToolbarPaletteSection />, { wrapper })
-
-    await waitFor(() => {
-      expect(screen.queryByText('불러오는 중…')).toBeNull()
-    })
-
-    fireEvent.click(screen.getByText('다크'))
-
-    await waitFor(() => {
-      const slots = screen.getByTestId('palette-slots')
-      const firstHexInput = slots.querySelectorAll('input.font-mono')[0] as HTMLInputElement
-      expect(firstHexInput.value.toLowerCase()).toBe(DEFAULT_TOOLBAR_PALETTE.dark[0].toLowerCase())
-    })
-  })
-
-  it('슬롯 색상 변경 시 settings:set IPC 호출', async () => {
+  it('슬롯 색상 변경 → settings:set IPC + 올바른 hex 직렬화', async () => {
     const { wrapper } = createWrapper()
     render(<NoteToolbarPaletteSection />, { wrapper })
 
@@ -102,24 +85,21 @@ describe('NoteToolbarPaletteSection', () => {
     const [key, valueStr] = setMock.mock.calls[0]
     expect(key).toBe('noteToolbarPalette')
     const parsed = JSON.parse(valueStr as string)
-    expect(parsed.light[0]).toBe('#abcdef')
-    expect(parsed.light[1]).toBe(DEFAULT_TOOLBAR_PALETTE.light[1])
+    expect(parsed[0]).toBe('#abcdef')
+    expect(parsed[1]).toBe(DEFAULT_TOOLBAR_PALETTE[1])
   })
 
-  it('슬롯별 초기화 → 해당 슬롯만 default', async () => {
-    const custom = {
-      light: [
-        '#000001',
-        '#000002',
-        '#000003',
-        '#000004',
-        '#000005',
-        '#000006',
-        '#000007',
-        '#000008'
-      ],
-      dark: DEFAULT_TOOLBAR_PALETTE.dark
-    }
+  it('슬롯별 초기화 → 해당 slot 만 default', async () => {
+    const custom = [
+      '#000001',
+      '#000002',
+      '#000003',
+      '#000004',
+      '#000005',
+      '#000006',
+      '#000007',
+      '#000008'
+    ]
     getMock.mockResolvedValueOnce({ success: true, data: JSON.stringify(custom) })
 
     const { wrapper } = createWrapper()
@@ -136,24 +116,21 @@ describe('NoteToolbarPaletteSection', () => {
     await waitFor(() => expect(setMock).toHaveBeenCalled())
     const [, valueStr] = setMock.mock.calls[0]
     const parsed = JSON.parse(valueStr as string)
-    expect(parsed.light[0]).toBe(DEFAULT_TOOLBAR_PALETTE.light[0])
-    expect(parsed.light[1]).toBe('#000002')
+    expect(parsed[0]).toBe(DEFAULT_TOOLBAR_PALETTE[0])
+    expect(parsed[1]).toBe('#000002')
   })
 
   it('전체 초기화 → 모든 슬롯 DEFAULT', async () => {
-    const custom = {
-      light: [
-        '#aa0001',
-        '#aa0002',
-        '#aa0003',
-        '#aa0004',
-        '#aa0005',
-        '#aa0006',
-        '#aa0007',
-        '#aa0008'
-      ],
-      dark: ['#bb0001', '#bb0002', '#bb0003', '#bb0004', '#bb0005', '#bb0006', '#bb0007', '#bb0008']
-    }
+    const custom = [
+      '#aa0001',
+      '#aa0002',
+      '#aa0003',
+      '#aa0004',
+      '#aa0005',
+      '#aa0006',
+      '#aa0007',
+      '#aa0008'
+    ]
     getMock.mockResolvedValueOnce({ success: true, data: JSON.stringify(custom) })
 
     const { wrapper } = createWrapper()
@@ -170,40 +147,10 @@ describe('NoteToolbarPaletteSection', () => {
     await waitFor(() => expect(setMock).toHaveBeenCalled())
     const [, valueStr] = setMock.mock.calls[0]
     const parsed = JSON.parse(valueStr as string)
-    expect(parsed.light).toEqual([...DEFAULT_TOOLBAR_PALETTE.light])
-    expect(parsed.dark).toEqual([...DEFAULT_TOOLBAR_PALETTE.dark])
+    expect(parsed).toEqual([...DEFAULT_TOOLBAR_PALETTE])
   })
 
-  it('다크 모드 편집 시 dark 배열만 업데이트', async () => {
-    const { wrapper } = createWrapper()
-    render(<NoteToolbarPaletteSection />, { wrapper })
-
-    await waitFor(() => {
-      expect(screen.queryByText('불러오는 중…')).toBeNull()
-    })
-
-    fireEvent.click(screen.getByText('다크'))
-
-    await waitFor(() => {
-      const slots = screen.getByTestId('palette-slots')
-      const first = slots.querySelectorAll('input.font-mono')[0] as HTMLInputElement
-      expect(first.value.toLowerCase()).toBe(DEFAULT_TOOLBAR_PALETTE.dark[0].toLowerCase())
-    })
-
-    const slots = screen.getByTestId('palette-slots')
-    const firstColorInput = slots.querySelectorAll('input[type="color"]')[0] as HTMLInputElement
-    act(() => {
-      fireEvent.change(firstColorInput, { target: { value: '#cccccc' } })
-    })
-
-    await waitFor(() => expect(setMock).toHaveBeenCalled())
-    const [, valueStr] = setMock.mock.calls[0]
-    const parsed = JSON.parse(valueStr as string)
-    expect(parsed.dark[0]).toBe('#cccccc')
-    expect(parsed.light[0]).toBe(DEFAULT_TOOLBAR_PALETTE.light[0])
-  })
-
-  it('hex 입력칸으로도 색상 편집 가능', async () => {
+  it('hex 텍스트 input 으로도 편집 가능', async () => {
     const { wrapper } = createWrapper()
     render(<NoteToolbarPaletteSection />, { wrapper })
 
@@ -221,6 +168,6 @@ describe('NoteToolbarPaletteSection', () => {
     await waitFor(() => expect(setMock).toHaveBeenCalled())
     const [, valueStr] = setMock.mock.calls[0]
     const parsed = JSON.parse(valueStr as string)
-    expect(parsed.light[0]).toBe('#deadbe')
+    expect(parsed[0]).toBe('#deadbe')
   })
 })
