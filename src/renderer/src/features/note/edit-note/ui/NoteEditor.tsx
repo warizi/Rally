@@ -29,7 +29,11 @@ import {
   colorSpanStringifyHandler,
   COLOR_SPAN_MDAST_TYPE
 } from '../model/note-color-mark'
+import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
+import { toggleColorCommand } from '../model/note-toolbar-commands'
+import { useThemeMode } from '@/shared/lib/use-theme-mode'
 import { NoteSearchBar } from './NoteSearchBar'
+import { NoteFloatingToolbar } from './NoteFloatingToolbar'
 
 /** 저장 시: 문단 사이 빈 줄 제거, <br /> → 빈 줄로 변환 */
 function compactMarkdown(md: string): string {
@@ -120,6 +124,14 @@ function MilkdownEditor({
   const wrapperRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const [loading, getEditor] = useInstance()
+  const themeMode = useThemeMode()
+  // editorRef.current 는 초기 렌더 시 null 이라 useState 로 mount 후 캡처
+  // → NoteFloatingToolbar 가 toolbar-state 이벤트 listener 를 정확한 DOM 에 부착.
+  const [toolbarHostEl, setToolbarHostEl] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    if (loading) return
+    setToolbarHostEl(editorRef.current)
+  }, [loading])
 
   useEditor((root) =>
     Editor.make()
@@ -174,6 +186,8 @@ function MilkdownEditor({
       .use(autolinkPlugin)
       .use(syntaxHintPlugin)
       .use(colorMarkSchema)
+      .use(toggleColorCommand)
+      .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
   )
 
@@ -272,6 +286,7 @@ function MilkdownEditor({
         <Milkdown />
       </div>
       <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
+      <NoteFloatingToolbar editorEl={toolbarHostEl} theme={themeMode} />
     </div>
   )
 }
