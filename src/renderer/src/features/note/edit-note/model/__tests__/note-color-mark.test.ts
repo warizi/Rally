@@ -129,6 +129,47 @@ describe('colorSpanRemarkPlugin', () => {
   })
 })
 
+describe('slot 속성', () => {
+  it('data-color-slot 속성이 있는 span 은 slot 캡처', () => {
+    const tree = parseAndRun('<span style="color:#dc2626" data-color-slot="1">red</span>')
+    const para = tree.children[0]
+    if ('children' in para) {
+      const cs = para.children.find(
+        (c) => (c as { type?: string }).type === 'colorSpan'
+      ) as unknown as { color: string; slot: number | null } | undefined
+      expect(cs).toBeDefined()
+      expect(cs?.color).toBe('#dc2626')
+      expect(cs?.slot).toBe(1)
+    }
+  })
+
+  it('data-color-slot 없으면 slot=null', () => {
+    const tree = parseAndRun('<span style="color:#ff0000">red</span>')
+    const para = tree.children[0]
+    if ('children' in para) {
+      const cs = para.children.find(
+        (c) => (c as { type?: string }).type === 'colorSpan'
+      ) as unknown as { color: string; slot: number | null } | undefined
+      expect(cs).toBeDefined()
+      expect(cs?.slot).toBeNull()
+    }
+  })
+
+  it('slot 라운드트립 — 입력에 slot 있으면 출력에도 slot', () => {
+    const md = '<span style="color:#16a34a" data-color-slot="4">green</span>'
+    const out = roundtrip(md)
+    expect(out).toContain('data-color-slot="4"')
+    expect(out).toContain('<span style="color:#16a34a"')
+  })
+
+  it('slot 라운드트립 — slot 없으면 출력에도 slot 없음', () => {
+    const md = '<span style="color:#16a34a">green</span>'
+    const out = roundtrip(md)
+    expect(out).toContain('<span style="color:#16a34a">')
+    expect(out).not.toContain('data-color-slot')
+  })
+})
+
 describe('round-trip', () => {
   it('단순 paired span 라운드트립', () => {
     const md = 'hello <span style="color:#ff0000">red</span> world'

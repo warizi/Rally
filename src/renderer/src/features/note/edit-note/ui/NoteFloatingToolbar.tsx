@@ -63,8 +63,12 @@ export function NoteFloatingToolbar({
   const onToggleItalic = (): void => runCommand(toggleEmphasisCommand.key)
   const onToggleBold = (): void => runCommand(toggleStrongCommand.key)
   const onToggleInlineCode = (): void => runCommand(toggleInlineCodeCommand.key)
-  const onApplyColor = (color: string | undefined): void => {
-    runCommand(toggleColorCommand.key, color)
+  const onApplyPaletteSlot = (color: string, slot: number): void => {
+    runCommand(toggleColorCommand.key, { color, slot })
+    setColorPopoverOpen(false)
+  }
+  const onRemoveColor = (): void => {
+    runCommand(toggleColorCommand.key, undefined)
     setColorPopoverOpen(false)
   }
 
@@ -148,7 +152,7 @@ export function NoteFloatingToolbar({
             {paletteColors.map((c, i) => (
               <button
                 key={i}
-                onClick={() => onApplyColor(c)}
+                onClick={() => onApplyPaletteSlot(c, i)}
                 className={cn(
                   'size-7 rounded-md border border-border cursor-pointer hover:scale-110 transition-transform',
                   currentColor?.toLowerCase() === c.toLowerCase() && 'ring-2 ring-ring'
@@ -161,7 +165,7 @@ export function NoteFloatingToolbar({
           </div>
           <div className="mt-2 pt-2 border-t border-border">
             <button
-              onClick={() => onApplyColor(undefined)}
+              onClick={onRemoveColor}
               className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-pointer"
               data-testid="floating-toolbar-color-remove"
             >
