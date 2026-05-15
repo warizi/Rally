@@ -26,6 +26,7 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Separator } from '@/shared/ui/separator'
 import { cn } from '@/shared/lib/utils'
+import { NoteToolbarPaletteSection } from './NoteToolbarPaletteSection'
 
 const PREVIEW_MARKDOWN = `# 제목 1: Rally 노트 미리보기
 
@@ -223,6 +224,11 @@ export function NoteSettings(): React.JSX.Element {
 
       {/* 미리보기 — 내부 light/dark 토글로 강제 모드 표시 */}
       <NoteStylePreview set={settings} />
+
+      <Separator />
+
+      {/* Toolbar 색상 팔레트 (Floating Toolbar 가 참조) */}
+      <NoteToolbarPaletteSection />
 
       <Separator />
 
