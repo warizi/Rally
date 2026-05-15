@@ -63,8 +63,13 @@ export function NoteFloatingToolbar({
   const onToggleItalic = (): void => runCommand(toggleEmphasisCommand.key)
   const onToggleBold = (): void => runCommand(toggleStrongCommand.key)
   const onToggleInlineCode = (): void => runCommand(toggleInlineCodeCommand.key)
-  const onApplyPaletteSlot = (color: string, slot: number): void => {
-    runCommand(toggleColorCommand.key, { color, slot })
+  const onApplyPaletteSlot = (_displayColor: string, slot: number): void => {
+    // .md 파일에는 항상 light hex 를 canonical 로 저장.
+    // 다크 모드 표시는 use-runtime-toolbar-colors 가 주입한 CSS 가
+    // [data-color-slot="N"] 을 dark[N] 으로 override 해서 처리.
+    // 이렇게 해야 다크 모드에서 적용했어도 라이트 모드로 전환 시 light[N] 으로 자연스럽게 표시됨.
+    const canonical = palette.light[slot]
+    runCommand(toggleColorCommand.key, { color: canonical, slot })
     setColorPopoverOpen(false)
   }
   const onRemoveColor = (): void => {
