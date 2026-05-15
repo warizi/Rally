@@ -6,6 +6,24 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.9.0',
+    date: '2026-05-15',
+    changes: [
+      {
+        type: 'feature',
+        title: '노트 텍스트 색상 + Floating Toolbar',
+        description:
+          '노트 에디터에서 텍스트를 드래그하면 선택 영역 위에 popup toolbar 가 나타나서 기울임 / 굵게 / 인라인 코드 / 색상을 바로 적용할 수 있습니다. 8개 사전 정의 색상 팔레트를 제공하며 한글 입력(IME) 중에는 toolbar 가 자동 숨김됩니다.'
+      },
+      {
+        type: 'feature',
+        title: 'Toolbar 색상 팔레트 커스터마이즈',
+        description:
+          '설정 > 노트 탭 하단에 새 섹션이 추가되었습니다. floating toolbar 의 8개 색상 슬롯을 사용자가 직접 hex 로 지정할 수 있고, 슬롯별 / 전체 초기화 버튼으로 기본값 복원도 가능합니다.'
+      }
+    ]
+  },
+  {
     version: '1.8.2',
     date: '2026-05-14',
     changes: [
