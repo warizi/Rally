@@ -1,9 +1,10 @@
 /**
  * note-color-mark 단위 테스트.
  *
- * Milkdown 통합 (ProseMirror schema) 은 DOM 환경 의존이라 여기서 다루지 않고,
- * 순수 remark 파이프라인 (parse → 커스텀 플러그인 → stringify) 의 라운드트립과
- * `colorSpanRemarkPlugin` 의 페어링 동작을 검증.
+ * 순수 remark 파이프라인 (parse → 페어링 플러그인 → stringify) 라운드트립.
+ * Milkdown 통합 (ProseMirror schema) 은 DOM 환경 의존이라 별도.
+ *
+ * 단순화: slot / data-color-slot 개념 제거 — color hex 만.
  */
 import { describe, it, expect } from 'vitest'
 import { unified } from 'unified'
@@ -78,7 +79,7 @@ describe('colorSpanRemarkPlugin', () => {
     }
   })
 
-  it('color CSS 가 없는 일반 span 은 무시 (수정 안 함)', () => {
+  it('color CSS 가 없는 일반 span 은 무시', () => {
     const tree = parseAndRun('<span class="x">normal</span>')
     const para = tree.children[0]
     if ('children' in para) {
@@ -127,46 +128,19 @@ describe('colorSpanRemarkPlugin', () => {
       }
     }
   })
-})
 
-describe('slot 속성', () => {
-  it('data-color-slot 속성이 있는 span 은 slot 캡처', () => {
-    const tree = parseAndRun('<span style="color:#dc2626" data-color-slot="1">red</span>')
+  it('레거시 data-color-slot 속성이 있어도 무시 (color 만 추출)', () => {
+    const tree = parseAndRun('<span style="color:#dc2626" data-color-slot="1">레거시</span>')
     const para = tree.children[0]
     if ('children' in para) {
       const cs = para.children.find(
         (c) => (c as { type?: string }).type === 'colorSpan'
-      ) as unknown as { color: string; slot: number | null } | undefined
+      ) as unknown as { color: string } | undefined
       expect(cs).toBeDefined()
       expect(cs?.color).toBe('#dc2626')
-      expect(cs?.slot).toBe(1)
+      // slot 은 새 데이터 모델에 없음 — undefined 여야 함
+      expect((cs as unknown as { slot?: unknown }).slot).toBeUndefined()
     }
-  })
-
-  it('data-color-slot 없으면 slot=null', () => {
-    const tree = parseAndRun('<span style="color:#ff0000">red</span>')
-    const para = tree.children[0]
-    if ('children' in para) {
-      const cs = para.children.find(
-        (c) => (c as { type?: string }).type === 'colorSpan'
-      ) as unknown as { color: string; slot: number | null } | undefined
-      expect(cs).toBeDefined()
-      expect(cs?.slot).toBeNull()
-    }
-  })
-
-  it('slot 라운드트립 — 입력에 slot 있으면 출력에도 slot', () => {
-    const md = '<span style="color:#16a34a" data-color-slot="4">green</span>'
-    const out = roundtrip(md)
-    expect(out).toContain('data-color-slot="4"')
-    expect(out).toContain('<span style="color:#16a34a"')
-  })
-
-  it('slot 라운드트립 — slot 없으면 출력에도 slot 없음', () => {
-    const md = '<span style="color:#16a34a">green</span>'
-    const out = roundtrip(md)
-    expect(out).toContain('<span style="color:#16a34a">')
-    expect(out).not.toContain('data-color-slot')
   })
 })
 
@@ -195,5 +169,12 @@ describe('round-trip', () => {
     const md = '<span class="x">plain</span>'
     const out = roundtrip(md)
     expect(out).toContain('<span class="x">')
+  })
+
+  it('레거시 data-color-slot 은 출력 시 제거됨 (단순화 마이그레이션)', () => {
+    const md = '<span style="color:#dc2626" data-color-slot="1">red</span>'
+    const out = roundtrip(md)
+    expect(out).toContain('<span style="color:#dc2626">red</span>')
+    expect(out).not.toContain('data-color-slot')
   })
 })

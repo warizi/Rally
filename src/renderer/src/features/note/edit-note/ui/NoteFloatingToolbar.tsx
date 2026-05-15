@@ -5,7 +5,7 @@
  *  - 기울임 (italic)
  *  - 굵게 (bold)
  *  - 인라인 코드 (inline code)
- *  - 색상 (8 슬롯 팔레트 + 색 제거)
+ *  - 색상 (8 슬롯 단일 팔레트 + 색 제거)
  *
  * ProseMirror selection 변경은 `noteToolbarStatePlugin` 이 dispatch 하는
  * `note-toolbar-state` 커스텀 이벤트로 받음. composing(IME) 중에는 자동 숨김.
@@ -28,13 +28,10 @@ import { cn } from '@/shared/lib/utils'
 interface NoteFloatingToolbarProps {
   /** Milkdown editor 의 DOM wrapper. 여기에 toolbar-state 이벤트 listener 를 부착. */
   editorEl: HTMLElement | null
-  /** 현재 활성 테마 (light/dark) — 팔레트에서 어느 모드 색상을 보여줄지 결정. */
-  theme: 'light' | 'dark'
 }
 
 export function NoteFloatingToolbar({
-  editorEl,
-  theme
+  editorEl
 }: NoteFloatingToolbarProps): React.JSX.Element | null {
   const [state, setState] = useState<ToolbarStateDetail>({ visible: false })
   const [, getEditor] = useInstance()
@@ -63,13 +60,8 @@ export function NoteFloatingToolbar({
   const onToggleItalic = (): void => runCommand(toggleEmphasisCommand.key)
   const onToggleBold = (): void => runCommand(toggleStrongCommand.key)
   const onToggleInlineCode = (): void => runCommand(toggleInlineCodeCommand.key)
-  const onApplyPaletteSlot = (_displayColor: string, slot: number): void => {
-    // .md 파일에는 항상 light hex 를 canonical 로 저장.
-    // 다크 모드 표시는 use-runtime-toolbar-colors 가 주입한 CSS 가
-    // [data-color-slot="N"] 을 dark[N] 으로 override 해서 처리.
-    // 이렇게 해야 다크 모드에서 적용했어도 라이트 모드로 전환 시 light[N] 으로 자연스럽게 표시됨.
-    const canonical = palette.light[slot]
-    runCommand(toggleColorCommand.key, { color: canonical, slot })
+  const onApplyColor = (color: string): void => {
+    runCommand(toggleColorCommand.key, color)
     setColorPopoverOpen(false)
   }
   const onRemoveColor = (): void => {
@@ -92,8 +84,6 @@ export function NoteFloatingToolbar({
     transform: 'translate(-50%, -100%)',
     zIndex: 50
   }
-
-  const paletteColors = palette[theme]
 
   return (
     <div
@@ -154,10 +144,10 @@ export function NoteFloatingToolbar({
           onMouseDown={(e) => e.preventDefault()}
         >
           <div className="grid grid-cols-4 gap-1" data-testid="floating-toolbar-color-grid">
-            {paletteColors.map((c, i) => (
+            {palette.map((c, i) => (
               <button
                 key={i}
-                onClick={() => onApplyPaletteSlot(c, i)}
+                onClick={() => onApplyColor(c)}
                 className={cn(
                   'size-7 rounded-md border border-border cursor-pointer hover:scale-110 transition-transform',
                   currentColor?.toLowerCase() === c.toLowerCase() && 'ring-2 ring-ring'

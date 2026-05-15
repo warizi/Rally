@@ -3,37 +3,28 @@
  *
  * bold / italic / inlineCode 는 commonmark preset 의 기존 toggle 커맨드 재사용.
  * color 는 커스텀 — 동일 색상이면 mark 제거, 다른 색상이면 갈아끼움.
- * slot 인덱스 함께 저장 (다크 모드 매핑용 — `data-color-slot` 속성으로 직렬화).
  */
 import { $command } from '@milkdown/kit/utils'
 import { toggleMark } from '@milkdown/kit/prose/commands'
 import { COLOR_MARK_NAME } from './note-color-mark'
 
-export interface ToggleColorPayload {
-  /** hex 색상값. */
-  color: string
-  /** 팔레트 슬롯 인덱스 (0~7). 팔레트 외 색상이면 null. */
-  slot: number | null
-}
-
 /**
  * 색상 mark 토글.
  *
- * - payload = `undefined` → 현재 mark 제거
- * - payload = `{ color, slot }` → 동일 hex 면 제거, 다른 hex 면 갈아끼움
+ * - color = `undefined` → 현재 mark 제거
+ * - color = hex → 동일 hex 면 제거, 다른 hex 면 갈아끼움
  */
 export const toggleColorCommand = $command(
   'ToggleColorMark',
-  (ctx) => (payload?: ToggleColorPayload) => (state, dispatch) => {
+  (ctx) => (color?: string) => (state, dispatch) => {
     const markType = state.schema.marks[COLOR_MARK_NAME]
     if (!markType) return false
     void ctx
 
-    if (payload === undefined) {
+    if (color === undefined) {
       return toggleMark(markType)(state, dispatch)
     }
 
-    const { color, slot } = payload
     const { from, to } = state.selection
     let hasSameColor = true
     let foundAny = false
@@ -57,7 +48,7 @@ export const toggleColorCommand = $command(
     if (dispatch) {
       const tr = state.tr
         .removeMark(from, to, markType)
-        .addMark(from, to, markType.create({ color, slot }))
+        .addMark(from, to, markType.create({ color }))
       dispatch(tr)
     }
     return true

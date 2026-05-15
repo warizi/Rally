@@ -1,8 +1,8 @@
 /**
  * NoteFloatingToolbar 단위 테스트.
  *
- * Milkdown editor 의존 부분은 mock 처리. toolbar-state 커스텀 이벤트 dispatch
- * 시뮬레이션으로 visible 토글, 위치, active mark 표시, 색상 popover 동작 확인.
+ * Milkdown editor 의존 부분은 mock. toolbar-state 커스텀 이벤트 dispatch
+ * 시뮬레이션으로 visible 토글, active mark, 색상 popover 동작 확인.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
@@ -92,7 +92,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     expect(screen.queryByTestId('note-floating-toolbar')).toBeNull()
     document.body.removeChild(host)
   })
@@ -101,7 +101,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
 
     dispatchState(host, visibleState())
 
@@ -113,7 +113,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
 
     dispatchState(host, visibleState())
     await waitFor(() => expect(screen.queryByTestId('note-floating-toolbar')).not.toBeNull())
@@ -127,7 +127,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     dispatchState(host, visibleState())
 
     await waitFor(() => expect(screen.queryByTestId('floating-toolbar-italic')).not.toBeNull())
@@ -143,7 +143,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     dispatchState(host, visibleState())
 
     await waitFor(() => expect(screen.queryByTestId('floating-toolbar-bold')).not.toBeNull())
@@ -159,7 +159,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     dispatchState(host, visibleState({ italic: true }))
 
     await waitFor(() => {
@@ -173,7 +173,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     dispatchState(host, visibleState())
 
     await waitFor(() =>
@@ -190,11 +190,11 @@ describe('NoteFloatingToolbar', () => {
     document.body.removeChild(host)
   })
 
-  it('색상 슬롯 클릭 시 toggleColorCommand 가 {color, slot} payload 와 함께 호출', async () => {
+  it('색상 슬롯 클릭 시 toggleColorCommand 가 해당 hex 와 함께 호출', async () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     dispatchState(host, visibleState())
 
     fireEvent.click(screen.getByTestId('floating-toolbar-color-trigger'))
@@ -207,11 +207,10 @@ describe('NoteFloatingToolbar', () => {
     expect(actionMock).toHaveBeenCalled()
     const lastCall = actionMock.mock.calls[actionMock.mock.calls.length - 1][0] as {
       key: unknown
-      payload: { color: string; slot: number }
+      payload: unknown
     }
     expect(lastCall.key).toBe('ToggleColorMark')
-    expect(lastCall.payload.color).toBe(DEFAULT_TOOLBAR_PALETTE.light[2])
-    expect(lastCall.payload.slot).toBe(2)
+    expect(lastCall.payload).toBe(DEFAULT_TOOLBAR_PALETTE[2])
     document.body.removeChild(host)
   })
 
@@ -219,7 +218,7 @@ describe('NoteFloatingToolbar', () => {
     const { wrapper } = createWrapper()
     const host = document.createElement('div')
     document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="light" />, { wrapper })
+    render(<NoteFloatingToolbar editorEl={host} />, { wrapper })
     dispatchState(host, visibleState({ color: '#ff0000' }))
 
     fireEvent.click(screen.getByTestId('floating-toolbar-color-trigger'))
@@ -235,48 +234,6 @@ describe('NoteFloatingToolbar', () => {
     }
     expect(lastCall.key).toBe('ToggleColorMark')
     expect(lastCall.payload).toBeUndefined()
-    document.body.removeChild(host)
-  })
-
-  it('theme=dark 일 때 dark 팔레트 색상이 그리드에 표시', async () => {
-    const { wrapper } = createWrapper()
-    const host = document.createElement('div')
-    document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="dark" />, { wrapper })
-    dispatchState(host, visibleState())
-
-    fireEvent.click(screen.getByTestId('floating-toolbar-color-trigger'))
-    await waitFor(() =>
-      expect(screen.queryByTestId('floating-toolbar-color-slot-0')).not.toBeNull()
-    )
-    const slot0 = screen.getByTestId('floating-toolbar-color-slot-0') as HTMLButtonElement
-    expect(slot0.style.backgroundColor).toBeTruthy()
-    document.body.removeChild(host)
-  })
-
-  it('다크 모드에서 슬롯 클릭해도 light hex 가 canonical 로 저장', async () => {
-    const { wrapper } = createWrapper()
-    const host = document.createElement('div')
-    document.body.appendChild(host)
-    render(<NoteFloatingToolbar editorEl={host} theme="dark" />, { wrapper })
-    dispatchState(host, visibleState())
-
-    fireEvent.click(screen.getByTestId('floating-toolbar-color-trigger'))
-    await waitFor(() =>
-      expect(screen.queryByTestId('floating-toolbar-color-slot-3')).not.toBeNull()
-    )
-
-    fireEvent.click(screen.getByTestId('floating-toolbar-color-slot-3'))
-
-    const lastCall = actionMock.mock.calls[actionMock.mock.calls.length - 1][0] as {
-      key: unknown
-      payload: { color: string; slot: number }
-    }
-    expect(lastCall.key).toBe('ToggleColorMark')
-    // dark 모드여도 LIGHT hex 가 저장돼야 양방향 매핑 가능.
-    expect(lastCall.payload.color).toBe(DEFAULT_TOOLBAR_PALETTE.light[3])
-    expect(lastCall.payload.color).not.toBe(DEFAULT_TOOLBAR_PALETTE.dark[3])
-    expect(lastCall.payload.slot).toBe(3)
     document.body.removeChild(host)
   })
 })
