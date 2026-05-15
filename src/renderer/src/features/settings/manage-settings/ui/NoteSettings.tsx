@@ -227,13 +227,13 @@ export function NoteSettings(): React.JSX.Element {
 
       <Separator />
 
-      {/* Toolbar 색상 팔레트 (Floating Toolbar 가 참조) */}
-      <NoteToolbarPaletteSection />
+      {/* 템플릿 — noteStyle 만 저장. toolbar 팔레트는 포함 안 됨. */}
+      <TemplateSection settings={settings} onApply={save} />
 
       <Separator />
 
-      {/* 템플릿 */}
-      <TemplateSection settings={settings} onApply={save} />
+      {/* Toolbar 색상 팔레트 — 위 마크다운 스타일 / 템플릿과 독립된 별개 설정. */}
+      <NoteToolbarPaletteSection />
     </div>
   )
 }

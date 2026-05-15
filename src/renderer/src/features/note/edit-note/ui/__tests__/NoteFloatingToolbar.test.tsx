@@ -253,4 +253,30 @@ describe('NoteFloatingToolbar', () => {
     expect(slot0.style.backgroundColor).toBeTruthy()
     document.body.removeChild(host)
   })
+
+  it('다크 모드에서 슬롯 클릭해도 light hex 가 canonical 로 저장', async () => {
+    const { wrapper } = createWrapper()
+    const host = document.createElement('div')
+    document.body.appendChild(host)
+    render(<NoteFloatingToolbar editorEl={host} theme="dark" />, { wrapper })
+    dispatchState(host, visibleState())
+
+    fireEvent.click(screen.getByTestId('floating-toolbar-color-trigger'))
+    await waitFor(() =>
+      expect(screen.queryByTestId('floating-toolbar-color-slot-3')).not.toBeNull()
+    )
+
+    fireEvent.click(screen.getByTestId('floating-toolbar-color-slot-3'))
+
+    const lastCall = actionMock.mock.calls[actionMock.mock.calls.length - 1][0] as {
+      key: unknown
+      payload: { color: string; slot: number }
+    }
+    expect(lastCall.key).toBe('ToggleColorMark')
+    // dark 모드여도 LIGHT hex 가 저장돼야 양방향 매핑 가능.
+    expect(lastCall.payload.color).toBe(DEFAULT_TOOLBAR_PALETTE.light[3])
+    expect(lastCall.payload.color).not.toBe(DEFAULT_TOOLBAR_PALETTE.dark[3])
+    expect(lastCall.payload.slot).toBe(3)
+    document.body.removeChild(host)
+  })
 })
