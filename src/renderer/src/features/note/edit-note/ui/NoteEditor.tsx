@@ -1,5 +1,12 @@
 import { JSX, useCallback, useEffect, useRef, useState } from 'react'
-import { Editor, rootCtx, defaultValueCtx, editorViewCtx } from '@milkdown/kit/core'
+import {
+  Editor,
+  rootCtx,
+  defaultValueCtx,
+  editorViewCtx,
+  remarkPluginsCtx,
+  remarkStringifyOptionsCtx
+} from '@milkdown/kit/core'
 import { TextSelection } from '@milkdown/kit/prose/state'
 import { Milkdown, MilkdownProvider, useEditor, useInstance } from '@milkdown/react'
 import { commonmark, imageSchema, insertImageCommand } from '@milkdown/kit/preset/commonmark'
@@ -16,7 +23,16 @@ import { noteSearchPlugin } from '../model/note-search-plugin'
 import { autolinkPlugin } from '../model/note-link-input-rule'
 import { syntaxHintPlugin } from '../model/note-syntax-hint-plugin'
 import { notePasteNormalizePlugin } from '../model/note-paste-normalize'
+import {
+  colorMarkSchema,
+  colorSpanRemarkPlugin,
+  colorSpanStringifyHandler,
+  COLOR_SPAN_MDAST_TYPE
+} from '../model/note-color-mark'
+import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
+import { toggleColorCommand } from '../model/note-toolbar-commands'
 import { NoteSearchBar } from './NoteSearchBar'
+import { NoteFloatingToolbar } from './NoteFloatingToolbar'
 
 /** 저장 시: 문단 사이 빈 줄 제거, <br /> → 빈 줄로 변환 */
 function compactMarkdown(md: string): string {
@@ -107,6 +123,13 @@ function MilkdownEditor({
   const wrapperRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
   const [loading, getEditor] = useInstance()
+  // editorRef.current 는 초기 렌더 시 null 이라 useState 로 mount 후 캡처
+  // → NoteFloatingToolbar 가 toolbar-state 이벤트 listener 를 정확한 DOM 에 부착.
+  const [toolbarHostEl, setToolbarHostEl] = useState<HTMLElement | null>(null)
+  useEffect(() => {
+    if (loading) return
+    setToolbarHostEl(editorRef.current)
+  }, [loading])
 
   useEditor((root) =>
     Editor.make()
@@ -134,6 +157,20 @@ function MilkdownEditor({
             return nodes
           }
         }))
+        // 색상 mark — paired <span style="color:..."> 처리:
+        // (1) remark 플러그인이 mdast 의 paired html span 을 colorSpan 노드로 wrapping
+        // (2) remark-stringify 핸들러가 colorSpan 노드를 raw HTML span 으로 직렬화
+        ctx.update(remarkPluginsCtx, (prev) => [
+          ...prev,
+          { plugin: colorSpanRemarkPlugin, options: {} }
+        ])
+        ctx.update(remarkStringifyOptionsCtx, (prev) => ({
+          ...prev,
+          handlers: {
+            ...prev.handlers,
+            [COLOR_SPAN_MDAST_TYPE]: colorSpanStringifyHandler
+          }
+        }))
       })
       .use(commonmark)
       .use(gfm)
@@ -146,6 +183,9 @@ function MilkdownEditor({
       .use(noteSearchPlugin)
       .use(autolinkPlugin)
       .use(syntaxHintPlugin)
+      .use(colorMarkSchema)
+      .use(toggleColorCommand)
+      .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
   )
 
@@ -244,6 +284,7 @@ function MilkdownEditor({
         <Milkdown />
       </div>
       <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
+      <NoteFloatingToolbar editorEl={toolbarHostEl} />
     </div>
   )
 }

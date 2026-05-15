@@ -26,6 +26,7 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { Separator } from '@/shared/ui/separator'
 import { cn } from '@/shared/lib/utils'
+import { NoteToolbarPaletteSection } from './NoteToolbarPaletteSection'
 
 const PREVIEW_MARKDOWN = `# 제목 1: Rally 노트 미리보기
 
@@ -226,8 +227,13 @@ export function NoteSettings(): React.JSX.Element {
 
       <Separator />
 
-      {/* 템플릿 */}
+      {/* 템플릿 — noteStyle 만 저장. toolbar 팔레트는 포함 안 됨. */}
       <TemplateSection settings={settings} onApply={save} />
+
+      <Separator />
+
+      {/* Toolbar 색상 팔레트 — 위 마크다운 스타일 / 템플릿과 독립된 별개 설정. */}
+      <NoteToolbarPaletteSection />
     </div>
   )
 }
