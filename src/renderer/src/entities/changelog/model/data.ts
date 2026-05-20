@@ -6,6 +6,17 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.9.1',
+    date: '2026-05-21',
+    changes: [
+      {
+        type: 'improvement',
+        title: '폴더 트리 개선',
+        description: '폴더 트리의 가독성 및 안정성이 향상되었습니다.'
+      }
+    ]
+  },
+  {
     version: '1.9.0',
     date: '2026-05-15',
     changes: [
