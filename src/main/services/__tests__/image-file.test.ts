@@ -37,7 +37,13 @@ vi.mock('fs')
 vi.mock('nanoid', () => ({ nanoid: () => 'mock-id' }))
 vi.mock('../../lib/fs-utils', () => ({
   resolveNameConflict: vi.fn((_dir: string, name: string) => name),
-  readImageFilesRecursive: vi.fn(() => [])
+  readImageFilesRecursive: vi.fn(() => []),
+  getImageMimeType: vi.fn((p: string) => {
+    if (p.endsWith('.png')) return 'image/png'
+    if (p.endsWith('.jpg') || p.endsWith('.jpeg')) return 'image/jpeg'
+    if (p.endsWith('.webp')) return 'image/webp'
+    return 'application/octet-stream'
+  })
 }))
 vi.mock('../../lib/leaf-reindex', () => ({
   getLeafSiblings: vi.fn(() => []),
@@ -326,6 +332,67 @@ describe('updateMeta', () => {
     expect(() => imageFileService.updateMeta('ws-1', 'ghost', { description: 'x' })).toThrow(
       NotFoundError
     )
+  })
+})
+
+// ─── readBase64Content ────────────────────────────────────
+
+describe('readBase64Content', () => {
+  beforeEach(() => {
+    vi.mocked(workspaceRepository.findById).mockReturnValue(MOCK_WS)
+    vi.mocked(imageFileRepository.findById).mockReturnValue(MOCK_IMAGE_ROW)
+  })
+
+  it('정상 — base64 + mimeType + size 반환, truncated=false', () => {
+    const buf = Buffer.from([1, 2, 3, 4])
+    vi.mocked(fs.statSync).mockReturnValue({ size: buf.length } as fs.Stats)
+    vi.mocked(fs.readFileSync).mockReturnValue(buf as unknown as string)
+
+    const result = imageFileService.readBase64Content('ws-1', 'img-1')
+
+    expect(result.data).toBe(buf.toString('base64'))
+    expect(result.mimeType).toBe('image/png')
+    expect(result.size).toBe(buf.length)
+    expect(result.truncated).toBe(false)
+  })
+
+  it('maxBytes 초과 → data=null, truncated=true, fs.readFileSync 미호출', () => {
+    vi.mocked(fs.statSync).mockReturnValue({ size: 2_000_000 } as fs.Stats)
+
+    const result = imageFileService.readBase64Content('ws-1', 'img-1', { maxBytes: 1_000_000 })
+
+    expect(result.data).toBeNull()
+    expect(result.truncated).toBe(true)
+    expect(result.size).toBe(2_000_000)
+    expect(result.mimeType).toBe('image/png')
+    expect(fs.readFileSync).not.toHaveBeenCalled()
+  })
+
+  it('maxBytes=0 → 메타데이터만 반환', () => {
+    vi.mocked(fs.statSync).mockReturnValue({ size: 100 } as fs.Stats)
+
+    const result = imageFileService.readBase64Content('ws-1', 'img-1', { maxBytes: 0 })
+
+    expect(result.data).toBeNull()
+    expect(result.truncated).toBe(true)
+    expect(fs.readFileSync).not.toHaveBeenCalled()
+  })
+
+  it('없는 imageId → NotFoundError', () => {
+    vi.mocked(imageFileRepository.findById).mockReturnValue(undefined)
+    expect(() => imageFileService.readBase64Content('ws-1', 'ghost')).toThrow(NotFoundError)
+  })
+
+  it('없는 workspaceId → NotFoundError', () => {
+    vi.mocked(workspaceRepository.findById).mockReturnValue(undefined)
+    expect(() => imageFileService.readBase64Content('ghost', 'img-1')).toThrow(NotFoundError)
+  })
+
+  it('파일 읽기 실패 (stat 에러) → NotFoundError', () => {
+    vi.mocked(fs.statSync).mockImplementation(() => {
+      throw new Error('ENOENT')
+    })
+    expect(() => imageFileService.readBase64Content('ws-1', 'img-1')).toThrow(NotFoundError)
   })
 })
 

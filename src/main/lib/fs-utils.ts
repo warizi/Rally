@@ -118,6 +118,22 @@ export function isImageFile(filePath: string): boolean {
   return IMAGE_EXTENSIONS.includes(ext)
 }
 
+const IMAGE_MIME_BY_EXT: Record<string, string> = {
+  '.png': 'image/png',
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.gif': 'image/gif',
+  '.webp': 'image/webp',
+  '.bmp': 'image/bmp',
+  '.svg': 'image/svg+xml'
+}
+
+/** 파일 경로 확장자로 image MIME 추론. 알 수 없으면 application/octet-stream. */
+export function getImageMimeType(filePath: string): string {
+  const ext = path.extname(filePath).toLowerCase()
+  return IMAGE_MIME_BY_EXT[ext] ?? 'application/octet-stream'
+}
+
 // ─── Name conflict ────────────────────────────────────
 
 /**

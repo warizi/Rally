@@ -9,6 +9,7 @@ import { resolveNameConflict, readPdfFilesRecursive } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
+import { extractPdfText, getPdfPageCount } from '../lib/pdf-text'
 import { trashService } from './trash'
 
 export interface PdfFileNode {
@@ -293,6 +294,44 @@ export const pdfFileService = {
     }
 
     return { data }
+  },
+
+  /**
+   * MCP `read` 등 외부 클라이언트에 페이지 수와 본문 텍스트를 돌려준다.
+   * - `extractText: false` 면 페이지 수와 파일 크기만 반환 (텍스트 추출 skip).
+   * - 텍스트 추출은 pdfjs-dist (lazy ESM) 로 처리하며 `maxPages` / `maxChars` 로 응답 폭증 방지.
+   */
+  async readTextContent(
+    workspaceId: string,
+    pdfId: string,
+    options: { extractText?: boolean; maxPages?: number; maxChars?: number } = {}
+  ): Promise<{ pageCount: number; text: string; size: number; truncated: boolean }> {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const pdf = pdfFileRepository.findById(pdfId)
+    if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
+
+    const absPath = path.join(workspace.path, pdf.relativePath)
+    let size: number
+    let data: Buffer
+    try {
+      size = fs.statSync(absPath).size
+      data = fs.readFileSync(absPath)
+    } catch {
+      throw new NotFoundError(`파일을 읽을 수 없습니다: ${absPath}`)
+    }
+
+    if (options.extractText === false) {
+      const pageCount = await getPdfPageCount(data)
+      return { pageCount, text: '', size, truncated: false }
+    }
+
+    const result = await extractPdfText(data, {
+      maxPages: options.maxPages,
+      maxChars: options.maxChars
+    })
+    return { pageCount: result.pageCount, text: result.text, size, truncated: result.truncated }
   },
 
   /** 폴더 이동 (DnD) — 다른 폴더로 이동 + 혼합 siblings reindex */
