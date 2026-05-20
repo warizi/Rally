@@ -1,22 +1,17 @@
-import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Tree } from 'react-arborist'
-import type { NodeRendererProps, TreeApi } from 'react-arborist'
-
-// 트리 DnD는 @dnd-kit으로 통일 (MainLayout의 DndContext에서 처리).
-// react-arborist 내장 react-dnd 드래그/드롭은 disableDrag/disableDrop으로 비활성화한다.
-// 단, disableDrag/disableDrop은 기능만 차단할 뿐 내부 DndProvider/HTML5Backend 마운트는 막지
-// 못하므로, 공유 dndManager를 주입해 전역에 backend 인스턴스가 둘 이상 생성되지 않도록 한다.
-import { sharedArboristDndManager } from '@shared/lib/react-arborist-dnd'
+import { JSX, useCallback, useEffect, useRef, useState } from 'react'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
+// 자체 Tree 구현 (react-arborist 대체). 트리 DnD 는 @dnd-kit 으로 통일되고,
+// 가상화는 @tanstack/react-virtual 로 처리한다.
+import { Tree } from '../lib/tree'
+import type { NodeRendererProps, TreeApi } from '../lib/tree'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
 import { useTreeMoveListener } from '../model/use-tree-move-listener'
 import { useFolderDialogState } from '../model/use-folder-dialog-state'
 import { useFolderCreateHandlers } from '../model/use-folder-create-handlers'
 import { useFolderMutations } from '../model/use-folder-mutations'
-import { useFolderTreeHandlers } from '../model/use-folder-tree-handlers'
 import { useFolderSearch } from '../model/use-folder-search'
-import { countVisibleNodes } from '../model/folder-tree-helpers'
 import type { WorkspaceTreeNode } from '../model/types'
 import { FolderTreeNodeDispatcher } from './FolderTreeNodeDispatcher'
 import { FolderTreeToolbar } from './FolderTreeToolbar'
@@ -29,18 +24,23 @@ interface Props {
   tabId?: string // sourcePaneId 계산용 (FolderPage에서 전달)
 }
 
-const ROW_HEIGHT = 36
+// react-arborist v3 의 기본 rowHeight 와 동일 (기존 시각적 row 높이 유지).
+// 기존 FolderTree 의 `ROW_HEIGHT = 36` 은 react-arborist 외곽 height prop 계산용으로만
+// 사용했고 실제 row 높이는 react-arborist 의 기본값(24px)이었음.
+const ROW_HEIGHT = 24
+
+const idAccessor = (n: WorkspaceTreeNode): string => n.id
+const childrenAccessor = (n: WorkspaceTreeNode): WorkspaceTreeNode[] | null =>
+  n.kind === 'folder' ? n.children : null
 
 export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const { tree } = useWorkspaceTree(workspaceId)
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const { openState, toggle, collapseAll, expandToItem, expandIds } = useTreeOpenState(tabId)
 
   // 트리 내 DnD 이동을 @dnd-kit 기반으로 처리
   useTreeMoveListener(workspaceId)
-
-  const visibleCount = useMemo(() => countVisibleNodes(tree, openState), [tree, openState])
-  const treeHeight = visibleCount * ROW_HEIGHT
 
   const mutations = useFolderMutations()
   const dialogState = useFolderDialogState()
@@ -60,11 +60,6 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
 
   const createHandlers = useFolderCreateHandlers({ workspaceId, sourcePaneId })
   const { handleCreateNote, handleCreateCsv } = createHandlers
-  const treeHandlers = useFolderTreeHandlers({
-    workspaceId,
-    rename: mutations.rename,
-    dialogState
-  })
 
   // 검색 (Phase 2 + Phase 3)
   const [searchOpen, setSearchOpen] = useState(false)
@@ -82,14 +77,14 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
     search.clear()
   }, [search])
 
-  // Phase 3: 매치 결과의 ancestor 폴더 일괄 자동 펼침
+  // 매치 결과의 ancestor 폴더 일괄 자동 펼침
   const ancestorIds = search.result.ancestorIds
   useEffect(() => {
     if (ancestorIds.size === 0) return
     expandIds(ancestorIds, treeRef.current)
   }, [ancestorIds, expandIds])
 
-  // Phase 3: 활성 매치로 스크롤 (react-arborist API)
+  // 활성 매치로 스크롤
   const activeId = search.activeId
   useEffect(() => {
     if (!activeId) return
@@ -121,72 +116,61 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   )
 
   return (
-    <div data-testid="folder-tree-root" className="flex flex-col relative px-6 pt-6 pb-2">
-      {/* sticky 상단 그룹: 툴바 + 검색바 — 외부 탭 스크롤 시에도 고정 */}
-      <div className="sticky top-0 z-10 bg-background pb-2">
-        <FolderTreeToolbar
-          createHandlers={createHandlers}
-          onCollapseAll={() => {
-            treeRef.current?.closeAll()
-            collapseAll()
-          }}
-          onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
-          onToggleSearch={handleToggleSearch}
-        />
+    <ScrollArea viewportRef={scrollRef} className="h-full">
+      <div data-testid="folder-tree-root" className="flex flex-col relative px-6 pt-6 pb-2">
+        {/* sticky 상단 그룹: 툴바 + 검색바 — viewport 스크롤 시에도 고정 */}
+        <div className="sticky top-0 z-10 bg-background pb-2">
+          <FolderTreeToolbar
+            createHandlers={createHandlers}
+            onCollapseAll={() => {
+              collapseAll()
+            }}
+            onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
+            onToggleSearch={handleToggleSearch}
+          />
 
-        <FolderTreeSearchBar
-          open={searchOpen}
-          query={search.query}
-          matchCount={search.result.orderedMatches.length}
-          activeIndex={search.activeIndex}
-          onQueryChange={search.setQuery}
-          onNext={search.goNext}
-          onPrev={search.goPrev}
-          onClose={handleCloseSearch}
-        />
-      </div>
+          <FolderTreeSearchBar
+            open={searchOpen}
+            query={search.query}
+            matchCount={search.result.orderedMatches.length}
+            activeIndex={search.activeIndex}
+            onQueryChange={search.setQuery}
+            onNext={search.goNext}
+            onPrev={search.goPrev}
+            onClose={handleCloseSearch}
+          />
+        </div>
 
-      {tree.length === 0 ? (
-        <FolderTreeEmpty
-          onCreateNote={() => handleCreateNote(null)}
-          onCreateCsv={() => handleCreateCsv(null)}
-          onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
-        />
-      ) : (
-        <div>
+        {tree.length === 0 ? (
+          <FolderTreeEmpty
+            onCreateNote={() => handleCreateNote(null)}
+            onCreateCsv={() => handleCreateCsv(null)}
+            onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
+          />
+        ) : (
           <Tree<WorkspaceTreeNode>
             key={workspaceId}
             ref={treeRef}
-            dndManager={sharedArboristDndManager}
             data={tree}
-            idAccessor="id"
-            initialOpenState={openState}
-            openByDefault={false}
-            childrenAccessor={(n) => (n.kind === 'folder' ? n.children : null)}
-            disableDrag
-            disableDrop
-            disableEdit={(n) =>
-              n.kind === 'note' || n.kind === 'csv' || n.kind === 'pdf' || n.kind === 'image'
-            }
-            onToggle={(id) => toggle(id, treeRef.current?.isOpen(id) ?? false)}
-            onCreate={treeHandlers.onCreate}
-            onRename={treeHandlers.onRename}
-            onDelete={treeHandlers.onDelete}
-            height={treeHeight}
-            width="100%"
+            idAccessor={idAccessor}
+            childrenAccessor={childrenAccessor}
+            openState={openState}
+            onToggle={toggle}
+            scrollElementRef={scrollRef}
+            rowHeight={ROW_HEIGHT}
             className="px-2"
           >
             {NodeRenderer}
           </Tree>
-        </div>
-      )}
+        )}
 
-      <FolderTreeDialogs
-        workspaceId={workspaceId}
-        tree={tree}
-        dialogState={dialogState}
-        mutations={mutations}
-      />
-    </div>
+        <FolderTreeDialogs
+          workspaceId={workspaceId}
+          tree={tree}
+          dialogState={dialogState}
+          mutations={mutations}
+        />
+      </div>
+    </ScrollArea>
   )
 }

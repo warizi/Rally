@@ -4,10 +4,9 @@
 // / isDragging) 를 사용한다. react-hooks/refs 룰이 "Ref" suffix property 와 일부
 // boolean 셀렉터를 ref 값 접근으로 잘못 인식하는 false positive 가 발생하므로 비활성화.
 import { JSX, useEffect, useRef } from 'react'
-import type { NodeRendererProps } from 'react-arborist'
+import type { NodeRendererProps } from '../lib/tree'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
-import { REACT_ARBORIST_ROOT_ID } from '@shared/types/tree-drag'
 import { cn } from '@shared/lib/utils'
 import type { NoteTreeNode } from '../model/types'
 import { useShowExtensionSetting } from '../model/use-show-extension-setting'
@@ -39,8 +38,7 @@ export function NoteNodeRenderer({
   }, [isActive])
 
   const displayName = `${node.data.name}${showExtension ? node.data.extension : ''}`
-  const parentRawId = node.parent?.id
-  const parentId = !parentRawId || parentRawId === REACT_ARBORIST_ROOT_ID ? null : parentRawId
+  const parentId = node.parent?.id ?? null
   const indent = node.level * node.tree.indent
 
   const dnd = useTreeNodeDnd({

@@ -7,7 +7,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
-import type { NodeApi, NodeRendererProps } from 'react-arborist'
+import type { NodeApi, NodeRendererProps } from '../../lib/tree'
 
 // FolderNodeRenderer 가 사용하는 내부 hook 들을 stub — 카운터만 늘리는 가벼운 구현
 vi.mock('../../model/use-tree-node-dnd', () => ({

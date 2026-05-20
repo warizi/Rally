@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { NodeApi } from 'react-arborist'
+import type { NodeApi } from '../lib/tree'
 
 const HOVER_OPEN_DELAY_MS = 700
 

@@ -1,9 +1,6 @@
 // @dnd-kit으로 통일한 트리 DnD에서 사용하는 공용 타입과 ID prefix.
 // useDraggable의 data와 useDroppable의 data를 강타입으로 다루기 위해 정의한다.
 
-// react-arborist 내부의 가상 root 노드 ID. node.parent?.id가 이 값이면 워크스페이스 루트 의미.
-export const REACT_ARBORIST_ROOT_ID = '__REACT_ARBORIST_INTERNAL_ROOT__'
-
 export type TreeNodeKind = 'folder' | 'note' | 'csv' | 'pdf' | 'image'
 
 // useDraggable id prefix

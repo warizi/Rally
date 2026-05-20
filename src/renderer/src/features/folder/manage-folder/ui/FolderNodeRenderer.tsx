@@ -2,11 +2,10 @@
 // @dnd-kit callback ref setter / boolean 상태 false positive 회피.
 // 자세한 사유는 NoteNodeRenderer.tsx 상단 주석 참고.
 import { JSX, memo } from 'react'
-import type { NodeRendererProps } from 'react-arborist'
+import type { NodeRendererProps } from '../lib/tree'
 import { ChevronRight } from 'lucide-react'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
-import { REACT_ARBORIST_ROOT_ID } from '@shared/types/tree-drag'
 import { cn } from '@/shared/lib/utils'
 import type { FolderTreeNode } from '../model/types'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
@@ -24,8 +23,7 @@ function FolderNodeRendererImpl({
   workspaceId,
   sourcePaneId
 }: FolderNodeRendererProps): JSX.Element {
-  const parentRawId = node.parent?.id
-  const parentId = !parentRawId || parentRawId === REACT_ARBORIST_ROOT_ID ? null : parentRawId
+  const parentId = node.parent?.id ?? null
   const indent = node.level * node.tree.indent
 
   const dnd = useTreeNodeDnd({

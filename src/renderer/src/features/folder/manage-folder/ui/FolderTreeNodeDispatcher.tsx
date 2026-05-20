@@ -1,5 +1,5 @@
 import { useEffect, useRef, type JSX } from 'react'
-import type { NodeRendererProps } from 'react-arborist'
+import type { NodeRendererProps } from '../lib/tree'
 import { useDuplicateNote } from '@entities/note'
 import { useDuplicateCsvFile } from '@entities/csv-file'
 import { useDuplicatePdfFile } from '@entities/pdf-file'

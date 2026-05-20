@@ -16,7 +16,7 @@
 import type { JSX } from 'react'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render } from '@testing-library/react'
-import type { NodeApi, NodeRendererProps } from 'react-arborist'
+import type { NodeApi, NodeRendererProps } from '../../lib/tree'
 
 vi.mock('../../model/use-tree-node-dnd', () => ({
   useTreeNodeDnd: () => ({

@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 import { renderHook } from '@testing-library/react'
-import type { NodeApi } from 'react-arborist'
+import type { NodeApi } from '../../lib/tree'
 import { useFolderTreeHandlers } from '../use-folder-tree-handlers'
 import type { FolderDialogState } from '../use-folder-dialog-state'
 import type { WorkspaceTreeNode } from '../types'
