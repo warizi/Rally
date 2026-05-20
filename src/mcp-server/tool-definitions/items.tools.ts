@@ -101,15 +101,46 @@ Supported types and response shape per entry:
 - note     : { id, success:true, type:'note',     title, relativePath, content }
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
-- pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt, updatedAt }  (metadata only — no binary body)
-- image    : { id, success:true, type:'image',    title, relativePath, description, folderId, createdAt, updatedAt }  (metadata only)
+- pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt,
+              updatedAt, size, pageCount, text, truncated }
+- image    : { id, success:true, type:'image',    title, relativePath, description, folderId, createdAt,
+              updatedAt, size, mimeType, content (base64) | null, truncated }
 - template : { id, success:true, type:'template', title, templateType, jsonData, createdAt }
+
+Image/PDF bodies are returned by default:
+- image.content is base64 (use mimeType to decode). Files larger than 1MB return content=null + truncated=true.
+- pdf.text is extracted with pdfjs. Default caps: first 10 pages and 100,000 chars (truncated=true if hit).
+- Pass includeImageContent=false to fetch image metadata only (faster, smaller response).
+- Pass includePdfText=false to fetch PDF metadata only (pageCount + size, no text).
+- Override caps via maxPdfPages / maxPdfChars.
 
 Failure entries: { id, success:false, error: { code, message } } — independent per id, others still succeed.
 
 Replaces v1 read_contents (note/csv), read_canvas, list_templates(id). Mixed type ids in one call OK.`,
     schema: {
-      ids: z.array(z.string()).min(1).max(50).describe('Mixed-type item IDs (1–50)')
+      ids: z.array(z.string()).min(1).max(50).describe('Mixed-type item IDs (1–50)'),
+      includeImageContent: z
+        .boolean()
+        .optional()
+        .describe('Include base64 image bodies (default true). Set false for metadata-only.'),
+      includePdfText: z
+        .boolean()
+        .optional()
+        .describe('Extract PDF text via pdfjs (default true). Set false for metadata-only.'),
+      maxPdfPages: z
+        .number()
+        .int()
+        .min(1)
+        .max(200)
+        .optional()
+        .describe('Max PDF pages to extract per file (default 10).'),
+      maxPdfChars: z
+        .number()
+        .int()
+        .min(1)
+        .max(500_000)
+        .optional()
+        .describe('Max characters of extracted PDF text per file (default 100_000).')
     },
     handler: (args) => callTool('POST', '/api/mcp/read', args)
   },

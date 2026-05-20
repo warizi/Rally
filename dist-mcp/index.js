@@ -35923,15 +35923,28 @@ Supported types and response shape per entry:
 - note     : { id, success:true, type:'note',     title, relativePath, content }
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
-- pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt, updatedAt }  (metadata only \u2014 no binary body)
-- image    : { id, success:true, type:'image',    title, relativePath, description, folderId, createdAt, updatedAt }  (metadata only)
+- pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt,
+              updatedAt, size, pageCount, text, truncated }
+- image    : { id, success:true, type:'image',    title, relativePath, description, folderId, createdAt,
+              updatedAt, size, mimeType, content (base64) | null, truncated }
 - template : { id, success:true, type:'template', title, templateType, jsonData, createdAt }
+
+Image/PDF bodies are returned by default:
+- image.content is base64 (use mimeType to decode). Files larger than 1MB return content=null + truncated=true.
+- pdf.text is extracted with pdfjs. Default caps: first 10 pages and 100,000 chars (truncated=true if hit).
+- Pass includeImageContent=false to fetch image metadata only (faster, smaller response).
+- Pass includePdfText=false to fetch PDF metadata only (pageCount + size, no text).
+- Override caps via maxPdfPages / maxPdfChars.
 
 Failure entries: { id, success:false, error: { code, message } } \u2014 independent per id, others still succeed.
 
 Replaces v1 read_contents (note/csv), read_canvas, list_templates(id). Mixed type ids in one call OK.`,
     schema: {
-      ids: external_exports3.array(external_exports3.string()).min(1).max(50).describe("Mixed-type item IDs (1\u201350)")
+      ids: external_exports3.array(external_exports3.string()).min(1).max(50).describe("Mixed-type item IDs (1\u201350)"),
+      includeImageContent: external_exports3.boolean().optional().describe("Include base64 image bodies (default true). Set false for metadata-only."),
+      includePdfText: external_exports3.boolean().optional().describe("Extract PDF text via pdfjs (default true). Set false for metadata-only."),
+      maxPdfPages: external_exports3.number().int().min(1).max(200).optional().describe("Max PDF pages to extract per file (default 10)."),
+      maxPdfChars: external_exports3.number().int().min(1).max(5e5).optional().describe("Max characters of extracted PDF text per file (default 100_000).")
     },
     handler: (args) => callTool("POST", "/api/mcp/read", args)
   },

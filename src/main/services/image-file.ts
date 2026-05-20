@@ -5,7 +5,7 @@ import { NotFoundError, ValidationError } from '../lib/errors'
 import { imageFileRepository } from '../repositories/image-file'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
-import { resolveNameConflict, readImageFilesRecursive } from '../lib/fs-utils'
+import { resolveNameConflict, readImageFilesRecursive, getImageMimeType } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
@@ -288,6 +288,40 @@ export const imageFileService = {
     }
 
     return { data }
+  },
+
+  /**
+   * MCP `read` 등 외부 클라이언트에 본문을 base64 로 직렬화해 돌려준다.
+   * `maxBytes` 초과 시 본문은 비우고 `truncated: true` 만 돌려준다 — 응답 폭증 방지.
+   * 크기/MIME 메타만 필요하면 호출자가 `maxBytes: 0` 으로 truncated 응답을 받을 수 있다.
+   */
+  readBase64Content(
+    workspaceId: string,
+    imageId: string,
+    options: { maxBytes?: number } = {}
+  ): { data: string | null; mimeType: string; size: number; truncated: boolean } {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const image = imageFileRepository.findById(imageId)
+    if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
+
+    const absPath = path.join(workspace.path, image.relativePath)
+    let size: number
+    try {
+      size = fs.statSync(absPath).size
+    } catch {
+      throw new NotFoundError(`파일을 읽을 수 없습니다: ${absPath}`)
+    }
+
+    const mimeType = getImageMimeType(image.relativePath)
+    const maxBytes = options.maxBytes ?? Infinity
+    if (size > maxBytes) {
+      return { data: null, mimeType, size, truncated: true }
+    }
+
+    const buffer = fs.readFileSync(absPath)
+    return { data: buffer.toString('base64'), mimeType, size, truncated: false }
   },
 
   move(
