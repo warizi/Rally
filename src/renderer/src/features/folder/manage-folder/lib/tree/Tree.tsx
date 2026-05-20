@@ -140,9 +140,18 @@ function TreeInner<T>(props: TreeProps<T>, ref: ForwardedRef<TreeApi<T>>): React
           transform: `translateY(${vi.start}px)`
         }
         // NodeRenderer 에 넘기는 style 은 paddingLeft 만 담당 (수직 위치는 wrapper 가 처리).
-        const rendererStyle = { paddingLeft: row.level * indent }
+        const rendererStyle = { paddingLeft: `${(row.level * indent) / 16}rem` }
         return (
           <div key={row.id} data-index={vi.index} style={wrapperStyle}>
+            {Array.from({ length: row.level }).map((_, depth) => (
+              <div
+                key={depth}
+                className="absolute top-0 h-full w-px bg-muted-foreground/20"
+                style={{
+                  left: `calc(${(depth * indent + indent) / 16}rem - 0.5rem)`
+                }}
+              />
+            ))}
             {renderRow({ node, style: rendererStyle } as NodeRendererProps<T>)}
           </div>
         )

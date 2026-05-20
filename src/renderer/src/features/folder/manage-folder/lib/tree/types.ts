@@ -11,6 +11,8 @@ export interface NodeApi<T> {
   id: string
   data: T
   level: number
+  isMatch: boolean
+  isActiveMatch: boolean
   childIndex: number
   isOpen: boolean
   /** 자식 보유 폴더면 true. NodeRenderer 분기에 사용. */

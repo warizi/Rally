@@ -16,6 +16,8 @@ interface CsvNodeRendererProps extends NodeRendererProps<CsvTreeNode> {
   sourcePaneId: string
   onOpen: () => void
   isActive?: boolean
+  isMatch?: boolean
+  isActiveMatch?: boolean
 }
 
 export function CsvNodeRenderer({
@@ -24,7 +26,9 @@ export function CsvNodeRenderer({
   workspaceId,
   sourcePaneId,
   onOpen,
-  isActive
+  isActive,
+  isMatch,
+  isActiveMatch
 }: CsvNodeRendererProps): JSX.Element {
   const ref = useRef<HTMLDivElement>(null)
   const { enabled: showExtension } = useShowExtensionSetting()
@@ -63,6 +67,8 @@ export function CsvNodeRenderer({
         className={cn(
           'flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer select-none h-full',
           isActive ? 'bg-accent text-accent-foreground' : 'hover:bg-accent',
+          isMatch && 'bg-yellow-200/40',
+          isActiveMatch && 'bg-yellow-300/60 ring-2 ring-inset ring-yellow-500',
           dnd.isDragging && 'opacity-30'
         )}
         onClick={onOpen}
@@ -85,13 +91,13 @@ export function CsvNodeRenderer({
       {!isFolderDrag && dnd.isBeforeOver && (
         <div
           className="absolute top-0 right-2 h-0.5 bg-primary z-10 pointer-events-none"
-          style={{ left: indent + 8 }}
+          style={{ left: `calc(${(indent + 8) / 16}rem)` }}
         />
       )}
       {!isFolderDrag && dnd.isAfterOver && (
         <div
           className="absolute bottom-0 right-2 h-0.5 bg-primary z-10 pointer-events-none"
-          style={{ left: indent + 8 }}
+          style={{ left: `calc(${(indent + 8) / 16}rem)` }}
         />
       )}
     </div>

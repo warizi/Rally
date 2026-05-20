@@ -73,13 +73,6 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
 
   const kind = node.data.kind
 
-  // 검색 하이라이트 (Phase 2). active 매치는 더 진한 색 + inner ring
-  // (좌우가 컨테이너에 잘리지 않도록 ring-inset 사용).
-  const highlightClass = cn(
-    isMatch && 'bg-yellow-200/40',
-    isActiveMatch && 'bg-yellow-300/60 ring-2 ring-inset ring-yellow-500'
-  )
-
   // 활성 매치 wrap div 에 ref + scrollIntoView (외부 탭 스크롤 컨테이너 대응).
   const activeMatchRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -116,13 +109,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         <div
           ref={activeMatchRef}
           className={cn(
-            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
-            highlightClass
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring h-full'
           )}
         >
           <NoteNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<NoteTreeNode>)}
             workspaceId={workspaceId}
+            isMatch={isMatch}
+            isActiveMatch={isActiveMatch}
             sourcePaneId={sourcePaneId}
             isActive={activePathname === `/folder/note/${node.data.id}`}
             onOpen={() =>
@@ -169,13 +163,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         <div
           ref={activeMatchRef}
           className={cn(
-            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
-            highlightClass
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring h-full'
           )}
         >
           <CsvNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<CsvTreeNode>)}
             workspaceId={workspaceId}
+            isMatch={isMatch}
+            isActiveMatch={isActiveMatch}
             sourcePaneId={sourcePaneId}
             isActive={activePathname === `/folder/csv/${node.data.id}`}
             onOpen={() =>
@@ -222,13 +217,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         <div
           ref={activeMatchRef}
           className={cn(
-            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
-            highlightClass
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring h-full'
           )}
         >
           <PdfNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<PdfTreeNode>)}
             workspaceId={workspaceId}
+            isMatch={isMatch}
+            isActiveMatch={isActiveMatch}
             sourcePaneId={sourcePaneId}
             isActive={activePathname === `/folder/pdf/${node.data.id}`}
             onOpen={() =>
@@ -277,13 +273,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
         <div
           ref={activeMatchRef}
           className={cn(
-            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
-            highlightClass
+            'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring h-full'
           )}
         >
           <ImageNodeRenderer
             {...(arboristProps as unknown as NodeRendererProps<ImageTreeNode>)}
             workspaceId={workspaceId}
+            isMatch={isMatch}
+            isActiveMatch={isActiveMatch}
             sourcePaneId={sourcePaneId}
             isActive={activePathname === `/folder/image/${node.data.id}`}
             onOpen={() =>
@@ -322,13 +319,14 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
       <div
         ref={activeMatchRef}
         className={cn(
-          'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
-          highlightClass
+          'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring h-full'
         )}
       >
         <FolderNodeRenderer
           {...(arboristProps as unknown as NodeRendererProps<FolderTreeNode>)}
           workspaceId={workspaceId}
+          isMatch={isMatch}
+          isActiveMatch={isActiveMatch}
           sourcePaneId={sourcePaneId}
         />
       </div>
