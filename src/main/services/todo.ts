@@ -45,6 +45,12 @@ export interface UpdateTodoData {
   status?: '할일' | '진행중' | '완료' | '보류'
   priority?: 'high' | 'medium' | 'low'
   isDone?: boolean
+  /**
+   * 부모 todo 이동. `null` = root 승격, string = 해당 todo 밑으로 이동, 키 자체 미전달 = 변경 없음.
+   * 2-depth 트리만 허용되므로 (1) 자기 자신, (2) 이미 subtodo인 부모, (3) 자기 자식을 가진 todo를
+   * subtodo로 만드는 케이스는 거부된다.
+   */
+  parentId?: string | null
   dueDate?: Date | null
   startDate?: Date | null
 }
@@ -280,12 +286,48 @@ export const todoService = {
     const now = Date.now()
     const doneFields = resolveDoneFields(data, now)
 
+    // parentId 변경 처리 (2-depth 강제 + cycle 차단). undefined = 변경 없음.
+    let parentMove: { parentId: string | null; subOrder: number } | undefined
+    if (data.parentId !== undefined && data.parentId !== todo.parentId) {
+      if (data.parentId === todoId) {
+        throw new ValidationError('Todo cannot be its own parent.')
+      }
+      // 자식을 가진 root todo는 subtodo로 만들 수 없음 (3-depth 차단)
+      if (data.parentId !== null) {
+        const ownChildren = todoRepository.findByParentId(todoId)
+        if (ownChildren.length > 0) {
+          throw new ValidationError(
+            'Todo with subtodos cannot become a subtodo. Only 2-depth hierarchy is allowed.'
+          )
+        }
+        const parent = todoRepository.findById(data.parentId)
+        if (!parent) throw new NotFoundError(`Parent todo not found: ${data.parentId}`)
+        if (parent.workspaceId !== todo.workspaceId) {
+          throw new ValidationError('Parent todo must belong to the same workspace.')
+        }
+        if (parent.parentId) {
+          throw new ValidationError(
+            'Subtodo cannot have children. Only 2-depth hierarchy is allowed (parent → subtodo).'
+          )
+        }
+      }
+      // 새 부모(또는 root) 형제의 subOrder max + 1
+      const siblings =
+        data.parentId === null
+          ? todoRepository.findTopLevelByWorkspaceId(todo.workspaceId)
+          : todoRepository.findByParentId(data.parentId)
+      const maxSubOrder =
+        siblings.length > 0 ? Math.max(...siblings.map((s) => s.subOrder)) : -1
+      parentMove = { parentId: data.parentId, subOrder: maxSubOrder + 1 }
+    }
+
     const updated = todoRepository.update(todoId, {
       ...(data.title !== undefined ? { title: data.title.trim() } : {}),
       ...(data.description !== undefined ? { description: data.description.trim() } : {}),
       ...(data.priority !== undefined ? { priority: data.priority } : {}),
       ...(data.dueDate !== undefined ? { dueDate: data.dueDate } : {}),
       ...(data.startDate !== undefined ? { startDate: data.startDate } : {}),
+      ...(parentMove ?? {}),
       ...doneFields,
       updatedAt: new Date(now)
     })
@@ -312,18 +354,20 @@ export const todoService = {
 
     // 자동완료 (단방향): 하위 전체 완료 → 부모 자동완료
     // 역방향(하위 미완료 → 부모 복원)은 없음
-    if (doneFields.isDone === true && todo.parentId) {
-      const siblings = todoRepository.findByParentId(todo.parentId)
+    // parentId 가 이번 update 에서 바뀌었다면 새 부모 기준으로 평가한다.
+    const effectiveParentId = parentMove ? parentMove.parentId : todo.parentId
+    if (doneFields.isDone === true && effectiveParentId) {
+      const siblings = todoRepository.findByParentId(effectiveParentId)
       const allDone = siblings.every((s) => (s.id === todoId ? true : s.isDone))
       if (allDone) {
         const parentNow = Date.now()
-        todoRepository.update(todo.parentId, {
+        todoRepository.update(effectiveParentId, {
           isDone: true,
           status: '완료',
           doneAt: new Date(parentNow),
           updatedAt: new Date(parentNow)
         })
-        reminderService.removeUnfiredByEntity('todo', todo.parentId)
+        reminderService.removeUnfiredByEntity('todo', effectiveParentId)
       }
     }
 

@@ -290,6 +290,8 @@ export interface UpdateTodoAction {
   status?: TodoStatus
   priority?: TodoPriority
   isDone?: boolean
+  /** `null` = root 승격, string = 해당 todo 밑으로 이동. 미전달 시 변경 없음. */
+  parentId?: string | null
   dueDate?: string | null
   startDate?: string | null
   linkItems?: LinkRef[]

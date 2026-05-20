@@ -4,7 +4,7 @@ import { todoRepository } from '../../repositories/todo'
 import { workspaceRepository } from '../../repositories/workspace'
 import { entityLinkService } from '../entity-link'
 import { reminderService } from '../reminder'
-import { NotFoundError } from '../../lib/errors'
+import { NotFoundError, ValidationError } from '../../lib/errors'
 
 vi.mock('../../repositories/workspace', () => ({
   workspaceRepository: { findById: vi.fn() }
@@ -245,6 +245,145 @@ describe('update', () => {
   it('update 반환 undefined → NotFoundError (update 단계)', () => {
     vi.mocked(todoRepository.update).mockReturnValue(undefined)
     expect(() => todoService.update('todo-1', { title: 'x' })).toThrow(NotFoundError)
+  })
+})
+
+describe('update parentId (트리 이동)', () => {
+  const rootTodo = { ...MOCK_TODO_ROW, id: 'root-1', parentId: null }
+  const otherRoot = { ...MOCK_TODO_ROW, id: 'root-2', parentId: null }
+  const subTodo = { ...MOCK_TODO_ROW, id: 'sub-1', parentId: 'root-1' }
+  const otherSub = { ...MOCK_TODO_ROW, id: 'sub-2', parentId: 'root-1' }
+
+  it('parentId 미전달 → repository.update 인자에 parentId/subOrder 없음', () => {
+    todoService.update('todo-1', { title: '제목만' })
+    const arg = vi.mocked(todoRepository.update).mock.calls[0][1]
+    expect(arg).not.toHaveProperty('parentId')
+    expect(arg).not.toHaveProperty('subOrder')
+  })
+
+  it('parentId 가 기존과 동일 → no-op (parentId/subOrder 미포함)', () => {
+    vi.mocked(todoRepository.findById).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.update).mockReturnValue(subTodo)
+    todoService.update('sub-1', { parentId: 'root-1' })
+    const arg = vi.mocked(todoRepository.update).mock.calls[0][1]
+    expect(arg).not.toHaveProperty('parentId')
+    expect(arg).not.toHaveProperty('subOrder')
+  })
+
+  it('parentId === 자기 자신 → ValidationError', () => {
+    expect(() => todoService.update('todo-1', { parentId: 'todo-1' })).toThrow(ValidationError)
+  })
+
+  it('자식 보유 todo 를 subtodo 로 → ValidationError (3-depth 차단)', () => {
+    vi.mocked(todoRepository.findById).mockImplementation((id) => {
+      if (id === 'root-1') return rootTodo
+      if (id === 'root-2') return otherRoot
+      return undefined
+    })
+    vi.mocked(todoRepository.findByParentId).mockImplementation((parentId) =>
+      parentId === 'root-1' ? [subTodo] : []
+    )
+    expect(() => todoService.update('root-1', { parentId: 'root-2' })).toThrow(ValidationError)
+  })
+
+  it('부모가 이미 subtodo → ValidationError (3-depth 차단)', () => {
+    vi.mocked(todoRepository.findById).mockImplementation((id) => {
+      if (id === 'todo-1') return MOCK_TODO_ROW
+      if (id === 'sub-1') return subTodo
+      return undefined
+    })
+    expect(() => todoService.update('todo-1', { parentId: 'sub-1' })).toThrow(ValidationError)
+  })
+
+  it('부모 workspace 가 다름 → ValidationError', () => {
+    const otherWsParent = { ...MOCK_TODO_ROW, id: 'p-other', workspaceId: 'ws-2', parentId: null }
+    vi.mocked(todoRepository.findById).mockImplementation((id) => {
+      if (id === 'todo-1') return MOCK_TODO_ROW
+      if (id === 'p-other') return otherWsParent
+      return undefined
+    })
+    expect(() => todoService.update('todo-1', { parentId: 'p-other' })).toThrow(ValidationError)
+  })
+
+  it('존재하지 않는 parentId → NotFoundError', () => {
+    vi.mocked(todoRepository.findById).mockImplementation((id) =>
+      id === 'todo-1' ? MOCK_TODO_ROW : undefined
+    )
+    expect(() => todoService.update('todo-1', { parentId: 'ghost' })).toThrow(NotFoundError)
+  })
+
+  it('subtodo → root 승격 (parentId=null) — 최상위 형제 maxSubOrder+1 사용', () => {
+    vi.mocked(todoRepository.findById).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.update).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.findTopLevelByWorkspaceId).mockReturnValue([
+      { ...rootTodo, subOrder: 4 }
+    ])
+    todoService.update('sub-1', { parentId: null })
+    expect(todoRepository.findTopLevelByWorkspaceId).toHaveBeenCalledWith('ws-1')
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'sub-1',
+      expect.objectContaining({ parentId: null, subOrder: 5 })
+    )
+  })
+
+  it('root → 다른 root 밑 subtodo 로 이동 — 새 부모 자식 maxSubOrder+1 사용', () => {
+    vi.mocked(todoRepository.findById).mockImplementation((id) => {
+      if (id === 'root-1') return rootTodo
+      if (id === 'root-2') return otherRoot
+      return undefined
+    })
+    vi.mocked(todoRepository.update).mockReturnValue(rootTodo)
+    vi.mocked(todoRepository.findByParentId).mockImplementation((parentId) => {
+      if (parentId === 'root-1') return [] // root-1 자체엔 자식 없음 (3-depth 검사 통과)
+      if (parentId === 'root-2') return [{ ...subTodo, subOrder: 2 }]
+      return []
+    })
+    todoService.update('root-1', { parentId: 'root-2' })
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'root-1',
+      expect.objectContaining({ parentId: 'root-2', subOrder: 3 })
+    )
+  })
+
+  it('subtodo → 다른 root 밑 subtodo 로 이동', () => {
+    vi.mocked(todoRepository.findById).mockImplementation((id) => {
+      if (id === 'sub-1') return subTodo
+      if (id === 'root-2') return otherRoot
+      return undefined
+    })
+    vi.mocked(todoRepository.update).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.findByParentId).mockImplementation((parentId) => {
+      if (parentId === 'sub-1') return [] // 자식 없음 (subtodo)
+      if (parentId === 'root-2') return [otherSub]
+      return []
+    })
+    todoService.update('sub-1', { parentId: 'root-2' })
+    expect(todoRepository.update).toHaveBeenCalledWith(
+      'sub-1',
+      expect.objectContaining({ parentId: 'root-2', subOrder: 1 })
+    )
+  })
+
+  it('이동 + isDone=true 동시 — 새 부모 기준으로 자동완료 평가', () => {
+    vi.mocked(todoRepository.findById).mockImplementation((id) => {
+      if (id === 'sub-1') return subTodo
+      if (id === 'root-2') return otherRoot
+      return undefined
+    })
+    vi.mocked(todoRepository.update).mockReturnValue(subTodo)
+    vi.mocked(todoRepository.findByParentId).mockImplementation((parentId) => {
+      if (parentId === 'sub-1') return []
+      if (parentId === 'root-2') return [{ ...subTodo, id: 'sub-1', isDone: false }]
+      return []
+    })
+    todoService.update('sub-1', { parentId: 'root-2', isDone: true })
+    // sub-1 update + root-2 자동완료 update
+    expect(todoRepository.update).toHaveBeenCalledTimes(2)
+    expect(todoRepository.update).toHaveBeenNthCalledWith(
+      2,
+      'root-2',
+      expect.objectContaining({ isDone: true, status: '완료' })
+    )
   })
 })
 
