@@ -38,6 +38,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
   const treeRef = useRef<TreeApi<WorkspaceTreeNode>>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
   const { openState, toggle, collapseAll, expandToItem, expandIds } = useTreeOpenState(tabId)
+  const [ready, setReady] = useState(false)
 
   // 트리 내 DnD 이동을 @dnd-kit 기반으로 처리
   useTreeMoveListener(workspaceId)
@@ -114,6 +115,13 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
       search.activeId
     ]
   )
+  useEffect(() => {
+    if (!scrollRef.current) return
+
+    requestAnimationFrame(() => {
+      setReady(true)
+    })
+  }, [])
 
   return (
     <ScrollArea viewportRef={scrollRef} className="h-full">
@@ -141,13 +149,15 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           />
         </div>
 
-        {tree.length === 0 ? (
+        {ready && tree.length === 0 && (
           <FolderTreeEmpty
             onCreateNote={() => handleCreateNote(null)}
             onCreateCsv={() => handleCreateCsv(null)}
             onCreateFolder={() => dialogState.setCreateTarget({ parentFolderId: null })}
           />
-        ) : (
+        )}
+
+        {ready && tree.length > 0 && (
           <Tree<WorkspaceTreeNode>
             key={workspaceId}
             ref={treeRef}

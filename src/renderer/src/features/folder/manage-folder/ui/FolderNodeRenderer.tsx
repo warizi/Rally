@@ -15,13 +15,17 @@ import { useTreeDragStore } from '@shared/store/tree-drag.store'
 interface FolderNodeRendererProps extends NodeRendererProps<FolderTreeNode> {
   workspaceId: string
   sourcePaneId: string
+  isMatch?: boolean
+  isActiveMatch?: boolean
 }
 
 function FolderNodeRendererImpl({
   node,
   style,
   workspaceId,
-  sourcePaneId
+  sourcePaneId,
+  isMatch,
+  isActiveMatch
 }: FolderNodeRendererProps): JSX.Element {
   const parentId = node.parent?.id ?? null
   const indent = node.level * node.tree.indent
@@ -59,7 +63,9 @@ function FolderNodeRendererImpl({
         className={cn(
           'flex items-center gap-1.5 px-2 py-0.5 rounded cursor-pointer select-none h-full',
           dnd.isIntoOver || isFolderDragTarget ? 'bg-primary/15' : 'hover:bg-accent',
-          dnd.isDragging && 'opacity-30'
+          dnd.isDragging && 'opacity-30',
+          isMatch && 'bg-yellow-200/40',
+          isActiveMatch && 'bg-yellow-300/60 ring-2 ring-inset ring-yellow-500'
         )}
         onClick={() => node.toggle()}
       >
@@ -78,19 +84,19 @@ function FolderNodeRendererImpl({
         </TruncateTooltip>
       </div>
 
-      {/* 드롭 슬롯: 폴더는 before/into/after 30:40:30 */}
-      <div
+      {/* 드롭 슬롯: 폴더는 before/into/after 20:60:20 */}
+      {/* <div
         ref={dnd.setBeforeRef}
-        className="absolute top-0 left-0 right-0 h-[30%] pointer-events-none"
-      />
+        className="absolute top-0 left-0 right-0 h-[20%] pointer-events-none"
+      /> */}
       <div
         ref={dnd.setIntoRef}
-        className="absolute top-[30%] left-0 right-0 h-[40%] pointer-events-none"
+        className="absolute top-[0%] left-0 right-0 h-[100%] pointer-events-none"
       />
-      <div
+      {/* <div
         ref={dnd.setAfterRef}
-        className="absolute bottom-0 left-0 right-0 h-[30%] pointer-events-none"
-      />
+        className="absolute bottom-0 left-0 right-0 h-[20%] pointer-events-none"
+      /> */}
 
       {/* 폴더 source 드래그 시에는 형제 라인 가이드 안 표시 (폴더는 순서 없는 모델) */}
       {!isFolderDrag && dnd.isBeforeOver && (
