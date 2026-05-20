@@ -182,12 +182,16 @@ export function registerMcpTodoRoutes(router: Router): void {
         }
         if (action.action === 'update') {
           assertValidId(action.id, 'todo id')
+          if (typeof action.parentId === 'string') {
+            assertValidId(action.parentId, 'parentId')
+          }
           todoService.update(action.id, {
             title: action.title,
             description: action.description,
             status: action.status,
             priority: action.priority,
             isDone: action.isDone,
+            parentId: action.parentId,
             dueDate:
               action.dueDate === null
                 ? null

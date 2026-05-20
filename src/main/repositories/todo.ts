@@ -185,6 +185,7 @@ export const todoRepository = {
         | 'status'
         | 'priority'
         | 'isDone'
+        | 'parentId'
         | 'listOrder'
         | 'kanbanOrder'
         | 'subOrder'

@@ -36198,8 +36198,12 @@ Action shapes by type:
 
 - todo:
   - { type:'todo', action:'create', title, description?, status?, priority?, dueDate?, startDate?, subtodos?, linkItems? }
-  - { type:'todo', action:'update', id, title?, description?, status?, priority?, isDone?, dueDate?, startDate?, linkItems?, unlinkItems? }
+  - { type:'todo', action:'update', id, title?, description?, status?, priority?, isDone?, parentId?, dueDate?, startDate?, linkItems?, unlinkItems? }
   - { type:'todo', action:'delete', id }
+
+Move a todo across the tree via update.parentId: null = promote to root, string = move under that parent.
+Only 2-depth hierarchy is allowed \u2014 a todo that already has subtodos cannot itself become a subtodo,
+and a subtodo cannot have children. Cross-workspace parents are rejected.
 
 - schedule:
   - { type:'schedule', action:'create', title, description?, location?, allDay?, startAt, endAt, color?, priority? }
@@ -36243,6 +36247,7 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
             status: TODO_STATUS.optional(),
             priority: PRIORITY.optional(),
             isDone: external_exports3.boolean().optional(),
+            parentId: external_exports3.string().nullable().optional(),
             dueDate: external_exports3.string().nullable().optional(),
             startDate: external_exports3.string().nullable().optional(),
             linkItems: external_exports3.array(external_exports3.object({ type: LINK_TYPE, id: external_exports3.string() })).optional(),
