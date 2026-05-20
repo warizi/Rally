@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react'
-import type { TreeApi } from 'react-arborist'
+import type { TreeApi } from '../lib/tree'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import type { WorkspaceTreeNode } from './types'
 

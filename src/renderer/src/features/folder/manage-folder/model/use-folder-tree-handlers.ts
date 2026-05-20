@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import type { NodeApi } from 'react-arborist'
+import type { NodeApi } from '../lib/tree'
 import type { WorkspaceTreeNode } from './types'
 import type { FolderDialogState } from './use-folder-dialog-state'
 

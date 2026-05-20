@@ -6,7 +6,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import type { NodeApi, NodeRendererProps } from 'react-arborist'
+import type { NodeApi, NodeRendererProps } from '../../lib/tree'
 import type { WorkspaceTreeNode, FolderTreeNode } from '../../model/types'
 
 // 무거운 의존성을 가벼운 마커로 대체 → 어떤 분기가 선택됐는지 DOM 으로 확인.
