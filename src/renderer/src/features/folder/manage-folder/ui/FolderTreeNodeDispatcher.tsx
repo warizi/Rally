@@ -320,7 +320,7 @@ export function FolderTreeNodeDispatcher(props: Props): JSX.Element {
       onDelete={() => dialogState.setDeleteTarget({ id: node.id, name: node.data.name })}
     >
       <div
-          ref={activeMatchRef}
+        ref={activeMatchRef}
         className={cn(
           'rounded data-[state=open]:bg-accent data-[state=open]:ring-1 data-[state=open]:ring-inset data-[state=open]:ring-ring',
           highlightClass

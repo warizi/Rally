@@ -20,12 +20,12 @@ export function TabDropZone({
 
   // store 셀렉터로 boolean만 구독 (dragover 마다 모든 zone re-render되는 것 방지)
   // - 폴더 드래그: 모든 위치 비활성
-  // - 트리 드래그가 자기 패널일 때: split-zone(top/right/bottom/left)만 비활성, center는 유지
+  // - 트리 드래그가 자기 패널일 때: split-zone(top/right/bottom/left), center 비활성
   const isFolderDrag = useTreeDragStore((s) => s.isFolderDrag)
   const isTreeDragOnSelfPane = useTreeDragStore(
     (s) => s.isTreeDragActive && s.sourcePaneId === paneId
   )
-  const disabledForTreeDrag = isTreeDragOnSelfPane && position !== 'center'
+  const disabledForTreeDrag = isTreeDragOnSelfPane
   const disabled = isFolderDrag || disabledForTreeDrag
 
   const { setNodeRef, isOver } = useDroppable({
