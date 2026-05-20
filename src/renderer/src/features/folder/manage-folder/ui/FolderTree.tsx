@@ -4,6 +4,9 @@ import type { NodeRendererProps, TreeApi } from 'react-arborist'
 
 // 트리 DnD는 @dnd-kit으로 통일 (MainLayout의 DndContext에서 처리).
 // react-arborist 내장 react-dnd 드래그/드롭은 disableDrag/disableDrop으로 비활성화한다.
+// 단, disableDrag/disableDrop은 기능만 차단할 뿐 내부 DndProvider/HTML5Backend 마운트는 막지
+// 못하므로, 공유 dndManager를 주입해 전역에 backend 인스턴스가 둘 이상 생성되지 않도록 한다.
+import { sharedArboristDndManager } from '@shared/lib/react-arborist-dnd'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { useWorkspaceTree } from '../model/use-workspace-tree'
 import { useTreeOpenState } from '../model/use-tree-open-state'
@@ -154,6 +157,7 @@ export function FolderTree({ workspaceId, tabId }: Props): JSX.Element {
           <Tree<WorkspaceTreeNode>
             key={workspaceId}
             ref={treeRef}
+            dndManager={sharedArboristDndManager}
             data={tree}
             idAccessor="id"
             initialOpenState={openState}
