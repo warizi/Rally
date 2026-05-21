@@ -50,7 +50,7 @@
     "@milkdown/kit": "^7.18.0",
     "@milkdown/react": "^7.18.0",
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@napi-rs/canvas": "^1.0.0",
+    "@napi-rs/canvas": "^0.1.100",
     "@parcel/watcher": "^2.5.6",
     "@tailwindcss/vite": "^4.2.0",
     "@tanstack/react-query": "^5.90.21",
