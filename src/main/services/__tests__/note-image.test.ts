@@ -147,6 +147,78 @@ describe('readImage', () => {
   })
 })
 
+// ─── statImage / readImageAsBase64 ──────────────────────────
+
+describe('statImage', () => {
+  it('정상 → size + mimeType (확장자 매핑)', () => {
+    vi.mocked(fs.statSync).mockReturnValue({ size: 1234 } as fs.Stats)
+    const result = noteImageService.statImage('ws-1', '.images/abc.png')
+    expect(result).toEqual({ size: 1234, mimeType: 'image/png' })
+  })
+
+  it('jpg → image/jpeg', () => {
+    vi.mocked(fs.statSync).mockReturnValue({ size: 500 } as fs.Stats)
+    const result = noteImageService.statImage('ws-1', '.images/abc.jpg')
+    expect(result.mimeType).toBe('image/jpeg')
+  })
+
+  it('path traversal → ValidationError', () => {
+    expect(() => noteImageService.statImage('ws-1', '../etc/passwd')).toThrow(ValidationError)
+  })
+
+  it('.images/ 외 경로 → ValidationError', () => {
+    expect(() => noteImageService.statImage('ws-1', 'photos/x.png')).toThrow(ValidationError)
+  })
+
+  it('파일 미존재 → NotFoundError', () => {
+    vi.mocked(fs.statSync).mockImplementation(() => {
+      throw new Error('ENOENT')
+    })
+    expect(() => noteImageService.statImage('ws-1', '.images/gone.png')).toThrow(NotFoundError)
+  })
+})
+
+describe('readImageAsBase64', () => {
+  it('정상 → base64 + mimeType + size, truncated=false', () => {
+    const buf = Buffer.from([1, 2, 3, 4])
+    vi.mocked(fs.statSync).mockReturnValue({ size: buf.length } as fs.Stats)
+    vi.mocked(fs.readFileSync).mockReturnValue(buf as unknown as string)
+
+    const result = noteImageService.readImageAsBase64('ws-1', '.images/abc.png')
+    expect(result.data).toBe(buf.toString('base64'))
+    expect(result.mimeType).toBe('image/png')
+    expect(result.size).toBe(buf.length)
+    expect(result.truncated).toBe(false)
+  })
+
+  it('maxBytes 초과 → data=null, truncated=true, readFileSync 미호출', () => {
+    vi.mocked(fs.statSync).mockReturnValue({ size: 2_000_000 } as fs.Stats)
+
+    const result = noteImageService.readImageAsBase64('ws-1', '.images/big.png', {
+      maxBytes: 1_000_000
+    })
+    expect(result.data).toBeNull()
+    expect(result.truncated).toBe(true)
+    expect(result.size).toBe(2_000_000)
+    expect(fs.readFileSync).not.toHaveBeenCalled()
+  })
+
+  it('path traversal → ValidationError', () => {
+    expect(() => noteImageService.readImageAsBase64('ws-1', '../etc/passwd')).toThrow(
+      ValidationError
+    )
+  })
+
+  it('파일 미존재 → NotFoundError', () => {
+    vi.mocked(fs.statSync).mockImplementation(() => {
+      throw new Error('ENOENT')
+    })
+    expect(() => noteImageService.readImageAsBase64('ws-1', '.images/gone.png')).toThrow(
+      NotFoundError
+    )
+  })
+})
+
 // ─── extractImagePaths ──────────────────────────────────────
 
 describe('extractImagePaths', () => {

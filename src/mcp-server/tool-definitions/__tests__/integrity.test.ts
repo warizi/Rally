@@ -4,23 +4,24 @@
  * P3-7 — 1,031L 단일 파일을 13개 도메인 파일로 분할. 등록 누락 / 중복 / 이름 형식
  * 깨짐을 자동 감지.
  *
- * MCP v2 완료 — v1 도구 제거 후 최종 15개 도구 (read_* / manage_* / search).
+ * MCP v2 완료 — v1 도구 제거 후 16개 도구 (read_* / manage_* / search + read_note_image).
  */
 import { describe, it, expect } from 'vitest'
 import { allTools } from '../index'
 
-const BASELINE_TOOL_COUNT = 15
+const BASELINE_TOOL_COUNT = 16
 
 const V2_TOOLS = [
   // Discovery (3)
   'search',
   'browse',
   'read_workspace',
-  // Read content (4)
+  // Read content (5)
   'read',
   'read_tasks',
   'read_trash',
   'read_templates',
+  'read_note_image',
   // Manage content (3)
   'manage_content',
   'manage_canvas',
@@ -58,7 +59,7 @@ describe('tool-definitions 무결성 (v2 final)', () => {
     }
   })
 
-  it('v2 최종 도구 15개가 모두 존재한다', () => {
+  it('v2 최종 도구 16개가 모두 존재한다', () => {
     const names = new Set(allTools.map((t) => t.name))
     for (const name of V2_TOOLS) {
       expect(names.has(name), `missing v2 tool: ${name}`).toBe(true)

@@ -35850,6 +35850,25 @@ async function callTool(method, urlPath, body) {
 }
 
 // src/mcp-server/tool-definitions/items.tools.ts
+async function callToolWithImages(method, urlPath, args, mutator) {
+  const raw = await callTool(method, urlPath, args);
+  const first = raw.content?.[0];
+  if (raw.isError || !first || first.type !== "text" || typeof first.text !== "string") {
+    return raw;
+  }
+  let parsed;
+  try {
+    parsed = JSON.parse(first.text);
+  } catch {
+    return raw;
+  }
+  const { sanitized, images } = mutator(parsed);
+  const content = [{ type: "text", text: JSON.stringify(sanitized, null, 2) }];
+  for (const img of images) {
+    content.push({ type: "image", data: img.data, mimeType: img.mimeType });
+  }
+  return { content };
+}
 var itemsTools = [
   {
     name: "browse",
@@ -35920,7 +35939,9 @@ Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, im
     description: `Batch read item bodies/metadata by id (1\u201350). Type is auto-detected from id.
 
 Supported types and response shape per entry:
-- note     : { id, success:true, type:'note',     title, relativePath, content }
+- note     : { id, success:true, type:'note',     title, relativePath, content, embeddedImages }
+             embeddedImages: [{ src, size, mimeType }] \u2014 pointers to .images/ files in the note body.
+             Fetch the bytes separately with the read_note_image tool when needed.
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
 - pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt,
@@ -35954,7 +35975,67 @@ Replaces v1 read_contents (note/csv), read_canvas, list_templates(id). Mixed typ
       maxPdfPageImages: external_exports3.number().int().min(1).max(20).optional().describe("Max PDF pages to render as images per file (default 3)."),
       pdfImageScale: external_exports3.number().min(0.5).max(3).optional().describe("pdfjs viewport scale for rendered page images (default 1.5).")
     },
-    handler: (args) => callTool("POST", "/api/mcp/read", args)
+    handler: (args) => callToolWithImages("POST", "/api/mcp/read", args, (parsed) => {
+      const results = Array.isArray(parsed.results) ? parsed.results : [];
+      const images = [];
+      const sanitizedResults = results.map((r) => {
+        if (!r || typeof r !== "object") return r;
+        const entry = r;
+        if (entry.type === "image" && typeof entry.content === "string" && typeof entry.mimeType === "string") {
+          images.push({ data: entry.content, mimeType: entry.mimeType });
+          return { ...entry, content: "[embedded as image content block in this response]" };
+        }
+        if (entry.type === "pdf" && Array.isArray(entry.pageImages) && entry.pageImages.length) {
+          for (const pi of entry.pageImages) {
+            if (typeof pi.data === "string" && typeof pi.mimeType === "string") {
+              images.push({ data: pi.data, mimeType: pi.mimeType });
+            }
+          }
+          return {
+            ...entry,
+            pageImages: entry.pageImages.map((pi) => ({
+              page: pi.page,
+              mimeType: pi.mimeType,
+              embedded: true
+            }))
+          };
+        }
+        return entry;
+      });
+      return { sanitized: { ...parsed, results: sanitizedResults }, images };
+    })
+  },
+  {
+    name: "read_note_image",
+    description: `Read a single image embedded in a note body as base64.
+
+A note's response includes embeddedImages with { src, size, mimeType } for each .images/...
+reference found in the markdown. The bytes are NOT returned by 'read' to keep responses small \u2014
+call this tool with the same { noteId, src } pair to fetch a single image on demand.
+
+Response: { src, data (base64) | null, mimeType, size, truncated }
+- Files larger than 1MB return data=null + truncated=true (to fit MCP result size limits).`,
+    schema: {
+      noteId: external_exports3.string().describe("Note id (must belong to the active workspace)."),
+      src: external_exports3.string().describe(
+        'Image src from note.embeddedImages[].src (e.g. ".images/abc.png"). Must be under .images/.'
+      )
+    },
+    handler: (args) => callToolWithImages(
+      "POST",
+      "/api/mcp/note-images/read",
+      args,
+      (parsed) => {
+        if (typeof parsed.data === "string" && typeof parsed.mimeType === "string") {
+          const { data, ...rest } = parsed;
+          return {
+            sanitized: { ...rest, data: "[embedded as image content block in this response]" },
+            images: [{ data, mimeType: parsed.mimeType }]
+          };
+        }
+        return { sanitized: parsed, images: [] };
+      }
+    )
   },
   {
     name: "manage_content",

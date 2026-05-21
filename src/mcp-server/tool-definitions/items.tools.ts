@@ -4,8 +4,46 @@
  * MCP v2 — browse + read 추가 (list_items/files/tagged/tags + read_contents/read_canvas/list_templates(id) 통합).
  */
 import { z } from 'zod'
+import type { CallToolResult } from '@modelcontextprotocol/sdk/types.js'
 import { callTool } from '../lib/call-tool'
 import type { ToolDefinition } from './types'
+
+type ContentBlock = CallToolResult['content'][number]
+
+/**
+ * callTool 의 단일 text 응답을 파싱해서 mutator 가 만들어주는 추가 image content block 들을
+ * 함께 반환한다. 결과는 [text(JSON), ...images] 순서. 실패/에러 시 원본 그대로 반환.
+ *
+ * mutator 는 파싱된 JSON 을 받아 `sanitized` (응답 JSON 에서 base64 를 제거한 버전) 와
+ * `images` (별도 image block 으로 분리할 항목 배열) 를 돌려준다.
+ */
+async function callToolWithImages(
+  method: 'GET' | 'POST',
+  urlPath: string,
+  args: Record<string, unknown>,
+  mutator: (parsed: Record<string, unknown>) => {
+    sanitized: Record<string, unknown>
+    images: { data: string; mimeType: string }[]
+  }
+): Promise<CallToolResult> {
+  const raw = await callTool(method, urlPath, args)
+  const first = raw.content?.[0]
+  if (raw.isError || !first || first.type !== 'text' || typeof first.text !== 'string') {
+    return raw
+  }
+  let parsed: Record<string, unknown>
+  try {
+    parsed = JSON.parse(first.text) as Record<string, unknown>
+  } catch {
+    return raw
+  }
+  const { sanitized, images } = mutator(parsed)
+  const content: ContentBlock[] = [{ type: 'text', text: JSON.stringify(sanitized, null, 2) }]
+  for (const img of images) {
+    content.push({ type: 'image', data: img.data, mimeType: img.mimeType })
+  }
+  return { content }
+}
 
 export const itemsTools: ToolDefinition[] = [
   {
@@ -98,7 +136,9 @@ Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, im
     description: `Batch read item bodies/metadata by id (1–50). Type is auto-detected from id.
 
 Supported types and response shape per entry:
-- note     : { id, success:true, type:'note',     title, relativePath, content }
+- note     : { id, success:true, type:'note',     title, relativePath, content, embeddedImages }
+             embeddedImages: [{ src, size, mimeType }] — pointers to .images/ files in the note body.
+             Fetch the bytes separately with the read_note_image tool when needed.
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
 - pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt,
@@ -164,7 +204,80 @@ Replaces v1 read_contents (note/csv), read_canvas, list_templates(id). Mixed typ
         .optional()
         .describe('pdfjs viewport scale for rendered page images (default 1.5).')
     },
-    handler: (args) => callTool('POST', '/api/mcp/read', args)
+    handler: (args) =>
+      callToolWithImages('POST', '/api/mcp/read', args as Record<string, unknown>, (parsed) => {
+        // image.content / pdf.pageImages[].data 를 별도 image content block 으로 분리해서
+        // Claude Code 가 multimodal input 으로 LLM 에게 직접 전달하도록 한다.
+        // JSON 안 base64 는 LLM 이 텍스트로만 인식하므로 그림으로 못 본다.
+        const results = Array.isArray(parsed.results) ? parsed.results : []
+        const images: { data: string; mimeType: string }[] = []
+        const sanitizedResults = results.map((r: unknown) => {
+          if (!r || typeof r !== 'object') return r
+          const entry = r as Record<string, unknown>
+          if (
+            entry.type === 'image' &&
+            typeof entry.content === 'string' &&
+            typeof entry.mimeType === 'string'
+          ) {
+            images.push({ data: entry.content, mimeType: entry.mimeType })
+            return { ...entry, content: '[embedded as image content block in this response]' }
+          }
+          if (entry.type === 'pdf' && Array.isArray(entry.pageImages) && entry.pageImages.length) {
+            for (const pi of entry.pageImages as Array<Record<string, unknown>>) {
+              if (typeof pi.data === 'string' && typeof pi.mimeType === 'string') {
+                images.push({ data: pi.data, mimeType: pi.mimeType })
+              }
+            }
+            return {
+              ...entry,
+              pageImages: (entry.pageImages as Array<Record<string, unknown>>).map((pi) => ({
+                page: pi.page,
+                mimeType: pi.mimeType,
+                embedded: true
+              }))
+            }
+          }
+          return entry
+        })
+        return { sanitized: { ...parsed, results: sanitizedResults }, images }
+      })
+  },
+  {
+    name: 'read_note_image',
+    description: `Read a single image embedded in a note body as base64.
+
+A note's response includes embeddedImages with { src, size, mimeType } for each .images/...
+reference found in the markdown. The bytes are NOT returned by 'read' to keep responses small —
+call this tool with the same { noteId, src } pair to fetch a single image on demand.
+
+Response: { src, data (base64) | null, mimeType, size, truncated }
+- Files larger than 1MB return data=null + truncated=true (to fit MCP result size limits).`,
+    schema: {
+      noteId: z.string().describe('Note id (must belong to the active workspace).'),
+      src: z
+        .string()
+        .describe(
+          'Image src from note.embeddedImages[].src (e.g. ".images/abc.png"). Must be under .images/.'
+        )
+    },
+    handler: (args) =>
+      callToolWithImages(
+        'POST',
+        '/api/mcp/note-images/read',
+        args as Record<string, unknown>,
+        (parsed) => {
+          // data(base64) 는 image content block 으로 빼서 LLM 이 그림으로 직접 본다.
+          // JSON 메타(src/size/mimeType/truncated) 는 text block 에 남긴다.
+          if (typeof parsed.data === 'string' && typeof parsed.mimeType === 'string') {
+            const { data, ...rest } = parsed
+            return {
+              sanitized: { ...rest, data: '[embedded as image content block in this response]' },
+              images: [{ data: data as string, mimeType: parsed.mimeType as string }]
+            }
+          }
+          return { sanitized: parsed, images: [] }
+        }
+      )
   },
   {
     name: 'manage_content',

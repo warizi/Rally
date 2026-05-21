@@ -3,7 +3,7 @@ import fs from 'fs'
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { workspaceRepository } from '../repositories/workspace'
-import { isImageFile } from '../lib/fs-utils'
+import { isImageFile, getImageMimeType } from '../lib/fs-utils'
 
 const IMAGES_DIR = '.images'
 
@@ -131,5 +131,42 @@ export const noteImageService = {
     }
 
     return { data }
+  },
+
+  /** 파일 크기만 (statSync) — MCP 노트 응답의 embeddedImages 메타에 사용. */
+  statImage(workspaceId: string, relativePath: string): { size: number; mimeType: string } {
+    const workspacePath = getWorkspacePath(workspaceId)
+    const normalized = path.normalize(relativePath)
+    if (normalized.startsWith('..') || path.isAbsolute(normalized)) {
+      throw new ValidationError(`Invalid image path: ${relativePath}`)
+    }
+    if (!normalized.startsWith(IMAGES_DIR)) {
+      throw new ValidationError(`Image path must be under ${IMAGES_DIR}: ${relativePath}`)
+    }
+    const absPath = path.join(workspacePath, normalized)
+    let size: number
+    try {
+      size = fs.statSync(absPath).size
+    } catch {
+      throw new NotFoundError(`Image file not found: ${relativePath}`)
+    }
+    return { size, mimeType: getImageMimeType(normalized) }
+  },
+
+  /**
+   * MCP `read_note_image` 도구용. base64 + 메타. `maxBytes` 초과 시 data=null + truncated=true.
+   */
+  readImageAsBase64(
+    workspaceId: string,
+    relativePath: string,
+    options: { maxBytes?: number } = {}
+  ): { data: string | null; mimeType: string; size: number; truncated: boolean } {
+    const { size, mimeType } = this.statImage(workspaceId, relativePath)
+    const maxBytes = options.maxBytes ?? Infinity
+    if (size > maxBytes) {
+      return { data: null, mimeType, size, truncated: true }
+    }
+    const { data: buf } = this.readImage(workspaceId, relativePath)
+    return { data: buf.toString('base64'), mimeType, size, truncated: false }
   }
 }
