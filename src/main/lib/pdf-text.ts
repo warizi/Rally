@@ -1,26 +1,31 @@
 /**
  * PDF 본문 → 텍스트 추출. MCP `read` 응답에서 LLM 에게 PDF 콘텐츠를 전달할 때 사용.
  *
- * pdfjs-dist 는 ESM-only 이므로 lazy 동적 import 로 로드한다. 첫 호출 시점에만 모듈을
- * 로드해 cold start 영향을 최소화. 메인 프로세스(Node) 환경 전용 — worker 없이 같은
- * 스레드에서 실행.
+ * 내부적으로 `unpdf` 를 사용. unpdf 는 pdfjs-dist 위에 worker-less wrapper 를 씌워
+ * Node / Bun / Edge 어디서든 동일하게 동작하므로, Electron 메인 프로세스 번들에서
+ * worker 모듈을 resolve 하지 못해 실패하는 문제(pdfjs-dist 직접 사용 시 발생)가 없다.
  */
 
-type PdfjsModule = typeof import('pdfjs-dist/legacy/build/pdf.mjs')
-
-let pdfjsPromise: Promise<PdfjsModule> | null = null
-
-async function loadPdfjs(): Promise<PdfjsModule> {
-  if (!pdfjsPromise) {
-    pdfjsPromise = import('pdfjs-dist/legacy/build/pdf.mjs')
-  }
-  return pdfjsPromise
-}
+import { getDocumentProxy, renderPageAsImage, createIsomorphicCanvasFactory } from 'unpdf'
 
 export interface PdfTextResult {
   pageCount: number
   text: string
   /** 추출이 maxPages/maxChars 한도에 걸려 잘렸으면 true. */
+  truncated: boolean
+}
+
+export interface PdfPageImage {
+  page: number
+  /** base64 (PNG). */
+  data: string
+  mimeType: 'image/png'
+}
+
+export interface PdfPageImagesResult {
+  pageCount: number
+  images: PdfPageImage[]
+  /** pageCount > maxImages 로 일부 페이지가 제외됐으면 true. */
   truncated: boolean
 }
 
@@ -31,16 +36,58 @@ function toUint8Copy(data: Buffer | Uint8Array): Uint8Array {
   return copy
 }
 
+/**
+ * PDF 첫 N 페이지를 PNG 이미지로 렌더해 base64 배열로 돌려준다.
+ * 텍스트 layer 가 없는 스캔본 / 표·차트 위주 PDF 를 MCP image content block 으로
+ * LLM 에 보여주는 용도. 응답이 매우 무거우므로 `maxImages` 기본값을 보수적으로 둔다.
+ *
+ * - `maxImages` (기본 3): 렌더할 최대 페이지 수.
+ * - `scale` (기본 1.5): pdfjs viewport 배율. 1.0 은 화면 보기 기본, 1.5~2.0 이 OCR/판독에 적당.
+ */
+export async function renderPdfPagesAsImages(
+  data: Buffer | Uint8Array,
+  options: { maxImages?: number; scale?: number } = {}
+): Promise<PdfPageImagesResult> {
+  const maxImages = Math.max(1, options.maxImages ?? 3)
+  const scale = Math.max(0.1, options.scale ?? 1.5)
+
+  // Node 환경에서는 canvasImport 를 명시해야 unpdf 가 @napi-rs/canvas 를 로드한다.
+  // (isomorphic factory 가 isBrowser=false 분기에서 canvasImport 없으면 throw)
+  const canvasImport = (): Promise<typeof import('@napi-rs/canvas')> =>
+    import('@napi-rs/canvas')
+
+  // 중요: doc 생성 시 CanvasFactory 를 함께 주입해야 page.render() 가 unpdf 의
+  // NodeCanvasFactory 를 쓴다. 안 주면 pdfjs 의 기본 NodeCanvasFactory(unpdf 가
+  // 의도적으로 throw 하도록 패치한 것)로 떨어져 "@napi-rs/canvas is not available"
+  // 에러가 난다.
+  const CanvasFactory = await createIsomorphicCanvasFactory(canvasImport)
+  const doc = await getDocumentProxy(toUint8Copy(data), {
+    CanvasFactory
+  } as unknown as Parameters<typeof getDocumentProxy>[1])
+  const pageCount = doc.numPages
+  const limit = Math.min(pageCount, maxImages)
+  const images: PdfPageImage[] = []
+
+  try {
+    for (let i = 1; i <= limit; i++) {
+      const buf = await renderPageAsImage(doc, i, { scale, canvasImport })
+      images.push({
+        page: i,
+        data: Buffer.from(buf).toString('base64'),
+        mimeType: 'image/png'
+      })
+    }
+  } finally {
+    await doc.cleanup()
+    await doc.destroy()
+  }
+
+  return { pageCount, images, truncated: pageCount > limit }
+}
+
 /** 페이지 수만 빠르게 조회 (텍스트 미추출). */
 export async function getPdfPageCount(data: Buffer | Uint8Array): Promise<number> {
-  const { getDocument } = await loadPdfjs()
-  const loadingTask = getDocument({
-    data: toUint8Copy(data),
-    isEvalSupported: false,
-    disableFontFace: true,
-    useSystemFonts: false
-  })
-  const doc = await loadingTask.promise
+  const doc = await getDocumentProxy(toUint8Copy(data))
   try {
     return doc.numPages
   } finally {
@@ -61,15 +108,7 @@ export async function extractPdfText(
   const maxPages = Math.max(1, options.maxPages ?? 10)
   const maxChars = Math.max(1, options.maxChars ?? 200_000)
 
-  const { getDocument } = await loadPdfjs()
-  const loadingTask = getDocument({
-    data: toUint8Copy(data),
-    isEvalSupported: false,
-    disableFontFace: true,
-    useSystemFonts: false
-  })
-  const doc = await loadingTask.promise
-
+  const doc = await getDocumentProxy(toUint8Copy(data))
   const pageCount = doc.numPages
   const limit = Math.min(pageCount, maxPages)
   let text = ''

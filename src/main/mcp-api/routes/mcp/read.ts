@@ -11,7 +11,7 @@
  *   csv     : { id, success: true, type: 'csv',      title, relativePath, content, encoding, columnWidths }
  *   canvas  : { id, success: true, type: 'canvas',   title, description, nodes, edges, createdAt, updatedAt }
  *   pdf     : { id, success: true, type: 'pdf',      title, relativePath, description, folderId, createdAt,
- *                updatedAt, size, pageCount, text, truncated }
+ *                updatedAt, size, pageCount, text, truncated, pageImages, pageImagesTruncated }
  *   image   : { id, success: true, type: 'image',    title, relativePath, description, folderId, createdAt,
  *                updatedAt, size, mimeType, content (base64) | null, truncated }
  *   template: { id, success: true, type: 'template', title, templateType, jsonData, createdAt }
@@ -38,6 +38,10 @@ import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 const MAX_IMAGE_BYTES = 1024 * 1024 // 1MB raw → ~1.33MB base64
 const DEFAULT_MAX_PDF_PAGES = 10
 const DEFAULT_MAX_PDF_CHARS = 100_000
+const DEFAULT_MAX_PDF_PAGE_IMAGES = 3
+const DEFAULT_PDF_IMAGE_SCALE = 1.5
+/** 텍스트가 이만큼도 안 추출되면 "사실상 빈 PDF" 로 보고 auto fallback 으로 이미지 렌더. */
+const PDF_TEXT_FALLBACK_THRESHOLD = 32
 
 type ReadEntry =
   | {
@@ -85,6 +89,13 @@ type ReadEntry =
       text: string
       /** maxPages / maxChars 가드에 걸려 잘렸으면 true. */
       truncated: boolean
+      /**
+       * 페이지 이미지(PNG base64). `renderPdfPages` 옵션이 'always' 거나, 'auto' 인데
+       * 텍스트 추출이 사실상 비어 있을 때 채워짐. 'never' 면 빈 배열.
+       */
+      pageImages: { page: number; data: string; mimeType: 'image/png' }[]
+      /** pageImages 가 maxPdfPageImages 가드로 일부 페이지만 렌더됐으면 true. */
+      pageImagesTruncated: boolean
     }
   | {
       id: string
@@ -130,6 +141,17 @@ interface ReadRequestBody {
   maxPdfPages?: number
   /** 한 PDF 당 추출 누적 글자 수 상한. 기본 100_000. */
   maxPdfChars?: number
+  /**
+   * PDF 페이지 이미지 렌더 정책.
+   * - 'auto' (기본): 텍스트 추출이 사실상 비어 있을 때만 렌더 (스캔본 fallback)
+   * - 'always': 항상 렌더 (텍스트 + 이미지 동시 반환)
+   * - 'never': 렌더 안 함
+   */
+  renderPdfPages?: 'auto' | 'always' | 'never'
+  /** 렌더할 최대 페이지 수. 기본 3. */
+  maxPdfPageImages?: number
+  /** pdfjs viewport 배율. 기본 1.5. */
+  pdfImageScale?: number
 }
 
 export function registerMcpReadRoutes(router: Router): void {
@@ -150,6 +172,9 @@ export function registerMcpReadRoutes(router: Router): void {
       const includePdfText = body.includePdfText !== false
       const maxPdfPages = body.maxPdfPages ?? DEFAULT_MAX_PDF_PAGES
       const maxPdfChars = body.maxPdfChars ?? DEFAULT_MAX_PDF_CHARS
+      const renderPdfPages = body.renderPdfPages ?? 'auto'
+      const maxPdfPageImages = body.maxPdfPageImages ?? DEFAULT_MAX_PDF_PAGE_IMAGES
+      const pdfImageScale = body.pdfImageScale ?? DEFAULT_PDF_IMAGE_SCALE
 
       const results = await Promise.all(
         body.ids.map(async (id): Promise<ReadEntry> => {
@@ -208,6 +233,23 @@ export function registerMcpReadRoutes(router: Router): void {
                 maxPages: maxPdfPages,
                 maxChars: maxPdfChars
               })
+
+              const shouldRenderImages =
+                renderPdfPages === 'always' ||
+                (renderPdfPages === 'auto' &&
+                  includePdfText &&
+                  meta.text.trim().length < PDF_TEXT_FALLBACK_THRESHOLD)
+              let pageImages: { page: number; data: string; mimeType: 'image/png' }[] = []
+              let pageImagesTruncated = false
+              if (shouldRenderImages) {
+                const rendered = await pdfFileService.readPageImages(wsId, id, {
+                  maxImages: maxPdfPageImages,
+                  scale: pdfImageScale
+                })
+                pageImages = rendered.images
+                pageImagesTruncated = rendered.truncated
+              }
+
               return {
                 id,
                 success: true,
@@ -221,7 +263,9 @@ export function registerMcpReadRoutes(router: Router): void {
                 size: meta.size,
                 pageCount: meta.pageCount,
                 text: meta.text,
-                truncated: meta.truncated
+                truncated: meta.truncated,
+                pageImages,
+                pageImagesTruncated
               }
             }
 

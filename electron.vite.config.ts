@@ -9,7 +9,16 @@ import type { Plugin } from 'vite'
 const ANALYZE = process.env.ANALYZE === '1'
 
 export default defineConfig({
-  main: {},
+  main: {
+    build: {
+      rollupOptions: {
+        // native binary (@napi-rs/canvas) 와 그 wrapper(unpdf) 는 vite 가 chunk 로 묶지 않게
+        // external 처리해 런타임에 node_modules 에서 직접 로드시킨다.
+        // 묶으면 binary 파일/worker fallback resolve 가 깨진다.
+        external: ['@napi-rs/canvas', 'unpdf']
+      }
+    }
+  },
   preload: {
     // 보안-1: sandbox: true 모드에서는 preload 가 외부 npm 모듈을 require() 할 수 없으므로
     // electron 내장 모듈만 external 로 두고 npm 의존성(@electron-toolkit/preload 등)은
