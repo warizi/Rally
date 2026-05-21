@@ -7,7 +7,7 @@
  * type 자동 감지 — id 만 알면 됨. 각 entry 는 독립 실행 (한 id 실패가 다른 ids 영향 X).
  *
  * 응답 entry shape (성공 시):
- *   note    : { id, success: true, type: 'note',     title, relativePath, content }
+ *   note    : { id, success: true, type: 'note',     title, relativePath, content, embeddedImages }
  *   csv     : { id, success: true, type: 'csv',      title, relativePath, content, encoding, columnWidths }
  *   canvas  : { id, success: true, type: 'canvas',   title, description, nodes, edges, createdAt, updatedAt }
  *   pdf     : { id, success: true, type: 'pdf',      title, relativePath, description, folderId, createdAt,
@@ -31,11 +31,14 @@ import { csvFileService } from '../../../services/csv-file'
 import { canvasNodeService } from '../../../services/canvas-node'
 import { canvasEdgeService } from '../../../services/canvas-edge'
 import { imageFileService } from '../../../services/image-file'
+import { noteImageService } from '../../../services/note-image'
 import { pdfFileService } from '../../../services/pdf-file'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 
 // 응답 폭증 방지 가드. Claude Code 의 MCP 결과 한도(~500KB 자) 안에 들어가도록 보수적으로 잡음.
 const MAX_IMAGE_BYTES = 1024 * 1024 // 1MB raw → ~1.33MB base64
+/** 노트 내장 이미지 단건 fetch 응답에도 동일 가드 적용. */
+const MAX_NOTE_IMAGE_BYTES = MAX_IMAGE_BYTES
 const DEFAULT_MAX_PDF_PAGES = 10
 const DEFAULT_MAX_PDF_CHARS = 100_000
 const DEFAULT_MAX_PDF_PAGE_IMAGES = 3
@@ -51,6 +54,11 @@ type ReadEntry =
       title: string
       relativePath: string
       content: string
+      /**
+       * 본문 마크다운에 임베드된 이미지(.images/...) 메타. 본문(base64)은 포함하지 않으며,
+       * 필요 시 `read_note_image(noteId, src)` 로 별도 fetch 한다.
+       */
+      embeddedImages: { src: string; size: number; mimeType: string }[]
     }
   | {
       id: string
@@ -184,13 +192,25 @@ export function registerMcpReadRoutes(router: Router): void {
             const note = noteRepository.findById(id)
             if (note && note.workspaceId === wsId) {
               const content = noteService.readContent(wsId, id)
+              // 본문에서 .images/ 참조만 뽑아 메타(size/MIME)로 노출. base64 는 동봉 안 함.
+              const srcs = noteImageService.extractImagePaths(content)
+              const embeddedImages: { src: string; size: number; mimeType: string }[] = []
+              for (const src of srcs) {
+                try {
+                  const stat = noteImageService.statImage(wsId, src)
+                  embeddedImages.push({ src, size: stat.size, mimeType: stat.mimeType })
+                } catch {
+                  // 파일 누락/경로 검증 실패는 silent skip — 본문 조회 자체는 성공시킨다.
+                }
+              }
               return {
                 id,
                 success: true,
                 type: 'note',
                 title: note.title,
                 relativePath: note.relativePath,
-                content
+                content,
+                embeddedImages
               }
             }
 
@@ -317,6 +337,45 @@ export function registerMcpReadRoutes(router: Router): void {
       )
 
       return { results }
+    }
+  )
+
+  // ─── POST /api/mcp/note-images/read ─────────────────────────
+  // 노트 본문에 임베드된 이미지(.images/...) 를 단건 base64 로 돌려준다.
+  // read 응답의 embeddedImages.src 를 그대로 넘기면 된다.
+
+  router.addRoute<{ noteId: string; src: string }>(
+    'POST',
+    '/api/mcp/note-images/read',
+    (
+      _,
+      body
+    ): {
+      src: string
+      data: string | null
+      mimeType: string
+      size: number
+      truncated: boolean
+    } => {
+      requireBody(body)
+      const wsId = resolveActiveWorkspace()
+      if (typeof body.noteId !== 'string' || !body.noteId.trim()) {
+        throw new ValidationError('noteId is required')
+      }
+      assertValidId(body.noteId, 'noteId')
+      if (typeof body.src !== 'string' || !body.src.trim()) {
+        throw new ValidationError('src is required')
+      }
+
+      const note = noteRepository.findById(body.noteId)
+      if (!note || note.workspaceId !== wsId) {
+        throw new NotFoundError(`Note not found in active workspace: ${body.noteId}`)
+      }
+
+      const result = noteImageService.readImageAsBase64(wsId, body.src, {
+        maxBytes: MAX_NOTE_IMAGE_BYTES
+      })
+      return { src: body.src, ...result }
     }
   )
 }
