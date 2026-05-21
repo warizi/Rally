@@ -123,6 +123,104 @@ describe('findByWorkspaceId', () => {
     const result = todoRepository.findByWorkspaceId(WS_ID, 'completed')
     expect(result.map((r) => r.id)).not.toContain('c3')
   })
+
+  // ─── active 회귀 차단: 완료된 부모의 subtodo 는 active 결과에서 제외 ─────────
+
+  it("filter='active' — 완료된 부모의 미완료 서브투두 제외 (회귀 차단)", () => {
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'doneParent', isDone: true }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'orphanActive', parentId: 'doneParent', isDone: false }))
+      .run()
+    const result = todoRepository.findByWorkspaceId(WS_ID, 'active')
+    expect(result.map((r) => r.id)).not.toContain('orphanActive')
+    expect(result.map((r) => r.id)).not.toContain('doneParent')
+  })
+
+  it("filter='active' — 완료된 부모의 완료 서브투두 제외", () => {
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'doneParent2', isDone: true }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'orphanDone', parentId: 'doneParent2', isDone: true }))
+      .run()
+    const result = todoRepository.findByWorkspaceId(WS_ID, 'active')
+    expect(result.map((r) => r.id)).not.toContain('orphanDone')
+  })
+
+  it("filter='active' — 진행 부모 vs 완료 부모 혼합 시나리오", () => {
+    // 부모 A 진행 중 + 자식 a1(미완료) + a2(완료) → A, a1, a2 모두 포함
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'A', isDone: false }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'a1', parentId: 'A', isDone: false }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'a2', parentId: 'A', isDone: true }))
+      .run()
+    // 부모 B 완료 + 자식 b1(미완료) + b2(완료) → B, b1, b2 모두 제외
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'B', isDone: true }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'b1', parentId: 'B', isDone: false }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'b2', parentId: 'B', isDone: true }))
+      .run()
+
+    const ids = todoRepository.findByWorkspaceId(WS_ID, 'active').map((r) => r.id)
+    expect(ids.sort()).toEqual(['A', 'a1', 'a2'])
+  })
+})
+
+describe("findByWorkspaceWithFilters - filter='active'", () => {
+  it('완료된 부모의 subtodo 제외 (동일 정책)', () => {
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'P', isDone: true }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'C', parentId: 'P', isDone: false }))
+      .run()
+    const ids = todoRepository
+      .findByWorkspaceWithFilters(WS_ID, { filter: 'active' })
+      .map((r) => r.id)
+    expect(ids).not.toContain('C')
+    expect(ids).not.toContain('P')
+  })
+
+  it('진행 부모의 subtodo 는 isDone 무관 포함', () => {
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'P2', isDone: false }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'C2a', parentId: 'P2', isDone: false }))
+      .run()
+    testDb
+      .insert(schema.todos)
+      .values(makeTodo({ id: 'C2b', parentId: 'P2', isDone: true }))
+      .run()
+    const ids = todoRepository
+      .findByWorkspaceWithFilters(WS_ID, { filter: 'active' })
+      .map((r) => r.id)
+    expect(ids.sort()).toEqual(['C2a', 'C2b', 'P2'])
+  })
 })
 
 describe('findById', () => {
