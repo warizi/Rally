@@ -6,6 +6,24 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.9.2',
+    date: '2026-05-22',
+    changes: [
+      {
+        type: 'improvement',
+        title: 'MCP 도구 개선',
+        description:
+          'AI 에이전트가 pdf, image를 읽을 수 있습니다. todo를 읽을때 불필요한 정보를 가져오던 문제가 개선되었습니다.'
+      },
+      {
+        type: 'fix',
+        title: '사이드바 버튼 클릭 범위 문제 수정',
+        description:
+          '사이드바가 접혔을 경우 특정 버튼의 클릭 범위가 좁아지던 현상을 수정하였습니다.'
+      }
+    ]
+  },
+  {
     version: '1.9.1',
     date: '2026-05-21',
     changes: [
