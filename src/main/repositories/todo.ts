@@ -8,6 +8,44 @@ export type TodoInsert = typeof todos.$inferInsert
 /** 모든 read 쿼리에서 휴지통 항목 제외 — `deleted_at IS NULL` 가드 */
 const NOT_DELETED = isNull(todos.deletedAt)
 
+/**
+ * `active` 필터 조건.
+ *
+ *   (top-level AND !isDone)
+ *   OR
+ *   (subtodo AND 해당 부모가 active root)
+ *
+ * 옛 정책은 "subtodo 면 isDone 무관하게 모두 포함" 이었는데, 그러면 **완료된 부모의
+ * subtodo 도 같이 끌려와** MCP `read_tasks` 응답이 폭증하는 회귀가 있었다 (#TBD).
+ * 렌더러는 `parentId === null` 만 화면에 표시해 시각적으로는 멀쩡했지만, 외부
+ * LLM 으로 나가는 응답에서는 트리 평탄화 로직(`mcp/todos.ts`) 때문에 그 고아
+ * subtodo 가 root 처럼 노출됐다.
+ *
+ * 진행 중인 부모의 **완료된 subtodo** 는 그대로 포함된다 (체크리스트 진행 상황 UX).
+ */
+function buildActiveWhere(workspaceId: string): ReturnType<typeof or> {
+  return or(
+    and(isNull(todos.parentId), eq(todos.isDone, false)),
+    and(
+      isNotNull(todos.parentId),
+      inArray(
+        todos.parentId,
+        db
+          .select({ id: todos.id })
+          .from(todos)
+          .where(
+            and(
+              eq(todos.workspaceId, workspaceId),
+              isNull(todos.parentId),
+              eq(todos.isDone, false),
+              NOT_DELETED
+            )
+          )
+      )
+    )
+  )
+}
+
 export const todoRepository = {
   /** 풀 fetch 없이 SQL COUNT로 active/completed/total 카운트만 반환 (휴지통 제외) */
   countByWorkspaceId(workspaceId: string): { active: number; completed: number; total: number } {
@@ -26,17 +64,8 @@ export const todoRepository = {
   findByWorkspaceId(workspaceId: string, filter?: 'all' | 'active' | 'completed'): Todo[] {
     const base = and(eq(todos.workspaceId, workspaceId), NOT_DELETED)!
     if (filter === 'active') {
-      // 최상위 미완료 + 모든 sub-todo (isDone 무관)
-      return db
-        .select()
-        .from(todos)
-        .where(
-          and(
-            base,
-            or(and(isNull(todos.parentId), eq(todos.isDone, false)), isNotNull(todos.parentId))
-          )
-        )
-        .all()
+      // 최상위 미완료 + 진행 중인 부모의 sub-todo (완료된 부모의 sub-todo 는 제외)
+      return db.select().from(todos).where(and(base, buildActiveWhere(workspaceId))).all()
     }
     if (filter === 'completed') {
       // 최상위 완료 투두만
@@ -98,7 +127,7 @@ export const todoRepository = {
 
   /**
    * 동적 필터 검색. AND 조합. 휴지통 제외.
-   * - filter: 'active'면 (top-level 미완료 OR 모든 sub-todo), 'completed'면 top-level 완료만, 그 외 전부
+   * - filter: 'active'면 (top-level 미완료 OR 진행 중 부모의 sub-todo), 'completed'면 top-level 완료만, 그 외 전부
    * - parentId: undefined=무관, null=top-level only, string=해당 parent의 자식만
    * - dueWithin: { from, to } 범위에 dueDate가 들어가는 것만
    * - priority: 주어진 priority들 중 하나
@@ -119,9 +148,7 @@ export const todoRepository = {
     const conditions = [eq(todos.workspaceId, workspaceId), NOT_DELETED]
 
     if (options.filter === 'active') {
-      conditions.push(
-        or(and(isNull(todos.parentId), eq(todos.isDone, false)), isNotNull(todos.parentId))!
-      )
+      conditions.push(buildActiveWhere(workspaceId)!)
     } else if (options.filter === 'completed') {
       conditions.push(isNull(todos.parentId))
       conditions.push(eq(todos.isDone, true))
