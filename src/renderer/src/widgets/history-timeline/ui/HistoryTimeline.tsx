@@ -22,10 +22,7 @@ import { useTabStore } from '@/features/tap-system/manage-tab-system'
 import { cn } from '@shared/lib/utils'
 import { HighlightText } from '../lib/highlight'
 import { linkToTabOptions } from '../lib/link-to-tab'
-import {
-  buildHistoryLinkDragId,
-  type HistoryLinkDragData
-} from '../lib/history-link-drag'
+import { buildHistoryLinkDragId, type HistoryLinkDragData } from '../lib/history-link-drag'
 
 interface Props {
   workspaceId: string
@@ -33,7 +30,6 @@ interface Props {
   fromDate: string | null
   toDate: string | null
 }
-
 
 /** ScrollArea Viewport ref를 자손 motion에 전달 (whileInView root) */
 const ScrollViewportContext = createContext<RefObject<HTMLElement | null> | null>(null)
@@ -199,13 +195,7 @@ function DaySection({
  *
  * 부모에 link가 많아 row가 길어져도 sub는 좌측에서 부모 바로 아래로 붙어 표시된다.
  */
-function GroupRow({
-  entries,
-  query
-}: {
-  entries: HistoryTodoEntry[]
-  query: string
-}): JSX.Element {
+function GroupRow({ entries, query }: { entries: HistoryTodoEntry[]; query: string }): JSX.Element {
   const containerRef = useRef<HTMLDivElement>(null)
   const todoRefs = useRef<Array<HTMLDivElement | null>>([])
   // entry index와 무관하게 link key로 ref 저장 — 평탄화된 우측 list와 entry 순회를 분리
@@ -249,7 +239,7 @@ function GroupRow({
 
   useLayoutEffect(() => {
     // DOM 측정 후 SVG path/size state 업데이트 — 외부(DOM) → React 동기화 패턴
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     measure()
     const raf = requestAnimationFrame(() => measure())
     return () => cancelAnimationFrame(raf)

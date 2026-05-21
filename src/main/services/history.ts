@@ -1,4 +1,4 @@
-import { and, eq, gte, inArray, isNotNull, lte, or } from 'drizzle-orm'
+import { and, eq, gte, inArray, isNotNull, isNull, lte, or } from 'drizzle-orm'
 import { db } from '../db'
 import {
   todos,
@@ -167,7 +167,8 @@ export const historyService = {
     const conditions = [
       eq(todos.workspaceId, workspaceId),
       eq(todos.isDone, true),
-      isNotNull(todos.doneAt)
+      isNotNull(todos.doneAt),
+      isNull(todos.deletedAt)
     ]
     if (options.fromDate) {
       conditions.push(gte(todos.doneAt!, dateKeyToStartOfDay(options.fromDate)))
@@ -199,7 +200,7 @@ export const historyService = {
       const parentRows = db
         .select({ id: todos.id, title: todos.title })
         .from(todos)
-        .where(inArray(todos.id, parentIds))
+        .where(and(inArray(todos.id, parentIds), isNull(todos.deletedAt)))
         .all()
       for (const r of parentRows) parentTitleMap.set(r.id, r.title)
     }
