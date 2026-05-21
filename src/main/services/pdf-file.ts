@@ -9,7 +9,12 @@ import { resolveNameConflict, readPdfFilesRecursive } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
-import { extractPdfText, getPdfPageCount } from '../lib/pdf-text'
+import {
+  extractPdfText,
+  getPdfPageCount,
+  renderPdfPagesAsImages,
+  type PdfPageImage
+} from '../lib/pdf-text'
 import { trashService } from './trash'
 
 export interface PdfFileNode {
@@ -332,6 +337,32 @@ export const pdfFileService = {
       maxChars: options.maxChars
     })
     return { pageCount: result.pageCount, text: result.text, size, truncated: result.truncated }
+  },
+
+  /**
+   * PDF 첫 N 페이지를 PNG 로 렌더해 base64 배열로 돌려준다. 스캔본 / 시각 위주 PDF 에서
+   * MCP image content block 으로 LLM 에 보여주는 용도.
+   */
+  async readPageImages(
+    workspaceId: string,
+    pdfId: string,
+    options: { maxImages?: number; scale?: number } = {}
+  ): Promise<{ pageCount: number; images: PdfPageImage[]; truncated: boolean }> {
+    const workspace = workspaceRepository.findById(workspaceId)
+    if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
+
+    const pdf = pdfFileRepository.findById(pdfId)
+    if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
+
+    const absPath = path.join(workspace.path, pdf.relativePath)
+    let data: Buffer
+    try {
+      data = fs.readFileSync(absPath)
+    } catch {
+      throw new NotFoundError(`파일을 읽을 수 없습니다: ${absPath}`)
+    }
+
+    return renderPdfPagesAsImages(data, options)
   },
 
   /** 폴더 이동 (DnD) — 다른 폴더로 이동 + 혼합 siblings reindex */

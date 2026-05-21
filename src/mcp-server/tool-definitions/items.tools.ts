@@ -102,7 +102,7 @@ Supported types and response shape per entry:
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
 - pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt,
-              updatedAt, size, pageCount, text, truncated }
+              updatedAt, size, pageCount, text, truncated, pageImages, pageImagesTruncated }
 - image    : { id, success:true, type:'image',    title, relativePath, description, folderId, createdAt,
               updatedAt, size, mimeType, content (base64) | null, truncated }
 - template : { id, success:true, type:'template', title, templateType, jsonData, createdAt }
@@ -110,9 +110,12 @@ Supported types and response shape per entry:
 Image/PDF bodies are returned by default:
 - image.content is base64 (use mimeType to decode). Files larger than 1MB return content=null + truncated=true.
 - pdf.text is extracted with pdfjs. Default caps: first 10 pages and 100,000 chars (truncated=true if hit).
+- pdf.pageImages renders pages to PNG base64 — by default 'auto' fallback: only triggered when text extraction
+  returns nearly empty (scanned PDFs / image-only PDFs). Set renderPdfPages='always' to also render even when
+  text exists, or 'never' to disable. Default cap: first 3 pages at scale 1.5 (pageImagesTruncated=true if hit).
 - Pass includeImageContent=false to fetch image metadata only (faster, smaller response).
 - Pass includePdfText=false to fetch PDF metadata only (pageCount + size, no text).
-- Override caps via maxPdfPages / maxPdfChars.
+- Override caps via maxPdfPages / maxPdfChars / maxPdfPageImages / pdfImageScale.
 
 Failure entries: { id, success:false, error: { code, message } } — independent per id, others still succeed.
 
@@ -140,7 +143,26 @@ Replaces v1 read_contents (note/csv), read_canvas, list_templates(id). Mixed typ
         .min(1)
         .max(500_000)
         .optional()
-        .describe('Max characters of extracted PDF text per file (default 100_000).')
+        .describe('Max characters of extracted PDF text per file (default 100_000).'),
+      renderPdfPages: z
+        .enum(['auto', 'always', 'never'])
+        .optional()
+        .describe(
+          "Render PDF pages to PNG base64. 'auto' (default) = render only when text is nearly empty; 'always' = render even with text; 'never' = skip."
+        ),
+      maxPdfPageImages: z
+        .number()
+        .int()
+        .min(1)
+        .max(20)
+        .optional()
+        .describe('Max PDF pages to render as images per file (default 3).'),
+      pdfImageScale: z
+        .number()
+        .min(0.5)
+        .max(3)
+        .optional()
+        .describe('pdfjs viewport scale for rendered page images (default 1.5).')
     },
     handler: (args) => callTool('POST', '/api/mcp/read', args)
   },
