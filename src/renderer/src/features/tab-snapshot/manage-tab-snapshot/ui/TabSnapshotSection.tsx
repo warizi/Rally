@@ -1,5 +1,5 @@
 import { JSX, useState } from 'react'
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react'
+import { ChevronDown, Plus } from 'lucide-react'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@shared/ui/collapsible'
 import {
   SidebarGroup,
@@ -36,12 +36,18 @@ export function TabSnapshotSection({
 
   return (
     <>
-      <SidebarGroup>
-        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+      <Collapsible open={isOpen} onOpenChange={setIsOpen} className="group/collapsible">
+        <SidebarGroup>
           <SidebarGroupLabel asChild>
-            <CollapsibleTrigger className="flex w-full items-center justify-between">
+            <CollapsibleTrigger className="flex w-full items-center justify-between group-data-[collapsible=icon]:hidden">
               <span>탭 스냅샷</span>
-              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+              <ChevronDown
+                className="
+                  ml-auto
+                  transition-transform
+                  group-data-[state=open]/collapsible:rotate-180
+                "
+              />
             </CollapsibleTrigger>
           </SidebarGroupLabel>
 
@@ -77,8 +83,8 @@ export function TabSnapshotSection({
               </div>
             </SidebarGroupContent>
           </CollapsibleContent>
-        </Collapsible>
-      </SidebarGroup>
+        </SidebarGroup>
+      </Collapsible>
 
       <SaveSnapshotDialog
         open={saveDialogOpen}

@@ -109,7 +109,9 @@ function MainSidebar(): React.JSX.Element {
             />
           )}
           <SidebarGroup>
-            <SidebarGroupLabel>시스템</SidebarGroupLabel>
+            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+              시스템
+            </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
                 {system_sidebar_items.map((item) => (
