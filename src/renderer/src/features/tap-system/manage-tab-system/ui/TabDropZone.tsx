@@ -61,8 +61,8 @@ export function TabDropZone({
       {isOver && (
         <div
           className={cn(
-            'absolute z-40 pointer-events-none',
-            position === 'center' ? 'bg-primary/10' : 'bg-primary/20',
+            'absolute z-40 pointer-events-none m-4 rounded-lg',
+            position === 'center' ? 'bg-primary/10' : 'bg-primary/10',
             highlightClasses[position]
           )}
         />

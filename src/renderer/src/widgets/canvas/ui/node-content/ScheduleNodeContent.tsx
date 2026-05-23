@@ -1,6 +1,7 @@
 import { format } from 'date-fns'
 import { ko } from 'date-fns/locale'
 import { Clock, MapPin } from 'lucide-react'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import type { NodeContentProps } from '../../model/node-content-registry'
 
 export function ScheduleNodeContent({ refTitle, refMeta }: NodeContentProps): React.JSX.Element {
@@ -30,8 +31,9 @@ export function ScheduleNodeContent({ refTitle, refMeta }: NodeContentProps): Re
   }
 
   return (
-    <div className="p-3 flex-1 overflow-y-auto nowheel flex flex-col gap-2">
-      <div className="flex items-start gap-2">
+    <ScrollArea className="flex-1 min-h-0 nowheel">
+      <div className="p-3 flex flex-col gap-2">
+        <div className="flex items-start gap-2">
         {color && (
           <div className="size-3 rounded-full mt-0.5 shrink-0" style={{ backgroundColor: color }} />
         )}
@@ -53,11 +55,12 @@ export function ScheduleNodeContent({ refTitle, refMeta }: NodeContentProps): Re
         )}
       </div>
 
-      {description && (
-        <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-          {description}
-        </p>
-      )}
-    </div>
+        {description && (
+          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
+            {description}
+          </p>
+        )}
+      </div>
+    </ScrollArea>
   )
 }

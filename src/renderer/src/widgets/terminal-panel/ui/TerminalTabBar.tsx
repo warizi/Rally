@@ -83,7 +83,7 @@ export function TerminalTabBar(): React.ReactElement {
   }
 
   return (
-    <div className="flex items-center h-9 bg-muted border-b border-border shrink-0">
+    <div className="flex items-center h-9 shrink-0">
       {/* 좌측: 가로 스크롤 가능한 탭 리스트 (shadcn ScrollArea 로 수직 스크롤 차단) */}
       <ScrollArea className="flex-1 h-full min-w-0">
         <DndContext

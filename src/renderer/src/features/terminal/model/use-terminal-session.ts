@@ -4,6 +4,13 @@ import { FitAddon } from '@xterm/addon-fit'
 import { SerializeAddon } from '@xterm/addon-serialize'
 import '@xterm/xterm/css/xterm.css'
 import { useTerminalStore } from './store'
+import { FONT_SIZE_CHANGE_EVENT } from '@/shared/lib/theme'
+
+// 루트 폰트 크기(px)를 읽어 터미널 폰트 크기에 사용
+function readRootFontSize(): number {
+  const v = parseFloat(getComputedStyle(document.documentElement).fontSize)
+  return Number.isFinite(v) && v > 0 ? v : 14
+}
 
 // CSS 변수를 실제 computed 색상(rgb 문자열)으로 읽어 xterm ITheme 생성
 function buildThemeFromCSSVars(): ITheme {
@@ -46,7 +53,7 @@ export function useTerminalSession(
 
     const term = new Terminal({
       cursorBlink: true,
-      fontSize: 14,
+      fontSize: readRootFontSize(),
       fontFamily: 'Menlo, Monaco, "Courier New", monospace',
       theme: buildThemeFromCSSVars()
     })
@@ -104,6 +111,26 @@ export function useTerminalSession(
       attributeFilter: ['class']
     })
 
+    // 글꼴 크기 설정 변경 감지 → 터미널 fontSize 동기화 + 재fit
+    const handleFontSizeChange = (): void => {
+      if (aborted) return
+      requestAnimationFrame(() => {
+        if (aborted) return
+        const next = readRootFontSize()
+        if (term.options.fontSize === next) return
+        term.options.fontSize = next
+        // xterm 텍스처 캐시 무효화 + 재측정
+        term.refresh(0, term.rows - 1)
+        fitAddon.fit()
+        const { cols, rows } = term
+        if (cols > 0 && rows > 0) {
+          window.api.terminal.resize({ id: sessionId, cols, rows })
+          useTerminalStore.getState().updateSession(sessionId, { cols, rows })
+        }
+      })
+    }
+    window.addEventListener(FONT_SIZE_CHANGE_EVENT, handleFontSizeChange)
+
     // 리사이즈 감지
     const resizeObserver = new ResizeObserver(() => {
       if (aborted) return
@@ -126,6 +153,7 @@ export function useTerminalSession(
       aborted = true
       window.removeEventListener('beforeunload', handleQuit)
       themeObserver.disconnect()
+      window.removeEventListener(FONT_SIZE_CHANGE_EVENT, handleFontSizeChange)
 
       // 탭 전환 시 스냅샷 → 스토어 저장
       if (serializeAddonRef.current && useTerminalStore.getState().sessions[sessionId]) {

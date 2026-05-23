@@ -7,6 +7,7 @@ import { TodoCheckbox } from '@features/todo/todo-field/ui/TodoCheckbox'
 import { TodoStatusSelect } from '@features/todo/todo-field/ui/TodoStatusSelect'
 import { TodoPrioritySelect } from '@features/todo/todo-field/ui/TodoPrioritySelect'
 import { SubTodoListView } from '@features/todo/todo-field/ui/SubTodoListView'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import type { NodeContentProps } from '../../model/node-content-registry'
 
 export function TodoNodeContent({ refId, refTitle }: NodeContentProps): React.JSX.Element {
@@ -29,8 +30,9 @@ export function TodoNodeContent({ refId, refTitle }: NodeContentProps): React.JS
   }
 
   return (
-    <div className="p-3 flex-1 min-h-0 overflow-y-auto nowheel flex flex-col gap-3">
-      <div className="flex items-center gap-2">
+    <ScrollArea className="flex-1 min-h-0 nowheel">
+      <div className="p-3 flex flex-col gap-3">
+        <div className="flex items-center gap-2">
         <TodoCheckbox
           todoId={todo.id}
           workspaceId={workspaceId}
@@ -77,13 +79,14 @@ export function TodoNodeContent({ refId, refTitle }: NodeContentProps): React.JS
         )}
       </div>
 
-      {todo.description && (
-        <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
-          {todo.description}
-        </p>
-      )}
+        {todo.description && (
+          <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">
+            {todo.description}
+          </p>
+        )}
 
-      <SubTodoListView subTodos={subTodos} workspaceId={workspaceId} parentId={todo.id} />
-    </div>
+        <SubTodoListView subTodos={subTodos} workspaceId={workspaceId} parentId={todo.id} />
+      </div>
+    </ScrollArea>
   )
 }
