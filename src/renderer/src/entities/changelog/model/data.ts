@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.10.2',
+    date: '2026-05-23',
+    changes: [
+      {
+        type: 'feature',
+        title: 'UI 리뉴얼 — 더 깔끔하고 현대적인 디자인',
+        description:
+          'Rally의 전체 UI가 새롭게 리뉴얼되었습니다. 더 깔끔하고 현대적인 디자인으로, 사용성이 향상되고 시각적으로도 더욱 매력적인 인터페이스를 제공합니다.'
+      }
+    ]
+  },
+  {
     version: '1.9.2',
     date: '2026-05-22',
     changes: [
