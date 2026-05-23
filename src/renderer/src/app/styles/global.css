@@ -5,6 +5,7 @@
 
 @theme inline {
   --color-background: var(--background);
+  --color-root-background: var(--root-background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
   --color-card-foreground: var(--card-foreground);
@@ -47,6 +48,12 @@
   --header-height: 35px;
   --main-height: calc(100vh - var(--header-height));
   --background: oklch(1 0 0);
+  --root-background: oklch(0.96 0 0);
+  --root-gradient: linear-gradient(
+    135deg,
+    oklch(0.96 0.03 240) 0%,
+    oklch(0.95 0.035 30) 100%
+  );
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -71,7 +78,7 @@
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
+  --sidebar: var(--background);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.205 0 0);
   --sidebar-primary-foreground: oklch(0.985 0 0);
@@ -83,14 +90,19 @@
 
 .dark {
   --crepe-color-inline-area: oklch(0.145 0 0);
-  --background: oklch(0.145 0 0);
-  /* --background: oklch(39.091% 0.08592 21.793); */
-  --foreground: oklch(0.985 0 0);
+  --background: oklch(14.958% 0.00002 271.152);
+  --root-background: oklch(9.693% 0.00001 271.152);
+  --root-gradient: linear-gradient(
+    135deg,
+    oklch(0.22 0.06 240) 0%,
+    oklch(0.18 0.07 30) 100%
+  );
+  --foreground: oklch(0.885 0 0);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
   --popover: oklch(0.145 0 0);
   --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.985 0 0);
+  --primary: oklch(0.885 0 0);
   --primary-foreground: oklch(0.205 0 0);
   --secondary: oklch(0.269 0 0);
   --secondary-foreground: oklch(0.985 0 0);
@@ -108,12 +120,12 @@
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar: var(--background);
+  --sidebar-foreground: oklch(0.885 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.885 0 0);
   --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-accent-foreground: oklch(0.885 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
 }
@@ -124,7 +136,9 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: var(--root-gradient);
+    background-attachment: fixed;
   }
 }
 
@@ -134,7 +148,9 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: var(--root-gradient);
+    background-attachment: fixed;
   }
 }
 
@@ -309,10 +325,12 @@
   }
 }
 
-/* React Flow 다크모드 오버라이드 */
-.dark .react-flow__background {
-  background-color: var(--muted);
+/* React Flow 배경: 테마 그라디언트가 비치도록 투명 처리 */
+.react-flow__background {
+  background-color: transparent;
 }
+
+/* React Flow 다크모드 오버라이드 */
 
 .dark .react-flow__controls {
   background: transparent;

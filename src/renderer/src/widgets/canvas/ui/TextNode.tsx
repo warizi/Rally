@@ -1,6 +1,7 @@
 import { memo, useState, useCallback } from 'react'
 import { Handle, Position, NodeResizer, type NodeProps } from '@xyflow/react'
 import { useUpdateCanvasNode, type TextNode as TextNodeType } from '@entities/canvas'
+import { ScrollArea } from '@shared/ui/scroll-area'
 
 function TextNodeComponent({ id, data, selected }: NodeProps<TextNodeType>): React.JSX.Element {
   const { mutate: updateNode } = useUpdateCanvasNode()
@@ -39,21 +40,25 @@ function TextNodeComponent({ id, data, selected }: NodeProps<TextNodeType>): Rea
       <Handle type="source" position={Position.Left} id="left" className="!w-2 !h-2" />
 
       {editing ? (
-        <textarea
-          autoFocus
-          value={localContent}
-          onChange={(e) => setLocalContent(e.target.value)}
-          onBlur={handleBlur}
-          className="nodrag nowheel w-full h-full bg-transparent outline-none resize-none text-sm"
-          placeholder="텍스트를 입력하세요..."
-        />
+        <ScrollArea className="w-full h-full nowheel">
+          <textarea
+            autoFocus
+            value={localContent}
+            onChange={(e) => setLocalContent(e.target.value)}
+            onBlur={handleBlur}
+            className="nodrag w-full bg-transparent outline-none resize-none text-sm [field-sizing:content] min-h-full"
+            placeholder="텍스트를 입력하세요..."
+          />
+        </ScrollArea>
       ) : (
-        <div
+        <ScrollArea
+          className="w-full h-full nowheel"
           onDoubleClick={() => setEditing(true)}
-          className="w-full h-full text-sm whitespace-pre-wrap cursor-text overflow-hidden"
         >
-          {localContent || <span className="text-muted-foreground">더블클릭하여 편집</span>}
-        </div>
+          <div className="text-sm whitespace-pre-wrap cursor-text">
+            {localContent || <span className="text-muted-foreground">더블클릭하여 편집</span>}
+          </div>
+        </ScrollArea>
       )}
     </div>
   )

@@ -30,7 +30,6 @@ export function RecurringTodoSection({
         title={`반복 할일 (${rules.length}개)`}
         open={open}
         onOpenChange={onOpenChange}
-        contentClassName="max-h-36 overflow-y-auto"
         headerExtra={
           <Button
             variant="outline"

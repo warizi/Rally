@@ -13,13 +13,15 @@ import { useTerminalPanelStore } from '@/features/terminal'
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
-  SidebarMenuItem
+  SidebarMenuItem,
+  SidebarTrigger
 } from '@/shared/ui/sidebar'
 
 function MainSidebar(): React.JSX.Element {
@@ -65,7 +67,7 @@ function MainSidebar(): React.JSX.Element {
 
   return (
     <>
-      <Sidebar collapsible="icon" className="mt-9">
+      <Sidebar collapsible="icon" variant="floating" className="!top-9 !h-[calc(100svh-2.2rem)]">
         <SidebarHeader>
           <WorkspaceSwitcher />
         </SidebarHeader>
@@ -141,6 +143,11 @@ function MainSidebar(): React.JSX.Element {
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
+        <SidebarFooter>
+          <div className="px-0.5">
+            <SidebarTrigger />
+          </div>
+        </SidebarFooter>
       </Sidebar>
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
