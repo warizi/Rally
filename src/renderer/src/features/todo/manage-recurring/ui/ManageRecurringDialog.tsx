@@ -4,6 +4,7 @@ import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
 import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,7 +90,7 @@ export function ManageRecurringDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="sm:max-w-2xl flex flex-col max-h-[80vh]">
+        <DialogContent className="sm:max-w-2xl flex flex-col h-[80vh]">
           <div className="flex items-center gap-3">
             <DialogTitle>반복 할일 관리</DialogTitle>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -103,9 +104,10 @@ export function ManageRecurringDialog({
               <p>등록된 반복 할일이 없습니다</p>
             </div>
           ) : (
-            <div className="overflow-y-auto min-h-0 divide-y divide-border">
-              {rules.map((rule) => (
-                <div key={rule.id} className="flex items-start justify-between py-3 gap-2">
+            <ScrollArea className="flex-1 min-h-0">
+              <div className="divide-y divide-border">
+                {rules.map((rule) => (
+                  <div key={rule.id} className="flex items-start justify-between py-3 gap-2">
                   <div className="min-w-0 flex-1 space-y-1.5">
                     <div className="flex items-center gap-2">
                       <Badge
@@ -148,10 +150,11 @@ export function ManageRecurringDialog({
                         삭제
                       </DropdownMenuItem>
                     </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              ))}
-            </div>
+                    </DropdownMenu>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
           )}
         </DialogContent>
       </Dialog>
