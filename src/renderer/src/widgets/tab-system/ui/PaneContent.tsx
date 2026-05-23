@@ -12,7 +12,7 @@ interface PaneContentProps {
 
 function LoadingFallback(): React.ReactElement {
   return (
-    <div className="flex-1 flex items-center justify-center w-full h-full">
+    <div className="flex-1 flex items-center justify-center w-full h-full rounded-lg">
       <div className="animate-spin size-6 border-2 border-primary border-t-transparent rounded-full" />
     </div>
   )
@@ -20,7 +20,7 @@ function LoadingFallback(): React.ReactElement {
 
 function NotFoundContent({ pathname }: { pathname: string }): React.ReactElement {
   return (
-    <div className="flex-1 flex flex-col items-center justify-center bg-background">
+    <div className="flex-1 flex flex-col items-center justify-center bg-background rounded-lg">
       <p className="text-muted-foreground">페이지를 찾을 수 없습니다</p>
       <p className="text-sm text-muted-foreground/60 mt-1">{pathname}</p>
     </div>
@@ -30,7 +30,12 @@ function NotFoundContent({ pathname }: { pathname: string }): React.ReactElement
 export function PaneContent({ tab, routes, className }: PaneContentProps): React.ReactElement {
   if (!tab) {
     return (
-      <div className={cn('flex-1 flex items-center justify-center bg-background', className)}>
+      <div
+        className={cn(
+          'flex-1 flex items-center justify-center bg-background rounded-lg',
+          className
+        )}
+      >
         <p className="text-muted-foreground">탭을 선택하세요</p>
       </div>
     )
@@ -47,7 +52,7 @@ export function PaneContent({ tab, routes, className }: PaneContentProps): React
   const Component = route.component
 
   return (
-    <div className={cn('flex-1 overflow-auto bg-background', className)}>
+    <div className={cn('flex-1 overflow-auto bg-background rounded-lg', className)}>
       <Suspense fallback={<LoadingFallback />}>
         <Component key={tab.id} tabId={tab.id} params={params} search={tab.searchParams} />
       </Suspense>

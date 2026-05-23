@@ -1,3 +1,4 @@
+import { useRef } from 'react'
 import { useDroppable } from '@dnd-kit/core'
 import { SortableContext, horizontalListSortingStrategy } from '@dnd-kit/sortable'
 import { useTreeDragStore } from '@shared/store/tree-drag.store'
@@ -7,7 +8,7 @@ import { TabItem } from './TabItem'
 import { TabContextMenu } from './TabContextMenu'
 import { useTabStore } from '../model/store'
 import { ScrollArea, ScrollBar } from '@/shared/ui/scroll-area'
-import { SidebarTrigger, useSidebar } from '@/shared/ui/sidebar'
+import { useSidebar } from '@/shared/ui/sidebar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -44,6 +45,16 @@ export function TabBar({
     disabled: isFolderDrag
   })
 
+  const viewportRef = useRef<HTMLDivElement>(null)
+
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>): void => {
+    if (!viewportRef.current) return
+    // 트랙패드 가로 스왑이 있으면 native 처리 그대로 두고, 세로 휠만 가로 스크롤로 변환
+    if (e.deltaX !== 0) return
+    if (e.deltaY === 0) return
+    viewportRef.current.scrollLeft += e.deltaY
+  }
+
   if (!pane) return <div className="h-9 bg-muted" />
 
   const paneTabs = pane.tabIds.map((id) => tabs[id]).filter(Boolean)
@@ -51,18 +62,21 @@ export function TabBar({
   return (
     <div
       ref={setNodeRef}
-      className={cn('flex flex-row items-center h-9 w-full', isDragRegion && 'drag-region')}
+      className={cn('flex flex-row items-center h-10 w-full pt-0.5', isDragRegion && 'drag-region')}
     >
+      {' '}
       {showSidebarTrigger && (
-        <SidebarTrigger
+        <div
           className={cn(
-            'shrink-0 sticky left-0 z-10 bg-muted no-drag-region',
+            'shrink-0 sticky left-0 z-10 bg-none no-drag-region',
             sidebarState === 'collapsed' && 'ml-10'
           )}
         />
       )}
       <ScrollArea
-        className={cn('h-9 bg-muted', isOver && 'bg-primary/20')}
+        viewportRef={viewportRef}
+        onWheel={handleWheel}
+        className={cn('h-10 rounded-lg pb-1', isOver && 'bg-primary/20')}
         style={{ flex: 1, minWidth: 0 }}
       >
         <div className="inline-flex items-center h-9 pr-1">
@@ -88,7 +102,7 @@ export function TabBar({
       </ScrollArea>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button className="shrink-0 flex items-center justify-center size-9 bg-muted text-muted-foreground hover:text-foreground no-drag-region">
+          <button className="shrink-0 flex items-center justify-center size-8 ml-1.5 bg-none rounded-lg text-foreground hover:text-foreground no-drag-region">
             <Ellipsis className="size-4" />
           </button>
         </DropdownMenuTrigger>

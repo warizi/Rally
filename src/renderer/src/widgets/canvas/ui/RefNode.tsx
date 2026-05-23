@@ -5,6 +5,7 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { toTabOptions, PanePickerSubmenu } from '@features/entity-link/manage-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import type { RefNode as RefNodeType } from '@entities/canvas'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 
 function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>): React.JSX.Element {
@@ -133,9 +134,11 @@ function RefNodeComponent({ data, selected, dragging }: NodeProps<RefNodeType>):
             <div className="flex-1 min-h-0 bg-muted/40" />
           )
         ) : (
-          <div className="p-3 flex-1 overflow-y-auto overflow-x-hidden nowheel">
-            <p className="text-sm font-medium truncate">{data.refTitle || '(제목 없음)'}</p>
-          </div>
+          <ScrollArea className="flex-1 min-h-0 nowheel">
+            <div className="p-3">
+              <p className="text-sm font-medium truncate">{data.refTitle || '(제목 없음)'}</p>
+            </div>
+          </ScrollArea>
         )}
       </div>
     </>

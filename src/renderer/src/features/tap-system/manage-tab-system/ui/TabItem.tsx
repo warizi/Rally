@@ -67,13 +67,14 @@ export function TabItem({
         onClick={onActivate}
         onContextMenu={onContextMenu}
         className={cn(
-          'group flex items-center h-8 gap-2 px-3 py-1 mt-1 rounded-tl-md rounded-tr-md ml-1 border-t border-x border-border',
-          'cursor-pointer select-none transition-colors',
-          'hover:bg-background',
+          'group flex items-center h-8 gap-2 px-3 py-1 mr-2 rounded-md',
+          'cursor-pointer select-none transition-colors opacity-70',
+          'hover:bg-background hover:opacity-100',
           'min-w-45 max-w-45',
-          isActive && 'bg-background',
+          isActive && 'bg-background opacity-100',
+          isPaneActive && isActive && 'opacity-100 border border-primary/50',
           isDragging && 'opacity-50 z-50',
-          !isActive && 'bg-muted/30',
+          !isActive && 'bg-none',
           'no-drag-region'
         )}
       >
@@ -81,11 +82,7 @@ export function TabItem({
         <Icon
           className={cn(
             'size-4 shrink-0',
-            tab.error
-              ? 'text-destructive'
-              : iconColor
-                ? undefined
-                : 'text-muted-foreground'
+            tab.error ? 'text-destructive' : iconColor ? undefined : 'text-muted-foreground'
           )}
           style={tab.error || !iconColor ? undefined : { color: iconColor }}
         />

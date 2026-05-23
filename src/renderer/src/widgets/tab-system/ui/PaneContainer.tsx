@@ -20,7 +20,7 @@ export function PaneContainer({
 }: PaneContainerProps): React.ReactElement {
   const pane = useTabStore((state) => state.panes[paneId])
   const tabs = useTabStore((state) => state.tabs)
-  const activePaneId = useTabStore((state) => state.activePaneId)
+  // const activePaneId = useTabStore((state) => state.activePaneId)
   const setActivePane = useTabStore((state) => state.setActivePane)
 
   if (!pane) {
@@ -28,7 +28,7 @@ export function PaneContainer({
   }
 
   const activeTab = pane.activeTabId ? tabs[pane.activeTabId] : null
-  const isActivePane = activePaneId === paneId
+  // const isActivePane = activePaneId === paneId
 
   const handleFocus = (): void => {
     setActivePane(paneId)
@@ -38,8 +38,8 @@ export function PaneContainer({
     <div
       onClick={handleFocus}
       className={cn(
-        'flex flex-col h-full relative min-w-75 min-h-75 w-full overflow-hidden',
-        isActivePane && 'ring-1 ring-primary ring-inset'
+        'flex flex-col h-full relative min-w-75 min-h-75 w-full overflow-hidden px-1 pt-1'
+        // isActivePane && 'ring-1 ring-primary ring-inset'
       )}
     >
       {/* 탭 바 */}

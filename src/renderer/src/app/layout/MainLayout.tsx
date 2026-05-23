@@ -186,7 +186,7 @@ function MainLayout(): React.JSX.Element {
           <HistoryLinkToTabListener />
           {/* 트리 DnD 상태를 store에 동기화 (각 렌더러는 store 셀렉터로 구독) */}
           <TreeDragMonitor />
-          <main className="flex flex-1 overflow-hidden">
+          <main className="flex flex-1 overflow-hidden pb-2 px-1">
             <ResizablePanelGroup
               orientation="vertical"
               className="flex-1"

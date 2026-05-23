@@ -15,9 +15,11 @@ export function TerminalBottomPanel(): React.ReactElement | null {
   if (!hasBeenOpened) return null
 
   return (
-    <div className="flex flex-col h-full min-h-0 bg-background border-t border-border overflow-hidden">
+    <div className="flex flex-col h-full min-h-0 overflow-hidden">
       <TerminalTabBar />
-      <div ref={containerRef} className="flex-1 min-h-0 overflow-hidden" />
+      <div className="flex-1 min-h-0 overflow-hidden m-1.5 mt-1 mb-0 rounded-lg p-2 bg-background">
+        <div ref={containerRef} className="h-full overflow-hidden rounded-lg m-1.5" />
+      </div>
     </div>
   )
 }
