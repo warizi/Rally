@@ -65,7 +65,7 @@ function MainSidebar(): React.JSX.Element {
 
   return (
     <>
-      <Sidebar collapsible="icon" className="mt-9">
+      <Sidebar collapsible="icon" variant="floating" className="!top-9 !h-[calc(100svh-2.4rem)]">
         <SidebarHeader>
           <WorkspaceSwitcher />
         </SidebarHeader>
