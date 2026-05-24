@@ -278,6 +278,8 @@ export interface CreateTodoAction {
   priority?: TodoPriority
   dueDate?: string
   startDate?: string
+  /** 지정 시 해당 todo의 subtodo로 생성. 부모가 이미 subtodo면 service 단에서 거부됨 (2-depth 강제). */
+  parentId?: string
   subtodos?: { title: string }[]
   linkItems?: LinkRef[]
 }

@@ -40,13 +40,15 @@ are dispatched as a single sub-batch to the v1 endpoint (atomicity per sub-batch
 Action shapes by type:
 
 - todo:
-  - { type:'todo', action:'create', title, description?, status?, priority?, dueDate?, startDate?, subtodos?, linkItems? }
+  - { type:'todo', action:'create', title, description?, status?, priority?, dueDate?, startDate?, parentId?, subtodos?, linkItems? }
   - { type:'todo', action:'update', id, title?, description?, status?, priority?, isDone?, parentId?, dueDate?, startDate?, linkItems?, unlinkItems? }
   - { type:'todo', action:'delete', id }
 
+Create a subtodo directly via create.parentId — supports full fields (description / priority / dates / linkItems).
 Move a todo across the tree via update.parentId: null = promote to root, string = move under that parent.
 Only 2-depth hierarchy is allowed — a todo that already has subtodos cannot itself become a subtodo,
-and a subtodo cannot have children. Cross-workspace parents are rejected.
+and a subtodo cannot have children (combining create.parentId with create.subtodos is rejected).
+Cross-workspace parents are rejected.
 
 - schedule:
   - { type:'schedule', action:'create', title, description?, location?, allDay?, startAt, endAt, color?, priority? }
@@ -79,6 +81,7 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
               priority: PRIORITY.optional(),
               dueDate: z.string().optional(),
               startDate: z.string().optional(),
+              parentId: z.string().optional(),
               subtodos: z.array(z.object({ title: z.string() })).optional(),
               linkItems: z
                 .array(z.object({ type: LINK_TYPE, id: z.string() }))
