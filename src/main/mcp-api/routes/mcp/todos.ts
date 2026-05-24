@@ -159,15 +159,24 @@ export function registerMcpTodoRoutes(router: Router): void {
 
       const results = processBatchActions<TodoAction, ManageTodoResult>(body.actions, (action) => {
         if (action.action === 'create') {
+          if (typeof action.parentId === 'string') {
+            assertValidId(action.parentId, 'parentId')
+          }
           const result = todoService.create(wsId, {
             title: action.title,
             description: action.description,
             status: action.status,
             priority: action.priority,
+            parentId: action.parentId,
             dueDate: action.dueDate ? new Date(action.dueDate) : undefined,
             startDate: action.startDate ? new Date(action.startDate) : undefined
           })
           if (action.subtodos?.length) {
+            if (action.parentId) {
+              throw new ValidationError(
+                'Subtodo cannot have children. Only 2-depth hierarchy is allowed (parent → subtodo).'
+              )
+            }
             for (const sub of action.subtodos) {
               todoService.create(wsId, { title: sub.title, parentId: result.id })
             }
