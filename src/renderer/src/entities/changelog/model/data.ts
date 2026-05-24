@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.10.3',
+    date: '2026-05-25',
+    changes: [
+      {
+        type: 'fix',
+        title: 'mcp todo 도구에서 subtodo를 추가 생성할 수 있던 문제 수정',
+        description:
+          'mcp todo 도구에서 subtodo를 추가 할 수 없던 문제가 수정되었습니다. 이제 todo 도구에서 subtodo를 정상적으로 추가할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.10.2',
     date: '2026-05-23',
     changes: [
