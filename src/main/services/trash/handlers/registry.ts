@@ -15,9 +15,7 @@ export function registerTrashHandler(handler: SoftDeleteHandler): void {
   handlers.set(handler.entityType, handler)
 }
 
-export function getTrashHandler(
-  entityType: TrashEntityKind
-): SoftDeleteHandler | undefined {
+export function getTrashHandler(entityType: TrashEntityKind): SoftDeleteHandler | undefined {
   return handlers.get(entityType)
 }
 

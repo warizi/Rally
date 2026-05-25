@@ -14,7 +14,8 @@ import {
   pdfFiles,
   imageFiles,
   folders,
-  templates
+  templates,
+  customSkills
 } from '../../db/schema'
 import { NotFoundError, ValidationError } from '../../lib/errors'
 import { workspaceRepository } from '../../repositories/workspace'
@@ -61,6 +62,7 @@ export const trashPurger = {
       db.delete(imageFiles).where(eq(imageFiles.trashBatchId, batchId)).run()
       db.delete(folders).where(eq(folders.trashBatchId, batchId)).run()
       db.delete(templates).where(eq(templates.trashBatchId, batchId)).run()
+      db.delete(customSkills).where(eq(customSkills.trashBatchId, batchId)).run()
 
       db.delete(trashBatches).where(eq(trashBatches.id, batchId)).run()
     })

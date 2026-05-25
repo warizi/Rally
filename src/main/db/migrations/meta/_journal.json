@@ -176,6 +176,41 @@
       "when": 1778688809846,
       "tag": "0024_ambiguous_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1779686334760,
+      "tag": "0025_boring_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1779710493570,
+      "tag": "0026_old_impossible_man",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "6",
+      "when": 1779710866312,
+      "tag": "0027_sloppy_logan",
+      "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1779711030374,
+      "tag": "0028_nervous_living_tribunal",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "6",
+      "when": 1779711653837,
+      "tag": "0029_majestic_robbie_robertson",
+      "breakpoints": true
     }
   ]
 }

@@ -929,6 +929,7 @@ type TrashEntityKind =
   | 'schedule'
   | 'recurring_rule'
   | 'template'
+  | 'custom_skill'
 type TrashRetentionKey = '1' | '7' | '30' | '90' | '365' | 'never'
 
 interface TrashBatchSummary {
@@ -972,6 +973,57 @@ interface NoteStyleTemplateAPI {
     settingsJson: string
   }) => Promise<IpcResponse<NoteStyleTemplateItem>>
   remove: (id: string) => Promise<IpcResponse<void>>
+}
+
+type SkillSource = 'system' | 'custom'
+
+interface SkillItem {
+  id: string
+  name: string
+  description: string
+  content: string
+  mcpTools: string[]
+  triggers: string[]
+  source: SkillSource
+  editable: boolean
+  /** system skill 에 사용자 override 가 적용된 상태인지. */
+  hasOverride?: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CreateCustomSkillInput {
+  name: string
+  description: string
+  content: string
+  mcpTools?: string[]
+  triggers?: string[]
+}
+
+interface UpdateCustomSkillInput {
+  description?: string
+  content?: string
+  mcpTools?: string[]
+  triggers?: string[]
+}
+
+interface SkillApplyStatus {
+  id: string
+  name: string
+  applied: boolean
+}
+
+interface SkillAPI {
+  list: () => Promise<IpcResponse<SkillItem[]>>
+  get: (id: string) => Promise<IpcResponse<SkillItem>>
+  create: (input: CreateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
+  update: (id: string, input: UpdateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
+  remove: (workspaceId: string, id: string) => Promise<IpcResponse<{ batchId: string }>>
+  resetSystem: (id: string) => Promise<IpcResponse<SkillItem>>
+  apply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
+  unapply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
+  status: () => Promise<IpcResponse<SkillApplyStatus[]>>
+  export: (id: string) => Promise<IpcResponse<{ path: string } | null>>
 }
 
 interface TrashAPI {
@@ -1038,6 +1090,7 @@ interface API {
   trash: TrashAPI
   onboarding: OnboardingAPI
   noteStyleTemplate: NoteStyleTemplateAPI
+  skill: SkillAPI
 }
 
 interface ShellAPI {

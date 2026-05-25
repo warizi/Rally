@@ -17,7 +17,8 @@ import {
   pdfFiles,
   imageFiles,
   folders,
-  templates
+  templates,
+  customSkills
 } from '../../db/schema'
 import { NotFoundError } from '../../lib/errors'
 import { workspaceRepository } from '../../repositories/workspace'
@@ -202,6 +203,7 @@ export const trashRestorer = {
       db.update(imageFiles).set(setActive).where(eq(imageFiles.trashBatchId, batchId)).run()
       db.update(folders).set(setActive).where(eq(folders.trashBatchId, batchId)).run()
       db.update(templates).set(setActive).where(eq(templates.trashBatchId, batchId)).run()
+      db.update(customSkills).set(setActive).where(eq(customSkills.trashBatchId, batchId)).run()
 
       // 3. folder rename 충돌 발생 시 모든 자식 row 의 relativePath prefix 갱신
       //    — 위에서 deletedAt 해제 후 호출 (bulkUpdatePathPrefix 는 활성 row 만 대상)

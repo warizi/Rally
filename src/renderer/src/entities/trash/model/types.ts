@@ -9,6 +9,7 @@ export type TrashEntityKind =
   | 'schedule'
   | 'recurring_rule'
   | 'template'
+  | 'custom_skill'
 
 export type TrashRetentionKey = '1' | '7' | '30' | '90' | '365' | 'never'
 
@@ -50,7 +51,8 @@ const KIND_LABEL: Record<TrashEntityKind, string> = {
   todo: '할 일',
   schedule: '일정',
   recurring_rule: '반복 규칙',
-  template: '템플릿'
+  template: '템플릿',
+  custom_skill: '커스텀 Skill'
 }
 
 export function trashKindLabel(kind: TrashEntityKind): string {

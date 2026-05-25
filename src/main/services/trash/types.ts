@@ -16,6 +16,7 @@ export type TrashEntityKind =
   | 'schedule'
   | 'recurring_rule'
   | 'template'
+  | 'custom_skill'
 
 export const SUPPORTED_KINDS: ReadonlySet<TrashEntityKind> = new Set([
   'canvas',
@@ -27,7 +28,8 @@ export const SUPPORTED_KINDS: ReadonlySet<TrashEntityKind> = new Set([
   'pdf',
   'image',
   'folder',
-  'template'
+  'template',
+  'custom_skill'
 ])
 
 export interface TrashBatchSummary {

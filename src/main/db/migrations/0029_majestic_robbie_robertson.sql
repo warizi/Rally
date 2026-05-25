@@ -1,0 +1,1 @@
+ALTER TABLE `custom_skills` ADD `trash_batch_id` text REFERENCES trash_batches(id);

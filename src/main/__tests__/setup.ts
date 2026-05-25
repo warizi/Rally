@@ -43,6 +43,8 @@ const TABLES = [
   'tags',
   'templates',
   'noteStyleTemplates',
+  'customSkills',
+  'systemSkillOverrides',
   'folders',
   'trashBatches',
   'workspaces',

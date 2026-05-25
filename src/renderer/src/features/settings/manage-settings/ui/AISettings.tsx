@@ -11,6 +11,7 @@ import {
 import { Button } from '@/shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
+import { SkillsManager } from '@widgets/skills-manager'
 
 interface CommandFile {
   name: string
@@ -305,6 +306,8 @@ export function AISettings(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      <SkillsManager />
 
       {commandFiles.length > 0 && (
         <div className="space-y-2 border-t pt-4">

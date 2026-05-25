@@ -60,7 +60,9 @@ const KIND_TO_ICON: Record<TrashEntityKind, TabIconKey> = {
   todo: 'todo',
   schedule: 'calendar',
   recurring_rule: 'todo',
-  template: 'note'
+  template: 'note',
+  // TabIcon 에 skill 전용이 아직 없어 'note' 로 fallback (텍스트 문서 느낌)
+  custom_skill: 'note'
 }
 
 export function TrashPage(): JSX.Element {
@@ -111,8 +113,9 @@ export function TrashPage(): JSX.Element {
               />
             }
           />
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="relative w-56">
+          <div className="flex flex-col gap-2 @[400px]:flex-row @[400px]:items-center">
+            {/* 검색바: 좁을 땐 가로 가득, 400px+ 부터 고정폭 */}
+            <div className="relative w-full @[400px]:w-56 @[800px]:w-72">
               <Search className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
               <Input
                 placeholder="제목 검색..."
@@ -130,7 +133,7 @@ export function TrashPage(): JSX.Element {
                 </button>
               )}
             </div>
-            <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-2 @[400px]:ml-auto">
               <span className="text-xs text-muted-foreground">{batches.length}개 항목</span>
               <AlertDialog>
                 <AlertDialogTrigger asChild>
@@ -139,9 +142,11 @@ export function TrashPage(): JSX.Element {
                     size="sm"
                     className="h-8 text-xs"
                     disabled={isEmpty || emptyM.isPending}
+                    title="전체 비우기"
                   >
-                    <Trash className="size-3.5 mr-1" />
-                    전체 비우기
+                    <Trash className="size-3.5 @[400px]:mr-1" />
+                    {/* 좁을 땐 아이콘만 */}
+                    <span className="hidden @[400px]:inline">전체 비우기</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -175,28 +180,29 @@ export function TrashPage(): JSX.Element {
           <div className="text-sm">휴지통이 비어있습니다</div>
         </div>
       ) : (
-        <ul className="divide-y border rounded-md bg-card">
+        <ul className="divide-y border rounded-md bg-card w-full max-w-full">
           {batches.map((b) => {
             const Icon = TAB_ICON[KIND_TO_ICON[b.rootEntityType]]
             return (
               <li
                 key={b.id}
-                className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40 transition-colors"
+                className="flex items-center gap-2 px-3 py-3 hover:bg-muted/40 transition-colors @[400px]:gap-3 @[400px]:px-4 w-full max-w-full min-w-0"
               >
                 <Icon className="size-4 shrink-0 text-muted-foreground" />
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 max-w-full overflow-hidden">
                   <div className="text-sm truncate">
-                    <span className="text-muted-foreground mr-2">
+                    {/* kind 라벨은 ≥400px 부터 노출, 좁을 땐 아이콘만으로 구분 */}
+                    <span className="text-muted-foreground mr-2 hidden @[400px]:inline">
                       [{trashKindLabel(b.rootEntityType)}]
                     </span>
                     {b.rootTitle || '(제목 없음)'}
                   </div>
-                  <div className="text-xs text-muted-foreground mt-0.5 flex gap-2">
-                    <span>삭제됨: {relativeTime(b.deletedAt)}</span>
+                  <div className="text-xs text-muted-foreground mt-0.5 flex gap-2 truncate">
+                    <span className="shrink-0">{relativeTime(b.deletedAt)}</span>
                     {b.childCount > 0 && (
                       <>
-                        <span>·</span>
-                        <span>하위 항목 {b.childCount}개</span>
+                        <span className="shrink-0">·</span>
+                        <span className="shrink-0">하위 {b.childCount}개</span>
                       </>
                     )}
                   </div>
@@ -205,23 +211,25 @@ export function TrashPage(): JSX.Element {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 text-xs"
+                    className="h-7 px-2 text-xs"
                     onClick={() => restoreM.mutate({ workspaceId, batchId: b.id })}
                     disabled={restoreM.isPending}
+                    title="복구"
                   >
-                    <RotateCcw className="size-3.5 mr-1" />
-                    복구
+                    <RotateCcw className="size-3.5 @[400px]:mr-1" />
+                    <span className="hidden @[400px]:inline">복구</span>
                   </Button>
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-7 text-xs text-destructive hover:text-destructive"
+                        className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                         disabled={purgeM.isPending}
+                        title="영구 삭제"
                       >
-                        <Trash className="size-3.5 mr-1" />
-                        영구 삭제
+                        <Trash className="size-3.5 @[400px]:mr-1" />
+                        <span className="hidden @[400px]:inline">영구 삭제</span>
                       </Button>
                     </AlertDialogTrigger>
                     <AlertDialogContent>

@@ -28,6 +28,7 @@ import { appInfoApi } from './app-info'
 import { mcpClientApi } from './mcp-client'
 import { terminalApi } from './terminal'
 import { noteStyleTemplateApi } from './note-style-template'
+import { skillApi } from './skill'
 
 export { shellApi } from './shell'
 
@@ -61,5 +62,6 @@ export const api = {
   appInfo: appInfoApi,
   mcpClient: mcpClientApi,
   terminal: terminalApi,
-  noteStyleTemplate: noteStyleTemplateApi
+  noteStyleTemplate: noteStyleTemplateApi,
+  skill: skillApi
 }

@@ -1,0 +1,1 @@
+ALTER TABLE `custom_skills` ADD `deleted_at` integer;
