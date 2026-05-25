@@ -1004,12 +1004,21 @@ interface UpdateCustomSkillInput {
   triggers?: string[]
 }
 
+interface SkillApplyStatus {
+  id: string
+  name: string
+  applied: boolean
+}
+
 interface SkillAPI {
   list: () => Promise<IpcResponse<SkillItem[]>>
   get: (id: string) => Promise<IpcResponse<SkillItem>>
   create: (input: CreateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
   update: (id: string, input: UpdateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
   remove: (id: string) => Promise<IpcResponse<void>>
+  apply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
+  unapply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
+  status: () => Promise<IpcResponse<SkillApplyStatus[]>>
 }
 
 interface TrashAPI {

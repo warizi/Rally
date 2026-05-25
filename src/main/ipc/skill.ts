@@ -6,6 +6,7 @@ import {
   type CreateCustomSkillInput,
   type UpdateCustomSkillInput
 } from '../services/skill'
+import { skillSyncService } from '../services/skill-sync'
 
 export function registerSkillHandlers(): void {
   ipcMain.handle('skill:list', (): IpcResponse => handle(() => skillService.list()))
@@ -29,6 +30,27 @@ export function registerSkillHandlers(): void {
 
   ipcMain.handle(
     'skill:remove',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.remove(id))
+    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
+      handle(() =>
+        // 커스텀 skill 삭제 시 ~/.claude/skills 의 적용 파일도 함께 정리.
+        // 이름 조회 → DB 삭제 → 파일 정리 순서 (이름 조회 실패 시 IPC 가 NotFoundError 반환).
+        {
+          const item = skillService.get(id)
+          skillService.remove(id)
+          skillSyncService.cleanupByName(item.name)
+        }
+      )
   )
+
+  ipcMain.handle(
+    'skill:apply',
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillSyncService.apply(id))
+  )
+
+  ipcMain.handle(
+    'skill:unapply',
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillSyncService.unapply(id))
+  )
+
+  ipcMain.handle('skill:status', (): IpcResponse => handle(() => skillSyncService.status()))
 }

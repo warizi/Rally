@@ -21,5 +21,8 @@ export const skillApi = {
   create: (input: CreateCustomSkillInput) => ipcRenderer.invoke('skill:create', input),
   update: (id: string, input: UpdateCustomSkillInput) =>
     ipcRenderer.invoke('skill:update', id, input),
-  remove: (id: string) => ipcRenderer.invoke('skill:remove', id)
+  remove: (id: string) => ipcRenderer.invoke('skill:remove', id),
+  apply: (id: string) => ipcRenderer.invoke('skill:apply', id),
+  unapply: (id: string) => ipcRenderer.invoke('skill:unapply', id),
+  status: () => ipcRenderer.invoke('skill:status')
 }
