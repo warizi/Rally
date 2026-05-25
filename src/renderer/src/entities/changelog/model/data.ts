@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11.3',
+    date: '2026-05-26',
+    changes: [
+      {
+        type: 'improvement',
+        title: 'MCP 도구 개선',
+        description:
+          'MCP 서버의 manage workspace 도구가 추가되었습니다. 이제 AI가 워크스페이스의 정보와 전환을 관리할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.11.2',
     date: '2026-05-26',
     changes: [
