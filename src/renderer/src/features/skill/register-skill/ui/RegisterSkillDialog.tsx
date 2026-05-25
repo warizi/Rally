@@ -226,7 +226,7 @@ export function RegisterSkillDialog({ open, onOpenChange }: Props): JSX.Element 
                       <FormControl>
                         <Textarea
                           placeholder="추가 지침, 예시, 주의사항 등을 markdown 으로 작성"
-                          className="min-h-32"
+                          className="scrollbar-thin min-h-32"
                           {...field}
                         />
                       </FormControl>

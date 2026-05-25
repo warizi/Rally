@@ -69,6 +69,7 @@ export function useUpdateSkill(): UseMutationResult<
       return res.data
     },
     onSuccess: () => {
+      // update 시 backend 가 자동 unapply 하므로 list / status 둘 다 재조회 필요.
       qc.invalidateQueries({ queryKey: [SKILL_KEY] })
     }
   })

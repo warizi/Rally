@@ -183,9 +183,14 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
                     <FormItem>
                       <FormLabel>SKILL.md 본문</FormLabel>
                       <FormControl>
+                        {/*
+                          Textarea 는 native element 라 div 기반 ScrollArea 로 감쌀 수 없음.
+                          대신 전역 .scrollbar-thin (global.css) 으로 native scrollbar 를
+                          ScrollArea 와 동일한 모양으로 스타일링.
+                        */}
                         <Textarea
                           placeholder="---&#10;name: ...&#10;description: ...&#10;---&#10;&#10;본문..."
-                          className="field-sizing-fixed h-80 font-mono text-xs leading-relaxed"
+                          className="field-sizing-fixed scrollbar-thin h-80 font-mono text-xs leading-relaxed"
                           {...field}
                         />
                       </FormControl>
@@ -200,39 +205,47 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
                   )}
                 />
 
-                <FormField
-                  control={form.control}
-                  name="mcpTools"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>MCP Tools</FormLabel>
-                      <FormControl>
-                        <ToolMultiSelect value={field.value} onChange={field.onChange} />
-                      </FormControl>
-                      <FormDescription className="text-[11px]">
-                        이 skill 이 활용할 Rally MCP tool 들을 선택하세요.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/*
+                  mcpTools / triggers 메타 필드는 커스텀 skill 전용.
+                  system skill 은 SKILL.md frontmatter / 본문에서 직접 명시하므로 별도 입력 X.
+                */}
+                {!isSystem && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="mcpTools"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>MCP Tools</FormLabel>
+                          <FormControl>
+                            <ToolMultiSelect value={field.value} onChange={field.onChange} />
+                          </FormControl>
+                          <FormDescription className="text-[11px]">
+                            이 skill 이 활용할 Rally MCP tool 들을 선택하세요.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                <FormField
-                  control={form.control}
-                  name="triggersCsv"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>트리거 키워드</FormLabel>
-                      <FormControl>
-                        <Input placeholder="할일, todo, 오늘 뭐 해야 해" {...field} />
-                      </FormControl>
-                      <FormDescription className="text-[11px]">
-                        쉼표 또는 줄바꿈으로 구분
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    <FormField
+                      control={form.control}
+                      name="triggersCsv"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>트리거 키워드</FormLabel>
+                          <FormControl>
+                            <Input placeholder="할일, todo, 오늘 뭐 해야 해" {...field} />
+                          </FormControl>
+                          <FormDescription className="text-[11px]">
+                            쉼표 또는 줄바꿈으로 구분
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </>
+                )}
               </div>
             </ScrollArea>
           </form>

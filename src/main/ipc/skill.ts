@@ -27,7 +27,16 @@ export function registerSkillHandlers(): void {
   ipcMain.handle(
     'skill:update',
     (_: IpcMainInvokeEvent, id: string, input: UpdateCustomSkillInput): IpcResponse =>
-      handle(() => skillService.update(id, input))
+      handle(() => {
+        const updated = skillService.update(id, input)
+        // 수정 시점에 ~/.claude/skills/<name>/SKILL.md 가 존재 = 적용된 상태.
+        // 그 파일은 새 내용 반영 안 되어 stale 이므로 명시적으로 해제 → UI 도 적용됨 배지 제거.
+        // 사용자가 새 내용을 적용하려면 "적용" 버튼 다시 클릭.
+        if (skillSyncService.isApplied(updated.name)) {
+          skillSyncService.unapply(id)
+        }
+        return updated
+      })
   )
 
   ipcMain.handle(
@@ -46,7 +55,15 @@ export function registerSkillHandlers(): void {
 
   ipcMain.handle(
     'skill:resetSystem',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.resetSystem(id))
+    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
+      handle(() => {
+        const reset = skillService.resetSystem(id)
+        // 리셋도 적용 파일을 stale 로 만들므로 동일하게 자동 해제.
+        if (skillSyncService.isApplied(reset.name)) {
+          skillSyncService.unapply(id)
+        }
+        return reset
+      })
   )
 
   ipcMain.handle(
