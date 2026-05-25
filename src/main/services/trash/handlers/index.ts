@@ -19,6 +19,7 @@ import { csvHandler } from './csv.handler'
 import { pdfHandler } from './pdf.handler'
 import { imageHandler } from './image.handler'
 import { folderHandler } from './folder.handler'
+import { customSkillHandler } from './custom-skill.handler'
 
 registerTrashHandler(canvasHandler)
 registerTrashHandler(todoHandler)
@@ -30,6 +31,7 @@ registerTrashHandler(csvHandler)
 registerTrashHandler(pdfHandler)
 registerTrashHandler(imageHandler)
 registerTrashHandler(folderHandler)
+registerTrashHandler(customSkillHandler)
 
 export { registerTrashHandler, getTrashHandler, listRegisteredHandlers } from './registry'
 export type { SoftDeleteHandler, HandlerContext } from './handler.interface'

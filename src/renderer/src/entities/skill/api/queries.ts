@@ -27,17 +27,6 @@ export function useSkills(): UseQueryResult<SkillItem[]> {
   })
 }
 
-export function useTrashedSkills(): UseQueryResult<SkillItem[]> {
-  return useQuery({
-    queryKey: [SKILL_KEY, 'trashed'],
-    queryFn: async (): Promise<SkillItem[]> => {
-      const res: IpcResponse<SkillItem[]> = await window.api.skill.listTrashed()
-      if (!res.success) throwIpcError(res)
-      return res.data ?? []
-    }
-  })
-}
-
 export function useSkillStatus(): UseQueryResult<SkillApplyStatus[]> {
   return useQuery({
     queryKey: [SKILL_KEY, 'status'],
@@ -85,42 +74,22 @@ export function useUpdateSkill(): UseMutationResult<
   })
 }
 
-export function useRemoveSkill(): UseMutationResult<void, Error, { id: string }> {
+export function useRemoveSkill(): UseMutationResult<
+  { batchId: string } | undefined,
+  Error,
+  { workspaceId: string; id: string }
+> {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id }) => {
-      const res: IpcResponse<void> = await window.api.skill.remove(id)
-      if (!res.success) throwIpcError(res)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [SKILL_KEY] })
-    }
-  })
-}
-
-export function useRestoreSkill(): UseMutationResult<SkillItem | undefined, Error, { id: string }> {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id }) => {
-      const res: IpcResponse<SkillItem> = await window.api.skill.restore(id)
+    mutationFn: async ({ workspaceId, id }) => {
+      const res: IpcResponse<{ batchId: string }> = await window.api.skill.remove(workspaceId, id)
       if (!res.success) throwIpcError(res)
       return res.data
     },
     onSuccess: () => {
+      // skill 목록뿐 아니라 trash 목록도 갱신.
       qc.invalidateQueries({ queryKey: [SKILL_KEY] })
-    }
-  })
-}
-
-export function usePurgeSkill(): UseMutationResult<void, Error, { id: string }> {
-  const qc = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ id }) => {
-      const res: IpcResponse<void> = await window.api.skill.purge(id)
-      if (!res.success) throwIpcError(res)
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: [SKILL_KEY] })
+      qc.invalidateQueries({ queryKey: ['trash'] })
     }
   })
 }

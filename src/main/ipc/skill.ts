@@ -8,11 +8,10 @@ import {
 } from '../services/skill'
 import { skillSyncService } from '../services/skill-sync'
 import { skillExportService } from '../services/skill-export'
+import { trashService } from '../services/trash'
 
 export function registerSkillHandlers(): void {
   ipcMain.handle('skill:list', (): IpcResponse => handle(() => skillService.list()))
-
-  ipcMain.handle('skill:listTrashed', (): IpcResponse => handle(() => skillService.listTrashed()))
 
   ipcMain.handle(
     'skill:get',
@@ -33,24 +32,16 @@ export function registerSkillHandlers(): void {
 
   ipcMain.handle(
     'skill:remove',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
+    (_: IpcMainInvokeEvent, workspaceId: string, id: string): IpcResponse =>
       handle(() => {
-        // soft delete (휴지통 이동) + ~/.claude/skills 의 적용 파일 정리.
-        // 적용 파일은 복구 후 다시 수동 적용 필요 (의도된 동작 — 휴지통에 있는 동안 Claude 가 인식하지 않도록).
-        const item = skillService.get(id)
-        skillService.remove(id)
-        skillSyncService.cleanupByName(item.name)
+        // 1. 도메인 검증 (system 차단, not-found 차단) + name 회수
+        const { name } = skillService.ensureCustomDeletable(id)
+        // 2. trash 시스템에 위임 — trash_batches row 생성 + deletedAt/trashBatchId 세팅
+        const batchId = trashService.softRemove(workspaceId, 'custom_skill', id)
+        // 3. 적용된 ~/.claude/skills/<name>/ 디렉터리 정리 (복구 시 재적용 필요)
+        skillSyncService.cleanupByName(name)
+        return { batchId }
       })
-  )
-
-  ipcMain.handle(
-    'skill:restore',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.restore(id))
-  )
-
-  ipcMain.handle(
-    'skill:purge',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.purge(id))
   )
 
   ipcMain.handle(

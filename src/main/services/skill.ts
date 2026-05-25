@@ -200,11 +200,6 @@ export const skillService = {
     return [...system, ...custom]
   },
 
-  /** 휴지통에 있는 커스텀 skill 목록 (deletedAt desc). */
-  listTrashed(): SkillItem[] {
-    return customSkillRepository.findTrashed().map(toItem)
-  },
-
   get(id: string): SkillItem {
     if (id.startsWith('system:')) {
       const name = id.slice('system:'.length)
@@ -316,52 +311,17 @@ export const skillService = {
   },
 
   /**
-   * Soft delete — 휴지통으로 이동. 활성 목록에서는 사라지지만 복구 가능.
+   * 삭제 가드 — system / not-found 만 검사. 실제 soft delete 는 trashService 가 담당.
+   * Renderer 에서 직접 `trash:softRemove('custom_skill', id)` 를 호출해도 되지만,
+   * skill 도메인 검증을 한 곳에 두기 위해 wrapper 유지.
    */
-  remove(id: string): void {
+  ensureCustomDeletable(id: string): { name: string } {
     if (id.startsWith('system:')) {
       throw new ValidationError('기본 skill 은 삭제할 수 없습니다.')
     }
     const existing = customSkillRepository.findById(id)
     if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
-    if (existing.deletedAt) return // 이미 휴지통
-    customSkillRepository.update(id, { deletedAt: new Date() })
-  },
-
-  /**
-   * 휴지통에서 복구.
-   * 같은 이름의 활성 skill 이 이미 있으면 ConflictError (복구 거부).
-   */
-  restore(id: string): SkillItem {
-    if (id.startsWith('system:')) {
-      throw new ValidationError('기본 skill 은 복구 대상이 아닙니다.')
-    }
-    const existing = customSkillRepository.findById(id)
-    if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
-    if (!existing.deletedAt) return toItem(existing) // 이미 활성
-    if (customSkillRepository.findActiveByName(existing.name)) {
-      throw new ConflictError(
-        `이미 같은 이름의 활성 skill 이 있습니다: ${existing.name}. 먼저 삭제하거나 이름을 바꾸세요.`
-      )
-    }
-    const row = customSkillRepository.update(id, { deletedAt: null })
-    if (!row) throw new NotFoundError(`Skill not found: ${id}`)
-    return toItem(row)
-  },
-
-  /**
-   * 영구 삭제 — 휴지통에서 비우기. 휴지통에 있는 항목만 대상.
-   */
-  purge(id: string): void {
-    if (id.startsWith('system:')) {
-      throw new ValidationError('기본 skill 은 영구 삭제 대상이 아닙니다.')
-    }
-    const existing = customSkillRepository.findById(id)
-    if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
-    if (!existing.deletedAt) {
-      throw new ValidationError('휴지통에 있는 항목만 영구 삭제할 수 있습니다.')
-    }
-    customSkillRepository.delete(id)
+    return { name: existing.name }
   },
 
   isSystemName(name: string): boolean {

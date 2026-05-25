@@ -7,13 +7,10 @@ export type {
 } from './model/types'
 export {
   useSkills,
-  useTrashedSkills,
   useSkillStatus,
   useCreateSkill,
   useUpdateSkill,
   useRemoveSkill,
-  useRestoreSkill,
-  usePurgeSkill,
   useResetSystemSkill,
   useApplySkill,
   useUnapplySkill

@@ -929,6 +929,7 @@ type TrashEntityKind =
   | 'schedule'
   | 'recurring_rule'
   | 'template'
+  | 'custom_skill'
 type TrashRetentionKey = '1' | '7' | '30' | '90' | '365' | 'never'
 
 interface TrashBatchSummary {
@@ -1014,13 +1015,10 @@ interface SkillApplyStatus {
 
 interface SkillAPI {
   list: () => Promise<IpcResponse<SkillItem[]>>
-  listTrashed: () => Promise<IpcResponse<SkillItem[]>>
   get: (id: string) => Promise<IpcResponse<SkillItem>>
   create: (input: CreateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
   update: (id: string, input: UpdateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
-  remove: (id: string) => Promise<IpcResponse<void>>
-  restore: (id: string) => Promise<IpcResponse<SkillItem>>
-  purge: (id: string) => Promise<IpcResponse<void>>
+  remove: (workspaceId: string, id: string) => Promise<IpcResponse<{ batchId: string }>>
   resetSystem: (id: string) => Promise<IpcResponse<SkillItem>>
   apply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
   unapply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>

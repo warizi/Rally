@@ -1,4 +1,5 @@
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { trashBatches } from './trash-batch'
 
 /**
  * 사용자가 등록한 커스텀 Claude skill. 전역 (workspace 무관).
@@ -23,6 +24,14 @@ export const customSkills = sqliteTable('custom_skills', {
   triggersJson: text('triggers_json').notNull().default('[]'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
   updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
-  /** Soft delete 마커 — null 이면 활성, timestamp 면 휴지통. customSkills 는 workspace 무관 전역이라 trash_batches 와 연결하지 않고 단순 컬럼으로 관리. */
-  deletedAt: integer('deleted_at', { mode: 'timestamp_ms' })
+  /** Soft delete 마커 — null 이면 활성, timestamp 면 휴지통. */
+  deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
+  /**
+   * 휴지통 batch FK. customSkills 는 전역이지만 trash_batches 는 workspace-scoped
+   * 이므로 "삭제 발생 시점의 활성 워크스페이스" 에 귀속된다 (UI 표시 기준).
+   * batch 영구 삭제(purge) 시 set null → 다음 hard delete 에서 row 제거.
+   */
+  trashBatchId: text('trash_batch_id').references(() => trashBatches.id, {
+    onDelete: 'set null'
+  })
 })

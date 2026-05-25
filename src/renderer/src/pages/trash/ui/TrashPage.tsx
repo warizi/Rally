@@ -60,7 +60,9 @@ const KIND_TO_ICON: Record<TrashEntityKind, TabIconKey> = {
   todo: 'todo',
   schedule: 'calendar',
   recurring_rule: 'todo',
-  template: 'note'
+  template: 'note',
+  // TabIcon 에 skill 전용이 아직 없어 'note' 로 fallback (텍스트 문서 느낌)
+  custom_skill: 'note'
 }
 
 export function TrashPage(): JSX.Element {

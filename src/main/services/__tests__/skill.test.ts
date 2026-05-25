@@ -154,87 +154,22 @@ describe('skillService.update', () => {
   })
 })
 
-describe('skillService.remove (soft delete → 휴지통)', () => {
-  it('커스텀 삭제하면 list 에서 빠지고 listTrashed 에 들어감', () => {
+describe('skillService.ensureCustomDeletable (trash 위임 가드)', () => {
+  it('활성 커스텀 skill 의 name 회수', () => {
     const created = skillService.create({
-      name: 'rally-removable',
+      name: 'rally-deletable',
       description: 'd',
       content: 'c'
     })
-    skillService.remove(created.id)
-    expect(skillService.list().find((s) => s.id === created.id)).toBeUndefined()
-    expect(skillService.listTrashed().find((s) => s.id === created.id)).toBeDefined()
-  })
-
-  it('이미 휴지통에 있는 항목 remove 는 idempotent (에러 없음)', () => {
-    const created = skillService.create({
-      name: 'rally-twice-removed',
-      description: 'd',
-      content: 'c'
-    })
-    skillService.remove(created.id)
-    expect(() => skillService.remove(created.id)).not.toThrow()
+    expect(skillService.ensureCustomDeletable(created.id)).toEqual({ name: 'rally-deletable' })
   })
 
   it('system skill 삭제는 ValidationError', () => {
-    expect(() => skillService.remove('system:rally')).toThrow(ValidationError)
+    expect(() => skillService.ensureCustomDeletable('system:rally')).toThrow(ValidationError)
   })
 
   it('없는 id 는 NotFoundError', () => {
-    expect(() => skillService.remove('nope')).toThrow(NotFoundError)
-  })
-})
-
-describe('skillService.restore', () => {
-  it('휴지통에서 복구하면 다시 list 에 등장', () => {
-    const created = skillService.create({
-      name: 'rally-recoverable',
-      description: 'd',
-      content: 'c'
-    })
-    skillService.remove(created.id)
-    const restored = skillService.restore(created.id)
-    expect(restored.id).toBe(created.id)
-    expect(skillService.list().find((s) => s.id === created.id)).toBeDefined()
-    expect(skillService.listTrashed().find((s) => s.id === created.id)).toBeUndefined()
-  })
-
-  it('이미 같은 이름의 활성 skill 이 있으면 ConflictError', () => {
-    const a = skillService.create({ name: 'rally-conflict', description: 'a', content: 'a' })
-    skillService.remove(a.id) // a 휴지통으로
-    skillService.create({ name: 'rally-conflict', description: 'b', content: 'b' }) // 새로 만들기
-    expect(() => skillService.restore(a.id)).toThrow(ConflictError)
-  })
-
-  it('system id 복구 시도는 ValidationError', () => {
-    expect(() => skillService.restore('system:rally')).toThrow(ValidationError)
-  })
-})
-
-describe('skillService.purge', () => {
-  it('휴지통 항목 영구 삭제하면 listTrashed 에서도 사라짐', () => {
-    const created = skillService.create({
-      name: 'rally-purgeable',
-      description: 'd',
-      content: 'c'
-    })
-    skillService.remove(created.id)
-    skillService.purge(created.id)
-    expect(skillService.listTrashed().find((s) => s.id === created.id)).toBeUndefined()
-    expect(() => skillService.get(created.id)).toThrow(NotFoundError)
-  })
-
-  it('활성 항목 purge 시도는 ValidationError (먼저 휴지통으로 보내야)', () => {
-    const created = skillService.create({
-      name: 'rally-active',
-      description: 'd',
-      content: 'c'
-    })
-    expect(() => skillService.purge(created.id)).toThrow(ValidationError)
-  })
-
-  it('system id purge 시도는 ValidationError', () => {
-    expect(() => skillService.purge('system:rally')).toThrow(ValidationError)
+    expect(() => skillService.ensureCustomDeletable('nope')).toThrow(NotFoundError)
   })
 })
 

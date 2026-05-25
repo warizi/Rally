@@ -13,6 +13,7 @@ import {
   AlertDialogTitle
 } from '@shared/ui/alert-dialog'
 import { useRemoveSkill, type SkillItem } from '@entities/skill'
+import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 
 interface Props {
   skill: SkillItem
@@ -21,14 +22,21 @@ interface Props {
 export function RemoveSkillButton({ skill }: Props): JSX.Element | null {
   const removeMutation = useRemoveSkill()
   const [open, setOpen] = useState(false)
+  const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
 
   // 기본 skill 은 삭제 불가 — 버튼 자체 미노출.
   if (skill.source === 'system') return null
 
   const handleConfirm = async (): Promise<void> => {
+    if (!workspaceId) {
+      toast.error('활성 워크스페이스가 없습니다.')
+      return
+    }
     try {
-      await removeMutation.mutateAsync({ id: skill.id })
-      toast.success(`${skill.name} 을(를) 휴지통으로 이동했습니다.`)
+      await removeMutation.mutateAsync({ workspaceId, id: skill.id })
+      toast.success(`${skill.name} 을(를) 휴지통으로 이동했습니다.`, {
+        description: '휴지통 페이지에서 복구하거나 영구 삭제할 수 있습니다.'
+      })
       setOpen(false)
     } catch (err) {
       const message = err instanceof Error ? err.message : '삭제에 실패했습니다'

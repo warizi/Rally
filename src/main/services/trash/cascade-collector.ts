@@ -24,6 +24,7 @@ export interface CollectedRows {
   imageIds: string[]
   folderIds: string[]
   templateIds: string[]
+  customSkillIds: string[]
   /** 사용자가 직접 삭제 액션한 root entity 의 메타 (UI 표시용) */
   rootTitle: string
   /** FS 파일 도메인의 경우 워크스페이스 내 원본 절대 경로 → trash 절대 경로 매핑 */
@@ -45,6 +46,7 @@ export function emptyCollected(): CollectedRows {
     imageIds: [],
     folderIds: [],
     templateIds: [],
+    customSkillIds: [],
     rootTitle: '',
     fsMoves: []
   }
@@ -95,7 +97,8 @@ export function totalChildCount(rows: CollectedRows): number {
     rows.pdfIds.length +
     rows.imageIds.length +
     rows.folderIds.length +
-    rows.templateIds.length -
+    rows.templateIds.length +
+    rows.customSkillIds.length -
     1 // root entity 자신 제외
   )
 }

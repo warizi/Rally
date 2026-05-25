@@ -17,7 +17,8 @@ import {
   pdfFiles,
   imageFiles,
   folders,
-  templates
+  templates,
+  customSkills
 } from '../../db/schema'
 import { NotFoundError, ValidationError } from '../../lib/errors'
 import { workspaceRepository } from '../../repositories/workspace'
@@ -195,6 +196,12 @@ export const trashCollector = {
       }
       if (collected.templateIds.length > 0) {
         db.update(templates).set(setTrash).where(inArray(templates.id, collected.templateIds)).run()
+      }
+      if (collected.customSkillIds.length > 0) {
+        db.update(customSkills)
+          .set(setTrash)
+          .where(inArray(customSkills.id, collected.customSkillIds))
+          .run()
       }
 
       // 5. FS 이동 — 트랜잭션 안에서 실행 (DB 롤백 시 fs 도 원복은 별도 cleanup 필요).
