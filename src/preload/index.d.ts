@@ -1007,10 +1007,7 @@ interface UpdateCustomSkillInput {
 interface SkillApplyStatus {
   id: string
   name: string
-  /** 어느 한 target 에라도 적용돼 있으면 true. */
   applied: boolean
-  /** 클라이언트별 세부 적용 여부 (Claude Code / Claude Desktop). */
-  targets: { id: string; label: string; applied: boolean }[]
 }
 
 interface SkillAPI {
@@ -1022,6 +1019,7 @@ interface SkillAPI {
   apply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
   unapply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
   status: () => Promise<IpcResponse<SkillApplyStatus[]>>
+  export: (id: string) => Promise<IpcResponse<{ path: string } | null>>
 }
 
 interface TrashAPI {

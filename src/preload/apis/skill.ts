@@ -24,5 +24,6 @@ export const skillApi = {
   remove: (id: string) => ipcRenderer.invoke('skill:remove', id),
   apply: (id: string) => ipcRenderer.invoke('skill:apply', id),
   unapply: (id: string) => ipcRenderer.invoke('skill:unapply', id),
-  status: () => ipcRenderer.invoke('skill:status')
+  status: () => ipcRenderer.invoke('skill:status'),
+  export: (id: string) => ipcRenderer.invoke('skill:export', id)
 }

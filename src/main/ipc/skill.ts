@@ -1,12 +1,13 @@
 import { ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { handle, handleAsync } from '../lib/handle'
 import {
   skillService,
   type CreateCustomSkillInput,
   type UpdateCustomSkillInput
 } from '../services/skill'
 import { skillSyncService } from '../services/skill-sync'
+import { skillExportService } from '../services/skill-export'
 
 export function registerSkillHandlers(): void {
   ipcMain.handle('skill:list', (): IpcResponse => handle(() => skillService.list()))
@@ -53,4 +54,10 @@ export function registerSkillHandlers(): void {
   )
 
   ipcMain.handle('skill:status', (): IpcResponse => handle(() => skillSyncService.status()))
+
+  ipcMain.handle(
+    'skill:export',
+    (_: IpcMainInvokeEvent, id: string): Promise<IpcResponse> =>
+      handleAsync(() => skillExportService.exportWithDialog(id))
+  )
 }

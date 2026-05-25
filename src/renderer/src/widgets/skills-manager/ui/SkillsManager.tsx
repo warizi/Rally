@@ -5,6 +5,7 @@ import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { Button } from '@shared/ui/button'
 import {
   ApplyToggleButton,
+  ExportSkillButton,
   RegisterSkillDialog,
   RemoveSkillButton,
   SkillDetailDialog
@@ -41,9 +42,14 @@ export function SkillsManager(): React.JSX.Element {
         />
       </div>
       <p className="text-xs text-muted-foreground mb-3">
-        Claude 에 적용할 skill 을 관리합니다. 적용된 skill 은{' '}
-        <code className="bg-muted px-1 rounded">~/.claude/skills/&lt;name&gt;/SKILL.md</code> 로
-        저장됩니다.
+        <strong>적용</strong> 은{' '}
+        <code className="bg-muted px-1 rounded">~/.claude/skills/&lt;name&gt;/SKILL.md</code> 에
+        작성됩니다 — Claude Code 가 자동 인식합니다. Claude Desktop 은 filesystem skill 을 지원하지
+        않으므로{' '}
+        <strong>
+          <code className="bg-muted px-1 rounded">.skill</code> 파일로 내보내기
+        </strong>{' '}
+        후 앱 Settings 에서 수동 업로드하세요.
       </p>
 
       {isLoading && (
@@ -77,6 +83,7 @@ export function SkillsManager(): React.JSX.Element {
                     actions={
                       <>
                         <ApplyToggleButton skill={skill} applied={appliedNames.has(skill.name)} />
+                        <ExportSkillButton skill={skill} />
                         <RemoveSkillButton skill={skill} />
                       </>
                     }
@@ -116,6 +123,7 @@ export function SkillsManager(): React.JSX.Element {
                     actions={
                       <>
                         <ApplyToggleButton skill={skill} applied={appliedNames.has(skill.name)} />
+                        <ExportSkillButton skill={skill} />
                         <RemoveSkillButton skill={skill} />
                       </>
                     }

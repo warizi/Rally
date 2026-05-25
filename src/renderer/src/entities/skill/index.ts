@@ -2,7 +2,6 @@ export type {
   SkillItem,
   SkillSource,
   SkillApplyStatus,
-  SkillTargetStatus,
   CreateCustomSkillInput,
   UpdateCustomSkillInput
 } from './model/types'
