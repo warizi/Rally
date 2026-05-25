@@ -56,7 +56,12 @@ export const RALLY_TOOLS: RallyToolDef[] = [
   { value: 'manage_links', label: '아이템 링크 관리', description: '아이템 간 양방향 연결' },
   { value: 'manage_tags', label: '태그 관리', description: '태그 생성·부착·해제·삭제' },
   { value: 'manage_templates', label: '템플릿 관리', description: '노트/CSV 템플릿 저장·삭제' },
-  { value: 'manage_trash', label: '휴지통 관리', description: '복구·영구삭제·비우기' }
+  { value: 'manage_trash', label: '휴지통 관리', description: '복구·영구삭제·비우기' },
+  {
+    value: 'manage_workspace',
+    label: '워크스페이스 관리',
+    description: '워크스페이스 목록 조회·활성 워크스페이스 전환'
+  }
 ]
 
 const TOOL_BY_VALUE = new Map(RALLY_TOOLS.map((t) => [t.value, t]))
