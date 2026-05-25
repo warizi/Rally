@@ -25,6 +25,7 @@ import { terminalSessions } from './terminal-session'
 import { templates } from './template'
 import { trashBatches } from './trash-batch'
 import { noteStyleTemplates } from './note-style-template'
+import { customSkills } from './custom-skill'
 
 export {
   workspaces,
@@ -53,5 +54,6 @@ export {
   terminalSessions,
   templates,
   trashBatches,
-  noteStyleTemplates
+  noteStyleTemplates,
+  customSkills
 }

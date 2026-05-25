@@ -176,6 +176,13 @@
       "when": 1778688809846,
       "tag": "0024_ambiguous_pandemic",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1779686334760,
+      "tag": "0025_boring_oracle",
+      "breakpoints": true
     }
   ]
 }
