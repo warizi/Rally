@@ -48,6 +48,9 @@ const CONTENT_MAX_LENGTH = 100_000
 // 파일시스템 디렉터리명 + Claude skill name 규약: 영소문자/숫자/하이픈/언더스코어, 1~60자.
 const NAME_PATTERN = /^[a-z0-9][a-z0-9_-]{0,59}$/
 const RESERVED_NAMES = new Set<string>(SYSTEM_SKILL_NAMES)
+// 사용자 등록 skill 은 system skill 과의 네임스페이스 충돌 방지 + 'rally 계열' 식별 위해
+// 'rally-' prefix 를 강제.
+const CUSTOM_NAME_PREFIX = 'rally-'
 
 function getBundledSkillsRoot(): string {
   return is.dev
@@ -132,6 +135,11 @@ function validateName(name: string): string {
   }
   if (RESERVED_NAMES.has(trimmed)) {
     throw new ValidationError(`'${trimmed}' 은(는) 기본 skill 이름이라 사용할 수 없습니다.`)
+  }
+  if (!trimmed.startsWith(CUSTOM_NAME_PREFIX) || trimmed.length <= CUSTOM_NAME_PREFIX.length) {
+    throw new ValidationError(
+      `커스텀 skill 이름은 '${CUSTOM_NAME_PREFIX}' 로 시작해야 합니다 (예: rally-my-skill).`
+    )
   }
   return trimmed
 }

@@ -37,9 +37,9 @@ afterEach(() => {
 describe('skillService.list', () => {
   it('system skill 3개 + custom skill 통합 반환', () => {
     skillService.create({
-      name: 'my-skill',
+      name: 'rally-my-skill',
       description: 'my desc',
-      content: '---\nname: my-skill\ndescription: my desc\n---\nbody'
+      content: '---\nname: rally-my-skill\ndescription: my desc\n---\nbody'
     })
     const list = skillService.list()
     expect(list.filter((s) => s.source === 'system')).toHaveLength(SYSTEM_SKILL_NAMES.length)
@@ -57,8 +57,8 @@ describe('skillService.create', () => {
     content: '---\nname: x\ndescription: d\n---\nbody'
   }
 
-  it('정상 생성 후 list 조회 가능', () => {
-    const created = skillService.create({ name: 'my-tool', ...base })
+  it('정상 생성 후 list 조회 가능 (rally- prefix)', () => {
+    const created = skillService.create({ name: 'rally-my-tool', ...base })
     expect(created.source).toBe('custom')
     expect(created.editable).toBe(true)
     expect(created.mcpTools).toEqual([])
@@ -68,7 +68,7 @@ describe('skillService.create', () => {
 
   it('mcpTools / triggers 배열을 영속화', () => {
     const created = skillService.create({
-      name: 'has-tools',
+      name: 'rally-has-tools',
       ...base,
       mcpTools: ['read', 'browse'],
       triggers: ['foo', 'bar']
@@ -84,9 +84,18 @@ describe('skillService.create', () => {
   })
 
   it('잘못된 이름 패턴은 ValidationError (대문자/공백/한글 등)', () => {
-    expect(() => skillService.create({ name: 'MySkill', ...base })).toThrow(ValidationError)
-    expect(() => skillService.create({ name: 'my skill', ...base })).toThrow(ValidationError)
-    expect(() => skillService.create({ name: '내스킬', ...base })).toThrow(ValidationError)
+    expect(() => skillService.create({ name: 'rally-MySkill', ...base })).toThrow(ValidationError)
+    expect(() => skillService.create({ name: 'rally-my skill', ...base })).toThrow(ValidationError)
+    expect(() => skillService.create({ name: 'rally-내스킬', ...base })).toThrow(ValidationError)
+  })
+
+  it("'rally-' prefix 없으면 ValidationError", () => {
+    expect(() => skillService.create({ name: 'my-tool', ...base })).toThrow(ValidationError)
+    expect(() => skillService.create({ name: 'plain-name', ...base })).toThrow(ValidationError)
+  })
+
+  it("'rally-' 만 입력하면 ValidationError (suffix 필요)", () => {
+    expect(() => skillService.create({ name: 'rally-', ...base })).toThrow(ValidationError)
   })
 
   it('system skill 과 이름 충돌은 ValidationError (RESERVED)', () => {
@@ -95,15 +104,15 @@ describe('skillService.create', () => {
   })
 
   it('동일 커스텀 이름 중복은 ConflictError', () => {
-    skillService.create({ name: 'dup', ...base })
-    expect(() => skillService.create({ name: 'dup', ...base })).toThrow(ConflictError)
+    skillService.create({ name: 'rally-dup', ...base })
+    expect(() => skillService.create({ name: 'rally-dup', ...base })).toThrow(ConflictError)
   })
 })
 
 describe('skillService.update', () => {
   it('description/content/mcpTools 부분 업데이트', () => {
     const created = skillService.create({
-      name: 'editable',
+      name: 'rally-editable',
       description: 'before',
       content: 'before-content'
     })
@@ -131,7 +140,7 @@ describe('skillService.update', () => {
 describe('skillService.remove', () => {
   it('커스텀 삭제', () => {
     const created = skillService.create({
-      name: 'removable',
+      name: 'rally-removable',
       description: 'd',
       content: 'c'
     })

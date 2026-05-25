@@ -59,26 +59,26 @@ describe('skillSyncService.apply', () => {
 
   it('custom skill 을 DB content 로 작성', () => {
     const created = skillService.create({
-      name: 'my-custom',
+      name: 'rally-my-custom',
       description: 'my desc',
       content: '---\nname: my-custom\ndescription: my desc\n---\n# custom body\n'
     })
     const result = skillSyncService.apply(created.id)
     expect(result.applied).toBe(true)
-    const file = join(tmpHome, '.claude', 'skills', 'my-custom', 'SKILL.md')
+    const file = join(tmpHome, '.claude', 'skills', 'rally-my-custom', 'SKILL.md')
     expect(readFileSync(file, 'utf-8')).toContain('# custom body')
   })
 
   it('재적용은 덮어쓰기 (idempotent)', () => {
     const created = skillService.create({
-      name: 'overwrite-target',
+      name: 'rally-overwrite-target',
       description: 'd',
       content: 'first'
     })
     skillSyncService.apply(created.id)
     skillService.update(created.id, { content: 'second' })
     skillSyncService.apply(created.id)
-    const file = join(tmpHome, '.claude', 'skills', 'overwrite-target', 'SKILL.md')
+    const file = join(tmpHome, '.claude', 'skills', 'rally-overwrite-target', 'SKILL.md')
     expect(readFileSync(file, 'utf-8')).toBe('second')
   })
 })
@@ -131,13 +131,13 @@ describe('skillSyncService.status', () => {
 
 describe('skillSyncService.cleanupByName', () => {
   it('해당 이름의 디렉터리 삭제', () => {
-    skillService.create({ name: 'cleanup-target', description: 'd', content: 'c' })
+    skillService.create({ name: 'rally-cleanup-target', description: 'd', content: 'c' })
     const items = skillService.list()
-    const item = items.find((s) => s.name === 'cleanup-target')!
+    const item = items.find((s) => s.name === 'rally-cleanup-target')!
     skillSyncService.apply(item.id)
-    expect(existsSync(join(tmpHome, '.claude', 'skills', 'cleanup-target'))).toBe(true)
-    skillSyncService.cleanupByName('cleanup-target')
-    expect(existsSync(join(tmpHome, '.claude', 'skills', 'cleanup-target'))).toBe(false)
+    expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally-cleanup-target'))).toBe(true)
+    skillSyncService.cleanupByName('rally-cleanup-target')
+    expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally-cleanup-target'))).toBe(false)
   })
 
   it('system skill 이름은 cleanup 대상 아님 (보호)', () => {
