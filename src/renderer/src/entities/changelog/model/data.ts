@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11.1',
+    date: '2026-05-26',
+    changes: [
+      {
+        type: 'fix',
+        title: '기본 Skills 누락 수정',
+        description:
+          'Claude Skills 도구가 추가되면서 기본적으로 제공되는 Skills가 누락되는 문제가 수정되었습니다.'
+      }
+    ]
+  },
+  {
     version: '1.11.0',
     date: '2026-05-25',
     changes: [
