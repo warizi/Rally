@@ -1,41 +1,33 @@
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { describe, it, expect, beforeEach } from 'vitest'
 
-vi.mock('@electron-toolkit/utils', () => ({
-  is: { dev: true }
-}))
-
-import { skillService, SYSTEM_SKILL_NAMES } from '../skill'
+import { skillService, SYSTEM_SKILL_NAMES, seedSystemSkills } from '../skill'
+import { SYSTEM_SKILL_SEEDS } from '../system-skills-seed'
 import { ConflictError, NotFoundError, ValidationError } from '../../lib/errors'
 
-let tmpRoot: string
-
 beforeEach(() => {
-  tmpRoot = mkdtempSync(join(tmpdir(), 'rally-skills-test-'))
-  // 번들된 system skill 디렉터리를 임시 경로로 우회시키기 위해 process.cwd 를 mock.
-  // is.dev 가 true 이면 service 가 process.cwd()/.claude/skills 를 사용.
-  vi.spyOn(process, 'cwd').mockReturnValue(tmpRoot)
-  const skillsRoot = join(tmpRoot, '.claude', 'skills')
-  for (const name of SYSTEM_SKILL_NAMES) {
-    const dir = join(skillsRoot, name)
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(
-      join(dir, 'SKILL.md'),
-      `---\nname: ${name}\ndescription: |\n  System skill ${name} description.\n---\n\n# ${name}\nbody.\n`,
-      'utf-8'
-    )
-  }
+  // resetAllTables (test setup) 가 system_skills 도 비우므로 매 테스트마다 재seed.
+  seedSystemSkills()
 })
 
-afterEach(() => {
-  vi.restoreAllMocks()
-  rmSync(tmpRoot, { recursive: true, force: true })
+describe('seedSystemSkills', () => {
+  it('빈 DB 에 SYSTEM_SKILL_NAMES 개수만큼 row 생성', () => {
+    const list = skillService.list().filter((s) => s.source === 'system')
+    expect(list).toHaveLength(SYSTEM_SKILL_NAMES.length)
+  })
+
+  it('이미 seed 된 상태에서 재호출해도 사용자 수정값을 덮어쓰지 않음 (idempotent)', () => {
+    skillService.update('system:rally', {
+      content: '---\nname: rally\ndescription: edited\n---\nedited'
+    })
+    seedSystemSkills()
+    const fresh = skillService.get('system:rally')
+    expect(fresh.content).toContain('edited')
+    expect(fresh.hasOverride).toBe(true)
+  })
 })
 
 describe('skillService.list', () => {
-  it('system skill 3개 + custom skill 통합 반환', () => {
+  it('system skill N개 + custom skill 통합 반환', () => {
     skillService.create({
       name: 'rally-my-skill',
       description: 'my desc',
@@ -45,11 +37,20 @@ describe('skillService.list', () => {
     expect(list.filter((s) => s.source === 'system')).toHaveLength(SYSTEM_SKILL_NAMES.length)
     expect(list.filter((s) => s.source === 'custom')).toHaveLength(1)
     const sys = list.find((s) => s.name === 'rally')
-    // system skill 도 내용은 편집 가능 (override 로 저장), 이름/삭제만 별도 제한.
+    // seed 직후엔 default 값과 동일하므로 hasOverride=false.
     expect(sys?.editable).toBe(true)
     expect(sys?.hasOverride).toBe(false)
     expect(sys?.id).toBe('system:rally')
-    expect(sys?.description).toContain('System skill rally')
+    // description 은 seed frontmatter 의 description 블록에서 파싱.
+    expect(sys?.description.length).toBeGreaterThan(0)
+  })
+
+  it('system skill 순서는 SYSTEM_SKILL_NAMES 정의 순서와 동일', () => {
+    const systemNames = skillService
+      .list()
+      .filter((s) => s.source === 'system')
+      .map((s) => s.name)
+    expect(systemNames).toEqual([...SYSTEM_SKILL_NAMES])
   })
 })
 
@@ -128,7 +129,7 @@ describe('skillService.update', () => {
     expect(updated.updatedAt.getTime()).toBeGreaterThanOrEqual(created.createdAt.getTime())
   })
 
-  it('system skill content/mcpTools 수정은 override 로 저장 + hasOverride=true', () => {
+  it('system skill content/mcpTools 수정은 row 갱신 + hasOverride=true', () => {
     const updated = skillService.update('system:rally', {
       content: '---\nname: rally\ndescription: edited\n---\nedited body',
       mcpTools: ['read', 'browse']
@@ -139,7 +140,7 @@ describe('skillService.update', () => {
     expect(updated.mcpTools).toEqual(['read', 'browse'])
   })
 
-  it('system skill resetSystem 으로 override 제거 → hasOverride=false', () => {
+  it('system skill resetSystem 으로 default 복원 → hasOverride=false', () => {
     skillService.update('system:rally', {
       content: '---\nname: rally\ndescription: edited\n---\nedited body',
       mcpTools: ['read']
@@ -147,6 +148,8 @@ describe('skillService.update', () => {
     const reset = skillService.resetSystem('system:rally')
     expect(reset.hasOverride).toBe(false)
     expect(reset.mcpTools).toEqual([])
+    const seed = SYSTEM_SKILL_SEEDS.find((s) => s.name === 'rally')!
+    expect(reset.content).toBe(seed.content)
   })
 
   it('존재하지 않는 id 는 NotFoundError', () => {
@@ -181,7 +184,7 @@ describe('skillService.get', () => {
     expect(got.name).toBe('rally-do')
   })
 
-  it('없는 system 은 NotFoundError', () => {
+  it('seed 되지 않은 system 이름은 NotFoundError', () => {
     expect(() => skillService.get('system:unknown-skill')).toThrow(NotFoundError)
   })
 })

@@ -50,6 +50,7 @@ import { registerHistoryHandlers } from './ipc/history'
 import { registerTrashHandlers } from './ipc/trash'
 import { registerOnboardingHandlers } from './ipc/onboarding'
 import { registerSkillHandlers } from './ipc/skill'
+import { seedSystemSkills } from './services/skill'
 import { setupAutoUpdater } from './lib/updater'
 import { ensureClaudeCommands } from './services/claude-commands-setup'
 
@@ -251,6 +252,7 @@ app.whenReady().then(() => {
 
   runMigrations()
   initializeDatabase()
+  seedSystemSkills()
   migrateLegacyDefaultWorkspacePath()
   ensureAllWorkspaceCommands()
   registerWorkspaceHandlers()

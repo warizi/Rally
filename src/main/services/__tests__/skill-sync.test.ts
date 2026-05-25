@@ -1,60 +1,43 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, existsSync, readFileSync } from 'node:fs'
+import { mkdtempSync, mkdirSync, rmSync, existsSync, readFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-vi.mock('@electron-toolkit/utils', () => ({
-  is: { dev: true }
-}))
-
 let tmpHome: string
-let tmpCwd: string
 
 vi.mock('electron', () => ({
   app: {
     getPath: (name: string) => {
       if (name === 'home') return tmpHome
-      return tmpCwd
+      return tmpHome
     }
   }
 }))
 
 import { skillSyncService } from '../skill-sync'
-import { skillService, SYSTEM_SKILL_NAMES } from '../skill'
+import { skillService, seedSystemSkills } from '../skill'
 import { ValidationError } from '../../lib/errors'
 
 beforeEach(() => {
   tmpHome = mkdtempSync(join(tmpdir(), 'rally-home-'))
-  tmpCwd = mkdtempSync(join(tmpdir(), 'rally-cwd-'))
-  vi.spyOn(process, 'cwd').mockReturnValue(tmpCwd)
-
-  // 번들된 system skill 파일 준비 (skillService.list 가 읽음)
-  const bundleRoot = join(tmpCwd, '.claude', 'skills')
-  for (const name of SYSTEM_SKILL_NAMES) {
-    const dir = join(bundleRoot, name)
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(
-      join(dir, 'SKILL.md'),
-      `---\nname: ${name}\ndescription: bundled-${name}\n---\n# ${name}\n`,
-      'utf-8'
-    )
-  }
+  // DB 기반이므로 매 테스트마다 system_skills 재seed.
+  seedSystemSkills()
 })
 
 afterEach(() => {
   vi.restoreAllMocks()
   rmSync(tmpHome, { recursive: true, force: true })
-  rmSync(tmpCwd, { recursive: true, force: true })
 })
 
 describe('skillSyncService.apply', () => {
-  it('system skill 을 ~/.claude/skills/<name>/SKILL.md 로 작성', () => {
+  it('system skill 을 ~/.claude/skills/<name>/SKILL.md 로 작성 (DB content)', () => {
     const result = skillSyncService.apply('system:rally')
     expect(result.applied).toBe(true)
     expect(result.name).toBe('rally')
     const expected = join(tmpHome, '.claude', 'skills', 'rally', 'SKILL.md')
     expect(existsSync(expected)).toBe(true)
-    expect(readFileSync(expected, 'utf-8')).toContain('bundled-rally')
+    // seed content 의 일부가 들어 있어야 함.
+    expect(readFileSync(expected, 'utf-8')).toContain('# Rally MCP Skill')
   })
 
   it('custom skill 을 DB content 로 작성', () => {
