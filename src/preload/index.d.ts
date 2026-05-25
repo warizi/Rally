@@ -974,6 +974,44 @@ interface NoteStyleTemplateAPI {
   remove: (id: string) => Promise<IpcResponse<void>>
 }
 
+type SkillSource = 'system' | 'custom'
+
+interface SkillItem {
+  id: string
+  name: string
+  description: string
+  content: string
+  mcpTools: string[]
+  triggers: string[]
+  source: SkillSource
+  editable: boolean
+  createdAt: Date
+  updatedAt: Date
+}
+
+interface CreateCustomSkillInput {
+  name: string
+  description: string
+  content: string
+  mcpTools?: string[]
+  triggers?: string[]
+}
+
+interface UpdateCustomSkillInput {
+  description?: string
+  content?: string
+  mcpTools?: string[]
+  triggers?: string[]
+}
+
+interface SkillAPI {
+  list: () => Promise<IpcResponse<SkillItem[]>>
+  get: (id: string) => Promise<IpcResponse<SkillItem>>
+  create: (input: CreateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
+  update: (id: string, input: UpdateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
+  remove: (id: string) => Promise<IpcResponse<void>>
+}
+
 interface TrashAPI {
   list: (
     workspaceId: string,
@@ -1038,6 +1076,7 @@ interface API {
   trash: TrashAPI
   onboarding: OnboardingAPI
   noteStyleTemplate: NoteStyleTemplateAPI
+  skill: SkillAPI
 }
 
 interface ShellAPI {
