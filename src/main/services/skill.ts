@@ -4,6 +4,7 @@ import { nanoid } from 'nanoid'
 import { is } from '@electron-toolkit/utils'
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors'
 import { customSkillRepository, type CustomSkill } from '../repositories/custom-skill'
+import { systemSkillOverrideRepository } from '../repositories/system-skill-override'
 
 export type SkillSource = 'system' | 'custom'
 
@@ -15,8 +16,16 @@ export interface SkillItem {
   mcpTools: string[]
   triggers: string[]
   source: SkillSource
-  /** false 면 UI 에서 수정/삭제 비활성 (system skill). */
+  /**
+   * 사용자가 본문/메타 수정 가능 여부.
+   * - custom: 항상 true
+   * - system: 항상 true (override 로 DB 저장)
+   *
+   * 단, system skill 의 **이름** 은 변경 불가, 삭제도 불가 (UI 에서 분리 처리).
+   */
   editable: boolean
+  /** system skill 에 사용자 override 가 적용돼 있는지. UI 에서 "기본값으로 리셋" 버튼 노출용. */
+  hasOverride?: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -61,24 +70,36 @@ function getBundledSkillsRoot(): string {
 function loadSystemSkill(name: string): SkillItem | null {
   const skillMd = join(getBundledSkillsRoot(), name, 'SKILL.md')
   if (!existsSync(skillMd)) return null
-  let content: string
+
+  // 번들된 SKILL.md 를 fallback 으로 사용. 사용자 override 가 있으면 우선.
+  let bundledContent: string
   try {
-    content = readFileSync(skillMd, 'utf-8')
+    bundledContent = readFileSync(skillMd, 'utf-8')
   } catch {
     return null
   }
+
+  const override = systemSkillOverrideRepository.findByName(name)
+  const content = override?.content ?? bundledContent
   const { description } = parseFrontmatter(content)
+  const updatedAt = override?.updatedAt
+    ? override.updatedAt instanceof Date
+      ? override.updatedAt
+      : new Date(override.updatedAt)
+    : new Date(0)
+
   return {
     id: `system:${name}`,
     name,
     description: description ?? '',
     content,
-    mcpTools: [],
-    triggers: [],
+    mcpTools: override ? safeJsonArray(override.mcpToolsJson) : [],
+    triggers: override ? safeJsonArray(override.triggersJson) : [],
     source: 'system',
-    editable: false,
+    editable: true,
+    hasOverride: !!override,
     createdAt: new Date(0),
-    updatedAt: new Date(0)
+    updatedAt
   }
 }
 
@@ -171,12 +192,17 @@ function validateStringArray(field: string, value: unknown): string[] {
 
 export const skillService = {
   /**
-   * 시스템 + 커스텀 skill 통합 목록. 시스템이 먼저, 커스텀은 createdAt desc.
+   * 시스템 + 활성 커스텀 skill 통합 목록 (휴지통 제외). 시스템이 먼저, 커스텀은 createdAt desc.
    */
   list(): SkillItem[] {
     const system = SYSTEM_SKILL_NAMES.map(loadSystemSkill).filter((s): s is SkillItem => s !== null)
-    const custom = customSkillRepository.findAll().map(toItem)
+    const custom = customSkillRepository.findActive().map(toItem)
     return [...system, ...custom]
+  },
+
+  /** 휴지통에 있는 커스텀 skill 목록 (deletedAt desc). */
+  listTrashed(): SkillItem[] {
+    return customSkillRepository.findTrashed().map(toItem)
   },
 
   get(id: string): SkillItem {
@@ -198,7 +224,7 @@ export const skillService = {
     const mcpTools = validateStringArray('mcpTools', input.mcpTools)
     const triggers = validateStringArray('triggers', input.triggers)
 
-    if (customSkillRepository.findByName(name)) {
+    if (customSkillRepository.findActiveByName(name)) {
       throw new ConflictError(`이미 같은 이름의 skill 이 있습니다: ${name}`)
     }
 
@@ -218,7 +244,36 @@ export const skillService = {
 
   update(id: string, input: UpdateCustomSkillInput): SkillItem {
     if (id.startsWith('system:')) {
-      throw new ValidationError('기본 skill 은 수정할 수 없습니다.')
+      // system skill 은 override 테이블에 upsert. description 은 frontmatter 에서 파생되므로 무시.
+      const name = id.slice('system:'.length)
+      if (!RESERVED_NAMES.has(name)) {
+        throw new NotFoundError(`System skill not found: ${name}`)
+      }
+      // 현재 (override 또는 번들) content 를 base 로 patch
+      const current = loadSystemSkill(name)
+      if (!current) throw new NotFoundError(`System skill not found: ${name}`)
+      const content =
+        input.content !== undefined
+          ? validateText('content', input.content, CONTENT_MAX_LENGTH)
+          : current.content
+      const mcpTools =
+        input.mcpTools !== undefined
+          ? validateStringArray('mcpTools', input.mcpTools)
+          : current.mcpTools
+      const triggers =
+        input.triggers !== undefined
+          ? validateStringArray('triggers', input.triggers)
+          : current.triggers
+      systemSkillOverrideRepository.upsert({
+        name,
+        content,
+        mcpToolsJson: JSON.stringify(mcpTools),
+        triggersJson: JSON.stringify(triggers),
+        updatedAt: new Date()
+      })
+      const refreshed = loadSystemSkill(name)
+      if (!refreshed) throw new NotFoundError(`System skill not found: ${name}`)
+      return refreshed
     }
     const existing = customSkillRepository.findById(id)
     if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
@@ -242,12 +297,70 @@ export const skillService = {
     return toItem(row)
   },
 
+  /**
+   * system skill 의 사용자 override 를 제거하여 번들된 기본값으로 되돌린다.
+   * override 가 없으면 noop.
+   */
+  resetSystem(id: string): SkillItem {
+    if (!id.startsWith('system:')) {
+      throw new ValidationError('system skill 만 리셋할 수 있습니다.')
+    }
+    const name = id.slice('system:'.length)
+    if (!RESERVED_NAMES.has(name)) {
+      throw new NotFoundError(`System skill not found: ${name}`)
+    }
+    systemSkillOverrideRepository.delete(name)
+    const refreshed = loadSystemSkill(name)
+    if (!refreshed) throw new NotFoundError(`System skill not found: ${name}`)
+    return refreshed
+  },
+
+  /**
+   * Soft delete — 휴지통으로 이동. 활성 목록에서는 사라지지만 복구 가능.
+   */
   remove(id: string): void {
     if (id.startsWith('system:')) {
       throw new ValidationError('기본 skill 은 삭제할 수 없습니다.')
     }
     const existing = customSkillRepository.findById(id)
     if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
+    if (existing.deletedAt) return // 이미 휴지통
+    customSkillRepository.update(id, { deletedAt: new Date() })
+  },
+
+  /**
+   * 휴지통에서 복구.
+   * 같은 이름의 활성 skill 이 이미 있으면 ConflictError (복구 거부).
+   */
+  restore(id: string): SkillItem {
+    if (id.startsWith('system:')) {
+      throw new ValidationError('기본 skill 은 복구 대상이 아닙니다.')
+    }
+    const existing = customSkillRepository.findById(id)
+    if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
+    if (!existing.deletedAt) return toItem(existing) // 이미 활성
+    if (customSkillRepository.findActiveByName(existing.name)) {
+      throw new ConflictError(
+        `이미 같은 이름의 활성 skill 이 있습니다: ${existing.name}. 먼저 삭제하거나 이름을 바꾸세요.`
+      )
+    }
+    const row = customSkillRepository.update(id, { deletedAt: null })
+    if (!row) throw new NotFoundError(`Skill not found: ${id}`)
+    return toItem(row)
+  },
+
+  /**
+   * 영구 삭제 — 휴지통에서 비우기. 휴지통에 있는 항목만 대상.
+   */
+  purge(id: string): void {
+    if (id.startsWith('system:')) {
+      throw new ValidationError('기본 skill 은 영구 삭제 대상이 아닙니다.')
+    }
+    const existing = customSkillRepository.findById(id)
+    if (!existing) throw new NotFoundError(`Skill not found: ${id}`)
+    if (!existing.deletedAt) {
+      throw new ValidationError('휴지통에 있는 항목만 영구 삭제할 수 있습니다.')
+    }
     customSkillRepository.delete(id)
   },
 

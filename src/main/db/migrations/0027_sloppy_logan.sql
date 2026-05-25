@@ -1,0 +1,1 @@
+DROP INDEX `custom_skills_name_unique`;

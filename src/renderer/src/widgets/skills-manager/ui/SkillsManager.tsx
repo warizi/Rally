@@ -11,6 +11,7 @@ import {
   SkillDetailDialog
 } from '@features/skill'
 import { SkillCard } from './SkillCard'
+import { TrashSection } from './TrashSection'
 
 export function SkillsManager(): React.JSX.Element {
   const skillsQuery = useSkills()
@@ -132,6 +133,8 @@ export function SkillsManager(): React.JSX.Element {
               </div>
             )}
           </section>
+
+          <TrashSection />
         </div>
       )}
 

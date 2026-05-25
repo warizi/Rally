@@ -57,8 +57,8 @@ export function SkillCard({ skill, applied, actions, onClick }: SkillCardProps):
                 ✓ 적용됨
               </Badge>
             )}
-            {!skill.editable && (
-              <span title="기본 skill 은 수정·삭제할 수 없습니다" className="text-muted-foreground">
+            {isSystem && (
+              <span title="기본 skill — 삭제·이름 변경 불가" className="text-muted-foreground">
                 <LockIcon className="size-3" />
               </span>
             )}

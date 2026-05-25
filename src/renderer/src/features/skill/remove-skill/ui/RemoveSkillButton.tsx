@@ -23,12 +23,12 @@ export function RemoveSkillButton({ skill }: Props): JSX.Element | null {
   const [open, setOpen] = useState(false)
 
   // 기본 skill 은 삭제 불가 — 버튼 자체 미노출.
-  if (!skill.editable) return null
+  if (skill.source === 'system') return null
 
   const handleConfirm = async (): Promise<void> => {
     try {
       await removeMutation.mutateAsync({ id: skill.id })
-      toast.success(`${skill.name} 을(를) 삭제했습니다.`)
+      toast.success(`${skill.name} 을(를) 휴지통으로 이동했습니다.`)
       setOpen(false)
     } catch (err) {
       const message = err instanceof Error ? err.message : '삭제에 실패했습니다'
@@ -51,15 +51,21 @@ export function RemoveSkillButton({ skill }: Props): JSX.Element | null {
         <Trash2Icon className="size-3" />
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
-        <AlertDialogContent>
+        {/*
+          React synthetic event 는 portal 무관하게 React tree 를 따라 bubble 한다.
+          이 AlertDialog 는 RemoveSkillButton (SkillCard 의 action slot) 안에 있으므로
+          내부 클릭 (취소/확인) 이 SkillCard onClick (상세 다이얼로그 열기) 으로 새어나가지 않게
+          모든 click 을 여기서 차단.
+        */}
+        <AlertDialogContent onClick={(e) => e.stopPropagation()}>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              <span className="font-mono">{skill.name}</span> 을(를) 삭제할까요?
+              <span className="font-mono">{skill.name}</span> 을(를) 휴지통으로 이동할까요?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              DB 에서 영구 삭제되며, 적용된{' '}
+              적용된{' '}
               <code className="bg-muted px-1 rounded text-xs">~/.claude/skills/{skill.name}/</code>{' '}
-              디렉터리도 함께 정리됩니다. 이 작업은 되돌릴 수 없습니다.
+              디렉터리는 함께 정리됩니다. 휴지통에서 복구하거나 영구 삭제할 수 있습니다.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -72,10 +78,10 @@ export function RemoveSkillButton({ skill }: Props): JSX.Element | null {
               {removeMutation.isPending ? (
                 <>
                   <Loader2Icon className="size-3 animate-spin mr-1" />
-                  삭제 중…
+                  이동 중…
                 </>
               ) : (
-                '삭제'
+                '휴지통으로'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

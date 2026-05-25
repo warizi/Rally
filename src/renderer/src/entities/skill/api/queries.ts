@@ -27,6 +27,17 @@ export function useSkills(): UseQueryResult<SkillItem[]> {
   })
 }
 
+export function useTrashedSkills(): UseQueryResult<SkillItem[]> {
+  return useQuery({
+    queryKey: [SKILL_KEY, 'trashed'],
+    queryFn: async (): Promise<SkillItem[]> => {
+      const res: IpcResponse<SkillItem[]> = await window.api.skill.listTrashed()
+      if (!res.success) throwIpcError(res)
+      return res.data ?? []
+    }
+  })
+}
+
 export function useSkillStatus(): UseQueryResult<SkillApplyStatus[]> {
   return useQuery({
     queryKey: [SKILL_KEY, 'status'],
@@ -80,6 +91,51 @@ export function useRemoveSkill(): UseMutationResult<void, Error, { id: string }>
     mutationFn: async ({ id }) => {
       const res: IpcResponse<void> = await window.api.skill.remove(id)
       if (!res.success) throwIpcError(res)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SKILL_KEY] })
+    }
+  })
+}
+
+export function useRestoreSkill(): UseMutationResult<SkillItem | undefined, Error, { id: string }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }) => {
+      const res: IpcResponse<SkillItem> = await window.api.skill.restore(id)
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SKILL_KEY] })
+    }
+  })
+}
+
+export function usePurgeSkill(): UseMutationResult<void, Error, { id: string }> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }) => {
+      const res: IpcResponse<void> = await window.api.skill.purge(id)
+      if (!res.success) throwIpcError(res)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [SKILL_KEY] })
+    }
+  })
+}
+
+export function useResetSystemSkill(): UseMutationResult<
+  SkillItem | undefined,
+  Error,
+  { id: string }
+> {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id }) => {
+      const res: IpcResponse<SkillItem> = await window.api.skill.resetSystem(id)
+      if (!res.success) throwIpcError(res)
+      return res.data
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [SKILL_KEY] })

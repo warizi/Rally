@@ -12,6 +12,8 @@ import { skillExportService } from '../services/skill-export'
 export function registerSkillHandlers(): void {
   ipcMain.handle('skill:list', (): IpcResponse => handle(() => skillService.list()))
 
+  ipcMain.handle('skill:listTrashed', (): IpcResponse => handle(() => skillService.listTrashed()))
+
   ipcMain.handle(
     'skill:get',
     (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.get(id))
@@ -32,15 +34,28 @@ export function registerSkillHandlers(): void {
   ipcMain.handle(
     'skill:remove',
     (_: IpcMainInvokeEvent, id: string): IpcResponse =>
-      handle(() =>
-        // 커스텀 skill 삭제 시 ~/.claude/skills 의 적용 파일도 함께 정리.
-        // 이름 조회 → DB 삭제 → 파일 정리 순서 (이름 조회 실패 시 IPC 가 NotFoundError 반환).
-        {
-          const item = skillService.get(id)
-          skillService.remove(id)
-          skillSyncService.cleanupByName(item.name)
-        }
-      )
+      handle(() => {
+        // soft delete (휴지통 이동) + ~/.claude/skills 의 적용 파일 정리.
+        // 적용 파일은 복구 후 다시 수동 적용 필요 (의도된 동작 — 휴지통에 있는 동안 Claude 가 인식하지 않도록).
+        const item = skillService.get(id)
+        skillService.remove(id)
+        skillSyncService.cleanupByName(item.name)
+      })
+  )
+
+  ipcMain.handle(
+    'skill:restore',
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.restore(id))
+  )
+
+  ipcMain.handle(
+    'skill:purge',
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.purge(id))
+  )
+
+  ipcMain.handle(
+    'skill:resetSystem',
+    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillService.resetSystem(id))
   )
 
   ipcMain.handle(

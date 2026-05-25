@@ -2,6 +2,7 @@ import { JSX, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import {
   Dialog,
   DialogContent,
@@ -24,9 +25,9 @@ import {
   FormLabel,
   FormMessage
 } from '@shared/ui/form'
-import { LockIcon } from 'lucide-react'
+import { RotateCcwIcon } from 'lucide-react'
 import type { SkillItem } from '@entities/skill'
-import { useUpdateSkill } from '@entities/skill'
+import { useResetSystemSkill, useUpdateSkill } from '@entities/skill'
 import { ToolMultiSelect } from '../../lib/ToolMultiSelect'
 
 interface Props {
@@ -36,10 +37,8 @@ interface Props {
 }
 
 const schema = z.object({
-  description: z
-    .string()
-    .min(1, 'description 은 비워둘 수 없습니다')
-    .max(4000, 'description 은 4000자 이하여야 합니다'),
+  // system skill 은 description 이 frontmatter 파생이라 별도 입력하지 않음 (UI 에서 숨김).
+  description: z.string().max(4000, 'description 은 4000자 이하여야 합니다'),
   content: z
     .string()
     .min(1, 'content 는 비워둘 수 없습니다')
@@ -63,6 +62,7 @@ function arrayToCsv(arr: string[]): string {
 
 export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Element | null {
   const updateSkill = useUpdateSkill()
+  const resetSystem = useResetSystemSkill()
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -86,24 +86,44 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
 
   if (!skill) return null
 
-  const readonly = !skill.editable
+  const isSystem = skill.source === 'system'
 
   const handleSubmit = async (values: FormValues): Promise<void> => {
-    if (readonly) return
     try {
       await updateSkill.mutateAsync({
         id: skill.id,
         input: {
-          description: values.description,
+          // system skill 의 description 은 frontmatter 파생이라 무시됨.
+          ...(isSystem ? {} : { description: values.description }),
           content: values.content,
           mcpTools: values.mcpTools,
           triggers: csvToArray(values.triggersCsv)
         }
       })
+      toast.success(`${skill.name} 저장됨`)
       onOpenChange(false)
     } catch (err) {
       const message = err instanceof Error ? err.message : '저장에 실패했습니다'
       form.setError('content', { message })
+      toast.error(message)
+    }
+  }
+
+  const handleReset = async (): Promise<void> => {
+    try {
+      const fresh = await resetSystem.mutateAsync({ id: skill.id })
+      if (fresh) {
+        form.reset({
+          description: fresh.description,
+          content: fresh.content,
+          mcpTools: fresh.mcpTools,
+          triggersCsv: arrayToCsv(fresh.triggers)
+        })
+      }
+      toast.success(`${skill.name} 을(를) 기본값으로 복원했습니다.`)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : '복원에 실패했습니다'
+      toast.error(message)
     }
   }
 
@@ -113,19 +133,19 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
         <DialogHeader>
           <div className="flex items-center gap-2">
             <DialogTitle className="font-mono text-base">{skill.name}</DialogTitle>
-            <Badge variant={skill.source === 'system' ? 'secondary' : 'outline'}>
-              {skill.source === 'system' ? '기본' : '커스텀'}
+            <Badge variant={isSystem ? 'secondary' : 'outline'}>
+              {isSystem ? '기본' : '커스텀'}
             </Badge>
-            {readonly && (
-              <span title="기본 skill 은 수정할 수 없습니다" className="text-muted-foreground">
-                <LockIcon className="size-3.5" />
-              </span>
+            {isSystem && skill.hasOverride && (
+              <Badge variant="outline" className="text-amber-600 border-amber-500/40">
+                수정됨
+              </Badge>
             )}
           </div>
           <DialogDescription className="text-xs">
-            {readonly
-              ? '기본 skill 은 읽기 전용입니다. 내용을 참고할 수 있어요.'
-              : 'description, content, mcpTools, triggers 를 수정할 수 있습니다. name 은 변경할 수 없어요.'}
+            {isSystem
+              ? 'SKILL.md 본문, MCP Tools, 트리거를 사용자별로 덮어쓸 수 있습니다. 이름은 변경할 수 없으며 "기본값으로 복원" 으로 번들된 원본으로 되돌릴 수 있어요.'
+              : 'description, content, mcpTools, triggers 를 수정할 수 있습니다. 이름은 변경할 수 없어요.'}
           </DialogDescription>
         </DialogHeader>
 
@@ -133,27 +153,28 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
           <form onSubmit={form.handleSubmit(handleSubmit)} className="flex min-h-0 flex-col">
             <ScrollArea className="min-h-0 flex-1" viewportClassName="pr-3">
               <div className="flex flex-col gap-3">
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description</FormLabel>
-                      <FormControl>
-                        <Textarea
-                          readOnly={readonly}
-                          placeholder="언제 이 skill 을 사용할지 / 무엇을 하는지"
-                          className="min-h-20"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormDescription className="text-[11px]">
-                        Claude 가 trigger 여부를 판단할 때 이 텍스트를 본다.
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {!isSystem && (
+                  <FormField
+                    control={form.control}
+                    name="description"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Description</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="언제 이 skill 을 사용할지 / 무엇을 하는지"
+                            className="min-h-20"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormDescription className="text-[11px]">
+                          Claude 가 trigger 여부를 판단할 때 이 텍스트를 본다.
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
 
                 <FormField
                   control={form.control}
@@ -162,78 +183,81 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
                     <FormItem>
                       <FormLabel>SKILL.md 본문</FormLabel>
                       <FormControl>
-                        {readonly ? (
-                          // readonly: <pre> + ScrollArea 로 커스텀 스크롤바 사용
-                          <ScrollArea className="border-input bg-input/30 h-80 rounded-md border">
-                            <pre className="px-3 py-2 font-mono text-xs leading-relaxed whitespace-pre-wrap break-words">
-                              {field.value}
-                            </pre>
-                          </ScrollArea>
-                        ) : (
-                          // editable: textarea 유지 (h-80 고정 + field-sizing-fixed 로 자동 grow 차단)
-                          <Textarea
-                            placeholder="---&#10;name: ...&#10;description: ...&#10;---&#10;&#10;본문..."
-                            className="field-sizing-fixed h-80 font-mono text-xs leading-relaxed"
-                            {...field}
-                          />
-                        )}
+                        <Textarea
+                          placeholder="---&#10;name: ...&#10;description: ...&#10;---&#10;&#10;본문..."
+                          className="field-sizing-fixed h-80 font-mono text-xs leading-relaxed"
+                          {...field}
+                        />
                       </FormControl>
+                      {isSystem && (
+                        <FormDescription className="text-[11px]">
+                          system skill 의 description 은 본문 frontmatter 의 description 으로부터
+                          파생됩니다.
+                        </FormDescription>
+                      )}
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                {/*
-                  mcpTools / triggers 는 사용자 등록 메타데이터.
-                  system skill 은 SKILL.md frontmatter 만 source-of-truth 이므로 본문에서 직접 확인.
-                */}
-                {!readonly && (
-                  <>
-                    <FormField
-                      control={form.control}
-                      name="mcpTools"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>MCP Tools</FormLabel>
-                          <FormControl>
-                            <ToolMultiSelect value={field.value} onChange={field.onChange} />
-                          </FormControl>
-                          <FormDescription className="text-[11px]">
-                            이 skill 이 활용할 Rally MCP tool 들을 선택하세요.
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                <FormField
+                  control={form.control}
+                  name="mcpTools"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>MCP Tools</FormLabel>
+                      <FormControl>
+                        <ToolMultiSelect value={field.value} onChange={field.onChange} />
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        이 skill 이 활용할 Rally MCP tool 들을 선택하세요.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-                    <FormField
-                      control={form.control}
-                      name="triggersCsv"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>트리거 키워드</FormLabel>
-                          <FormControl>
-                            <Input placeholder="할일, todo, 오늘 뭐 해야 해" {...field} />
-                          </FormControl>
-                          <FormDescription className="text-[11px]">
-                            쉼표 또는 줄바꿈으로 구분
-                          </FormDescription>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </>
-                )}
+                <FormField
+                  control={form.control}
+                  name="triggersCsv"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>트리거 키워드</FormLabel>
+                      <FormControl>
+                        <Input placeholder="할일, todo, 오늘 뭐 해야 해" {...field} />
+                      </FormControl>
+                      <FormDescription className="text-[11px]">
+                        쉼표 또는 줄바꿈으로 구분
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </ScrollArea>
           </form>
         </Form>
 
-        <DialogFooter className="shrink-0">
-          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-            {readonly ? '닫기' : '취소'}
-          </Button>
-          {!readonly && (
+        <DialogFooter className="shrink-0 sm:justify-between">
+          <div>
+            {isSystem && skill.hasOverride && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={handleReset}
+                disabled={resetSystem.isPending}
+                className="gap-1.5 text-xs text-muted-foreground"
+              >
+                <RotateCcwIcon className="size-3" />
+                {resetSystem.isPending ? '복원 중…' : '기본값으로 복원'}
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              취소
+            </Button>
             <Button
               type="button"
               disabled={updateSkill.isPending}
@@ -241,7 +265,7 @@ export function SkillDetailDialog({ skill, open, onOpenChange }: Props): JSX.Ele
             >
               {updateSkill.isPending ? '저장 중…' : '저장'}
             </Button>
-          )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

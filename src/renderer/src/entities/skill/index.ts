@@ -7,17 +7,16 @@ export type {
 } from './model/types'
 export {
   useSkills,
+  useTrashedSkills,
   useSkillStatus,
   useCreateSkill,
   useUpdateSkill,
   useRemoveSkill,
+  useRestoreSkill,
+  usePurgeSkill,
+  useResetSystemSkill,
   useApplySkill,
   useUnapplySkill
 } from './api/queries'
 export { assembleSkillContent, type AssembleSkillInput } from './lib/assemble'
-export {
-  RALLY_TOOLS,
-  getToolLabel,
-  isKnownTool,
-  type RallyToolDef
-} from './lib/rally-tools'
+export { RALLY_TOOLS, getToolLabel, isKnownTool, type RallyToolDef } from './lib/rally-tools'

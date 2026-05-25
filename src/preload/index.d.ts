@@ -985,6 +985,8 @@ interface SkillItem {
   triggers: string[]
   source: SkillSource
   editable: boolean
+  /** system skill 에 사용자 override 가 적용된 상태인지. */
+  hasOverride?: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -1012,10 +1014,14 @@ interface SkillApplyStatus {
 
 interface SkillAPI {
   list: () => Promise<IpcResponse<SkillItem[]>>
+  listTrashed: () => Promise<IpcResponse<SkillItem[]>>
   get: (id: string) => Promise<IpcResponse<SkillItem>>
   create: (input: CreateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
   update: (id: string, input: UpdateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
   remove: (id: string) => Promise<IpcResponse<void>>
+  restore: (id: string) => Promise<IpcResponse<SkillItem>>
+  purge: (id: string) => Promise<IpcResponse<void>>
+  resetSystem: (id: string) => Promise<IpcResponse<SkillItem>>
   apply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
   unapply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
   status: () => Promise<IpcResponse<SkillApplyStatus[]>>

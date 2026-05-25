@@ -8,8 +8,13 @@ export interface SkillItem {
   mcpTools: string[]
   triggers: string[]
   source: SkillSource
-  /** false 면 UI 에서 수정/삭제 비활성 (system skill). */
+  /**
+   * 본문/메타 수정 가능 여부 (system / custom 모두 true).
+   * system 의 **이름·삭제** 만 별도 제한 (UI 에서 분기 처리).
+   */
   editable: boolean
+  /** system skill 에 사용자 override 가 적용된 상태인지. */
+  hasOverride?: boolean
   createdAt: Date
   updatedAt: Date
 }
