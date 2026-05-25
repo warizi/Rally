@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.11.0',
+    date: '2026-05-25',
+    changes: [
+      {
+        type: 'feature',
+        title: 'Claude Skills 도구 추가',
+        description:
+          'Claude Skills 도구가 추가되었습니다. 이제 AI 에이전트가 워크스페이스 내에서 작업할 때 Claude Skills를 활용할 수 있으며, 이를 통해 AI 에이전트가 더 효율적으로 작업을 수행할 수 있도록 지원합니다.'
+      }
+    ]
+  },
+  {
     version: '1.10.3',
     date: '2026-05-25',
     changes: [
