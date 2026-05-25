@@ -5,11 +5,12 @@
  * 깨짐을 자동 감지.
  *
  * MCP v2 완료 — v1 도구 제거 후 16개 도구 (read_* / manage_* / search + read_note_image).
+ * + manage_workspace 추가 → 17개.
  */
 import { describe, it, expect } from 'vitest'
 import { allTools } from '../index'
 
-const BASELINE_TOOL_COUNT = 16
+const BASELINE_TOOL_COUNT = 17
 
 const V2_TOOLS = [
   // Discovery (3)
@@ -32,7 +33,9 @@ const V2_TOOLS = [
   'manage_items',
   'manage_links',
   'manage_tags',
-  'manage_trash'
+  'manage_trash',
+  // Manage workspace (1)
+  'manage_workspace'
 ] as const
 
 describe('tool-definitions 무결성 (v2 final)', () => {

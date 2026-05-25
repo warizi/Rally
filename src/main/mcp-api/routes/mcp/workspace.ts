@@ -1,7 +1,10 @@
 import type { Router } from '../../router'
-import { ValidationError } from '../../../lib/errors'
+import { ValidationError, NotFoundError } from '../../../lib/errors'
 import { workspaceInfoService, type StatsKind } from '../../../services/workspace-info'
-import { resolveActiveWorkspace } from './helpers'
+import { workspaceRepository } from '../../../repositories/workspace'
+import { workspaceWatcher } from '../../../services/workspace-watcher'
+import { broadcastChanged } from '../../lib/broadcast'
+import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 
 const VALID_STATS_KINDS: ReadonlySet<StatsKind> = new Set([
   'folders',
@@ -59,4 +62,57 @@ export function registerMcpWorkspaceRoutes(router: Router): void {
     const stats = workspaceInfoService.getStats(wsId, types)
     return { stats }
   })
+
+  // ─── GET /api/mcp/workspaces → manage_workspace(action:'list') ────────
+  // 활성 워크스페이스가 없어도 동작 (목록만 반환). 각 항목에 active flag 포함.
+
+  router.addRoute('GET', '/api/mcp/workspaces', () => {
+    const activeId = workspaceWatcher.getActiveWorkspaceId()
+    const all = workspaceRepository.findAll()
+    return {
+      workspaces: all.map((w) => ({
+        id: w.id,
+        name: w.name,
+        path: w.path,
+        active: w.id === activeId
+      }))
+    }
+  })
+
+  // ─── POST /api/mcp/workspace/switch → manage_workspace(action:'switch') ──
+  // 같은 워크스페이스로 재전환 시 no-op (alreadyActive:true). renderer UI 는
+  // 'workspace:active-changed' 브로드캐스트로 동기화.
+
+  router.addRoute<{ workspaceId: string }>(
+    'POST',
+    '/api/mcp/workspace/switch',
+    async (_params, body) => {
+      requireBody(body)
+      if (typeof body.workspaceId !== 'string') {
+        throw new ValidationError('workspaceId is required')
+      }
+      assertValidId(body.workspaceId, 'workspaceId')
+
+      const ws = workspaceRepository.findById(body.workspaceId)
+      if (!ws) throw new NotFoundError(`Workspace not found: ${body.workspaceId}`)
+
+      const currentActiveId = workspaceWatcher.getActiveWorkspaceId()
+      const alreadyActive = currentActiveId === ws.id
+
+      if (!alreadyActive) {
+        await workspaceWatcher.ensureWatching(ws.id, ws.path)
+        broadcastChanged('workspace:active-changed', ws.id, [])
+      }
+
+      return {
+        workspace: {
+          id: ws.id,
+          name: ws.name,
+          path: ws.path,
+          active: true
+        },
+        alreadyActive
+      }
+    }
+  )
 }

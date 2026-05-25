@@ -8,6 +8,7 @@ export function WorkspaceInitializer(): null {
   const isInitialized = useCurrentWorkspaceStore((s) => s.isInitialized)
   const initialize = useCurrentWorkspaceStore((s) => s.initialize)
   const setCurrentWorkspaceId = useCurrentWorkspaceStore((s) => s.setCurrentWorkspaceId)
+  const syncFromMain = useCurrentWorkspaceStore((s) => s.syncCurrentWorkspaceIdFromMain)
 
   // Step 1: DB에서 저장된 워크스페이스 ID 로드
   useEffect(() => {
@@ -27,6 +28,14 @@ export function WorkspaceInitializer(): null {
     const activeId = isValid ? currentWorkspaceId! : workspaces[0].id
     window.api.workspace.activate(activeId).catch(console.error)
   }, [workspaces, currentWorkspaceId, isInitialized, setCurrentWorkspaceId])
+
+  // Step 3: MCP manage_workspace(switch) 로 main 에서 활성 워크스페이스가 바뀌면
+  // store + settings 만 갱신 (watcher 는 main 에서 이미 전환됨).
+  useEffect(() => {
+    return window.api.workspace.onActiveChanged((newId) => {
+      syncFromMain(newId)
+    })
+  }, [syncFromMain])
 
   return null
 }
