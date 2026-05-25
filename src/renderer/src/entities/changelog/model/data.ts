@@ -6,7 +6,7 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
-    version: '1.11.1',
+    version: '1.11.2',
     date: '2026-05-26',
     changes: [
       {
