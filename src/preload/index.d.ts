@@ -264,6 +264,7 @@ interface WorkspaceAPI {
   delete: (id: string) => Promise<IpcResponse<void>>
   activate: (id: string) => Promise<IpcResponse<Workspace>>
   selectDirectory: () => Promise<string | null>
+  onActiveChanged: (callback: (workspaceId: string, _: string[]) => void) => () => void
 }
 
 interface TodoItem {
