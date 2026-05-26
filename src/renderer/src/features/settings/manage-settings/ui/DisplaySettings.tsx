@@ -4,7 +4,9 @@ import { cn } from '@/shared/lib/utils'
 import { applyTheme, applyFontSize, type Theme, type FontSize } from '@/shared/lib/theme'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Separator } from '@/shared/ui/separator'
+import { Switch } from '@/shared/ui/switch'
 import { useDayViewTimeSettings } from '@/features/schedule/manage-schedule/model/use-day-view-time-settings'
+import { useShowAuthorBadgeSetting } from '@/shared/hooks/use-show-author-badge-setting'
 
 const FONT_SIZE_OPTIONS: { value: FontSize; label: string }[] = [
   { value: 'small', label: '작게' },
@@ -79,7 +81,29 @@ export function DisplaySettings(): React.JSX.Element {
 
       <Separator />
 
+      <AuthorBadgeSettings />
+
+      <Separator />
+
       <ScheduleSettings />
+    </div>
+  )
+}
+
+function AuthorBadgeSettings(): React.JSX.Element {
+  const { show, setShow } = useShowAuthorBadgeSetting()
+
+  return (
+    <div>
+      <div className="flex items-start justify-between gap-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-medium">생성자/수정자 표시</h3>
+          <p className="text-xs text-muted-foreground">
+            리스트와 상세 페이지에서 작성자/수정자 아이콘을 보여줍니다.
+          </p>
+        </div>
+        <Switch checked={show} onCheckedChange={(v) => setShow(v)} />
+      </div>
     </div>
   )
 }

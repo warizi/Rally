@@ -10,6 +10,7 @@ import {
   formatAuthorTooltip,
   type AuthorKind
 } from '@/shared/lib/format-author'
+import { useShowAuthorBadgeSetting } from '@/shared/hooks/use-show-author-badge-setting'
 function ClaudeIcon({ className }: { className?: string }) {
   return (
     <svg
@@ -117,6 +118,8 @@ export function AuthorBadge({
   size = 'sm',
   className
 }: AuthorBadgeProps) {
+  const { show } = useShowAuthorBadgeSetting()
+  if (!show) return null
   return (
     <TooltipProvider delayDuration={300}>
       <BadgeIcon
@@ -156,11 +159,14 @@ export function AuthorBadgePair({
   size = 'sm',
   className
 }: AuthorBadgePairProps) {
+  const { show } = useShowAuthorBadgeSetting()
   const sameActor = createdBy === updatedBy && createdById === updatedById
   const sameTime =
     createdAt && updatedAt
       ? new Date(createdAt).getTime() === new Date(updatedAt).getTime()
       : !createdAt && !updatedAt
+
+  if (!show) return null
 
   return (
     <TooltipProvider delayDuration={300}>
