@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.12.1',
+    date: '2026-05-26',
+    changes: [
+      {
+        type: 'fix',
+        title: '칸반보드 링크 검색 input 포커스 오류 수정',
+        description:
+          '칸반보드의 카드에서 링크 추가 팝업의 검색 input을 클릭해도 포커스가 되지 않아 검색을 할 수 없던 문제가 수정되었습니다. 이제 정상적으로 검색하여 항목을 연결할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.12.0',
     date: '2026-06-26',
     changes: [
