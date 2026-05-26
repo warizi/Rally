@@ -2,11 +2,7 @@
  * folder-search-helpers 단위 테스트 (Phase 1).
  */
 import { describe, it, expect } from 'vitest'
-import {
-  searchTree,
-  findAncestors,
-  moveActiveIndex
-} from '../folder-search-helpers'
+import { searchTree, findAncestors, moveActiveIndex } from '../folder-search-helpers'
 import type { WorkspaceTreeNode } from '../types'
 
 function folder(id: string, name: string, children: WorkspaceTreeNode[] = []): WorkspaceTreeNode {

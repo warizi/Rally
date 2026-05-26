@@ -136,7 +136,7 @@ describe('bulkUpdatePathPrefix', () => {
       makeFolder({ id: 'f3', relativePath: 'a/b/c' })
     ])
 
-    folderRepository.bulkUpdatePathPrefix(WS_ID, 'a', 'x')
+    folderRepository.bulkUpdatePathPrefix(WS_ID, 'a', 'x', { kind: 'user', id: null })
 
     const paths = folderRepository.findByWorkspaceId(WS_ID).map((f) => f.relativePath)
     expect(paths).toContain('x')
@@ -153,7 +153,7 @@ describe('bulkUpdatePathPrefix', () => {
       makeFolder({ id: 'f2', relativePath: 'ab' })
     ])
 
-    folderRepository.bulkUpdatePathPrefix(WS_ID, 'a', 'x')
+    folderRepository.bulkUpdatePathPrefix(WS_ID, 'a', 'x', { kind: 'user', id: null })
 
     const paths = folderRepository.findByWorkspaceId(WS_ID).map((f) => f.relativePath)
     expect(paths).toContain('x')
@@ -221,7 +221,7 @@ describe('reindexSiblings', () => {
     ])
 
     // c → a → b 순서로 재할당 → order: 0, 1, 2
-    folderRepository.reindexSiblings(WS_ID, ['id-c', 'id-a', 'id-b'])
+    folderRepository.reindexSiblings(WS_ID, ['id-c', 'id-a', 'id-b'], { kind: 'user', id: null })
 
     const rows = folderRepository.findByWorkspaceId(WS_ID)
     const byId = Object.fromEntries(rows.map((r) => [r.id, r.order]))
@@ -233,7 +233,7 @@ describe('reindexSiblings', () => {
   it('빈 배열이면 DB를 변경하지 않는다 (no-op)', () => {
     folderRepository.create(makeFolder({ id: 'f1', order: 99 }))
 
-    folderRepository.reindexSiblings(WS_ID, [])
+    folderRepository.reindexSiblings(WS_ID, [], { kind: 'user', id: null })
 
     const row = folderRepository.findById('f1')
     expect(row?.order).toBe(99)

@@ -82,9 +82,7 @@ export function FolderContextMenu({
           </ContextMenuItem>
           <ContextMenuSub
             open={openSub === 'note'}
-            onOpenChange={(open) =>
-              setOpenSub(open ? 'note' : openSub === 'note' ? null : openSub)
-            }
+            onOpenChange={(open) => setOpenSub(open ? 'note' : openSub === 'note' ? null : openSub)}
           >
             <ContextMenuSubTrigger onPointerEnter={() => setOpenSub('note')}>
               <FileText className="size-4 mr-2" />

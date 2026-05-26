@@ -63,10 +63,9 @@ describe('wrapHandlerWithDeprecation', () => {
     const tool = makeTool({ deprecated: { replacedBy: 'v2_tool' } })
     const wrapped = wrapHandlerWithDeprecation(tool)
     // ToolCallback 시그니처는 SDK 내부 타입 — 테스트에선 임의 인자 전달
-    const result = (await (wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>)(
-      {},
-      {}
-    )) as CallToolResult
+    const result = (await (
+      wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>
+    )({}, {})) as CallToolResult
     const text = (result.content[0] as { text: string }).text
     const parsed = JSON.parse(text) as Record<string, unknown>
     expect(parsed._deprecation).toEqual({ tool: 'test_tool', replacedBy: 'v2_tool' })
@@ -75,10 +74,9 @@ describe('wrapHandlerWithDeprecation', () => {
   it('_workspace 가 _deprecation 보다 먼저, payload 는 그 뒤 순서 유지', async () => {
     const tool = makeTool({ deprecated: { replacedBy: 'v2_tool' } })
     const wrapped = wrapHandlerWithDeprecation(tool)
-    const result = (await (wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>)(
-      {},
-      {}
-    )) as CallToolResult
+    const result = (await (
+      wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>
+    )({}, {})) as CallToolResult
     const text = (result.content[0] as { text: string }).text
     const keys = Object.keys(JSON.parse(text) as Record<string, unknown>)
     expect(keys[0]).toBe('_workspace')
@@ -91,10 +89,9 @@ describe('wrapHandlerWithDeprecation', () => {
       deprecated: { replacedBy: 'v2_tool', since: 'v2.0', reason: 'merged' }
     })
     const wrapped = wrapHandlerWithDeprecation(tool)
-    const result = (await (wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>)(
-      {},
-      {}
-    )) as CallToolResult
+    const result = (await (
+      wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>
+    )({}, {})) as CallToolResult
     const parsed = JSON.parse((result.content[0] as { text: string }).text) as Record<
       string,
       unknown
@@ -116,10 +113,9 @@ describe('wrapHandlerWithDeprecation', () => {
       })) as unknown as ToolDefinition['handler']
     })
     const wrapped = wrapHandlerWithDeprecation(tool)
-    const result = (await (wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>)(
-      {},
-      {}
-    )) as CallToolResult
+    const result = (await (
+      wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>
+    )({}, {})) as CallToolResult
     expect((result.content[0] as { text: string }).text).toBe('plain string not json')
     expect(result.isError).toBe(true)
   })
@@ -132,10 +128,9 @@ describe('wrapHandlerWithDeprecation', () => {
       })) as unknown as ToolDefinition['handler']
     })
     const wrapped = wrapHandlerWithDeprecation(tool)
-    const result = (await (wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>)(
-      {},
-      {}
-    )) as CallToolResult
+    const result = (await (
+      wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>
+    )({}, {})) as CallToolResult
     expect(result.content[0]).toEqual({ type: 'image', data: 'base64...', mimeType: 'image/png' })
   })
 
@@ -150,10 +145,9 @@ describe('wrapHandlerWithDeprecation', () => {
         })) as unknown as ToolDefinition['handler']
     })
     const wrapped = wrapHandlerWithDeprecation(tool)
-    const result = (await (wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>)(
-      {},
-      {}
-    )) as CallToolResult
+    const result = (await (
+      wrapped as unknown as (a: unknown, e: unknown) => Promise<CallToolResult>
+    )({}, {})) as CallToolResult
     const parsed = JSON.parse((result.content[0] as { text: string }).text) as Record<
       string,
       unknown

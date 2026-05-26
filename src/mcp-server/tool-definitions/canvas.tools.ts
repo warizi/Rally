@@ -105,7 +105,10 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
         .describe('Array of canvas actions')
     },
     handler: (args) => {
-      const a = args as { canvasId?: string; actions: Array<{ action: string; [k: string]: unknown }> }
+      const a = args as {
+        canvasId?: string
+        actions: Array<{ action: string; [k: string]: unknown }>
+      }
       const isCreate = a.actions.some((act) => act.action === 'create')
       if (isCreate) {
         // create must be the only action

@@ -123,9 +123,10 @@ export function registerMcpRecurringRoutes(router: Router): void {
   router.addRoute<{ actions: RecurringRuleAction[] }>(
     'POST',
     '/api/mcp/recurring/rules/batch',
-    (_, body): { results: ManageRecurringRuleResult[] } => {
+    (_, body, _query, ctx): { results: ManageRecurringRuleResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       const results = processBatchActions<RecurringRuleAction, ManageRecurringRuleResult>(
         body.actions,
@@ -133,36 +134,44 @@ export function registerMcpRecurringRoutes(router: Router): void {
           if (action.action === 'create') {
             const startDate = requireDate(action.startDate, 'startDate')
             const endDate = parseDate(action.endDate, 'endDate') ?? null
-            const created = recurringRuleService.create(wsId, {
-              title: action.title,
-              description: action.description,
-              priority: action.priority,
-              recurrenceType: action.recurrenceType,
-              daysOfWeek: action.daysOfWeek,
-              startDate,
-              endDate,
-              startTime: action.startTime ?? null,
-              endTime: action.endTime ?? null,
-              reminderOffsetMs: action.reminderOffsetMs ?? null
-            })
+            const created = recurringRuleService.create(
+              wsId,
+              {
+                title: action.title,
+                description: action.description,
+                priority: action.priority,
+                recurrenceType: action.recurrenceType,
+                daysOfWeek: action.daysOfWeek,
+                startDate,
+                endDate,
+                startTime: action.startTime ?? null,
+                endTime: action.endTime ?? null,
+                reminderOffsetMs: action.reminderOffsetMs ?? null
+              },
+              actor
+            )
             return { action: 'create', id: created.id, success: true }
           }
           if (action.action === 'update') {
             assertValidId(action.id, 'rule id')
             const existing = recurringRuleRepository.findById(action.id)
             assertOwnedByWorkspace(existing, wsId, `Recurring rule not found: ${action.id}`)
-            recurringRuleService.update(action.id, {
-              title: action.title,
-              description: action.description,
-              priority: action.priority,
-              recurrenceType: action.recurrenceType,
-              daysOfWeek: action.daysOfWeek,
-              startDate: parseDate(action.startDate, 'startDate'),
-              endDate: action.endDate === null ? null : parseDate(action.endDate, 'endDate'),
-              startTime: action.startTime,
-              endTime: action.endTime,
-              reminderOffsetMs: action.reminderOffsetMs
-            })
+            recurringRuleService.update(
+              action.id,
+              {
+                title: action.title,
+                description: action.description,
+                priority: action.priority,
+                recurrenceType: action.recurrenceType,
+                daysOfWeek: action.daysOfWeek,
+                startDate: parseDate(action.startDate, 'startDate'),
+                endDate: action.endDate === null ? null : parseDate(action.endDate, 'endDate'),
+                startTime: action.startTime,
+                endTime: action.endTime,
+                reminderOffsetMs: action.reminderOffsetMs
+              },
+              actor
+            )
             return { action: 'update', id: action.id, success: true }
           }
           if (action.action === 'complete') {

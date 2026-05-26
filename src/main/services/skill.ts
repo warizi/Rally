@@ -2,11 +2,7 @@ import { nanoid } from 'nanoid'
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors'
 import { customSkillRepository, type CustomSkill } from '../repositories/custom-skill'
 import { systemSkillRepository, type SystemSkill } from '../repositories/system-skill'
-import {
-  SYSTEM_SKILL_NAMES,
-  SYSTEM_SKILL_SEEDS,
-  getSystemSkillSeed
-} from './system-skills-seed'
+import { SYSTEM_SKILL_NAMES, SYSTEM_SKILL_SEEDS, getSystemSkillSeed } from './system-skills-seed'
 
 export type SkillSource = 'system' | 'custom'
 
@@ -208,9 +204,7 @@ export const skillService = {
    * 시스템은 SYSTEM_SKILL_NAMES 정의 순서대로, 커스텀은 createdAt desc.
    */
   list(): SkillItem[] {
-    const system = SYSTEM_SKILL_NAMES.map(loadSystemSkill).filter(
-      (s): s is SkillItem => s !== null
-    )
+    const system = SYSTEM_SKILL_NAMES.map(loadSystemSkill).filter((s): s is SkillItem => s !== null)
     const custom = customSkillRepository.findActive().map(toItem)
     return [...system, ...custom]
   },

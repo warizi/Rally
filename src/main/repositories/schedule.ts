@@ -63,6 +63,8 @@ export const scheduleRepository = {
         | 'color'
         | 'priority'
         | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
         | 'deletedAt'
         | 'trashBatchId'
       >

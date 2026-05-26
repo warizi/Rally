@@ -43,6 +43,10 @@ interface NoteNode {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface NoteAPI {
@@ -94,6 +98,10 @@ interface CsvFileNode {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface CsvAPI {
@@ -146,6 +154,10 @@ interface PdfFileNode {
   order: number
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface PdfAPI {
@@ -184,6 +196,10 @@ interface ImageFileNode {
   order: number
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface ImageAPI {
@@ -236,6 +252,10 @@ interface FolderNode {
   color: string | null
   order: number
   children: FolderNode[]
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }
 
 interface FolderAPI {
@@ -296,6 +316,10 @@ interface TodoItem {
   doneAt: Date | null
   dueDate: Date | null
   startDate: Date | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface CreateTodoData {
@@ -363,6 +387,10 @@ interface ScheduleItem {
   priority: 'low' | 'medium' | 'high'
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface CreateScheduleData {
@@ -438,6 +466,10 @@ interface CanvasItem {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface CanvasNodeItem {
@@ -639,6 +671,10 @@ interface TagItem {
   color: string
   description: string | null
   createdAt: Date
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }
 
 interface CreateTagInput {
@@ -800,6 +836,10 @@ interface RecurringRuleItem {
   reminderOffsetMs: number | null
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface CreateRecurringRuleData {

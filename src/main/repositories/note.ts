@@ -23,6 +23,8 @@ export const noteRepository = {
         | 'order'
         | 'isLocked'
         | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
       >
     >
   ): Note | undefined {

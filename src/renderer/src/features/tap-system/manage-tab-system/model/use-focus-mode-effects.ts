@@ -6,9 +6,7 @@ import { useTabStore } from './store'
 // - 사라진 탭(닫기/리셋 등)은 스택에서 자동 정리
 export function useFocusModeEffects(): void {
   const focusedDepth = useTabStore((state) => state.focusedTabIds.length)
-  const hasInvalidEntry = useTabStore((state) =>
-    state.focusedTabIds.some((id) => !state.tabs[id])
-  )
+  const hasInvalidEntry = useTabStore((state) => state.focusedTabIds.some((id) => !state.tabs[id]))
 
   // 사라진 탭 정리
   useEffect(() => {

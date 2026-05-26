@@ -111,9 +111,7 @@ export function TemplateButton({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>저장할 내용이 비어있습니다</AlertDialogTitle>
-            <AlertDialogDescription>
-              내용을 작성한 뒤 다시 시도해주세요.
-            </AlertDialogDescription>
+            <AlertDialogDescription>내용을 작성한 뒤 다시 시도해주세요.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction>확인</AlertDialogAction>

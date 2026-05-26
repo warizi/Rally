@@ -63,6 +63,29 @@ import {
 } from './import-schemas'
 
 /**
+ * 구버전 백업(4필드 누락)일 때 'user' / null 기본값을 명시 주입.
+ * 신버전 백업은 값이 있으면 그대로 보존.
+ */
+function actorDefaults(row: {
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
+}): {
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
+} {
+  return {
+    createdBy: row.createdBy ?? 'user',
+    createdById: row.createdById ?? null,
+    updatedBy: row.updatedBy ?? 'user',
+    updatedById: row.updatedById ?? null
+  }
+}
+
+/**
  * 백업 import — zip → 새 워크스페이스.
  *
  * 1. zip 해제 + manifest 검증 (version, 손상 거부)
@@ -115,9 +138,7 @@ export const backupDeserializer = {
         for (let i = 0; i < raw.length; i++) {
           const parsed = schema.safeParse(raw[i])
           if (!parsed.success) {
-            throw new Error(
-              `Invalid backup data in ${filename}[${i}]: ${parsed.error.message}`
-            )
+            throw new Error(`Invalid backup data in ${filename}[${i}]: ${parsed.error.message}`)
           }
           result.push(parsed.data)
         }
@@ -187,7 +208,8 @@ export const backupDeserializer = {
             color: f.color,
             order: f.order,
             createdAt: toDate(f.createdAt),
-            updatedAt: toDate(f.updatedAt)
+            updatedAt: toDate(f.updatedAt),
+            ...actorDefaults(f)
           }))
         )
 
@@ -205,7 +227,8 @@ export const backupDeserializer = {
             order: n.order,
             isLocked: n.isLocked ?? false,
             createdAt: toDate(n.createdAt),
-            updatedAt: toDate(n.updatedAt)
+            updatedAt: toDate(n.updatedAt),
+            ...actorDefaults(n)
           }))
         )
 
@@ -224,7 +247,8 @@ export const backupDeserializer = {
             order: c.order,
             isLocked: c.isLocked ?? false,
             createdAt: toDate(c.createdAt),
-            updatedAt: toDate(c.updatedAt)
+            updatedAt: toDate(c.updatedAt),
+            ...actorDefaults(c)
           }))
         )
 
@@ -241,7 +265,8 @@ export const backupDeserializer = {
             preview: p.preview,
             order: p.order,
             createdAt: toDate(p.createdAt),
-            updatedAt: toDate(p.updatedAt)
+            updatedAt: toDate(p.updatedAt),
+            ...actorDefaults(p)
           }))
         )
 
@@ -258,7 +283,8 @@ export const backupDeserializer = {
             preview: i.preview,
             order: i.order,
             createdAt: toDate(i.createdAt),
-            updatedAt: toDate(i.updatedAt)
+            updatedAt: toDate(i.updatedAt),
+            ...actorDefaults(i)
           }))
         )
 
@@ -282,7 +308,8 @@ export const backupDeserializer = {
               updatedAt: toDate(t.updatedAt),
               doneAt: toDateOrNull(t.doneAt),
               dueDate: toDateOrNull(t.dueDate),
-              startDate: toDateOrNull(t.startDate)
+              startDate: toDateOrNull(t.startDate),
+              ...actorDefaults(t)
             })
             .run()
         }
@@ -302,7 +329,8 @@ export const backupDeserializer = {
             color: s.color,
             priority: s.priority,
             createdAt: toDate(s.createdAt),
-            updatedAt: toDate(s.updatedAt)
+            updatedAt: toDate(s.updatedAt),
+            ...actorDefaults(s)
           }))
         )
 
@@ -328,7 +356,8 @@ export const backupDeserializer = {
             viewportZoom: c.viewportZoom,
             isLocked: c.isLocked ?? false,
             createdAt: toDate(c.createdAt),
-            updatedAt: toDate(c.updatedAt)
+            updatedAt: toDate(c.updatedAt),
+            ...actorDefaults(c)
           }))
         )
 
@@ -414,7 +443,8 @@ export const backupDeserializer = {
             name: t.name,
             color: t.color,
             description: t.description,
-            createdAt: toDate(t.createdAt)
+            createdAt: toDate(t.createdAt),
+            ...actorDefaults(t)
           }))
         )
 
@@ -509,7 +539,8 @@ export const backupDeserializer = {
             endTime: r.endTime,
             reminderOffsetMs: r.reminderOffsetMs,
             createdAt: toDate(r.createdAt),
-            updatedAt: toDate(r.updatedAt)
+            updatedAt: toDate(r.updatedAt),
+            ...actorDefaults(r)
           }))
         )
 
@@ -558,8 +589,7 @@ export const backupDeserializer = {
           terminalSessionsJson.map((s) => ({
             id: mapper.register('terminal-session', s.id),
             workspaceId: newWorkspaceId,
-            layoutId:
-              s.layoutId != null ? mapper.mapOrSkip('terminal-layout', s.layoutId) : null,
+            layoutId: s.layoutId != null ? mapper.mapOrSkip('terminal-layout', s.layoutId) : null,
             name: s.name,
             cwd: s.cwd,
             shell: s.shell,

@@ -78,6 +78,10 @@ const MOCK_SCHEDULE_ROW = {
   priority: 'medium' as const,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }

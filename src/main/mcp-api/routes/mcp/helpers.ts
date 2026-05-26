@@ -1,8 +1,10 @@
+import type { IncomingMessage } from 'http'
 import { workspaceWatcher } from '../../../services/workspace-watcher'
 import { workspaceRepository } from '../../../repositories/workspace'
 import { noteRepository, type Note } from '../../../repositories/note'
 import { csvFileRepository, type CsvFile } from '../../../repositories/csv-file'
 import { ValidationError, NotFoundError } from '../../../lib/errors'
+import type { Actor } from '../../../services/_shared/actor'
 
 export function requireBody(body: unknown): asserts body is Record<string, unknown> {
   if (!body || typeof body !== 'object') {
@@ -51,4 +53,10 @@ export function assertValidId(id: unknown, label: string = 'id'): asserts id is 
   if (typeof id !== 'string' || !ID_RE.test(id)) {
     throw new ValidationError(`Invalid ${label} format`)
   }
+}
+
+export function getActorFromRequest(req: IncomingMessage): Actor {
+  const raw = req.headers['x-mcp-client-name']
+  const name = (typeof raw === 'string' ? raw.trim() : '') || null
+  return { kind: 'ai', id: name }
 }

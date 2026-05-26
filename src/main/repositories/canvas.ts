@@ -51,7 +51,14 @@ export const canvasRepository = {
     data: Partial<
       Pick<
         Canvas,
-        'title' | 'description' | 'isLocked' | 'updatedAt' | 'deletedAt' | 'trashBatchId'
+        | 'title'
+        | 'description'
+        | 'isLocked'
+        | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
+        | 'deletedAt'
+        | 'trashBatchId'
       >
     >
   ): Canvas | undefined {

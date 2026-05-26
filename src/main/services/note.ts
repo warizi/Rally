@@ -11,6 +11,7 @@ import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { noteImageService } from './note-image'
 import { trashService } from './trash'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 
 export interface NoteNode {
   id: string
@@ -211,7 +212,12 @@ export const noteService = {
   /**
    * 새 노트 생성 (disk + DB)
    */
-  create(workspaceId: string, folderId: string | null, name: string): NoteNode {
+  create(
+    workspaceId: string,
+    folderId: string | null,
+    name: string,
+    actor: Actor = USER_ACTOR
+  ): NoteNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -250,7 +256,8 @@ export const noteService = {
       preview: '',
       order: maxOrder + 1,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      ...toCreatedFields(actor)
     })
 
     return toNoteNode(row)
@@ -407,7 +414,12 @@ export const noteService = {
   /**
    * .md 파일 내용 저장 + preview 자동 업데이트
    */
-  writeContent(workspaceId: string, noteId: string, content: string): void {
+  writeContent(
+    workspaceId: string,
+    noteId: string,
+    content: string,
+    actor: Actor = USER_ACTOR
+  ): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -428,7 +440,7 @@ export const noteService = {
     fs.writeFileSync(absPath, content, 'utf-8')
 
     const preview = content.slice(0, 200).replace(/\s+/g, ' ').trim()
-    noteRepository.update(noteId, { preview, updatedAt: new Date() })
+    noteRepository.update(noteId, { preview, updatedAt: new Date(), ...toUpdatedFields(actor) })
   },
 
   /**
@@ -584,13 +596,19 @@ export const noteService = {
     return results
   },
 
-  updateMeta(_workspaceId: string, noteId: string, data: { description?: string }): NoteNode {
+  updateMeta(
+    _workspaceId: string,
+    noteId: string,
+    data: { description?: string },
+    actor: Actor = USER_ACTOR
+  ): NoteNode {
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
 
     const updated = noteRepository.update(noteId, {
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toNoteNode(updated)

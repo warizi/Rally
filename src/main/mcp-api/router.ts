@@ -4,12 +4,21 @@ import { isAuthenticated, writeUnauthorized } from './lib/auth'
 import { normalizeError } from '../lib/errors'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { workspaceRepository } from '../repositories/workspace'
+import type { Actor } from '../services/_shared/actor'
 
 type RouteParams = Record<string, string>
+
+export interface RequestContext {
+  actor: Actor
+  clientName: string | null
+  clientVersion: string | null
+}
+
 type RouteHandler = (
   params: RouteParams,
   body: unknown,
-  query: URLSearchParams
+  query: URLSearchParams,
+  context: RequestContext
 ) => unknown | Promise<unknown>
 
 interface Route {
@@ -17,6 +26,23 @@ interface Route {
   pattern: RegExp
   paramNames: string[]
   handler: RouteHandler
+}
+
+function readHeader(req: http.IncomingMessage, name: string): string | null {
+  const raw = req.headers[name]
+  if (typeof raw !== 'string') return null
+  const trimmed = raw.trim()
+  return trimmed.length > 0 ? trimmed : null
+}
+
+function buildContext(req: http.IncomingMessage): RequestContext {
+  const clientName = readHeader(req, 'x-mcp-client-name')
+  const clientVersion = readHeader(req, 'x-mcp-client-version')
+  return {
+    actor: { kind: 'ai', id: clientName },
+    clientName,
+    clientVersion
+  }
 }
 
 // 에러 정규화는 lib/errors.ts의 normalizeError 사용
@@ -28,7 +54,8 @@ interface RouterInstance {
     handler: (
       params: RouteParams,
       body: TBody extends null ? null : TBody,
-      query: URLSearchParams
+      query: URLSearchParams,
+      context: RequestContext
     ) => unknown | Promise<unknown>
   ) => void
   handle: (req: http.IncomingMessage, res: http.ServerResponse) => Promise<void>
@@ -43,7 +70,8 @@ export function createRouter(): RouterInstance {
     handler: (
       params: RouteParams,
       body: TBody extends null ? null : TBody,
-      query: URLSearchParams
+      query: URLSearchParams,
+      context: RequestContext
     ) => unknown | Promise<unknown>
   ): void {
     const paramNames: string[] = []
@@ -84,7 +112,8 @@ export function createRouter(): RouterInstance {
 
       try {
         const body = method === 'GET' ? null : await parseBody(req)
-        const result = await Promise.resolve(route.handler(params, body, query))
+        const context = buildContext(req)
+        const result = await Promise.resolve(route.handler(params, body, query, context))
 
         const wsId = workspaceWatcher.getActiveWorkspaceId()
         const wsName = wsId ? (workspaceRepository.findById(wsId)?.name ?? null) : null

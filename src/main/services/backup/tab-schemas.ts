@@ -14,7 +14,8 @@ export const TabSchema = z
     id: z.string(),
     type: z.string(),
     title: z.string(),
-    icon: z.string(),
+    // 구버전 백업(icon 필드 추가 이전) 호환 — 누락 시 deserializer가 type을 fallback으로 주입.
+    icon: z.string().optional(),
     pathname: z.string(),
     searchParams: z.record(z.string(), z.string()).optional(),
     pinned: z.boolean(),

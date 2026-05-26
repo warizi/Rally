@@ -25,6 +25,17 @@ import { z } from 'zod'
 const Ts = z.union([z.number(), z.string()])
 const TsNullable = z.union([z.number(), z.string(), z.null()])
 
+/**
+ * 액터 4필드 — 구버전 백업(v1.12 이전) 호환을 위해 모두 optional.
+ * deserializer가 누락 시 'user' / null 기본값을 명시 주입.
+ */
+const ActorFields = {
+  createdBy: z.enum(['user', 'ai']).optional(),
+  createdById: z.string().nullable().optional(),
+  updatedBy: z.enum(['user', 'ai']).optional(),
+  updatedById: z.string().nullable().optional()
+}
+
 // ─── 각 entity import 스키마 ───────────────────────
 
 export const FolderImport = z
@@ -34,7 +45,8 @@ export const FolderImport = z
     color: z.string().nullable(),
     order: z.number(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -50,7 +62,8 @@ export const NoteImport = z
     // v1.12 이후 백업에만 존재. 옛 백업 호환 위해 optional 처리, DB default(0) 보존.
     isLocked: z.boolean().optional(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -66,7 +79,8 @@ export const CsvFileImport = z
     order: z.number(),
     isLocked: z.boolean().optional(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -80,7 +94,8 @@ export const PdfFileImport = z
     preview: z.string(),
     order: z.number(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -94,7 +109,8 @@ export const ImageFileImport = z
     preview: z.string(),
     order: z.number(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -114,7 +130,8 @@ export const TodoImport = z
     updatedAt: Ts,
     doneAt: TsNullable,
     dueDate: TsNullable,
-    startDate: TsNullable
+    startDate: TsNullable,
+    ...ActorFields
   })
   .passthrough()
 
@@ -130,7 +147,8 @@ export const ScheduleImport = z
     color: z.string().nullable(),
     priority: z.enum(['low', 'medium', 'high']),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -161,7 +179,8 @@ export const CanvasImport = z
     viewportZoom: z.number(),
     isLocked: z.boolean().optional(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -220,7 +239,8 @@ export const TagImport = z
     name: z.string(),
     color: z.string().nullable(),
     description: z.string().nullable(),
-    createdAt: Ts
+    createdAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 
@@ -283,7 +303,8 @@ export const RecurringRuleImport = z
     endTime: z.string().nullable(),
     reminderOffsetMs: z.number().nullable(),
     createdAt: Ts,
-    updatedAt: Ts
+    updatedAt: Ts,
+    ...ActorFields
   })
   .passthrough()
 

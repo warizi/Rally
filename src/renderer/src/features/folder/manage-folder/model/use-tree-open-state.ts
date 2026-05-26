@@ -38,10 +38,7 @@ export function useTreeOpenState(tabId: string | undefined): {
     itemId: string,
     treeApi?: TreeApi<WorkspaceTreeNode> | null
   ) => void
-  expandIds: (
-    ids: Iterable<string>,
-    treeApi?: TreeApi<WorkspaceTreeNode> | null
-  ) => void
+  expandIds: (ids: Iterable<string>, treeApi?: TreeApi<WorkspaceTreeNode> | null) => void
 } {
   const searchParams = useTabStore((s) => (tabId ? s.tabs[tabId]?.searchParams : undefined))
   const navigateTab = useTabStore((s) => s.navigateTab)

@@ -42,9 +42,10 @@ export function registerMcpCanvasRoutes(router: Router): void {
   router.addRoute<CreateCanvasBody>(
     'POST',
     '/api/mcp/canvases',
-    (_, body): CreateCanvasResponse => {
+    (_, body, _query, ctx): CreateCanvasResponse => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       if (body.edges?.length && !body.nodes?.length)
         throw new ValidationError('edges require nodes to reference')
@@ -52,10 +53,14 @@ export function registerMcpCanvasRoutes(router: Router): void {
       // 캔버스 + 노드 + 엣지 생성 전체를 단일 트랜잭션으로.
       // 중간 실패 시 빈 캔버스/orphan 노드 잔존 방지.
       const { canvas, createdNodes, createdEdges } = withTransaction(() => {
-        const canvas = canvasService.create(wsId, {
-          title: body.title,
-          description: body.description
-        })
+        const canvas = canvasService.create(
+          wsId,
+          {
+            title: body.title,
+            description: body.description
+          },
+          actor
+        )
 
         const createdNodes: CreatedNodeInfo[] = []
         if (body.nodes?.length) {
@@ -114,9 +119,10 @@ export function registerMcpCanvasRoutes(router: Router): void {
   router.addRoute<{ actions: EditCanvasAction[] }>(
     'POST',
     '/api/mcp/canvases/:canvasId/edit',
-    (params, body): { results: EditCanvasResult[] } => {
+    (params, body, _query, ctx): { results: EditCanvasResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
       if (!Array.isArray(body.actions) || body.actions.length === 0)
         throw new ValidationError('actions array is required')
       const actions = body.actions
@@ -144,10 +150,14 @@ export function registerMcpCanvasRoutes(router: Router): void {
         for (const action of actions) {
           switch (action.action) {
             case 'update':
-              canvasService.update(params.canvasId, {
-                title: action.title,
-                description: action.description
-              })
+              canvasService.update(
+                params.canvasId,
+                {
+                  title: action.title,
+                  description: action.description
+                },
+                actor
+              )
               acc.push({ action: 'update', success: true })
               break
             case 'add_node': {

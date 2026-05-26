@@ -51,9 +51,11 @@ function detectType(id: string, wsId: string): { type: ItemType; relativePath?: 
   const pdf = pdfFileRepository.findById(id)
   if (pdf && pdf.workspaceId === wsId) return { type: 'pdf', relativePath: pdf.relativePath }
   const image = imageFileRepository.findById(id)
-  if (image && image.workspaceId === wsId) return { type: 'image', relativePath: image.relativePath }
+  if (image && image.workspaceId === wsId)
+    return { type: 'image', relativePath: image.relativePath }
   const folder = folderRepository.findById(id)
-  if (folder && folder.workspaceId === wsId) return { type: 'folder', relativePath: folder.relativePath }
+  if (folder && folder.workspaceId === wsId)
+    return { type: 'folder', relativePath: folder.relativePath }
   return null
 }
 
@@ -61,9 +63,10 @@ export function registerMcpManageItemsRoutes(router: Router): void {
   router.addRoute<{ actions: ManageItemAction[] }>(
     'POST',
     '/api/mcp/manage-items/batch',
-    (_, body): { results: ManageItemResult[] } => {
+    (_, body, _query, ctx): { results: ManageItemResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
       if (!Array.isArray(body.actions) || body.actions.length === 0) {
         throw new ValidationError('actions array is required')
       }
@@ -79,7 +82,12 @@ export function registerMcpManageItemsRoutes(router: Router): void {
         try {
           if (action.action === 'create_folder') {
             if (action.parentFolderId) assertValidId(action.parentFolderId, 'parentFolderId')
-            const folder = folderService.create(wsId, action.parentFolderId ?? null, action.name)
+            const folder = folderService.create(
+              wsId,
+              action.parentFolderId ?? null,
+              action.name,
+              actor
+            )
             folderTouched = true
             return { action: 'create_folder', id: folder.id, type: 'folder', success: true }
           }
@@ -114,7 +122,7 @@ export function registerMcpManageItemsRoutes(router: Router): void {
                 break
               }
               case 'canvas': {
-                canvasService.update(action.id, { title: action.newName })
+                canvasService.update(action.id, { title: action.newName }, actor)
                 canvasTouched = true
                 break
               }

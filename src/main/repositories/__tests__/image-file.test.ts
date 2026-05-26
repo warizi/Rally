@@ -213,7 +213,10 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.imageFiles)
       .values(makeImage({ id: 'pp1', relativePath: 'old-folder' }))
       .run()
-    imageFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder')
+    imageFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder', {
+      kind: 'user',
+      id: null
+    })
     expect(imageFileRepository.findById('pp1')!.relativePath).toBe('new-folder')
   })
 
@@ -226,7 +229,10 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.imageFiles)
       .values(makeImage({ id: 'pp3', relativePath: 'other/b.png' }))
       .run()
-    imageFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder')
+    imageFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder', {
+      kind: 'user',
+      id: null
+    })
     expect(imageFileRepository.findById('pp2')!.relativePath).toBe('new-folder/a.png')
     expect(imageFileRepository.findById('pp3')!.relativePath).toBe('other/b.png')
   })
@@ -237,7 +243,7 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.imageFiles)
       .values(makeImage({ id: 'pp4', relativePath: 'old/c.png', updatedAt: oldDate }))
       .run()
-    imageFileRepository.bulkUpdatePathPrefix(WS_ID, 'old', 'new')
+    imageFileRepository.bulkUpdatePathPrefix(WS_ID, 'old', 'new', { kind: 'user', id: null })
     const row = imageFileRepository.findById('pp4')!
     expect(new Date(row.updatedAt).getTime()).toBeGreaterThan(oldDate.getTime())
   })
@@ -253,7 +259,7 @@ describe('reindexSiblings', () => {
       .insert(schema.imageFiles)
       .values(makeImage({ id: 'ri2', relativePath: 'r2.png', order: 3 }))
       .run()
-    imageFileRepository.reindexSiblings(WS_ID, ['ri2', 'ri1'])
+    imageFileRepository.reindexSiblings(WS_ID, ['ri2', 'ri1'], { kind: 'user', id: null })
     expect(imageFileRepository.findById('ri2')!.order).toBe(0)
     expect(imageFileRepository.findById('ri1')!.order).toBe(1)
   })

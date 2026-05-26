@@ -223,11 +223,7 @@ describe('trash integration matrix', () => {
       expect(purgedCount).toBe(1)
 
       // Old todo는 영구 삭제 — DB에서도 사라짐
-      const oldRow = testDb
-        .select()
-        .from(schema.todos)
-        .where(eq(schema.todos.id, todoOld.id))
-        .get()
+      const oldRow = testDb.select().from(schema.todos).where(eq(schema.todos.id, todoOld.id)).get()
       expect(oldRow).toBeUndefined()
 
       // Fresh todo는 여전히 trash 상태
@@ -260,50 +256,45 @@ describe('trash integration matrix', () => {
       ['30', 30],
       ['90', 90],
       ['365', 365]
-    ] as const)(
-      'retention=%s sweepAll → cutoff 경과 batch만 purge',
-      (retentionKey, days) => {
-        vi.useFakeTimers()
-        try {
-          const ws = seed.workspace({ path: wsDir })
-          const oldTodo = seed.todo(ws.id, { title: 'Old' })
-          const freshTodo = seed.todo(ws.id, { title: 'Fresh' })
+    ] as const)('retention=%s sweepAll → cutoff 경과 batch만 purge', (retentionKey, days) => {
+      vi.useFakeTimers()
+      try {
+        const ws = seed.workspace({ path: wsDir })
+        const oldTodo = seed.todo(ws.id, { title: 'Old' })
+        const freshTodo = seed.todo(ws.id, { title: 'Fresh' })
 
-          const dayMs = 24 * 60 * 60 * 1000
-          // retention + 1 일 전 삭제 (만료 대상)
-          vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
-          trashService.softRemove(ws.id, 'todo', oldTodo.id)
+        const dayMs = 24 * 60 * 60 * 1000
+        // retention + 1 일 전 삭제 (만료 대상)
+        vi.setSystemTime(new Date('2026-01-01T00:00:00Z'))
+        trashService.softRemove(ws.id, 'todo', oldTodo.id)
 
-          // 오늘 삭제 (보존)
-          const now = new Date(
-            new Date('2026-01-01T00:00:00Z').getTime() + (days + 2) * dayMs
-          )
-          vi.setSystemTime(now)
-          trashService.softRemove(ws.id, 'todo', freshTodo.id)
+        // 오늘 삭제 (보존)
+        const now = new Date(new Date('2026-01-01T00:00:00Z').getTime() + (days + 2) * dayMs)
+        vi.setSystemTime(now)
+        trashService.softRemove(ws.id, 'todo', freshTodo.id)
 
-          trashService.setRetention(retentionKey)
-          const purged = trashService.sweepAll()
+        trashService.setRetention(retentionKey)
+        const purged = trashService.sweepAll()
 
-          expect(purged, `retention=${retentionKey}: 만료 batch 1개 purge`).toBe(1)
+        expect(purged, `retention=${retentionKey}: 만료 batch 1개 purge`).toBe(1)
 
-          // Old 는 hard delete, Fresh 는 여전히 trash
-          const oldRow = testDb
-            .select()
-            .from(schema.todos)
-            .where(eq(schema.todos.id, oldTodo.id))
-            .get()
-          const freshRow = testDb
-            .select()
-            .from(schema.todos)
-            .where(eq(schema.todos.id, freshTodo.id))
-            .get()
-          expect(oldRow).toBeUndefined()
-          expect(freshRow?.deletedAt).not.toBeNull()
-        } finally {
-          vi.useRealTimers()
-        }
+        // Old 는 hard delete, Fresh 는 여전히 trash
+        const oldRow = testDb
+          .select()
+          .from(schema.todos)
+          .where(eq(schema.todos.id, oldTodo.id))
+          .get()
+        const freshRow = testDb
+          .select()
+          .from(schema.todos)
+          .where(eq(schema.todos.id, freshTodo.id))
+          .get()
+        expect(oldRow).toBeUndefined()
+        expect(freshRow?.deletedAt).not.toBeNull()
+      } finally {
+        vi.useRealTimers()
       }
-    )
+    })
 
     it("retention='never' 는 sweepAll 호출해도 0 — 오래된 batch 도 보존", () => {
       vi.useFakeTimers()

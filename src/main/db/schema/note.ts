@@ -20,6 +20,14 @@ export const notes = sqliteTable(
     isLocked: integer('is_locked', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdBy: text('created_by', { enum: ['user', 'ai'] })
+      .notNull()
+      .default('user'),
+    createdById: text('created_by_id'),
+    updatedBy: text('updated_by', { enum: ['user', 'ai'] })
+      .notNull()
+      .default('user'),
+    updatedById: text('updated_by_id'),
     /** 휴지통 이동 시각 — NULL이면 활성 row */
     deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
     /** 같은 사용자 액션으로 묶인 trash batch 참조 */

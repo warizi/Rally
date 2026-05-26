@@ -95,7 +95,9 @@ export function expectWorkspacesEquivalent(idA: string, idB: string): void {
     fkCol: any,
     canvasIds: string[]
   ): T[] {
-    return canvasIds.flatMap((cid) => testDb.select().from(table).where(eq(fkCol, cid)).all() as T[])
+    return canvasIds.flatMap(
+      (cid) => testDb.select().from(table).where(eq(fkCol, cid)).all() as T[]
+    )
   }
 
   const nodesA = collect<Record<string, unknown>>(

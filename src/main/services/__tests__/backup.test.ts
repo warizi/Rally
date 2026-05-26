@@ -30,7 +30,13 @@ import { nanoid } from 'nanoid'
  * P0-2 follow-up: 라운드트립 시 모든 entity insert 경로가 실행되도록
  * seedFullWorkspace 외에 추가 entity 직접 시드 (coverage 보강).
  */
-function seedAdditionalEntities(workspaceId: string, folderId: string, noteId: string, todoId: string, scheduleId: string): {
+function seedAdditionalEntities(
+  workspaceId: string,
+  folderId: string,
+  noteId: string,
+  todoId: string,
+  scheduleId: string
+): {
   tagId: string
   recurringRuleId: string
   tabSnapshotId: string
@@ -39,112 +45,142 @@ function seedAdditionalEntities(workspaceId: string, folderId: string, noteId: s
 
   // tag + itemTag
   const tagId = nanoid()
-  testDb.insert(schema.tags).values({
-    id: tagId,
-    workspaceId,
-    name: 'urgent',
-    color: '#ff0000',
-    description: 'urgent tag',
-    createdAt: now
-  }).run()
-  testDb.insert(schema.itemTags).values({
-    id: nanoid(),
-    itemType: 'note',
-    itemId: noteId,
-    tagId,
-    createdAt: now
-  }).run()
+  testDb
+    .insert(schema.tags)
+    .values({
+      id: tagId,
+      workspaceId,
+      name: 'urgent',
+      color: '#ff0000',
+      description: 'urgent tag',
+      createdAt: now
+    })
+    .run()
+  testDb
+    .insert(schema.itemTags)
+    .values({
+      id: nanoid(),
+      itemType: 'note',
+      itemId: noteId,
+      tagId,
+      createdAt: now
+    })
+    .run()
 
   // schedule_todo (composite PK)
-  testDb.insert(schema.scheduleTodos).values({
-    scheduleId,
-    todoId
-  }).run()
+  testDb
+    .insert(schema.scheduleTodos)
+    .values({
+      scheduleId,
+      todoId
+    })
+    .run()
 
   // entity_link (note ↔ todo 양방향)
-  testDb.insert(schema.entityLinks).values({
-    sourceType: 'note',
-    sourceId: noteId,
-    targetType: 'todo',
-    targetId: todoId,
-    workspaceId,
-    createdAt: now
-  }).run()
+  testDb
+    .insert(schema.entityLinks)
+    .values({
+      sourceType: 'note',
+      sourceId: noteId,
+      targetType: 'todo',
+      targetId: todoId,
+      workspaceId,
+      createdAt: now
+    })
+    .run()
 
   // reminder
-  testDb.insert(schema.reminders).values({
-    id: nanoid(),
-    entityType: 'todo',
-    entityId: todoId,
-    offsetMs: 3600000,
-    remindAt: now,
-    isFired: false,
-    createdAt: now,
-    updatedAt: now
-  }).run()
+  testDb
+    .insert(schema.reminders)
+    .values({
+      id: nanoid(),
+      entityType: 'todo',
+      entityId: todoId,
+      offsetMs: 3600000,
+      remindAt: now,
+      isFired: false,
+      createdAt: now,
+      updatedAt: now
+    })
+    .run()
 
   // recurring_rule + completion
   const recurringRuleId = nanoid()
-  testDb.insert(schema.recurringRules).values({
-    id: recurringRuleId,
-    workspaceId,
-    title: 'Daily standup',
-    description: '',
-    priority: 'medium',
-    recurrenceType: 'daily',
-    daysOfWeek: null,
-    startDate: now,
-    endDate: null,
-    startTime: '09:00',
-    endTime: '09:30',
-    reminderOffsetMs: null,
-    createdAt: now,
-    updatedAt: now
-  }).run()
-  testDb.insert(schema.recurringCompletions).values({
-    id: nanoid(),
-    ruleId: recurringRuleId,
-    ruleTitle: 'Daily standup',
-    workspaceId,
-    completedDate: '2026-05-12',
-    completedAt: now,
-    createdAt: now
-  }).run()
+  testDb
+    .insert(schema.recurringRules)
+    .values({
+      id: recurringRuleId,
+      workspaceId,
+      title: 'Daily standup',
+      description: '',
+      priority: 'medium',
+      recurrenceType: 'daily',
+      daysOfWeek: null,
+      startDate: now,
+      endDate: null,
+      startTime: '09:00',
+      endTime: '09:30',
+      reminderOffsetMs: null,
+      createdAt: now,
+      updatedAt: now
+    })
+    .run()
+  testDb
+    .insert(schema.recurringCompletions)
+    .values({
+      id: nanoid(),
+      ruleId: recurringRuleId,
+      ruleTitle: 'Daily standup',
+      workspaceId,
+      completedDate: '2026-05-12',
+      completedAt: now,
+      createdAt: now
+    })
+    .run()
 
   // template
-  testDb.insert(schema.templates).values({
-    id: nanoid(),
-    workspaceId,
-    title: 'Note template',
-    type: 'note',
-    jsonData: JSON.stringify({ body: 'template body' }),
-    createdAt: now
-  }).run()
+  testDb
+    .insert(schema.templates)
+    .values({
+      id: nanoid(),
+      workspaceId,
+      title: 'Note template',
+      type: 'note',
+      jsonData: JSON.stringify({ body: 'template body' }),
+      createdAt: now
+    })
+    .run()
 
   // terminal_layout + session
   const terminalLayoutId = nanoid()
-  testDb.insert(schema.terminalLayouts).values({
-    id: terminalLayoutId,
-    workspaceId,
-    layoutJson: JSON.stringify({ type: 'single' }),
-    createdAt: now,
-    updatedAt: now
-  }).run()
-  testDb.insert(schema.terminalSessions).values({
-    id: nanoid(),
-    workspaceId,
-    layoutId: terminalLayoutId,
-    name: 'main',
-    cwd: '/tmp',
-    shell: '/bin/zsh',
-    rows: 24,
-    cols: 80,
-    screenSnapshot: null,
-    sortOrder: 0,
-    isActive: 1, // integer column (no boolean mode in schema)
-    createdAt: now,
-    updatedAt: now
-  }).run()
+  testDb
+    .insert(schema.terminalLayouts)
+    .values({
+      id: terminalLayoutId,
+      workspaceId,
+      layoutJson: JSON.stringify({ type: 'single' }),
+      createdAt: now,
+      updatedAt: now
+    })
+    .run()
+  testDb
+    .insert(schema.terminalSessions)
+    .values({
+      id: nanoid(),
+      workspaceId,
+      layoutId: terminalLayoutId,
+      name: 'main',
+      cwd: '/tmp',
+      shell: '/bin/zsh',
+      rows: 24,
+      cols: 80,
+      screenSnapshot: null,
+      sortOrder: 0,
+      isActive: 1, // integer column (no boolean mode in schema)
+      createdAt: now,
+      updatedAt: now
+    })
+    .run()
 
   // tab_session — tabsJson/panesJson/layoutJson 에 노트 id 포함 (재매핑 검증)
   const tabsJson = JSON.stringify({
@@ -174,28 +210,34 @@ function seedAdditionalEntities(workspaceId: string, folderId: string, noteId: s
     type: 'pane',
     paneId: 'pane-1'
   })
-  testDb.insert(schema.tabSessions).values({
-    workspaceId,
-    activePaneId: 'pane-1',
-    tabsJson,
-    panesJson,
-    layoutJson,
-    updatedAt: now
-  }).run()
+  testDb
+    .insert(schema.tabSessions)
+    .values({
+      workspaceId,
+      activePaneId: 'pane-1',
+      tabsJson,
+      panesJson,
+      layoutJson,
+      updatedAt: now
+    })
+    .run()
 
   // tab_snapshot
   const tabSnapshotId = nanoid()
-  testDb.insert(schema.tabSnapshots).values({
-    id: tabSnapshotId,
-    workspaceId,
-    name: 'Layout-A',
-    description: 'snapshot',
-    tabsJson,
-    panesJson,
-    layoutJson,
-    createdAt: now,
-    updatedAt: now
-  }).run()
+  testDb
+    .insert(schema.tabSnapshots)
+    .values({
+      id: tabSnapshotId,
+      workspaceId,
+      name: 'Layout-A',
+      description: 'snapshot',
+      tabsJson,
+      panesJson,
+      layoutJson,
+      createdAt: now,
+      updatedAt: now
+    })
+    .run()
 
   return { tagId, recurringRuleId, tabSnapshotId }
 }
@@ -273,7 +315,15 @@ describe('backupService — round trip', () => {
     const zip = new AdmZip()
     zip.addFile(
       'manifest.json',
-      Buffer.from(JSON.stringify({ version: 999, appVersion: 'x', workspaceName: 'x', exportedAt: 'x', tables: [] }))
+      Buffer.from(
+        JSON.stringify({
+          version: 999,
+          appVersion: 'x',
+          workspaceName: 'x',
+          exportedAt: 'x',
+          tables: []
+        })
+      )
     )
     zip.writeZip(badZip)
 
@@ -309,9 +359,9 @@ describe('backupService — round trip', () => {
     out.addLocalFolder(tmpDir)
     out.writeZip(tamperedZip)
 
-    await expect(
-      backupService.import(tamperedZip, 'Target', importPath)
-    ).rejects.toThrow(/Invalid backup data in folders\.json/)
+    await expect(backupService.import(tamperedZip, 'Target', importPath)).rejects.toThrow(
+      /Invalid backup data in folders\.json/
+    )
   })
 
   it('S6 — large workspace (1000 notes) round-trip smoke', async () => {
@@ -334,10 +384,7 @@ describe('backupService — round trip', () => {
     const newWs = await backupService.import(zipPath, 'LargeTarget', importPath)
     const importMs = Date.now() - importStart
 
-    // eslint-disable-next-line no-console
-    console.log(
-      `[P0-2 S6] 1000-note round-trip: export=${exportMs}ms, import=${importMs}ms`
-    )
+    console.log(`[P0-2 S6] 1000-note round-trip: export=${exportMs}ms, import=${importMs}ms`)
 
     // 30 초 이내 (smoke threshold — 대용량 핸들링 능력 확인)
     expect(exportMs).toBeLessThan(30_000)
@@ -403,18 +450,15 @@ describe('backupService — round trip', () => {
     new AdmZip(zipPath).extractAllTo(tmpDir, true)
 
     // folders.json 을 객체로 치환 (배열 아님)
-    fs.writeFileSync(
-      path.join(tmpDir, 'data', 'folders.json'),
-      JSON.stringify({ malformed: true })
-    )
+    fs.writeFileSync(path.join(tmpDir, 'data', 'folders.json'), JSON.stringify({ malformed: true }))
 
     const tamperedZip = path.join(tmpRoot, 'tampered2.zip')
     const out = new AdmZip()
     out.addLocalFolder(tmpDir)
     out.writeZip(tamperedZip)
 
-    await expect(
-      backupService.import(tamperedZip, 'Target', importPath)
-    ).rejects.toThrow(/is not an array/)
+    await expect(backupService.import(tamperedZip, 'Target', importPath)).rejects.toThrow(
+      /is not an array/
+    )
   })
 })

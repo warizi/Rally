@@ -24,6 +24,8 @@ export const csvFileRepository = {
         | 'order'
         | 'isLocked'
         | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
       >
     >
   ): CsvFile | undefined {

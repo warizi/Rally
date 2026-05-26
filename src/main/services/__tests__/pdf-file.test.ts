@@ -58,6 +58,10 @@ const MOCK_PDF_ROW = {
   order: 0,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }
@@ -70,6 +74,10 @@ const MOCK_FOLDER = {
   order: 0,
   createdAt: new Date(),
   updatedAt: new Date(),
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }

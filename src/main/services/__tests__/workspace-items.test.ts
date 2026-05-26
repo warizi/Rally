@@ -44,27 +44,173 @@ const baseDate = new Date('2026-01-01T00:00:00Z')
 const newerDate = new Date('2026-04-01T00:00:00Z')
 
 const mockFolders = [
-  { id: 'f-root', workspaceId: 'ws-1', relativePath: 'root', order: 0, color: null, createdAt: baseDate, updatedAt: baseDate, deletedAt: null, trashBatchId: null },
-  { id: 'f-child', workspaceId: 'ws-1', relativePath: 'root/child', order: 0, color: null, createdAt: baseDate, updatedAt: baseDate, deletedAt: null, trashBatchId: null },
-  { id: 'f-grand', workspaceId: 'ws-1', relativePath: 'root/child/grand', order: 0, color: null, createdAt: baseDate, updatedAt: newerDate, deletedAt: null, trashBatchId: null },
-  { id: 'f-other', workspaceId: 'ws-1', relativePath: 'other', order: 1, color: null, createdAt: baseDate, updatedAt: baseDate, deletedAt: null, trashBatchId: null }
+  {
+    id: 'f-root',
+    workspaceId: 'ws-1',
+    relativePath: 'root',
+    order: 0,
+    color: null,
+    createdAt: baseDate,
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
+    deletedAt: null,
+    trashBatchId: null
+  },
+  {
+    id: 'f-child',
+    workspaceId: 'ws-1',
+    relativePath: 'root/child',
+    order: 0,
+    color: null,
+    createdAt: baseDate,
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
+    deletedAt: null,
+    trashBatchId: null
+  },
+  {
+    id: 'f-grand',
+    workspaceId: 'ws-1',
+    relativePath: 'root/child/grand',
+    order: 0,
+    color: null,
+    createdAt: baseDate,
+    updatedAt: newerDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
+    deletedAt: null,
+    trashBatchId: null
+  },
+  {
+    id: 'f-other',
+    workspaceId: 'ws-1',
+    relativePath: 'other',
+    order: 1,
+    color: null,
+    createdAt: baseDate,
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
+    deletedAt: null,
+    trashBatchId: null
+  }
 ]
 
 const mockNotes = [
-  { id: 'n-1', title: 'note1', relativePath: 'root/note1.md', description: '', preview: 'p1', folderId: 'f-root', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'n-2', title: 'note2', relativePath: 'root/child/note2.md', description: '', preview: 'p2', folderId: 'f-child', order: 0, isLocked: false, createdAt: baseDate, updatedAt: newerDate },
-  { id: 'n-3', title: 'note3', relativePath: 'root/child/grand/note3.md', description: '', preview: 'p3', folderId: 'f-grand', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'n-4', title: 'note4', relativePath: 'other/note4.md', description: '', preview: 'p4', folderId: 'f-other', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate }
+  {
+    id: 'n-1',
+    title: 'note1',
+    relativePath: 'root/note1.md',
+    description: '',
+    preview: 'p1',
+    folderId: 'f-root',
+    order: 0,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: baseDate
+  },
+  {
+    id: 'n-2',
+    title: 'note2',
+    relativePath: 'root/child/note2.md',
+    description: '',
+    preview: 'p2',
+    folderId: 'f-child',
+    order: 0,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: newerDate
+  },
+  {
+    id: 'n-3',
+    title: 'note3',
+    relativePath: 'root/child/grand/note3.md',
+    description: '',
+    preview: 'p3',
+    folderId: 'f-grand',
+    order: 0,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: baseDate
+  },
+  {
+    id: 'n-4',
+    title: 'note4',
+    relativePath: 'other/note4.md',
+    description: '',
+    preview: 'p4',
+    folderId: 'f-other',
+    order: 0,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: baseDate
+  }
 ]
 
 const mockTables = [
-  { id: 't-1', title: 'tbl1', relativePath: 'root/t1.csv', description: 'd1', preview: 'tp1', columnWidths: null, folderId: 'f-root', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
-  { id: 't-2', title: 'tbl2', relativePath: 'root/child/t2.csv', description: 'd2', preview: 'tp2', columnWidths: null, folderId: 'f-child', order: 0, isLocked: false, createdAt: baseDate, updatedAt: newerDate }
+  {
+    id: 't-1',
+    title: 'tbl1',
+    relativePath: 'root/t1.csv',
+    description: 'd1',
+    preview: 'tp1',
+    columnWidths: null,
+    folderId: 'f-root',
+    order: 0,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: baseDate
+  },
+  {
+    id: 't-2',
+    title: 'tbl2',
+    relativePath: 'root/child/t2.csv',
+    description: 'd2',
+    preview: 'tp2',
+    columnWidths: null,
+    folderId: 'f-child',
+    order: 0,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: newerDate
+  }
 ]
 
 const mockCanvases = [
-  { id: 'c-1', workspaceId: 'ws-1', title: 'canvas1', description: 'cd1', viewportX: 0, viewportY: 0, viewportZoom: 1, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'c-2', workspaceId: 'ws-1', title: 'canvas2', description: 'cd2', viewportX: 0, viewportY: 0, viewportZoom: 1, isLocked: false, createdAt: baseDate, updatedAt: newerDate }
+  {
+    id: 'c-1',
+    workspaceId: 'ws-1',
+    title: 'canvas1',
+    description: 'cd1',
+    viewportX: 0,
+    viewportY: 0,
+    viewportZoom: 1,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: baseDate
+  },
+  {
+    id: 'c-2',
+    workspaceId: 'ws-1',
+    title: 'canvas2',
+    description: 'cd2',
+    viewportX: 0,
+    viewportY: 0,
+    viewportZoom: 1,
+    isLocked: false,
+    createdAt: baseDate,
+    updatedAt: newerDate
+  }
 ]
 
 beforeEach(() => {
@@ -87,7 +233,13 @@ describe('workspaceItemsService.list', () => {
       expect(r.tables).toHaveLength(2)
       expect(r.canvases).toHaveLength(2)
       expect(r.todos).toEqual({ active: 3, completed: 1, total: 4 })
-      expect(r.notes[0]).toMatchObject({ id: 'n-1', title: 'note1', preview: 'p1', relativePath: 'root/note1.md', folderPath: 'root' })
+      expect(r.notes[0]).toMatchObject({
+        id: 'n-1',
+        title: 'note1',
+        preview: 'p1',
+        relativePath: 'root/note1.md',
+        folderPath: 'root'
+      })
     })
 
     it('워크스페이스가 없으면 NotFoundError', () => {
@@ -102,7 +254,12 @@ describe('workspaceItemsService.list', () => {
       expect(r.meta.recursive).toBe(false)
       expect(r.meta.types).toBe(null)
       expect(r.meta.counts).toEqual({ folders: 4, notes: 4, tables: 2, canvases: 2 })
-      expect(r.meta.hasMore).toEqual({ folders: false, notes: false, tables: false, canvases: false })
+      expect(r.meta.hasMore).toEqual({
+        folders: false,
+        notes: false,
+        tables: false,
+        canvases: false
+      })
     })
   })
 
@@ -110,16 +267,31 @@ describe('workspaceItemsService.list', () => {
     it('summary=true면 preview/relativePath/folderPath/description 제거', () => {
       const r = workspaceItemsService.list('ws-1', { summary: true })
       const note = r.notes[0]
-      expect(note).toEqual({ id: 'n-1', title: 'note1', folderId: 'f-root', updatedAt: baseDate.toISOString() })
+      expect(note).toEqual({
+        id: 'n-1',
+        title: 'note1',
+        folderId: 'f-root',
+        updatedAt: baseDate.toISOString()
+      })
       expect(note).not.toHaveProperty('preview')
       expect(note).not.toHaveProperty('relativePath')
       expect(note).not.toHaveProperty('folderPath')
       const table = r.tables[0]
-      expect(table).toEqual({ id: 't-1', title: 'tbl1', folderId: 'f-root', updatedAt: baseDate.toISOString() })
+      expect(table).toEqual({
+        id: 't-1',
+        title: 'tbl1',
+        folderId: 'f-root',
+        updatedAt: baseDate.toISOString()
+      })
       expect(table).not.toHaveProperty('description')
       expect(table).not.toHaveProperty('preview')
       const canvas = r.canvases[0]
-      expect(canvas).toEqual({ id: 'c-1', title: 'canvas1', createdAt: baseDate.toISOString(), updatedAt: baseDate.toISOString() })
+      expect(canvas).toEqual({
+        id: 'c-1',
+        title: 'canvas1',
+        createdAt: baseDate.toISOString(),
+        updatedAt: baseDate.toISOString()
+      })
       expect(canvas).not.toHaveProperty('description')
     })
   })
@@ -178,7 +350,9 @@ describe('workspaceItemsService.list', () => {
     })
 
     it('존재하지 않는 folderId는 NotFoundError', () => {
-      expect(() => workspaceItemsService.list('ws-1', { folderId: 'f-missing' })).toThrow(NotFoundError)
+      expect(() => workspaceItemsService.list('ws-1', { folderId: 'f-missing' })).toThrow(
+        NotFoundError
+      )
     })
   })
 

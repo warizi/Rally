@@ -118,9 +118,7 @@ export function DayView({
       <div className="flex flex-col flex-1 overflow-hidden">
         {/* 반복 할일 */}
         {recurringSection && (
-          <div className="border-b border-border px-2 py-1.5 shrink-0">
-            {recurringSection}
-          </div>
+          <div className="border-b border-border px-2 py-1.5 shrink-0">{recurringSection}</div>
         )}
 
         {/* 종일 일정 */}

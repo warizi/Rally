@@ -214,7 +214,10 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.pdfFiles)
       .values(makePdf({ id: 'pp1', relativePath: 'old-folder' }))
       .run()
-    pdfFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder')
+    pdfFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder', {
+      kind: 'user',
+      id: null
+    })
     expect(pdfFileRepository.findById('pp1')!.relativePath).toBe('new-folder')
   })
 
@@ -227,7 +230,10 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.pdfFiles)
       .values(makePdf({ id: 'pp3', relativePath: 'other/b.pdf' }))
       .run()
-    pdfFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder')
+    pdfFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder', {
+      kind: 'user',
+      id: null
+    })
     expect(pdfFileRepository.findById('pp2')!.relativePath).toBe('new-folder/a.pdf')
     expect(pdfFileRepository.findById('pp3')!.relativePath).toBe('other/b.pdf')
   })
@@ -238,7 +244,7 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.pdfFiles)
       .values(makePdf({ id: 'pp4', relativePath: 'old/c.pdf', updatedAt: oldDate }))
       .run()
-    pdfFileRepository.bulkUpdatePathPrefix(WS_ID, 'old', 'new')
+    pdfFileRepository.bulkUpdatePathPrefix(WS_ID, 'old', 'new', { kind: 'user', id: null })
     const row = pdfFileRepository.findById('pp4')!
     expect(new Date(row.updatedAt).getTime()).toBeGreaterThan(oldDate.getTime())
   })
@@ -254,7 +260,7 @@ describe('reindexSiblings', () => {
       .insert(schema.pdfFiles)
       .values(makePdf({ id: 'ri2', relativePath: 'r2.pdf', order: 3 }))
       .run()
-    pdfFileRepository.reindexSiblings(WS_ID, ['ri2', 'ri1'])
+    pdfFileRepository.reindexSiblings(WS_ID, ['ri2', 'ri1'], { kind: 'user', id: null })
     expect(pdfFileRepository.findById('ri2')!.order).toBe(0)
     expect(pdfFileRepository.findById('ri1')!.order).toBe(1)
   })

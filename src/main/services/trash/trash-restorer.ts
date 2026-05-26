@@ -32,6 +32,7 @@ import { resolveNameConflict } from '../../lib/fs-utils'
 
 import { type TrashEntityKind } from './types'
 import { type TrashMetadata, broadcastTrashChanged, moveFromTrash } from './helpers'
+import { USER_ACTOR } from '../_shared/actor'
 
 /**
  * 휴지통 복원기 — `trashService.restore` 의 본문 책임.
@@ -210,11 +211,16 @@ export const trashRestorer = {
       if (folderRenameOldPrefix !== null && folderRenameNewPrefix !== null) {
         const oldPrefix = folderRenameOldPrefix
         const newPrefix = folderRenameNewPrefix
-        folderRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix)
-        noteRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix)
-        csvFileRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix)
-        pdfFileRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix)
-        imageFileRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix)
+        folderRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix, USER_ACTOR)
+        noteRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix, USER_ACTOR)
+        csvFileRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix, USER_ACTOR)
+        pdfFileRepository.bulkUpdatePathPrefix(batch.workspaceId, oldPrefix, newPrefix, USER_ACTOR)
+        imageFileRepository.bulkUpdatePathPrefix(
+          batch.workspaceId,
+          oldPrefix,
+          newPrefix,
+          USER_ACTOR
+        )
       }
 
       // 4. entity-link / reminder snapshot 복원 (양쪽 entity 가 모두 활성일 때만 — orphan 회피)

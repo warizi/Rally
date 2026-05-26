@@ -64,10 +64,7 @@ export function createTabId(pathname: string): string {
 }
 
 /** folderOpenState JSON 키 매핑. 손상된 JSON 은 throw (silent fallback 0). */
-export function mapFolderOpenState(
-  json: string | undefined,
-  mapper: IdMapper
-): string | undefined {
+export function mapFolderOpenState(json: string | undefined, mapper: IdMapper): string | undefined {
   if (!json) return json
   let parsed: unknown
   try {
@@ -133,7 +130,9 @@ export function mapTabJsons(
       ...tab,
       id: newTabId,
       pathname: newPathname,
-      searchParams
+      searchParams,
+      // 구버전 백업에 icon 누락 시 type을 fallback으로 (TabIcon = TabType 이므로 동일 값).
+      icon: tab.icon ?? tab.type
     }
   }
 

@@ -61,6 +61,10 @@ const LOCKED_CANVAS = {
   isLocked: true,
   createdAt: new Date(),
   updatedAt: new Date(),
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }
@@ -78,6 +82,10 @@ const LOCKED_CSV = {
   isLocked: true,
   createdAt: new Date(),
   updatedAt: new Date(),
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }

@@ -49,6 +49,10 @@ const folderRows = [
     color: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
     deletedAt: null,
     trashBatchId: null
   }
@@ -171,9 +175,7 @@ describe('searchService.search', () => {
 
   describe('정렬: title 매칭 우선', () => {
     it('title vs description 매칭이 섞이면 title이 먼저 온다', async () => {
-      vi.mocked(noteService.search).mockResolvedValue([
-        { ...noteHit, matchType: 'content' }
-      ])
+      vi.mocked(noteService.search).mockResolvedValue([{ ...noteHit, matchType: 'content' }])
       vi.mocked(canvasService.search).mockReturnValue([{ ...canvasHit, matchType: 'description' }])
       vi.mocked(todoService.search).mockReturnValue([{ ...todoHit, matchType: 'title' }])
 

@@ -80,11 +80,7 @@ export function HistoryPage(): JSX.Element {
                 className="pl-8 h-8 text-xs"
               />
             </div>
-            <DatePickerButton
-              value={fromDate}
-              onChange={setFromDate}
-              placeholder="시작 날짜"
-            />
+            <DatePickerButton value={fromDate} onChange={setFromDate} placeholder="시작 날짜" />
             <span className="text-muted-foreground text-xs">~</span>
             <DatePickerButton value={toDate} onChange={setToDate} placeholder="종료 날짜" />
             {hasFilter && (

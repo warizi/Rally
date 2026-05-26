@@ -12,6 +12,7 @@ import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { trashService } from './trash'
+import { type Actor, USER_ACTOR, toCreatedFields } from './_shared/actor'
 
 export interface CsvFileNode {
   id: string
@@ -247,7 +248,12 @@ export const csvFileService = {
   /**
    * CSV 생성 (disk + DB)
    */
-  create(workspaceId: string, folderId: string | null, name: string): CsvFileNode {
+  create(
+    workspaceId: string,
+    folderId: string | null,
+    name: string,
+    actor: Actor = USER_ACTOR
+  ): CsvFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -286,7 +292,8 @@ export const csvFileService = {
       preview: '',
       order: maxOrder + 1,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      ...toCreatedFields(actor)
     })
 
     return toCsvFileNode(row)

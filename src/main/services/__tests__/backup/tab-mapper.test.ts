@@ -76,9 +76,7 @@ describe('mapFolderOpenState', () => {
 
   it('throws on malformed JSON (silent fallback 0)', () => {
     const mapper = new IdMapper()
-    expect(() => mapFolderOpenState('not-a-json', mapper)).toThrow(
-      /Invalid folderOpenState JSON/
-    )
+    expect(() => mapFolderOpenState('not-a-json', mapper)).toThrow(/Invalid folderOpenState JSON/)
   })
 
   it('throws on non-object JSON (array)', () => {
@@ -91,9 +89,9 @@ describe('mapFolderOpenState', () => {
   it('throws on non-boolean entry value', () => {
     const mapper = new IdMapper()
     mapper.register('folder', 'f1')
-    expect(() =>
-      mapFolderOpenState(JSON.stringify({ f1: 'not-boolean' }), mapper)
-    ).toThrow(/not boolean/)
+    expect(() => mapFolderOpenState(JSON.stringify({ f1: 'not-boolean' }), mapper)).toThrow(
+      /not boolean/
+    )
   })
 })
 
@@ -136,10 +134,7 @@ describe('mapTabJsons', () => {
     const { mapper, todoNew, tabsJson, panesJson, layoutJson } = fixture()
     const result = mapTabJsons(tabsJson, panesJson, layoutJson, 'pane-old', mapper)
 
-    const tabs = JSON.parse(result.tabsJson) as Record<
-      string,
-      { pathname: string }
-    >
+    const tabs = JSON.parse(result.tabsJson) as Record<string, { pathname: string }>
     const panes = JSON.parse(result.panesJson) as Record<
       string,
       { tabIds: string[]; activeTabId: string | null }
@@ -164,14 +159,16 @@ describe('mapTabJsons', () => {
 
   it('throws on invalid tabsJson (zod parse fail)', () => {
     const mapper = new IdMapper()
-    expect(() => mapTabJsons('null', '{}', '{"type":"pane","id":"x","paneId":"y"}', null, mapper))
-      .toThrow(/Invalid tabsJson/)
+    expect(() =>
+      mapTabJsons('null', '{}', '{"type":"pane","id":"x","paneId":"y"}', null, mapper)
+    ).toThrow(/Invalid tabsJson/)
   })
 
   it('throws on invalid panesJson', () => {
     const mapper = new IdMapper()
-    expect(() => mapTabJsons('{}', 'null', '{"type":"pane","id":"x","paneId":"y"}', null, mapper))
-      .toThrow(/Invalid panesJson/)
+    expect(() =>
+      mapTabJsons('{}', 'null', '{"type":"pane","id":"x","paneId":"y"}', null, mapper)
+    ).toThrow(/Invalid panesJson/)
   })
 
   it('throws on invalid layoutJson', () => {
@@ -182,14 +179,14 @@ describe('mapTabJsons', () => {
   it('handles split layout node recursively', () => {
     const mapper = new IdMapper()
     const panesJson = JSON.stringify({
-      'p1': {
+      p1: {
         id: 'p1',
         tabIds: [],
         activeTabId: null,
         size: 50,
         minSize: 10
       },
-      'p2': {
+      p2: {
         id: 'p2',
         tabIds: [],
         activeTabId: null,

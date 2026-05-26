@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNotNull, isNull, like, type InferSelectModel } from 'drizzle-orm'
 import type { SQLiteColumn, SQLiteTableWithColumns } from 'drizzle-orm/sqlite-core'
 import { db } from '../db'
+import type { Actor } from '../services/_shared/actor'
 
 /**
  * 파일 타입 repository 공통 메서드 팩토리
@@ -33,8 +34,13 @@ export function createFileRepository<
   createMany(items: T['$inferInsert'][]): void
   deleteOrphans(workspaceId: string, existingPaths: string[]): void
   bulkDeleteByPrefix(workspaceId: string, prefix: string): void
-  bulkUpdatePathPrefix(workspaceId: string, oldPrefix: string, newPrefix: string): void
-  reindexSiblings(workspaceId: string, orderedIds: string[]): void
+  bulkUpdatePathPrefix(
+    workspaceId: string,
+    oldPrefix: string,
+    newPrefix: string,
+    actor: Actor
+  ): void
+  reindexSiblings(workspaceId: string, orderedIds: string[], actor: Actor): void
   findByIds(ids: string[]): InferSelectModel<T>[]
   findInTrashByWorkspaceId(workspaceId: string): InferSelectModel<T>[]
   findByTrashBatchId(batchId: string): InferSelectModel<T>[]
@@ -155,30 +161,46 @@ export function createFileRepository<
      * 폴더 rename 시 활성 row의 relativePath만 업데이트.
      * 휴지통 row는 원래 위치 정보를 보존해야 복구 가능하므로 건드리지 않음.
      */
-    bulkUpdatePathPrefix(workspaceId: string, oldPrefix: string, newPrefix: string): void {
+    bulkUpdatePathPrefix(
+      workspaceId: string,
+      oldPrefix: string,
+      newPrefix: string,
+      actor: Actor
+    ): void {
       const now = Date.now()
       db.$client.transaction(() => {
         db.$client
           .prepare(
             `UPDATE ${tableName}
              SET relative_path = ? || substr(relative_path, ?),
-                 updated_at = ?
+                 updated_at = ?,
+                 updated_by = ?,
+                 updated_by_id = ?
              WHERE workspace_id = ?
                AND deleted_at IS NULL
                AND (relative_path = ? OR relative_path LIKE ?)`
           )
-          .run(newPrefix, oldPrefix.length + 1, now, workspaceId, oldPrefix, `${oldPrefix}/%`)
+          .run(
+            newPrefix,
+            oldPrefix.length + 1,
+            now,
+            actor.kind,
+            actor.id ?? null,
+            workspaceId,
+            oldPrefix,
+            `${oldPrefix}/%`
+          )
       })()
     },
 
-    reindexSiblings(workspaceId: string, orderedIds: string[]): void {
+    reindexSiblings(workspaceId: string, orderedIds: string[], actor: Actor): void {
       const now = Date.now()
       const stmt = db.$client.prepare(
-        `UPDATE ${tableName} SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
+        `UPDATE ${tableName} SET "order" = ?, updated_at = ?, updated_by = ?, updated_by_id = ? WHERE workspace_id = ? AND id = ?`
       )
       db.$client.transaction(() => {
         for (let i = 0; i < orderedIds.length; i++) {
-          stmt.run(i, now, workspaceId, orderedIds[i])
+          stmt.run(i, now, actor.kind, actor.id ?? null, workspaceId, orderedIds[i])
         }
       })()
     },

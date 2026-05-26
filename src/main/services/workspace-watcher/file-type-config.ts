@@ -3,6 +3,7 @@ import { noteRepository } from '../../repositories/note'
 import { csvFileRepository } from '../../repositories/csv-file'
 import { pdfFileRepository } from '../../repositories/pdf-file'
 import { imageFileRepository } from '../../repositories/image-file'
+import type { Actor } from '../_shared/actor'
 import {
   readMdFilesRecursiveAsync,
   readCsvFilesRecursiveAsync,
@@ -25,7 +26,12 @@ export interface FileRepository {
   create(data: Record<string, unknown>): FileRow
   delete(id: string): void
   bulkDeleteByPrefix(workspaceId: string, prefix: string): void
-  bulkUpdatePathPrefix(workspaceId: string, oldPrefix: string, newPrefix: string): void
+  bulkUpdatePathPrefix(
+    workspaceId: string,
+    oldPrefix: string,
+    newPrefix: string,
+    actor: Actor
+  ): void
   findByWorkspaceId(workspaceId: string): FileRow[]
   createMany(items: Record<string, unknown>[]): void
   deleteOrphans(workspaceId: string, existingPaths: string[]): void

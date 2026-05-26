@@ -66,6 +66,10 @@ const MOCK_TODO_ROW = {
   doneAt: null,
   dueDate: null,
   startDate: null,
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }

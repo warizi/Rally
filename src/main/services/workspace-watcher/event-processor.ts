@@ -6,6 +6,7 @@ import { entityLinkRepository } from '../../repositories/entity-link'
 import { nanoid } from 'nanoid'
 import { fileTypeConfigs } from './file-type-config'
 import type { FileTypeConfig } from './file-type-config'
+import { USER_ACTOR } from '../_shared/actor'
 
 /**
  * 이벤트 배치 → DB 동기화
@@ -53,9 +54,9 @@ export async function applyEvents(
       const newRel = path.relative(workspacePath, createEvent.path).replace(/\\/g, '/')
       const existingFolder = folderRepository.findByRelativePath(workspaceId, oldRel)
       if (existingFolder) {
-        folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+        folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
         for (const config of fileTypeConfigs) {
-          config.repository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+          config.repository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
         }
         pairedFolderDeletePaths.add(matchingDelete.path)
         pairedFolderCreatePaths.add(createEvent.path)
@@ -81,9 +82,9 @@ export async function applyEvents(
       const oldRel = path
         .relative(workspacePath, (event as unknown as { oldPath: string }).oldPath)
         .replace(/\\/g, '/')
-      folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
+      folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, rel, USER_ACTOR)
       for (const config of fileTypeConfigs) {
-        config.repository.bulkUpdatePathPrefix(workspaceId, oldRel, rel)
+        config.repository.bulkUpdatePathPrefix(workspaceId, oldRel, rel, USER_ACTOR)
       }
       changedFolderPaths.push(rel)
       continue

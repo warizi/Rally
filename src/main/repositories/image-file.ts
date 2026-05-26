@@ -15,7 +15,15 @@ export const imageFileRepository = {
     data: Partial<
       Pick<
         ImageFile,
-        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+        | 'relativePath'
+        | 'title'
+        | 'description'
+        | 'preview'
+        | 'folderId'
+        | 'order'
+        | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
       >
     >
   ): ImageFile | undefined {

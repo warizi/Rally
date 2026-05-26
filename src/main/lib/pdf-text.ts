@@ -53,8 +53,7 @@ export async function renderPdfPagesAsImages(
 
   // Node 환경에서는 canvasImport 를 명시해야 unpdf 가 @napi-rs/canvas 를 로드한다.
   // (isomorphic factory 가 isBrowser=false 분기에서 canvasImport 없으면 throw)
-  const canvasImport = (): Promise<typeof import('@napi-rs/canvas')> =>
-    import('@napi-rs/canvas')
+  const canvasImport = (): Promise<typeof import('@napi-rs/canvas')> => import('@napi-rs/canvas')
 
   // 중요: doc 생성 시 CanvasFactory 를 함께 주입해야 page.render() 가 unpdf 의
   // NodeCanvasFactory 를 쓴다. 안 주면 pdfjs 의 기본 NodeCanvasFactory(unpdf 가
@@ -119,9 +118,7 @@ export async function extractPdfText(
       const page = await doc.getPage(i)
       try {
         const content = await page.getTextContent()
-        const pageText = content.items
-          .map((item) => ('str' in item ? item.str : ''))
-          .join(' ')
+        const pageText = content.items.map((item) => ('str' in item ? item.str : '')).join(' ')
         const remaining = maxChars - text.length
         if (pageText.length >= remaining) {
           text += pageText.slice(0, remaining)

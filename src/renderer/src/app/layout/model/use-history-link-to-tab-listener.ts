@@ -1,10 +1,7 @@
 import { useCallback } from 'react'
 import { useDndMonitor, type DragEndEvent } from '@dnd-kit/core'
 import { useTabStore, type SplitPosition } from '@/features/tap-system/manage-tab-system'
-import {
-  linkToTabOptions,
-  type HistoryLinkDragData
-} from '@/widgets/history-timeline'
+import { linkToTabOptions, type HistoryLinkDragData } from '@/widgets/history-timeline'
 
 const SPLIT_POSITIONS: Record<string, SplitPosition> = {
   top: 'top',

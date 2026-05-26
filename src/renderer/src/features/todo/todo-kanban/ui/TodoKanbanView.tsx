@@ -86,7 +86,6 @@ export function TodoKanbanView({
   // 드래그 중이 아닐 때만 서버 데이터로 동기화
   useEffect(() => {
     if (!activeId) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLocalColumns(columnMap)
     }
   }, [columnMap, activeId])
