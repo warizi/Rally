@@ -49,7 +49,10 @@ export const canvasRepository = {
   update(
     id: string,
     data: Partial<
-      Pick<Canvas, 'title' | 'description' | 'updatedAt' | 'deletedAt' | 'trashBatchId'>
+      Pick<
+        Canvas,
+        'title' | 'description' | 'isLocked' | 'updatedAt' | 'deletedAt' | 'trashBatchId'
+      >
     >
   ): Canvas | undefined {
     return db.update(canvases).set(data).where(eq(canvases.id, id)).returning().get()

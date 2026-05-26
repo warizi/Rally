@@ -15,6 +15,8 @@ export {
   applySessionToStore
 } from './model/use-tab-persistence'
 export { useFocusModeEffects } from './model/use-focus-mode-effects'
+export { useTabLockState } from './model/use-tab-lock-state'
+export type { TabLockState } from './model/use-tab-lock-state'
 export type { SerializedTab, SessionData } from './api/queries'
 export { TabBar } from './ui/TabBar'
 export { TabContextMenu } from './ui/TabContextMenu'

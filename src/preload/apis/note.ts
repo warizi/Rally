@@ -21,6 +21,8 @@ export const noteApi = {
     ipcRenderer.invoke('note:import', workspaceId, folderId, sourcePath),
   duplicate: (workspaceId: string, noteId: string) =>
     ipcRenderer.invoke('note:duplicate', workspaceId, noteId),
+  toggleLock: (workspaceId: string, noteId: string, isLocked: boolean) =>
+    ipcRenderer.invoke('note:toggleLock', workspaceId, noteId, isLocked),
   selectFile: () => ipcRenderer.invoke('note:selectFile'),
   onChanged: createOnChangedListener('note:changed')
 }

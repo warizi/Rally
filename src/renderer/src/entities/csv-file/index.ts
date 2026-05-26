@@ -9,7 +9,8 @@ export {
   useMoveCsvFile,
   useReadCsvContent,
   useWriteCsvContent,
-  useUpdateCsvMeta
+  useUpdateCsvMeta,
+  useToggleCsvLock
 } from './api/queries'
 export { isOwnWrite } from './model/own-write-tracker'
 export { useCsvWatcher } from './model/use-csv-watcher'

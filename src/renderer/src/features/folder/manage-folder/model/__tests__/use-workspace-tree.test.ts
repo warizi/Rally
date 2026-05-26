@@ -21,6 +21,7 @@ function makeNote(overrides: Partial<NoteNode> & { id: string; title: string }):
     preview: '',
     folderId: null,
     order: 0,
+    isLocked: false,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides

@@ -37,6 +37,7 @@ interface NoteOverride {
   description?: string
   preview?: string
   order?: number
+  isLocked?: boolean
   createdAt?: Date
   updatedAt?: Date
 }
@@ -79,6 +80,7 @@ interface CanvasOverride {
   viewportX?: number
   viewportY?: number
   viewportZoom?: number
+  isLocked?: boolean
   createdAt?: Date
   updatedAt?: Date
 }
@@ -138,6 +140,7 @@ export const seed = {
       description: overrides.description ?? '',
       preview: overrides.preview ?? '',
       order: overrides.order ?? 0,
+      isLocked: overrides.isLocked ?? false,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
       deletedAt: null,
@@ -209,6 +212,7 @@ export const seed = {
       viewportX: overrides.viewportX ?? 0,
       viewportY: overrides.viewportY ?? 0,
       viewportZoom: overrides.viewportZoom ?? 1,
+      isLocked: overrides.isLocked ?? false,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
       deletedAt: null,

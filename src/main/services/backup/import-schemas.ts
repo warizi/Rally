@@ -47,6 +47,8 @@ export const NoteImport = z
     description: z.string(),
     preview: z.string(),
     order: z.number(),
+    // v1.12 이후 백업에만 존재. 옛 백업 호환 위해 optional 처리, DB default(0) 보존.
+    isLocked: z.boolean().optional(),
     createdAt: Ts,
     updatedAt: Ts
   })
@@ -62,6 +64,7 @@ export const CsvFileImport = z
     preview: z.string(),
     columnWidths: z.string().nullable(),
     order: z.number(),
+    isLocked: z.boolean().optional(),
     createdAt: Ts,
     updatedAt: Ts
   })
@@ -156,6 +159,7 @@ export const CanvasImport = z
     viewportX: z.number(),
     viewportY: z.number(),
     viewportZoom: z.number(),
+    isLocked: z.boolean().optional(),
     createdAt: Ts,
     updatedAt: Ts
   })

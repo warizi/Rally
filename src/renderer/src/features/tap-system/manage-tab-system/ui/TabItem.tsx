@@ -2,11 +2,12 @@ import { useEffect, useRef } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { motion } from 'framer-motion'
-import { X, Pin } from 'lucide-react'
+import { X, Pin, Lock, LockOpen } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { Tab } from '@/entities/tab-system'
 import { TAB_ICON } from '@/shared/constants/tab-url'
 import { getEntityColorByTabIcon } from '@shared/constants/entity-icon'
+import { useTabLockState } from '../model/use-tab-lock-state'
 
 interface TabItemProps {
   tab: Tab
@@ -43,10 +44,16 @@ export function TabItem({
 
   const Icon = TAB_ICON[tab.icon]
   const iconColor = getEntityColorByTabIcon(tab.icon)
+  const { isLockable, isLocked, toggle: toggleLock } = useTabLockState(tab)
 
   const handleClose = (e: React.MouseEvent): void => {
     e.stopPropagation()
     onClose()
+  }
+
+  const handleToggleLock = (e: React.MouseEvent): void => {
+    e.stopPropagation()
+    toggleLock()
   }
 
   return (
@@ -93,6 +100,23 @@ export function TabItem({
         >
           {tab.title}
         </span>
+
+        {/* 잠금 토글 (note / csv / canvas-detail 전용) */}
+        {isLockable && (
+          <button
+            onClick={handleToggleLock}
+            aria-label={isLocked ? '잠금 해제' : '잠금'}
+            title={isLocked ? '잠금 해제' : '잠금'}
+            className={cn(
+              'size-4 rounded-sm flex items-center justify-center shrink-0 cursor-pointer transition-colors',
+              isLocked
+                ? 'text-foreground'
+                : 'text-muted-foreground/50 hover:text-foreground opacity-0 group-hover:opacity-100'
+            )}
+          >
+            {isLocked ? <Lock className="size-3" /> : <LockOpen className="size-3" />}
+          </button>
+        )}
 
         {/* 고정 표시 */}
         {tab.pinned && <Pin className="size-3 text-muted-foreground shrink-0" />}

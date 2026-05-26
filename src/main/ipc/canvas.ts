@@ -43,4 +43,10 @@ export function registerCanvasHandlers(): void {
     (_: IpcMainInvokeEvent, canvasId: string): IpcResponse =>
       handle(() => canvasService.remove(canvasId))
   )
+
+  ipcMain.handle(
+    'canvas:toggleLock',
+    (_: IpcMainInvokeEvent, canvasId: string, isLocked: boolean): IpcResponse =>
+      handle(() => canvasService.toggleLock(canvasId, isLocked))
+  )
 }

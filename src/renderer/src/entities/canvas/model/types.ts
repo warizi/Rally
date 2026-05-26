@@ -19,6 +19,7 @@ export interface CanvasItem {
   viewportX: number
   viewportY: number
   viewportZoom: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }

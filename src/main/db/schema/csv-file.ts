@@ -18,6 +18,7 @@ export const csvFiles = sqliteTable(
     preview: text('preview').notNull().default(''),
     columnWidths: text('column_widths'),
     order: integer('order').notNull().default(0),
+    isLocked: integer('is_locked', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),

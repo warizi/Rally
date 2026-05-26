@@ -82,6 +82,7 @@ describe('외부 변경 파일 content refetch', () => {
         preview: '',
         folderId: null,
         order: 0,
+        isLocked: false,
         createdAt: new Date(),
         updatedAt: new Date()
       }
@@ -142,6 +143,7 @@ describe('자체 저장 파일 스킵', () => {
         preview: '',
         folderId: null,
         order: 0,
+        isLocked: false,
         createdAt: new Date(),
         updatedAt: new Date()
       }

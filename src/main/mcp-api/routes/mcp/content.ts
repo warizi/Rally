@@ -13,6 +13,7 @@ import { csvFileService } from '../../../services/csv-file'
 import { searchService, type SearchType } from '../../../services/search'
 import { ValidationError } from '../../../lib/errors'
 import { broadcastChanged } from '../../lib/broadcast'
+import { mcpErrorBody } from '../../lib/mcp-error'
 import { requireBody, resolveActiveWorkspace, resolveItemType, assertValidId } from './helpers'
 
 const VALID_SEARCH_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
@@ -167,11 +168,10 @@ export function registerMcpContentRoutes(router: Router): void {
           columnWidths
         }
       } catch (e) {
-        const err = e as Error
         return {
           id,
           success: false,
-          error: { code: err.constructor.name, message: err.message }
+          error: mcpErrorBody(e)
         }
       }
     })
@@ -294,11 +294,10 @@ export function registerMcpContentRoutes(router: Router): void {
             success: true
           }
         } catch (e) {
-          const err = e as Error
           return {
             action: action.action,
             success: false,
-            error: { code: err.constructor.name, message: err.message }
+            error: mcpErrorBody(e)
           }
         }
       })

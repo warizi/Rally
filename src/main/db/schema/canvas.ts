@@ -14,6 +14,7 @@ export const canvases = sqliteTable(
     viewportX: real('viewport_x').notNull().default(0),
     viewportY: real('viewport_y').notNull().default(0),
     viewportZoom: real('viewport_zoom').notNull().default(1),
+    isLocked: integer('is_locked', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),

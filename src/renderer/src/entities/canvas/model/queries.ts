@@ -163,6 +163,27 @@ export function useRemoveCanvas(): UseMutationResult<
   })
 }
 
+export function useToggleCanvasLock(): UseMutationResult<
+  CanvasItem,
+  Error,
+  { canvasId: string; isLocked: boolean; workspaceId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ canvasId, isLocked }) => {
+      const res = await window.api.canvas.toggleLock(canvasId, isLocked)
+      if (!res.success) throwIpcError(res)
+      return res.data!
+    },
+    onSuccess: (result, { workspaceId }) => {
+      queryClient.invalidateQueries({
+        queryKey: [CANVAS_KEY, 'workspace', workspaceId]
+      })
+      queryClient.setQueryData([CANVAS_KEY, 'detail', result.id], result)
+    }
+  })
+}
+
 // ─── Canvas Node Mutations ───────────────────────────────
 
 export function useCreateCanvasNode(): UseMutationResult<

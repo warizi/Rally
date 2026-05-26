@@ -70,6 +70,7 @@ const SAMPLE_NOTE: NoteNode = {
   preview: '',
   folderId: null,
   order: 0,
+  isLocked: false,
   createdAt: new Date(),
   updatedAt: new Date()
 }

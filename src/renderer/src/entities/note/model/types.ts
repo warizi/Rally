@@ -6,6 +6,7 @@ export interface NoteNode {
   preview: string
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }

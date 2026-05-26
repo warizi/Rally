@@ -7,6 +7,7 @@ export type ErrorType =
   | 'PayloadTooLargeError'
   | 'WorkspaceInactiveError'
   | 'PermissionError'
+  | 'LockedError'
   | 'UnknownError'
 
 export interface IpcResponse<T = unknown> {

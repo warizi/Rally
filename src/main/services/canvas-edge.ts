@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from '../lib/errors'
 import { canvasEdgeRepository } from '../repositories/canvas-edge'
 import { canvasRepository } from '../repositories/canvas'
 import { canvasNodeRepository } from '../repositories/canvas-node'
+import { assertCanvasUnlockedById } from './canvas'
 
 export type CanvasEdgeSide = 'top' | 'right' | 'bottom' | 'left'
 export type CanvasEdgeStyle = 'solid' | 'dashed' | 'dotted'
@@ -70,6 +71,7 @@ export const canvasEdgeService = {
   create(canvasId: string, data: CreateCanvasEdgeData): CanvasEdgeItem {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+    assertCanvasUnlockedById(canvasId)
 
     // Self-loop 불가
     if (data.fromNode === data.toNode) {
@@ -108,6 +110,7 @@ export const canvasEdgeService = {
   update(edgeId: string, data: UpdateCanvasEdgeData): CanvasEdgeItem {
     const edge = canvasEdgeRepository.findById(edgeId)
     if (!edge) throw new NotFoundError(`Canvas edge not found: ${edgeId}`)
+    assertCanvasUnlockedById(edge.canvasId)
     const updated = canvasEdgeRepository.update(edgeId, {
       ...(data.fromSide !== undefined ? { fromSide: data.fromSide } : {}),
       ...(data.toSide !== undefined ? { toSide: data.toSide } : {}),
@@ -123,6 +126,7 @@ export const canvasEdgeService = {
   remove(edgeId: string): void {
     const edge = canvasEdgeRepository.findById(edgeId)
     if (!edge) throw new NotFoundError(`Canvas edge not found: ${edgeId}`)
+    assertCanvasUnlockedById(edge.canvasId)
     canvasEdgeRepository.delete(edgeId)
   }
 }

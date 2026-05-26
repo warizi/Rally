@@ -24,6 +24,8 @@ export const csvApi = {
     ipcRenderer.invoke('csv:import', workspaceId, folderId, sourcePath),
   duplicate: (workspaceId: string, csvId: string) =>
     ipcRenderer.invoke('csv:duplicate', workspaceId, csvId),
+  toggleLock: (workspaceId: string, csvId: string, isLocked: boolean) =>
+    ipcRenderer.invoke('csv:toggleLock', workspaceId, csvId, isLocked),
   selectFile: () => ipcRenderer.invoke('csv:selectFile'),
   onChanged: createOnChangedListener('csv:changed')
 }

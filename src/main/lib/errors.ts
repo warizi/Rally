@@ -9,6 +9,7 @@ export enum ErrorCode {
   PAYLOAD_TOO_LARGE = 'PAYLOAD_TOO_LARGE',
   WORKSPACE_INACTIVE = 'WORKSPACE_INACTIVE',
   PERMISSION = 'PERMISSION',
+  LOCKED = 'LOCKED',
   INTERNAL = 'INTERNAL'
 }
 
@@ -62,6 +63,14 @@ export class PermissionError extends Error {
   }
 }
 
+export class LockedError extends Error {
+  readonly code = ErrorCode.LOCKED
+  constructor(message: string = '잠금됨 — 사용자에게 해제 요청 필요') {
+    super(message)
+    this.name = 'LockedError'
+  }
+}
+
 /**
  * 정규화된 에러 정보 — router/IPC 등 응답 layer에서 일관된 형식 사용.
  * `code`(stable contract) + `name`(legacy errorType 호환) + `status` + `details`.
@@ -81,6 +90,7 @@ const ERROR_STATUS: Record<ErrorCode, number> = {
   [ErrorCode.PAYLOAD_TOO_LARGE]: 413,
   [ErrorCode.WORKSPACE_INACTIVE]: 400,
   [ErrorCode.PERMISSION]: 403,
+  [ErrorCode.LOCKED]: 423,
   [ErrorCode.INTERNAL]: 500
 }
 
@@ -114,6 +124,9 @@ export function normalizeError(e: unknown): NormalizedError {
   }
   if (e instanceof PermissionError) {
     return { status: 403, code: ErrorCode.PERMISSION, name: e.name, message: e.message }
+  }
+  if (e instanceof LockedError) {
+    return { status: 423, code: ErrorCode.LOCKED, name: e.name, message: e.message }
   }
   // 알려지지 않은 우리 Error 클래스 — code 필드 있으면 활용
   if (e instanceof Error) {

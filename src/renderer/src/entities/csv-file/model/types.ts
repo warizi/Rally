@@ -7,6 +7,7 @@ export interface CsvFileNode {
   columnWidths: string | null
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }

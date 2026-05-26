@@ -40,6 +40,7 @@ interface NoteNode {
   preview: string
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -72,6 +73,11 @@ interface NoteAPI {
     sourcePath: string
   ) => Promise<IpcResponse<NoteNode>>
   duplicate: (workspaceId: string, noteId: string) => Promise<IpcResponse<NoteNode>>
+  toggleLock: (
+    workspaceId: string,
+    noteId: string,
+    isLocked: boolean
+  ) => Promise<IpcResponse<NoteNode>>
   selectFile: () => Promise<string[] | null>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
@@ -85,6 +91,7 @@ interface CsvFileNode {
   columnWidths: string | null
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -120,6 +127,11 @@ interface CsvAPI {
     sourcePath: string
   ) => Promise<IpcResponse<CsvFileNode>>
   duplicate: (workspaceId: string, csvId: string) => Promise<IpcResponse<CsvFileNode>>
+  toggleLock: (
+    workspaceId: string,
+    csvId: string,
+    isLocked: boolean
+  ) => Promise<IpcResponse<CsvFileNode>>
   selectFile: () => Promise<string[] | null>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
@@ -423,6 +435,7 @@ interface CanvasItem {
   viewportX: number
   viewportY: number
   viewportZoom: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -518,6 +531,7 @@ interface CanvasAPI {
     viewport: { x: number; y: number; zoom: number }
   ) => Promise<IpcResponse<void>>
   remove: (canvasId: string) => Promise<IpcResponse<void>>
+  toggleLock: (canvasId: string, isLocked: boolean) => Promise<IpcResponse<CanvasItem>>
   onChanged: (callback: (workspaceId: string, changedRelPaths: string[]) => void) => () => void
 }
 

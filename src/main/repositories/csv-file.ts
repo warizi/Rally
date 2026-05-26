@@ -22,6 +22,7 @@ export const csvFileRepository = {
         | 'columnWidths'
         | 'folderId'
         | 'order'
+        | 'isLocked'
         | 'updatedAt'
       >
     >
