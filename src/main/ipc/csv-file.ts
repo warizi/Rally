@@ -81,6 +81,12 @@ export function registerCsvFileHandlers(): void {
     ): IpcResponse => handle(() => csvFileService.import(workspaceId, folderId, sourcePath))
   )
 
+  ipcMain.handle(
+    'csv:toggleLock',
+    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string, isLocked: boolean): IpcResponse =>
+      handle(() => csvFileService.toggleLock(workspaceId, csvId, isLocked))
+  )
+
   ipcMain.handle('csv:selectFile', async (): Promise<string[] | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],

@@ -17,6 +17,7 @@ export const notes = sqliteTable(
     description: text('description').notNull().default(''),
     preview: text('preview').notNull().default(''), // 내용 앞부분 최대 200자
     order: integer('order').notNull().default(0),
+    isLocked: integer('is_locked', { mode: 'boolean' }).notNull().default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     /** 휴지통 이동 시각 — NULL이면 활성 row */

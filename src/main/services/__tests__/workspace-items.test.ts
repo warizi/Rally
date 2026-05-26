@@ -51,20 +51,20 @@ const mockFolders = [
 ]
 
 const mockNotes = [
-  { id: 'n-1', title: 'note1', relativePath: 'root/note1.md', description: '', preview: 'p1', folderId: 'f-root', order: 0, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'n-2', title: 'note2', relativePath: 'root/child/note2.md', description: '', preview: 'p2', folderId: 'f-child', order: 0, createdAt: baseDate, updatedAt: newerDate },
-  { id: 'n-3', title: 'note3', relativePath: 'root/child/grand/note3.md', description: '', preview: 'p3', folderId: 'f-grand', order: 0, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'n-4', title: 'note4', relativePath: 'other/note4.md', description: '', preview: 'p4', folderId: 'f-other', order: 0, createdAt: baseDate, updatedAt: baseDate }
+  { id: 'n-1', title: 'note1', relativePath: 'root/note1.md', description: '', preview: 'p1', folderId: 'f-root', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
+  { id: 'n-2', title: 'note2', relativePath: 'root/child/note2.md', description: '', preview: 'p2', folderId: 'f-child', order: 0, isLocked: false, createdAt: baseDate, updatedAt: newerDate },
+  { id: 'n-3', title: 'note3', relativePath: 'root/child/grand/note3.md', description: '', preview: 'p3', folderId: 'f-grand', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
+  { id: 'n-4', title: 'note4', relativePath: 'other/note4.md', description: '', preview: 'p4', folderId: 'f-other', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate }
 ]
 
 const mockTables = [
-  { id: 't-1', title: 'tbl1', relativePath: 'root/t1.csv', description: 'd1', preview: 'tp1', columnWidths: null, folderId: 'f-root', order: 0, createdAt: baseDate, updatedAt: baseDate },
-  { id: 't-2', title: 'tbl2', relativePath: 'root/child/t2.csv', description: 'd2', preview: 'tp2', columnWidths: null, folderId: 'f-child', order: 0, createdAt: baseDate, updatedAt: newerDate }
+  { id: 't-1', title: 'tbl1', relativePath: 'root/t1.csv', description: 'd1', preview: 'tp1', columnWidths: null, folderId: 'f-root', order: 0, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
+  { id: 't-2', title: 'tbl2', relativePath: 'root/child/t2.csv', description: 'd2', preview: 'tp2', columnWidths: null, folderId: 'f-child', order: 0, isLocked: false, createdAt: baseDate, updatedAt: newerDate }
 ]
 
 const mockCanvases = [
-  { id: 'c-1', workspaceId: 'ws-1', title: 'canvas1', description: 'cd1', viewportX: 0, viewportY: 0, viewportZoom: 1, createdAt: baseDate, updatedAt: baseDate },
-  { id: 'c-2', workspaceId: 'ws-1', title: 'canvas2', description: 'cd2', viewportX: 0, viewportY: 0, viewportZoom: 1, createdAt: baseDate, updatedAt: newerDate }
+  { id: 'c-1', workspaceId: 'ws-1', title: 'canvas1', description: 'cd1', viewportX: 0, viewportY: 0, viewportZoom: 1, isLocked: false, createdAt: baseDate, updatedAt: baseDate },
+  { id: 'c-2', workspaceId: 'ws-1', title: 'canvas2', description: 'cd2', viewportX: 0, viewportY: 0, viewportZoom: 1, isLocked: false, createdAt: baseDate, updatedAt: newerDate }
 ]
 
 beforeEach(() => {

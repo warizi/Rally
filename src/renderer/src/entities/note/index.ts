@@ -9,7 +9,8 @@ export {
   useMoveNote,
   useReadNoteContent,
   useWriteNoteContent,
-  useUpdateNoteMeta
+  useUpdateNoteMeta,
+  useToggleNoteLock
 } from './api/queries'
 export { useNoteWatcher } from './model/use-note-watcher'
 export { isOwnWrite } from './model/own-write-tracker'

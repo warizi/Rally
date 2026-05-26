@@ -3,7 +3,7 @@ import fs from 'fs'
 import { nanoid } from 'nanoid'
 import chardet from 'chardet'
 import iconv from 'iconv-lite'
-import { NotFoundError, ValidationError } from '../lib/errors'
+import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { csvFileRepository } from '../repositories/csv-file'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
@@ -22,6 +22,7 @@ export interface CsvFileNode {
   columnWidths: string | null
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -35,6 +36,7 @@ function toCsvFileNode(row: {
   columnWidths: string | null
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date | number
   updatedAt: Date | number
 }): CsvFileNode {
@@ -47,9 +49,14 @@ function toCsvFileNode(row: {
     columnWidths: row.columnWidths,
     folderId: row.folderId,
     order: row.order,
+    isLocked: row.isLocked,
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt)
   }
+}
+
+function assertCsvUnlocked(csv: { isLocked: boolean; title: string }): void {
+  if (csv.isLocked) throw new LockedError(`잠금된 CSV는 수정할 수 없습니다: ${csv.title}`)
 }
 
 function generateCsvPreview(content: string): string {
@@ -360,6 +367,7 @@ export const csvFileService = {
 
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+    assertCsvUnlocked(csv)
 
     if (newName.trim() === csv.title) return toCsvFileNode(csv)
 
@@ -394,6 +402,8 @@ export const csvFileService = {
 
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+    // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과.
+    if (!options.permanent) assertCsvUnlocked(csv)
 
     if (!options.permanent) {
       trashService.softRemove(workspaceId, 'csv', csvId)
@@ -456,6 +466,7 @@ export const csvFileService = {
 
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+    assertCsvUnlocked(csv)
 
     const absPath = path.join(workspace.path, csv.relativePath)
     fs.writeFileSync(absPath, content, 'utf-8')
@@ -478,6 +489,7 @@ export const csvFileService = {
 
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+    assertCsvUnlocked(csv)
 
     let targetFolderRel: string | null = null
     if (targetFolderId) {
@@ -537,9 +549,26 @@ export const csvFileService = {
   ): CsvFileNode {
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+    // columnWidths 만 변경하는 경우는 view 메타라 허용. description 변경은 차단.
+    if (data.description !== undefined) assertCsvUnlocked(csv)
 
     const updated = csvFileRepository.update(csvId, {
       ...data,
+      updatedAt: new Date()
+    })!
+
+    return toCsvFileNode(updated)
+  },
+
+  /**
+   * 잠금 토글 — 가드 우회. 잠긴 상태에서도 해제 가능.
+   */
+  toggleLock(_workspaceId: string, csvId: string, isLocked: boolean): CsvFileNode {
+    const csv = csvFileRepository.findById(csvId)
+    if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
+
+    const updated = csvFileRepository.update(csvId, {
+      isLocked,
       updatedAt: new Date()
     })!
 

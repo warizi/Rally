@@ -12,6 +12,7 @@
  */
 import type { Router } from '../../router'
 import { NotFoundError, ValidationError } from '../../../lib/errors'
+import { mcpErrorBody } from '../../lib/mcp-error'
 import { noteService } from '../../../services/note'
 import { csvFileService } from '../../../services/csv-file'
 import { canvasService } from '../../../services/canvas'
@@ -207,12 +208,11 @@ export function registerMcpManageItemsRoutes(router: Router): void {
           }
           return { action: 'delete', id: action.id, type: detected.type, success: true }
         } catch (e) {
-          const err = e as Error
           return {
             action: action.action,
             id: 'id' in action ? action.id : undefined,
             success: false,
-            error: { code: err.constructor.name, message: err.message }
+            error: mcpErrorBody(e)
           }
         }
       })

@@ -26,6 +26,7 @@ export {
   useUpdateCanvas,
   useUpdateCanvasViewport,
   useRemoveCanvas,
+  useToggleCanvasLock,
   useCreateCanvasNode,
   useUpdateCanvasNode,
   useUpdateCanvasNodePositions,

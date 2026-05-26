@@ -226,3 +226,25 @@ export function useUpdateNoteMeta(): UseMutationResult<
     }
   })
 }
+
+export function useToggleNoteLock(): UseMutationResult<
+  NoteNode | undefined,
+  Error,
+  { workspaceId: string; noteId: string; isLocked: boolean }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ workspaceId, noteId, isLocked }) => {
+      const res: IpcResponse<NoteNode> = await window.api.note.toggleLock(
+        workspaceId,
+        noteId,
+        isLocked
+      )
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (_, { workspaceId }) => {
+      queryClient.invalidateQueries({ queryKey: [NOTE_KEY, 'workspace', workspaceId] })
+    }
+  })
+}

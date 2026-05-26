@@ -81,6 +81,16 @@ export function registerNoteHandlers(): void {
     ): IpcResponse => handle(() => noteService.import(workspaceId, folderId, sourcePath))
   )
 
+  ipcMain.handle(
+    'note:toggleLock',
+    (
+      _: IpcMainInvokeEvent,
+      workspaceId: string,
+      noteId: string,
+      isLocked: boolean
+    ): IpcResponse => handle(() => noteService.toggleLock(workspaceId, noteId, isLocked))
+  )
+
   ipcMain.handle('note:selectFile', async (): Promise<string[] | null> => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],

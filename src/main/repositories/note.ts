@@ -15,7 +15,14 @@ export const noteRepository = {
     data: Partial<
       Pick<
         Note,
-        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+        | 'relativePath'
+        | 'title'
+        | 'description'
+        | 'preview'
+        | 'folderId'
+        | 'order'
+        | 'isLocked'
+        | 'updatedAt'
       >
     >
   ): Note | undefined {

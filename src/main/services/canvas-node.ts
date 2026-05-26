@@ -1,5 +1,6 @@
 import { nanoid } from 'nanoid'
-import { NotFoundError } from '../lib/errors'
+import { LockedError, NotFoundError } from '../lib/errors'
+import { assertCanvasUnlockedById } from './canvas'
 import { db } from '../db'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { canvasEdgeRepository } from '../repositories/canvas-edge'
@@ -174,6 +175,8 @@ export const canvasNodeService = {
   create(canvasId: string, data: CreateCanvasNodeData): CanvasNodeItem {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+    if (canvas.isLocked)
+      throw new LockedError(`잠금된 캔버스는 수정할 수 없습니다: ${canvas.title}`)
     const now = new Date()
     const row = canvasNodeRepository.create({
       id: nanoid(),
@@ -196,6 +199,7 @@ export const canvasNodeService = {
   update(nodeId: string, data: UpdateCanvasNodeData): CanvasNodeItem {
     const node = canvasNodeRepository.findById(nodeId)
     if (!node) throw new NotFoundError(`Canvas node not found: ${nodeId}`)
+    assertCanvasUnlockedById(node.canvasId)
     const updated = canvasNodeRepository.update(nodeId, {
       ...(data.content !== undefined ? { content: data.content } : {}),
       ...(data.color !== undefined ? { color: data.color } : {}),
@@ -209,12 +213,17 @@ export const canvasNodeService = {
   },
 
   updatePositions(updates: { id: string; x: number; y: number }[]): void {
+    if (updates.length === 0) return
+    // 첫 노드의 canvasId 로 잠금 검사 (positions는 단일 canvas 단위로만 호출됨)
+    const firstNode = canvasNodeRepository.findById(updates[0].id)
+    if (firstNode) assertCanvasUnlockedById(firstNode.canvasId)
     canvasNodeRepository.bulkUpdatePositions(updates)
   },
 
   remove(nodeId: string): void {
     const node = canvasNodeRepository.findById(nodeId)
     if (!node) throw new NotFoundError(`Canvas node not found: ${nodeId}`)
+    assertCanvasUnlockedById(node.canvasId)
     canvasNodeRepository.delete(nodeId)
     // FK CASCADE가 연결 엣지 자동 삭제
   },
@@ -245,6 +254,7 @@ export const canvasNodeService = {
       arrow: string
     }[]
   ): void {
+    assertCanvasUnlockedById(canvasId)
     const now = new Date()
     db.$client.transaction(() => {
       canvasEdgeRepository.deleteByCanvasId(canvasId)

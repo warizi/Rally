@@ -37,6 +37,7 @@ const MOCK_CANVAS_ROW = {
   viewportX: 0,
   viewportY: 0,
   viewportZoom: 1,
+  isLocked: false,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,

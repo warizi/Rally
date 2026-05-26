@@ -6,6 +6,7 @@ export type ErrorCode =
   | 'PAYLOAD_TOO_LARGE'
   | 'WORKSPACE_INACTIVE'
   | 'PERMISSION'
+  | 'LOCKED'
   | 'INTERNAL'
 
 /** Legacy 호환 필드 — 새 호출자는 `code` 우선 사용 */
@@ -16,6 +17,7 @@ export type ErrorType =
   | 'PayloadTooLargeError'
   | 'WorkspaceInactiveError'
   | 'PermissionError'
+  | 'LockedError'
   | 'UnknownError'
 
 export interface IpcResponse<T = unknown> {

@@ -203,6 +203,7 @@ export const backupDeserializer = {
             description: n.description,
             preview: n.preview,
             order: n.order,
+            isLocked: n.isLocked ?? false,
             createdAt: toDate(n.createdAt),
             updatedAt: toDate(n.updatedAt)
           }))
@@ -221,6 +222,7 @@ export const backupDeserializer = {
             preview: c.preview,
             columnWidths: c.columnWidths,
             order: c.order,
+            isLocked: c.isLocked ?? false,
             createdAt: toDate(c.createdAt),
             updatedAt: toDate(c.updatedAt)
           }))
@@ -324,6 +326,7 @@ export const backupDeserializer = {
             viewportX: c.viewportX,
             viewportY: c.viewportY,
             viewportZoom: c.viewportZoom,
+            isLocked: c.isLocked ?? false,
             createdAt: toDate(c.createdAt),
             updatedAt: toDate(c.updatedAt)
           }))

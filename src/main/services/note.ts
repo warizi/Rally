@@ -1,7 +1,7 @@
 import path from 'path'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
-import { NotFoundError, ValidationError } from '../lib/errors'
+import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { noteRepository } from '../repositories/note'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
@@ -20,6 +20,7 @@ export interface NoteNode {
   preview: string
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -32,6 +33,7 @@ function toNoteNode(note: {
   preview: string
   folderId: string | null
   order: number
+  isLocked: boolean
   createdAt: Date | number
   updatedAt: Date | number
 }): NoteNode {
@@ -43,9 +45,14 @@ function toNoteNode(note: {
     preview: note.preview,
     folderId: note.folderId,
     order: note.order,
+    isLocked: note.isLocked,
     createdAt: note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt),
     updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt)
   }
+}
+
+function assertNoteUnlocked(note: { isLocked: boolean; title: string }): void {
+  if (note.isLocked) throw new LockedError(`잠금된 노트는 수정할 수 없습니다: ${note.title}`)
 }
 
 export const noteService = {
@@ -318,6 +325,7 @@ export const noteService = {
 
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
+    assertNoteUnlocked(note)
 
     if (newName.trim() === note.title) return toNoteNode(note)
 
@@ -352,6 +360,8 @@ export const noteService = {
 
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
+    // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과 (이미 사용자가 휴지통에서 의도 확정).
+    if (!options.permanent) assertNoteUnlocked(note)
 
     if (!options.permanent) {
       // 휴지통 이동 — fs는 trashService가 워크스페이스 밖 .trash로 옮김.
@@ -403,6 +413,7 @@ export const noteService = {
 
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
+    assertNoteUnlocked(note)
 
     const absPath = path.join(workspace.path, note.relativePath)
 
@@ -435,6 +446,7 @@ export const noteService = {
 
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
+    assertNoteUnlocked(note)
 
     let targetFolderRel: string | null = null
     if (targetFolderId) {
@@ -578,6 +590,21 @@ export const noteService = {
 
     const updated = noteRepository.update(noteId, {
       ...data,
+      updatedAt: new Date()
+    })!
+
+    return toNoteNode(updated)
+  },
+
+  /**
+   * 잠금 토글 — 가드 우회. 잠긴 상태에서도 해제 가능.
+   */
+  toggleLock(_workspaceId: string, noteId: string, isLocked: boolean): NoteNode {
+    const note = noteRepository.findById(noteId)
+    if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
+
+    const updated = noteRepository.update(noteId, {
+      isLocked,
       updatedAt: new Date()
     })!
 

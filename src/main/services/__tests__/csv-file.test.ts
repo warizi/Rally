@@ -55,6 +55,7 @@ const MOCK_CSV_ROW = {
   preview: '',
   columnWidths: null,
   order: 0,
+  isLocked: false,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
   deletedAt: null,

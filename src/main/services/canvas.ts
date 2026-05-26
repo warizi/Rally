@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { NotFoundError } from '../lib/errors'
+import { LockedError, NotFoundError } from '../lib/errors'
 import { canvasRepository } from '../repositories/canvas'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
@@ -13,6 +13,7 @@ export interface CanvasItem {
   viewportX: number
   viewportY: number
   viewportZoom: number
+  isLocked: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -26,9 +27,21 @@ function toCanvasItem(row: NonNullable<ReturnType<typeof canvasRepository.findBy
     viewportX: row.viewportX,
     viewportY: row.viewportY,
     viewportZoom: row.viewportZoom,
+    isLocked: row.isLocked,
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
     updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number)
   }
+}
+
+function assertCanvasUnlocked(canvas: { isLocked: boolean; title: string }): void {
+  if (canvas.isLocked) throw new LockedError(`잠금된 캔버스는 수정할 수 없습니다: ${canvas.title}`)
+}
+
+// 다른 서비스(canvas-node, canvas-edge)에서 캔버스 잠금 가드를 사용할 수 있도록 export
+export function assertCanvasUnlockedById(canvasId: string): void {
+  const canvas = canvasRepository.findById(canvasId)
+  if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+  assertCanvasUnlocked(canvas)
 }
 
 export const canvasService = {
@@ -94,6 +107,7 @@ export const canvasService = {
   update(canvasId: string, data: { title?: string; description?: string }): CanvasItem {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+    assertCanvasUnlocked(canvas)
     const updated = canvasRepository.update(canvasId, {
       ...(data.title !== undefined ? { title: data.title.trim() } : {}),
       ...(data.description !== undefined ? { description: data.description.trim() } : {}),
@@ -116,6 +130,8 @@ export const canvasService = {
   remove(canvasId: string, options: { permanent?: boolean } = {}): void {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+    // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과.
+    if (!options.permanent) assertCanvasUnlocked(canvas)
 
     if (!options.permanent) {
       trashService.softRemove(canvas.workspaceId, 'canvas', canvasId)
@@ -125,5 +141,20 @@ export const canvasService = {
     // 영구 삭제 — Phase 2: entityLinkService.removeAllLinks('canvas', canvasId) 호출 추가
     itemTagService.removeByItem('canvas', canvasId)
     canvasRepository.delete(canvasId)
+  },
+
+  /**
+   * 잠금 토글 — 가드 우회. 잠긴 상태에서도 해제 가능.
+   */
+  toggleLock(canvasId: string, isLocked: boolean): CanvasItem {
+    const canvas = canvasRepository.findById(canvasId)
+    if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+
+    const updated = canvasRepository.update(canvasId, {
+      isLocked,
+      updatedAt: new Date()
+    })
+    if (!updated) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+    return toCanvasItem(updated)
   }
 }
