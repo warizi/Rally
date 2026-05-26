@@ -1,6 +1,7 @@
 import { and, count, eq, inArray, isNull, isNotNull, like, or, gte, lte } from 'drizzle-orm'
 import { db } from '../db'
 import { todos } from '../db/schema'
+import type { Actor } from '../services/_shared/actor'
 
 export type Todo = typeof todos.$inferSelect
 export type TodoInsert = typeof todos.$inferInsert
@@ -65,7 +66,11 @@ export const todoRepository = {
     const base = and(eq(todos.workspaceId, workspaceId), NOT_DELETED)!
     if (filter === 'active') {
       // 최상위 미완료 + 진행 중인 부모의 sub-todo (완료된 부모의 sub-todo 는 제외)
-      return db.select().from(todos).where(and(base, buildActiveWhere(workspaceId))).all()
+      return db
+        .select()
+        .from(todos)
+        .where(and(base, buildActiveWhere(workspaceId)))
+        .all()
     }
     if (filter === 'completed') {
       // 최상위 완료 투두만
@@ -220,6 +225,8 @@ export const todoRepository = {
         | 'dueDate'
         | 'startDate'
         | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
         | 'deletedAt'
         | 'trashBatchId'
       >
@@ -232,13 +239,15 @@ export const todoRepository = {
     db.delete(todos).where(eq(todos.id, id)).run()
   },
 
-  bulkUpdateListOrder(updates: { id: string; order: number }[]): void {
+  bulkUpdateListOrder(updates: { id: string; order: number }[], actor: Actor): void {
     if (updates.length === 0) return
     const now = Date.now()
-    const stmt = db.$client.prepare(`UPDATE todos SET list_order = ?, updated_at = ? WHERE id = ?`)
+    const stmt = db.$client.prepare(
+      `UPDATE todos SET list_order = ?, updated_at = ?, updated_by = ?, updated_by_id = ? WHERE id = ?`
+    )
     db.$client.transaction(() => {
       for (const u of updates) {
-        stmt.run(u.order, now, u.id)
+        stmt.run(u.order, now, actor.kind, actor.id ?? null, u.id)
       }
     })()
   },
@@ -250,7 +259,8 @@ export const todoRepository = {
       status?: string
       isDone?: boolean
       doneAt?: number | null
-    }[]
+    }[],
+    actor: Actor
   ): void {
     if (updates.length === 0) return
     const now = Date.now()
@@ -259,13 +269,24 @@ export const todoRepository = {
         if (u.status !== undefined) {
           db.$client
             .prepare(
-              `UPDATE todos SET kanban_order = ?, status = ?, is_done = ?, done_at = ?, updated_at = ? WHERE id = ?`
+              `UPDATE todos SET kanban_order = ?, status = ?, is_done = ?, done_at = ?, updated_at = ?, updated_by = ?, updated_by_id = ? WHERE id = ?`
             )
-            .run(u.order, u.status, u.isDone ? 1 : 0, u.doneAt ?? null, now, u.id)
+            .run(
+              u.order,
+              u.status,
+              u.isDone ? 1 : 0,
+              u.doneAt ?? null,
+              now,
+              actor.kind,
+              actor.id ?? null,
+              u.id
+            )
         } else {
           db.$client
-            .prepare(`UPDATE todos SET kanban_order = ?, updated_at = ? WHERE id = ?`)
-            .run(u.order, now, u.id)
+            .prepare(
+              `UPDATE todos SET kanban_order = ?, updated_at = ?, updated_by = ?, updated_by_id = ? WHERE id = ?`
+            )
+            .run(u.order, now, actor.kind, actor.id ?? null, u.id)
         }
       }
     })()
@@ -338,13 +359,15 @@ export const todoRepository = {
     return db.select().from(todos).where(eq(todos.trashBatchId, batchId)).all()
   },
 
-  bulkUpdateSubOrder(updates: { id: string; order: number }[]): void {
+  bulkUpdateSubOrder(updates: { id: string; order: number }[], actor: Actor): void {
     if (updates.length === 0) return
     const now = Date.now()
-    const stmt = db.$client.prepare(`UPDATE todos SET sub_order = ?, updated_at = ? WHERE id = ?`)
+    const stmt = db.$client.prepare(
+      `UPDATE todos SET sub_order = ?, updated_at = ?, updated_by = ?, updated_by_id = ? WHERE id = ?`
+    )
     db.$client.transaction(() => {
       for (const u of updates) {
-        stmt.run(u.order, now, u.id)
+        stmt.run(u.order, now, actor.kind, actor.id ?? null, u.id)
       }
     })()
   }

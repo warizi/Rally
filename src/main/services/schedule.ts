@@ -10,6 +10,7 @@ import { canvasNodeRepository } from '../repositories/canvas-node'
 import { trashService } from './trash'
 import type { Schedule } from '../repositories/schedule'
 import type { Todo } from '../repositories/todo'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 
 // === Domain Types ===
 
@@ -150,7 +151,7 @@ export const scheduleService = {
     return toScheduleItem(row)
   },
 
-  create(workspaceId: string, data: CreateScheduleData): ScheduleItem {
+  create(workspaceId: string, data: CreateScheduleData, actor: Actor = USER_ACTOR): ScheduleItem {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError('워크스페이스를 찾을 수 없습니다')
 
@@ -181,13 +182,14 @@ export const scheduleService = {
       color: data.color ?? null,
       priority: data.priority ?? 'medium',
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      ...toCreatedFields(actor)
     })
 
     return toScheduleItem(row)
   },
 
-  update(scheduleId: string, data: UpdateScheduleData): ScheduleItem {
+  update(scheduleId: string, data: UpdateScheduleData, actor: Actor = USER_ACTOR): ScheduleItem {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
 
@@ -228,7 +230,8 @@ export const scheduleService = {
       ...(finalEndAt && { endAt: finalEndAt }),
       ...(data.color !== undefined && { color: data.color }),
       ...(data.priority !== undefined && { priority: data.priority }),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')

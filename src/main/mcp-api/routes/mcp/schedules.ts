@@ -75,9 +75,10 @@ export function registerMcpScheduleRoutes(router: Router): void {
   router.addRoute<{ actions: ScheduleAction[] }>(
     'POST',
     '/api/mcp/schedules/batch',
-    (_, body): { results: ManageScheduleResult[] } => {
+    (_, body, _query, ctx): { results: ManageScheduleResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       const results = processBatchActions<ScheduleAction, ManageScheduleResult>(
         body.actions,
@@ -85,16 +86,20 @@ export function registerMcpScheduleRoutes(router: Router): void {
           if (action.action === 'create') {
             const startAt = requireIso(action.startAt, 'startAt')
             const endAt = requireIso(action.endAt, 'endAt')
-            const created = scheduleService.create(wsId, {
-              title: action.title,
-              description: action.description ?? null,
-              location: action.location ?? null,
-              allDay: action.allDay,
-              startAt,
-              endAt,
-              color: action.color ?? null,
-              priority: action.priority
-            })
+            const created = scheduleService.create(
+              wsId,
+              {
+                title: action.title,
+                description: action.description ?? null,
+                location: action.location ?? null,
+                allDay: action.allDay,
+                startAt,
+                endAt,
+                color: action.color ?? null,
+                priority: action.priority
+              },
+              actor
+            )
             return { action: 'create', id: created.id, success: true }
           }
           if (action.action === 'update') {
@@ -104,16 +109,20 @@ export function registerMcpScheduleRoutes(router: Router): void {
             if (!existing || existing.workspaceId !== wsId) {
               throw new NotFoundError(`Schedule not found: ${action.id}`)
             }
-            scheduleService.update(action.id, {
-              title: action.title,
-              description: action.description,
-              location: action.location,
-              allDay: action.allDay,
-              startAt: action.startAt ? new Date(action.startAt) : undefined,
-              endAt: action.endAt ? new Date(action.endAt) : undefined,
-              color: action.color,
-              priority: action.priority
-            })
+            scheduleService.update(
+              action.id,
+              {
+                title: action.title,
+                description: action.description,
+                location: action.location,
+                allDay: action.allDay,
+                startAt: action.startAt ? new Date(action.startAt) : undefined,
+                endAt: action.endAt ? new Date(action.endAt) : undefined,
+                color: action.color,
+                priority: action.priority
+              },
+              actor
+            )
             return { action: 'update', id: action.id, success: true }
           }
           // delete

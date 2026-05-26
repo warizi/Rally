@@ -186,7 +186,7 @@ describe('bulkUpdatePathPrefix', () => {
       makeNote({ id: 'n1', relativePath: 'docs/note.md' }),
       makeNote({ id: 'n2', relativePath: 'docs/sub/other.md' })
     ])
-    noteRepository.bulkUpdatePathPrefix(WS_ID, 'docs', 'archive')
+    noteRepository.bulkUpdatePathPrefix(WS_ID, 'docs', 'archive', { kind: 'user', id: null })
     const paths = noteRepository.findByWorkspaceId(WS_ID).map((n) => n.relativePath)
     expect(paths).toContain('archive/note.md')
     expect(paths).toContain('archive/sub/other.md')
@@ -198,7 +198,7 @@ describe('bulkUpdatePathPrefix', () => {
       makeNote({ id: 'n1', relativePath: 'doc/note.md' }),
       makeNote({ id: 'n2', relativePath: 'docs/note.md' })
     ])
-    noteRepository.bulkUpdatePathPrefix(WS_ID, 'doc', 'x')
+    noteRepository.bulkUpdatePathPrefix(WS_ID, 'doc', 'x', { kind: 'user', id: null })
     const paths = noteRepository.findByWorkspaceId(WS_ID).map((n) => n.relativePath)
     expect(paths).toContain('x/note.md')
     expect(paths).toContain('docs/note.md') // "docs/note.md"는 변경되지 않아야 함
@@ -213,7 +213,7 @@ describe('reindexSiblings', () => {
       makeNote({ id: 'n-b', relativePath: 'b.md', order: 1 }),
       makeNote({ id: 'n-c', relativePath: 'c.md', order: 0 })
     ])
-    noteRepository.reindexSiblings(WS_ID, ['n-c', 'n-a', 'n-b'])
+    noteRepository.reindexSiblings(WS_ID, ['n-c', 'n-a', 'n-b'], { kind: 'user', id: null })
     const rows = noteRepository.findByWorkspaceId(WS_ID)
     const byId = Object.fromEntries(rows.map((r) => [r.id, r.order]))
     expect(byId['n-c']).toBe(0)
@@ -223,7 +223,7 @@ describe('reindexSiblings', () => {
 
   it('빈 배열이면 DB를 변경하지 않는다 (no-op)', () => {
     noteRepository.create(makeNote({ id: 'n1', order: 99 }))
-    noteRepository.reindexSiblings(WS_ID, [])
+    noteRepository.reindexSiblings(WS_ID, [], { kind: 'user', id: null })
     expect(noteRepository.findById('n1')?.order).toBe(99)
   })
 })

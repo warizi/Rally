@@ -12,6 +12,7 @@ import { pdfFileRepository } from '../repositories/pdf-file'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
 import { trashService } from './trash'
+import { type Actor, USER_ACTOR, toCreatedFields } from './_shared/actor'
 // ⚠️ folder-watcher.ts를 import하지 않음 — 순환 의존성 방지
 //    folderWatcher.ensureWatching 호출은 ipc/folder.ts에서 담당
 
@@ -213,7 +214,12 @@ export const folderService = {
   /**
    * 새 폴더 생성 (disk + DB)
    */
-  create(workspaceId: string, parentFolderId: string | null, name: string): FolderNode {
+  create(
+    workspaceId: string,
+    parentFolderId: string | null,
+    name: string,
+    actor: Actor = USER_ACTOR
+  ): FolderNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -252,7 +258,8 @@ export const folderService = {
       color: null,
       order: maxOrder + 1,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      ...toCreatedFields(actor)
     })
 
     return {
@@ -299,11 +306,11 @@ export const folderService = {
     const newAbs = path.join(workspace.path, newRel)
 
     fs.renameSync(oldAbs, newAbs)
-    folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
-    noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
-    csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
-    pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
-    imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel)
+    folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
+    noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
+    csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
+    pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
+    imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
 
     const updated = folderRepository.findById(folderId)!
     return {
@@ -387,11 +394,16 @@ export const folderService = {
 
     if (oldAbs !== finalAbs) {
       fs.renameSync(oldAbs, finalAbs)
-      folderRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
-      noteRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
-      csvFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
-      pdfFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
-      imageFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel)
+      folderRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
+      noteRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
+      csvFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
+      pdfFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
+      imageFileRepository.bulkUpdatePathPrefix(
+        workspaceId,
+        folder.relativePath,
+        finalRel,
+        USER_ACTOR
+      )
     }
 
     // siblings reindex
@@ -411,7 +423,8 @@ export const folderService = {
     withoutSelf.splice(index, 0, { ...folder, relativePath: finalRel })
     folderRepository.reindexSiblings(
       workspaceId,
-      withoutSelf.map((s) => s.id)
+      withoutSelf.map((s) => s.id),
+      USER_ACTOR
     )
 
     const updated = folderRepository.findById(folderId)!

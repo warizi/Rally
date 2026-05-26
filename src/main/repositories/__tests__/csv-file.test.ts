@@ -214,7 +214,10 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.csvFiles)
       .values(makeCsv({ id: 'pp1', relativePath: 'old-folder' }))
       .run()
-    csvFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder')
+    csvFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder', {
+      kind: 'user',
+      id: null
+    })
     expect(csvFileRepository.findById('pp1')!.relativePath).toBe('new-folder')
   })
 
@@ -227,7 +230,10 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.csvFiles)
       .values(makeCsv({ id: 'pp3', relativePath: 'other/b.csv' }))
       .run()
-    csvFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder')
+    csvFileRepository.bulkUpdatePathPrefix(WS_ID, 'old-folder', 'new-folder', {
+      kind: 'user',
+      id: null
+    })
     expect(csvFileRepository.findById('pp2')!.relativePath).toBe('new-folder/a.csv')
     expect(csvFileRepository.findById('pp3')!.relativePath).toBe('other/b.csv')
   })
@@ -238,7 +244,7 @@ describe('bulkUpdatePathPrefix', () => {
       .insert(schema.csvFiles)
       .values(makeCsv({ id: 'pp4', relativePath: 'old/c.csv', updatedAt: oldDate }))
       .run()
-    csvFileRepository.bulkUpdatePathPrefix(WS_ID, 'old', 'new')
+    csvFileRepository.bulkUpdatePathPrefix(WS_ID, 'old', 'new', { kind: 'user', id: null })
     const row = csvFileRepository.findById('pp4')!
     expect(new Date(row.updatedAt).getTime()).toBeGreaterThan(oldDate.getTime())
   })
@@ -254,7 +260,7 @@ describe('reindexSiblings', () => {
       .insert(schema.csvFiles)
       .values(makeCsv({ id: 'ri2', relativePath: 'r2.csv', order: 3 }))
       .run()
-    csvFileRepository.reindexSiblings(WS_ID, ['ri2', 'ri1'])
+    csvFileRepository.reindexSiblings(WS_ID, ['ri2', 'ri1'], { kind: 'user', id: null })
     expect(csvFileRepository.findById('ri2')!.order).toBe(0)
     expect(csvFileRepository.findById('ri1')!.order).toBe(1)
   })

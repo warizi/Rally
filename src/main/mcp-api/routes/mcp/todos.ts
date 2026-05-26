@@ -153,24 +153,29 @@ export function registerMcpTodoRoutes(router: Router): void {
   router.addRoute<{ actions: TodoAction[] }>(
     'POST',
     '/api/mcp/todos/batch',
-    (_, body): { results: ManageTodoResult[] } => {
+    (_, body, _query, ctx): { results: ManageTodoResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       const results = processBatchActions<TodoAction, ManageTodoResult>(body.actions, (action) => {
         if (action.action === 'create') {
           if (typeof action.parentId === 'string') {
             assertValidId(action.parentId, 'parentId')
           }
-          const result = todoService.create(wsId, {
-            title: action.title,
-            description: action.description,
-            status: action.status,
-            priority: action.priority,
-            parentId: action.parentId,
-            dueDate: action.dueDate ? new Date(action.dueDate) : undefined,
-            startDate: action.startDate ? new Date(action.startDate) : undefined
-          })
+          const result = todoService.create(
+            wsId,
+            {
+              title: action.title,
+              description: action.description,
+              status: action.status,
+              priority: action.priority,
+              parentId: action.parentId,
+              dueDate: action.dueDate ? new Date(action.dueDate) : undefined,
+              startDate: action.startDate ? new Date(action.startDate) : undefined
+            },
+            actor
+          )
           if (action.subtodos?.length) {
             if (action.parentId) {
               throw new ValidationError(
@@ -178,7 +183,7 @@ export function registerMcpTodoRoutes(router: Router): void {
               )
             }
             for (const sub of action.subtodos) {
-              todoService.create(wsId, { title: sub.title, parentId: result.id })
+              todoService.create(wsId, { title: sub.title, parentId: result.id }, actor)
             }
           }
           if (action.linkItems?.length) {
@@ -194,26 +199,30 @@ export function registerMcpTodoRoutes(router: Router): void {
           if (typeof action.parentId === 'string') {
             assertValidId(action.parentId, 'parentId')
           }
-          todoService.update(action.id, {
-            title: action.title,
-            description: action.description,
-            status: action.status,
-            priority: action.priority,
-            isDone: action.isDone,
-            parentId: action.parentId,
-            dueDate:
-              action.dueDate === null
-                ? null
-                : action.dueDate
-                  ? new Date(action.dueDate)
-                  : undefined,
-            startDate:
-              action.startDate === null
-                ? null
-                : action.startDate
-                  ? new Date(action.startDate)
-                  : undefined
-          })
+          todoService.update(
+            action.id,
+            {
+              title: action.title,
+              description: action.description,
+              status: action.status,
+              priority: action.priority,
+              isDone: action.isDone,
+              parentId: action.parentId,
+              dueDate:
+                action.dueDate === null
+                  ? null
+                  : action.dueDate
+                    ? new Date(action.dueDate)
+                    : undefined,
+              startDate:
+                action.startDate === null
+                  ? null
+                  : action.startDate
+                    ? new Date(action.startDate)
+                    : undefined
+            },
+            actor
+          )
           if (action.linkItems?.length) {
             for (const item of action.linkItems) {
               assertValidId(item.id, `linkItems[].id (${item.type})`)

@@ -122,6 +122,10 @@ export const seed = {
       order: overrides.order ?? 0,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
+      createdBy: 'user' as const,
+      createdById: null,
+      updatedBy: 'user' as const,
+      updatedById: null,
       deletedAt: null,
       trashBatchId: null
     }
@@ -143,6 +147,10 @@ export const seed = {
       isLocked: overrides.isLocked ?? false,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
+      createdBy: 'user' as const,
+      createdById: null,
+      updatedBy: 'user' as const,
+      updatedById: null,
       deletedAt: null,
       trashBatchId: null
     }
@@ -165,6 +173,10 @@ export const seed = {
       subOrder: overrides.subOrder ?? 0,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
+      createdBy: 'user' as const,
+      createdById: null,
+      updatedBy: 'user' as const,
+      updatedById: null,
       doneAt: null,
       dueDate: overrides.dueDate ?? null,
       startDate: null,
@@ -193,6 +205,10 @@ export const seed = {
       priority: overrides.priority ?? ('medium' as const),
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
+      createdBy: 'user' as const,
+      createdById: null,
+      updatedBy: 'user' as const,
+      updatedById: null,
       deletedAt: null,
       trashBatchId: null
     }
@@ -200,10 +216,7 @@ export const seed = {
     return sched
   },
 
-  canvas(
-    workspaceId: string,
-    overrides: CanvasOverride = {}
-  ): typeof schema.canvases.$inferSelect {
+  canvas(workspaceId: string, overrides: CanvasOverride = {}): typeof schema.canvases.$inferSelect {
     const canvas = {
       id: overrides.id ?? nanoid(),
       workspaceId,
@@ -215,6 +228,10 @@ export const seed = {
       isLocked: overrides.isLocked ?? false,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
+      createdBy: 'user' as const,
+      createdById: null,
+      updatedBy: 'user' as const,
+      updatedById: null,
       deletedAt: null,
       trashBatchId: null
     }

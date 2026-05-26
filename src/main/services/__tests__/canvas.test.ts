@@ -40,6 +40,10 @@ const MOCK_CANVAS_ROW = {
   isLocked: false,
   createdAt: new Date(),
   updatedAt: new Date(),
+  createdBy: 'user' as const,
+  createdById: null,
+  updatedBy: 'user' as const,
+  updatedById: null,
   deletedAt: null,
   trashBatchId: null
 }

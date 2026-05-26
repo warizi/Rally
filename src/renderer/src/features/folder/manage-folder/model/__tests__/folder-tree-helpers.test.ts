@@ -32,11 +32,7 @@ function note(id: string, folderId: string | null = null, order = 0): NoteTreeNo
   }
 }
 
-function folder(
-  id: string,
-  children: WorkspaceTreeNode[] = [],
-  order = 0
-): FolderTreeNode {
+function folder(id: string, children: WorkspaceTreeNode[] = [], order = 0): FolderTreeNode {
   return {
     kind: 'folder',
     id,

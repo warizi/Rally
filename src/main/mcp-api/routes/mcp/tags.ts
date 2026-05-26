@@ -168,30 +168,39 @@ export function registerMcpTagRoutes(router: Router): void {
   router.addRoute<{ actions: TagAction[] }>(
     'POST',
     '/api/mcp/tags/batch',
-    (_, body): { results: ManageTagResult[] } => {
+    (_, body, _query, ctx): { results: ManageTagResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       const results = processBatchActions<TagAction, ManageTagResult>(
         body.actions,
         (action) => {
           if (action.action === 'create_tag') {
-            const tag = tagService.create(wsId, {
-              name: action.name,
-              color: action.color ?? '#6b7280',
-              description: action.description
-            })
+            const tag = tagService.create(
+              wsId,
+              {
+                name: action.name,
+                color: action.color ?? '#6b7280',
+                description: action.description
+              },
+              actor
+            )
             return { action: 'create_tag', id: tag.id, success: true }
           }
           if (action.action === 'update_tag') {
             assertValidId(action.id, 'tag id')
             const tag = tagRepository.findById(action.id)
             assertOwnedByWorkspace(tag, wsId, `Tag not found: ${action.id}`)
-            tagService.update(action.id, {
-              name: action.name,
-              color: action.color,
-              description: action.description
-            })
+            tagService.update(
+              action.id,
+              {
+                name: action.name,
+                color: action.color,
+                description: action.description
+              },
+              actor
+            )
             return { action: 'update_tag', id: action.id, success: true }
           }
           if (action.action === 'delete_tag') {

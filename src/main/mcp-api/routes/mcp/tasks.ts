@@ -54,9 +54,7 @@ function parseTypesParam(query: URLSearchParams): TaskType[] | undefined {
   if (cleaned.length === 0) return undefined
   for (const t of cleaned) {
     if (!VALID_TASK_TYPES.has(t as TaskType)) {
-      throw new ValidationError(
-        `Invalid type: ${t}. Must be one of ${ALL_TASK_TYPES.join(', ')}.`
-      )
+      throw new ValidationError(`Invalid type: ${t}. Must be one of ${ALL_TASK_TYPES.join(', ')}.`)
     }
   }
   return cleaned as TaskType[]

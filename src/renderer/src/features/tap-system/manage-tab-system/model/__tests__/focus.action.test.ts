@@ -105,7 +105,9 @@ describe('focus 모드 중 openTab — 스택 push', () => {
     // openRightTab 은 sourcePaneId 가 필요. 기본 패인을 사용.
     const sourcePaneId = useTabStore.getState().activePaneId
 
-    useTabStore.getState().openRightTab({ type: 'note', pathname: '/note/a', title: '노트A' }, sourcePaneId)
+    useTabStore
+      .getState()
+      .openRightTab({ type: 'note', pathname: '/note/a', title: '노트A' }, sourcePaneId)
 
     expect(useTabStore.getState().focusedTabIds).toEqual([folder, note])
   })

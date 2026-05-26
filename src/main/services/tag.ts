@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid'
 import { ConflictError, NotFoundError } from '../lib/errors'
 import { tagRepository } from '../repositories/tag'
 import { workspaceRepository } from '../repositories/workspace'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 
 export interface TagItem {
   id: string
@@ -46,7 +47,7 @@ export const tagService = {
     return tagRepository.findByWorkspaceId(workspaceId).map(toTagItem)
   },
 
-  create(workspaceId: string, input: CreateTagInput): TagItem {
+  create(workspaceId: string, input: CreateTagInput, actor: Actor = USER_ACTOR): TagItem {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -59,13 +60,14 @@ export const tagService = {
       name: input.name,
       color: input.color,
       description: input.description ?? null,
-      createdAt: new Date()
+      createdAt: new Date(),
+      ...toCreatedFields(actor)
     })
 
     return toTagItem(row)
   },
 
-  update(id: string, input: UpdateTagInput): TagItem {
+  update(id: string, input: UpdateTagInput, actor: Actor = USER_ACTOR): TagItem {
     const tag = tagRepository.findById(id)
     if (!tag) throw new NotFoundError(`Tag not found: ${id}`)
 
@@ -77,7 +79,8 @@ export const tagService = {
     const row = tagRepository.update(id, {
       ...(input.name !== undefined && { name: input.name }),
       ...(input.color !== undefined && { color: input.color }),
-      ...(input.description !== undefined && { description: input.description })
+      ...(input.description !== undefined && { description: input.description }),
+      ...toUpdatedFields(actor)
     })
     if (!row) throw new NotFoundError(`Tag not found: ${id}`)
 

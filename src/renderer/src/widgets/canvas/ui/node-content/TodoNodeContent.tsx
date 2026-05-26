@@ -33,51 +33,51 @@ export function TodoNodeContent({ refId, refTitle }: NodeContentProps): React.JS
     <ScrollArea className="flex-1 min-h-0 nowheel">
       <div className="p-3 flex flex-col gap-3">
         <div className="flex items-center gap-2">
-        <TodoCheckbox
-          todoId={todo.id}
-          workspaceId={workspaceId}
-          checked={todo.isDone}
-          title={todo.title}
-        />
-        <p
-          className={`text-sm font-medium truncate ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
-        >
-          {todo.title}
-        </p>
-      </div>
+          <TodoCheckbox
+            todoId={todo.id}
+            workspaceId={workspaceId}
+            checked={todo.isDone}
+            title={todo.title}
+          />
+          <p
+            className={`text-sm font-medium truncate ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+          >
+            {todo.title}
+          </p>
+        </div>
 
-      <div className="flex flex-col gap-2 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground w-10 shrink-0">상태</span>
-          <TodoStatusSelect
-            value={todo.status}
-            onChange={(status: TodoStatus) =>
-              updateTodo.mutate({ workspaceId, todoId: todo.id, data: { status } })
-            }
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground w-10 shrink-0">중요도</span>
-          <TodoPrioritySelect
-            value={todo.priority}
-            onChange={(priority: TodoPriority) =>
-              updateTodo.mutate({ workspaceId, todoId: todo.id, data: { priority } })
-            }
-          />
-        </div>
-        {todo.dueDate && (
-          <div className="flex items-center gap-1.5 text-muted-foreground">
-            <CalendarDays className="size-3" />
-            <span>
-              {new Date(todo.dueDate).toLocaleDateString('ko-KR', {
-                year: 'numeric',
-                month: 'numeric',
-                day: 'numeric'
-              })}
-            </span>
+        <div className="flex flex-col gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground w-10 shrink-0">상태</span>
+            <TodoStatusSelect
+              value={todo.status}
+              onChange={(status: TodoStatus) =>
+                updateTodo.mutate({ workspaceId, todoId: todo.id, data: { status } })
+              }
+            />
           </div>
-        )}
-      </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground w-10 shrink-0">중요도</span>
+            <TodoPrioritySelect
+              value={todo.priority}
+              onChange={(priority: TodoPriority) =>
+                updateTodo.mutate({ workspaceId, todoId: todo.id, data: { priority } })
+              }
+            />
+          </div>
+          {todo.dueDate && (
+            <div className="flex items-center gap-1.5 text-muted-foreground">
+              <CalendarDays className="size-3" />
+              <span>
+                {new Date(todo.dueDate).toLocaleDateString('ko-KR', {
+                  year: 'numeric',
+                  month: 'numeric',
+                  day: 'numeric'
+                })}
+              </span>
+            </div>
+          )}
+        </div>
 
         {todo.description && (
           <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">

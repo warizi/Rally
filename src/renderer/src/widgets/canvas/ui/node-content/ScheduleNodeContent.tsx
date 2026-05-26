@@ -34,26 +34,29 @@ export function ScheduleNodeContent({ refTitle, refMeta }: NodeContentProps): Re
     <ScrollArea className="flex-1 min-h-0 nowheel">
       <div className="p-3 flex flex-col gap-2">
         <div className="flex items-start gap-2">
-        {color && (
-          <div className="size-3 rounded-full mt-0.5 shrink-0" style={{ backgroundColor: color }} />
-        )}
-        <p className="text-sm font-medium truncate">{refTitle || '(제목 없음)'}</p>
-      </div>
+          {color && (
+            <div
+              className="size-3 rounded-full mt-0.5 shrink-0"
+              style={{ backgroundColor: color }}
+            />
+          )}
+          <p className="text-sm font-medium truncate">{refTitle || '(제목 없음)'}</p>
+        </div>
 
-      <div className="flex flex-col gap-1 text-xs text-muted-foreground">
-        {(startAt || endAt) && (
-          <div className="flex items-center gap-1.5">
-            <Clock className="size-3 shrink-0" />
-            <span>{formatDateRange()}</span>
-          </div>
-        )}
-        {location && (
-          <div className="flex items-center gap-1.5">
-            <MapPin className="size-3 shrink-0" />
-            <span className="truncate">{location}</span>
-          </div>
-        )}
-      </div>
+        <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {(startAt || endAt) && (
+            <div className="flex items-center gap-1.5">
+              <Clock className="size-3 shrink-0" />
+              <span>{formatDateRange()}</span>
+            </div>
+          )}
+          {location && (
+            <div className="flex items-center gap-1.5">
+              <MapPin className="size-3 shrink-0" />
+              <span className="truncate">{location}</span>
+            </div>
+          )}
+        </div>
 
         {description && (
           <p className="text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4">

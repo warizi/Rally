@@ -1,6 +1,7 @@
 import { and, eq, inArray, isNotNull, isNull, like, or } from 'drizzle-orm'
 import { db } from '../db'
 import { folders } from '../db/schema'
+import type { Actor } from '../services/_shared/actor'
 
 export type Folder = typeof folders.$inferSelect
 export type FolderInsert = typeof folders.$inferInsert
@@ -60,7 +61,17 @@ export const folderRepository = {
   update(
     id: string,
     data: Partial<
-      Pick<Folder, 'relativePath' | 'color' | 'order' | 'updatedAt' | 'deletedAt' | 'trashBatchId'>
+      Pick<
+        Folder,
+        | 'relativePath'
+        | 'color'
+        | 'order'
+        | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
+        | 'deletedAt'
+        | 'trashBatchId'
+      >
     >
   ): Folder | undefined {
     return db.update(folders).set(data).where(eq(folders.id, id)).returning().get()
@@ -70,19 +81,35 @@ export const folderRepository = {
    * 폴더 rename 시 해당 폴더 + 활성 하위 폴더의 relativePath를 일괄 업데이트.
    * 휴지통 row는 원래 위치 보존(복구를 위해).
    */
-  bulkUpdatePathPrefix(workspaceId: string, oldPrefix: string, newPrefix: string): void {
+  bulkUpdatePathPrefix(
+    workspaceId: string,
+    oldPrefix: string,
+    newPrefix: string,
+    actor: Actor
+  ): void {
     const now = Date.now()
     db.$client.transaction(() => {
       db.$client
         .prepare(
           `UPDATE folders
            SET relative_path = ? || substr(relative_path, ?),
-               updated_at = ?
+               updated_at = ?,
+               updated_by = ?,
+               updated_by_id = ?
            WHERE workspace_id = ?
              AND deleted_at IS NULL
              AND (relative_path = ? OR relative_path LIKE ?)`
         )
-        .run(newPrefix, oldPrefix.length + 1, now, workspaceId, oldPrefix, `${oldPrefix}/%`)
+        .run(
+          newPrefix,
+          oldPrefix.length + 1,
+          now,
+          actor.kind,
+          actor.id ?? null,
+          workspaceId,
+          oldPrefix,
+          `${oldPrefix}/%`
+        )
     })()
   },
 
@@ -133,14 +160,14 @@ export const folderRepository = {
     }
   },
 
-  reindexSiblings(workspaceId: string, orderedIds: string[]): void {
+  reindexSiblings(workspaceId: string, orderedIds: string[], actor: Actor): void {
     const now = Date.now()
     const stmt = db.$client.prepare(
-      `UPDATE folders SET "order" = ?, updated_at = ? WHERE workspace_id = ? AND id = ?`
+      `UPDATE folders SET "order" = ?, updated_at = ?, updated_by = ?, updated_by_id = ? WHERE workspace_id = ? AND id = ?`
     )
     db.$client.transaction(() => {
       for (let i = 0; i < orderedIds.length; i++) {
-        stmt.run(i, now, workspaceId, orderedIds[i])
+        stmt.run(i, now, actor.kind, actor.id ?? null, workspaceId, orderedIds[i])
       }
     })()
   },

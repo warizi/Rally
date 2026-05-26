@@ -109,10 +109,9 @@ describe('tool-definitions 무결성 (v2 final)', () => {
         standalone.has(tool.name) ||
         tool.name.startsWith('read_') ||
         tool.name.startsWith('manage_')
-      expect(
-        validName,
-        `${tool.name} 은 read/read_*/manage_*/search/browse 중 하나여야 함`
-      ).toBe(true)
+      expect(validName, `${tool.name} 은 read/read_*/manage_*/search/browse 중 하나여야 함`).toBe(
+        true
+      )
     }
   })
 

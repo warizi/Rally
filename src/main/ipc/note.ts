@@ -83,12 +83,8 @@ export function registerNoteHandlers(): void {
 
   ipcMain.handle(
     'note:toggleLock',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      noteId: string,
-      isLocked: boolean
-    ): IpcResponse => handle(() => noteService.toggleLock(workspaceId, noteId, isLocked))
+    (_: IpcMainInvokeEvent, workspaceId: string, noteId: string, isLocked: boolean): IpcResponse =>
+      handle(() => noteService.toggleLock(workspaceId, noteId, isLocked))
   )
 
   ipcMain.handle('note:selectFile', async (): Promise<string[] | null> => {

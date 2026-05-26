@@ -3,6 +3,7 @@ import { NotFoundError, ValidationError } from '../lib/errors'
 import { recurringRuleRepository } from '../repositories/recurring-rule'
 import { trashService } from './trash'
 import type { RecurringRule } from '../repositories/recurring-rule'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 
 export type RecurrenceType = 'daily' | 'weekday' | 'weekend' | 'custom'
 
@@ -126,7 +127,11 @@ export const recurringRuleService = {
     return candidates.filter((rule) => isRuleOnDate(rule, date))
   },
 
-  create(workspaceId: string, data: CreateRecurringRuleData): RecurringRuleItem {
+  create(
+    workspaceId: string,
+    data: CreateRecurringRuleData,
+    actor: Actor = USER_ACTOR
+  ): RecurringRuleItem {
     if (!data.title.trim()) {
       throw new ValidationError('제목을 입력하세요')
     }
@@ -151,12 +156,17 @@ export const recurringRuleService = {
       endTime: data.endTime ?? null,
       reminderOffsetMs: data.reminderOffsetMs ?? null,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      ...toCreatedFields(actor)
     })
     return toItem(row)
   },
 
-  update(ruleId: string, data: UpdateRecurringRuleData): RecurringRuleItem {
+  update(
+    ruleId: string,
+    data: UpdateRecurringRuleData,
+    actor: Actor = USER_ACTOR
+  ): RecurringRuleItem {
     const existing = recurringRuleRepository.findById(ruleId)
     if (!existing) throw new NotFoundError('반복 규칙을 찾을 수 없습니다')
     if (data.recurrenceType === 'custom' && data.daysOfWeek !== undefined) {
@@ -177,7 +187,8 @@ export const recurringRuleService = {
       ...(data.startTime !== undefined && { startTime: data.startTime }),
       ...(data.endTime !== undefined && { endTime: data.endTime }),
       ...(data.reminderOffsetMs !== undefined && { reminderOffsetMs: data.reminderOffsetMs }),
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })
     if (!updated) throw new NotFoundError('반복 규칙을 찾을 수 없습니다')
     return toItem(updated)

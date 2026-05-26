@@ -69,7 +69,7 @@ function initTmux(): void {
   // 3순위: 알려진 경로 직접 탐색 (Homebrew, 시스템)
   const knownPaths = [
     '/opt/homebrew/bin/tmux', // macOS ARM64 Homebrew
-    '/usr/local/bin/tmux',    // macOS x64 Homebrew
+    '/usr/local/bin/tmux', // macOS x64 Homebrew
     '/usr/bin/tmux'
   ]
   for (const p of knownPaths) {
@@ -115,7 +115,20 @@ function createWithTmux(
 
   const p = pty.spawn(
     tmuxBin!,
-    ['-L', 'rally', 'new-session', '-A', '-s', sessionName, '-c', cwd, '-x', String(cols), '-y', String(rows)],
+    [
+      '-L',
+      'rally',
+      'new-session',
+      '-A',
+      '-s',
+      sessionName,
+      '-c',
+      cwd,
+      '-x',
+      String(cols),
+      '-y',
+      String(rows)
+    ],
     {
       name: 'xterm-256color',
       cols,

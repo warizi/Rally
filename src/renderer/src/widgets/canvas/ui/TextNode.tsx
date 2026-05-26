@@ -51,10 +51,7 @@ function TextNodeComponent({ id, data, selected }: NodeProps<TextNodeType>): Rea
           />
         </ScrollArea>
       ) : (
-        <ScrollArea
-          className="w-full h-full nowheel"
-          onDoubleClick={() => setEditing(true)}
-        >
+        <ScrollArea className="w-full h-full nowheel" onDoubleClick={() => setEditing(true)}>
           <div className="text-sm whitespace-pre-wrap cursor-text">
             {localContent || <span className="text-muted-foreground">더블클릭하여 편집</span>}
           </div>

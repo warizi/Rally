@@ -83,13 +83,9 @@ export function LinkEntityPopover({
       items.filter((item) => !(item.type === entityType && item.id === entityId))
     return {
       todo: excludeSelf(
-        todos
-          .filter((t) => !t.parentId)
-          .map((t) => ({ type: 'todo', id: t.id, title: t.title }))
+        todos.filter((t) => !t.parentId).map((t) => ({ type: 'todo', id: t.id, title: t.title }))
       ),
-      schedule: excludeSelf(
-        schedules.map((s) => ({ type: 'schedule', id: s.id, title: s.title }))
-      ),
+      schedule: excludeSelf(schedules.map((s) => ({ type: 'schedule', id: s.id, title: s.title }))),
       note: excludeSelf(notes.map((n) => ({ type: 'note', id: n.id, title: n.title }))),
       pdf: excludeSelf(pdfs.map((p) => ({ type: 'pdf', id: p.id, title: p.title }))),
       csv: excludeSelf(csvs.map((c) => ({ type: 'csv', id: c.id, title: c.title }))),

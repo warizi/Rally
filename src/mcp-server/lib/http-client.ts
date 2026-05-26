@@ -1,6 +1,7 @@
 import http from 'http'
 import path from 'path'
 import os from 'os'
+import { getClientInfo } from './client-info'
 
 const isDev = process.env.RALLY_DEV === '1'
 const socketName = isDev ? 'mcp-dev.sock' : 'mcp.sock'
@@ -31,6 +32,14 @@ export async function mcpRequest(
     const token = process.env.MCP_AUTH_TOKEN
     if (token) {
       headers['x-mcp-token'] = token
+    }
+
+    const clientInfo = getClientInfo()
+    if (clientInfo?.name) {
+      headers['x-mcp-client-name'] = clientInfo.name
+    }
+    if (clientInfo?.version) {
+      headers['x-mcp-client-version'] = clientInfo.version
     }
 
     const options: http.RequestOptions = {

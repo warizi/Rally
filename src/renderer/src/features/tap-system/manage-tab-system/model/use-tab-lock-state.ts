@@ -29,8 +29,7 @@ export function useTabLockState(tab: Tab): TabLockState {
 
   const noteId = tab.icon === 'note' ? extractTrailingId(tab.pathname, '/folder/note') : null
   const csvId = tab.icon === 'csv' ? extractTrailingId(tab.pathname, '/folder/csv') : null
-  const canvasId =
-    tab.icon === 'canvas-detail' ? extractTrailingId(tab.pathname, '/canvas') : null
+  const canvasId = tab.icon === 'canvas-detail' ? extractTrailingId(tab.pathname, '/canvas') : null
 
   const notes = useNotesByWorkspace(workspaceId)
   const csvs = useCsvFilesByWorkspace(workspaceId)

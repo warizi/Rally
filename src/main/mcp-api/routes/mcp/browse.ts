@@ -29,7 +29,7 @@ import { entityLinkService } from '../../../services/entity-link'
 import { folderRepository } from '../../../repositories/folder'
 import { resolveActiveWorkspace, assertValidId } from './helpers'
 import type {
-  LinkableEntityType,
+  LinkableEntityType
   // re-export 회피용 type alias
 } from '../../../db/schema/entity-link'
 import type { TaggableEntityType } from '../../../db/schema/tag'
@@ -58,13 +58,7 @@ const VALID_LINKED_TYPES = new Set<LinkableEntityType>([
   'canvas'
 ])
 
-const LINKABLE_BROWSE_TYPES = new Set<BrowseType>([
-  'note',
-  'csv',
-  'canvas',
-  'pdf',
-  'image'
-])
+const LINKABLE_BROWSE_TYPES = new Set<BrowseType>(['note', 'csv', 'canvas', 'pdf', 'image'])
 
 function parseIntParam(raw: string | null, label: string): number | undefined {
   if (raw === null || raw === '') return undefined
@@ -203,8 +197,7 @@ function applySearchTitle<T extends { title: string; description?: string | null
   const lower = search.toLowerCase()
   return rows.filter(
     (r) =>
-      r.title.toLowerCase().includes(lower) ||
-      (r.description ?? '').toLowerCase().includes(lower)
+      r.title.toLowerCase().includes(lower) || (r.description ?? '').toLowerCase().includes(lower)
   )
 }
 
@@ -267,8 +260,7 @@ function filterFiles(
     const lower = search.toLowerCase()
     filtered = filtered.filter(
       (r) =>
-        r.title.toLowerCase().includes(lower) ||
-        (r.description ?? '').toLowerCase().includes(lower)
+        r.title.toLowerCase().includes(lower) || (r.description ?? '').toLowerCase().includes(lower)
     )
   }
   const total = filtered.length

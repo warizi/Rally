@@ -64,10 +64,7 @@ export function createTabId(pathname: string): string {
 }
 
 /** folderOpenState JSON 키 매핑. 손상된 JSON 은 throw (silent fallback 0). */
-export function mapFolderOpenState(
-  json: string | undefined,
-  mapper: IdMapper
-): string | undefined {
+export function mapFolderOpenState(json: string | undefined, mapper: IdMapper): string | undefined {
   if (!json) return json
   let parsed: unknown
   try {

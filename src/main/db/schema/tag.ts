@@ -23,7 +23,15 @@ export const tags = sqliteTable(
     name: text('name').notNull(),
     color: text('color').notNull(),
     description: text('description'),
-    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull()
+    createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
+    createdBy: text('created_by', { enum: ['user', 'ai'] })
+      .notNull()
+      .default('user'),
+    createdById: text('created_by_id'),
+    updatedBy: text('updated_by', { enum: ['user', 'ai'] })
+      .notNull()
+      .default('user'),
+    updatedById: text('updated_by_id')
   },
   (t) => [unique().on(t.workspaceId, t.name)]
 )

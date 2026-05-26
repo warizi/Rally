@@ -15,7 +15,15 @@ export const pdfFileRepository = {
     data: Partial<
       Pick<
         PdfFile,
-        'relativePath' | 'title' | 'description' | 'preview' | 'folderId' | 'order' | 'updatedAt'
+        | 'relativePath'
+        | 'title'
+        | 'description'
+        | 'preview'
+        | 'folderId'
+        | 'order'
+        | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
       >
     >
   ): PdfFile | undefined {

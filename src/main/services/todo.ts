@@ -9,6 +9,7 @@ import { canvasNodeRepository } from '../repositories/canvas-node'
 import { recurringCompletionService } from './recurring-completion'
 import { trashService } from './trash'
 import type { RecurringCompletionItem } from './recurring-completion'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 
 export interface TodoItem {
   id: string
@@ -227,7 +228,7 @@ export const todoService = {
     })
   },
 
-  create(workspaceId: string, data: CreateTodoData): TodoItem {
+  create(workspaceId: string, data: CreateTodoData, actor: Actor = USER_ACTOR): TodoItem {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -273,13 +274,14 @@ export const todoService = {
       updatedAt: now,
       doneAt: isDone ? now : null,
       dueDate: data.dueDate ?? null,
-      startDate: data.startDate ?? null
+      startDate: data.startDate ?? null,
+      ...toCreatedFields(actor)
     })
 
     return toTodoItem(row)
   },
 
-  update(todoId: string, data: UpdateTodoData): TodoItem {
+  update(todoId: string, data: UpdateTodoData, actor: Actor = USER_ACTOR): TodoItem {
     const todo = todoRepository.findById(todoId)
     if (!todo) throw new NotFoundError(`Todo not found: ${todoId}`)
 
@@ -316,8 +318,7 @@ export const todoService = {
         data.parentId === null
           ? todoRepository.findTopLevelByWorkspaceId(todo.workspaceId)
           : todoRepository.findByParentId(data.parentId)
-      const maxSubOrder =
-        siblings.length > 0 ? Math.max(...siblings.map((s) => s.subOrder)) : -1
+      const maxSubOrder = siblings.length > 0 ? Math.max(...siblings.map((s) => s.subOrder)) : -1
       parentMove = { parentId: data.parentId, subOrder: maxSubOrder + 1 }
     }
 
@@ -329,7 +330,8 @@ export const todoService = {
       ...(data.startDate !== undefined ? { startDate: data.startDate } : {}),
       ...(parentMove ?? {}),
       ...doneFields,
-      updatedAt: new Date(now)
+      updatedAt: new Date(now),
+      ...toUpdatedFields(actor)
     })
 
     if (!updated) throw new NotFoundError(`Todo not found: ${todoId}`)
@@ -402,13 +404,16 @@ export const todoService = {
     todoRepository.delete(todoId)
   },
 
-  reorderList(workspaceId: string, updates: TodoOrderUpdate[]): void {
+  reorderList(workspaceId: string, updates: TodoOrderUpdate[], actor: Actor = USER_ACTOR): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
-    todoRepository.bulkUpdateListOrder(updates.map((u) => ({ id: u.id, order: u.order })))
+    todoRepository.bulkUpdateListOrder(
+      updates.map((u) => ({ id: u.id, order: u.order })),
+      actor
+    )
   },
 
-  reorderKanban(workspaceId: string, updates: TodoOrderUpdate[]): void {
+  reorderKanban(workspaceId: string, updates: TodoOrderUpdate[], actor: Actor = USER_ACTOR): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
     const now = Date.now()
@@ -425,7 +430,8 @@ export const todoService = {
           }
         }
         return { id: u.id, order: u.order }
-      })
+      }),
+      actor
     )
 
     // 칸반 완료 이동 시 미발송 알림 삭제
@@ -436,10 +442,13 @@ export const todoService = {
     }
   },
 
-  reorderSub(parentId: string, updates: TodoOrderUpdate[]): void {
+  reorderSub(parentId: string, updates: TodoOrderUpdate[], actor: Actor = USER_ACTOR): void {
     const parent = todoRepository.findById(parentId)
     if (!parent) throw new NotFoundError(`Parent todo not found: ${parentId}`)
-    todoRepository.bulkUpdateSubOrder(updates.map((u) => ({ id: u.id, order: u.order })))
+    todoRepository.bulkUpdateSubOrder(
+      updates.map((u) => ({ id: u.id, order: u.order })),
+      actor
+    )
   },
 
   findCompletedWithRecurring(workspaceId: string): CompletedItem[] {

@@ -83,9 +83,7 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
               startDate: z.string().optional(),
               parentId: z.string().optional(),
               subtodos: z.array(z.object({ title: z.string() })).optional(),
-              linkItems: z
-                .array(z.object({ type: LINK_TYPE, id: z.string() }))
-                .optional()
+              linkItems: z.array(z.object({ type: LINK_TYPE, id: z.string() })).optional()
             }),
             z.object({
               type: z.literal('todo'),
@@ -215,7 +213,11 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
       for (const g of groups) {
         const ep = typeEndpoint(g.type)
         if (!ep) {
-          aggregated.push({ type: g.type, success: false, error: { code: 'ValidationError', message: `Unknown type: ${g.type}` } })
+          aggregated.push({
+            type: g.type,
+            success: false,
+            error: { code: 'ValidationError', message: `Unknown type: ${g.type}` }
+          })
           hadError = true
           continue
         }
@@ -224,7 +226,11 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
         const first = result.content?.[0]
         if (!first || first.type !== 'text' || typeof first.text !== 'string') {
           hadError = true
-          aggregated.push({ type: g.type, success: false, error: { code: 'UnexpectedResult', message: 'no text content' } })
+          aggregated.push({
+            type: g.type,
+            success: false,
+            error: { code: 'UnexpectedResult', message: 'no text content' }
+          })
           continue
         }
         try {
@@ -239,10 +245,17 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
           for (const r of subResults) aggregated.push({ type: g.type, ...r })
         } catch {
           hadError = true
-          aggregated.push({ type: g.type, success: false, error: { code: 'ParseError', message: first.text.slice(0, 200) } })
+          aggregated.push({
+            type: g.type,
+            success: false,
+            error: { code: 'ParseError', message: first.text.slice(0, 200) }
+          })
         }
       }
-      const payload: Record<string, unknown> = workspace !== null ? { _workspace: workspace, results: aggregated } : { results: aggregated }
+      const payload: Record<string, unknown> =
+        workspace !== null
+          ? { _workspace: workspace, results: aggregated }
+          : { results: aggregated }
       return {
         content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
         ...(hadError ? { isError: true } : {})
@@ -287,12 +300,7 @@ Response shape depends on mode:
         .describe('View mode (default: active)'),
       from: z.string().optional().describe('ISO 8601 range start (schedule)'),
       to: z.string().optional().describe('ISO 8601 range end (schedule)'),
-      dueWithin: z
-        .number()
-        .int()
-        .min(0)
-        .optional()
-        .describe('Todo due within N days from today'),
+      dueWithin: z.number().int().min(0).optional().describe('Todo due within N days from today'),
       priority: z
         .array(z.enum(['high', 'medium', 'low']))
         .optional()
@@ -313,10 +321,7 @@ Response shape depends on mode:
         .boolean()
         .optional()
         .describe('Include linkedItem previews (todo only, default: false)'),
-      pendingOnly: z
-        .boolean()
-        .optional()
-        .describe('Reminder: only un-fired (default: false)'),
+      pendingOnly: z.boolean().optional().describe('Reminder: only un-fired (default: false)'),
       activeOnly: z
         .boolean()
         .optional()
@@ -338,14 +343,8 @@ Response shape depends on mode:
         .max(60)
         .optional()
         .describe('completed mode: days per page (default 10)'),
-      fromDate: z
-        .string()
-        .optional()
-        .describe('completed mode: YYYY-MM-DD inclusive lower bound'),
-      toDate: z
-        .string()
-        .optional()
-        .describe('completed mode: YYYY-MM-DD inclusive upper bound'),
+      fromDate: z.string().optional().describe('completed mode: YYYY-MM-DD inclusive lower bound'),
+      toDate: z.string().optional().describe('completed mode: YYYY-MM-DD inclusive upper bound'),
       query: z
         .string()
         .optional()
@@ -370,7 +369,8 @@ Response shape depends on mode:
       if (typeof a.search === 'string' && a.search.trim()) params.set('search', a.search)
       if (a.resolveLinks) params.set('resolveLinks', 'true')
       if (a.pendingOnly) params.set('pendingOnly', 'true')
-      if (typeof a.activeOnly === 'boolean') params.set('activeOnly', a.activeOnly ? 'true' : 'false')
+      if (typeof a.activeOnly === 'boolean')
+        params.set('activeOnly', a.activeOnly ? 'true' : 'false')
       if (typeof a.date === 'string') params.set('date', a.date)
       if (typeof a.dayOffset === 'number') params.set('dayOffset', String(a.dayOffset))
       if (typeof a.dayLimit === 'number') params.set('dayLimit', String(a.dayLimit))

@@ -94,7 +94,6 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
     const todos = Array.from({ length: 5 }, (_, i) => makeTodo(`t${i}`))
     const { counter } = renderWithCounter(<ListWrapper todos={todos} />)
 
-    // eslint-disable-next-line no-console
     console.log(`[POST-P1-4] Initial 5-item mount renders: ${counter.count}`)
     expect(counter.count).toBeGreaterThan(0)
   })
@@ -115,7 +114,6 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
 
     result.rerender(<ListWrapper todos={todos} />)
 
-    // eslint-disable-next-line no-console
     console.log(`[POST-P1-4] Same-ref rerender (5 items) renders: ${counter.count}`)
     // baseline 측정값 = 2 (dnd-kit context 한계). 폭증(>5) 시 회귀.
     expect(counter.count).toBeLessThanOrEqual(5)
@@ -200,9 +198,7 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
     itemRenders.clear() // 초기 마운트 제외
 
     // t2 만 새 객체로 교체, 나머지는 동일 참조 유지
-    const changed = initial.map((t, i) =>
-      i === 2 ? { ...t, title: 'Changed!' } : t
-    )
+    const changed = initial.map((t, i) => (i === 2 ? { ...t, title: 'Changed!' } : t))
     result.rerender(<ProfiledList todos={changed} />)
 
     const changedCount = itemRenders.get('item-t2') ?? 0
@@ -210,10 +206,7 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
       .map((id) => itemRenders.get(`item-${id}`) ?? 0)
       .reduce((a, b) => a + b, 0)
 
-    // eslint-disable-next-line no-console
-    console.log(
-      `[POST-P1-4] Single-item change: changed=${changedCount}, others=${otherTotal}`
-    )
+    console.log(`[POST-P1-4] Single-item change: changed=${changedCount}, others=${otherTotal}`)
 
     // 바뀐 항목은 반드시 재렌더
     expect(changedCount, '바뀐 항목은 재렌더').toBeGreaterThanOrEqual(1)
@@ -235,8 +228,9 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
     // production-instrumentation counter: TodoListItemContent body 가 실제로
     // 호출될 때만 증가. React.memo skip 시 호출 안 됨 → 정확한 memo 효과 측정.
     const counter = new Map<string, number>()
-    ;(globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
-      .__TODO_LIST_ITEM_RENDER_COUNTER__ = counter
+    ;(
+      globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> }
+    ).__TODO_LIST_ITEM_RENDER_COUNTER__ = counter
 
     try {
       const initial = Array.from({ length: 5 }, (_, i) => makeTodo(`t${i}`))
@@ -282,7 +276,6 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
       const others = ['t0', 't1', 't3', 't4'].map((id) => counter.get(id) ?? 0)
       const otherTotal = others.reduce((a, b) => a + b, 0)
 
-      // eslint-disable-next-line no-console
       console.log(
         `[POST-P1-4.5] Inner body executions: changed=${changedCount}, others=${otherTotal}`
       )
@@ -290,8 +283,9 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
       expect(changedCount, '바뀐 항목 inner body 는 실행됨').toBeGreaterThanOrEqual(1)
       expect(otherTotal, '바뀌지 않은 inner body 는 0건 실행 (P1-4.5 핵심)').toBe(0)
     } finally {
-      ;(globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
-        .__TODO_LIST_ITEM_RENDER_COUNTER__ = undefined
+      ;(
+        globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> }
+      ).__TODO_LIST_ITEM_RENDER_COUNTER__ = undefined
     }
   })
 
@@ -301,7 +295,9 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
   it('S7 — TodoListItem applies SortableWrapper split pattern (P1-4.5 fact)', () => {
     const src = readFileSync(TODO_LIST_ITEM_PATH, 'utf-8')
     // outer 는 일반 함수, inner 만 memo
-    expect(src, 'TodoListItemContent inner export').toMatch(/export const TodoListItemContent = memo/)
+    expect(src, 'TodoListItemContent inner export').toMatch(
+      /export const TodoListItemContent = memo/
+    )
     // SubTodoItem 도 같은 패턴
     expect(src, 'SubTodoItemContent memo').toMatch(/const SubTodoItemContent = memo/)
     // outer 는 useSortable 호출 + Content 한 줄 호출만

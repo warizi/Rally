@@ -332,7 +332,7 @@ describe('bulkUpdateListOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 'b1', listOrder: 5 }))
       .run()
-    todoRepository.bulkUpdateListOrder([])
+    todoRepository.bulkUpdateListOrder([], { kind: 'user', id: null })
     expect(todoRepository.findById('b1')!.listOrder).toBe(5)
   })
   it('listOrder + updatedAt 변경', () => {
@@ -340,7 +340,7 @@ describe('bulkUpdateListOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 'b2', listOrder: 0 }))
       .run()
-    todoRepository.bulkUpdateListOrder([{ id: 'b2', order: 99 }])
+    todoRepository.bulkUpdateListOrder([{ id: 'b2', order: 99 }], { kind: 'user', id: null })
     expect(todoRepository.findById('b2')!.listOrder).toBe(99)
   })
 })
@@ -351,7 +351,7 @@ describe('bulkUpdateKanbanOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 'k1' }))
       .run()
-    todoRepository.bulkUpdateKanbanOrder([])
+    todoRepository.bulkUpdateKanbanOrder([], { kind: 'user', id: null })
     expect(todoRepository.findById('k1')!.kanbanOrder).toBe(0)
   })
   it("status='완료' 포함 → isDone=true, doneAt≠null (Drizzle Date로 읽힘)", () => {
@@ -360,9 +360,10 @@ describe('bulkUpdateKanbanOrder', () => {
       .values(makeTodo({ id: 'k2', status: '할일', isDone: false }))
       .run()
     const now = Date.now()
-    todoRepository.bulkUpdateKanbanOrder([
-      { id: 'k2', order: 1, status: '완료', isDone: true, doneAt: now }
-    ])
+    todoRepository.bulkUpdateKanbanOrder(
+      [{ id: 'k2', order: 1, status: '완료', isDone: true, doneAt: now }],
+      { kind: 'user', id: null }
+    )
     const row = todoRepository.findById('k2')!
     expect(row.isDone).toBe(true)
     expect(row.status).toBe('완료')
@@ -373,9 +374,10 @@ describe('bulkUpdateKanbanOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 'k3', status: '완료', isDone: true, doneAt: new Date() }))
       .run()
-    todoRepository.bulkUpdateKanbanOrder([
-      { id: 'k3', order: 1, status: '할일', isDone: false, doneAt: null }
-    ])
+    todoRepository.bulkUpdateKanbanOrder(
+      [{ id: 'k3', order: 1, status: '할일', isDone: false, doneAt: null }],
+      { kind: 'user', id: null }
+    )
     const row = todoRepository.findById('k3')!
     expect(row.isDone).toBe(false)
     expect(row.doneAt).toBeNull()
@@ -385,7 +387,7 @@ describe('bulkUpdateKanbanOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 'k4', isDone: false }))
       .run()
-    todoRepository.bulkUpdateKanbanOrder([{ id: 'k4', order: 7 }])
+    todoRepository.bulkUpdateKanbanOrder([{ id: 'k4', order: 7 }], { kind: 'user', id: null })
     const row = todoRepository.findById('k4')!
     expect(row.kanbanOrder).toBe(7)
     expect(row.isDone).toBe(false)
@@ -450,7 +452,7 @@ describe('bulkUpdateSubOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 's1', subOrder: 0 }))
       .run()
-    todoRepository.bulkUpdateSubOrder([])
+    todoRepository.bulkUpdateSubOrder([], { kind: 'user', id: null })
     expect(todoRepository.findById('s1')!.subOrder).toBe(0)
   })
   it('subOrder 변경', () => {
@@ -458,7 +460,7 @@ describe('bulkUpdateSubOrder', () => {
       .insert(schema.todos)
       .values(makeTodo({ id: 's2', subOrder: 0 }))
       .run()
-    todoRepository.bulkUpdateSubOrder([{ id: 's2', order: 3 }])
+    todoRepository.bulkUpdateSubOrder([{ id: 's2', order: 3 }], { kind: 'user', id: null })
     expect(todoRepository.findById('s2')!.subOrder).toBe(3)
   })
 })

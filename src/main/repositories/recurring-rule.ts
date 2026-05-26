@@ -65,6 +65,8 @@ export const recurringRuleRepository = {
         | 'endTime'
         | 'reminderOffsetMs'
         | 'updatedAt'
+        | 'updatedBy'
+        | 'updatedById'
         | 'deletedAt'
         | 'trashBatchId'
       >

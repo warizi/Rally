@@ -28,6 +28,14 @@ export const todos = sqliteTable(
     subOrder: real('sub_order').notNull().default(0),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
+    createdBy: text('created_by', { enum: ['user', 'ai'] })
+      .notNull()
+      .default('user'),
+    createdById: text('created_by_id'),
+    updatedBy: text('updated_by', { enum: ['user', 'ai'] })
+      .notNull()
+      .default('user'),
+    updatedById: text('updated_by_id'),
     doneAt: integer('done_at', { mode: 'timestamp_ms' }),
     dueDate: integer('due_date', { mode: 'timestamp_ms' }),
     startDate: integer('start_date', { mode: 'timestamp_ms' }),

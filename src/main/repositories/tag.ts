@@ -26,7 +26,10 @@ export const tagRepository = {
     return db.insert(tags).values(data).returning().get()
   },
 
-  update(id: string, data: Partial<Pick<Tag, 'name' | 'color' | 'description'>>): Tag | undefined {
+  update(
+    id: string,
+    data: Partial<Pick<Tag, 'name' | 'color' | 'description' | 'updatedBy' | 'updatedById'>>
+  ): Tag | undefined {
     return db.update(tags).set(data).where(eq(tags.id, id)).returning().get()
   },
 

@@ -73,9 +73,10 @@ export function registerMcpFolderRoutes(router: Router): void {
   router.addRoute<{ actions: FolderAction[] }>(
     'POST',
     '/api/mcp/folders/batch',
-    (_, body): { results: ManageFolderResult[] } => {
+    (_, body, _query, ctx): { results: ManageFolderResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       // 1. 사전 validation — invalid id 등 흔한 fail 케이스를 실행 전에 거름 (부분 commit 방지)
       preflightFolderActions(body.actions, wsId)
@@ -90,7 +91,12 @@ export function registerMcpFolderRoutes(router: Router): void {
         (action) => {
           if (action.action === 'create') {
             if (action.parentFolderId) assertValidId(action.parentFolderId, 'parentFolderId')
-            const result = folderService.create(wsId, action.parentFolderId ?? null, action.name)
+            const result = folderService.create(
+              wsId,
+              action.parentFolderId ?? null,
+              action.name,
+              actor
+            )
             affectedPaths.push(result.relativePath)
             return { action: 'create', id: result.id, success: true }
           }
