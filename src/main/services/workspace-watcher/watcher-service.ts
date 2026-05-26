@@ -4,6 +4,7 @@ import { BrowserWindow } from 'electron'
 import { fileTypeConfigs } from './file-type-config'
 import { applyEvents } from './event-processor'
 import { syncOfflineChanges, reconcileFileType, getSnapshotPath } from './reconciler'
+import { isRecentWrite } from '../../lib/recent-writes'
 
 class WorkspaceWatcherService {
   private subscription: parcelWatcher.AsyncSubscription | null = null
@@ -94,7 +95,11 @@ class WorkspaceWatcherService {
           workspacePath,
           eventsToProcess
         )
-        this.pushChanged('folder:changed', workspaceId, folderPaths)
+        // folder 도 dedup — MCP folders 라우트가 이미 broadcast 한 path 는 skip
+        const dedupedFolderPaths = folderPaths.filter((rel) => !isRecentWrite(workspaceId, rel))
+        if (dedupedFolderPaths.length > 0 || folderPaths.length === 0) {
+          this.pushChanged('folder:changed', workspaceId, dedupedFolderPaths)
+        }
 
         // 변경된 파일 경로 수집 + 폴더 삭제로 함께 삭제된 경로 병합
         for (const config of fileTypeConfigs) {
@@ -109,7 +114,14 @@ class WorkspaceWatcherService {
               .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
             ...(orphanPaths.get(config.entityType) ?? [])
           ]
-          this.pushChanged(config.channelName, workspaceId, changedRelPaths)
+          // MCP 라우트 같은 main-process 내부 변경은 이미 broadcastChanged 로 broadcast 됐다.
+          // recent-writes 트래커에 등록된 path 는 여기서 skip 해 이중 알림을 방지한다.
+          const dedupedPaths = changedRelPaths.filter(
+            (rel) => !isRecentWrite(workspaceId, rel)
+          )
+          // 전부 dedup 된 경우 broadcast 자체를 생략 (불필요한 invalidation 도 줄임)
+          if (dedupedPaths.length === 0 && changedRelPaths.length > 0) continue
+          this.pushChanged(config.channelName, workspaceId, dedupedPaths)
         }
       } catch {
         /* applyEvents 실패 시 무시 — watcher 지속 유지 */
