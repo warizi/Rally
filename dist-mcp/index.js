@@ -35787,6 +35787,17 @@ var StdioServerTransport = class {
 var import_http = __toESM(require("http"));
 var import_path = __toESM(require("path"));
 var import_os = __toESM(require("os"));
+
+// src/mcp-server/lib/client-info.ts
+var cachedClientInfo = null;
+function setClientInfo(info) {
+  cachedClientInfo = info;
+}
+function getClientInfo() {
+  return cachedClientInfo;
+}
+
+// src/mcp-server/lib/http-client.ts
 var isDev = process.env.RALLY_DEV === "1";
 var socketName = isDev ? "mcp-dev.sock" : "mcp.sock";
 var pipeName = isDev ? "rally-mcp-dev" : "rally-mcp";
@@ -35799,6 +35810,13 @@ async function mcpRequest(method, urlPath, body) {
     const token = process.env.MCP_AUTH_TOKEN;
     if (token) {
       headers["x-mcp-token"] = token;
+    }
+    const clientInfo = getClientInfo();
+    if (clientInfo?.name) {
+      headers["x-mcp-client-name"] = clientInfo.name;
+    }
+    if (clientInfo?.version) {
+      headers["x-mcp-client-version"] = clientInfo.version;
     }
     const options = {
       socketPath,
@@ -36466,7 +36484,11 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
       for (const g of groups) {
         const ep = typeEndpoint(g.type);
         if (!ep) {
-          aggregated.push({ type: g.type, success: false, error: { code: "ValidationError", message: `Unknown type: ${g.type}` } });
+          aggregated.push({
+            type: g.type,
+            success: false,
+            error: { code: "ValidationError", message: `Unknown type: ${g.type}` }
+          });
           hadError = true;
           continue;
         }
@@ -36475,7 +36497,11 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
         const first = result.content?.[0];
         if (!first || first.type !== "text" || typeof first.text !== "string") {
           hadError = true;
-          aggregated.push({ type: g.type, success: false, error: { code: "UnexpectedResult", message: "no text content" } });
+          aggregated.push({
+            type: g.type,
+            success: false,
+            error: { code: "UnexpectedResult", message: "no text content" }
+          });
           continue;
         }
         try {
@@ -36490,7 +36516,11 @@ Subtodos support links (linkItems/unlinkItems) since MCP v2.`,
           for (const r of subResults) aggregated.push({ type: g.type, ...r });
         } catch {
           hadError = true;
-          aggregated.push({ type: g.type, success: false, error: { code: "ParseError", message: first.text.slice(0, 200) } });
+          aggregated.push({
+            type: g.type,
+            success: false,
+            error: { code: "ParseError", message: first.text.slice(0, 200) }
+          });
         }
       }
       const payload = workspace !== null ? { _workspace: workspace, results: aggregated } : { results: aggregated };
@@ -36569,7 +36599,8 @@ Response shape depends on mode:
       if (typeof a.search === "string" && a.search.trim()) params.set("search", a.search);
       if (a.resolveLinks) params.set("resolveLinks", "true");
       if (a.pendingOnly) params.set("pendingOnly", "true");
-      if (typeof a.activeOnly === "boolean") params.set("activeOnly", a.activeOnly ? "true" : "false");
+      if (typeof a.activeOnly === "boolean")
+        params.set("activeOnly", a.activeOnly ? "true" : "false");
       if (typeof a.date === "string") params.set("date", a.date);
       if (typeof a.dayOffset === "number") params.set("dayOffset", String(a.dayOffset));
       if (typeof a.dayLimit === "number") params.set("dayLimit", String(a.dayLimit));
@@ -36975,6 +37006,12 @@ var server = new McpServer({
   name: "rally",
   version: "1.0.0"
 });
+server.server.oninitialized = () => {
+  const info = server.server.getClientVersion();
+  if (info) {
+    setClientInfo({ name: info.name, version: info.version });
+  }
+};
 registerAllTools(server);
 async function main() {
   const transport = new StdioServerTransport();
