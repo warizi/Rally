@@ -22,6 +22,10 @@ export interface RecurringRuleItem {
   reminderOffsetMs: number | null
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface CreateRecurringRuleData {
@@ -89,7 +93,11 @@ function toItem(rule: RecurringRule): RecurringRuleItem {
     endTime: rule.endTime ?? null,
     reminderOffsetMs: rule.reminderOffsetMs ?? null,
     createdAt: toDate(rule.createdAt)!,
-    updatedAt: toDate(rule.updatedAt)!
+    updatedAt: toDate(rule.updatedAt)!,
+    createdBy: (rule.createdBy ?? 'user') as 'user' | 'ai',
+    createdById: rule.createdById ?? null,
+    updatedBy: (rule.updatedBy ?? 'user') as 'user' | 'ai',
+    updatedById: rule.updatedById ?? null
   }
 }
 

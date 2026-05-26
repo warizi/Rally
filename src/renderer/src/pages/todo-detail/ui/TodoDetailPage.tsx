@@ -15,6 +15,7 @@ import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog
 import { TodoDetailFields, SubTodoSection } from '@widgets/todo'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface Props {
   tabId?: string
@@ -115,7 +116,20 @@ export function TodoDetailPage({ tabId, params }: Props): React.JSX.Element {
               </DropdownMenu>
             </div>
           }
-          footer={<TagList workspaceId={workspaceId!} itemType="todo" itemId={todo.id} />}
+          footer={
+            <div className="flex items-center justify-between gap-3">
+              <TagList workspaceId={workspaceId!} itemType="todo" itemId={todo.id} />
+              <AuthorBadgePair
+                createdBy={todo.createdBy}
+                createdById={todo.createdById}
+                createdAt={todo.createdAt}
+                updatedBy={todo.updatedBy}
+                updatedById={todo.updatedById}
+                updatedAt={todo.updatedAt}
+                size="sm"
+              />
+            </div>
+          }
         />
       }
     >

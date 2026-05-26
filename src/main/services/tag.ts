@@ -11,6 +11,10 @@ export interface TagItem {
   color: string
   description: string | null
   createdAt: Date
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }
 
 function toTagItem(row: {
@@ -20,10 +24,22 @@ function toTagItem(row: {
   color: string
   description: string | null
   createdAt: Date | number
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }): TagItem {
   return {
-    ...row,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt)
+    id: row.id,
+    workspaceId: row.workspaceId,
+    name: row.name,
+    color: row.color,
+    description: row.description,
+    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
+    createdBy: row.createdBy ?? 'user',
+    createdById: row.createdById ?? null,
+    updatedBy: row.updatedBy ?? 'user',
+    updatedById: row.updatedById ?? null
   }
 }
 

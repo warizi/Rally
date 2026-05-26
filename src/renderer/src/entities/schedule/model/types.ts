@@ -14,6 +14,10 @@ export interface ScheduleItem {
   createdAt: Date
   updatedAt: Date
   isDone?: boolean
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface CreateScheduleData {

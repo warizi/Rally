@@ -24,6 +24,10 @@ export interface NoteNode {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 function toNoteNode(note: {
@@ -37,6 +41,10 @@ function toNoteNode(note: {
   isLocked: boolean
   createdAt: Date | number
   updatedAt: Date | number
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }): NoteNode {
   return {
     id: note.id,
@@ -48,7 +56,11 @@ function toNoteNode(note: {
     order: note.order,
     isLocked: note.isLocked,
     createdAt: note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt),
-    updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt)
+    updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
+    createdBy: note.createdBy ?? 'user',
+    createdById: note.createdById ?? null,
+    updatedBy: note.updatedBy ?? 'user',
+    updatedById: note.updatedById ?? null
   }
 }
 
@@ -326,7 +338,12 @@ export const noteService = {
   /**
    * 노트 이름 변경 (disk + DB)
    */
-  rename(workspaceId: string, noteId: string, newName: string): NoteNode {
+  rename(
+    workspaceId: string,
+    noteId: string,
+    newName: string,
+    actor: Actor = USER_ACTOR
+  ): NoteNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -352,7 +369,8 @@ export const noteService = {
     const updated = noteRepository.update(noteId, {
       relativePath: newRel,
       title,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toNoteNode(updated)
@@ -451,7 +469,8 @@ export const noteService = {
     workspaceId: string,
     noteId: string,
     targetFolderId: string | null,
-    index: number
+    index: number,
+    actor: Actor = USER_ACTOR
   ): NoteNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
@@ -491,7 +510,8 @@ export const noteService = {
         folderId: targetFolderId,
         relativePath: finalRel,
         title: finalTitle,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...toUpdatedFields(actor)
       })
     }
 
@@ -617,13 +637,19 @@ export const noteService = {
   /**
    * 잠금 토글 — 가드 우회. 잠긴 상태에서도 해제 가능.
    */
-  toggleLock(_workspaceId: string, noteId: string, isLocked: boolean): NoteNode {
+  toggleLock(
+    _workspaceId: string,
+    noteId: string,
+    isLocked: boolean,
+    actor: Actor = USER_ACTOR
+  ): NoteNode {
     const note = noteRepository.findById(noteId)
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
 
     const updated = noteRepository.update(noteId, {
       isLocked,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toNoteNode(updated)

@@ -16,6 +16,10 @@ export function makeScheduleItem(overrides?: Partial<ScheduleItem>): ScheduleIte
     priority: 'medium' as SchedulePriority,
     createdAt: new Date('2026-01-01'),
     updatedAt: new Date('2026-01-01'),
+    createdBy: 'user',
+    createdById: null,
+    updatedBy: 'user',
+    updatedById: null,
     ...overrides
   }
 }

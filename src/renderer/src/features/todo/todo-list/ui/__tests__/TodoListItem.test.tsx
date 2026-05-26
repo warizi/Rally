@@ -45,6 +45,10 @@ function makeTodo(id: string, overrides: Partial<TodoItem> = {}): TodoItem {
     doneAt: null,
     dueDate: null,
     startDate: null,
+    createdBy: 'user',
+    createdById: null,
+    updatedBy: 'user',
+    updatedById: null,
     ...overrides
   }
 }

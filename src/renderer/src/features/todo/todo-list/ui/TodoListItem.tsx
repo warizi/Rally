@@ -45,6 +45,7 @@ import type { TodoItem, TodoStatus } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { EditSubTodoDialog } from '@features/todo/todo-field/ui/EditSubTodoDialog'
 import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
+import { AuthorBadge } from '@shared/ui/author-badge'
 
 const PRIORITY_CLASS: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
@@ -512,6 +513,13 @@ export const TodoListItemContent = memo(function TodoListItemContent({
         {/* 연결 + 더보기 메뉴 */}
         <TableCell className="py-2">
           <div className="flex items-center justify-end gap-0.5">
+            <AuthorBadge
+              by={todo.updatedBy}
+              byId={todo.updatedById}
+              at={todo.updatedAt}
+              size="sm"
+              className="mr-1"
+            />
             <LinkedEntityPopoverButton
               entityType="todo"
               entityId={todo.id}

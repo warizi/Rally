@@ -27,6 +27,10 @@ export interface ScheduleItem {
   priority: 'low' | 'medium' | 'high'
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface CreateScheduleData {
@@ -75,6 +79,10 @@ export interface TodoItem {
   doneAt: Date | null
   dueDate: Date | null
   startDate: Date | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 // === Mappers ===
@@ -92,7 +100,11 @@ function toScheduleItem(row: Schedule): ScheduleItem {
     color: row.color,
     priority: row.priority as ScheduleItem['priority'],
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number)
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number),
+    createdBy: (row.createdBy ?? 'user') as 'user' | 'ai',
+    createdById: row.createdById ?? null,
+    updatedBy: (row.updatedBy ?? 'user') as 'user' | 'ai',
+    updatedById: row.updatedById ?? null
   }
 }
 
@@ -125,7 +137,11 @@ function toTodoItem(todo: Todo): TodoItem {
       ? todo.startDate instanceof Date
         ? todo.startDate
         : new Date(todo.startDate as number)
-      : null
+      : null,
+    createdBy: (todo.createdBy ?? 'user') as 'user' | 'ai',
+    createdById: todo.createdById ?? null,
+    updatedBy: (todo.updatedBy ?? 'user') as 'user' | 'ai',
+    updatedById: todo.updatedById ?? null
   }
 }
 
@@ -265,7 +281,12 @@ export const scheduleService = {
     scheduleRepository.delete(scheduleId)
   },
 
-  move(scheduleId: string, startAt: Date, endAt: Date): ScheduleItem {
+  move(
+    scheduleId: string,
+    startAt: Date,
+    endAt: Date,
+    actor: Actor = USER_ACTOR
+  ): ScheduleItem {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
 
@@ -276,7 +297,8 @@ export const scheduleService = {
     const row = scheduleRepository.update(scheduleId, {
       startAt,
       endAt,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })
 
     if (!row) throw new NotFoundError('일정을 찾을 수 없습니다')

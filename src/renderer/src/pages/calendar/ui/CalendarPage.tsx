@@ -58,7 +58,11 @@ function todoToScheduleItem(todo: TodoItem): ScheduleItem {
     priority: todo.priority,
     createdAt: todo.createdAt,
     updatedAt: todo.updatedAt,
-    isDone: todo.isDone
+    isDone: todo.isDone,
+    createdBy: todo.createdBy,
+    createdById: todo.createdById,
+    updatedBy: todo.updatedBy,
+    updatedById: todo.updatedById
   }
 }
 

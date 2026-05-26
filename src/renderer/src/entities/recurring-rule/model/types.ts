@@ -15,6 +15,10 @@ export interface RecurringRuleItem {
   reminderOffsetMs: number | null
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface CreateRecurringRuleData {

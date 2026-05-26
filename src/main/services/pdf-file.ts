@@ -16,6 +16,7 @@ import {
   type PdfPageImage
 } from '../lib/pdf-text'
 import { trashService } from './trash'
+import { type Actor, USER_ACTOR, toUpdatedFields } from './_shared/actor'
 
 export interface PdfFileNode {
   id: string
@@ -27,6 +28,10 @@ export interface PdfFileNode {
   order: number
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 function toPdfFileNode(row: {
@@ -39,6 +44,10 @@ function toPdfFileNode(row: {
   order: number
   createdAt: Date | number
   updatedAt: Date | number
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }): PdfFileNode {
   return {
     id: row.id,
@@ -49,7 +58,11 @@ function toPdfFileNode(row: {
     folderId: row.folderId,
     order: row.order,
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt)
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt),
+    createdBy: row.createdBy ?? 'user',
+    createdById: row.createdById ?? null,
+    updatedBy: row.updatedBy ?? 'user',
+    updatedById: row.updatedById ?? null
   }
 }
 
@@ -227,7 +240,12 @@ export const pdfFileService = {
   },
 
   /** 이름 변경 (disk + DB) */
-  rename(workspaceId: string, pdfId: string, newName: string): PdfFileNode {
+  rename(
+    workspaceId: string,
+    pdfId: string,
+    newName: string,
+    actor: Actor = USER_ACTOR
+  ): PdfFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -252,7 +270,8 @@ export const pdfFileService = {
     const updated = pdfFileRepository.update(pdfId, {
       relativePath: newRel,
       title,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toPdfFileNode(updated)
@@ -370,7 +389,8 @@ export const pdfFileService = {
     workspaceId: string,
     pdfId: string,
     targetFolderId: string | null,
-    index: number
+    index: number,
+    actor: Actor = USER_ACTOR
   ): PdfFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
@@ -409,7 +429,8 @@ export const pdfFileService = {
         folderId: targetFolderId,
         relativePath: finalRel,
         title: finalTitle,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...toUpdatedFields(actor)
       })
     }
 
@@ -427,13 +448,19 @@ export const pdfFileService = {
   },
 
   /** 메타데이터 업데이트 (description만) */
-  updateMeta(_workspaceId: string, pdfId: string, data: { description?: string }): PdfFileNode {
+  updateMeta(
+    _workspaceId: string,
+    pdfId: string,
+    data: { description?: string },
+    actor: Actor = USER_ACTOR
+  ): PdfFileNode {
     const pdf = pdfFileRepository.findById(pdfId)
     if (!pdf) throw new NotFoundError(`PDF not found: ${pdfId}`)
 
     const updated = pdfFileRepository.update(pdfId, {
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toPdfFileNode(updated)

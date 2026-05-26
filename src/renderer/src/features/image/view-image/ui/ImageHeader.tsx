@@ -9,6 +9,7 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { ImageIcon } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface ImageHeaderProps {
   workspaceId: string
@@ -37,7 +38,22 @@ export function ImageHeader({ workspaceId, imageId, tabId }: ImageHeaderProps): 
           workspaceId={workspaceId}
         />
       }
-      footer={<TagList workspaceId={workspaceId} itemType="image" itemId={imageId} />}
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <TagList workspaceId={workspaceId} itemType="image" itemId={imageId} />
+          {image && (
+            <AuthorBadgePair
+              createdBy={image.createdBy}
+              createdById={image.createdById}
+              createdAt={image.createdAt}
+              updatedBy={image.updatedBy}
+              updatedById={image.updatedById}
+              updatedAt={image.updatedAt}
+              size="sm"
+            />
+          )}
+        </div>
+      }
       onTitleChange={(title) => {
         renameImage({ workspaceId, imageId, newName: title })
         if (tabId) setTabTitle(tabId, title)

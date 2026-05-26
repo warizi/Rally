@@ -28,6 +28,10 @@ export interface TodoItem {
   doneAt: Date | null
   dueDate: Date | null
   startDate: Date | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface CreateTodoData {
@@ -92,7 +96,11 @@ function toTodoItem(todo: ReturnType<typeof todoRepository.findById>): TodoItem 
       ? todo.startDate instanceof Date
         ? todo.startDate
         : new Date(todo.startDate as number)
-      : null
+      : null,
+    createdBy: (todo.createdBy ?? 'user') as 'user' | 'ai',
+    createdById: todo.createdById ?? null,
+    updatedBy: (todo.updatedBy ?? 'user') as 'user' | 'ai',
+    updatedById: todo.updatedById ?? null
   }
 }
 

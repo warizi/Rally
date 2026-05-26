@@ -24,6 +24,10 @@ function makeNote(overrides: Partial<NoteNode> & { id: string; title: string }):
     isLocked: false,
     createdAt: new Date(),
     updatedAt: new Date(),
+    createdBy: 'user',
+    createdById: null,
+    updatedBy: 'user',
+    updatedById: null,
     ...overrides
   }
 }
@@ -109,7 +113,13 @@ describe('노트만 (폴더 없음)', () => {
         description: 'desc',
         preview: 'preview text',
         folderId: null,
-        order: 2
+        order: 2,
+        createdBy: 'user',
+        createdById: null,
+        createdAt: expect.any(Date),
+        updatedBy: 'user',
+        updatedById: null,
+        updatedAt: expect.any(Date)
       }
     ])
   })

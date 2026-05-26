@@ -117,7 +117,11 @@ const mockNotes = [
     order: 0,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: baseDate
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
   },
   {
     id: 'n-2',
@@ -129,7 +133,11 @@ const mockNotes = [
     order: 0,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: newerDate
+    updatedAt: newerDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
   },
   {
     id: 'n-3',
@@ -141,7 +149,11 @@ const mockNotes = [
     order: 0,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: baseDate
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
   },
   {
     id: 'n-4',
@@ -153,7 +165,11 @@ const mockNotes = [
     order: 0,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: baseDate
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null
   }
 ]
 
@@ -169,7 +185,11 @@ const mockTables = [
     order: 0,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: baseDate
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
   },
   {
     id: 't-2',
@@ -182,7 +202,11 @@ const mockTables = [
     order: 0,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: newerDate
+    updatedAt: newerDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null
   }
 ]
 
@@ -197,7 +221,11 @@ const mockCanvases = [
     viewportZoom: 1,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: baseDate
+    updatedAt: baseDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null,
   },
   {
     id: 'c-2',
@@ -209,7 +237,11 @@ const mockCanvases = [
     viewportZoom: 1,
     isLocked: false,
     createdAt: baseDate,
-    updatedAt: newerDate
+    updatedAt: newerDate,
+    createdBy: 'user' as const,
+    createdById: null,
+    updatedBy: 'user' as const,
+    updatedById: null
   }
 ]
 

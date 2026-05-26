@@ -82,9 +82,10 @@ export function registerMcpItemRoutes(router: Router): void {
   router.addRoute<{ actions: ItemAction[] }>(
     'POST',
     '/api/mcp/items/batch',
-    (_, body): { results: ManageItemResult[] } => {
+    (_, body, _query, ctx): { results: ManageItemResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
 
       const noteAffected: string[] = []
       const tableAffected: string[] = []
@@ -103,21 +104,33 @@ export function registerMcpItemRoutes(router: Router): void {
           if (action.action === 'rename') {
             if (resolved.type === 'note') {
               const old = resolved.row.relativePath
-              const result = noteService.rename(wsId, action.id, action.newName)
+              const result = noteService.rename(wsId, action.id, action.newName, actor)
               noteAffected.push(old, result.relativePath)
             } else {
               const old = resolved.row.relativePath
-              const result = csvFileService.rename(wsId, action.id, action.newName)
+              const result = csvFileService.rename(wsId, action.id, action.newName, actor)
               tableAffected.push(old, result.relativePath)
             }
           } else if (action.action === 'move') {
             if (resolved.type === 'note') {
               const old = resolved.row.relativePath
-              const result = noteService.move(wsId, action.id, action.targetFolderId ?? null, 0)
+              const result = noteService.move(
+                wsId,
+                action.id,
+                action.targetFolderId ?? null,
+                0,
+                actor
+              )
               noteAffected.push(old, result.relativePath)
             } else {
               const old = resolved.row.relativePath
-              const result = csvFileService.move(wsId, action.id, action.targetFolderId ?? null, 0)
+              const result = csvFileService.move(
+                wsId,
+                action.id,
+                action.targetFolderId ?? null,
+                0,
+                actor
+              )
               tableAffected.push(old, result.relativePath)
             }
           } else {

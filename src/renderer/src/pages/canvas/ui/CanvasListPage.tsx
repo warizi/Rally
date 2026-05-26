@@ -18,6 +18,7 @@ import { PanePickerSubmenu } from '@features/entity-link/manage-link'
 import { CreateCanvasDialog } from '@features/canvas/create-canvas/ui/CreateCanvasDialog'
 import { DeleteCanvasDialog } from '@features/canvas/delete-canvas/ui/DeleteCanvasDialog'
 import { useCanvasesByWorkspace, useCreateCanvas, type CanvasItem } from '@entities/canvas'
+import { AuthorBadge } from '@shared/ui/author-badge'
 
 function useDebouncedValue<T>(value: T, delay: number): T {
   const [debounced, setDebounced] = useState(value)
@@ -170,6 +171,13 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
                   <Network className="size-4 shrink-0 text-muted-foreground" />
                   <span className="font-medium text-sm truncate">{canvas.title}</span>
                 </div>
+                <div className="flex items-center gap-1">
+                  <AuthorBadge
+                    by={canvas.updatedBy}
+                    byId={canvas.updatedById}
+                    at={canvas.updatedAt}
+                    size="sm"
+                  />
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <button
@@ -196,6 +204,7 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </div>
               </div>
               {canvas.description && (
                 <p className="text-xs text-muted-foreground mt-2 line-clamp-2">

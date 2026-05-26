@@ -4,6 +4,7 @@ import TabHeader from '@shared/ui/tab-header'
 import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 import { useCanvasById, useUpdateCanvas } from '@entities/canvas'
 import { CanvasBoard } from '@widgets/canvas/ui/CanvasBoard'
 
@@ -69,7 +70,18 @@ export function CanvasDetailPage({ tabId, params }: Props): React.JSX.Element {
           }
           footer={
             canvas ? (
-              <TagList workspaceId={canvas.workspaceId} itemType="canvas" itemId={canvas.id} />
+              <div className="flex items-center justify-between gap-3">
+                <TagList workspaceId={canvas.workspaceId} itemType="canvas" itemId={canvas.id} />
+                <AuthorBadgePair
+                  createdBy={canvas.createdBy}
+                  createdById={canvas.createdById}
+                  createdAt={canvas.createdAt}
+                  updatedBy={canvas.updatedBy}
+                  updatedById={canvas.updatedById}
+                  updatedAt={canvas.updatedAt}
+                  size="sm"
+                />
+              </div>
             ) : undefined
           }
         />
