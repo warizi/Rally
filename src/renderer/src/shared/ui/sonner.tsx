@@ -7,6 +7,7 @@ import {
 } from 'lucide-react'
 import { useSyncExternalStore } from 'react'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
+import { useToastSettings } from '@shared/hooks/use-toast-settings'
 
 function getThemeSnapshot(): 'light' | 'dark' {
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light'
@@ -23,11 +24,15 @@ function subscribeTheme(callback: () => void): () => void {
 
 const Toaster = ({ ...props }: ToasterProps) => {
   const theme = useSyncExternalStore(subscribeTheme, getThemeSnapshot)
+  const { duration, visibleCount } = useToastSettings()
 
   return (
     <Sonner
       theme={theme as ToasterProps['theme']}
       className="toaster group"
+      duration={duration}
+      visibleToasts={visibleCount}
+      expand
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,
