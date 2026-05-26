@@ -60,20 +60,17 @@ export function useFileWatcher(config: FileWatcherConfig): void {
     }, 2000)
 
     const unsub = onChanged((workspaceId, changedRelPaths, actor) => {
-      const refetchPromise = queryClient.refetchQueries({
+      queryClient.invalidateQueries({
         queryKey: [queryKeyPrefix, 'workspace', workspaceId]
       })
 
-      // refetch 후 갱신된 items 캐시 기반으로 토스트
-      refetchPromise.then(() => {
-        const items = queryClient.getQueryData<WatchedItem[]>([
-          queryKeyPrefix,
-          'workspace',
-          workspaceId
-        ])
+      const items = queryClient.getQueryData<WatchedItem[]>([
+        queryKeyPrefix,
+        'workspace',
+        workspaceId
+      ])
 
-        if (!items || changedRelPaths.length === 0) return
-
+      if (items && changedRelPaths.length > 0) {
         const externalItems = items.filter(
           (item) =>
             changedRelPaths.includes(item.relativePath) &&
@@ -135,7 +132,7 @@ export function useFileWatcher(config: FileWatcherConfig): void {
               )
             })
         })
-      })
+      }
     })
 
     return () => {
