@@ -243,9 +243,12 @@ export function TodoKanbanView({
   }
 
   function handleBoardMouseDown(e: React.MouseEvent<HTMLDivElement>): void {
-    if ((e.target as HTMLElement).closest('[data-kanban-card]')) return
     const el = boardScrollRef.current
     if (!el) return
+    // Portal로 렌더링된 Popover/Dialog 내부 mousedown이 React tree 버블링으로 도달할 때 e.preventDefault()가
+    // input focus를 막는 문제 방지 — e.target이 컨테이너의 DOM 자손일 때만 팬-스크롤 트리거.
+    if (!el.contains(e.target as Node)) return
+    if ((e.target as HTMLElement).closest('[data-kanban-card]')) return
     e.preventDefault()
     boardDragState.current = { isDown: true, startX: e.clientX, scrollLeft: el.scrollLeft }
   }
