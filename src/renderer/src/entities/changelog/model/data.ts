@@ -6,6 +6,35 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13.0',
+    date: '2026-05-27',
+    changes: [
+      {
+        type: 'feature',
+        title: '생성자/수정자 표시',
+        description:
+          '모든 항목(노트, CSV, PDF, 이미지, 캔버스, 할일, 일정, 반복 규칙, 폴더, 태그) 에 생성자/수정자 아이콘이 표시됩니다. 리스트와 폴더 트리에는 수정자 아이콘만, 상세 페이지에는 생성자 + 수정자 두 아이콘을 표시하며, hover 시 누가 언제 만들었는지/수정했는지 툴팁으로 확인할 수 있습니다. Claude 가 변경한 항목은 Claude 컬러 아이콘으로 구분됩니다.'
+      },
+      {
+        type: 'feature',
+        title: '작성자 표시 토글 설정',
+        description: '설정 > 화면 에서 생성자/수정자 아이콘 표시 여부를 켜고 끌 수 있습니다.'
+      },
+      {
+        type: 'feature',
+        title: 'AI 변경 토스트 + 아이템 클릭으로 열기',
+        description:
+          'AI 가 MCP 로 항목을 변경하면 토스트 제목에 "AI 가 변경하였습니다" 로 표시되고 각 아이템에 작성자 뱃지가 함께 나옵니다. 토스트의 아이템을 클릭하면 해당 항목이 새 탭으로 열립니다.'
+      },
+      {
+        type: 'feature',
+        title: '알림 토스트 설정 + 스택 스크롤',
+        description:
+          '설정 > 화면 > 알림 토스트 에서 자동 닫힘 시간(3/5/10초/끄지 않음)과 동시 표시 개수(3/5/10개)를 조절할 수 있습니다. 토스트가 화면을 초과해 쌓이면 스크롤로 모두 확인 가능합니다.'
+      }
+    ]
+  },
+  {
     version: '1.12.1',
     date: '2026-05-26',
     changes: [
