@@ -133,10 +133,10 @@ export function registerMcpFolderRoutes(router: Router): void {
         { transactional: false }
       )
 
-      broadcastChanged('folder:changed', wsId, affectedPaths)
+      broadcastChanged('folder:changed', wsId, affectedPaths, actor)
       if (hasFolderChange) {
-        broadcastChanged('note:changed', wsId, [])
-        broadcastChanged('csv:changed', wsId, [])
+        broadcastChanged('note:changed', wsId, [], actor)
+        broadcastChanged('csv:changed', wsId, [], actor)
       }
 
       return { results }

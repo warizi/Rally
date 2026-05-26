@@ -231,12 +231,12 @@ export function registerMcpManageItemsRoutes(router: Router): void {
         }
       })
 
-      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected)
-      if (csvAffected.length > 0) broadcastChanged('csv:changed', wsId, csvAffected)
-      if (pdfAffected.length > 0) broadcastChanged('pdf:changed', wsId, pdfAffected)
-      if (imageAffected.length > 0) broadcastChanged('image:changed', wsId, imageAffected)
-      if (folderTouched) broadcastChanged('folder:changed', wsId, [])
-      if (canvasTouched) broadcastChanged('canvas:changed', wsId, [])
+      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected, actor)
+      if (csvAffected.length > 0) broadcastChanged('csv:changed', wsId, csvAffected, actor)
+      if (pdfAffected.length > 0) broadcastChanged('pdf:changed', wsId, pdfAffected, actor)
+      if (imageAffected.length > 0) broadcastChanged('image:changed', wsId, imageAffected, actor)
+      if (folderTouched) broadcastChanged('folder:changed', wsId, [], actor)
+      if (canvasTouched) broadcastChanged('canvas:changed', wsId, [], actor)
 
       return { results }
     }

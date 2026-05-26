@@ -1,5 +1,6 @@
 import { FileText } from 'lucide-react'
 import { useFileWatcher } from '@shared/hooks/use-file-watcher'
+import { ROUTES } from '@shared/constants/tab-url'
 import { isOwnWrite } from './own-write-tracker'
 
 /** 외부 파일 변경 시 발생하는 커스텀 이벤트 이름 */
@@ -13,6 +14,11 @@ export function useNoteWatcher(): void {
     icon: FileText,
     externalChangedEvent: NOTE_EXTERNAL_CHANGED_EVENT,
     idField: 'noteId',
-    isOwnWrite
+    isOwnWrite,
+    buildTabOptions: (item) => ({
+      type: 'note',
+      pathname: ROUTES.NOTE_DETAIL.replace(':noteId', item.id),
+      title: item.title
+    })
   })
 }
