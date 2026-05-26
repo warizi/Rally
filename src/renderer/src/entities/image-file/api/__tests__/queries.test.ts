@@ -68,7 +68,11 @@ const SAMPLE_IMAGE: ImageFileNode = {
   folderId: null,
   order: 0,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  createdBy: 'user',
+  createdById: null,
+  updatedBy: 'user',
+  updatedById: null
 }
 
 // ─── useImageFilesByWorkspace ──────────────────────────────────

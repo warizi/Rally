@@ -2,6 +2,7 @@ import { Repeat } from 'lucide-react'
 import { Checkbox } from '@shared/ui/checkbox'
 import { Badge } from '@shared/ui/badge'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
+import { AuthorBadge } from '@shared/ui/author-badge'
 import type { RecurringRuleItem } from '@entities/recurring-rule'
 import type { RecurringCompletionItem } from '@entities/recurring-completion'
 import { useCompleteRecurring, useUncompleteRecurring } from '@entities/recurring-completion'
@@ -65,6 +66,12 @@ function RecurringTodoRow({ rule, completion, workspaceId, date }: RowProps): Re
       </Badge>
       <span
         className={`h-2 w-2 rounded-full shrink-0 @[400px]:hidden ${PRIORITY_DOT[rule.priority].replace('text-', 'bg-')}`}
+      />
+      <AuthorBadge
+        by={rule.updatedBy}
+        byId={rule.updatedById}
+        at={rule.updatedAt}
+        size="sm"
       />
     </div>
   )

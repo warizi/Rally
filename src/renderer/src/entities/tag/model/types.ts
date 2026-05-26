@@ -7,6 +7,10 @@ export interface TagItem {
   color: string
   description: string | null
   createdAt: Date
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }
 
 export interface CreateTagInput {

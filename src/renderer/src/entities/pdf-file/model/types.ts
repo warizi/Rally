@@ -8,4 +8,8 @@ export interface PdfFileNode {
   order: number
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }

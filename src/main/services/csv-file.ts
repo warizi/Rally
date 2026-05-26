@@ -12,7 +12,7 @@ import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { trashService } from './trash'
-import { type Actor, USER_ACTOR, toCreatedFields } from './_shared/actor'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 
 export interface CsvFileNode {
   id: string
@@ -26,6 +26,10 @@ export interface CsvFileNode {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 function toCsvFileNode(row: {
@@ -40,6 +44,10 @@ function toCsvFileNode(row: {
   isLocked: boolean
   createdAt: Date | number
   updatedAt: Date | number
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }): CsvFileNode {
   return {
     id: row.id,
@@ -52,7 +60,11 @@ function toCsvFileNode(row: {
     order: row.order,
     isLocked: row.isLocked,
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt)
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt),
+    createdBy: row.createdBy ?? 'user',
+    createdById: row.createdById ?? null,
+    updatedBy: row.updatedBy ?? 'user',
+    updatedById: row.updatedById ?? null
   }
 }
 
@@ -368,7 +380,12 @@ export const csvFileService = {
   /**
    * CSV 이름 변경 (disk + DB)
    */
-  rename(workspaceId: string, csvId: string, newName: string): CsvFileNode {
+  rename(
+    workspaceId: string,
+    csvId: string,
+    newName: string,
+    actor: Actor = USER_ACTOR
+  ): CsvFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -394,7 +411,8 @@ export const csvFileService = {
     const updated = csvFileRepository.update(csvId, {
       relativePath: newRel,
       title,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toCsvFileNode(updated)
@@ -467,7 +485,12 @@ export const csvFileService = {
   /**
    * CSV 내용 저장 (항상 UTF-8) + preview 자동 업데이트
    */
-  writeContent(workspaceId: string, csvId: string, content: string): void {
+  writeContent(
+    workspaceId: string,
+    csvId: string,
+    content: string,
+    actor: Actor = USER_ACTOR
+  ): void {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -479,7 +502,11 @@ export const csvFileService = {
     fs.writeFileSync(absPath, content, 'utf-8')
 
     const preview = generateCsvPreview(content)
-    csvFileRepository.update(csvId, { preview, updatedAt: new Date() })
+    csvFileRepository.update(csvId, {
+      preview,
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
+    })
   },
 
   /**
@@ -489,7 +516,8 @@ export const csvFileService = {
     workspaceId: string,
     csvId: string,
     targetFolderId: string | null,
-    index: number
+    index: number,
+    actor: Actor = USER_ACTOR
   ): CsvFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
@@ -529,7 +557,8 @@ export const csvFileService = {
         folderId: targetFolderId,
         relativePath: finalRel,
         title: finalTitle,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...toUpdatedFields(actor)
       })
     }
 
@@ -552,7 +581,8 @@ export const csvFileService = {
   updateMeta(
     _workspaceId: string,
     csvId: string,
-    data: { description?: string; columnWidths?: string }
+    data: { description?: string; columnWidths?: string },
+    actor: Actor = USER_ACTOR
   ): CsvFileNode {
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
@@ -561,7 +591,8 @@ export const csvFileService = {
 
     const updated = csvFileRepository.update(csvId, {
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toCsvFileNode(updated)
@@ -570,13 +601,19 @@ export const csvFileService = {
   /**
    * 잠금 토글 — 가드 우회. 잠긴 상태에서도 해제 가능.
    */
-  toggleLock(_workspaceId: string, csvId: string, isLocked: boolean): CsvFileNode {
+  toggleLock(
+    _workspaceId: string,
+    csvId: string,
+    isLocked: boolean,
+    actor: Actor = USER_ACTOR
+  ): CsvFileNode {
     const csv = csvFileRepository.findById(csvId)
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
 
     const updated = csvFileRepository.update(csvId, {
       isLocked,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toCsvFileNode(updated)

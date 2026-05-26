@@ -12,6 +12,7 @@ import { Sheet } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
 import { TemplateButton } from '@features/template/manage-template'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface CsvHeaderProps {
   workspaceId: string
@@ -101,7 +102,22 @@ export function CsvHeader({ workspaceId, csvId, tabId, encoding }: CsvHeaderProp
           <LinkedEntityPopoverButton entityType="csv" entityId={csvId} workspaceId={workspaceId} />
         </div>
       }
-      footer={<TagList workspaceId={workspaceId} itemType="csv" itemId={csvId} />}
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <TagList workspaceId={workspaceId} itemType="csv" itemId={csvId} />
+          {csv && (
+            <AuthorBadgePair
+              createdBy={csv.createdBy}
+              createdById={csv.createdById}
+              createdAt={csv.createdAt}
+              updatedBy={csv.updatedBy}
+              updatedById={csv.updatedById}
+              updatedAt={csv.updatedAt}
+              size="sm"
+            />
+          )}
+        </div>
+      }
       onTitleChange={(title) => {
         renameCsv({ workspaceId, csvId, newName: title })
         if (tabId) setTabTitle(tabId, title)

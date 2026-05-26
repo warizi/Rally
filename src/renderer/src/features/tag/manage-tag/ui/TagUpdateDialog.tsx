@@ -9,6 +9,7 @@ import { Textarea } from '@shared/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
 import type { TagItem } from '@entities/tag'
 import { TagColorPicker } from './TagColorPicker'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 const schema = z.object({
   name: z.string().min(1, '이름을 입력해주세요').max(50, '이름이 너무 깁니다'),
@@ -68,7 +69,20 @@ export function TagUpdateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[360px]">
         <DialogHeader>
-          <DialogTitle>태그 수정</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <span>태그 수정</span>
+            {tag.updatedBy && (
+              <AuthorBadgePair
+                createdBy={tag.createdBy ?? 'user'}
+                createdById={tag.createdById ?? null}
+                createdAt={tag.createdAt}
+                updatedBy={tag.updatedBy}
+                updatedById={tag.updatedById ?? null}
+                size="sm"
+                className="ml-auto text-xs"
+              />
+            )}
+          </DialogTitle>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>

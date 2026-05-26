@@ -21,6 +21,10 @@ export interface TodoItem {
   doneAt: Date | null
   dueDate: Date | null
   startDate: Date | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface CreateTodoData {

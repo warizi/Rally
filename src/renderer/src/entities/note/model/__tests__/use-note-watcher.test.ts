@@ -84,7 +84,11 @@ describe('외부 변경 파일 content refetch', () => {
         order: 0,
         isLocked: false,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        createdBy: 'user',
+        createdById: null,
+        updatedBy: 'user',
+        updatedById: null
       }
     ]
 
@@ -145,7 +149,11 @@ describe('자체 저장 파일 스킵', () => {
         order: 0,
         isLocked: false,
         createdAt: new Date(),
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        createdBy: 'user',
+        createdById: null,
+        updatedBy: 'user',
+        updatedById: null
       }
     ]
     vi.spyOn(queryClient, 'getQueryData').mockReturnValue(notes)

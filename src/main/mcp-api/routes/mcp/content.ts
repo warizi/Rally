@@ -249,7 +249,7 @@ export function registerMcpContentRoutes(router: Router): void {
             const result = csvFileService.create(wsId, folderId, action.title, actor)
             if (action.content) {
               try {
-                csvFileService.writeContent(wsId, result.id, action.content)
+                csvFileService.writeContent(wsId, result.id, action.content, actor)
               } catch (e) {
                 try {
                   csvFileService.remove(wsId, result.id)
@@ -277,16 +277,16 @@ export function registerMcpContentRoutes(router: Router): void {
               noteService.writeContent(wsId, action.id, action.content, actor)
               noteAffected.push(row.relativePath)
             } else {
-              csvFileService.writeContent(wsId, action.id, action.content)
+              csvFileService.writeContent(wsId, action.id, action.content, actor)
               csvAffected.push(row.relativePath)
             }
           }
           if (action.title !== undefined) {
             if (type === 'note') {
-              const updated = noteService.rename(wsId, action.id, action.title)
+              const updated = noteService.rename(wsId, action.id, action.title, actor)
               noteAffected.push(row.relativePath, updated.relativePath)
             } else {
-              const updated = csvFileService.rename(wsId, action.id, action.title)
+              const updated = csvFileService.rename(wsId, action.id, action.title, actor)
               csvAffected.push(row.relativePath, updated.relativePath)
             }
           }
@@ -333,7 +333,7 @@ export function registerMcpContentRoutes(router: Router): void {
           noteService.writeContent(wsId, body.id, body.content, actor)
           broadcastChanged('note:changed', wsId, [row.relativePath])
         } else {
-          csvFileService.writeContent(wsId, body.id, body.content)
+          csvFileService.writeContent(wsId, body.id, body.content, actor)
           broadcastChanged('csv:changed', wsId, [row.relativePath])
         }
         const updated =
@@ -378,7 +378,7 @@ export function registerMcpContentRoutes(router: Router): void {
       const result = csvFileService.create(wsId, folderId, body.title, actor)
       if (body.content) {
         try {
-          csvFileService.writeContent(wsId, result.id, body.content)
+          csvFileService.writeContent(wsId, result.id, body.content, actor)
         } catch (e) {
           try {
             csvFileService.remove(wsId, result.id)

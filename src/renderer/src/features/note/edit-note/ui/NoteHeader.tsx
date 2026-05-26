@@ -1,6 +1,7 @@
 import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 import {
   useRenameNote,
   useUpdateNoteMeta,
@@ -57,7 +58,22 @@ export function NoteHeader({ workspaceId, noteId, tabId }: NoteHeaderProps): JSX
           />
         </div>
       }
-      footer={<TagList workspaceId={workspaceId} itemType="note" itemId={noteId} />}
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <TagList workspaceId={workspaceId} itemType="note" itemId={noteId} />
+          {note && (
+            <AuthorBadgePair
+              createdBy={note.createdBy}
+              createdById={note.createdById}
+              createdAt={note.createdAt}
+              updatedBy={note.updatedBy}
+              updatedById={note.updatedById}
+              updatedAt={note.updatedAt}
+              size="sm"
+            />
+          )}
+        </div>
+      }
       onTitleChange={(title) => {
         renameNote({ workspaceId, noteId, newName: title })
         if (tabId) setTabTitle(tabId, title)

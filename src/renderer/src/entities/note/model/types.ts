@@ -9,4 +9,8 @@ export interface NoteNode {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }

@@ -48,7 +48,13 @@ export function buildWorkspaceTree(
       description: note.description,
       preview: note.preview,
       folderId: note.folderId,
-      order: note.order
+      order: note.order,
+      createdBy: note.createdBy,
+      createdById: note.createdById,
+      createdAt: note.createdAt,
+      updatedBy: note.updatedBy,
+      updatedById: note.updatedById,
+      updatedAt: note.updatedAt
     }
   }
 
@@ -62,7 +68,13 @@ export function buildWorkspaceTree(
       description: csv.description,
       preview: csv.preview,
       folderId: csv.folderId,
-      order: csv.order
+      order: csv.order,
+      createdBy: csv.createdBy,
+      createdById: csv.createdById,
+      createdAt: csv.createdAt,
+      updatedBy: csv.updatedBy,
+      updatedById: csv.updatedById,
+      updatedAt: csv.updatedAt
     }
   }
 
@@ -76,7 +88,13 @@ export function buildWorkspaceTree(
       description: pdf.description,
       preview: pdf.preview,
       folderId: pdf.folderId,
-      order: pdf.order
+      order: pdf.order,
+      createdBy: pdf.createdBy,
+      createdById: pdf.createdById,
+      createdAt: pdf.createdAt,
+      updatedBy: pdf.updatedBy,
+      updatedById: pdf.updatedById,
+      updatedAt: pdf.updatedAt
     }
   }
 
@@ -90,7 +108,13 @@ export function buildWorkspaceTree(
       description: img.description,
       preview: img.preview,
       folderId: img.folderId,
-      order: img.order
+      order: img.order,
+      createdBy: img.createdBy,
+      createdById: img.createdById,
+      createdAt: img.createdAt,
+      updatedBy: img.updatedBy,
+      updatedById: img.updatedById,
+      updatedAt: img.updatedAt
     }
   }
 
@@ -123,7 +147,11 @@ export function buildWorkspaceTree(
       relativePath: folder.relativePath,
       color: folder.color,
       order: folder.order,
-      children: [...childFolders, ...getLeafChildren(folder.id)]
+      children: [...childFolders, ...getLeafChildren(folder.id)],
+      createdBy: folder.createdBy,
+      createdById: folder.createdById,
+      updatedBy: folder.updatedBy,
+      updatedById: folder.updatedById
     }
   }
 

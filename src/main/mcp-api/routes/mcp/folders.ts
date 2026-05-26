@@ -102,7 +102,7 @@ export function registerMcpFolderRoutes(router: Router): void {
           }
           if (action.action === 'rename') {
             assertValidId(action.folderId, 'folderId')
-            const result = folderService.rename(wsId, action.folderId, action.newName)
+            const result = folderService.rename(wsId, action.folderId, action.newName, actor)
             affectedPaths.push(result.relativePath)
             hasFolderChange = true
             return { action: 'rename', id: action.folderId, success: true }
@@ -114,7 +114,8 @@ export function registerMcpFolderRoutes(router: Router): void {
               wsId,
               action.folderId,
               action.parentFolderId ?? null,
-              0
+              0,
+              actor
             )
             affectedPaths.push(result.relativePath)
             hasFolderChange = true

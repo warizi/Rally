@@ -5,6 +5,7 @@ import { useTabStore } from '@features/tap-system/manage-tab-system'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface PdfHeaderProps {
   workspaceId: string
@@ -30,7 +31,22 @@ export function PdfHeader({ workspaceId, pdfId, tabId }: PdfHeaderProps): JSX.El
       buttons={
         <LinkedEntityPopoverButton entityType="pdf" entityId={pdfId} workspaceId={workspaceId} />
       }
-      footer={<TagList workspaceId={workspaceId} itemType="pdf" itemId={pdfId} />}
+      footer={
+        <div className="flex items-center justify-between gap-3">
+          <TagList workspaceId={workspaceId} itemType="pdf" itemId={pdfId} />
+          {pdf && (
+            <AuthorBadgePair
+              createdBy={pdf.createdBy}
+              createdById={pdf.createdById}
+              createdAt={pdf.createdAt}
+              updatedBy={pdf.updatedBy}
+              updatedById={pdf.updatedById}
+              updatedAt={pdf.updatedAt}
+              size="sm"
+            />
+          )}
+        </div>
+      }
       onTitleChange={(title) => {
         renamePdf({ workspaceId, pdfId, newName: title })
         if (tabId) setTabTitle(tabId, title)

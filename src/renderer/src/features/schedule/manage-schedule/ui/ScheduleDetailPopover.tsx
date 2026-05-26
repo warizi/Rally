@@ -27,6 +27,7 @@ import { useReminders, REMINDER_OFFSETS } from '@entities/reminder'
 import { ScheduleFormDialog } from './ScheduleFormDialog'
 import { DeleteScheduleDialog } from './DeleteScheduleDialog'
 import { LinkEntityPopover, OpenAllSubmenu } from '@features/entity-link/manage-link'
+import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface Props {
   schedule: ScheduleItem
@@ -183,7 +184,17 @@ export function ScheduleDetailPopover({
             )}
 
             {!isTodo && (
-              <div className="flex justify-end gap-1 pt-1 border-t">
+              <div className="flex items-center justify-between gap-2 pt-1 border-t">
+                <AuthorBadgePair
+                  createdBy={schedule.createdBy}
+                  createdById={schedule.createdById}
+                  createdAt={schedule.createdAt}
+                  updatedBy={schedule.updatedBy}
+                  updatedById={schedule.updatedById}
+                  updatedAt={schedule.updatedAt}
+                  size="sm"
+                />
+                <div className="flex items-center gap-1">
                 <LinkEntityPopover
                   entityType="schedule"
                   entityId={schedule.id}
@@ -213,6 +224,7 @@ export function ScheduleDetailPopover({
                 >
                   <Trash2 className="size-3.5" />
                 </Button>
+                </div>
               </div>
             )}
           </div>

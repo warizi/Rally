@@ -5,6 +5,7 @@ import { JSX, useEffect, useRef } from 'react'
 import type { NodeRendererProps } from '../lib/tree'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
+import { AuthorBadge } from '@shared/ui/author-badge'
 import { cn } from '@shared/lib/utils'
 import type { ImageTreeNode } from '../model/types'
 import { useShowExtensionSetting } from '../model/use-show-extension-setting'
@@ -77,6 +78,15 @@ export function ImageNodeRenderer({
         <TruncateTooltip content={displayName}>
           <span className="text-sm truncate min-w-0">{displayName}</span>
         </TruncateTooltip>
+        {node.data.updatedBy && (
+          <AuthorBadge
+            by={node.data.updatedBy}
+            byId={node.data.updatedById ?? null}
+            at={node.data.updatedAt}
+            size="sm"
+            className="ml-auto shrink-0"
+          />
+        )}
       </div>
 
       <div

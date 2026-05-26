@@ -1,4 +1,13 @@
-export interface FolderTreeNode {
+interface AuthorMeta {
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  createdAt?: Date
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
+  updatedAt?: Date
+}
+
+export interface FolderTreeNode extends AuthorMeta {
   kind: 'folder'
   id: string
   name: string
@@ -8,7 +17,7 @@ export interface FolderTreeNode {
   children: WorkspaceTreeNode[] // 하위 폴더 + 노트 혼합
 }
 
-export interface NoteTreeNode {
+export interface NoteTreeNode extends AuthorMeta {
   kind: 'note'
   id: string
   name: string // NoteNode.title에서 매핑
@@ -20,7 +29,7 @@ export interface NoteTreeNode {
   order: number
 }
 
-export interface CsvTreeNode {
+export interface CsvTreeNode extends AuthorMeta {
   kind: 'csv'
   id: string
   name: string // CsvFileNode.title에서 매핑
@@ -32,7 +41,7 @@ export interface CsvTreeNode {
   order: number
 }
 
-export interface PdfTreeNode {
+export interface PdfTreeNode extends AuthorMeta {
   kind: 'pdf'
   id: string
   name: string // PdfFileNode.title에서 매핑
@@ -44,7 +53,7 @@ export interface PdfTreeNode {
   order: number
 }
 
-export interface ImageTreeNode {
+export interface ImageTreeNode extends AuthorMeta {
   kind: 'image'
   id: string
   name: string

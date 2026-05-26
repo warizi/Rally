@@ -17,6 +17,10 @@ export interface CanvasItem {
   isLocked: boolean
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 function toCanvasItem(row: NonNullable<ReturnType<typeof canvasRepository.findById>>): CanvasItem {
@@ -30,7 +34,11 @@ function toCanvasItem(row: NonNullable<ReturnType<typeof canvasRepository.findBy
     viewportZoom: row.viewportZoom,
     isLocked: row.isLocked,
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number)
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number),
+    createdBy: (row.createdBy ?? 'user') as 'user' | 'ai',
+    createdById: row.createdById ?? null,
+    updatedBy: (row.updatedBy ?? 'user') as 'user' | 'ai',
+    updatedById: row.updatedById ?? null
   }
 }
 
@@ -157,13 +165,14 @@ export const canvasService = {
   /**
    * 잠금 토글 — 가드 우회. 잠긴 상태에서도 해제 가능.
    */
-  toggleLock(canvasId: string, isLocked: boolean): CanvasItem {
+  toggleLock(canvasId: string, isLocked: boolean, actor: Actor = USER_ACTOR): CanvasItem {
     const canvas = canvasRepository.findById(canvasId)
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
 
     const updated = canvasRepository.update(canvasId, {
       isLocked,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })
     if (!updated) throw new NotFoundError(`Canvas not found: ${canvasId}`)
     return toCanvasItem(updated)

@@ -16,6 +16,7 @@ import { useUpdateTodo, TODO_STATUS } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
+import { AuthorBadge } from '@shared/ui/author-badge'
 
 const PRIORITY_STRIP: Record<string, string> = {
   high: 'bg-red-500',
@@ -215,6 +216,12 @@ function TodoKanbanCardImpl({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
+          <AuthorBadge
+            by={todo.updatedBy}
+            byId={todo.updatedById}
+            at={todo.updatedAt}
+            size="sm"
+          />
           <LinkedEntityPopoverButton
             entityType="todo"
             entityId={todo.id}

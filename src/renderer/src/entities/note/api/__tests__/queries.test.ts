@@ -72,7 +72,11 @@ const SAMPLE_NOTE: NoteNode = {
   order: 0,
   isLocked: false,
   createdAt: new Date(),
-  updatedAt: new Date()
+  updatedAt: new Date(),
+  createdBy: 'user',
+  createdById: null,
+  updatedBy: 'user',
+  updatedById: null
 }
 
 // ─── useNotesByWorkspace ──────────────────────────────────────

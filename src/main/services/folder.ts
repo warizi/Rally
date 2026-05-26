@@ -12,7 +12,7 @@ import { pdfFileRepository } from '../repositories/pdf-file'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
 import { trashService } from './trash'
-import { type Actor, USER_ACTOR, toCreatedFields } from './_shared/actor'
+import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 // ⚠️ folder-watcher.ts를 import하지 않음 — 순환 의존성 방지
 //    folderWatcher.ensureWatching 호출은 ipc/folder.ts에서 담당
 
@@ -97,12 +97,26 @@ export interface FolderNode {
   color: string | null
   order: number
   children: FolderNode[]
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }
 
 // ─── buildTree (private) ─────────────────────────────────────
 
+interface FolderMeta {
+  id: string
+  color: string | null
+  order: number
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
+}
+
 function buildTree(
-  dbFoldersByPath: Map<string, { id: string; color: string | null; order: number }>,
+  dbFoldersByPath: Map<string, FolderMeta>,
   fsEntries: FsEntry[]
 ): FolderNode[] {
   // 부모 경로별로 자식 목록을 미리 그룹핑 → O(n) 전처리로 재귀 시 O(1) 조회
@@ -129,7 +143,11 @@ function buildTree(
           relativePath: e.relativePath,
           color: meta.color,
           order: meta.order,
-          children: buildChildren(e.relativePath)
+          children: buildChildren(e.relativePath),
+          createdBy: meta.createdBy ?? 'user',
+          createdById: meta.createdById ?? null,
+          updatedBy: meta.updatedBy ?? 'user',
+          updatedById: meta.updatedById ?? null
         }
       })
       .sort((a, b) => a.order - b.order || a.name.localeCompare(b.name))
@@ -152,7 +170,18 @@ export const folderService = {
 
     const dbFolders = folderRepository.findByWorkspaceId(workspaceId)
     const metaByPath = new Map(
-      dbFolders.map((r) => [r.relativePath, { id: r.id, color: r.color, order: r.order }])
+      dbFolders.map((r) => [
+        r.relativePath,
+        {
+          id: r.id,
+          color: r.color,
+          order: r.order,
+          createdBy: r.createdBy ?? 'user',
+          createdById: r.createdById ?? null,
+          updatedBy: r.updatedBy ?? 'user',
+          updatedById: r.updatedById ?? null
+        }
+      ])
     )
     const fsEntries = dbFolders.map((f) => ({
       name: f.relativePath.split('/').at(-1)!,
@@ -205,7 +234,18 @@ export const folderService = {
     // 5. 최신 DB rows 재조회
     const latestRows = folderRepository.findByWorkspaceId(workspaceId)
     const metaByPath = new Map(
-      latestRows.map((r) => [r.relativePath, { id: r.id, color: r.color, order: r.order }])
+      latestRows.map((r) => [
+        r.relativePath,
+        {
+          id: r.id,
+          color: r.color,
+          order: r.order,
+          createdBy: r.createdBy ?? 'user',
+          createdById: r.createdById ?? null,
+          updatedBy: r.updatedBy ?? 'user',
+          updatedById: r.updatedById ?? null
+        }
+      ])
     )
 
     return buildTree(metaByPath, fsEntries)
@@ -275,7 +315,12 @@ export const folderService = {
   /**
    * 폴더 이름 변경 (disk + DB 하위 전체)
    */
-  rename(workspaceId: string, folderId: string, newName: string): FolderNode {
+  rename(
+    workspaceId: string,
+    folderId: string,
+    newName: string,
+    actor: Actor = USER_ACTOR
+  ): FolderNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -306,11 +351,11 @@ export const folderService = {
     const newAbs = path.join(workspace.path, newRel)
 
     fs.renameSync(oldAbs, newAbs)
-    folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
-    noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
-    csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
-    pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
-    imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, USER_ACTOR)
+    folderRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, actor)
+    noteRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, actor)
+    csvFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, actor)
+    pdfFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, actor)
+    imageFileRepository.bulkUpdatePathPrefix(workspaceId, oldRel, newRel, actor)
 
     const updated = folderRepository.findById(folderId)!
     return {
@@ -355,7 +400,8 @@ export const folderService = {
     workspaceId: string,
     folderId: string,
     parentFolderId: string | null,
-    index: number
+    index: number,
+    actor: Actor = USER_ACTOR
   ): FolderNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
@@ -394,16 +440,11 @@ export const folderService = {
 
     if (oldAbs !== finalAbs) {
       fs.renameSync(oldAbs, finalAbs)
-      folderRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
-      noteRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
-      csvFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
-      pdfFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, USER_ACTOR)
-      imageFileRepository.bulkUpdatePathPrefix(
-        workspaceId,
-        folder.relativePath,
-        finalRel,
-        USER_ACTOR
-      )
+      folderRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, actor)
+      noteRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, actor)
+      csvFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, actor)
+      pdfFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, actor)
+      imageFileRepository.bulkUpdatePathPrefix(workspaceId, folder.relativePath, finalRel, actor)
     }
 
     // siblings reindex
@@ -424,7 +465,7 @@ export const folderService = {
     folderRepository.reindexSiblings(
       workspaceId,
       withoutSelf.map((s) => s.id),
-      USER_ACTOR
+      actor
     )
 
     const updated = folderRepository.findById(folderId)!
@@ -444,14 +485,16 @@ export const folderService = {
   updateMeta(
     _workspaceId: string,
     folderId: string,
-    data: { color?: string | null; order?: number }
+    data: { color?: string | null; order?: number },
+    actor: Actor = USER_ACTOR
   ): FolderNode {
     const folder = folderRepository.findById(folderId)
     if (!folder) throw new NotFoundError(`Folder not found: ${folderId}`)
 
     const updated = folderRepository.update(folderId, {
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     const name = updated.relativePath.split('/').at(-1)!

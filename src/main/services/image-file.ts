@@ -10,6 +10,7 @@ import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { trashService } from './trash'
+import { type Actor, USER_ACTOR, toUpdatedFields } from './_shared/actor'
 
 export interface ImageFileNode {
   id: string
@@ -21,6 +22,10 @@ export interface ImageFileNode {
   order: number
   createdAt: Date
   updatedAt: Date
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 function toImageFileNode(row: {
@@ -33,6 +38,10 @@ function toImageFileNode(row: {
   order: number
   createdAt: Date | number
   updatedAt: Date | number
+  createdBy?: 'user' | 'ai'
+  createdById?: string | null
+  updatedBy?: 'user' | 'ai'
+  updatedById?: string | null
 }): ImageFileNode {
   return {
     id: row.id,
@@ -43,7 +52,11 @@ function toImageFileNode(row: {
     folderId: row.folderId,
     order: row.order,
     createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt)
+    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt),
+    createdBy: row.createdBy ?? 'user',
+    createdById: row.createdById ?? null,
+    updatedBy: row.updatedBy ?? 'user',
+    updatedById: row.updatedById ?? null
   }
 }
 
@@ -216,7 +229,12 @@ export const imageFileService = {
     return toImageFileNode(imageFileRepository.findById(newId)!)
   },
 
-  rename(workspaceId: string, imageId: string, newName: string): ImageFileNode {
+  rename(
+    workspaceId: string,
+    imageId: string,
+    newName: string,
+    actor: Actor = USER_ACTOR
+  ): ImageFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
 
@@ -242,7 +260,8 @@ export const imageFileService = {
     const updated = imageFileRepository.update(imageId, {
       relativePath: newRel,
       title,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toImageFileNode(updated)
@@ -328,7 +347,8 @@ export const imageFileService = {
     workspaceId: string,
     imageId: string,
     targetFolderId: string | null,
-    index: number
+    index: number,
+    actor: Actor = USER_ACTOR
   ): ImageFileNode {
     const workspace = workspaceRepository.findById(workspaceId)
     if (!workspace) throw new NotFoundError(`Workspace not found: ${workspaceId}`)
@@ -367,7 +387,8 @@ export const imageFileService = {
         folderId: targetFolderId,
         relativePath: finalRel,
         title: finalTitle,
-        updatedAt: new Date()
+        updatedAt: new Date(),
+        ...toUpdatedFields(actor)
       })
     }
 
@@ -383,13 +404,19 @@ export const imageFileService = {
     return toImageFileNode(updated)
   },
 
-  updateMeta(_workspaceId: string, imageId: string, data: { description?: string }): ImageFileNode {
+  updateMeta(
+    _workspaceId: string,
+    imageId: string,
+    data: { description?: string },
+    actor: Actor = USER_ACTOR
+  ): ImageFileNode {
     const image = imageFileRepository.findById(imageId)
     if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
 
     const updated = imageFileRepository.update(imageId, {
       ...data,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      ...toUpdatedFields(actor)
     })!
 
     return toImageFileNode(updated)

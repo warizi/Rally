@@ -6,6 +6,7 @@ import type { NodeRendererProps } from '../lib/tree'
 import { ChevronRight } from 'lucide-react'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
 import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
+import { AuthorBadge } from '@shared/ui/author-badge'
 import { cn } from '@/shared/lib/utils'
 import type { FolderTreeNode } from '../model/types'
 import { useTreeNodeDnd } from '../model/use-tree-node-dnd'
@@ -82,6 +83,15 @@ function FolderNodeRendererImpl({
         <TruncateTooltip content={node.data.name}>
           <span className="text-sm truncate min-w-0">{node.data.name}</span>
         </TruncateTooltip>
+        {node.data.updatedBy && (
+          <AuthorBadge
+            by={node.data.updatedBy}
+            byId={node.data.updatedById ?? null}
+            at={node.data.updatedAt}
+            size="sm"
+            className="ml-auto shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          />
+        )}
       </div>
 
       {/* 드롭 슬롯: 폴더는 before/into/after 20:60:20 */}

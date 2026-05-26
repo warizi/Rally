@@ -7,6 +7,7 @@ import { ROUTES } from '@shared/constants/tab-url'
 import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
 import { DashboardCard } from '@shared/ui/dashboard-card'
+import { AuthorBadge } from '@shared/ui/author-badge'
 
 interface RecentNotesCardProps {
   workspaceId: string
@@ -79,7 +80,13 @@ export function RecentNotesCard({ workspaceId }: RecentNotesCardProps): React.JS
             >
               <div className="flex items-center justify-between gap-2">
                 <span className="truncate text-sm">{note.title}</span>
-                <span className="shrink-0 text-[10px] text-muted-foreground">
+                <span className="shrink-0 inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <AuthorBadge
+                    by={note.updatedBy}
+                    byId={note.updatedById}
+                    at={note.updatedAt}
+                    size="sm"
+                  />
                   {formatRelativeTime(note.updatedAt)}
                 </span>
               </div>

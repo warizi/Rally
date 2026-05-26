@@ -102,8 +102,14 @@ export function registerMcpManageItemsRoutes(router: Router): void {
               )
             }
             if (detected.type === 'pdf')
-              pdfFileService.updateMeta(wsId, action.id, { description: action.description })
-            else imageFileService.updateMeta(wsId, action.id, { description: action.description })
+              pdfFileService.updateMeta(wsId, action.id, { description: action.description }, actor)
+            else
+              imageFileService.updateMeta(
+                wsId,
+                action.id,
+                { description: action.description },
+                actor
+              )
             return { action: 'update_meta', id: action.id, type: detected.type, success: true }
           }
 
@@ -111,13 +117,13 @@ export function registerMcpManageItemsRoutes(router: Router): void {
             switch (detected.type) {
               case 'note': {
                 const old = detected.relativePath!
-                const r = noteService.rename(wsId, action.id, action.newName)
+                const r = noteService.rename(wsId, action.id, action.newName, actor)
                 noteAffected.push(old, r.relativePath)
                 break
               }
               case 'csv': {
                 const old = detected.relativePath!
-                const r = csvFileService.rename(wsId, action.id, action.newName)
+                const r = csvFileService.rename(wsId, action.id, action.newName, actor)
                 csvAffected.push(old, r.relativePath)
                 break
               }
@@ -128,18 +134,18 @@ export function registerMcpManageItemsRoutes(router: Router): void {
               }
               case 'pdf': {
                 const old = detected.relativePath!
-                const r = pdfFileService.rename(wsId, action.id, action.newName)
+                const r = pdfFileService.rename(wsId, action.id, action.newName, actor)
                 pdfAffected.push(old, r.relativePath)
                 break
               }
               case 'image': {
                 const old = detected.relativePath!
-                const r = imageFileService.rename(wsId, action.id, action.newName)
+                const r = imageFileService.rename(wsId, action.id, action.newName, actor)
                 imageAffected.push(old, r.relativePath)
                 break
               }
               case 'folder': {
-                folderService.rename(wsId, action.id, action.newName)
+                folderService.rename(wsId, action.id, action.newName, actor)
                 folderTouched = true
                 break
               }
@@ -153,13 +159,13 @@ export function registerMcpManageItemsRoutes(router: Router): void {
             switch (detected.type) {
               case 'note': {
                 const old = detected.relativePath!
-                const r = noteService.move(wsId, action.id, target, 0)
+                const r = noteService.move(wsId, action.id, target, 0, actor)
                 noteAffected.push(old, r.relativePath)
                 break
               }
               case 'csv': {
                 const old = detected.relativePath!
-                const r = csvFileService.move(wsId, action.id, target, 0)
+                const r = csvFileService.move(wsId, action.id, target, 0, actor)
                 csvAffected.push(old, r.relativePath)
                 break
               }
@@ -168,18 +174,18 @@ export function registerMcpManageItemsRoutes(router: Router): void {
                 throw new ValidationError('canvas does not support move (no folder hierarchy)')
               case 'pdf': {
                 const old = detected.relativePath!
-                const r = pdfFileService.move(wsId, action.id, target, 0)
+                const r = pdfFileService.move(wsId, action.id, target, 0, actor)
                 pdfAffected.push(old, r.relativePath)
                 break
               }
               case 'image': {
                 const old = detected.relativePath!
-                const r = imageFileService.move(wsId, action.id, target, 0)
+                const r = imageFileService.move(wsId, action.id, target, 0, actor)
                 imageAffected.push(old, r.relativePath)
                 break
               }
               case 'folder': {
-                folderService.move(wsId, action.id, target, 0)
+                folderService.move(wsId, action.id, target, 0, actor)
                 folderTouched = true
                 break
               }
