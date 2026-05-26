@@ -36759,6 +36759,49 @@ mode:
       const qs = params.toString();
       return callTool("GET", `/api/mcp/workspace${qs ? `?${qs}` : ""}`);
     }
+  },
+  {
+    name: "manage_workspace",
+    description: `Manage workspaces \u2014 list all workspaces or switch the active one.
+
+actions:
+- 'list': return all workspaces with { id, name, path, active }. workspaceId is ignored.
+- 'switch': switch the active workspace. Requires workspaceId.
+            Updates both the MCP context (subsequent calls operate on the new workspace)
+            and the Rally app UI (running app's current workspace updates via IPC).
+            Same-workspace switch is a no-op and returns alreadyActive:true.`,
+    schema: {
+      action: external_exports3.enum(["list", "switch"]).describe("Action to perform: 'list' | 'switch'"),
+      workspaceId: external_exports3.string().min(1).optional().describe("Target workspace id \u2014 required when action='switch', ignored for 'list'")
+    },
+    handler: ({ action, workspaceId }) => {
+      if (action === "list") {
+        return callTool("GET", "/api/mcp/workspaces");
+      }
+      if (action === "switch") {
+        if (typeof workspaceId !== "string" || workspaceId.length === 0) {
+          return Promise.resolve({
+            content: [
+              {
+                type: "text",
+                text: JSON.stringify({ error: "workspaceId is required when action='switch'" })
+              }
+            ],
+            isError: true
+          });
+        }
+        return callTool("POST", "/api/mcp/workspace/switch", { workspaceId });
+      }
+      return Promise.resolve({
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify({ error: `Unknown action: ${String(action)}` })
+          }
+        ],
+        isError: true
+      });
+    }
   }
 ];
 
