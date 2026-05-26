@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13.1',
+    date: '2026-05-27',
+    changes: [
+      {
+        type: 'fix',
+        title: 'MCP 수정 알림 오류 수정',
+        description:
+          'AI가 MCP로 항목을 변경했을 때 토스트 알림이 나타나지 않던 문제가 수정되었습니다. 이제 AI가 변경한 항목이 있을 때마다 "AI가 변경하였습니다"라는 제목의 토스트 알림이 표시됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.13.0',
     date: '2026-05-27',
     changes: [
