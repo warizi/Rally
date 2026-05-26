@@ -130,7 +130,9 @@ export function mapTabJsons(
       ...tab,
       id: newTabId,
       pathname: newPathname,
-      searchParams
+      searchParams,
+      // 구버전 백업에 icon 누락 시 type을 fallback으로 (TabIcon = TabType 이므로 동일 값).
+      icon: tab.icon ?? tab.type
     }
   }
 
