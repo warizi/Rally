@@ -6,6 +6,24 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.12.0',
+    date: '2026-06-26',
+    changes: [
+      {
+        type: 'feature',
+        title: '화면 전체보기 추가',
+        description:
+          '탭의 컨텍스트 메뉴에 "화면 전체보기" 옵션이 추가되었습니다. 이 옵션을 선택하면 해당 탭이 현재 창에서 최대화되어 표시됩니다. 특히 캔버스나 테이블과 같이 넓은 화면이 필요한 작업에 유용합니다.'
+      },
+      {
+        type: 'feature',
+        title: '노트, csv, 캔버스 잠금 기능 추가',
+        description:
+          '노트, csv, 캔버스 탭에 "잠금" 옵션이 추가되었습니다. 이 옵션을 선택하면 해당 컨텐츠가 수정, 삭제, 이동 등을 방지할 수 있습니다. 잠긴 탭은 탭 헤더에 자물쇠 아이콘이 표시되어 쉽게 식별할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.11.3',
     date: '2026-05-26',
     changes: [
