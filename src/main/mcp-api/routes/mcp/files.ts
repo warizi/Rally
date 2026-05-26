@@ -105,9 +105,10 @@ export function registerMcpFileRoutes(router: Router): void {
   router.addRoute<{ actions: FileAction[] }>(
     'POST',
     '/api/mcp/pdfs/batch',
-    (_, body): { results: ManageFileResult[] } => {
+    (_, body, _query, ctx): { results: ManageFileResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
       const affected: string[] = []
 
       const results = processBatchActions<FileAction, ManageFileResult>(
@@ -119,19 +120,25 @@ export function registerMcpFileRoutes(router: Router): void {
 
           if (action.action === 'rename') {
             const old = existing.relativePath
-            const result = pdfFileService.rename(wsId, action.id, action.newName)
+            const result = pdfFileService.rename(wsId, action.id, action.newName, actor)
             affected.push(old, result.relativePath)
             return { action: 'rename', id: action.id, success: true }
           }
           if (action.action === 'move') {
             if (action.targetFolderId) assertValidId(action.targetFolderId, 'targetFolderId')
             const old = existing.relativePath
-            const result = pdfFileService.move(wsId, action.id, action.targetFolderId ?? null, 0)
+            const result = pdfFileService.move(
+              wsId,
+              action.id,
+              action.targetFolderId ?? null,
+              0,
+              actor
+            )
             affected.push(old, result.relativePath)
             return { action: 'move', id: action.id, success: true }
           }
           if (action.action === 'update_meta') {
-            pdfFileService.updateMeta(wsId, action.id, { description: action.description })
+            pdfFileService.updateMeta(wsId, action.id, { description: action.description }, actor)
             return { action: 'update_meta', id: action.id, success: true }
           }
           // delete
@@ -143,7 +150,7 @@ export function registerMcpFileRoutes(router: Router): void {
         { transactional: false }
       )
 
-      if (affected.length > 0) broadcastChanged('pdf:changed', wsId, affected)
+      if (affected.length > 0) broadcastChanged('pdf:changed', wsId, affected, actor)
       return { results }
     }
   )
@@ -161,9 +168,10 @@ export function registerMcpFileRoutes(router: Router): void {
   router.addRoute<{ actions: FileAction[] }>(
     'POST',
     '/api/mcp/images/batch',
-    (_, body): { results: ManageFileResult[] } => {
+    (_, body, _query, ctx): { results: ManageFileResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+      const actor = ctx.actor
       const affected: string[] = []
 
       const results = processBatchActions<FileAction, ManageFileResult>(
@@ -175,19 +183,25 @@ export function registerMcpFileRoutes(router: Router): void {
 
           if (action.action === 'rename') {
             const old = existing.relativePath
-            const result = imageFileService.rename(wsId, action.id, action.newName)
+            const result = imageFileService.rename(wsId, action.id, action.newName, actor)
             affected.push(old, result.relativePath)
             return { action: 'rename', id: action.id, success: true }
           }
           if (action.action === 'move') {
             if (action.targetFolderId) assertValidId(action.targetFolderId, 'targetFolderId')
             const old = existing.relativePath
-            const result = imageFileService.move(wsId, action.id, action.targetFolderId ?? null, 0)
+            const result = imageFileService.move(
+              wsId,
+              action.id,
+              action.targetFolderId ?? null,
+              0,
+              actor
+            )
             affected.push(old, result.relativePath)
             return { action: 'move', id: action.id, success: true }
           }
           if (action.action === 'update_meta') {
-            imageFileService.updateMeta(wsId, action.id, { description: action.description })
+            imageFileService.updateMeta(wsId, action.id, { description: action.description }, actor)
             return { action: 'update_meta', id: action.id, success: true }
           }
           // delete
@@ -198,7 +212,7 @@ export function registerMcpFileRoutes(router: Router): void {
         { transactional: false }
       )
 
-      if (affected.length > 0) broadcastChanged('image:changed', wsId, affected)
+      if (affected.length > 0) broadcastChanged('image:changed', wsId, affected, actor)
       return { results }
     }
   )

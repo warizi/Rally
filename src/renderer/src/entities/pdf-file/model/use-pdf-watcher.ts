@@ -1,5 +1,6 @@
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { useFileWatcher } from '@shared/hooks/use-file-watcher'
+import { ROUTES } from '@shared/constants/tab-url'
 import { isOwnWrite } from './own-write-tracker'
 
 /** 외부 파일 변경 시 발생하는 커스텀 이벤트 이름 */
@@ -13,6 +14,11 @@ export function usePdfWatcher(): void {
     icon: PdfIcon,
     externalChangedEvent: PDF_EXTERNAL_CHANGED_EVENT,
     idField: 'pdfId',
-    isOwnWrite
+    isOwnWrite,
+    buildTabOptions: (item) => ({
+      type: 'pdf',
+      pathname: ROUTES.PDF_DETAIL.replace(':pdfId', item.id),
+      title: item.title
+    })
   })
 }

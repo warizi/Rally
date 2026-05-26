@@ -148,8 +148,8 @@ export function registerMcpItemRoutes(router: Router): void {
         { transactional: false }
       )
 
-      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected)
-      if (tableAffected.length > 0) broadcastChanged('csv:changed', wsId, tableAffected)
+      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected, actor)
+      if (tableAffected.length > 0) broadcastChanged('csv:changed', wsId, tableAffected, actor)
 
       return { results }
     }

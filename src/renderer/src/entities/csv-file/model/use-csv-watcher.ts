@@ -1,5 +1,6 @@
 import { Sheet } from 'lucide-react'
 import { useFileWatcher } from '@shared/hooks/use-file-watcher'
+import { ROUTES } from '@shared/constants/tab-url'
 import { isOwnWrite } from './own-write-tracker'
 
 /** 외부 파일 변경 시 발생하는 커스텀 이벤트 이름 */
@@ -13,6 +14,11 @@ export function useCsvWatcher(): void {
     icon: Sheet,
     externalChangedEvent: CSV_EXTERNAL_CHANGED_EVENT,
     idField: 'csvId',
-    isOwnWrite
+    isOwnWrite,
+    buildTabOptions: (item) => ({
+      type: 'csv',
+      pathname: ROUTES.CSV_DETAIL.replace(':csvId', item.id),
+      title: item.title
+    })
   })
 }

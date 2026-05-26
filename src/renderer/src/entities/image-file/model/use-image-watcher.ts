@@ -1,5 +1,6 @@
 import { ImageIcon } from 'lucide-react'
 import { useFileWatcher } from '@shared/hooks/use-file-watcher'
+import { ROUTES } from '@shared/constants/tab-url'
 import { isOwnWrite } from './own-write-tracker'
 
 /** 외부 파일 변경 시 발생하는 커스텀 이벤트 이름 */
@@ -13,6 +14,11 @@ export function useImageWatcher(): void {
     icon: ImageIcon,
     externalChangedEvent: IMAGE_EXTERNAL_CHANGED_EVENT,
     idField: 'imageId',
-    isOwnWrite
+    isOwnWrite,
+    buildTabOptions: (item) => ({
+      type: 'image',
+      pathname: ROUTES.IMAGE_DETAIL.replace(':imageId', item.id),
+      title: item.title
+    })
   })
 }

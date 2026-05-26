@@ -311,8 +311,8 @@ export function registerMcpContentRoutes(router: Router): void {
         }
       })
 
-      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected)
-      if (csvAffected.length > 0) broadcastChanged('csv:changed', wsId, csvAffected)
+      if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected, actor)
+      if (csvAffected.length > 0) broadcastChanged('csv:changed', wsId, csvAffected, actor)
       return { results }
     }
   )
@@ -331,10 +331,10 @@ export function registerMcpContentRoutes(router: Router): void {
         const { type, row } = resolveItemType(body.id)
         if (type === 'note') {
           noteService.writeContent(wsId, body.id, body.content, actor)
-          broadcastChanged('note:changed', wsId, [row.relativePath])
+          broadcastChanged('note:changed', wsId, [row.relativePath], actor)
         } else {
           csvFileService.writeContent(wsId, body.id, body.content, actor)
-          broadcastChanged('csv:changed', wsId, [row.relativePath])
+          broadcastChanged('csv:changed', wsId, [row.relativePath], actor)
         }
         const updated =
           type === 'note' ? noteRepository.findById(body.id) : csvFileRepository.findById(body.id)
@@ -365,7 +365,7 @@ export function registerMcpContentRoutes(router: Router): void {
             throw e
           }
         }
-        broadcastChanged('note:changed', wsId, [result.relativePath])
+        broadcastChanged('note:changed', wsId, [result.relativePath], actor)
         return {
           type: 'note',
           id: result.id,
@@ -388,7 +388,7 @@ export function registerMcpContentRoutes(router: Router): void {
           throw e
         }
       }
-      broadcastChanged('csv:changed', wsId, [result.relativePath])
+      broadcastChanged('csv:changed', wsId, [result.relativePath], actor)
       return {
         type: 'table',
         id: result.id,
