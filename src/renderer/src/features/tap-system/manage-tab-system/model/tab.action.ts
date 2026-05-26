@@ -12,8 +12,9 @@ export const createTabActions = (
   get: GetState
 ): ReturnType<typeof createTabActions> => ({
   openTab: (options: TabOptions, targetPaneId?: string): string => {
-    const { tabs, panes, activePaneId } = get()
+    const { tabs, panes, activePaneId, focusedTabIds } = get()
     const tabId = createTabId(options.pathname)
+    const inFocusMode = focusedTabIds.length > 0
 
     // 이미 같은 pathname을 가진 탭이 열려있는지 확인
     if (tabs[tabId]) {
@@ -37,7 +38,11 @@ export const createTabActions = (
               activeTabId: tabId
             }
           },
-          activePaneId: existingPane.id
+          activePaneId: existingPane.id,
+          // focus 모드 중이면 활성화된 탭을 focus 스택 top 으로 push (중복 시 재배치)
+          ...(inFocusMode && {
+            focusedTabIds: [...state.focusedTabIds.filter((id) => id !== tabId), tabId]
+          })
         }))
         return tabId
       }
@@ -63,15 +68,20 @@ export const createTabActions = (
           activeTabId: newTab.id
         }
       },
-      activePaneId: paneId
+      activePaneId: paneId,
+      // focus 모드 중이면 새 탭을 focus 스택 top 으로 push
+      ...(inFocusMode && {
+        focusedTabIds: [...state.focusedTabIds, newTab.id]
+      })
     }))
 
     return newTab.id
   },
 
   openRightTab: (options: TabOptions, sourcePaneId: string): string => {
-    const { tabs, panes, layout } = get()
+    const { tabs, panes, layout, focusedTabIds } = get()
     const tabId = createTabId(options.pathname)
+    const inFocusMode = focusedTabIds.length > 0
 
     // 이미 존재하는 탭이면 활성화만
     if (tabs[tabId]) {
@@ -80,7 +90,11 @@ export const createTabActions = (
         set((s) => ({
           tabs: { ...s.tabs, [tabId]: { ...s.tabs[tabId], lastAccessedAt: Date.now() } },
           panes: { ...s.panes, [existingPane.id]: { ...existingPane, activeTabId: tabId } },
-          activePaneId: existingPane.id
+          activePaneId: existingPane.id,
+          // focus 모드 중이면 활성화된 탭을 focus 스택 top 으로 push (중복 시 재배치)
+          ...(inFocusMode && {
+            focusedTabIds: [...s.focusedTabIds.filter((id) => id !== tabId), tabId]
+          })
         }))
         return tabId
       }
@@ -231,7 +245,7 @@ export const createTabActions = (
   },
 
   activateTab: (tabId: string, paneId?: string): void => {
-    const { tabs, panes } = get()
+    const { tabs, panes, focusedTabIds } = get()
     const tab = tabs[tabId]
     if (!tab) return
 
@@ -242,11 +256,16 @@ export const createTabActions = (
     if (!pane) return
 
     const tabIds = pane.tabIds.includes(tabId) ? pane.tabIds : [...pane.tabIds, tabId]
+    const inFocusMode = focusedTabIds.length > 0
 
     set({
       tabs: { ...tabs, [tabId]: { ...tab, lastAccessedAt: Date.now() } },
       panes: { ...panes, [targetPaneId]: { ...pane, tabIds, activeTabId: tabId } },
-      activePaneId: targetPaneId
+      activePaneId: targetPaneId,
+      // focus 모드 중이면 활성화된 탭을 focus 스택 top 으로 push (중복 시 재배치)
+      ...(inFocusMode && {
+        focusedTabIds: [...focusedTabIds.filter((id) => id !== tabId), tabId]
+      })
     })
   },
   navigateTab: (tabId: string, options: NavigateOptions): void => {

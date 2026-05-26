@@ -28,17 +28,17 @@ export interface TabState {
   panes: Record<string, Pane>
   layout: LayoutNode
   activePaneId: string
+  // 화면 전체보기(focus) 스택. 마지막 요소가 현재 표시 대상이며,
+  // 비어있으면 일반 모드. ESC/X 로 pop, focus 모드 중 새 탭은 push.
+  // 세션에 영속되지 않으며, 앱 재시작 시 항상 [] 로 초기화된다.
+  focusedTabIds: string[]
 }
 
 export interface TabActions {
   // Tab 액션
   openTab: (options: TabOptions, targetPaneId?: string) => string
   openRightTab: (options: TabOptions, sourcePaneId: string) => string
-  openTabInNewSplit: (
-    sourcePaneId: string,
-    position: SplitPosition,
-    options: TabOptions
-  ) => string
+  openTabInNewSplit: (sourcePaneId: string, position: SplitPosition, options: TabOptions) => string
   closeTab: (tabId: string) => void
   closeAllTabs: (paneId: string) => void
   closeOtherTabs: (paneId: string, keepTabId: string) => void
@@ -56,6 +56,10 @@ export interface TabActions {
   closePane: (paneId: string) => void
   moveTabToPane: (tabId: string, sourcePaneId: string, targetPaneId: string) => void
   updateLayoutSizes: (nodeId: string, sizes: number[]) => void
+
+  // Focus(화면 전체보기) 액션
+  enterFocusMode: (tabId: string) => void
+  exitFocusMode: () => void
 
   // 편의 셀렉터 (store에서 직접 사용 가능한 래퍼)
   getTabById: (tabId: string) => Tab | undefined

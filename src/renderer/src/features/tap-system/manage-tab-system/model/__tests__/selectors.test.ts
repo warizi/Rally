@@ -48,6 +48,7 @@ function makeState(
     panes: { 'pane-main': pane },
     layout,
     activePaneId: 'pane-main',
+    focusedTabIds: [],
     ...overrides
   }
 }

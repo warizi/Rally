@@ -84,7 +84,8 @@ export function createInitialState(): TabState {
     tabs: { [dashboardTab.id]: dashboardTab },
     panes: { [mainPane.id]: mainPane },
     layout,
-    activePaneId: mainPane.id
+    activePaneId: mainPane.id,
+    focusedTabIds: []
   }
 }
 

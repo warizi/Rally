@@ -5,6 +5,7 @@ import { createInitialState } from '../lib/factory'
 import { createTabActions } from './tab.action'
 import { createPaneActions } from './pane.action'
 import { createLayoutActions } from './layout.action'
+import { createFocusActions } from './focus.action'
 import {
   selectActiveTab,
   selectPane,
@@ -19,6 +20,7 @@ export const useTabStore = create<TabStoreState>()(
     ...createTabActions(set, get),
     ...createPaneActions(set, get),
     ...createLayoutActions(set, get),
+    ...createFocusActions(set, get),
 
     reset: () => set(createInitialState()),
 
