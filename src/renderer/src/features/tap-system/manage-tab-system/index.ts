@@ -4,7 +4,8 @@ export {
   selectActivePane,
   selectPaneByTabId,
   selectTabByPathname,
-  selectPaneCount
+  selectPaneCount,
+  selectFocusedTabId
 } from './model/selectors'
 export type { TabStoreState, TabOptions, NavigateOptions, SplitPosition } from './model/types'
 export { useTabDnd } from './model/use-tab-dnd'
@@ -13,6 +14,7 @@ export {
   sessionKeys,
   applySessionToStore
 } from './model/use-tab-persistence'
+export { useFocusModeEffects } from './model/use-focus-mode-effects'
 export type { SerializedTab, SessionData } from './api/queries'
 export { TabBar } from './ui/TabBar'
 export { TabContextMenu } from './ui/TabContextMenu'

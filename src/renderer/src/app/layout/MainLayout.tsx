@@ -1,6 +1,7 @@
 import { SidebarProvider } from '@/shared/ui/sidebar'
 import MainSidebar from './MainSidebar'
 import {
+  useFocusModeEffects,
   useSessionPersistence,
   useTabDnd,
   useTabStore
@@ -31,7 +32,7 @@ import {
   useSensors,
   type DragStartEvent
 } from '@dnd-kit/core'
-import { PaneLayout } from '@/widgets/tab-system'
+import { FocusedTabOverlay, PaneLayout } from '@/widgets/tab-system'
 import { TerminalBottomPanel } from '@/widgets/terminal-panel'
 import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@shared/ui/resizable'
 import { useTerminalPanelStore } from '@features/terminal'
@@ -127,6 +128,8 @@ function MainLayout(): React.JSX.Element {
   useReminderWatcher()
   // 휴지통 변경 push 이벤트 구독 (소프트 삭제 / 복구 / 영구 삭제 시 활성 list 캐시 무효화)
   useTrashWatcher()
+  // 화면 전체보기(focus) 모드 ESC 핸들러 + 자동 해제
+  useFocusModeEffects()
 
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
@@ -218,6 +221,8 @@ function MainLayout(): React.JSX.Element {
               <DraggingTabOverlay tabId={draggingTabId} />
             )}
           </DragOverlay>
+          {/* 화면 전체보기 오버레이 — DndContext 내부에 두어야 PaneContent 내부 DnD hook 동작 */}
+          <FocusedTabOverlay routes={PANE_ROUTES} />
         </DndContext>
       </div>
     </SidebarProvider>

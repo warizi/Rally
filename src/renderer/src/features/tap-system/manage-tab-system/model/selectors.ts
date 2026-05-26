@@ -35,3 +35,8 @@ export const selectActiveTab =
 export const selectActivePane = (s: TabState): Pane | undefined => s.panes[s.activePaneId]
 
 export const selectPaneCount = (s: TabState): number => Object.keys(s.panes).length
+
+// ─── focus 셀렉터 ──────────────────────────────────────
+// 스택 top — 현재 화면 전체보기 대상 탭 id. 비어있으면 null.
+export const selectFocusedTabId = (s: TabState): string | null =>
+  s.focusedTabIds.length > 0 ? s.focusedTabIds[s.focusedTabIds.length - 1] : null
