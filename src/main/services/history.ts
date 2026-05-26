@@ -8,7 +8,8 @@ import {
   pdfFiles,
   imageFiles,
   canvases,
-  recurringCompletions
+  recurringCompletions,
+  recurringRules
 } from '../db/schema'
 
 export type HistoryLinkType = 'note' | 'csv' | 'pdf' | 'image' | 'canvas'
@@ -18,6 +19,9 @@ export interface HistoryLink {
   id: string
   title: string
   description: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
+  updatedAt: Date
 }
 
 export type HistoryEntryKind = 'todo' | 'recurring'
@@ -32,6 +36,10 @@ export interface HistoryTodoEntry {
   parentId: string | null
   /** subtodo인 경우 parent todo의 현재 title, 아니면 null */
   parentTitle: string | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface HistoryDay {
@@ -85,9 +93,12 @@ interface LinkMeta {
   type: HistoryLinkType
   title: string
   description: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
+  updatedAt: Date
 }
 
-/** 링크된 entity 타입별로 ID 그룹화하고 제목+설명 일괄 fetch */
+/** 링크된 entity 타입별로 ID 그룹화하고 제목+설명+author 일괄 fetch */
 function fetchLinkMeta(ids: { type: HistoryLinkType; id: string }[]): Map<string, LinkMeta> {
   const byType: Record<HistoryLinkType, string[]> = {
     note: [],
@@ -104,48 +115,118 @@ function fetchLinkMeta(ids: { type: HistoryLinkType; id: string }[]): Map<string
 
   if (byType.note.length > 0) {
     const rows = db
-      .select({ id: notes.id, title: notes.title, description: notes.description })
+      .select({
+        id: notes.id,
+        title: notes.title,
+        description: notes.description,
+        updatedBy: notes.updatedBy,
+        updatedById: notes.updatedById,
+        updatedAt: notes.updatedAt
+      })
       .from(notes)
       .where(inArray(notes.id, byType.note))
       .all()
     for (const r of rows)
-      result.set(r.id, { type: 'note', title: r.title, description: r.description ?? null })
+      result.set(r.id, {
+        type: 'note',
+        title: r.title,
+        description: r.description ?? null,
+        updatedBy: (r.updatedBy ?? 'user') as 'user' | 'ai',
+        updatedById: r.updatedById ?? null,
+        updatedAt: r.updatedAt
+      })
   }
   if (byType.csv.length > 0) {
     const rows = db
-      .select({ id: csvFiles.id, title: csvFiles.title, description: csvFiles.description })
+      .select({
+        id: csvFiles.id,
+        title: csvFiles.title,
+        description: csvFiles.description,
+        updatedBy: csvFiles.updatedBy,
+        updatedById: csvFiles.updatedById,
+        updatedAt: csvFiles.updatedAt
+      })
       .from(csvFiles)
       .where(inArray(csvFiles.id, byType.csv))
       .all()
     for (const r of rows)
-      result.set(r.id, { type: 'csv', title: r.title, description: r.description ?? null })
+      result.set(r.id, {
+        type: 'csv',
+        title: r.title,
+        description: r.description ?? null,
+        updatedBy: (r.updatedBy ?? 'user') as 'user' | 'ai',
+        updatedById: r.updatedById ?? null,
+        updatedAt: r.updatedAt
+      })
   }
   if (byType.pdf.length > 0) {
     const rows = db
-      .select({ id: pdfFiles.id, title: pdfFiles.title, description: pdfFiles.description })
+      .select({
+        id: pdfFiles.id,
+        title: pdfFiles.title,
+        description: pdfFiles.description,
+        updatedBy: pdfFiles.updatedBy,
+        updatedById: pdfFiles.updatedById,
+        updatedAt: pdfFiles.updatedAt
+      })
       .from(pdfFiles)
       .where(inArray(pdfFiles.id, byType.pdf))
       .all()
     for (const r of rows)
-      result.set(r.id, { type: 'pdf', title: r.title, description: r.description ?? null })
+      result.set(r.id, {
+        type: 'pdf',
+        title: r.title,
+        description: r.description ?? null,
+        updatedBy: (r.updatedBy ?? 'user') as 'user' | 'ai',
+        updatedById: r.updatedById ?? null,
+        updatedAt: r.updatedAt
+      })
   }
   if (byType.image.length > 0) {
     const rows = db
-      .select({ id: imageFiles.id, title: imageFiles.title, description: imageFiles.description })
+      .select({
+        id: imageFiles.id,
+        title: imageFiles.title,
+        description: imageFiles.description,
+        updatedBy: imageFiles.updatedBy,
+        updatedById: imageFiles.updatedById,
+        updatedAt: imageFiles.updatedAt
+      })
       .from(imageFiles)
       .where(inArray(imageFiles.id, byType.image))
       .all()
     for (const r of rows)
-      result.set(r.id, { type: 'image', title: r.title, description: r.description ?? null })
+      result.set(r.id, {
+        type: 'image',
+        title: r.title,
+        description: r.description ?? null,
+        updatedBy: (r.updatedBy ?? 'user') as 'user' | 'ai',
+        updatedById: r.updatedById ?? null,
+        updatedAt: r.updatedAt
+      })
   }
   if (byType.canvas.length > 0) {
     const rows = db
-      .select({ id: canvases.id, title: canvases.title, description: canvases.description })
+      .select({
+        id: canvases.id,
+        title: canvases.title,
+        description: canvases.description,
+        updatedBy: canvases.updatedBy,
+        updatedById: canvases.updatedById,
+        updatedAt: canvases.updatedAt
+      })
       .from(canvases)
       .where(inArray(canvases.id, byType.canvas))
       .all()
     for (const r of rows)
-      result.set(r.id, { type: 'canvas', title: r.title, description: r.description ?? null })
+      result.set(r.id, {
+        type: 'canvas',
+        title: r.title,
+        description: r.description ?? null,
+        updatedBy: (r.updatedBy ?? 'user') as 'user' | 'ai',
+        updatedById: r.updatedById ?? null,
+        updatedAt: r.updatedAt
+      })
   }
 
   return result
@@ -181,7 +262,11 @@ export const historyService = {
         id: todos.id,
         title: todos.title,
         doneAt: todos.doneAt,
-        parentId: todos.parentId
+        parentId: todos.parentId,
+        createdBy: todos.createdBy,
+        createdById: todos.createdById,
+        updatedBy: todos.updatedBy,
+        updatedById: todos.updatedById
       })
       .from(todos)
       .where(and(...conditions))
@@ -264,7 +349,10 @@ export const historyService = {
               type: meta.type,
               id: ref.id,
               title: meta.title,
-              description: meta.description
+              description: meta.description,
+              updatedBy: meta.updatedBy,
+              updatedById: meta.updatedById,
+              updatedAt: meta.updatedAt
             })
           }
         }
@@ -275,7 +363,11 @@ export const historyService = {
           links,
           kind: 'todo' as const,
           parentId: t.parentId ?? null,
-          parentTitle: t.parentId ? (parentTitleMap.get(t.parentId) ?? null) : null
+          parentTitle: t.parentId ? (parentTitleMap.get(t.parentId) ?? null) : null,
+          createdBy: (t.createdBy ?? 'user') as 'user' | 'ai',
+          createdById: t.createdById ?? null,
+          updatedBy: (t.updatedBy ?? 'user') as 'user' | 'ai',
+          updatedById: t.updatedById ?? null
         }
       })
 
@@ -295,22 +387,70 @@ export const historyService = {
       .select({
         id: recurringCompletions.id,
         title: recurringCompletions.ruleTitle,
-        completedAt: recurringCompletions.completedAt
+        completedAt: recurringCompletions.completedAt,
+        ruleId: recurringCompletions.ruleId
       })
       .from(recurringCompletions)
       .where(and(...recurringConditions))
       .all()
 
-    const recurringEntries: HistoryTodoEntry[] = recurringRows.map((r) => ({
-      // todo id와 충돌 방지를 위한 prefix
-      id: `recurring:${r.id}`,
-      title: r.title,
-      doneAt: r.completedAt,
-      links: [],
-      kind: 'recurring' as const,
-      parentId: null,
-      parentTitle: null
-    }))
+    // recurring rule actor 조회 (rule이 삭제됐으면 fallback user/null)
+    const ruleIds = Array.from(
+      new Set(recurringRows.map((r) => r.ruleId).filter((id): id is string => id != null))
+    )
+    const ruleActorMap = new Map<
+      string,
+      {
+        createdBy: 'user' | 'ai'
+        createdById: string | null
+        updatedBy: 'user' | 'ai'
+        updatedById: string | null
+      }
+    >()
+    if (ruleIds.length > 0) {
+      const ruleRows = db
+        .select({
+          id: recurringRules.id,
+          createdBy: recurringRules.createdBy,
+          createdById: recurringRules.createdById,
+          updatedBy: recurringRules.updatedBy,
+          updatedById: recurringRules.updatedById
+        })
+        .from(recurringRules)
+        .where(inArray(recurringRules.id, ruleIds))
+        .all()
+      for (const r of ruleRows) {
+        ruleActorMap.set(r.id, {
+          createdBy: (r.createdBy ?? 'user') as 'user' | 'ai',
+          createdById: r.createdById ?? null,
+          updatedBy: (r.updatedBy ?? 'user') as 'user' | 'ai',
+          updatedById: r.updatedById ?? null
+        })
+      }
+    }
+
+    const recurringEntries: HistoryTodoEntry[] = recurringRows.map((r) => {
+      const actor = (r.ruleId && ruleActorMap.get(r.ruleId)) || {
+        createdBy: 'user' as const,
+        createdById: null,
+        updatedBy: 'user' as const,
+        updatedById: null
+      }
+      return {
+        // todo id와 충돌 방지를 위한 prefix
+        id: `recurring:${r.id}`,
+        title: r.title,
+        doneAt: r.completedAt,
+        links: [],
+        kind: 'recurring' as const,
+        parentId: null,
+        parentTitle: null,
+        createdBy: actor.createdBy,
+        createdById: actor.createdById,
+        updatedBy: actor.updatedBy,
+        updatedById: actor.updatedById
+      }
+    })
 
     const entries: HistoryTodoEntry[] = [...todoEntries, ...recurringEntries]
 

@@ -15,6 +15,7 @@ import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TodoCheckbox } from './TodoCheckbox'
 import { EditSubTodoDialog } from './EditSubTodoDialog'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
+import { AuthorBadge } from '@shared/ui/author-badge'
 
 interface Props {
   sub: TodoItem
@@ -54,6 +55,14 @@ export function SubTodoItem({ sub, workspaceId }: Props): React.JSX.Element {
           >
             {sub.title}
           </span>
+        </TableCell>
+        <TableCell className="w-8 py-2">
+          <AuthorBadge
+            by={sub.updatedBy}
+            byId={sub.updatedById}
+            at={sub.updatedAt}
+            size="sm"
+          />
         </TableCell>
         <TableCell className="w-8 py-2">
           <LinkedEntityPopoverButton

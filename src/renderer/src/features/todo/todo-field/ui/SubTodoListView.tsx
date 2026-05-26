@@ -73,12 +73,13 @@ export function SubTodoListView({ subTodos, workspaceId, parentId }: Props): Rea
               <TableHead className="h-8">제목</TableHead>
               <TableHead className="w-8 h-8" />
               <TableHead className="w-8 h-8" />
+              <TableHead className="w-8 h-8" />
             </TableRow>
           </TableHeader>
           <TableBody>
             {subTodos.length === 0 ? (
               <TableRow className="hover:bg-transparent">
-                <TableCell colSpan={5} className="py-4 text-center">
+                <TableCell colSpan={6} className="py-4 text-center">
                   <CreateTodoDialog
                     workspaceId={workspaceId}
                     parentId={parentId}

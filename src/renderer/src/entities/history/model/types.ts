@@ -6,6 +6,9 @@ export interface HistoryLink {
   id: string
   title: string
   description: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
+  updatedAt: Date
 }
 
 export interface HistoryTodoEntry {
@@ -18,6 +21,10 @@ export interface HistoryTodoEntry {
   parentId: string | null
   /** subtodo인 경우 parent todo의 title */
   parentTitle: string | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 export interface HistoryDay {
