@@ -935,6 +935,9 @@ interface HistoryLink {
   id: string
   title: string
   description: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
+  updatedAt: Date
 }
 
 type HistoryEntryKind = 'todo' | 'recurring'
@@ -947,6 +950,10 @@ interface HistoryTodoEntry {
   kind: HistoryEntryKind
   parentId: string | null
   parentTitle: string | null
+  createdBy: 'user' | 'ai'
+  createdById: string | null
+  updatedBy: 'user' | 'ai'
+  updatedById: string | null
 }
 
 interface HistoryDay {

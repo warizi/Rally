@@ -23,6 +23,8 @@ import { cn } from '@shared/lib/utils'
 import { HighlightText } from '../lib/highlight'
 import { linkToTabOptions } from '../lib/link-to-tab'
 import { buildHistoryLinkDragId, type HistoryLinkDragData } from '../lib/history-link-drag'
+import { AuthorBadge } from '@shared/ui/author-badge'
+import type { AuthorKind } from '@shared/lib/format-author'
 
 interface Props {
   workspaceId: string
@@ -295,6 +297,8 @@ function GroupRow({ entries, query }: { entries: HistoryTodoEntry[]; query: stri
                 kind={entry.kind}
                 query={query}
                 parentTitle={entry.parentTitle}
+                updatedBy={entry.updatedBy}
+                updatedById={entry.updatedById}
               />
             </motion.div>
           )
@@ -370,13 +374,17 @@ function TodoNode({
   doneAt,
   kind,
   query,
-  parentTitle
+  parentTitle,
+  updatedBy,
+  updatedById
 }: {
   title: string
   doneAt: Date
   kind: 'todo' | 'recurring'
   query: string
   parentTitle: string | null
+  updatedBy: AuthorKind
+  updatedById: string | null
 }): JSX.Element {
   const isRecurring = kind === 'recurring'
   const isSub = parentTitle != null
@@ -404,8 +412,11 @@ function TodoNode({
         <div className="truncate">
           <HighlightText text={title} query={query} />
         </div>
-        <div className="text-[10px] text-muted-foreground/70 tabular-nums mt-0.5">
-          {format(doneAt, 'a h:mm', { locale: ko })}
+        <div className="flex items-center gap-1.5 mt-0.5">
+          <span className="text-[10px] text-muted-foreground/70 tabular-nums">
+            {format(doneAt, 'a h:mm', { locale: ko })}
+          </span>
+          <AuthorBadge by={updatedBy} byId={updatedById} at={doneAt} size="sm" />
         </div>
       </div>
     </div>
@@ -453,8 +464,17 @@ function LinkNode({ link, query }: { link: HistoryLink; query: string }): JSX.El
     >
       <Icon className="size-3.5 shrink-0 mt-0.5" style={{ color }} />
       <div className="min-w-0 flex-1">
-        <div className="truncate">
-          <HighlightText text={link.title} query={query} />
+        <div className="flex items-center gap-1.5">
+          <span className="truncate">
+            <HighlightText text={link.title} query={query} />
+          </span>
+          <AuthorBadge
+            by={link.updatedBy}
+            byId={link.updatedById}
+            at={link.updatedAt}
+            size="sm"
+            className="shrink-0"
+          />
         </div>
         {hasDesc && (
           <div className="text-[11px] text-muted-foreground/70 truncate mt-0.5">

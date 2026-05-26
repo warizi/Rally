@@ -168,6 +168,13 @@ const SubTodoItemContent = memo(function SubTodoItemContent({
             {todo.title}
           </span>
         </TruncateTooltip>
+        <AuthorBadge
+          by={todo.updatedBy}
+          byId={todo.updatedById}
+          at={todo.updatedAt}
+          size="sm"
+          className="shrink-0"
+        />
         <LinkedEntityPopoverButton entityType="todo" entityId={todo.id} workspaceId={workspaceId} />
         <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
           <DropdownMenuTrigger asChild>
