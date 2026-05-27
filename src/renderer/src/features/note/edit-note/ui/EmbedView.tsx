@@ -92,15 +92,15 @@ function CsvEmbedView({
   const parsed = parseCsv(content?.content ?? '')
   return (
     <span
-      className="block my-2 border rounded overflow-hidden bg-card"
+      className="flex flex-col my-2 border rounded overflow-hidden bg-card"
       style={{ height: height > 0 ? height : 400 }}
       contentEditable={false}
     >
-      <span className="flex items-center gap-1.5 px-3 py-1.5 border-b text-xs font-medium bg-muted/40">
+      <span className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-medium bg-muted/40 shrink-0">
         <Sheet className="size-3.5" />
         {csv.title}
       </span>
-      <span className="block overflow-auto" style={{ height: `calc(100% - 32px)` }}>
+      <span className="block flex-1 min-h-0 overflow-auto">
         {parsed.headers.length === 0 ? (
           <span className="block p-4 text-xs text-muted-foreground">빈 CSV</span>
         ) : (
@@ -149,15 +149,15 @@ function PdfEmbedView({
   if (!pdf) return <FallbackEmbed label="[삭제된 PDF]" />
   return (
     <span
-      className="block my-2 border rounded overflow-hidden bg-card"
+      className="flex flex-col my-2 border rounded overflow-hidden bg-card"
       style={{ height: height > 0 ? height : 600 }}
       contentEditable={false}
     >
-      <span className="flex items-center gap-1.5 px-3 py-1.5 border-b text-xs font-medium bg-muted/40">
+      <span className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-medium bg-muted/40 shrink-0">
         <PdfIcon className="size-3.5" />
         {pdf.title}
       </span>
-      <span className="block" style={{ height: `calc(100% - 32px)` }}>
+      <span className="block flex-1 min-h-0">
         {content?.data ? (
           <PdfViewer pdfId={entityId} pdfData={content.data} hideToolbar />
         ) : (
