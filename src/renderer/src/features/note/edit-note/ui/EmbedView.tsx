@@ -104,11 +104,23 @@ function CsvEmbedView({
         {parsed.headers.length === 0 ? (
           <div className="p-4 text-xs text-muted-foreground">빈 CSV</div>
         ) : (
-          <table className="text-xs w-full border-collapse">
+          // CsvPage 와 유사: 각 셀 고정 폭 (150px) 으로 합이 컨테이너 폭 초과 시
+          // 가로 스크롤 발생. table-layout: fixed + width: max-content 로 colgroup
+          // 기반 폭 강제. (.milkdown .ProseMirror table { width: 100% } override
+          // 는 specificity 더 높은 global selector 로 처리)
+          <table
+            className="text-xs border-collapse"
+            style={{ tableLayout: 'fixed', width: 'max-content' }}
+          >
+            <colgroup>
+              {parsed.headers.map((_, i) => (
+                <col key={i} style={{ width: 150 }} />
+              ))}
+            </colgroup>
             <thead className="bg-muted/30 sticky top-0">
               <tr>
                 {parsed.headers.map((h, i) => (
-                  <th key={i} className="text-left px-2 py-1 border-b font-medium whitespace-nowrap">
+                  <th key={i} className="text-left px-2 py-1 border-b font-medium truncate">
                     {h}
                   </th>
                 ))}
@@ -118,7 +130,7 @@ function CsvEmbedView({
               {parsed.rows.map((row, ri) => (
                 <tr key={ri} className="hover:bg-muted/20">
                   {row.map((cell, ci) => (
-                    <td key={ci} className="px-2 py-1 border-b whitespace-nowrap">
+                    <td key={ci} className="px-2 py-1 border-b truncate">
                       {cell}
                     </td>
                   ))}
