@@ -6,6 +6,42 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14.0',
+    date: '2026-05-27',
+    changes: [
+      {
+        type: 'feature',
+        title: '노트 안 임베드 — 노트 / CSV / PDF / 이미지',
+        description:
+          '노트 본문에 다른 노트 / CSV / PDF / 이미지를 직접 임베드할 수 있습니다. Obsidian 스타일 `![[domain:id]]` 문법으로 저장되며, CSV/PDF/이미지는 카드 형태로 본문 안에서 바로 보여집니다. 임베드 카드 하단의 핸들을 드래그해 높이를 조절할 수 있고, 카드 헤더를 클릭하면 해당 항목이 새 탭으로 열립니다.'
+      },
+      {
+        type: 'feature',
+        title: '노트에서 @ 입력 → 임베드 picker',
+        description:
+          '노트 줄 시작에서 @ 를 입력하면 워크스페이스의 노트 / CSV / PDF / 이미지를 통합 검색해 임베드할 수 있는 팝업이 뜹니다. 한글 검색과 다중 토큰 검색을 모두 지원합니다.'
+      },
+      {
+        type: 'feature',
+        title: '키보드 단축키 — Pane 이동 / 탭 이동 / 탭 스냅샷 전환 (macOS)',
+        description:
+          '⌃ + ⇧ + 방향키 로 인접 pane 으로 이동, ⌘ + ⌥ + ] / [ 로 현재 pane 의 탭 사이를 순환, ⌘ + ⇧ + s 로 탭 스냅샷을 전환할 수 있습니다. 모디파이어를 누르고 있는 동안 풀스크린 오버레이가 표시되며 (Pane 이동은 layout 미니 그림 + active 강조), 키를 떼면 선택된 항목이 적용됩니다.'
+      },
+      {
+        type: 'feature',
+        title: '설정 > 단축키 탭',
+        description:
+          '설정 다이얼로그에 단축키 탭이 추가되었습니다. 현재 지원되는 모든 키보드 단축키와 동작 설명을 한곳에서 확인할 수 있습니다.'
+      },
+      {
+        type: 'feature',
+        title: '타이머',
+        description:
+          '탭으로 띄우는 타이머 페이지가 추가되었습니다. 시작/일시정지/리셋과 종료 시 알림 + 사운드 옵션 (무음 포함) 을 제공하며, 시간 설정은 별도 다이얼로그에서 분/초 단위로 변경할 수 있습니다. 설정 > 타이머 알림 에서 사운드 종류와 알림 동작을 조절할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.13.2',
     date: '2026-05-27',
     changes: [
