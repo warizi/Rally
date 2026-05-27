@@ -76,6 +76,18 @@ function parseCsv(content: string): { headers: string[]; rows: string[][] } {
   return { headers, rows }
 }
 
+/** columnWidths JSON → 컬럼별 너비. 없거나 파싱 실패 시 빈 객체. */
+function parseColumnWidths(json: string | null | undefined): Record<string, number> {
+  if (!json) return {}
+  try {
+    return JSON.parse(json) as Record<string, number>
+  } catch {
+    return {}
+  }
+}
+
+const DEFAULT_CSV_COL_WIDTH = 150
+
 function CsvEmbedView({
   workspaceId,
   entityId,
@@ -90,6 +102,7 @@ function CsvEmbedView({
   const { data: content } = useReadCsvContent(workspaceId, entityId)
   if (!csv) return <FallbackEmbed label="[삭제된 CSV]" />
   const parsed = parseCsv(content?.content ?? '')
+  const widths = parseColumnWidths(content?.columnWidths)
   return (
     <div
       className="flex flex-col my-2 border rounded overflow-hidden bg-card"
@@ -114,7 +127,7 @@ function CsvEmbedView({
           >
             <colgroup>
               {parsed.headers.map((_, i) => (
-                <col key={i} style={{ width: 150 }} />
+                <col key={i} style={{ width: widths[`col_${i}`] ?? DEFAULT_CSV_COL_WIDTH }} />
               ))}
             </colgroup>
             <thead className="bg-muted/30 sticky top-0">
