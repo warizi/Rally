@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Button } from '@shared/ui/button'
 import { Form } from '@shared/ui/form'
 import { DatePickerButton } from '@shared/ui/date-picker-button'
+import { TimePickerButton } from '@shared/ui/time-picker-button'
 import { useCreateTodo } from '@entities/todo'
 import { useLinkEntity } from '@entities/entity-link'
 import { PendingLinkPicker } from '@features/entity-link/manage-link'
@@ -14,6 +15,7 @@ import { ReminderPendingSelect } from '@features/reminder'
 import { useSetReminder } from '@entities/reminder'
 import { TodoFormFields } from './TodoFormFields'
 import { useTodoDefaultDateSetting } from '../model/use-todo-default-date-setting'
+import { formatTime, applyTime } from '@shared/lib/datetime'
 import type { TodoStatus } from '@entities/todo'
 
 const createTodoSchema = z.object({
@@ -196,30 +198,48 @@ export function CreateTodoDialog({
               {!titleOnly && (
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium">시작일</span>
-                  <DatePickerButton
-                    value={startDate}
-                    onChange={(v) => {
-                      setStartDate(v)
-                      if (!v && !dueDate) setPendingReminders([])
-                    }}
-                    placeholder="날짜 없음 (선택)"
-                    className="w-full"
-                  />
+                  <div className="flex gap-2">
+                    <DatePickerButton
+                      value={startDate}
+                      onChange={(v) => {
+                        setStartDate(v)
+                        if (!v && !dueDate) setPendingReminders([])
+                      }}
+                      placeholder="날짜 없음 (선택)"
+                      className="flex-1"
+                    />
+                    <TimePickerButton
+                      value={formatTime(startDate)}
+                      onChange={(t) => setStartDate(applyTime(startDate, t))}
+                      placeholder="시간 없음"
+                      disabled={!startDate}
+                      className="w-[110px]"
+                    />
+                  </div>
                 </div>
               )}
 
               {!titleOnly && (
                 <div className="flex flex-col gap-1.5">
                   <span className="text-sm font-medium">마감일</span>
-                  <DatePickerButton
-                    value={dueDate}
-                    onChange={(v) => {
-                      setDueDate(v)
-                      if (!v && !startDate) setPendingReminders([])
-                    }}
-                    placeholder="날짜 없음 (선택)"
-                    className="w-full"
-                  />
+                  <div className="flex gap-2">
+                    <DatePickerButton
+                      value={dueDate}
+                      onChange={(v) => {
+                        setDueDate(v)
+                        if (!v && !startDate) setPendingReminders([])
+                      }}
+                      placeholder="날짜 없음 (선택)"
+                      className="flex-1"
+                    />
+                    <TimePickerButton
+                      value={formatTime(dueDate)}
+                      onChange={(t) => setDueDate(applyTime(dueDate, t))}
+                      placeholder="시간 없음"
+                      disabled={!dueDate}
+                      className="w-[110px]"
+                    />
+                  </div>
                 </div>
               )}
 

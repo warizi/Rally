@@ -11,6 +11,7 @@ interface Props {
   placeholder?: string
   className?: string
   clearable?: boolean
+  disabled?: boolean
 }
 
 const HOURS = Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0'))
@@ -21,7 +22,8 @@ export function TimePickerButton({
   onChange,
   placeholder = '시간 선택',
   className,
-  clearable = true
+  clearable = true,
+  disabled = false
 }: Props): React.JSX.Element {
   const [open, setOpen] = useState(false)
 
@@ -29,10 +31,11 @@ export function TimePickerButton({
   const minute = value ? value.split(':')[1] : '00'
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
         <button
           type="button"
+          disabled={disabled}
           className={cn(
             'border-input focus-visible:border-ring focus-visible:ring-ring/50 dark:bg-input/30 dark:hover:bg-input/50',
             'flex h-8 w-fit items-center justify-between gap-2 rounded-md border bg-transparent px-3 text-sm whitespace-nowrap shadow-xs',
