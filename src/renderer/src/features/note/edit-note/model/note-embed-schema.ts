@@ -114,6 +114,9 @@ export const rallyEmbedSchema = $nodeSchema(RALLY_EMBED_NODE_NAME, () => ({
   atom: true,
   selectable: true,
   draggable: false,
+  // mark (색상/굵게/코드 등) 적용 대상에서 제외 — 임베드 위에 mark 가 붙어
+  // markdown round-trip 이 깨지는 일을 막는다.
+  marks: '',
   attrs: {
     domain: { default: 'note', validate: 'string' },
     entityId: { default: '', validate: 'string' },

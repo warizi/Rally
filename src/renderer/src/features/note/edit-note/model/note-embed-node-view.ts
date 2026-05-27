@@ -37,6 +37,9 @@ class NoteEmbedNodeView implements NodeView {
     this.dom.setAttribute('data-rally-embed', 'true')
     this.dom.setAttribute('data-portal-id', this.portalId)
     this.dom.className = 'rally-embed-host'
+    // 브라우저 native selection 으로 임베드 내부 텍스트가 같이 선택되어
+    // inline-toolbar (색상/굵게 등) 가 임베드를 변환 시도하는 걸 막는다.
+    this.dom.style.userSelect = 'none'
     if (isBlock) {
       this.dom.style.width = '100%'
     } else {
@@ -82,8 +85,27 @@ class NoteEmbedNodeView implements NodeView {
     useEmbedPortalStore.getState().unregister(this.portalId)
   }
 
-  stopEvent(): boolean {
-    return false
+  /**
+   * pointer / mouse / click / drag / touch 이벤트를 ProseMirror 로 전파하지 않음.
+   *
+   * - PM 의 NodeSelection / TextSelection 이 임베드 위에서 생성되지 않게 → crepe
+   *   inline-toolbar (selection 기반) 가 trigger 되지 않아 색상/굵게/코드블럭
+   *   변환 메뉴가 임베드에 적용되지 않는다.
+   * - keyboard 이벤트는 PM 에 넘긴다 — 옆 caret 에서 backspace 로 atom 삭제 가능.
+   * - React onClick / pointerDown (resize handle 등) 은 NodeView 내부에서
+   *   처리되므로 영향 없음.
+   */
+  stopEvent(event: Event): boolean {
+    const t = event.type
+    return (
+      t.startsWith('pointer') ||
+      t.startsWith('mouse') ||
+      t.startsWith('drag') ||
+      t.startsWith('touch') ||
+      t === 'click' ||
+      t === 'dblclick' ||
+      t === 'contextmenu'
+    )
   }
 
   ignoreMutation(): boolean {
