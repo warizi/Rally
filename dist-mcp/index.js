@@ -35960,6 +35960,12 @@ Supported types and response shape per entry:
 - note     : { id, success:true, type:'note',     title, relativePath, content, embeddedImages }
              embeddedImages: [{ src, size, mimeType }] \u2014 pointers to .images/ files in the note body.
              Fetch the bytes separately with the read_note_image tool when needed.
+             Note bodies may also contain Obsidian-style cross-item embeds in the markdown:
+               ![[note:<id>]]              \u2014 embed another note as inline link
+               ![[csv:<id>|h=<px>]]        \u2014 embed a csv (h: container height, omit for content-fit)
+               ![[pdf:<id>|h=<px>]]        \u2014 embed a pdf
+               ![[image:<id>|h=<px>]]      \u2014 embed an image-file (workspace library, not inline .images/)
+             Use the embedded id with read again to fetch the linked item's content.
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
 - pdf      : { id, success:true, type:'pdf',      title, relativePath, description, folderId, createdAt,
@@ -36067,7 +36073,12 @@ Per-entry result independent (one failure doesn't roll back others).
 For delete: use manage_items.delete (soft-delete to trash).
 
 WARNING: When updating note content, image references (![](/.images/xxx.png)) removed from new content
-will be permanently deleted from disk. Always preserve existing image references.`,
+will be permanently deleted from disk. Always preserve existing image references.
+
+Note content can also include Obsidian-style cross-item embeds \u2014 keep / insert them verbatim:
+  ![[note:<id>]]   ![[csv:<id>|h=<px>]]   ![[pdf:<id>|h=<px>]]   ![[image:<id>|h=<px>]]
+h is optional and only sets the container height in the editor; omit to use content-fit (csv/note) or
+domain default (pdf 600 / image 400). Use ids returned by browse/search.`,
     schema: {
       actions: external_exports3.array(
         external_exports3.union([
