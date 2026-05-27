@@ -80,6 +80,9 @@ export function useGlobalHotkey({
           handlersRef.current.onActivate?.()
         }
         handlersRef.current.onKeyDown?.(event)
+        // 매칭된 이벤트는 다른 component-level listener (예: PanelResizeHandle 의
+        // shift+arrow keyboard resize) 까지 전파되지 않도록 capture 단계에서 차단.
+        event.stopPropagation()
       } else if (activeRef.current) {
         // 활성 중 modifier 가 어긋난 keydown (e.g., 다른 키 조합) — 해제 처리.
         activeRef.current = false
@@ -104,12 +107,15 @@ export function useGlobalHotkey({
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
-    window.addEventListener('keyup', handleKeyUp)
+    // capture phase 등록 — window 단계에서 가장 먼저 잡아서 우리 hotkey 가
+    // component-level listener (e.g. react-resizable-panels 의 PanelResizeHandle
+    // shift+arrow keyboard resize) 보다 우선권을 갖도록.
+    window.addEventListener('keydown', handleKeyDown, true)
+    window.addEventListener('keyup', handleKeyUp, true)
     window.addEventListener('blur', handleBlur)
     return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-      window.removeEventListener('keyup', handleKeyUp)
+      window.removeEventListener('keydown', handleKeyDown, true)
+      window.removeEventListener('keyup', handleKeyUp, true)
       window.removeEventListener('blur', handleBlur)
     }
   }, [enabled, modifiers.meta, modifiers.ctrl, modifiers.shift, modifiers.alt])
