@@ -39,10 +39,11 @@ export function EditableColumnHeader({
   }, [name])
 
   useEffect(() => {
-    if (editing) {
+    if (editing && inputRef.current) {
       didCommitRef.current = false
-      inputRef.current?.focus()
-      inputRef.current?.select()
+      inputRef.current.focus()
+      // 바디 셀과 동일: 끝에 커서 위치 (전체 선택 X)
+      inputRef.current.selectionStart = inputRef.current.value.length
     }
   }, [editing])
 
