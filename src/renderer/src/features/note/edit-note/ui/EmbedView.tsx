@@ -67,12 +67,19 @@ function NoteEmbedView({
 
 // ─── csv ───────────────────────────────────────────────
 
-/** 단순 csv 파서 — quote/escape 무시한 split 기반. 임베드 표시용. */
+/** 단순 csv 파서 — quote/escape 무시한 split 기반. 임베드 표시용.
+ * - 파일 끝의 trailing empty line 만 제거 (중간 빈 줄은 행으로 유지)
+ * - 행의 셀 수가 헤더보다 적으면 빈 셀로 패딩 → row height 일관 */
 function parseCsv(content: string): { headers: string[]; rows: string[][] } {
-  const lines = content.split(/\r?\n/).filter((l) => l.length > 0)
+  const lines = content.split(/\r?\n/)
+  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop()
   if (lines.length === 0) return { headers: [], rows: [] }
   const headers = lines[0].split(',')
-  const rows = lines.slice(1).map((l) => l.split(','))
+  const rows = lines.slice(1).map((l) => {
+    const cells = l.split(',')
+    while (cells.length < headers.length) cells.push('')
+    return cells
+  })
   return { headers, rows }
 }
 
@@ -144,7 +151,7 @@ function CsvEmbedView({
                 <tr key={ri} className="hover:bg-muted/20">
                   {row.map((cell, ci) => (
                     <td key={ci} className="px-2 py-1 border-b truncate">
-                      {cell}
+                      {cell || ' '}
                     </td>
                   ))}
                 </tr>
