@@ -96,7 +96,7 @@ function CsvEmbedView({
       style={{ height: height > 0 ? height : 400 }}
       contentEditable={false}
     >
-      <div className="flex items-center gap-2 px-4 py-3 border-b text-sm font-medium bg-muted/40 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2 border-b text-sm font-medium bg-muted/40 shrink-0">
         <Sheet className="size-3.5" />
         {csv.title}
       </div>
@@ -153,7 +153,7 @@ function PdfEmbedView({
       style={{ height: height > 0 ? height : 600 }}
       contentEditable={false}
     >
-      <div className="flex items-center gap-2 px-4 py-3 border-b text-sm font-medium bg-muted/40 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2 border-b text-sm font-medium bg-muted/40 shrink-0">
         <PdfIcon className="size-3.5" />
         {pdf.title}
       </div>
