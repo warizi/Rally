@@ -37,6 +37,7 @@ import {
 } from '../model/note-embed-schema'
 import { createNoteEmbedNodeViewFactory } from '../model/note-embed-node-view'
 import { embedPickerPlugin } from '../model/embed-picker-plugin'
+import { embedProtectPlugin } from '../model/embed-protect-plugin'
 import { EmbedPicker } from './EmbedPicker'
 import { EmbedPortals } from './EmbedPortals'
 import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
@@ -199,6 +200,7 @@ function MilkdownEditor({
       .use(toggleColorCommand)
       .use(rallyEmbedSchema)
       .use(embedPickerPlugin)
+      .use(embedProtectPlugin)
       .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
       .use($view(rallyEmbedSchema.node, () => createNoteEmbedNodeViewFactory(workspaceId)))
