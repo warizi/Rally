@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useTimerStore, TIMER_MIN_DURATION_MS } from '@/entities/timer'
 import { Button } from '@/shared/ui/button'
-import { Play, Pause, RotateCcw, TimerIcon, Settings } from 'lucide-react'
+import { Play, Pause, RotateCcw, Settings } from 'lucide-react'
 import { TabContainer } from '@/shared/ui/tab-container'
 import TabHeader from '@/shared/ui/tab-header'
 import { TimerSettingsDialog } from './TimerSettingsDialog'
@@ -43,7 +43,6 @@ function TimerPage(): React.JSX.Element {
       header={
         <TabHeader
           title="타이머"
-          icon={TimerIcon}
           buttons={
             <Button
               variant="outline"

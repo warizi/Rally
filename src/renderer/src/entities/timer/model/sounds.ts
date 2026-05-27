@@ -15,6 +15,9 @@ export interface AlarmSound {
   url: string
 }
 
+/** url 이 빈 문자열인 sound 는 무음 (다이얼로그만 표시, 재생 없음). */
+export const SILENT_ALARM_KEY = 'silent'
+
 export const ALARM_SOUNDS: readonly AlarmSound[] = [
   { key: 'beep-life-support', label: '생명유지장치 경고', url: s1 },
   { key: 'cluck', label: '닭 울음소리', url: s2 },
@@ -23,7 +26,8 @@ export const ALARM_SOUNDS: readonly AlarmSound[] = [
   { key: 'beep-double', label: '삐삐-삐삐', url: s5 },
   { key: 'beep-quad', label: '삐삐삐삐', url: s6 },
   { key: 'alarm-clock', label: '자명종', url: s7 },
-  { key: 'desk-clock', label: '탁상시계', url: s8 }
+  { key: 'desk-clock', label: '탁상시계', url: s8 },
+  { key: SILENT_ALARM_KEY, label: '무음', url: '' }
 ] as const
 
 export const DEFAULT_ALARM_SOUND_KEY = ALARM_SOUNDS[0].key
@@ -31,4 +35,8 @@ export const DEFAULT_ALARM_SOUND_KEY = ALARM_SOUNDS[0].key
 export function getAlarmSoundUrl(key: string): string {
   const found = ALARM_SOUNDS.find((s) => s.key === key)
   return found?.url ?? ALARM_SOUNDS[0].url
+}
+
+export function isSilentAlarm(key: string): boolean {
+  return key === SILENT_ALARM_KEY
 }

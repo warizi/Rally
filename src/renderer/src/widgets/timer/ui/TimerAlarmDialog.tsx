@@ -52,6 +52,8 @@ export function TimerAlarmDialog(): React.JSX.Element {
     }
 
     const url = getAlarmSoundUrl(alarmSoundKey)
+    // 무음 사운드: 다이얼로그만 표시, 재생 X
+    if (!url) return cleanup
 
     function playOnce(): void {
       const audio = new Audio(url)

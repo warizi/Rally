@@ -11,7 +11,7 @@ import {
   TOAST_VISIBLE_COUNT_OPTIONS
 } from '@/shared/hooks/use-toast-settings'
 import { useAlarmSettingsStore } from '@/shared/store/alarm-settings'
-import { ALARM_SOUNDS, getAlarmSoundUrl } from '@/entities/timer'
+import { ALARM_SOUNDS, getAlarmSoundUrl, isSilentAlarm } from '@/entities/timer'
 
 export function AlarmSettings(): React.JSX.Element {
   const alarmSoundKey = useAlarmSettingsStore((s) => s.alarmSoundKey)
@@ -32,7 +32,10 @@ export function AlarmSettings(): React.JSX.Element {
     }
   }, [])
 
+  const silent = isSilentAlarm(alarmSoundKey)
+
   function handlePreview(): void {
+    if (silent) return
     // 기존 미리듣기 정지 후 새로 재생 (loop 없이 한 번만)
     const prev = previewAudioRef.current
     if (prev) {
@@ -71,7 +74,7 @@ export function AlarmSettings(): React.JSX.Element {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm" onClick={handlePreview}>
+          <Button variant="outline" size="sm" onClick={handlePreview} disabled={silent}>
             <Play className="size-3.5 mr-1" />
             미리듣기
           </Button>
