@@ -4,31 +4,35 @@
  * - note: id → 제목 fetch (workspace list), 아이콘 + 제목 link 형식 (클릭 무동작)
  * - csv: id → content fetch, 단순 표 렌더 (read-only, 툴바 없이)
  * - pdf: id → content fetch, PdfViewer hideToolbar 로 렌더
+ * - image: id → workspace image-file content fetch, blob URL 로 표시
  *
  * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
-import { FileText, Sheet, FileX } from 'lucide-react'
+import { useEffect, useMemo } from 'react'
+import { FileText, Sheet, FileX, Image as ImageIcon } from 'lucide-react'
 import Papa from 'papaparse'
 import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
 import { useNotesByWorkspace } from '@entities/note'
 import { useCsvFilesByWorkspace, useReadCsvContent } from '@entities/csv-file'
 import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
+import { useImageFilesByWorkspace, useReadImageContent } from '@entities/image-file'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { PdfViewer } from '@/features/pdf/view-pdf/ui/PdfViewer'
 import { useTabStore } from '@/features/tap-system/manage-tab-system'
 import type { EmbedDomain } from '../model/note-embed-schema'
 
-/** entity → 탭으로 열기. NOTE_DETAIL / CSV_DETAIL / PDF_DETAIL pathname 사용. */
+/** entity → 탭으로 열기. note/csv/pdf/image 각 detail pathname. */
 function openEntityTab(domain: EmbedDomain, id: string, title: string): void {
   const pathname =
     domain === 'note'
       ? `/folder/note/${id}`
       : domain === 'csv'
         ? `/folder/csv/${id}`
-        : `/folder/pdf/${id}`
-  const type = domain === 'note' ? 'note' : domain === 'csv' ? 'csv' : 'pdf'
-  useTabStore.getState().openTab({ type, pathname, title })
+        : domain === 'pdf'
+          ? `/folder/pdf/${id}`
+          : `/folder/image/${id}`
+  useTabStore.getState().openTab({ type: domain, pathname, title })
 }
 
 interface Props {
@@ -53,6 +57,15 @@ export function EmbedView({ domain, entityId, height, onHeightChange }: Props): 
   if (domain === 'pdf')
     return (
       <PdfEmbedView
+        workspaceId={workspaceId}
+        entityId={entityId}
+        height={height}
+        onHeightChange={onHeightChange}
+      />
+    )
+  if (domain === 'image')
+    return (
+      <ImageEmbedView
         workspaceId={workspaceId}
         entityId={entityId}
         height={height}
@@ -294,6 +307,64 @@ function PdfEmbedView({
           <PdfViewer pdfId={entityId} pdfData={content.data} hideToolbar />
         ) : (
           <div className="p-4 text-xs text-muted-foreground">PDF 로딩 중...</div>
+        )}
+      </div>
+      <ResizeHandle onHeightChange={onHeightChange} />
+    </div>
+  )
+}
+
+// ─── image ─────────────────────────────────────────────
+
+function ImageEmbedView({
+  workspaceId,
+  entityId,
+  height,
+  onHeightChange
+}: {
+  workspaceId: string
+  entityId: string
+  height: number
+  onHeightChange: (h: number) => void
+}): React.JSX.Element {
+  const { data: images = [] } = useImageFilesByWorkspace(workspaceId)
+  const image = images.find((i) => i.id === entityId)
+  const { data: content } = useReadImageContent(workspaceId, entityId)
+  // ArrayBuffer → blob URL. unmount / src 변경 시 revoke.
+  const blobUrl = useMemo(() => {
+    if (!content?.data) return null
+    return URL.createObjectURL(new Blob([content.data]))
+  }, [content?.data])
+  useEffect(() => {
+    return () => {
+      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    }
+  }, [blobUrl])
+  if (!image) return <FallbackEmbed label="[삭제된 이미지]" />
+  const useFixedHeight = height > 0
+  return (
+    <div
+      className="flex flex-col my-2 border rounded overflow-hidden bg-card"
+      style={useFixedHeight ? { height } : undefined}
+      contentEditable={false}
+    >
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0 cursor-pointer hover:bg-muted/60"
+        onClick={() => openEntityTab('image', image.id, image.title)}
+      >
+        <ImageIcon className="size-3.5" />
+        {image.title}
+      </div>
+      <div className="flex-1 min-h-0 flex items-center justify-center bg-muted/10">
+        {blobUrl ? (
+          <img
+            src={blobUrl}
+            alt={image.title}
+            className="max-w-full max-h-full object-contain"
+            draggable={false}
+          />
+        ) : (
+          <div className="p-4 text-xs text-muted-foreground">이미지 로딩 중...</div>
         )}
       </div>
       <ResizeHandle onHeightChange={onHeightChange} />

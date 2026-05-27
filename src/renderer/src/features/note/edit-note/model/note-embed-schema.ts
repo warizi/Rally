@@ -26,16 +26,19 @@ import type { Handle } from 'mdast-util-to-markdown'
 export const RALLY_EMBED_NODE_NAME = 'rally_embed'
 export const RALLY_EMBED_MDAST_TYPE = 'rallyEmbed'
 
-export type EmbedDomain = 'note' | 'csv' | 'pdf'
+export type EmbedDomain = 'note' | 'csv' | 'pdf' | 'image'
 
-const EMBED_DOMAINS: readonly EmbedDomain[] = ['note', 'csv', 'pdf'] as const
+const EMBED_DOMAINS: readonly EmbedDomain[] = ['note', 'csv', 'pdf', 'image'] as const
 
 function isEmbedDomain(s: string): s is EmbedDomain {
   return (EMBED_DOMAINS as readonly string[]).includes(s)
 }
 
-/** `![[domain:id|h=NNN]]` 패턴. global 매칭 + non-greedy. */
-const EMBED_RE = /!\[\[(note|csv|pdf):([^\]|]+?)(?:\|h=(\d+))?\]\]/g
+/** `![[domain:id|h=NNN]]` 패턴. global 매칭 + non-greedy.
+ *
+ * image 도메인은 workspace image-file 라이브러리 참조 (DnD 로 넣은 .images/
+ * inline 이미지는 기존 markdown `![alt](path)` 그대로 — schema 자체가 다름). */
+const EMBED_RE = /!\[\[(note|csv|pdf|image):([^\]|]+?)(?:\|h=(\d+))?\]\]/g
 
 interface RallyEmbedMdastNode {
   type: typeof RALLY_EMBED_MDAST_TYPE

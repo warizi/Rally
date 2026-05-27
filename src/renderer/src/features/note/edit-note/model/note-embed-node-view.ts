@@ -32,7 +32,7 @@ class NoteEmbedNodeView implements NodeView {
     // 노트(링크)는 span(inline), csv/pdf 는 div(block) — span 안 div 는 HTML
     // 유효성 X. 도메인별 tag 분기.
     const domain = node.attrs.domain as string
-    const isBlock = domain === 'csv' || domain === 'pdf'
+    const isBlock = domain === 'csv' || domain === 'pdf' || domain === 'image'
     this.dom = document.createElement(isBlock ? 'div' : 'span')
     this.dom.setAttribute('data-rally-embed', 'true')
     this.dom.setAttribute('data-portal-id', this.portalId)
