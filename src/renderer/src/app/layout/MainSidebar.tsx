@@ -10,6 +10,7 @@ import { SettingsDialog } from '@/features/settings/manage-settings'
 import { sidebar_items, system_sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { useTerminalPanelStore } from '@/features/terminal'
+import { ScrollArea } from '@/shared/ui/scroll-area'
 import {
   Sidebar,
   SidebarContent,
@@ -71,77 +72,79 @@ function MainSidebar(): React.JSX.Element {
         <SidebarHeader>
           <WorkspaceSwitcher />
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>기능</SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {sidebar_items.map((item) => (
-                  <SidebarMenuItem key={item.pathname}>
+        <SidebarContent className="!overflow-hidden">
+          <ScrollArea className="flex-1 min-h-0">
+            <SidebarGroup>
+              <SidebarGroupLabel>기능</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {sidebar_items.map((item) => (
+                    <SidebarMenuItem key={item.pathname}>
+                      <SidebarMenuButton
+                        className="cursor-pointer"
+                        isActive={activePathname === item.pathname}
+                        tooltip={item.title}
+                        onClick={() => handleOpenStaticTab(item)}
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       className="cursor-pointer"
-                      isActive={activePathname === item.pathname}
-                      tooltip={item.title}
-                      onClick={() => handleOpenStaticTab(item)}
+                      isActive={terminalIsOpen}
+                      tooltip="터미널"
+                      onClick={toggleTerminal}
                     >
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <Terminal />
+                      <span>터미널</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    className="cursor-pointer"
-                    isActive={terminalIsOpen}
-                    tooltip="터미널"
-                    onClick={toggleTerminal}
-                  >
-                    <Terminal />
-                    <span>터미널</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-          {currentWorkspaceId && (
-            <TabSnapshotSection
-              workspaceId={currentWorkspaceId}
-              onRestoreSnapshot={handleRestore}
-              onOverwriteSnapshot={handleOverwrite}
-            />
-          )}
-          <SidebarGroup>
-            <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
-              시스템
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {system_sidebar_items.map((item) => (
-                  <SidebarMenuItem key={item.pathname}>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            {currentWorkspaceId && (
+              <TabSnapshotSection
+                workspaceId={currentWorkspaceId}
+                onRestoreSnapshot={handleRestore}
+                onOverwriteSnapshot={handleOverwrite}
+              />
+            )}
+            <SidebarGroup>
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:hidden">
+                시스템
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {system_sidebar_items.map((item) => (
+                    <SidebarMenuItem key={item.pathname}>
+                      <SidebarMenuButton
+                        className="cursor-pointer"
+                        isActive={activePathname === item.pathname}
+                        tooltip={item.title}
+                        onClick={() => handleOpenStaticTab(item)}
+                      >
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                  <SidebarMenuItem>
                     <SidebarMenuButton
                       className="cursor-pointer"
-                      isActive={activePathname === item.pathname}
-                      tooltip={item.title}
-                      onClick={() => handleOpenStaticTab(item)}
+                      tooltip="설정"
+                      onClick={() => setSettingsOpen(true)}
                     >
-                      <item.icon />
-                      <span>{item.title}</span>
+                      <Settings />
+                      <span>설정</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                ))}
-                <SidebarMenuItem>
-                  <SidebarMenuButton
-                    className="cursor-pointer"
-                    tooltip="설정"
-                    onClick={() => setSettingsOpen(true)}
-                  >
-                    <Settings />
-                    <span>설정</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </ScrollArea>
         </SidebarContent>
         <SidebarFooter>
           <div className="px-0.5">
