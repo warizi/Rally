@@ -251,6 +251,12 @@ export function LinkEntityPopover({
       <PopoverContent
         align="start"
         className="w-[28rem] p-2"
+        // popup 열림 시 Radix 기본 동작은 첫 focusable (TabsTrigger) 에 focus
+        // → ArrowDown 이 잡히지 않음. 검색 input 으로 명시 focus.
+        onOpenAutoFocus={(e) => {
+          e.preventDefault()
+          inputRef.current?.focus()
+        }}
         // popup 내부 spacebar 가 부모의 dnd-kit keyboard sensor 까지 bubble 되면
         // popup 을 띄운 카드가 drag 모드로 전환되는 버그. popup 경계에서 차단.
         onKeyDown={(e) => {
