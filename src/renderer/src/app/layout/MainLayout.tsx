@@ -21,7 +21,13 @@ import { useReminderChangedWatcher } from '@entities/reminder'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useTrashWatcher } from '@entities/trash'
-import { usePaneNavigation, useTabNavigation, TabNavOverlay } from '@features/keyboard-control'
+import {
+  usePaneNavigation,
+  useTabNavigation,
+  useSnapshotNavigation,
+  TabNavOverlay,
+  SnapshotNavOverlay
+} from '@features/keyboard-control'
 import { UpdateChecker } from '../providers/update-checker'
 import { TimerAlarmDialog } from '@/widgets/timer'
 import { useState } from 'react'
@@ -132,9 +138,10 @@ function MainLayout(): React.JSX.Element {
   useTrashWatcher()
   // 화면 전체보기(focus) 모드 ESC 핸들러 + 자동 해제
   useFocusModeEffects()
-  // 글로벌 키보드 단축키 — pane 이동 (ctrl+shift+방향키) / 탭 이동 (shift+tab)
+  // 글로벌 키보드 단축키 — pane 이동 / 탭 이동 / 탭 스냅샷 전환
   usePaneNavigation()
   useTabNavigation()
+  useSnapshotNavigation()
 
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
@@ -184,6 +191,7 @@ function MainLayout(): React.JSX.Element {
       <TimerAlarmDialog />
       {/* 키보드 조작 오버레이 — 활성 모드일 때만 표시 */}
       <TabNavOverlay />
+      <SnapshotNavOverlay />
       <MainSidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <DndContext
