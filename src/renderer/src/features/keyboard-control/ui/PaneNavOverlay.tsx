@@ -42,8 +42,11 @@ function LayoutMini({
       {node.children.map((child, i) => (
         <div
           key={child.id}
-          style={{ flexBasis: `${node.sizes[i] ?? 100 / node.children.length}%` }}
-          className="shrink-0 grow-0 overflow-hidden"
+          // flexGrow 를 sizes 비율로 → gap 이 차지하는 픽셀까지 자연스럽게
+          // 흡수. flexBasis %% 합산이 100 인데 gap 까지 더해져 부모 넘침
+          // (= 미니 박스 요소가 외곽선 너머로 삐져나가던 현상) 방지.
+          style={{ flexGrow: node.sizes[i] ?? 1, flexBasis: 0, flexShrink: 1 }}
+          className="min-w-0 min-h-0 overflow-hidden"
         >
           <LayoutMini node={child} activePaneId={activePaneId} />
         </div>

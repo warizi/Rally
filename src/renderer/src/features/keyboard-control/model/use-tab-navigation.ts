@@ -59,7 +59,7 @@ export function useTabNavigation(): void {
         if (target) useTabStore.getState().activateTab(target.tabId)
       }
       useTabNavStore.getState().close()
-      clearMode()
+      clearMode('tab-nav')
     }
   })
 }

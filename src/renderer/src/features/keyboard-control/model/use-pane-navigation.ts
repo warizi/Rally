@@ -30,7 +30,7 @@ export function usePaneNavigation(): void {
   useGlobalHotkey({
     modifiers: { ctrl: true, shift: true },
     onActivate: () => setMode('pane-nav'),
-    onDeactivate: () => clearMode(),
+    onDeactivate: () => clearMode('pane-nav'),
     onKeyDown: (e) => {
       const dir = arrowKeyToDirection(e.key)
       if (!dir) return

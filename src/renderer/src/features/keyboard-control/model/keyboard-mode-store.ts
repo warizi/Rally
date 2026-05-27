@@ -14,13 +14,20 @@ interface KeyboardModeState {
 
 interface KeyboardModeActions {
   setMode: (mode: Exclude<KeyboardMode, null>) => void
-  clearMode: () => void
+  /**
+   * 자기 모드만 해제 — 인자로 자기 mode 를 전달. 현재 활성 모드와 일치할 때만
+   * null 로 reset. 다른 hook 이 자기 deactivate 시점에 호출해도 다른 모드를
+   * 덮어쓰지 않게 한다 (modifier 순서가 엇갈리면 발생하던 race).
+   */
+  clearMode: (mode: Exclude<KeyboardMode, null>) => void
 }
 
 type KeyboardModeStore = KeyboardModeState & KeyboardModeActions
 
-export const useKeyboardModeStore = create<KeyboardModeStore>()((set) => ({
+export const useKeyboardModeStore = create<KeyboardModeStore>()((set, get) => ({
   mode: null,
   setMode: (mode) => set({ mode }),
-  clearMode: () => set({ mode: null })
+  clearMode: (mode) => {
+    if (get().mode === mode) set({ mode: null })
+  }
 }))

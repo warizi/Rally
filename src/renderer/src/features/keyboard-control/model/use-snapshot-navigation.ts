@@ -52,7 +52,7 @@ export function useSnapshotNavigation(): void {
         if (target) applyTabSnapshot(target)
       }
       useSnapshotNavStore.getState().close()
-      clearMode()
+      clearMode('snapshot-nav')
     }
   })
 }
