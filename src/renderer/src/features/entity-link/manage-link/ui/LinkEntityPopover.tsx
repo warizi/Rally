@@ -180,12 +180,8 @@ export function LinkEntityPopover({
         e.preventDefault()
         return
       }
-      if (e.key === 'Escape') {
-        // ESC → input 복귀 (popup 닫힘은 input 에서 ESC 누를 때만)
-        e.preventDefault()
-        focusInputMode()
-        return
-      }
+      // ESC 는 PopoverContent.onEscapeKeyDown 에서 일괄 처리
+      // (list mode → input 복귀 / input mode → popup 닫힘)
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault()
         const idx = availableTabs.indexOf(activeTab)
@@ -256,6 +252,14 @@ export function LinkEntityPopover({
         onOpenAutoFocus={(e) => {
           e.preventDefault()
           inputRef.current?.focus()
+        }}
+        // ESC: list mode 면 popup 닫지 말고 input 으로 복귀. input mode 면
+        // 기본 동작(popup 닫힘) 유지.
+        onEscapeKeyDown={(e) => {
+          if (focusIndex >= 0) {
+            e.preventDefault()
+            focusInputMode()
+          }
         }}
         // popup 내부 spacebar 가 부모의 dnd-kit keyboard sensor 까지 bubble 되면
         // popup 을 띄운 카드가 drag 모드로 전환되는 버그. popup 경계에서 차단.
