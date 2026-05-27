@@ -42,6 +42,63 @@ export function findFirstPaneId(layout: LayoutNode): string | null {
   return null
 }
 
+/**
+ * 방향키 기반 인접 pane 찾기.
+ *
+ * - direction 'left' / 'right' → horizontal split 에서 이전/다음 child
+ * - direction 'up'   / 'down'  → vertical split 에서 이전/다음 child
+ *
+ * 현재 pane 의 ancestor 들을 안→밖으로 올라가며 매칭되는 split 찾고,
+ * 새 child 가 split 이면 진행 방향 (first/last leaf) 으로 내려가 leaf
+ * paneId 반환. 매칭 split 이 없으면 null.
+ */
+export type ArrowDirection = 'up' | 'down' | 'left' | 'right'
+
+function collectPathToPane(
+  node: LayoutNode,
+  targetPaneId: string,
+  out: Array<{ split: SplitNode; childIndex: number }>
+): boolean {
+  if (isPaneNode(node)) return node.paneId === targetPaneId
+  for (let i = 0; i < node.children.length; i++) {
+    out.push({ split: node, childIndex: i })
+    if (collectPathToPane(node.children[i], targetPaneId, out)) return true
+    out.pop()
+  }
+  return false
+}
+
+function findLeafBySide(node: LayoutNode, side: 'first' | 'last'): string {
+  if (isPaneNode(node)) return node.paneId
+  const idx = side === 'first' ? 0 : node.children.length - 1
+  return findLeafBySide(node.children[idx], side)
+}
+
+export function findAdjacentPaneId(
+  layout: LayoutNode,
+  currentPaneId: string,
+  direction: ArrowDirection
+): string | null {
+  const targetDirection: SplitDirection =
+    direction === 'left' || direction === 'right' ? 'horizontal' : 'vertical'
+  const delta = direction === 'right' || direction === 'down' ? +1 : -1
+  // delta=+1 (right/down) → 새 형제의 시작면 (first leaf)
+  // delta=-1 (left/up)   → 새 형제의 끝면 (last leaf)
+  const side: 'first' | 'last' = delta === +1 ? 'first' : 'last'
+
+  const path: Array<{ split: SplitNode; childIndex: number }> = []
+  if (!collectPathToPane(layout, currentPaneId, path)) return null
+
+  for (let i = path.length - 1; i >= 0; i--) {
+    const { split, childIndex } = path[i]
+    if (split.direction !== targetDirection) continue
+    const newIndex = childIndex + delta
+    if (newIndex < 0 || newIndex >= split.children.length) continue
+    return findLeafBySide(split.children[newIndex], side)
+  }
+  return null
+}
+
 // 레이아웃에서 특정 paneId를 가진 노드가 존재하는지 확인한다.
 export function isContainsNode(layout: LayoutNode, nodeId: string): boolean {
   if (layout.id === nodeId) return true

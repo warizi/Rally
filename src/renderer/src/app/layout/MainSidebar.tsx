@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Settings, Terminal } from 'lucide-react'
-import { useTabStore, applySessionToStore } from '@/features/tap-system/manage-tab-system'
-import type { SerializedTab, SessionData } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
 import type { TabSnapshot } from '@/entities/tab-snapshot'
 import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
@@ -56,14 +56,7 @@ function MainSidebar(): React.JSX.Element {
   }
 
   const handleRestore = (snapshot: TabSnapshot): void => {
-    const panes = JSON.parse(snapshot.panesJson) as SessionData['panes']
-    const sessionData: SessionData = {
-      tabs: JSON.parse(snapshot.tabsJson) as Record<string, SerializedTab>,
-      panes,
-      layout: JSON.parse(snapshot.layoutJson) as SessionData['layout'],
-      activePaneId: Object.keys(panes)[0] ?? ''
-    }
-    applySessionToStore(sessionData)
+    applyTabSnapshot(snapshot)
   }
 
   return (
