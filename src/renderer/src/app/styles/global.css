@@ -158,6 +158,32 @@
   padding: 0 0 !important;
 }
 
+/* @milkdown/crepe reset.css 의 `.milkdown * { padding/margin: 0 }` universal
+   selector 가 rally 임베드 컴포넌트의 utility 클래스 padding/margin 을
+   무력화. 임베드 영역은 reset 무력화 → utilities layer 의 padding/margin
+   다시 동작. (revert-layer = 현재 layer 의 declaration 무시) */
+.milkdown [data-rally-embed],
+.milkdown [data-rally-embed] * {
+  margin: revert-layer;
+  padding: revert-layer;
+}
+
+/* 임베드 내부 table — global table 룰 (margin 8px, th/td padding 6px 12px) 가
+   inline 으로 적용돼 본문에 위/아래 여백 생김. 임베드 영역만 reset.
+   `.milkdown .ProseMirror table` (specificity 0,0,3) 가 나중에 정의되므로
+   specificity 더 높은 selector 로 우선권 확보. */
+.milkdown .ProseMirror [data-rally-embed] table {
+  margin: 0;
+  /* width 는 inline style (max-content) 이 따로 적용되어야 가로 스크롤 동작.
+     global `.milkdown .ProseMirror table { width: 100% }` override 필요. */
+  width: max-content;
+}
+.milkdown .ProseMirror [data-rally-embed] th,
+.milkdown .ProseMirror [data-rally-embed] td {
+  padding: 4px 8px;
+  border-color: var(--border);
+}
+
 /* ─── Syntax Hint (Obsidian-style) ──────────── */
 
 .milkdown .syntax-hint {

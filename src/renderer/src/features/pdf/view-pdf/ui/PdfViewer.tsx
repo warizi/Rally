@@ -17,11 +17,13 @@ pdfjs.GlobalWorkerOptions.workerSrc = new URL(
 interface PdfViewerProps {
   pdfId: string
   pdfData: ArrayBuffer
+  /** 임베드용 — 툴바 숨김. 줌/회전 기본값으로 고정. */
+  hideToolbar?: boolean
 }
 
 const ZOOM_STEPS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3]
 
-export function PdfViewer({ pdfId, pdfData }: PdfViewerProps): JSX.Element {
+export function PdfViewer({ pdfId, pdfData, hideToolbar = false }: PdfViewerProps): JSX.Element {
   const [numPages, setNumPages] = useState<number>(0)
   const [zoomIndex, setZoomIndex] = useState(2) // 기본: 1x
   const [rotation, setRotation] = useState(0)
@@ -108,7 +110,8 @@ export function PdfViewer({ pdfId, pdfData }: PdfViewerProps): JSX.Element {
 
   return (
     <div className="flex flex-col h-full" ref={containerRef}>
-      {/* 툴바 */}
+      {/* 툴바 — hideToolbar 시 미렌더링 */}
+      {!hideToolbar && (
       <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
         <span className="text-sm text-muted-foreground">
           {numPages > 0 ? `${numPages}페이지` : ''}
@@ -155,6 +158,7 @@ export function PdfViewer({ pdfId, pdfData }: PdfViewerProps): JSX.Element {
           </Tooltip>
         </div>
       </div>
+      )}
 
       {/* PDF 페이지 렌더링 — 확대 시 좌우 스크롤 + 드래그 패닝 */}
       <ScrollArea

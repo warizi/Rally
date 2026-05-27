@@ -1,4 +1,5 @@
-import { JSX, useCallback, useEffect, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { nanoid } from 'nanoid'
 import {
   Editor,
   rootCtx,
@@ -29,6 +30,17 @@ import {
   colorSpanStringifyHandler,
   COLOR_SPAN_MDAST_TYPE
 } from '../model/note-color-mark'
+import {
+  rallyEmbedSchema,
+  rallyEmbedRemarkPlugin,
+  rallyEmbedStringifyHandler,
+  RALLY_EMBED_MDAST_TYPE
+} from '../model/note-embed-schema'
+import { createNoteEmbedNodeViewFactory } from '../model/note-embed-node-view'
+import { createEmbedPickerPlugin } from '../model/embed-picker-plugin'
+import { embedProtectPlugin } from '../model/embed-protect-plugin'
+import { EmbedPicker } from './EmbedPicker'
+import { EmbedPortals } from './EmbedPortals'
 import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
 import { toggleColorCommand } from '../model/note-toolbar-commands'
 import { NoteSearchBar } from './NoteSearchBar'
@@ -122,6 +134,9 @@ function MilkdownEditor({
 }: MilkdownEditorProps): JSX.Element {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  // 한 페이지에 NoteEditor 가 여러 개 (탭 + 캔버스 노드) 떠 있을 때 embed
+  // picker / portal store 가 cross-contamination 되지 않도록 인스턴스 단위 id.
+  const editorId = useMemo(() => nanoid(), [])
   const [loading, getEditor] = useInstance()
   // editorRef.current 는 초기 렌더 시 null 이라 useState 로 mount 후 캡처
   // → NoteFloatingToolbar 가 toolbar-state 이벤트 listener 를 정확한 DOM 에 부착.
@@ -162,13 +177,15 @@ function MilkdownEditor({
         // (2) remark-stringify 핸들러가 colorSpan 노드를 raw HTML span 으로 직렬화
         ctx.update(remarkPluginsCtx, (prev) => [
           ...prev,
-          { plugin: colorSpanRemarkPlugin, options: {} }
+          { plugin: colorSpanRemarkPlugin, options: {} },
+          { plugin: rallyEmbedRemarkPlugin, options: {} }
         ])
         ctx.update(remarkStringifyOptionsCtx, (prev) => ({
           ...prev,
           handlers: {
             ...prev.handlers,
-            [COLOR_SPAN_MDAST_TYPE]: colorSpanStringifyHandler
+            [COLOR_SPAN_MDAST_TYPE]: colorSpanStringifyHandler,
+            [RALLY_EMBED_MDAST_TYPE]: rallyEmbedStringifyHandler
           }
         }))
       })
@@ -185,8 +202,16 @@ function MilkdownEditor({
       .use(syntaxHintPlugin)
       .use(colorMarkSchema)
       .use(toggleColorCommand)
+      .use(rallyEmbedSchema)
+      .use(createEmbedPickerPlugin(editorId))
+      .use(embedProtectPlugin)
       .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
+      .use(
+        $view(rallyEmbedSchema.node, () =>
+          createNoteEmbedNodeViewFactory(workspaceId, editorId)
+        )
+      )
   )
 
   // DnD: 드롭 시 이미지 삽입
@@ -199,6 +224,12 @@ function MilkdownEditor({
     }
 
     const onDrop = async (e: DragEvent): Promise<void> => {
+      // ProseMirror 의 upload plugin 이 에디터 영역 안 드롭은 자체 처리한다
+      // (uploadConfig.uploader). wrapper 리스너까지 같은 이벤트로 또 삽입하면
+      // 이미지가 2 번 들어가므로, 에디터 내부 드롭은 skip 한다.
+      const target = e.target as HTMLElement | null
+      if (target?.closest('.ProseMirror')) return
+
       e.preventDefault()
       e.stopPropagation()
 
@@ -285,6 +316,8 @@ function MilkdownEditor({
       </div>
       <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
       <NoteFloatingToolbar editorEl={toolbarHostEl} />
+      <EmbedPicker workspaceId={workspaceId} editorId={editorId} />
+      <EmbedPortals editorId={editorId} />
     </div>
   )
 }
