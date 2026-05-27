@@ -8,6 +8,7 @@
  * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
 import { FileText, Sheet, FileX } from 'lucide-react'
+import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
 import { useNotesByWorkspace } from '@entities/note'
 import { useCsvFilesByWorkspace, useReadCsvContent } from '@entities/csv-file'
 import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
@@ -120,14 +121,14 @@ function CsvEmbedView({
         <Sheet className="size-3.5" />
         {csv.title}
       </div>
-      <div className="flex-1 min-h-0 overflow-auto">
+      <ScrollArea className="flex-1 min-h-0">
         {parsed.headers.length === 0 ? (
           <div className="p-4 text-xs text-muted-foreground">빈 CSV</div>
         ) : (
-          // CsvPage 와 유사: 각 셀 고정 폭 (150px) 으로 합이 컨테이너 폭 초과 시
-          // 가로 스크롤 발생. table-layout: fixed + width: max-content 로 colgroup
-          // 기반 폭 강제. (.milkdown .ProseMirror table { width: 100% } override
-          // 는 specificity 더 높은 global selector 로 처리)
+          // CsvPage 와 유사: 각 셀 고정 폭 (columnWidths 또는 150px) → 합이
+          // 컨테이너 폭 초과 시 가로 스크롤. table-layout: fixed +
+          // width: max-content. (.milkdown .ProseMirror table { width: 100% }
+          // override 는 specificity 더 높은 global selector 로 처리)
           <table
             className="text-xs border-collapse"
             style={{ tableLayout: 'fixed', width: 'max-content' }}
@@ -159,7 +160,8 @@ function CsvEmbedView({
             </tbody>
           </table>
         )}
-      </div>
+        <ScrollBar orientation="horizontal" />
+      </ScrollArea>
     </div>
   )
 }
