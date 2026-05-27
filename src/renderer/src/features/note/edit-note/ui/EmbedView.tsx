@@ -171,8 +171,13 @@ function CsvEmbedView({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       ) : (
-        // h 메타 없으면 콘텐츠 height + 가로만 native scroll (세로 다 보임)
-        <div className="overflow-x-auto">{tableEl}</div>
+        // h 메타 없으면 콘텐츠 height + max 500 + ScrollArea (가로/세로).
+        // viewportClassName 으로 Viewport 에 max-h 적용 → 콘텐츠 작으면
+        // 콘텐츠 크기, 크면 500 까지 잘리며 내부 스크롤.
+        <ScrollArea viewportClassName="max-h-[500px]">
+          {tableEl}
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
       )}
     </div>
   )
