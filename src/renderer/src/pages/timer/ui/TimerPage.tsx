@@ -58,7 +58,7 @@ function TimerPage(): React.JSX.Element {
         />
       }
     >
-      <div className="flex flex-col items-center justify-center gap-8 py-12 px-6 max-w-3xl mx-auto">
+      <div className="flex flex-col items-center justify-center gap-8 px-6 max-w-3xl mx-auto min-h-full">
         {/* 디지털 카운트 */}
         <div className="font-mono text-5xl @[400px]:text-6xl tabular-nums tracking-tight select-none">
           {pad(display.h)}:{pad(display.m)}:{pad(display.s)}
