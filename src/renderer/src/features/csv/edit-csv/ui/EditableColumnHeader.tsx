@@ -100,7 +100,7 @@ export function EditableColumnHeader({
             stopEditing()
           }
         }}
-        className="w-full px-2 py-1 text-sm font-medium bg-muted border-0 outline-none ring-1 ring-primary"
+        className="w-full px-2 py-1 text-sm font-medium bg-transparent border-0 outline-none"
       />
     )
   }

@@ -233,7 +233,7 @@ export function CsvTable({
                   key={`h_${ci}`}
                   className={
                     'absolute top-0 flex items-center px-2 text-sm font-medium border-r border-b bg-muted hover:bg-muted-foreground/10' +
-                    (isHeaderFocus && !isHeaderEditing ? ' ring-2 ring-primary ring-inset' : '')
+                    (isHeaderFocus ? ' ring-2 ring-primary ring-inset' : '')
                   }
                   style={{ left: vc.start, width: vc.size, height: HEADER_HEIGHT }}
                   onMouseDown={(e) => handleHeaderMouseDown(ci, e)}
