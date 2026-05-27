@@ -76,7 +76,14 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return allItems.slice(0, 50)
-    return allItems.filter((i) => i.title.toLowerCase().includes(q)).slice(0, 50)
+    // 공백 분리한 모든 토큰이 title 에 포함되어야 매칭 (any position)
+    const tokens = q.split(/\s+/).filter(Boolean)
+    return allItems
+      .filter((i) => {
+        const lower = i.title.toLowerCase()
+        return tokens.every((t) => lower.includes(t))
+      })
+      .slice(0, 50)
   }, [allItems, query])
 
   const [focusIndex, setFocusIndex] = useState(0)
