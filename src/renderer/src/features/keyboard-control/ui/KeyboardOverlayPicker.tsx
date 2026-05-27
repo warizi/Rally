@@ -40,7 +40,7 @@ export function KeyboardOverlayPicker({
       {title && (
         <div className="text-sm font-medium text-foreground/80 tracking-wide">{title}</div>
       )}
-      <div className="flex flex-col gap-1.5 max-h-[70vh] overflow-y-auto px-2">
+      <div className="flex flex-col gap-1.5 max-h-[70vh] overflow-y-auto px-3 py-3">
         {items.length === 0 ? (
           <div className="text-xs text-muted-foreground italic px-3 py-1.5">항목 없음</div>
         ) : (
