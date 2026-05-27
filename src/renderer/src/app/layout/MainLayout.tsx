@@ -25,6 +25,7 @@ import {
   usePaneNavigation,
   useTabNavigation,
   useSnapshotNavigation,
+  PaneNavOverlay,
   TabNavOverlay,
   SnapshotNavOverlay
 } from '@features/keyboard-control'
@@ -190,6 +191,7 @@ function MainLayout(): React.JSX.Element {
       {/* 타이머 알람: 루트 레벨 mount → 어느 탭에서든 발동 */}
       <TimerAlarmDialog />
       {/* 키보드 조작 오버레이 — 활성 모드일 때만 표시 */}
+      <PaneNavOverlay />
       <TabNavOverlay />
       <SnapshotNavOverlay />
       <MainSidebar />
