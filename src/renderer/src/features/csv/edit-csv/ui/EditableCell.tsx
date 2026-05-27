@@ -48,6 +48,9 @@ export function EditableCell({
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
+        // mousedown \uC774 \uBD80\uBAA8 cell div \uC758 handleCellMouseDown \uC73C\uB85C bubble \uB418\uBA74
+        // setEditingCell(null) \uC774 \uD638\uCD9C\uB418\uC5B4 \uD3B8\uC9D1 \uBAA8\uB4DC \uC989\uC2DC \uD574\uC81C + \uD14D\uC2A4\uD2B8 \uC120\uD0DD \uBD88\uAC00.
+        onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           e.stopPropagation()
           // Tab: commit + \uC606 \uC140 \uC774\uB3D9 (Shift+Tab = \uC774\uC804, Tab = \uB2E4\uC74C)

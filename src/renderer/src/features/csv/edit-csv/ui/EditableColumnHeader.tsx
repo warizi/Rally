@@ -73,6 +73,9 @@ export function EditableColumnHeader({
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
         onBlur={commit}
+        // 부모 헤더 div 의 handleHeaderMouseDown 으로 mousedown 이 bubble 되면
+        // setEditingCell(null) 이 호출되어 편집 모드 즉시 해제 + 텍스트 선택 불가.
+        onMouseDown={(e) => e.stopPropagation()}
         onKeyDown={(e) => {
           e.stopPropagation()
           // Tab: commit + 옆 헤더 셀 이동
