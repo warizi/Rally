@@ -1,19 +1,19 @@
 /**
  * 임베드 시각화 — 4 도메인 분기.
  *
- * 이번 단계 구현:
- * - note: id → 제목 fetch (workspace list 에서 find), 아이콘 + 제목 link 형식 (클릭 무동작)
- * - csv: id → 제목 fetch, placeholder 박스 (실제 표 컴포넌트 wiring 은 후속)
- * - pdf: id → 제목 fetch, placeholder 박스 (실제 PDF wrapper wiring 은 후속)
+ * - note: id → 제목 fetch (workspace list), 아이콘 + 제목 link 형식 (클릭 무동작)
+ * - csv: id → content fetch, 단순 표 렌더 (read-only, 툴바 없이)
+ * - pdf: id → content fetch, PdfViewer hideToolbar 로 렌더
  *
- * 모든 도메인 공통 fallback: id 못 찾으면 "[삭제된 X]" 표시.
+ * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
 import { FileText, Sheet, FileX } from 'lucide-react'
 import { useNotesByWorkspace } from '@entities/note'
-import { useCsvFilesByWorkspace } from '@entities/csv-file'
-import { usePdfFilesByWorkspace } from '@entities/pdf-file'
+import { useCsvFilesByWorkspace, useReadCsvContent } from '@entities/csv-file'
+import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
+import { PdfViewer } from '@/features/pdf/view-pdf/ui/PdfViewer'
 import type { EmbedDomain } from '../model/note-embed-schema'
 
 interface Props {
@@ -65,7 +65,16 @@ function NoteEmbedView({
   )
 }
 
-// ─── csv (placeholder) ─────────────────────────────────
+// ─── csv ───────────────────────────────────────────────
+
+/** 단순 csv 파서 — quote/escape 무시한 split 기반. 임베드 표시용. */
+function parseCsv(content: string): { headers: string[]; rows: string[][] } {
+  const lines = content.split(/\r?\n/).filter((l) => l.length > 0)
+  if (lines.length === 0) return { headers: [], rows: [] }
+  const headers = lines[0].split(',')
+  const rows = lines.slice(1).map((l) => l.split(','))
+  return { headers, rows }
+}
 
 function CsvEmbedView({
   workspaceId,
@@ -78,7 +87,9 @@ function CsvEmbedView({
 }): React.JSX.Element {
   const { data: csvs = [] } = useCsvFilesByWorkspace(workspaceId)
   const csv = csvs.find((c) => c.id === entityId)
+  const { data: content } = useReadCsvContent(workspaceId, entityId)
   if (!csv) return <FallbackEmbed label="[삭제된 CSV]" />
+  const parsed = parseCsv(content?.content ?? '')
   return (
     <span
       className="block my-2 border rounded overflow-hidden bg-card"
@@ -89,14 +100,39 @@ function CsvEmbedView({
         <Sheet className="size-3.5" />
         {csv.title}
       </span>
-      <span className="block p-4 text-xs text-muted-foreground">
-        CSV 임베드 — 실제 표 렌더링은 후속 단계
+      <span className="block overflow-auto" style={{ height: `calc(100% - 32px)` }}>
+        {parsed.headers.length === 0 ? (
+          <span className="block p-4 text-xs text-muted-foreground">빈 CSV</span>
+        ) : (
+          <table className="text-xs w-full border-collapse">
+            <thead className="bg-muted/30 sticky top-0">
+              <tr>
+                {parsed.headers.map((h, i) => (
+                  <th key={i} className="text-left px-2 py-1 border-b font-medium whitespace-nowrap">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {parsed.rows.map((row, ri) => (
+                <tr key={ri} className="hover:bg-muted/20">
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="px-2 py-1 border-b whitespace-nowrap">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </span>
     </span>
   )
 }
 
-// ─── pdf (placeholder) ─────────────────────────────────
+// ─── pdf ───────────────────────────────────────────────
 
 function PdfEmbedView({
   workspaceId,
@@ -109,6 +145,7 @@ function PdfEmbedView({
 }): React.JSX.Element {
   const { data: pdfs = [] } = usePdfFilesByWorkspace(workspaceId)
   const pdf = pdfs.find((p) => p.id === entityId)
+  const { data: content } = useReadPdfContent(workspaceId, entityId)
   if (!pdf) return <FallbackEmbed label="[삭제된 PDF]" />
   return (
     <span
@@ -120,8 +157,12 @@ function PdfEmbedView({
         <PdfIcon className="size-3.5" />
         {pdf.title}
       </span>
-      <span className="block p-4 text-xs text-muted-foreground">
-        PDF 임베드 — 실제 렌더링은 후속 단계
+      <span className="block" style={{ height: `calc(100% - 32px)` }}>
+        {content?.data ? (
+          <PdfViewer pdfId={entityId} pdfData={content.data} hideToolbar />
+        ) : (
+          <span className="block p-4 text-xs text-muted-foreground">PDF 로딩 중...</span>
+        )}
       </span>
     </span>
   )
