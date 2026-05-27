@@ -24,6 +24,8 @@ interface PickerItem {
   domain: EmbedDomain | 'image'
   id: string
   title: string
+  /** image 도메인 한정 — 이미지 파일 상대 경로 (note 폴더 기준). */
+  relativePath?: string
 }
 
 const ICONS: Record<PickerItem['domain'], LucideIcon | typeof PdfIcon> = {
@@ -53,7 +55,12 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
       ...notes.map((n) => ({ domain: 'note' as const, id: n.id, title: n.title })),
       ...csvs.map((c) => ({ domain: 'csv' as const, id: c.id, title: c.title })),
       ...pdfs.map((p) => ({ domain: 'pdf' as const, id: p.id, title: p.title })),
-      ...images.map((i) => ({ domain: 'image' as const, id: i.id, title: i.title }))
+      ...images.map((i) => ({
+        domain: 'image' as const,
+        id: i.id,
+        title: i.title,
+        relativePath: i.relativePath
+      }))
     ],
     [notes, csvs, pdfs, images]
   )
@@ -102,13 +109,25 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
     editor.action((ctx) => {
       const view = ctx.get(editorViewCtx)
       const schema = view.state.schema
-      const embedType = schema.nodes[RALLY_EMBED_NODE_NAME]
-      if (!embedType) return
-      // image 도메인은 후속 단계에서 처리 — 현재는 close 만
+      // image 는 일반 markdown image 노드로 삽입 (![title](relativePath))
+      // 호환성 유지 — 기존 image NodeView / h=NNN alt 메타 그대로 활용.
       if (item.domain === 'image') {
+        const imageType = schema.nodes.image
+        if (!imageType || !item.relativePath) return
+        const node = imageType.create({
+          src: item.relativePath,
+          alt: item.title
+        })
+        const tr = view.state.tr
+          .replaceRangeWith(range.from, range.to, node)
+          .insertText(' ', range.from + 1)
+        view.dispatch(tr)
+        view.focus()
         closePicker()
         return
       }
+      const embedType = schema.nodes[RALLY_EMBED_NODE_NAME]
+      if (!embedType) return
       const node = embedType.create({
         domain: item.domain,
         entityId: item.id,
