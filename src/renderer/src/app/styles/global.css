@@ -158,6 +158,16 @@
   padding: 0 0 !important;
 }
 
+/* @milkdown/crepe reset.css 의 `.milkdown * { padding/margin: 0 }` universal
+   selector 가 rally 임베드 컴포넌트의 utility 클래스 padding/margin 을
+   무력화. 임베드 영역은 reset 무력화 → utilities layer 의 padding/margin
+   다시 동작. (revert-layer = 현재 layer 의 declaration 무시) */
+.milkdown [data-rally-embed],
+.milkdown [data-rally-embed] * {
+  margin: revert-layer;
+  padding: revert-layer;
+}
+
 /* ─── Syntax Hint (Obsidian-style) ──────────── */
 
 .milkdown .syntax-hint {
