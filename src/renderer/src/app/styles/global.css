@@ -168,6 +168,17 @@
   padding: revert-layer;
 }
 
+/* 임베드 내부 table — global table 룰 (margin 8px, th/td padding 6px 12px) 가
+   inline 으로 적용돼 본문에 위/아래 여백 생김. 임베드 영역만 reset. */
+.milkdown [data-rally-embed] table {
+  margin: 0;
+}
+.milkdown [data-rally-embed] th,
+.milkdown [data-rally-embed] td {
+  padding: 4px 8px;
+  border-color: var(--border);
+}
+
 /* ─── Syntax Hint (Obsidian-style) ──────────── */
 
 .milkdown .syntax-hint {
