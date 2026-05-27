@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { Play } from 'lucide-react'
 import { Label } from '@/shared/ui/label'
 import { Button } from '@/shared/ui/button'
+import { Switch } from '@/shared/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { useAlarmSettingsStore } from '@/shared/store/alarm-settings'
 import { ALARM_SOUNDS, getAlarmSoundUrl } from '@/entities/timer'
@@ -9,6 +10,8 @@ import { ALARM_SOUNDS, getAlarmSoundUrl } from '@/entities/timer'
 export function AlarmSettings(): React.JSX.Element {
   const alarmSoundKey = useAlarmSettingsStore((s) => s.alarmSoundKey)
   const setAlarmSoundKey = useAlarmSettingsStore((s) => s.setAlarmSoundKey)
+  const alarmRepeat = useAlarmSettingsStore((s) => s.alarmRepeat)
+  const setAlarmRepeat = useAlarmSettingsStore((s) => s.setAlarmRepeat)
   const previewAudioRef = useRef<HTMLAudioElement | null>(null)
 
   // 컴포넌트 unmount 시 미리듣기 사운드 정리
@@ -70,6 +73,16 @@ export function AlarmSettings(): React.JSX.Element {
         <p className="text-xs text-muted-foreground">
           설정은 즉시 저장되며 다음 알림부터 적용됩니다.
         </p>
+      </div>
+
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <Label className="text-sm">반복 재생</Label>
+          <p className="text-xs text-muted-foreground">
+            끄면 한 번만 재생됩니다. 켜면 2초 간격으로 반복합니다.
+          </p>
+        </div>
+        <Switch checked={alarmRepeat} onCheckedChange={setAlarmRepeat} />
       </div>
     </div>
   )

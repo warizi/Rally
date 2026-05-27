@@ -16,14 +16,14 @@ export interface AlarmSound {
 }
 
 export const ALARM_SOUNDS: readonly AlarmSound[] = [
-  { key: 'beep-life-support', label: '생명유지장치 (삐-삐-삐)', url: s1 },
-  { key: 'cluck', label: '꼬꼬덱-꼭', url: s2 },
-  { key: 'radiation', label: '방사능', url: s3 },
-  { key: 'beep-short', label: '삐비-', url: s4 },
+  { key: 'beep-life-support', label: '생명유지장치 경고', url: s1 },
+  { key: 'cluck', label: '닭 울음소리', url: s2 },
+  { key: 'radiation', label: '방사능 경고', url: s3 },
+  { key: 'beep-short', label: '삐빅-', url: s4 },
   { key: 'beep-double', label: '삐삐-삐삐', url: s5 },
   { key: 'beep-quad', label: '삐삐삐삐', url: s6 },
   { key: 'alarm-clock', label: '자명종', url: s7 },
-  { key: 'desk-clock', label: '탁상시계 (삐삐삐삐)', url: s8 }
+  { key: 'desk-clock', label: '탁상시계', url: s8 }
 ] as const
 
 export const DEFAULT_ALARM_SOUND_KEY = ALARM_SOUNDS[0].key
