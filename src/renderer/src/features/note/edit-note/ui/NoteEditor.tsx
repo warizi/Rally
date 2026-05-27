@@ -29,6 +29,13 @@ import {
   colorSpanStringifyHandler,
   COLOR_SPAN_MDAST_TYPE
 } from '../model/note-color-mark'
+import {
+  rallyEmbedSchema,
+  rallyEmbedRemarkPlugin,
+  rallyEmbedStringifyHandler,
+  RALLY_EMBED_MDAST_TYPE
+} from '../model/note-embed-schema'
+import { createNoteEmbedNodeViewFactory } from '../model/note-embed-node-view'
 import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
 import { toggleColorCommand } from '../model/note-toolbar-commands'
 import { NoteSearchBar } from './NoteSearchBar'
@@ -162,13 +169,15 @@ function MilkdownEditor({
         // (2) remark-stringify 핸들러가 colorSpan 노드를 raw HTML span 으로 직렬화
         ctx.update(remarkPluginsCtx, (prev) => [
           ...prev,
-          { plugin: colorSpanRemarkPlugin, options: {} }
+          { plugin: colorSpanRemarkPlugin, options: {} },
+          { plugin: rallyEmbedRemarkPlugin, options: {} }
         ])
         ctx.update(remarkStringifyOptionsCtx, (prev) => ({
           ...prev,
           handlers: {
             ...prev.handlers,
-            [COLOR_SPAN_MDAST_TYPE]: colorSpanStringifyHandler
+            [COLOR_SPAN_MDAST_TYPE]: colorSpanStringifyHandler,
+            [RALLY_EMBED_MDAST_TYPE]: rallyEmbedStringifyHandler
           }
         }))
       })
@@ -185,8 +194,10 @@ function MilkdownEditor({
       .use(syntaxHintPlugin)
       .use(colorMarkSchema)
       .use(toggleColorCommand)
+      .use(rallyEmbedSchema)
       .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
+      .use($view(rallyEmbedSchema.node, () => createNoteEmbedNodeViewFactory(workspaceId)))
   )
 
   // DnD: 드롭 시 이미지 삽입
