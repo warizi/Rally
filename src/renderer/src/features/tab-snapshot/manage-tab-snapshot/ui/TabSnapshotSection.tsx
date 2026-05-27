@@ -70,7 +70,7 @@ export function TabSnapshotSection({
                 </ScrollArea>
               </SidebarMenu>
 
-              <div className="sticky bottom-0 py-1">
+              <div className="sticky bottom-0 py-1 bg-sidebar">
                 <SidebarMenuButton
                   size="sm"
                   className="w-full justify-start gap-2 text-muted-foreground hover:text-foreground cursor-pointer"
