@@ -58,7 +58,7 @@ function NodeColorToolbarComponent({ store }: NodeColorToolbarProps): React.JSX.
 
   return (
     <div
-      className="absolute top-3 right-3 z-10 flex items-center gap-1.5 bg-background/90 backdrop-blur
+      className="absolute top-14 right-3 z-10 flex items-center gap-1.5 bg-background/90 backdrop-blur
                     border rounded-lg shadow-sm px-2.5 py-1.5"
     >
       <Paintbrush className="size-3.5 text-muted-foreground shrink-0" />

@@ -348,6 +348,17 @@
   background-color: var(--accent);
 }
 
+/* MiniMap 다크모드: React Flow `.react-flow.dark` 셀렉터가 Rally의 루트 .dark 와
+   매칭되지 않아 라이트 색상이 잔존. xy- CSS 변수로 테마 토큰 주입. */
+.dark .react-flow__minimap {
+  --xy-minimap-mask-background-color-default: color-mix(
+    in oklch,
+    var(--muted) 60%,
+    transparent
+  );
+  --xy-minimap-node-background-color-default: var(--muted-foreground);
+}
+
 .react-flow__handle::after {
   content: '';
   position: absolute;
