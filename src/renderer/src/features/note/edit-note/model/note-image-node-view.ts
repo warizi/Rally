@@ -26,11 +26,21 @@ class NoteImageNodeView implements NodeView {
     this.dom.classList.add('note-image-wrapper')
 
     this.img = document.createElement('img')
-    this.img.alt = (node.attrs.alt as string) || ''
+    const altRaw = (node.attrs.alt as string) || ''
+    this.img.alt = altRaw
     this.img.title = (node.attrs.title as string) || ''
     this.img.style.maxWidth = '100%'
     this.img.style.display = 'block'
     this.img.style.margin = '0.5rem 0'
+    // alt 에 `h=NNN` 메타가 있으면 max-height 적용. (resize handle 은 후속 PR)
+    const hMatch = altRaw.match(/(?:^|\s)h=(\d+)(?:\s|$)/)
+    if (hMatch) {
+      const h = parseInt(hMatch[1], 10)
+      if (!Number.isNaN(h) && h > 0) {
+        this.img.style.maxHeight = `${h}px`
+        this.img.style.height = 'auto'
+      }
+    }
 
     const src = node.attrs.src as string
     this.currentSrc = src
