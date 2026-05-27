@@ -47,7 +47,10 @@ export function useCsvSelection(
   // --- Scroll to focused cell ---
   useEffect(() => {
     if (!selection) return
-    rowVirtualizer.scrollToIndex(selection.focus.row, { align: 'auto' })
+    // row = -1 (헤더) 는 항상 보이므로 scroll 불필요
+    if (selection.focus.row >= 0) {
+      rowVirtualizer.scrollToIndex(selection.focus.row, { align: 'auto' })
+    }
     colVirtualizer.scrollToIndex(selection.focus.col, { align: 'auto' })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selection?.focus.row, selection?.focus.col])

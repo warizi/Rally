@@ -132,6 +132,53 @@ export function CsvTable({
     sel.setSelection({ anchor: focusCell, focus: focusCell })
   }, [focusCell]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // --- Commit-and-move 콜백 (EditableCell / EditableColumnHeader 에서 Tab / Shift+Enter 시 호출) ---
+  // 헤더 row = -1, 데이터 row 0..dataLength-1 통합 navigation. Tab 시 열 끝 도달하면 다음 행으로 wrap.
+  const handleCommitAndMove = useCallback(
+    (dRow: number, dCol: number) => {
+      if (!sel.selection) return
+      const { row, col } = sel.selection.focus
+      let newRow = row
+      let newCol = col
+      if (dCol !== 0) {
+        newCol = col + dCol
+        if (newCol >= headers.length) {
+          newCol = 0
+          newRow = row + 1
+        } else if (newCol < 0) {
+          newCol = headers.length - 1
+          newRow = row - 1
+        }
+      }
+      if (dRow !== 0) {
+        newRow = row + dRow
+      }
+      newRow = Math.max(-1, Math.min(data.length - 1, newRow))
+      newCol = Math.max(0, Math.min(headers.length - 1, newCol))
+      const next = { row: newRow, col: newCol }
+      sel.setSelection({ anchor: next, focus: next })
+    },
+    [sel, headers.length, data.length]
+  )
+
+  // --- 헤더 셀 mousedown: selection 만 (편집 모드 진입은 더블 클릭) ---
+  const handleHeaderMouseDown = useCallback(
+    (ci: number) => {
+      sel.setSelection({ anchor: { row: -1, col: ci }, focus: { row: -1, col: ci } })
+      sel.setEditingCell(null)
+      scrollRef.current?.focus()
+    },
+    [sel]
+  )
+
+  const handleHeaderStartEdit = useCallback(
+    (ci: number) => {
+      sel.setSelection({ anchor: { row: -1, col: ci }, focus: { row: -1, col: ci } })
+      sel.setEditingCell({ row: -1, col: ci })
+    },
+    [sel]
+  )
+
   // --- Computed ---
   const colTotalSize = colVirtualizer.getTotalSize()
   const rowTotalSize = rowVirtualizer.getTotalSize()
@@ -172,11 +219,19 @@ export function CsvTable({
           >
             {virtualCols.map((vc) => {
               const ci = vc.index
+              const isHeaderFocus =
+                sel.selection?.focus.row === -1 && sel.selection?.focus.col === ci
+              const isHeaderEditing =
+                sel.editingCell?.row === -1 && sel.editingCell?.col === ci
               return (
                 <div
                   key={`h_${ci}`}
-                  className="absolute top-0 flex items-center px-2 text-sm font-medium border-r border-b bg-muted hover:bg-muted-foreground/10"
+                  className={
+                    'absolute top-0 flex items-center px-2 text-sm font-medium border-r border-b bg-muted hover:bg-muted-foreground/10' +
+                    (isHeaderFocus && !isHeaderEditing ? ' ring-2 ring-primary ring-inset' : '')
+                  }
                   style={{ left: vc.start, width: vc.size, height: HEADER_HEIGHT }}
+                  onMouseDown={() => handleHeaderMouseDown(ci)}
                 >
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
@@ -186,6 +241,10 @@ export function CsvTable({
                           colIndex={ci}
                           onRename={onRenameColumn}
                           onRemove={onRemoveColumn}
+                          isEditing={isHeaderEditing}
+                          onStartEdit={() => handleHeaderStartEdit(ci)}
+                          onStopEdit={sel.handleStopEdit}
+                          onCommitAndMove={handleCommitAndMove}
                         />
                       </div>
                     </ContextMenuTrigger>
@@ -348,6 +407,7 @@ export function CsvTable({
                           onChange={(v) => onUpdateCell(ri, ci, v)}
                           isEditing={isEditing}
                           onStopEdit={sel.handleStopEdit}
+                          onCommitAndMove={handleCommitAndMove}
                         />
                       </div>
                     )

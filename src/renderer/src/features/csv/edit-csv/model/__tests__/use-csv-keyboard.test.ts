@@ -142,15 +142,27 @@ describe('Arrow 네비게이션', () => {
     })
   })
 
-  it('7 — 경계 (row=0에서 ArrowUp) → row 유지', () => {
+  it('7 — row=0 에서 ArrowUp → 헤더(row=-1) 로 이동', () => {
     const { result, setSelection } = setup({
       selection: { anchor: { row: 0, col: 0 }, focus: { row: 0, col: 0 } }
     })
     const e = createKeyEvent('ArrowUp')
     result.current.handleKeyDown(e)
     expect(setSelection).toHaveBeenCalledWith({
-      anchor: { row: 0, col: 0 },
-      focus: { row: 0, col: 0 }
+      anchor: { row: -1, col: 0 },
+      focus: { row: -1, col: 0 }
+    })
+  })
+
+  it('7b — row=-1 (헤더) 에서 ArrowUp → row 유지', () => {
+    const { result, setSelection } = setup({
+      selection: { anchor: { row: -1, col: 0 }, focus: { row: -1, col: 0 } }
+    })
+    const e = createKeyEvent('ArrowUp')
+    result.current.handleKeyDown(e)
+    expect(setSelection).toHaveBeenCalledWith({
+      anchor: { row: -1, col: 0 },
+      focus: { row: -1, col: 0 }
     })
   })
 
@@ -362,9 +374,21 @@ describe('Tab 네비게이션', () => {
     })
   })
 
-  it('27 — Shift+Tab (첫 행 + 첫 열) → 아무 동작 없음', () => {
+  it('27 — Shift+Tab (row=0 col=0) → 헤더 마지막 열로 이동', () => {
     const { result, setSelection } = setup({
       selection: { anchor: { row: 0, col: 0 }, focus: { row: 0, col: 0 } }
+    })
+    const e = createKeyEvent('Tab', { shiftKey: true })
+    result.current.handleKeyDown(e)
+    expect(setSelection).toHaveBeenCalledWith({
+      anchor: { row: -1, col: HEADERS_LENGTH - 1 },
+      focus: { row: -1, col: HEADERS_LENGTH - 1 }
+    })
+  })
+
+  it('27b — Shift+Tab (헤더 첫 열) → 아무 동작 없음', () => {
+    const { result, setSelection } = setup({
+      selection: { anchor: { row: -1, col: 0 }, focus: { row: -1, col: 0 } }
     })
     const e = createKeyEvent('Tab', { shiftKey: true })
     result.current.handleKeyDown(e)

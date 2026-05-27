@@ -1,4 +1,4 @@
-import { JSX, useState, useRef, useEffect } from 'react'
+import { JSX, useState, useRef, useEffect, useCallback } from 'react'
 import { Trash2 } from 'lucide-react'
 
 interface Props {
@@ -6,20 +6,62 @@ interface Props {
   colIndex: number
   onRename: (colIndex: number, name: string) => void
   onRemove: (colIndex: number) => void
+  /** 외부 제어: undefined 면 내부 state 유지 (하위 호환), 명시되면 controlled mode. */
+  isEditing?: boolean
+  /** 편집 종료 알림 (controlled mode 에서 사용). */
+  onStopEdit?: () => void
+  /** 편집 시작 요청 (double-click 등에서 호출 — controlled mode 일 때 부모가 처리). */
+  onStartEdit?: () => void
+  /** commit 직후 selection 을 dRow/dCol 만큼 이동. Tab/Shift+Tab/Shift+Enter 에서 사용. */
+  onCommitAndMove?: (dRow: number, dCol: number) => void
 }
 
-export function EditableColumnHeader({ name, colIndex, onRename, onRemove }: Props): JSX.Element {
-  const [editing, setEditing] = useState(false)
+export function EditableColumnHeader({
+  name,
+  colIndex,
+  onRename,
+  onRemove,
+  isEditing: externalEditing,
+  onStopEdit,
+  onStartEdit,
+  onCommitAndMove
+}: Props): JSX.Element {
+  const [internalEditing, setInternalEditing] = useState(false)
+  const editing = externalEditing ?? internalEditing
+  const isControlled = externalEditing !== undefined
+
   const [draft, setDraft] = useState(name)
   const inputRef = useRef<HTMLInputElement>(null)
+  const didCommitRef = useRef(false)
 
   useEffect(() => {
     setDraft(name)
   }, [name])
 
   useEffect(() => {
-    if (editing) inputRef.current?.focus()
+    if (editing) {
+      didCommitRef.current = false
+      inputRef.current?.focus()
+      inputRef.current?.select()
+    }
   }, [editing])
+
+  const stopEditing = useCallback(() => {
+    if (isControlled) onStopEdit?.()
+    else setInternalEditing(false)
+  }, [isControlled, onStopEdit])
+
+  const commit = useCallback(() => {
+    if (didCommitRef.current) return
+    didCommitRef.current = true
+    stopEditing()
+    if (draft !== name) onRename(colIndex, draft)
+  }, [draft, name, onRename, colIndex, stopEditing])
+
+  const startEditing = useCallback(() => {
+    if (isControlled) onStartEdit?.()
+    else setInternalEditing(true)
+  }, [isControlled, onStartEdit])
 
   if (editing) {
     return (
@@ -28,18 +70,33 @@ export function EditableColumnHeader({ name, colIndex, onRename, onRemove }: Pro
         size={1}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={() => {
-          setEditing(false)
-          if (draft !== name) onRename(colIndex, draft)
-        }}
+        onBlur={commit}
         onKeyDown={(e) => {
+          e.stopPropagation()
+          // Tab: commit + 옆 헤더 셀 이동
+          if (e.key === 'Tab') {
+            e.preventDefault()
+            commit()
+            onCommitAndMove?.(0, e.shiftKey ? -1 : 1)
+            return
+          }
+          if (e.key === 'Enter' && e.shiftKey) {
+            // 헤더에서 Shift+Enter → commit + 첫 데이터 행으로 이동 (dRow = +1 from row=-1 → row=0)
+            e.preventDefault()
+            commit()
+            onCommitAndMove?.(1, 0)
+            return
+          }
           if (e.key === 'Enter') {
-            setEditing(false)
-            if (draft !== name) onRename(colIndex, draft)
+            e.preventDefault()
+            commit()
+            return
           }
           if (e.key === 'Escape') {
-            setEditing(false)
+            e.preventDefault()
+            didCommitRef.current = true
             setDraft(name)
+            stopEditing()
           }
         }}
         className="w-full px-2 py-1 text-sm font-medium bg-muted border-0 outline-none ring-1 ring-primary"
@@ -49,7 +106,7 @@ export function EditableColumnHeader({ name, colIndex, onRename, onRemove }: Pro
 
   return (
     <div className="flex items-center gap-1 group/header">
-      <span className="flex-1 truncate cursor-text" onDoubleClick={() => setEditing(true)}>
+      <span className="flex-1 truncate cursor-text" onDoubleClick={startEditing}>
         {name}
       </span>
       <button
