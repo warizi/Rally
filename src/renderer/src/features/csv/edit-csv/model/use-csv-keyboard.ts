@@ -25,9 +25,11 @@ export function useCsvKeyboard(
 
       const mod = e.metaKey || e.ctrlKey
       const { row, col } = selection.focus
+      // 헤더 행(row = -1)은 데이터가 아니므로 clipboard / delete 류 차단
+      const isHeader = row === -1
 
       // Copy / Cut
-      if (mod && (e.key === 'c' || e.key === 'x') && selectionRange) {
+      if (mod && (e.key === 'c' || e.key === 'x') && selectionRange && !isHeader) {
         e.preventDefault()
         clipboard.copy()
         if (e.key === 'x') clipboard.deleteSelection()
@@ -48,8 +50,8 @@ export function useCsvKeyboard(
         return
       }
 
-      // Paste
-      if (mod && e.key === 'v') {
+      // Paste (헤더에서는 차단)
+      if (mod && e.key === 'v' && !isHeader) {
         e.preventDefault()
         clipboard.paste()
         return
@@ -58,7 +60,8 @@ export function useCsvKeyboard(
       switch (e.key) {
         case 'ArrowUp': {
           e.preventDefault()
-          const newRow = Math.max(0, row - 1)
+          // row = -1 → 헤더. 더 위로는 못 감.
+          const newRow = Math.max(-1, row - 1)
           if (e.shiftKey) {
             setSelection((prev) =>
               prev ? { anchor: prev.anchor, focus: { row: newRow, col } } : null
@@ -106,6 +109,15 @@ export function useCsvKeyboard(
         }
         case 'Enter':
           e.preventDefault()
+          // Shift+Enter → 한 행 아래로 selection 이동 (편집 진입 X).
+          // 헤더(row=-1) 에서는 row+1 = 0 → 첫 데이터 행, 바디 셀은 그 다음 행.
+          if (e.shiftKey) {
+            const newRow = Math.min(dataLength - 1, row + 1)
+            if (newRow !== row) {
+              setSelection({ anchor: { row: newRow, col }, focus: { row: newRow, col } })
+            }
+            break
+          }
           if (isSingleSelection) setEditingCell({ row, col })
           break
         case 'Escape':
@@ -115,7 +127,8 @@ export function useCsvKeyboard(
         case 'Backspace':
         case 'Delete': {
           e.preventDefault()
-          clipboard.deleteSelection()
+          // 헤더 행에서는 Delete 무시 (헤더 이름 비우려면 편집 진입 후 처리)
+          if (!isHeader) clipboard.deleteSelection()
           break
         }
         case 'Tab': {
@@ -123,7 +136,8 @@ export function useCsvKeyboard(
           if (e.shiftKey) {
             if (col > 0) {
               setSelection({ anchor: { row, col: col - 1 }, focus: { row, col: col - 1 } })
-            } else if (row > 0) {
+            } else if (row > -1) {
+              // row=0 에서 Shift+Tab → 헤더 마지막 열로
               const p: CellPos = { row: row - 1, col: headersLength - 1 }
               setSelection({ anchor: p, focus: p })
             }
