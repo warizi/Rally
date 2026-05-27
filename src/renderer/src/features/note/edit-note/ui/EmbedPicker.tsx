@@ -74,13 +74,15 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
   }, [open])
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
+    const q = query.trim().toLowerCase().normalize('NFC')
     if (!q) return allItems.slice(0, 50)
-    // 공백 분리한 모든 토큰이 title 에 포함되어야 매칭 (any position)
+    // 공백 분리한 모든 토큰이 title 에 포함되어야 매칭 (any position).
+    // macOS 파일명은 자주 NFD (자모 분리) 로 저장됨 — 사용자 입력 (NFC) 과
+    // 매칭 안 되는 문제 방지하기 위해 양쪽 normalize.
     const tokens = q.split(/\s+/).filter(Boolean)
     return allItems
       .filter((i) => {
-        const lower = i.title.toLowerCase()
+        const lower = i.title.toLowerCase().normalize('NFC')
         return tokens.every((t) => lower.includes(t))
       })
       .slice(0, 50)
