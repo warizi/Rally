@@ -109,6 +109,13 @@ export function useCsvKeyboard(
         }
         case 'Enter':
           e.preventDefault()
+          // 헤더 행에서 Shift+Enter → 첫 데이터 행 같은 열로 이동 (편집 진입 X)
+          if (isHeader && e.shiftKey) {
+            if (dataLength > 0) {
+              setSelection({ anchor: { row: 0, col }, focus: { row: 0, col } })
+            }
+            break
+          }
           if (isSingleSelection) setEditingCell({ row, col })
           break
         case 'Escape':
