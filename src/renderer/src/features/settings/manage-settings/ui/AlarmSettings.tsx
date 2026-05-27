@@ -50,7 +50,7 @@ export function AlarmSettings(): React.JSX.Element {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-base font-semibold mb-1">알림</h2>
+        <h2 className="text-base font-semibold mb-1">타이머 알림</h2>
         <p className="text-sm text-muted-foreground">
           타이머 종료에서 재생되는 알림 사운드를 선택합니다.
         </p>
