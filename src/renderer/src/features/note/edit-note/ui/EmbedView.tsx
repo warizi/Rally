@@ -62,22 +62,24 @@ export function EmbedView({ domain, entityId, height, onHeightChange }: Props): 
   return <FallbackEmbed label="알 수 없는 임베드" />
 }
 
-/** 하단 resize handle — mousedown + drag 로 height 갱신. */
+/** 하단 resize handle — mousedown + drag 로 height 갱신.
+ *
+ * 시작 height 는 wrapper 의 실제 렌더링 높이를 측정해서 사용 — currentHeight=0
+ * (콘텐츠 크기 모드) 일 때 fallback default 로 jump 하던 문제 방지. */
 function ResizeHandle({
-  currentHeight,
-  fallbackHeight,
   onHeightChange
 }: {
-  currentHeight: number
-  fallbackHeight: number
   onHeightChange: (h: number) => void
 }): React.JSX.Element {
   function handlePointerDown(e: React.PointerEvent<HTMLDivElement>): void {
     e.preventDefault()
     e.stopPropagation()
-    const startY = e.clientY
-    const startH = currentHeight > 0 ? currentHeight : fallbackHeight
     const target = e.currentTarget
+    // wrapper (handle 의 부모) 의 실제 height 측정 — h 메타 없이 콘텐츠 fit
+    // 상태에서도 정확한 시작점.
+    const wrapper = target.parentElement
+    const startH = wrapper ? Math.round(wrapper.getBoundingClientRect().height) : 200
+    const startY = e.clientY
     target.setPointerCapture(e.pointerId)
 
     function onMove(ev: PointerEvent): void {
@@ -252,11 +254,7 @@ function CsvEmbedView({
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       )}
-      <ResizeHandle
-        currentHeight={height}
-        fallbackHeight={400}
-        onHeightChange={onHeightChange}
-      />
+      <ResizeHandle onHeightChange={onHeightChange} />
     </div>
   )
 }
@@ -298,11 +296,7 @@ function PdfEmbedView({
           <div className="p-4 text-xs text-muted-foreground">PDF 로딩 중...</div>
         )}
       </div>
-      <ResizeHandle
-        currentHeight={height}
-        fallbackHeight={600}
-        onHeightChange={onHeightChange}
-      />
+      <ResizeHandle onHeightChange={onHeightChange} />
     </div>
   )
 }
