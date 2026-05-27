@@ -28,7 +28,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'general', label: '기본' },
   { id: 'display', label: '디스플레이' },
   { id: 'note', label: '노트' },
-  { id: 'alarm', label: '타이머 알림' },
+  { id: 'alarm', label: '알림' },
   { id: 'trash', label: '휴지통' },
   { id: 'ai', label: 'AI (Claude)' }
 ]
