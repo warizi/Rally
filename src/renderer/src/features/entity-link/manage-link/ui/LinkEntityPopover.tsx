@@ -194,6 +194,23 @@ export function LinkEntityPopover({
             ? availableTabs[(idx + 1) % availableTabs.length]
             : availableTabs[(idx - 1 + availableTabs.length) % availableTabs.length]
         setActiveTab(next)
+        // 탭 변경으로 이전 활성 wrapper 가 hidden 되며 focus 잃음. 새 활성 wrapper
+        // 가 mount + visible 된 이후 (다음 paint) 에 ref 통해 focus 회수.
+        requestAnimationFrame(() => {
+          listWrapperRef.current?.focus()
+        })
+        return
+      }
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        // 탭 변경 직후 (focusIndex = -1 로 리셋된 상태) 에서 ArrowDown 누르면
+        // 검색바로 복귀. 그 외 케이스는 다음 항목으로 이동.
+        if (focusIndex < 0) {
+          focusInputMode()
+          return
+        }
+        if (filtered.length === 0) return
+        setFocusIndex(focusIndex < filtered.length - 1 ? focusIndex + 1 : 0)
         return
       }
       if (filtered.length === 0) return
@@ -205,11 +222,6 @@ export function LinkEntityPopover({
         } else {
           setFocusIndex(focusIndex - 1)
         }
-        return
-      }
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setFocusIndex(focusIndex < filtered.length - 1 ? focusIndex + 1 : 0)
         return
       }
       if (e.key === 'Enter') {
