@@ -111,57 +111,63 @@ function CsvEmbedView({
   if (!csv) return <FallbackEmbed label="[삭제된 CSV]" />
   const parsed = parseCsv(content?.content ?? '')
   const widths = parseColumnWidths(content?.columnWidths)
+  const useFixedHeight = height > 0
+  const tableEl =
+    parsed.headers.length === 0 ? (
+      <div className="p-4 text-xs text-muted-foreground">빈 CSV</div>
+    ) : (
+      <table
+        className="text-xs border-collapse"
+        style={{ tableLayout: 'fixed', width: 'max-content' }}
+      >
+        <colgroup>
+          {parsed.headers.map((_, i) => (
+            <col key={i} style={{ width: widths[`col_${i}`] ?? DEFAULT_CSV_COL_WIDTH }} />
+          ))}
+        </colgroup>
+        <thead className="bg-muted/30 sticky top-0">
+          <tr>
+            {parsed.headers.map((h, i) => (
+              <th key={i} className="text-left px-2 py-1 border-b font-medium truncate">
+                {h}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {parsed.rows.map((row, ri) => (
+            <tr key={ri} className="hover:bg-muted/20">
+              {row.map((cell, ci) => (
+                <td key={ci} className="px-2 py-1 border-b truncate">
+                  {cell || ' '}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    )
+
   return (
     <div
       className="flex flex-col my-2 border rounded overflow-hidden bg-card"
-      style={{ height: height > 0 ? height : 400 }}
+      style={useFixedHeight ? { height } : undefined}
       contentEditable={false}
     >
       <div className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0">
         <Sheet className="size-3.5" />
         {csv.title}
       </div>
-      <ScrollArea className="flex-1 min-h-0">
-        {parsed.headers.length === 0 ? (
-          <div className="p-4 text-xs text-muted-foreground">빈 CSV</div>
-        ) : (
-          // CsvPage 와 유사: 각 셀 고정 폭 (columnWidths 또는 150px) → 합이
-          // 컨테이너 폭 초과 시 가로 스크롤. table-layout: fixed +
-          // width: max-content. (.milkdown .ProseMirror table { width: 100% }
-          // override 는 specificity 더 높은 global selector 로 처리)
-          <table
-            className="text-xs border-collapse"
-            style={{ tableLayout: 'fixed', width: 'max-content' }}
-          >
-            <colgroup>
-              {parsed.headers.map((_, i) => (
-                <col key={i} style={{ width: widths[`col_${i}`] ?? DEFAULT_CSV_COL_WIDTH }} />
-              ))}
-            </colgroup>
-            <thead className="bg-muted/30 sticky top-0">
-              <tr>
-                {parsed.headers.map((h, i) => (
-                  <th key={i} className="text-left px-2 py-1 border-b font-medium truncate">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {parsed.rows.map((row, ri) => (
-                <tr key={ri} className="hover:bg-muted/20">
-                  {row.map((cell, ci) => (
-                    <td key={ci} className="px-2 py-1 border-b truncate">
-                      {cell || ' '}
-                    </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      {useFixedHeight ? (
+        // h 메타 있으면 fixed height + ScrollArea (가로/세로)
+        <ScrollArea className="flex-1 min-h-0">
+          {tableEl}
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      ) : (
+        // h 메타 없으면 콘텐츠 height + 가로만 native scroll (세로 다 보임)
+        <div className="overflow-x-auto">{tableEl}</div>
+      )}
     </div>
   )
 }
