@@ -97,8 +97,8 @@ export function LinkEntityPopover({
 
   const filtered = useMemo(() => {
     const items = optionsByType[activeTab] ?? []
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
+    const q = search.trim().toLowerCase()
+    if (!q) return items
     return items.filter((item) => item.title.toLowerCase().includes(q))
   }, [optionsByType, activeTab, search])
 
