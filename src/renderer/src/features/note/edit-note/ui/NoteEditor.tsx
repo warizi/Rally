@@ -216,6 +216,12 @@ function MilkdownEditor({
     }
 
     const onDrop = async (e: DragEvent): Promise<void> => {
+      // ProseMirror 의 upload plugin 이 에디터 영역 안 드롭은 자체 처리한다
+      // (uploadConfig.uploader). wrapper 리스너까지 같은 이벤트로 또 삽입하면
+      // 이미지가 2 번 들어가므로, 에디터 내부 드롭은 skip 한다.
+      const target = e.target as HTMLElement | null
+      if (target?.closest('.ProseMirror')) return
+
       e.preventDefault()
       e.stopPropagation()
 
