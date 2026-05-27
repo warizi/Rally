@@ -8,7 +8,7 @@
  *
  * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
-import { useEffect, useMemo } from 'react'
+import { useEffect, useState } from 'react'
 import { FileText, Sheet, FileX, Image as ImageIcon } from 'lucide-react'
 import Papa from 'papaparse'
 import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
@@ -330,16 +330,19 @@ function ImageEmbedView({
   const { data: images = [] } = useImageFilesByWorkspace(workspaceId)
   const image = images.find((i) => i.id === entityId)
   const { data: content } = useReadImageContent(workspaceId, entityId)
-  // ArrayBuffer → blob URL. unmount / src 변경 시 revoke.
-  const blobUrl = useMemo(() => {
-    if (!content?.data) return null
-    return URL.createObjectURL(new Blob([content.data]))
-  }, [content?.data])
+  // ArrayBuffer → blob URL. URL.createObjectURL 은 side effect → useMemo 가
+  // 아닌 useEffect + state 로 처리 (ImageViewer 와 동일 패턴). Strict Mode
+  // 에서도 cleanup 매칭 정확.
+  const [blobUrl, setBlobUrl] = useState<string>('')
   useEffect(() => {
-    return () => {
-      if (blobUrl) URL.revokeObjectURL(blobUrl)
+    if (!content?.data || content.data.byteLength === 0) {
+      setBlobUrl('')
+      return
     }
-  }, [blobUrl])
+    const url = URL.createObjectURL(new Blob([content.data]))
+    setBlobUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [content?.data])
   if (!image) return <FallbackEmbed label="[삭제된 이미지]" />
   const useFixedHeight = height > 0
   return (
@@ -359,7 +362,7 @@ function ImageEmbedView({
         {blobUrl ? (
           <img
             src={blobUrl}
-            alt={image.title}
+            alt=""
             className="max-w-full max-h-full object-contain"
             draggable={false}
           />
