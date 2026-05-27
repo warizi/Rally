@@ -43,7 +43,6 @@ function TimerPage(): React.JSX.Element {
       header={
         <TabHeader
           title="타이머"
-          description="시간을 설정하고 카운트다운을 시작합니다."
           icon={TimerIcon}
           buttons={
             <Button
