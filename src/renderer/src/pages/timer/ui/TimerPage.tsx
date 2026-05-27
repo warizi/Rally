@@ -39,6 +39,7 @@ function TimerPage(): React.JSX.Element {
 
   return (
     <TabContainer
+      scrollable={false}
       header={
         <TabHeader
           title="타이머"
@@ -58,7 +59,7 @@ function TimerPage(): React.JSX.Element {
         />
       }
     >
-      <div className="flex flex-col items-center justify-center gap-8 px-6 max-w-3xl mx-auto min-h-full">
+      <div className="flex flex-col items-center justify-center gap-8 px-6 max-w-3xl mx-auto h-full">
         {/* 디지털 카운트 */}
         <div className="font-mono text-5xl @[400px]:text-6xl tabular-nums tracking-tight select-none">
           {pad(display.h)}:{pad(display.m)}:{pad(display.s)}
