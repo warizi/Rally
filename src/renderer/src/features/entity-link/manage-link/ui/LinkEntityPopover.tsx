@@ -127,7 +127,12 @@ export function LinkEntityPopover({
   const availableTabs = LINKABLE_TABS
 
   // --- Keyboard navigation ---
+  // 두 가지 focus 모드:
+  // - input mode: 검색 input 에 focus, focusIndex = -1, 좌우는 input cursor 이동
+  // - list mode: list wrapper 에 focus, focusIndex >= 0, 좌우는 탭 전환
   const [focusIndex, setFocusIndex] = useState(-1)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const listWrapperRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
   // Reset focus when filtered list or tab changes
@@ -143,8 +148,44 @@ export function LinkEntityPopover({
     el?.scrollIntoView({ block: 'nearest' })
   }, [focusIndex])
 
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
+  function focusInputMode(): void {
+    setFocusIndex(-1)
+    inputRef.current?.focus()
+  }
+
+  function focusListMode(initialIdx: number): void {
+    setFocusIndex(initialIdx)
+    listWrapperRef.current?.focus()
+  }
+
+  const handleInputKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // 좌우 = input cursor 이동 (default 동작 유지)
+      // 상하 = list 모드 전환
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        if (filtered.length === 0) return
+        const initialIdx = e.key === 'ArrowDown' ? 0 : filtered.length - 1
+        focusListMode(initialIdx)
+      }
+      // Tab / Enter / Escape / ArrowLeft / ArrowRight: input 기본 동작 유지
+    },
+    [filtered.length]
+  )
+
+  const handleListKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Tab') {
+        // list 모드에서 Tab 무시 (popup 내 element 간 순환 없음)
+        e.preventDefault()
+        return
+      }
+      if (e.key === 'Escape') {
+        // ESC → input 복귀 (popup 닫힘은 input 에서 ESC 누를 때만)
+        e.preventDefault()
+        focusInputMode()
+        return
+      }
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
         e.preventDefault()
         const idx = availableTabs.indexOf(activeTab)
@@ -156,17 +197,27 @@ export function LinkEntityPopover({
         return
       }
       if (filtered.length === 0) return
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        if (focusIndex <= 0) {
+          // 첫 항목에서 ArrowUp 더 누르면 input 복귀
+          focusInputMode()
+        } else {
+          setFocusIndex(focusIndex - 1)
+        }
+        return
+      }
       if (e.key === 'ArrowDown') {
         e.preventDefault()
-        setFocusIndex((i) => (i < filtered.length - 1 ? i + 1 : 0))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setFocusIndex((i) => (i > 0 ? i - 1 : filtered.length - 1))
-      } else if (e.key === 'Enter') {
+        setFocusIndex(focusIndex < filtered.length - 1 ? focusIndex + 1 : 0)
+        return
+      }
+      if (e.key === 'Enter') {
         e.preventDefault()
         if (focusIndex >= 0 && focusIndex < filtered.length) {
           handleToggleLink(filtered[focusIndex])
         }
+        return
       }
     },
     [filtered, focusIndex, handleToggleLink, availableTabs, activeTab]
@@ -185,7 +236,15 @@ export function LinkEntityPopover({
           </button>
         )}
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-[28rem] p-2">
+      <PopoverContent
+        align="start"
+        className="w-[28rem] p-2"
+        // popup 내부 spacebar 가 부모의 dnd-kit keyboard sensor 까지 bubble 되면
+        // popup 을 띄운 카드가 drag 모드로 전환되는 버그. popup 경계에서 차단.
+        onKeyDown={(e) => {
+          if (e.key === ' ') e.stopPropagation()
+        }}
+      >
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as LinkableEntityType)}>
           <TabsList className="w-full h-7 mb-2">
             {availableTabs.map((tab) => {
@@ -205,49 +264,57 @@ export function LinkEntityPopover({
           </TabsList>
 
           <Input
+            ref={inputRef}
             placeholder="검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={handleKeyDown}
+            onKeyDown={handleInputKeyDown}
             className="mb-2 h-7 text-xs"
           />
 
           {availableTabs.map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0">
-              <ScrollArea className="h-[200px]">
-                <div ref={tab === activeTab ? listRef : undefined}>
-                  {filtered.length === 0 ? (
-                    <div className="text-xs text-muted-foreground text-center py-4">
-                      항목이 없습니다
-                    </div>
-                  ) : (
-                    filtered.map((item, i) => {
-                      const isLinked = linkedSet.has(`${item.type}:${item.id}`)
-                      const isFocused = focusIndex === i
-                      return (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => handleToggleLink(item)}
-                          onMouseEnter={() => setFocusIndex(i)}
-                          className={`
+              <div
+                ref={tab === activeTab ? listWrapperRef : undefined}
+                tabIndex={-1}
+                onKeyDown={tab === activeTab ? handleListKeyDown : undefined}
+                className="outline-none"
+              >
+                <ScrollArea className="h-[200px]">
+                  <div ref={tab === activeTab ? listRef : undefined}>
+                    {filtered.length === 0 ? (
+                      <div className="text-xs text-muted-foreground text-center py-4">
+                        항목이 없습니다
+                      </div>
+                    ) : (
+                      filtered.map((item, i) => {
+                        const isLinked = linkedSet.has(`${item.type}:${item.id}`)
+                        const isFocused = focusIndex === i
+                        return (
+                          <button
+                            key={item.id}
+                            type="button"
+                            onClick={() => handleToggleLink(item)}
+                            onMouseEnter={() => setFocusIndex(i)}
+                            className={`
                             w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
                             ${isFocused ? (isLinked ? 'bg-destructive/10' : 'bg-accent') : ''}
                             ${!isFocused && isLinked ? 'hover:bg-destructive/10' : ''}
                             ${!isFocused && !isLinked ? 'hover:bg-accent' : ''}
                             cursor-pointer
                           `}
-                        >
-                          {isLinked && <Check className="size-3 text-primary shrink-0" />}
-                          <span className={`truncate ${isLinked ? 'text-muted-foreground' : ''}`}>
-                            {item.title}
-                          </span>
-                        </button>
-                      )
-                    })
-                  )}
-                </div>
-              </ScrollArea>
+                          >
+                            {isLinked && <Check className="size-3 text-primary shrink-0" />}
+                            <span className={`truncate ${isLinked ? 'text-muted-foreground' : ''}`}>
+                              {item.title}
+                            </span>
+                          </button>
+                        )
+                      })
+                    )}
+                  </div>
+                </ScrollArea>
+              </div>
             </TabsContent>
           ))}
         </Tabs>
