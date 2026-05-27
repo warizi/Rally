@@ -109,10 +109,12 @@ export function useCsvKeyboard(
         }
         case 'Enter':
           e.preventDefault()
-          // 헤더 행에서 Shift+Enter → 첫 데이터 행 같은 열로 이동 (편집 진입 X)
-          if (isHeader && e.shiftKey) {
-            if (dataLength > 0) {
-              setSelection({ anchor: { row: 0, col }, focus: { row: 0, col } })
+          // Shift+Enter → 한 행 아래로 selection 이동 (편집 진입 X).
+          // 헤더(row=-1) 에서는 row+1 = 0 → 첫 데이터 행, 바디 셀은 그 다음 행.
+          if (e.shiftKey) {
+            const newRow = Math.min(dataLength - 1, row + 1)
+            if (newRow !== row) {
+              setSelection({ anchor: { row: newRow, col }, focus: { row: newRow, col } })
             }
             break
           }
