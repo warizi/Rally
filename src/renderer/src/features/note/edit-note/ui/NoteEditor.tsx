@@ -36,6 +36,8 @@ import {
   RALLY_EMBED_MDAST_TYPE
 } from '../model/note-embed-schema'
 import { createNoteEmbedNodeViewFactory } from '../model/note-embed-node-view'
+import { embedPickerPlugin } from '../model/embed-picker-plugin'
+import { EmbedPicker } from './EmbedPicker'
 import { noteToolbarStatePlugin } from '../model/note-toolbar-state-plugin'
 import { toggleColorCommand } from '../model/note-toolbar-commands'
 import { NoteSearchBar } from './NoteSearchBar'
@@ -195,6 +197,7 @@ function MilkdownEditor({
       .use(colorMarkSchema)
       .use(toggleColorCommand)
       .use(rallyEmbedSchema)
+      .use(embedPickerPlugin)
       .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
       .use($view(rallyEmbedSchema.node, () => createNoteEmbedNodeViewFactory(workspaceId)))
@@ -296,6 +299,7 @@ function MilkdownEditor({
       </div>
       <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
       <NoteFloatingToolbar editorEl={toolbarHostEl} />
+      <EmbedPicker workspaceId={workspaceId} />
     </div>
   )
 }
