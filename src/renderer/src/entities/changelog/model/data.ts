@@ -6,6 +6,19 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.13.2',
+    date: '2026-05-27',
+    changes: [
+      {
+        type: 'fix',
+        title:
+          '외부에서 워크스페이스 폴더 안으로 파일 이동 시 탐색기에 바로 반영되지 않던 문제 수정',
+        description:
+          '외부에서 워크스페이스 폴더 안으로 파일을 이동했을 때 탐색기에 바로 반영되지 않던 문제가 수정되었습니다. 이제 외부에서 파일이 이동되면 탐색기가 자동으로 갱신되어 새 위치에 파일이 표시됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.13.1',
     date: '2026-05-27',
     changes: [
