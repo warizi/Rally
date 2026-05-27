@@ -39,7 +39,10 @@ vi.mock('../../lib/fs-utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/fs-utils')>()
   return {
     ...actual,
-    readMdFilesRecursiveAsync: vi.fn().mockResolvedValue([])
+    readMdFilesRecursiveAsync: vi.fn().mockResolvedValue([]),
+    readCsvFilesRecursiveAsync: vi.fn().mockResolvedValue([]),
+    readPdfFilesRecursiveAsync: vi.fn().mockResolvedValue([]),
+    readImageFilesRecursiveAsync: vi.fn().mockResolvedValue([])
   }
 })
 
@@ -47,6 +50,12 @@ vi.mock('../../lib/fs-utils', async (importOriginal) => {
 // dynamic import로 mock이 적용된 모듈 로드
 const { workspaceWatcher } = await import('../workspace-watcher')
 const { applyEvents } = await import('../workspace-watcher/event-processor')
+const folderModule = await import('../folder')
+const fsUtilsModule = await import('../../lib/fs-utils')
+const { csvFileRepository } = await import('../../repositories/csv-file')
+const { pdfFileRepository } = await import('../../repositories/pdf-file')
+const { imageFileRepository } = await import('../../repositories/image-file')
+const { folderRepository } = await import('../../repositories/folder')
 
 // ─── 픽스처 헬퍼 ─────────────────────────────────────────────
 const WS_ID = 'ws-test'
@@ -244,5 +253,117 @@ describe('handleEvents — pendingEvents 누적', () => {
     watcher.activeWorkspaceId = null
     watcher.stop()
     expect(watcher.pendingEvents).toHaveLength(0)
+  })
+})
+
+// ─── applyEvents: 외부 폴더 이동 시 subtree 재귀 스캔 ─────────
+// macOS FSEvents 등 일부 FS watcher 는 폴더가 한꺼번에 이동돼 들어올 때 최상위
+// 폴더의 create 이벤트만 emit 하고 내부 파일/서브폴더 이벤트는 생략한다.
+// event-processor 는 폴더 create 시 직접 subtree 를 스캔해 보완한다.
+describe('applyEvents — 폴더 create 시 subtree 재귀 스캔', () => {
+  beforeEach(() => {
+    // 폴더 create 이벤트에 대해 stat.isDirectory() = true 반환
+    statMock().mockResolvedValue({
+      isFile: () => false,
+      isDirectory: () => true
+    } as unknown as fs.Stats)
+  })
+
+  it('Case A: 폴더 create + 내부 .md 파일 create 가 모두 emit 된 경우 — 중복 없이 처리', async () => {
+    vi.mocked(folderModule.readDirRecursiveAsync).mockResolvedValue([])
+    vi.mocked(fsUtilsModule.readMdFilesRecursiveAsync).mockResolvedValue([
+      { name: 'note.md', relativePath: 'mybox/note.md' }
+    ])
+    // 파일 create 이벤트 처리할 때 stat.isFile()=true 가 필요하므로 동적 분기
+    statMock().mockImplementation(async (absPath: string) => {
+      if (absPath.endsWith('.md')) {
+        return { isFile: () => true, isDirectory: () => false } as fs.Stats
+      }
+      return { isFile: () => false, isDirectory: () => true } as fs.Stats
+    })
+
+    await applyEvents(WS_ID, WS_PATH, [
+      makeEvent('create', 'mybox'),
+      makeEvent('create', 'mybox/note.md')
+    ])
+
+    const folders = folderRepository.findByWorkspaceId(WS_ID)
+    expect(folders.map((f) => f.relativePath)).toContain('mybox')
+    const notes = noteRepository.findByWorkspaceId(WS_ID)
+    const noteRows = notes.filter((n) => n.relativePath === 'mybox/note.md')
+    expect(noteRows).toHaveLength(1)
+    expect(noteRows[0].folderId).toBe(folders.find((f) => f.relativePath === 'mybox')?.id)
+  })
+
+  it('Case B: 폴더 create 이벤트만 emit + 내부에 .md 파일 존재 — 스캔으로 보완 등록', async () => {
+    vi.mocked(folderModule.readDirRecursiveAsync).mockResolvedValue([])
+    vi.mocked(fsUtilsModule.readMdFilesRecursiveAsync).mockResolvedValue([
+      { name: 'a.md', relativePath: 'mybox/a.md' },
+      { name: 'b.md', relativePath: 'mybox/b.md' }
+    ])
+
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'mybox')])
+
+    const folder = folderRepository.findByRelativePath(WS_ID, 'mybox')
+    expect(folder).toBeDefined()
+    const notes = noteRepository.findByWorkspaceId(WS_ID).filter((n) =>
+      n.relativePath.startsWith('mybox/')
+    )
+    expect(notes.map((n) => n.relativePath).sort()).toEqual(['mybox/a.md', 'mybox/b.md'])
+    expect(notes.every((n) => n.folderId === folder?.id)).toBe(true)
+  })
+
+  it('Case C: 중첩 서브폴더 + 다양한 파일 타입 — folder/csv/pdf/image record 모두 생성', async () => {
+    vi.mocked(folderModule.readDirRecursiveAsync).mockResolvedValue([
+      { name: 'sub', relativePath: 'mybox/sub' }
+    ])
+    vi.mocked(fsUtilsModule.readMdFilesRecursiveAsync).mockResolvedValue([
+      { name: 'note.md', relativePath: 'mybox/note.md' }
+    ])
+    vi.mocked(fsUtilsModule.readCsvFilesRecursiveAsync).mockResolvedValue([
+      { name: 'data.csv', relativePath: 'mybox/sub/data.csv' }
+    ])
+    vi.mocked(fsUtilsModule.readPdfFilesRecursiveAsync).mockResolvedValue([
+      { name: 'doc.pdf', relativePath: 'mybox/doc.pdf' }
+    ])
+    vi.mocked(fsUtilsModule.readImageFilesRecursiveAsync).mockResolvedValue([
+      { name: 'pic.png', relativePath: 'mybox/sub/pic.png' }
+    ])
+
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'mybox')])
+
+    expect(folderRepository.findByRelativePath(WS_ID, 'mybox')).toBeDefined()
+    expect(folderRepository.findByRelativePath(WS_ID, 'mybox/sub')).toBeDefined()
+    expect(noteRepository.findByRelativePath(WS_ID, 'mybox/note.md')).toBeDefined()
+    expect(csvFileRepository.findByRelativePath(WS_ID, 'mybox/sub/data.csv')).toBeDefined()
+    expect(pdfFileRepository.findByRelativePath(WS_ID, 'mybox/doc.pdf')).toBeDefined()
+    expect(imageFileRepository.findByRelativePath(WS_ID, 'mybox/sub/pic.png')).toBeDefined()
+
+    // 서브폴더 내 파일의 folderId 는 해당 서브폴더 record 와 매칭
+    const subFolder = folderRepository.findByRelativePath(WS_ID, 'mybox/sub')
+    const csv = csvFileRepository.findByRelativePath(WS_ID, 'mybox/sub/data.csv')
+    expect(csv?.folderId).toBe(subFolder?.id)
+  })
+
+  it('Case D: 스캔 시 이미 DB 에 등록된 파일은 중복 insert 안 함', async () => {
+    insertFolder('f-mybox', 'mybox')
+    insertNote('n-existing', 'mybox/already.md', 'f-mybox')
+
+    vi.mocked(folderModule.readDirRecursiveAsync).mockResolvedValue([])
+    vi.mocked(fsUtilsModule.readMdFilesRecursiveAsync).mockResolvedValue([
+      { name: 'already.md', relativePath: 'mybox/already.md' },
+      { name: 'new.md', relativePath: 'mybox/new.md' }
+    ])
+
+    // mybox 폴더는 이미 DB 에 있으므로 create 이벤트가 와도 폴더 record 신규 생성 안 함
+    // 하지만 scan 은 여전히 돌면서 누락 파일 보완
+    await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'mybox')])
+
+    const all = noteRepository.findByWorkspaceId(WS_ID).filter((n) =>
+      n.relativePath.startsWith('mybox/')
+    )
+    expect(all.map((n) => n.relativePath).sort()).toEqual(['mybox/already.md', 'mybox/new.md'])
+    // 기존 record 의 id 유지 확인
+    expect(noteRepository.findByRelativePath(WS_ID, 'mybox/already.md')?.id).toBe('n-existing')
   })
 })
