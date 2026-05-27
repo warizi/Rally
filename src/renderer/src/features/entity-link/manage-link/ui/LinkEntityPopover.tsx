@@ -3,6 +3,7 @@ import { Check, Link } from 'lucide-react'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Input } from '@shared/ui/input'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@shared/ui/tabs'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { useTodosByWorkspace } from '@entities/todo'
 import { useAllSchedulesByWorkspace } from '@entities/schedule'
 import { useNotesByWorkspace } from '@entities/note'
@@ -213,41 +214,40 @@ export function LinkEntityPopover({
 
           {availableTabs.map((tab) => (
             <TabsContent key={tab} value={tab} className="mt-0">
-              <div
-                ref={tab === activeTab ? listRef : undefined}
-                className="h-[200px] overflow-y-auto"
-              >
-                {filtered.length === 0 ? (
-                  <div className="text-xs text-muted-foreground text-center py-4">
-                    항목이 없습니다
-                  </div>
-                ) : (
-                  filtered.map((item, i) => {
-                    const isLinked = linkedSet.has(`${item.type}:${item.id}`)
-                    const isFocused = focusIndex === i
-                    return (
-                      <button
-                        key={item.id}
-                        type="button"
-                        onClick={() => handleToggleLink(item)}
-                        onMouseEnter={() => setFocusIndex(i)}
-                        className={`
-                          w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
-                          ${isFocused ? (isLinked ? 'bg-destructive/10' : 'bg-accent') : ''}
-                          ${!isFocused && isLinked ? 'hover:bg-destructive/10' : ''}
-                          ${!isFocused && !isLinked ? 'hover:bg-accent' : ''}
-                          cursor-pointer
-                        `}
-                      >
-                        {isLinked && <Check className="size-3 text-primary shrink-0" />}
-                        <span className={`truncate ${isLinked ? 'text-muted-foreground' : ''}`}>
-                          {item.title}
-                        </span>
-                      </button>
-                    )
-                  })
-                )}
-              </div>
+              <ScrollArea className="h-[200px]">
+                <div ref={tab === activeTab ? listRef : undefined}>
+                  {filtered.length === 0 ? (
+                    <div className="text-xs text-muted-foreground text-center py-4">
+                      항목이 없습니다
+                    </div>
+                  ) : (
+                    filtered.map((item, i) => {
+                      const isLinked = linkedSet.has(`${item.type}:${item.id}`)
+                      const isFocused = focusIndex === i
+                      return (
+                        <button
+                          key={item.id}
+                          type="button"
+                          onClick={() => handleToggleLink(item)}
+                          onMouseEnter={() => setFocusIndex(i)}
+                          className={`
+                            w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
+                            ${isFocused ? (isLinked ? 'bg-destructive/10' : 'bg-accent') : ''}
+                            ${!isFocused && isLinked ? 'hover:bg-destructive/10' : ''}
+                            ${!isFocused && !isLinked ? 'hover:bg-accent' : ''}
+                            cursor-pointer
+                          `}
+                        >
+                          {isLinked && <Check className="size-3 text-primary shrink-0" />}
+                          <span className={`truncate ${isLinked ? 'text-muted-foreground' : ''}`}>
+                            {item.title}
+                          </span>
+                        </button>
+                      )
+                    })
+                  )}
+                </div>
+              </ScrollArea>
             </TabsContent>
           ))}
         </Tabs>
