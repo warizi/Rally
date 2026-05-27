@@ -1,17 +1,15 @@
 /**
- * 노트 임베드 NodeView (`rally_embed` ProseMirror 노드).
+ * 노트 임베드 NodeView — host DOM 생성 + portal store 등록.
  *
- * 4 도메인 (note/csv/pdf) 을 한 NodeView 에서 처리. domain 별 분기:
- *  - note  → 제목 링크 (id 로 noteRepository.findById → 제목 fetch)
- *  - csv   → 읽기전용 표 컴포넌트 (h 메타로 컨테이너 height + 내부 스크롤)
- *  - pdf   → 툴바 없는 PDF 렌더러 (h 메타로 컨테이너 height + 내부 스크롤)
- *
- * 이번 1단계 구현: domain 별 placeholder 렌더링 (한 줄 인라인 박스, "embed: domain:id").
- * 다음 단계에서 React Portal 로 각 도메인 컴포넌트 wiring.
+ * NoteEditor 의 EmbedPortals 컴포넌트가 store 를 구독해서 host 안에 React
+ * 컴포넌트 (EmbedView) 를 portal mount.
  */
 import type { NodeView } from '@milkdown/kit/prose/view'
 import type { Node } from '@milkdown/kit/prose/model'
 import type { EditorView } from '@milkdown/kit/prose/view'
+import { nanoid } from 'nanoid'
+import { useEmbedPortalStore } from './embed-portal-store'
+import type { EmbedDomain } from './note-embed-schema'
 
 export function createNoteEmbedNodeViewFactory(workspaceId: string) {
   return (node: Node, view: EditorView, getPos: () => number | undefined): NoteEmbedNodeView => {
@@ -21,6 +19,7 @@ export function createNoteEmbedNodeViewFactory(workspaceId: string) {
 
 class NoteEmbedNodeView implements NodeView {
   dom: HTMLElement
+  private portalId: string
 
   constructor(
     private node: Node,
@@ -28,28 +27,40 @@ class NoteEmbedNodeView implements NodeView {
     _getPos: () => number | undefined,
     private workspaceId: string
   ) {
-    void this.workspaceId // 추후 단계에서 사용
+    void this.workspaceId // workspaceId 는 EmbedView 내부 hook 에서 useCurrentWorkspaceStore 로 가져옴
+    this.portalId = nanoid()
     this.dom = document.createElement('span')
-    this.render()
+    this.dom.setAttribute('data-rally-embed', 'true')
+    this.dom.setAttribute('data-portal-id', this.portalId)
+    this.dom.className = 'rally-embed-host'
+    this.dom.style.display = 'inline-block'
+    this.dom.style.verticalAlign = 'baseline'
+    this.register()
   }
 
-  private render(): void {
-    const domain = this.node.attrs.domain as string
-    const entityId = this.node.attrs.entityId as string
-    const height = (this.node.attrs.height as number) || 0
-    this.dom.setAttribute('data-rally-embed', 'true')
-    this.dom.setAttribute('data-domain', domain)
-    this.dom.setAttribute('data-entity-id', entityId)
-    if (height > 0) this.dom.setAttribute('data-height', String(height))
-    this.dom.className = 'rally-embed rally-embed-placeholder'
-    this.dom.textContent = `embed: ${domain}:${entityId}${height > 0 ? `|h=${height}` : ''}`
+  private register(): void {
+    useEmbedPortalStore.getState().register({
+      portalId: this.portalId,
+      host: this.dom,
+      domain: this.node.attrs.domain as EmbedDomain,
+      entityId: this.node.attrs.entityId as string,
+      height: (this.node.attrs.height as number) || 0
+    })
   }
 
   update(node: Node): boolean {
     if (node.type.name !== this.node.type.name) return false
     this.node = node
-    this.render()
+    useEmbedPortalStore.getState().updateEntry(this.portalId, {
+      domain: node.attrs.domain as EmbedDomain,
+      entityId: node.attrs.entityId as string,
+      height: (node.attrs.height as number) || 0
+    })
     return true
+  }
+
+  destroy(): void {
+    useEmbedPortalStore.getState().unregister(this.portalId)
   }
 
   stopEvent(): boolean {
