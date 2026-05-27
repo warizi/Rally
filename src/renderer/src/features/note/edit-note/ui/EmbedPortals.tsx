@@ -13,7 +13,12 @@ export function EmbedPortals(): React.JSX.Element {
     <>
       {Object.values(entries).map((e) =>
         createPortal(
-          <EmbedView domain={e.domain} entityId={e.entityId} height={e.height} />,
+          <EmbedView
+            domain={e.domain}
+            entityId={e.entityId}
+            height={e.height}
+            onHeightChange={e.onHeightChange}
+          />,
           e.host,
           e.portalId
         )

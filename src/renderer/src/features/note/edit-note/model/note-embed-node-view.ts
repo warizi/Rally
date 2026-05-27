@@ -23,8 +23,8 @@ class NoteEmbedNodeView implements NodeView {
 
   constructor(
     private node: Node,
-    _view: EditorView,
-    _getPos: () => number | undefined,
+    private view: EditorView,
+    private getPos: () => number | undefined,
     private workspaceId: string
   ) {
     void this.workspaceId // workspaceId 는 EmbedView 내부 hook 에서 useCurrentWorkspaceStore 로 가져옴
@@ -46,13 +46,24 @@ class NoteEmbedNodeView implements NodeView {
     this.register()
   }
 
+  private handleHeightChange = (newHeight: number): void => {
+    const pos = this.getPos()
+    if (typeof pos !== 'number') return
+    const tr = this.view.state.tr.setNodeMarkup(pos, undefined, {
+      ...this.node.attrs,
+      height: Math.max(0, Math.round(newHeight))
+    })
+    this.view.dispatch(tr)
+  }
+
   private register(): void {
     useEmbedPortalStore.getState().register({
       portalId: this.portalId,
       host: this.dom,
       domain: this.node.attrs.domain as EmbedDomain,
       entityId: this.node.attrs.entityId as string,
-      height: (this.node.attrs.height as number) || 0
+      height: (this.node.attrs.height as number) || 0,
+      onHeightChange: this.handleHeightChange
     })
   }
 

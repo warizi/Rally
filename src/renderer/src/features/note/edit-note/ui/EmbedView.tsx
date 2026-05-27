@@ -35,16 +35,72 @@ interface Props {
   domain: EmbedDomain
   entityId: string
   height: number
+  onHeightChange: (h: number) => void
 }
 
-export function EmbedView({ domain, entityId, height }: Props): React.JSX.Element {
+export function EmbedView({ domain, entityId, height, onHeightChange }: Props): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId) ?? ''
   if (domain === 'note') return <NoteEmbedView workspaceId={workspaceId} entityId={entityId} />
   if (domain === 'csv')
-    return <CsvEmbedView workspaceId={workspaceId} entityId={entityId} height={height} />
+    return (
+      <CsvEmbedView
+        workspaceId={workspaceId}
+        entityId={entityId}
+        height={height}
+        onHeightChange={onHeightChange}
+      />
+    )
   if (domain === 'pdf')
-    return <PdfEmbedView workspaceId={workspaceId} entityId={entityId} height={height} />
+    return (
+      <PdfEmbedView
+        workspaceId={workspaceId}
+        entityId={entityId}
+        height={height}
+        onHeightChange={onHeightChange}
+      />
+    )
   return <FallbackEmbed label="알 수 없는 임베드" />
+}
+
+/** 하단 resize handle — mousedown + drag 로 height 갱신. */
+function ResizeHandle({
+  currentHeight,
+  fallbackHeight,
+  onHeightChange
+}: {
+  currentHeight: number
+  fallbackHeight: number
+  onHeightChange: (h: number) => void
+}): React.JSX.Element {
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>): void {
+    e.preventDefault()
+    e.stopPropagation()
+    const startY = e.clientY
+    const startH = currentHeight > 0 ? currentHeight : fallbackHeight
+    const target = e.currentTarget
+    target.setPointerCapture(e.pointerId)
+
+    function onMove(ev: PointerEvent): void {
+      const dy = ev.clientY - startY
+      const next = Math.max(120, startH + dy)
+      onHeightChange(next)
+    }
+    function onUp(ev: PointerEvent): void {
+      target.removeEventListener('pointermove', onMove)
+      target.removeEventListener('pointerup', onUp)
+      target.releasePointerCapture(ev.pointerId)
+    }
+    target.addEventListener('pointermove', onMove)
+    target.addEventListener('pointerup', onUp)
+  }
+
+  return (
+    <div
+      onPointerDown={handlePointerDown}
+      className="h-1.5 cursor-ns-resize bg-muted/40 hover:bg-primary/50 transition-colors shrink-0"
+      contentEditable={false}
+    />
+  )
 }
 
 function FallbackEmbed({ label }: { label: string }): React.JSX.Element {
@@ -119,11 +175,13 @@ const DEFAULT_CSV_COL_WIDTH = 150
 function CsvEmbedView({
   workspaceId,
   entityId,
-  height
+  height,
+  onHeightChange
 }: {
   workspaceId: string
   entityId: string
   height: number
+  onHeightChange: (h: number) => void
 }): React.JSX.Element {
   const { data: csvs = [] } = useCsvFilesByWorkspace(workspaceId)
   const csv = csvs.find((c) => c.id === entityId)
@@ -189,13 +247,16 @@ function CsvEmbedView({
         </ScrollArea>
       ) : (
         // h 메타 없으면 콘텐츠 height + max 500 + ScrollArea (가로/세로).
-        // viewportClassName 으로 Viewport 에 max-h 적용 → 콘텐츠 작으면
-        // 콘텐츠 크기, 크면 500 까지 잘리며 내부 스크롤.
         <ScrollArea viewportClassName="max-h-[500px]">
           {tableEl}
           <ScrollBar orientation="horizontal" />
         </ScrollArea>
       )}
+      <ResizeHandle
+        currentHeight={height}
+        fallbackHeight={400}
+        onHeightChange={onHeightChange}
+      />
     </div>
   )
 }
@@ -205,11 +266,13 @@ function CsvEmbedView({
 function PdfEmbedView({
   workspaceId,
   entityId,
-  height
+  height,
+  onHeightChange
 }: {
   workspaceId: string
   entityId: string
   height: number
+  onHeightChange: (h: number) => void
 }): React.JSX.Element {
   const { data: pdfs = [] } = usePdfFilesByWorkspace(workspaceId)
   const pdf = pdfs.find((p) => p.id === entityId)
@@ -235,6 +298,11 @@ function PdfEmbedView({
           <div className="p-4 text-xs text-muted-foreground">PDF 로딩 중...</div>
         )}
       </div>
+      <ResizeHandle
+        currentHeight={height}
+        fallbackHeight={600}
+        onHeightChange={onHeightChange}
+      />
     </div>
   )
 }

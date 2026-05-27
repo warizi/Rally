@@ -16,6 +16,8 @@ export interface PortalEntry {
   domain: EmbedDomain
   entityId: string
   height: number
+  /** resize handle drag 종료 시 attrs.height 갱신. NodeView 가 정의. */
+  onHeightChange: (newHeight: number) => void
 }
 
 interface PortalState {
