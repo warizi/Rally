@@ -161,9 +161,14 @@ export function CsvTable({
     [sel, headers.length, data.length]
   )
 
-  // --- 헤더 셀 mousedown: selection 만 (편집 모드 진입은 더블 클릭) ---
+  // --- 헤더 셀 mousedown: selection 만 (편집 모드 진입은 더블 클릭 / Enter) ---
+  // preventDefault: 브라우저 mousedown 기본 동작이 클릭한 element (헤더 div, focusable 아님)
+  // 로 focus 를 옮기려 하므로, scrollRef.focus() 가 그 직후 무효화될 수 있다. preventDefault
+  // 로 기본 focus 이동을 막고 명시적으로 scrollRef 에 focus.
   const handleHeaderMouseDown = useCallback(
-    (ci: number) => {
+    (ci: number, e: React.MouseEvent) => {
+      if (e.button !== 0) return
+      e.preventDefault()
       sel.setSelection({ anchor: { row: -1, col: ci }, focus: { row: -1, col: ci } })
       sel.setEditingCell(null)
       scrollRef.current?.focus()
@@ -231,7 +236,7 @@ export function CsvTable({
                     (isHeaderFocus && !isHeaderEditing ? ' ring-2 ring-primary ring-inset' : '')
                   }
                   style={{ left: vc.start, width: vc.size, height: HEADER_HEIGHT }}
-                  onMouseDown={() => handleHeaderMouseDown(ci)}
+                  onMouseDown={(e) => handleHeaderMouseDown(ci, e)}
                 >
                   <ContextMenu>
                     <ContextMenuTrigger asChild>
