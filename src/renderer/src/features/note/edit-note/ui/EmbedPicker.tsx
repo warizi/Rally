@@ -103,7 +103,8 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
       const node = embedType.create({
         domain: item.domain,
         entityId: item.id,
-        height: item.domain === 'note' ? 0 : item.domain === 'csv' ? 400 : 600
+        // 기본 height: csv/note 는 0 (콘텐츠 크기), pdf 는 600 (한 페이지 정도)
+        height: item.domain === 'pdf' ? 600 : 0
       })
       const tr = view.state.tr
         .replaceRangeWith(range.from, range.to, node)

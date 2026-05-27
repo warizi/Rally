@@ -8,6 +8,7 @@
  * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
 import { FileText, Sheet, FileX } from 'lucide-react'
+import Papa from 'papaparse'
 import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
 import { useNotesByWorkspace } from '@entities/note'
 import { useCsvFilesByWorkspace, useReadCsvContent } from '@entities/csv-file'
@@ -68,16 +69,21 @@ function NoteEmbedView({
 
 // ─── csv ───────────────────────────────────────────────
 
-/** 단순 csv 파서 — quote/escape 무시한 split 기반. 임베드 표시용.
- * - 파일 끝의 trailing empty line 만 제거 (중간 빈 줄은 행으로 유지)
- * - 행의 셀 수가 헤더보다 적으면 빈 셀로 패딩 → row height 일관 */
+/** CSV 파서 — Papa Parse 사용 (use-csv-editor 와 동일).
+ * - quote / escape 정상 처리
+ * - skipEmptyLines: true (중간 빈 줄 제외) — useCsvEditor 패턴 일치
+ * - 부족한 셀은 빈 셀로 패딩 → row height 일관 */
 function parseCsv(content: string): { headers: string[]; rows: string[][] } {
-  const lines = content.split(/\r?\n/)
-  while (lines.length > 0 && lines[lines.length - 1] === '') lines.pop()
-  if (lines.length === 0) return { headers: [], rows: [] }
-  const headers = lines[0].split(',')
-  const rows = lines.slice(1).map((l) => {
-    const cells = l.split(',')
+  if (!content.trim()) return { headers: [], rows: [] }
+  const result = Papa.parse<string[]>(content, {
+    header: false,
+    skipEmptyLines: true
+  })
+  const allRows = result.data
+  if (allRows.length === 0) return { headers: [], rows: [] }
+  const headers = allRows[0]
+  const rows = allRows.slice(1).map((row) => {
+    const cells = [...row]
     while (cells.length < headers.length) cells.push('')
     return cells
   })
