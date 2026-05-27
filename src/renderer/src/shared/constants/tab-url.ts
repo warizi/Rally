@@ -10,6 +10,7 @@ import {
   Network,
   Sheet,
   Terminal,
+  TimerIcon,
   Trash2
 } from 'lucide-react'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
@@ -29,6 +30,7 @@ export type TabType =
   | 'terminal'
   | 'changelog'
   | 'history'
+  | 'timer'
   | 'trash'
 
 export type TabIcon = TabType
@@ -48,6 +50,7 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   terminal: Terminal,
   changelog: History,
   history: Clock,
+  timer: TimerIcon,
   trash: Trash2
 }
 
@@ -72,6 +75,7 @@ export const ROUTES = {
   TERMINAL: '/terminal',
   CHANGELOG: '/changelog',
   HISTORY: '/history',
+  TIMER: '/timer',
   TRASH: '/trash'
 } as const
 
@@ -123,6 +127,12 @@ export const sidebar_items: SidebarItem[] = [
     tabType: 'history',
     pathname: ROUTES.HISTORY,
     icon: TAB_ICON['history']
+  },
+  {
+    title: '타이머',
+    tabType: 'timer',
+    pathname: ROUTES.TIMER,
+    icon: TAB_ICON['timer']
   }
 ]
 

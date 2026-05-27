@@ -7,11 +7,6 @@ import { Separator } from '@/shared/ui/separator'
 import { Switch } from '@/shared/ui/switch'
 import { useDayViewTimeSettings } from '@/features/schedule/manage-schedule/model/use-day-view-time-settings'
 import { useShowAuthorBadgeSetting } from '@/shared/hooks/use-show-author-badge-setting'
-import {
-  useToastSettings,
-  TOAST_DURATION_OPTIONS,
-  TOAST_VISIBLE_COUNT_OPTIONS
-} from '@/shared/hooks/use-toast-settings'
 
 const FONT_SIZE_OPTIONS: { value: FontSize; label: string }[] = [
   { value: 'small', label: '작게' },
@@ -90,72 +85,7 @@ export function DisplaySettings(): React.JSX.Element {
 
       <Separator />
 
-      <ToastSettings />
-
-      <Separator />
-
       <ScheduleSettings />
-    </div>
-  )
-}
-
-function ToastSettings(): React.JSX.Element {
-  const { duration, visibleCount, setDuration, setVisibleCount } = useToastSettings()
-
-  const durationValue = Number.isFinite(duration) ? String(duration) : 'Infinity'
-
-  const handleDurationChange = (value: string): void => {
-    setDuration(value === 'Infinity' ? Number.POSITIVE_INFINITY : Number(value))
-  }
-
-  const handleVisibleCountChange = (value: string): void => {
-    setVisibleCount(Number(value))
-  }
-
-  return (
-    <div>
-      <h3 className="text-sm font-medium mb-1">알림 토스트</h3>
-      <p className="text-xs text-muted-foreground mb-4">
-        토스트 알림의 자동 닫힘 시간과 동시 표시 개수를 조절합니다. 스택을 초과하면 hover 시
-        스크롤로 확인할 수 있습니다.
-      </p>
-
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <label className="text-xs text-muted-foreground mb-1.5 block">자동 닫힘 시간</label>
-          <Select value={durationValue} onValueChange={handleDurationChange}>
-            <SelectTrigger className="w-full" size="sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TOAST_DURATION_OPTIONS.map((opt) => (
-                <SelectItem
-                  key={opt.label}
-                  value={Number.isFinite(opt.value) ? String(opt.value) : 'Infinity'}
-                >
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div>
-          <label className="text-xs text-muted-foreground mb-1.5 block">동시 표시 개수</label>
-          <Select value={String(visibleCount)} onValueChange={handleVisibleCountChange}>
-            <SelectTrigger className="w-full" size="sm">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {TOAST_VISIBLE_COUNT_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)}>
-                  {opt.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
     </div>
   )
 }

@@ -22,6 +22,7 @@ import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useTrashWatcher } from '@entities/trash'
 import { UpdateChecker } from '../providers/update-checker'
+import { TimerAlarmDialog } from '@/widgets/timer'
 import { useState } from 'react'
 import {
   DndContext,
@@ -175,6 +176,8 @@ function MainLayout(): React.JSX.Element {
   return (
     <SidebarProvider>
       <UpdateChecker />
+      {/* 타이머 알람: 루트 레벨 mount → 어느 탭에서든 발동 */}
+      <TimerAlarmDialog />
       <MainSidebar />
       <div className="flex flex-col flex-1 h-screen overflow-hidden">
         <DndContext
