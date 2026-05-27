@@ -25,8 +25,8 @@ function Label({
   children: React.ReactNode
 }): React.JSX.Element {
   return (
-    <div className="flex flex-row gap-4 items-center h-6 min-w-[240px]">
-      <span className="text-muted-foreground w-[50px]">{title}</span>
+    <div className="flex flex-row flex-wrap gap-x-4 gap-y-2 items-center min-w-[240px] min-h-6">
+      <span className="text-muted-foreground w-[50px] shrink-0 whitespace-nowrap">{title}</span>
       {children}
     </div>
   )
