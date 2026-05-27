@@ -16,7 +16,20 @@ import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { PdfViewer } from '@/features/pdf/view-pdf/ui/PdfViewer'
+import { useTabStore } from '@/features/tap-system/manage-tab-system'
 import type { EmbedDomain } from '../model/note-embed-schema'
+
+/** entity → 탭으로 열기. NOTE_DETAIL / CSV_DETAIL / PDF_DETAIL pathname 사용. */
+function openEntityTab(domain: EmbedDomain, id: string, title: string): void {
+  const pathname =
+    domain === 'note'
+      ? `/folder/note/${id}`
+      : domain === 'csv'
+        ? `/folder/csv/${id}`
+        : `/folder/pdf/${id}`
+  const type = domain === 'note' ? 'note' : domain === 'csv' ? 'csv' : 'pdf'
+  useTabStore.getState().openTab({ type, pathname, title })
+}
 
 interface Props {
   domain: EmbedDomain
@@ -57,9 +70,10 @@ function NoteEmbedView({
   if (!note) return <FallbackEmbed label="[삭제된 노트]" />
   return (
     <span
-      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm bg-accent text-accent-foreground cursor-default select-none"
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm bg-accent text-accent-foreground hover:bg-accent/80 cursor-pointer select-none"
       title={note.title}
       contentEditable={false}
+      onClick={() => openEntityTab('note', note.id, note.title)}
     >
       <FileText className="size-3.5 shrink-0" />
       <span className="truncate">{note.title}</span>
@@ -160,7 +174,10 @@ function CsvEmbedView({
       style={useFixedHeight ? { height } : undefined}
       contentEditable={false}
     >
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0">
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0 cursor-pointer hover:bg-muted/60"
+        onClick={() => openEntityTab('csv', csv.id, csv.title)}
+      >
         <Sheet className="size-3.5" />
         {csv.title}
       </div>
@@ -204,7 +221,10 @@ function PdfEmbedView({
       style={{ height: height > 0 ? height : 600 }}
       contentEditable={false}
     >
-      <div className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0">
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0 cursor-pointer hover:bg-muted/60"
+        onClick={() => openEntityTab('pdf', pdf.id, pdf.title)}
+      >
         <PdfIcon className="size-3.5" />
         {pdf.title}
       </div>
