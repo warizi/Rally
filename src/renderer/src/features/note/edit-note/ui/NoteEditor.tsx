@@ -1,4 +1,5 @@
-import { JSX, useCallback, useEffect, useRef, useState } from 'react'
+import { JSX, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { nanoid } from 'nanoid'
 import {
   Editor,
   rootCtx,
@@ -36,7 +37,7 @@ import {
   RALLY_EMBED_MDAST_TYPE
 } from '../model/note-embed-schema'
 import { createNoteEmbedNodeViewFactory } from '../model/note-embed-node-view'
-import { embedPickerPlugin } from '../model/embed-picker-plugin'
+import { createEmbedPickerPlugin } from '../model/embed-picker-plugin'
 import { embedProtectPlugin } from '../model/embed-protect-plugin'
 import { EmbedPicker } from './EmbedPicker'
 import { EmbedPortals } from './EmbedPortals'
@@ -133,6 +134,9 @@ function MilkdownEditor({
 }: MilkdownEditorProps): JSX.Element {
   const wrapperRef = useRef<HTMLDivElement>(null)
   const editorRef = useRef<HTMLDivElement>(null)
+  // 한 페이지에 NoteEditor 가 여러 개 (탭 + 캔버스 노드) 떠 있을 때 embed
+  // picker / portal store 가 cross-contamination 되지 않도록 인스턴스 단위 id.
+  const editorId = useMemo(() => nanoid(), [])
   const [loading, getEditor] = useInstance()
   // editorRef.current 는 초기 렌더 시 null 이라 useState 로 mount 후 캡처
   // → NoteFloatingToolbar 가 toolbar-state 이벤트 listener 를 정확한 DOM 에 부착.
@@ -199,11 +203,15 @@ function MilkdownEditor({
       .use(colorMarkSchema)
       .use(toggleColorCommand)
       .use(rallyEmbedSchema)
-      .use(embedPickerPlugin)
+      .use(createEmbedPickerPlugin(editorId))
       .use(embedProtectPlugin)
       .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
-      .use($view(rallyEmbedSchema.node, () => createNoteEmbedNodeViewFactory(workspaceId)))
+      .use(
+        $view(rallyEmbedSchema.node, () =>
+          createNoteEmbedNodeViewFactory(workspaceId, editorId)
+        )
+      )
   )
 
   // DnD: 드롭 시 이미지 삽입
@@ -308,8 +316,8 @@ function MilkdownEditor({
       </div>
       <div className="h-[300px] shrink-0 cursor-text" onClick={handleBottomClick} />
       <NoteFloatingToolbar editorEl={toolbarHostEl} />
-      <EmbedPicker workspaceId={workspaceId} />
-      <EmbedPortals />
+      <EmbedPicker workspaceId={workspaceId} editorId={editorId} />
+      <EmbedPortals editorId={editorId} />
     </div>
   )
 }

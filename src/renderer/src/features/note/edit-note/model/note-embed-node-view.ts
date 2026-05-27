@@ -3,6 +3,9 @@
  *
  * NoteEditor 의 EmbedPortals 컴포넌트가 store 를 구독해서 host 안에 React
  * 컴포넌트 (EmbedView) 를 portal mount.
+ *
+ * editorId: factory 가 받아 register 시 entry 에 포함 — 여러 NoteEditor
+ * 인스턴스가 동시 mount 되어도 자기 EmbedPortals 만 portal 하도록 격리.
  */
 import type { NodeView } from '@milkdown/kit/prose/view'
 import type { Node } from '@milkdown/kit/prose/model'
@@ -11,9 +14,9 @@ import { nanoid } from 'nanoid'
 import { useEmbedPortalStore } from './embed-portal-store'
 import type { EmbedDomain } from './note-embed-schema'
 
-export function createNoteEmbedNodeViewFactory(workspaceId: string) {
+export function createNoteEmbedNodeViewFactory(workspaceId: string, editorId: string) {
   return (node: Node, view: EditorView, getPos: () => number | undefined): NoteEmbedNodeView => {
-    return new NoteEmbedNodeView(node, view, getPos, workspaceId)
+    return new NoteEmbedNodeView(node, view, getPos, workspaceId, editorId)
   }
 }
 
@@ -25,11 +28,12 @@ class NoteEmbedNodeView implements NodeView {
     private node: Node,
     private view: EditorView,
     private getPos: () => number | undefined,
-    private workspaceId: string
+    private workspaceId: string,
+    private editorId: string
   ) {
     void this.workspaceId // workspaceId 는 EmbedView 내부 hook 에서 useCurrentWorkspaceStore 로 가져옴
     this.portalId = nanoid()
-    // 노트(링크)는 span(inline), csv/pdf 는 div(block) — span 안 div 는 HTML
+    // 노트(링크)는 span(inline), csv/pdf/image 는 div(block) — span 안 div 는 HTML
     // 유효성 X. 도메인별 tag 분기.
     const domain = node.attrs.domain as string
     const isBlock = domain === 'csv' || domain === 'pdf' || domain === 'image'
@@ -62,6 +66,7 @@ class NoteEmbedNodeView implements NodeView {
   private register(): void {
     useEmbedPortalStore.getState().register({
       portalId: this.portalId,
+      editorId: this.editorId,
       host: this.dom,
       domain: this.node.attrs.domain as EmbedDomain,
       entityId: this.node.attrs.entityId as string,

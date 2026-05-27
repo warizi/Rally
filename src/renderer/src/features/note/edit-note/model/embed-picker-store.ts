@@ -3,8 +3,11 @@
  *
  * ProseMirror plugin 이 @ 입력을 감지해 store 업데이트 → React 컴포넌트가
  * store 구독해서 popup 표시 / 닫기 / 위치 / 검색어 반영.
- * 선택 결과는 callback 으로 plugin 측에 통지하지 않고, store 의 `pendingInsert`
- * 를 plugin 이 구독해 dispatch.
+ *
+ * `editorId` 격리: 한 페이지에 NoteEditor 인스턴스가 여러 개 (탭 + 캔버스
+ * 안 노트) 있을 때, 한 에디터의 @ 가 다른 에디터의 picker 까지 열어버리는
+ * cross-contamination 방지. openPicker 호출 시 editorId 를 함께 기록하고
+ * EmbedPicker 가 자기 editorId 일 때만 표시.
  */
 import { create } from 'zustand'
 
@@ -21,6 +24,8 @@ export interface PickerRange {
 
 interface PickerState {
   open: boolean
+  /** 현재 picker 를 trigger 한 NoteEditor 인스턴스 id (open=false 면 빈 문자열). */
+  editorId: string
   position: PickerPosition
   /** @ 다음 입력 텍스트 (검색어). 첫 호출 시 빈 문자열. */
   query: string
@@ -28,7 +33,7 @@ interface PickerState {
 }
 
 interface PickerActions {
-  openPicker: (range: PickerRange, position: PickerPosition) => void
+  openPicker: (editorId: string, range: PickerRange, position: PickerPosition) => void
   updateQuery: (query: string, range: PickerRange) => void
   updatePosition: (position: PickerPosition) => void
   closePicker: () => void
@@ -38,6 +43,7 @@ type PickerStore = PickerState & PickerActions
 
 const INITIAL: PickerState = {
   open: false,
+  editorId: '',
   position: { x: 0, y: 0 },
   query: '',
   range: { from: 0, to: 0 }
@@ -45,7 +51,8 @@ const INITIAL: PickerState = {
 
 export const useEmbedPickerStore = create<PickerStore>()((set) => ({
   ...INITIAL,
-  openPicker: (range, position) => set({ open: true, query: '', range, position }),
+  openPicker: (editorId, range, position) =>
+    set({ open: true, editorId, query: '', range, position }),
   updateQuery: (query, range) => set({ query, range }),
   updatePosition: (position) => set({ position }),
   closePicker: () => set({ ...INITIAL })

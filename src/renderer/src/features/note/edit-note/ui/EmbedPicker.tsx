@@ -35,10 +35,14 @@ const ICONS: Record<EmbedDomain, LucideIcon | typeof PdfIcon> = {
 
 interface Props {
   workspaceId: string
+  /** 이 picker 인스턴스를 trigger 한 NoteEditor id — store.editorId 와 일치할 때만 표시. */
+  editorId: string
 }
 
-export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
-  const open = useEmbedPickerStore((s) => s.open)
+export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element | null {
+  const openStore = useEmbedPickerStore((s) => s.open)
+  const ownerEditorId = useEmbedPickerStore((s) => s.editorId)
+  const open = openStore && ownerEditorId === editorId
   const position = useEmbedPickerStore((s) => s.position)
   const range = useEmbedPickerStore((s) => s.range)
   const closePicker = useEmbedPickerStore((s) => s.closePicker)
