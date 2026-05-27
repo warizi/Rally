@@ -10,7 +10,8 @@ import {
   removePaneFromLayout,
   updateSizesInLayout,
   removeAndNormalizeSizes,
-  cleanupLayout
+  cleanupLayout,
+  findAdjacentPaneId
 } from '../layout'
 import type { PaneNode, SplitNode } from '@/entities/tab-system'
 
@@ -393,5 +394,95 @@ describe('replaceNodeInLayout', () => {
     const layout = paneNode('n1', 'pane-1')
     const result = replaceNodeInLayout(layout, 'n-x', paneNode('n2', 'pane-2'))
     expect(result).toBe(layout)
+  })
+})
+
+// ─── findAdjacentPaneId ───────────────────────────────
+describe('findAdjacentPaneId', () => {
+  it('단일 PaneNode 는 인접 pane 없음 → null', () => {
+    const layout = paneNode('n1', 'pane-1')
+    expect(findAdjacentPaneId(layout, 'pane-1', 'left')).toBeNull()
+    expect(findAdjacentPaneId(layout, 'pane-1', 'right')).toBeNull()
+  })
+
+  it('horizontal split [L, R] 에서 좌측 → right 이동', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'L'),
+      paneNode('n2', 'R')
+    ])
+    expect(findAdjacentPaneId(layout, 'L', 'right')).toBe('R')
+    expect(findAdjacentPaneId(layout, 'R', 'left')).toBe('L')
+  })
+
+  it('horizontal split 양 끝 → 더 갈 곳 없음', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'L'),
+      paneNode('n2', 'R')
+    ])
+    expect(findAdjacentPaneId(layout, 'L', 'left')).toBeNull()
+    expect(findAdjacentPaneId(layout, 'R', 'right')).toBeNull()
+  })
+
+  it('horizontal split 에서 up/down 은 매칭 안 됨 → null', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'L'),
+      paneNode('n2', 'R')
+    ])
+    expect(findAdjacentPaneId(layout, 'L', 'down')).toBeNull()
+    expect(findAdjacentPaneId(layout, 'L', 'up')).toBeNull()
+  })
+
+  it('vertical split [T, B] 에서 위 → down', () => {
+    const layout = splitNode('s1', 'vertical', [
+      paneNode('n1', 'T'),
+      paneNode('n2', 'B')
+    ])
+    expect(findAdjacentPaneId(layout, 'T', 'down')).toBe('B')
+    expect(findAdjacentPaneId(layout, 'B', 'up')).toBe('T')
+  })
+
+  it('중첩: outer horizontal [L, inner-vertical[TR, BR]] — TR 에서 left → L', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'L'),
+      splitNode('s2', 'vertical', [paneNode('n2', 'TR'), paneNode('n3', 'BR')])
+    ])
+    expect(findAdjacentPaneId(layout, 'TR', 'left')).toBe('L')
+    expect(findAdjacentPaneId(layout, 'BR', 'left')).toBe('L')
+  })
+
+  it('중첩: L 에서 right → 우측 split 의 first leaf (TR)', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'L'),
+      splitNode('s2', 'vertical', [paneNode('n2', 'TR'), paneNode('n3', 'BR')])
+    ])
+    expect(findAdjacentPaneId(layout, 'L', 'right')).toBe('TR')
+  })
+
+  it('중첩: 안쪽 vertical 에서 down 은 vertical split 매칭 → BR', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      paneNode('n1', 'L'),
+      splitNode('s2', 'vertical', [paneNode('n2', 'TR'), paneNode('n3', 'BR')])
+    ])
+    expect(findAdjacentPaneId(layout, 'TR', 'down')).toBe('BR')
+  })
+
+  it('2x2 grid (outer horizontal, inner vertical 양쪽) 에서 모든 4방향', () => {
+    const layout = splitNode('s1', 'horizontal', [
+      splitNode('s2', 'vertical', [paneNode('n1', 'TL'), paneNode('n2', 'BL')]),
+      splitNode('s3', 'vertical', [paneNode('n3', 'TR'), paneNode('n4', 'BR')])
+    ])
+    // TL 기준
+    expect(findAdjacentPaneId(layout, 'TL', 'right')).toBe('TR')
+    expect(findAdjacentPaneId(layout, 'TL', 'down')).toBe('BL')
+    expect(findAdjacentPaneId(layout, 'TL', 'left')).toBeNull()
+    expect(findAdjacentPaneId(layout, 'TL', 'up')).toBeNull()
+    // BR 기준
+    expect(findAdjacentPaneId(layout, 'BR', 'left')).toBe('BL')
+    expect(findAdjacentPaneId(layout, 'BR', 'up')).toBe('TR')
+  })
+
+  it('currentPaneId 가 트리에 없으면 null', () => {
+    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'L'), paneNode('n2', 'R')])
+    expect(findAdjacentPaneId(layout, 'unknown', 'right')).toBeNull()
   })
 })

@@ -21,6 +21,7 @@ import { useReminderChangedWatcher } from '@entities/reminder'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useTrashWatcher } from '@entities/trash'
+import { usePaneNavigation } from '@features/keyboard-control'
 import { UpdateChecker } from '../providers/update-checker'
 import { TimerAlarmDialog } from '@/widgets/timer'
 import { useState } from 'react'
@@ -131,6 +132,8 @@ function MainLayout(): React.JSX.Element {
   useTrashWatcher()
   // 화면 전체보기(focus) 모드 ESC 핸들러 + 자동 해제
   useFocusModeEffects()
+  // 글로벌 키보드 단축키 — pane 이동 (ctrl+shift+방향키)
+  usePaneNavigation()
 
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
