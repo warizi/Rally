@@ -43,6 +43,7 @@ export function EditableCell({
     return (
       <input
         ref={inputRef}
+        data-csv-edit-input
         type="text"
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

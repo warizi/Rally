@@ -67,6 +67,7 @@ export function EditableColumnHeader({
     return (
       <input
         ref={inputRef}
+        data-csv-edit-input
         size={1}
         value={draft}
         onChange={(e) => setDraft(e.target.value)}

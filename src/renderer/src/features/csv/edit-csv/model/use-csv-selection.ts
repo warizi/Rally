@@ -106,6 +106,11 @@ export function useCsvSelection(
   const handleBlur = useCallback((e: React.FocusEvent<HTMLDivElement>) => {
     if (e.currentTarget.contains(e.relatedTarget)) return
     if (contextMenuOpenRef.current) return
+    // 헤더 편집 input 은 scrollRef 외부에 위치 — focus 이동이 외부 클릭으로 오인되지
+    // 않도록 data-csv-edit-input 마커가 있는 element 로의 이동은 cleanup 보류.
+    // (input 의 onBlur 가 편집 종료를 자체 처리)
+    const target = e.relatedTarget as HTMLElement | null
+    if (target?.matches?.('[data-csv-edit-input]')) return
     setSelection(null)
     setEditingCell(null)
   }, [])
