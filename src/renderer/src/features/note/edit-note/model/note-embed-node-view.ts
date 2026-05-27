@@ -33,8 +33,15 @@ class NoteEmbedNodeView implements NodeView {
     this.dom.setAttribute('data-rally-embed', 'true')
     this.dom.setAttribute('data-portal-id', this.portalId)
     this.dom.className = 'rally-embed-host'
-    this.dom.style.display = 'inline-block'
-    this.dom.style.verticalAlign = 'baseline'
+    // 노트(링크)는 inline, csv/pdf 는 block + 100% 폭 (paragraph 너비 가득 차게)
+    const domain = node.attrs.domain as string
+    if (domain === 'csv' || domain === 'pdf') {
+      this.dom.style.display = 'block'
+      this.dom.style.width = '100%'
+    } else {
+      this.dom.style.display = 'inline-block'
+      this.dom.style.verticalAlign = 'baseline'
+    }
     this.register()
   }
 
