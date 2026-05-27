@@ -24,6 +24,7 @@ import {
 import { Button } from '@/shared/ui/button'
 import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
+import { ScrollArea } from '@/shared/ui/scroll-area'
 import { Separator } from '@/shared/ui/separator'
 import { cn } from '@/shared/lib/utils'
 import { NoteToolbarPaletteSection } from './NoteToolbarPaletteSection'
@@ -474,16 +475,17 @@ function NoteStylePreview({ set }: { set: NoteStyleSettings }): React.JSX.Elemen
           </PreviewModeButton>
         </div>
       </div>
-      <div
+      <ScrollArea
         data-rally-note-preview
         style={{ backgroundColor: previewBg, borderColor: previewBorder }}
-        className="rounded-md border p-4 max-h-64 overflow-y-auto transition-colors"
+        className="rounded-md border h-64 transition-colors"
+        viewportClassName="p-4"
       >
         <style>{css}</style>
         <MilkdownProvider>
           <PreviewMilkdownEditor />
         </MilkdownProvider>
-      </div>
+      </ScrollArea>
     </div>
   )
 }
