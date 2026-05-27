@@ -91,18 +91,18 @@ function CsvEmbedView({
   if (!csv) return <FallbackEmbed label="[삭제된 CSV]" />
   const parsed = parseCsv(content?.content ?? '')
   return (
-    <span
+    <div
       className="flex flex-col my-2 border rounded overflow-hidden bg-card"
       style={{ height: height > 0 ? height : 400 }}
       contentEditable={false}
     >
-      <span className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-medium bg-muted/40 shrink-0">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-medium bg-muted/40 shrink-0">
         <Sheet className="size-3.5" />
         {csv.title}
-      </span>
-      <span className="block flex-1 min-h-0 overflow-auto">
+      </div>
+      <div className="flex-1 min-h-0 overflow-auto">
         {parsed.headers.length === 0 ? (
-          <span className="block p-4 text-xs text-muted-foreground">빈 CSV</span>
+          <div className="p-4 text-xs text-muted-foreground">빈 CSV</div>
         ) : (
           <table className="text-xs w-full border-collapse">
             <thead className="bg-muted/30 sticky top-0">
@@ -127,8 +127,8 @@ function CsvEmbedView({
             </tbody>
           </table>
         )}
-      </span>
-    </span>
+      </div>
+    </div>
   )
 }
 
@@ -148,22 +148,22 @@ function PdfEmbedView({
   const { data: content } = useReadPdfContent(workspaceId, entityId)
   if (!pdf) return <FallbackEmbed label="[삭제된 PDF]" />
   return (
-    <span
+    <div
       className="flex flex-col my-2 border rounded overflow-hidden bg-card"
       style={{ height: height > 0 ? height : 600 }}
       contentEditable={false}
     >
-      <span className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-medium bg-muted/40 shrink-0">
+      <div className="flex items-center gap-2 px-4 py-2.5 border-b text-xs font-medium bg-muted/40 shrink-0">
         <PdfIcon className="size-3.5" />
         {pdf.title}
-      </span>
-      <span className="block flex-1 min-h-0">
+      </div>
+      <div className="flex-1 min-h-0">
         {content?.data ? (
           <PdfViewer pdfId={entityId} pdfData={content.data} hideToolbar />
         ) : (
-          <span className="block p-4 text-xs text-muted-foreground">PDF 로딩 중...</span>
+          <div className="p-4 text-xs text-muted-foreground">PDF 로딩 중...</div>
         )}
-      </span>
-    </span>
+      </div>
+    </div>
   )
 }
