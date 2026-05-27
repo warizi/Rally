@@ -1,17 +1,14 @@
 /**
- * @ trigger picker UI — 4 도메인 (note/csv/pdf/image) 통합 검색.
+ * @ trigger picker UI — 4 도메인 통합 검색 + 자체 input (IME 호환).
  *
- * 동작 원칙:
- * - store.open 일 때만 render (absolute, store.position 기준)
- * - 검색어는 store.query 구독 (plugin 이 @ 다음 텍스트 갱신)
- * - 키보드: ↑↓ 항목 이동 / Enter 선택 / Esc 닫기 — plugin 이 store close, React 가
- *   selection 처리.
- * - 선택 시: ProseMirror view 를 통해 store.range 텍스트 (`@검색어`) 를 embed 노드로
- *   대체. 이미지는 마크다운 `![h=NNN](.images/...)` 가 아닌 entity id 기반 별도
- *   처리 (image entity 에 어떻게 임베드할지는 후속) — 우선 이번 단계는 image 도
- *   같은 embed 노드로 처리 (단, NodeView 단계에서 분기).
+ * 동작:
+ * - store.open → popup 표시 + 자동 focus
+ * - 사용자 input 으로 query (한글 IME OK — ProseMirror 외부)
+ * - ↑↓Enter 키보드 nav, ESC 닫기
+ * - 선택 시: ProseMirror dispatch — store.range (`@`) 를 embed 노드로 치환
+ * - 취소(닫힘) 시 노트 본문의 `@` 는 그대로 남음 (사용자가 직접 지움)
  */
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useInstance } from '@milkdown/react'
 import { editorViewCtx } from '@milkdown/kit/core'
 import { Check, FileText, Sheet, Image as ImageIcon, type LucideIcon } from 'lucide-react'
@@ -42,7 +39,6 @@ interface Props {
 
 export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
   const open = useEmbedPickerStore((s) => s.open)
-  const query = useEmbedPickerStore((s) => s.query)
   const position = useEmbedPickerStore((s) => s.position)
   const range = useEmbedPickerStore((s) => s.range)
   const closePicker = useEmbedPickerStore((s) => s.closePicker)
@@ -62,6 +58,21 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
     [notes, csvs, pdfs, images]
   )
 
+  // 자체 input state (IME 호환 — ProseMirror 외부에서 한글 입력 가능)
+  const [query, setQuery] = useState('')
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (!open) {
+      setQuery('')
+      return
+    }
+    // popup 열리면 input 자동 focus
+    requestAnimationFrame(() => {
+      inputRef.current?.focus()
+    })
+  }, [open])
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
     if (!q) return allItems.slice(0, 50)
@@ -76,27 +87,6 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
   const [loading, getEditor] = useInstance()
   void loading
 
-  // 키보드 nav: store.open 일 때만 활성
-  useEffect(() => {
-    if (!open) return
-    function onKeyDown(e: KeyboardEvent): void {
-      if (e.key === 'ArrowDown') {
-        e.preventDefault()
-        setFocusIndex((i) => Math.min(filtered.length - 1, i + 1))
-      } else if (e.key === 'ArrowUp') {
-        e.preventDefault()
-        setFocusIndex((i) => Math.max(0, i - 1))
-      } else if (e.key === 'Enter') {
-        e.preventDefault()
-        const item = filtered[focusIndex]
-        if (item) handleSelect(item)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown, true)
-    return () => window.removeEventListener('keydown', onKeyDown, true)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, filtered, focusIndex])
-
   function handleSelect(item: PickerItem): void {
     const editor = getEditor()
     if (!editor) return
@@ -105,10 +95,8 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
       const schema = view.state.schema
       const embedType = schema.nodes[RALLY_EMBED_NODE_NAME]
       if (!embedType) return
-      // image 도메인은 별도 처리 — embed 노드 대신 markdown image 직접 삽입
+      // image 도메인은 후속 단계에서 처리 — 현재는 close 만
       if (item.domain === 'image') {
-        // image 엔티티의 relativePath 가 .images/... 일 가능성 — 우선 단순 처리:
-        // 이미지 임베드는 후속 단계에서 처리. 지금은 일단 노트/csv/pdf 만 embed.
         closePicker()
         return
       }
@@ -124,6 +112,23 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
       view.focus()
       closePicker()
     })
+  }
+
+  function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setFocusIndex((i) => Math.min(filtered.length - 1, i + 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setFocusIndex((i) => Math.max(0, i - 1))
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      const item = filtered[focusIndex]
+      if (item) handleSelect(item)
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      closePicker()
+    }
   }
 
   // 외부 클릭 시 닫기
@@ -144,38 +149,45 @@ export function EmbedPicker({ workspaceId }: Props): React.JSX.Element | null {
   return (
     <div
       ref={containerRef}
-      className="fixed z-50 w-72 max-h-72 overflow-y-auto rounded-md border bg-popover shadow-md p-1"
+      className="fixed z-50 w-72 rounded-md border bg-popover shadow-md p-1"
       style={{ left: position.x, top: position.y }}
-      onMouseDown={(e) => {
-        // input/editor 포커스 빼앗기지 않게
-        e.preventDefault()
-      }}
     >
-      {filtered.length === 0 ? (
-        <div className="text-xs text-muted-foreground text-center py-4">결과 없음</div>
-      ) : (
-        filtered.map((item, i) => {
-          const Icon = ICONS[item.domain]
-          const isFocus = i === focusIndex
-          return (
-            <button
-              key={`${item.domain}:${item.id}`}
-              type="button"
-              onClick={() => handleSelect(item)}
-              onMouseEnter={() => setFocusIndex(i)}
-              className={
-                'w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left cursor-pointer ' +
-                (isFocus ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')
-              }
-            >
-              <Icon className="size-3.5 shrink-0" />
-              <span className="truncate flex-1">{item.title}</span>
-              <span className="text-[10px] text-muted-foreground shrink-0">{item.domain}</span>
-              {isFocus && <Check className="size-3 text-primary shrink-0" />}
-            </button>
-          )
-        })
-      )}
+      <input
+        ref={inputRef}
+        type="text"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleInputKeyDown}
+        placeholder="검색..."
+        className="w-full px-2 py-1 mb-1 text-xs bg-transparent border-b outline-none"
+      />
+      <div className="max-h-60 overflow-y-auto">
+        {filtered.length === 0 ? (
+          <div className="text-xs text-muted-foreground text-center py-4">결과 없음</div>
+        ) : (
+          filtered.map((item, i) => {
+            const Icon = ICONS[item.domain]
+            const isFocus = i === focusIndex
+            return (
+              <button
+                key={`${item.domain}:${item.id}`}
+                type="button"
+                onClick={() => handleSelect(item)}
+                onMouseEnter={() => setFocusIndex(i)}
+                className={
+                  'w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left cursor-pointer ' +
+                  (isFocus ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')
+                }
+              >
+                <Icon className="size-3.5 shrink-0" />
+                <span className="truncate flex-1">{item.title}</span>
+                <span className="text-[10px] text-muted-foreground shrink-0">{item.domain}</span>
+                {isFocus && <Check className="size-3 text-primary shrink-0" />}
+              </button>
+            )
+          })
+        )}
+      </div>
     </div>
   )
 }
