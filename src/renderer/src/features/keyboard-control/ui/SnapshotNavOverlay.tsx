@@ -25,7 +25,7 @@ export function SnapshotNavOverlay(): JSX.Element | null {
       items={pickerItems}
       focusIndex={focusIndex}
       title="탭 스냅샷 전환"
-      footer="cmd + shift 유지 + t 로 순환, 떼면 해당 스냅샷 복원"
+      footer="cmd + shift 유지 + s 로 순환, 떼면 해당 스냅샷 복원"
     />
   )
 }

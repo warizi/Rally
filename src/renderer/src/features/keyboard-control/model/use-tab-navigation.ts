@@ -1,14 +1,18 @@
 /**
- * 탭 이동 hook — `shift` (유지) + `tab` (클릭).
+ * 탭 이동 hook — `cmd + opt` (유지) + `]` (다음) / `[` (이전).
+ *
+ * 키맵 근거:
+ * - macOS 표준 `shift + tab` 은 reverse-focus 라 충돌 위험. 그래서
+ *   `cmd + opt` modifier + bracket trigger 로 변경 (브라우저/VSCode 의
+ *   `cmd+opt+] / [` 탭 nav 패턴과 일치).
+ * - bracket 키는 `event.code` (BracketRight/BracketLeft) 로 비교 → IME /
+ *   대소문자 / 한글 키보드 layout 영향 없음.
  *
  * Lifecycle:
- * - 첫 Tab keydown: active pane 의 tab 목록 캡처 → tab-nav-store.start
- *   (focusIndex = 현재 active 다음). 모드 = 'tab-nav'
- * - 이후 Tab keydown: next() — focusIndex 순환
- * - shift 해제: focusIndex 탭으로 activateTab → close() + mode clear
- *
- * 활성 pane 변경은 모드 진입 시점에만 캡처 — 진입 후 store 가 바뀌어도
- * 오버레이가 흔들리지 않는다.
+ * - 첫 trigger keydown: active pane 의 tab 목록 캡처 → start. direction
+ *   에 따라 한 step 적용한 focusIndex 로 시작 (Vim 의 :tabnext 발상).
+ * - 이후 trigger keydown: next() / prev() 순환
+ * - modifier 해제: focusIndex 탭으로 activateTab → close + mode clear
  */
 import { useTabStore } from '@/features/tap-system/manage-tab-system'
 import { useGlobalHotkey } from './use-global-hotkey'
@@ -17,20 +21,17 @@ import { useTabNavStore, type TabNavItem } from './tab-nav-store'
 
 function captureItemsForActivePane(): {
   items: TabNavItem[]
-  initialFocus: number
+  currentIdx: number
 } {
   const { activePaneId, panes, tabs } = useTabStore.getState()
   const pane = panes[activePaneId]
-  if (!pane) return { items: [], initialFocus: 0 }
+  if (!pane) return { items: [], currentIdx: 0 }
   const items: TabNavItem[] = pane.tabIds
     .map((id) => tabs[id])
     .filter((t): t is NonNullable<typeof t> => !!t)
     .map((t) => ({ tabId: t.id, title: t.title, type: t.type as string }))
-  const activeIdx = items.findIndex((it) => it.tabId === pane.activeTabId)
-  // 시작은 다음 탭에 focus — Vim 의 :tabnext 와 동일 발상.
-  const initialFocus =
-    items.length === 0 ? 0 : (Math.max(activeIdx, 0) + 1) % items.length
-  return { items, initialFocus }
+  const currentIdx = items.findIndex((it) => it.tabId === pane.activeTabId)
+  return { items, currentIdx: Math.max(currentIdx, 0) }
 }
 
 export function useTabNavigation(): void {
@@ -38,18 +39,28 @@ export function useTabNavigation(): void {
   const clearMode = useKeyboardModeStore((s) => s.clearMode)
 
   useGlobalHotkey({
-    modifiers: { shift: true },
+    modifiers: { meta: true, alt: true },
     onKeyDown: (e) => {
-      if (e.key !== 'Tab') return
+      let direction: 'next' | 'prev' | null = null
+      if (e.code === 'BracketRight') direction = 'next'
+      else if (e.code === 'BracketLeft') direction = 'prev'
+      if (!direction) return
       e.preventDefault()
+
       const { open } = useTabNavStore.getState()
       if (!open) {
-        const { items, initialFocus } = captureItemsForActivePane()
+        const { items, currentIdx } = captureItemsForActivePane()
         if (items.length === 0) return
+        const len = items.length
+        const initialFocus =
+          direction === 'next'
+            ? (currentIdx + 1) % len
+            : (currentIdx - 1 + len) % len
         useTabNavStore.getState().start(items, initialFocus)
         setMode('tab-nav')
       } else {
-        useTabNavStore.getState().next()
+        if (direction === 'next') useTabNavStore.getState().next()
+        else useTabNavStore.getState().prev()
       }
     },
     onDeactivate: () => {

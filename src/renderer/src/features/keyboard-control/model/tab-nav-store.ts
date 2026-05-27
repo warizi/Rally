@@ -20,10 +20,12 @@ interface TabNavState {
 }
 
 interface TabNavActions {
-  /** 첫 Tab keydown 시 호출 — items 캡처 + 초기 focusIndex 설정. */
+  /** 첫 trigger keydown 시 호출 — items 캡처 + 초기 focusIndex 설정. */
   start: (items: TabNavItem[], initialFocus: number) => void
-  /** 추가 Tab keydown 시 — focusIndex 순환. */
+  /** 추가 keydown 시 — focusIndex 다음 순환. */
   next: () => void
+  /** 추가 keydown 시 — focusIndex 이전 순환. */
+  prev: () => void
   /** modifier 해제 시 — 오버레이 닫기. */
   close: () => void
 }
@@ -39,6 +41,13 @@ export const useTabNavStore = create<TabNavStore>()((set) => ({
   next: () =>
     set((s) => ({
       focusIndex: s.items.length === 0 ? 0 : (s.focusIndex + 1) % s.items.length
+    })),
+  prev: () =>
+    set((s) => ({
+      focusIndex:
+        s.items.length === 0
+          ? 0
+          : (s.focusIndex - 1 + s.items.length) % s.items.length
     })),
   close: () => set({ open: false, items: [], focusIndex: 0 })
 }))

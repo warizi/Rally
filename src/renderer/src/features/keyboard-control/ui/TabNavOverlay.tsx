@@ -30,7 +30,7 @@ export function TabNavOverlay(): JSX.Element | null {
       items={pickerItems}
       focusIndex={focusIndex}
       title="탭 이동"
-      footer="shift 유지 + tab 으로 순환, 떼면 해당 탭 열림"
+      footer="cmd + opt 유지 + ] / [ 로 순환, 떼면 해당 탭 열림"
     />
   )
 }
