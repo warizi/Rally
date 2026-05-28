@@ -4,9 +4,9 @@ import { LayoutNode, SplitDirection, SplitNode } from '@/entities/tab-system'
 import {
   isPaneNode,
   isSplitContainerNode
-} from '@/features/tap-system/manage-tab-system/model/types'
+} from '@/features/tab-system/manage-tab-system/model/types'
 import { PaneRoute } from '@/shared/lib/pane-route'
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/shared/ui/resizable'
 
 /** 레이아웃 트리에서 가장 좌상단(첫 번째) pane의 ID를 반환 */

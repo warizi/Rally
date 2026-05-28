@@ -4,7 +4,7 @@ import TabHeader from '@shared/ui/tab-header'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useReadPdfContent } from '@entities/pdf-file'
 import { FolderX } from 'lucide-react'
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 import { PdfHeader } from '@/features/pdf/view-pdf'
 import { PdfViewer } from '@/widgets/pdf-viewer'
 

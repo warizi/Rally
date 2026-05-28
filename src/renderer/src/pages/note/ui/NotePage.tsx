@@ -5,7 +5,7 @@ import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useReadNoteContent } from '@entities/note'
 import { NoteEditor, NoteHeader } from '@features/note/edit-note'
 import { FolderX } from 'lucide-react'
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 
 // @app import 대신 인라인 타입 (FSD 위반 방지: pages → app 금지)
 export function NotePage({

@@ -5,7 +5,7 @@ import {
   useSessionPersistence,
   useTabDnd,
   useTabStore
-} from '@/features/tap-system/manage-tab-system'
+} from '@/features/tab-system/manage-tab-system'
 import { useFolderWatcher } from '@features/folder/manage-folder'
 import {
   useNoteWatcher,

@@ -1,6 +1,6 @@
 import { JSX, useCallback, useEffect, useRef, useState } from 'react'
 import { ScrollArea } from '@shared/ui/scroll-area'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 // 자체 Tree 구현 (react-arborist 대체). 트리 DnD 는 @dnd-kit 으로 통일되고,
 // 가상화는 @tanstack/react-virtual 로 처리한다.
 import { Tree } from '../lib/tree'

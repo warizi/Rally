@@ -8,7 +8,7 @@ import { Input } from '@shared/ui/input'
 import { Textarea } from '@shared/ui/textarea'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
 import { useCreateTabSnapshot } from '@entities/tab-snapshot'
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 
 const schema = z.object({
   name: z.string().min(1, '이름을 입력해주세요'),

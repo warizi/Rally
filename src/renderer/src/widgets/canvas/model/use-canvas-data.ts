@@ -9,7 +9,7 @@ import {
   useSyncCanvasState,
   type CanvasNodeItem
 } from '@entities/canvas'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { NODE_TYPE_REGISTRY } from './node-type-registry'
 import { useCanvasStore } from './use-canvas-store'
 import { useCanvasHydration } from './use-canvas-hydration'

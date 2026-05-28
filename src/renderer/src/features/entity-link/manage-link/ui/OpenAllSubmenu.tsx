@@ -1,6 +1,6 @@
 import { ExternalLink } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import type { LinkedEntity } from '@shared/lib/entity-link'
 import type { TodoItem } from '@entities/todo'
 import { toTabOptions } from '../lib/to-tab-options'

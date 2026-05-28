@@ -5,7 +5,7 @@ import {
   useUpdateImageMeta,
   useImageFilesByWorkspace
 } from '@entities/image-file'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { ImageIcon } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'

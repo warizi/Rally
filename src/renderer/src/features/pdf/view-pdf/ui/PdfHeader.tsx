@@ -1,7 +1,7 @@
 import { JSX } from 'react'
 import TabHeader from '@shared/ui/tab-header'
 import { useRenamePdfFile, useUpdatePdfMeta, usePdfFilesByWorkspace } from '@entities/pdf-file'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'

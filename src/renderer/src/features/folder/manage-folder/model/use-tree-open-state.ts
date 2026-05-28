@@ -1,6 +1,6 @@
 import { useCallback, useMemo } from 'react'
 import type { TreeApi } from '../lib/tree'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import type { WorkspaceTreeNode } from './types'
 
 const OPEN_STATE_KEY = 'folderOpenState'

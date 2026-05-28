@@ -1,4 +1,4 @@
-import type { TabOptions } from '@/features/tap-system/manage-tab-system'
+import type { TabOptions } from '@/features/tab-system/manage-tab-system'
 import type { HistoryLink } from '@entities/history'
 
 /** HistoryLink → openTab options */
