@@ -1,6 +1,6 @@
 import { LayoutList, LayoutGrid } from 'lucide-react'
 import { Button } from '@shared/ui/button'
-import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog'
+import { CreateTodoDialog } from './CreateTodoDialog'
 
 type ViewMode = 'list' | 'kanban'
 

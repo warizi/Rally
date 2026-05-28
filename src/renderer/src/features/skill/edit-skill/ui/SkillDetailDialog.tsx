@@ -27,8 +27,7 @@ import {
 } from '@shared/ui/form'
 import { RotateCcwIcon } from 'lucide-react'
 import type { SkillItem } from '@entities/skill'
-import { useResetSystemSkill, useUpdateSkill } from '@entities/skill'
-import { ToolMultiSelect } from '../../lib/ToolMultiSelect'
+import { useResetSystemSkill, useUpdateSkill, ToolMultiSelect } from '@entities/skill'
 
 interface Props {
   skill: SkillItem | null

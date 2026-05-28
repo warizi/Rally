@@ -1,6 +1,6 @@
 import { CollapsibleSection } from '@shared/ui/collapsible-section'
 import { TodoFilterBar } from '@features/todo/filter-todo/ui/TodoFilterBar'
-import type { TodoFilter } from '@features/todo/filter-todo/model/todo-filter'
+import type { TodoFilter } from '@entities/todo'
 
 interface Props {
   filter: TodoFilter

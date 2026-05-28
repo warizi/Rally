@@ -1,5 +1,5 @@
 import { ToggleGroup, ToggleGroupItem } from '@shared/ui/toggle-group'
-import type { CalendarViewType } from '@features/schedule/manage-schedule'
+import type { CalendarViewType } from '@widgets/calendar'
 
 interface Props {
   viewType: CalendarViewType

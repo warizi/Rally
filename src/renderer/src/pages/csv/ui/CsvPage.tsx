@@ -5,8 +5,7 @@ import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useReadCsvContent } from '@entities/csv-file'
 import { FolderX } from 'lucide-react'
 import { useTabStore } from '@/entities/tab-system'
-import { CsvHeader } from '@/features/csv/edit-csv'
-import { CsvViewer } from '@/widgets/csv-viewer'
+import { CsvHeader, CsvViewer } from '@widgets/csv-viewer'
 
 export function CsvPage({
   tabId,

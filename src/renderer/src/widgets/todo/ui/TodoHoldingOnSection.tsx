@@ -1,5 +1,5 @@
 import { CollapsibleSection } from '@shared/ui/collapsible-section'
-import { TodoHoldingOnView } from '@features/todo/todo-list/ui/TodoHoldingOnView'
+import { TodoHoldingOnView } from './TodoHoldingOnView'
 import type { TodoItem } from '@entities/todo'
 
 interface Props {

@@ -11,9 +11,9 @@ import {
   EmptyDescription,
   EmptyContent
 } from '@shared/ui/empty'
-import { useWorkspaceIsEmpty } from '@features/workspace/check-empty'
-import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog'
-import { ScheduleFormDialog } from '@features/schedule/manage-schedule'
+import { useWorkspaceIsEmpty } from '@/widgets/workspace'
+import { CreateTodoDialog } from '@widgets/todo/ui/CreateTodoDialog'
+import { ScheduleFormDialog } from '@widgets/calendar'
 import {
   TodoStatsCard,
   TodoChartCard,

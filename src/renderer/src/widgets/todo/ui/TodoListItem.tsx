@@ -1,0 +1,609 @@
+import { memo, useCallback, useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { arrayMove } from '@dnd-kit/sortable'
+import {
+  DndContext,
+  DragOverlay,
+  closestCenter,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  KeyboardSensor,
+  type DragEndEvent,
+  type DragStartEvent,
+  type DraggableAttributes,
+  type DraggableSyntheticListeners
+} from '@dnd-kit/core'
+import { SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
+import type { Transform } from '@dnd-kit/utilities'
+import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import { CSS } from '@dnd-kit/utilities'
+import { GripVertical, MoreHorizontal, ChevronDown, ChevronRight, Dot, X } from 'lucide-react'
+import { format } from 'date-fns'
+import { ko } from 'date-fns/locale'
+import { Checkbox } from '@shared/ui/checkbox'
+import { TruncateTooltip } from '@shared/ui/truncate-tooltip'
+import { Badge } from '@shared/ui/badge'
+import { Button } from '@shared/ui/button'
+import { TableCell } from '@shared/ui/table'
+import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
+import { Calendar } from '@shared/ui/calendar'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@shared/ui/dropdown-menu'
+import {
+  useUpdateTodo,
+  useReorderTodoSub,
+  TODO_STATUS,
+  TODO_PRIORITY,
+  type TodoPriority
+} from '@entities/todo'
+import type { TodoItem, TodoStatus } from '@entities/todo'
+import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
+import { EditSubTodoDialog } from './EditSubTodoDialog'
+import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@/widgets/entity-link'
+import { AuthorBadge } from '@shared/ui/author-badge'
+
+const PRIORITY_CLASS: Record<string, string> = {
+  high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',
+  medium:
+    'bg-amber-100 text-amber-700 border-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800',
+  low: 'bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800'
+}
+const PRIORITY_DOT: Record<string, string> = {
+  high: 'text-rose-400',
+  medium: 'text-amber-400',
+  low: 'text-sky-400'
+}
+const PRIORITY_LABEL: Record<string, string> = { high: '높음', medium: '보통', low: '낮음' }
+
+// ─────────────────────────────────────────────────────────────────────────
+// SortableWrapper 분리 패턴 (P1-4.5)
+//
+// useSortable 은 dnd-kit 의 SortableContext 를 구독해서, context 가 변경되면
+// 모든 consumer 가 강제 rerender 된다 (React.memo 로 막을 수 없음).
+//
+// 해결책: outer/inner 분리
+//   - Outer: useSortable 호출만, body 는 inner 호출 한 줄 → context 변경 시
+//     항상 rerender 되지만 비용 미미
+//   - Inner: React.memo, 모든 JSX 와 hook 보유 → props 가 같으면 skip
+//     (sortable 결과를 primitives 로 받기 때문에 stable refs 활용 가능)
+//
+// 결과: 100항목 리스트에서 한 항목만 바뀌면 그 항목 1개만 inner 렌더,
+// 나머지 99 개는 outer 만 rerender (cheap) + inner skip → 실측 -90%+ 가능.
+// ─────────────────────────────────────────────────────────────────────────
+
+// ============================================================
+// SubTodoItem — 하위 할 일 (outer/inner 분리)
+// ============================================================
+
+interface SubItemProps {
+  todo: TodoItem
+  workspaceId: string
+}
+
+export function SubTodoItem({ todo, workspaceId }: SubItemProps): React.JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: todo.id })
+  return (
+    <SubTodoItemContent
+      todo={todo}
+      workspaceId={workspaceId}
+      sortableAttributes={attributes}
+      sortableListeners={listeners}
+      setNodeRef={setNodeRef}
+      transform={transform}
+      transition={transition}
+    />
+  )
+}
+
+interface SubItemContentProps extends SubItemProps {
+  sortableAttributes: DraggableAttributes
+  sortableListeners: DraggableSyntheticListeners
+  setNodeRef: (node: HTMLElement | null) => void
+  transform: Transform | null
+  transition: string | undefined
+}
+
+const SubTodoItemContent = memo(function SubTodoItemContent({
+  todo,
+  workspaceId,
+  sortableAttributes,
+  sortableListeners,
+  setNodeRef,
+  transform,
+  transition
+}: SubItemContentProps): React.JSX.Element {
+  const updateTodo = useUpdateTodo()
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [editOpen, setEditOpen] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+
+  const handleToggle = useCallback(
+    (checked: boolean | string): void => {
+      updateTodo.mutate(
+        { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
+        {
+          onSuccess: () => {
+            if (checked) toast.success(`"${todo.title}" 완료!`)
+          }
+        }
+      )
+    },
+    [updateTodo, workspaceId, todo.id, todo.title]
+  )
+
+  const handleEditSelect = useCallback((): void => {
+    setMenuOpen(false)
+    setEditOpen(true)
+  }, [])
+
+  const handleDeleteSelect = useCallback((): void => {
+    setMenuOpen(false)
+    setDeleteOpen(true)
+  }, [])
+
+  return (
+    <>
+      <div
+        ref={setNodeRef}
+        style={{ transform: CSS.Transform.toString(transform), transition }}
+        className="flex items-center gap-2 py-1.5 px-2 min-w-0"
+      >
+        <span
+          {...sortableAttributes}
+          {...sortableListeners}
+          className="cursor-grab text-muted-foreground shrink-0"
+        >
+          <GripVertical className="h-3.5 w-3.5" />
+        </span>
+        <Checkbox checked={todo.isDone} onCheckedChange={handleToggle} />
+        <TruncateTooltip content={todo.title}>
+          <span
+            className={`flex-1 text-sm truncate min-w-0 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+          >
+            {todo.title}
+          </span>
+        </TruncateTooltip>
+        <AuthorBadge
+          by={todo.updatedBy}
+          byId={todo.updatedById}
+          at={todo.updatedAt}
+          size="sm"
+          className="shrink-0"
+        />
+        <LinkedEntityPopoverButton entityType="todo" entityId={todo.id} workspaceId={workspaceId} />
+        <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-6 w-6 shrink-0">
+              <MoreHorizontal className="h-3.5 w-3.5" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={handleEditSelect}>수정</DropdownMenuItem>
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onSelect={handleDeleteSelect}
+            >
+              삭제
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <EditSubTodoDialog
+        todoId={todo.id}
+        workspaceId={workspaceId}
+        currentTitle={todo.title}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+      />
+      <DeleteTodoDialog
+        todoId={todo.id}
+        workspaceId={workspaceId}
+        hasSubTodos={false}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
+    </>
+  )
+})
+
+// ============================================================
+// TodoListItem — 메인 행 (outer/inner 분리)
+// ============================================================
+
+interface Props {
+  todo: TodoItem
+  subTodos: TodoItem[]
+  workspaceId: string
+  filterActive: boolean
+  onItemClick: (todoId: string) => void
+  onOpenInPane?: (todoId: string, paneId: string) => void
+  onItemDeleted?: (todoId: string) => void
+}
+
+/**
+ * Outer wrapper — useSortable 만 호출하고 결과를 primitives 로 destructure 해서
+ * inner 로 전달. Body 는 의도적으로 비어있음 (가벼움).
+ *
+ * dnd-kit SortableContext 의 context 가 변경되면 본 컴포넌트는 항상 rerender
+ * 되지만, inner 는 props shallow-equal 시 skip → 실질적 비용 없음.
+ */
+export function TodoListItem(props: Props): React.JSX.Element {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: props.todo.id
+  })
+  return (
+    <TodoListItemContent
+      {...props}
+      sortableAttributes={attributes}
+      sortableListeners={listeners}
+      setNodeRef={setNodeRef}
+      transform={transform}
+      transition={transition}
+      isDragging={isDragging}
+    />
+  )
+}
+
+interface ContentProps extends Props {
+  sortableAttributes: DraggableAttributes
+  sortableListeners: DraggableSyntheticListeners
+  setNodeRef: (node: HTMLElement | null) => void
+  transform: Transform | null
+  transition: string | undefined
+  isDragging: boolean
+}
+
+// 테스트에서 inner 의 memo 동작을 직접 검증하기 위해 export.
+// 일반 사용은 외部 wrapper `TodoListItem` 을 통해서만.
+//
+// 테스트 계측 (zero-cost in production):
+//   globalThis.__TODO_LIST_ITEM_RENDER_COUNTER__ 가 Map 이면 본 함수 호출 시
+//   카운트를 증가. React.memo 가 skip 하면 본 함수는 호출되지 않으므로
+//   카운터가 증가 안 함 → memo 효과를 정확히 측정 가능.
+//   production 에서는 globalThis 에 해당 키가 없어 if-체크 한 번으로 끝.
+export const TodoListItemContent = memo(function TodoListItemContent({
+  todo,
+  subTodos,
+  workspaceId,
+  filterActive,
+  onItemClick,
+  onOpenInPane,
+  onItemDeleted,
+  sortableAttributes,
+  sortableListeners,
+  setNodeRef,
+  transform,
+  transition,
+  isDragging
+}: ContentProps): React.JSX.Element {
+  const tlicCounter = (globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
+    .__TODO_LIST_ITEM_RENDER_COUNTER__
+  if (tlicCounter) {
+    tlicCounter.set(todo.id, (tlicCounter.get(todo.id) ?? 0) + 1)
+  }
+  const [isOpen, setIsOpen] = useState(false)
+  const [activeSubId, setActiveSubId] = useState<string | null>(null)
+  const updateTodo = useUpdateTodo()
+  const reorderSub = useReorderTodoSub()
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { delay: 0, tolerance: 5 } }),
+    useSensor(KeyboardSensor)
+  )
+
+  const activeSub = activeSubId ? subTodos.find((t) => t.id === activeSubId) : null
+
+  // ─────────────────────────────────────────────────────────────
+  // 핸들러 안정화
+  // ─────────────────────────────────────────────────────────────
+
+  const handleToggle = useCallback(
+    (checked: boolean | string): void => {
+      updateTodo.mutate(
+        { workspaceId, todoId: todo.id, data: { isDone: !!checked } },
+        {
+          onSuccess: () => {
+            if (checked) toast.success(`"${todo.title}" 완료!`)
+          }
+        }
+      )
+    },
+    [updateTodo, workspaceId, todo.id, todo.title]
+  )
+
+  const handleToggleOpen = useCallback((): void => {
+    setIsOpen((o) => !o)
+  }, [])
+
+  const handleTitleClick = useCallback((): void => {
+    onItemClick(todo.id)
+  }, [onItemClick, todo.id])
+
+  const handlePriorityChange = useCallback(
+    (priority: TodoPriority): void => {
+      updateTodo.mutate({ workspaceId, todoId: todo.id, data: { priority } })
+    },
+    [updateTodo, workspaceId, todo.id]
+  )
+
+  const handleStatusChange = useCallback(
+    (status: TodoStatus): void => {
+      updateTodo.mutate({ workspaceId, todoId: todo.id, data: { status } })
+    },
+    [updateTodo, workspaceId, todo.id]
+  )
+
+  const handleDueDateChange = useCallback(
+    (date: Date | undefined): void => {
+      updateTodo.mutate({ workspaceId, todoId: todo.id, data: { dueDate: date ?? null } })
+    },
+    [updateTodo, workspaceId, todo.id]
+  )
+
+  const handleDueDateClear = useCallback((): void => {
+    updateTodo.mutate({ workspaceId, todoId: todo.id, data: { dueDate: null } })
+  }, [updateTodo, workspaceId, todo.id])
+
+  const handlePaneSelect = useCallback(
+    (paneId: string): void => {
+      onOpenInPane?.(todo.id, paneId)
+    },
+    [onOpenInPane, todo.id]
+  )
+
+  const handleDeleted = useCallback((): void => {
+    onItemDeleted?.(todo.id)
+  }, [onItemDeleted, todo.id])
+
+  const handleSubDragStart = useCallback((event: DragStartEvent): void => {
+    setActiveSubId(event.active.id as string)
+  }, [])
+
+  const handleSubDragEnd = useCallback(
+    (event: DragEndEvent): void => {
+      setActiveSubId(null)
+      const { active, over } = event
+      if (!over || active.id === over.id) return
+      const oldIndex = subTodos.findIndex((t) => t.id === active.id)
+      const newIndex = subTodos.findIndex((t) => t.id === over.id)
+      if (oldIndex === newIndex) return
+      const reordered = arrayMove(subTodos, oldIndex, newIndex)
+      reorderSub.mutate({
+        workspaceId,
+        parentId: todo.id,
+        updates: reordered.map((t, i) => ({ id: t.id, order: i }))
+      })
+    },
+    [reorderSub, subTodos, workspaceId, todo.id]
+  )
+
+  const subTodoIds = useMemo(() => subTodos.map((t) => t.id), [subTodos])
+
+  return (
+    <>
+      {/* 메인 행 */}
+      <tr
+        ref={setNodeRef}
+        style={{ transform: CSS.Transform.toString(transform), transition }}
+        className={`border-b border-border transition-colors hover:bg-muted/50 bg-background ${isDragging ? 'opacity-50' : ''}`}
+      >
+        {/* 드래그 핸들 */}
+        <TableCell className="w-8 px-2 py-2">
+          <span
+            {...(!filterActive ? sortableAttributes : {})}
+            {...(!filterActive ? sortableListeners : {})}
+            className={`flex text-muted-foreground ${filterActive ? 'opacity-30 cursor-not-allowed' : 'cursor-grab hover:text-foreground'}`}
+          >
+            <GripVertical className="h-4 w-4" />
+          </span>
+        </TableCell>
+        <TableCell className="w-8 px-2 py-2">
+          <Checkbox checked={todo.isDone} onCheckedChange={handleToggle} />
+        </TableCell>
+
+        {/* 제목 (접기 토글 포함) */}
+        <TableCell className="py-2 max-w-0 w-full whitespace-normal">
+          <div className="flex items-center gap-2 overflow-hidden">
+            {subTodos.length > 0 && (
+              <button
+                className="shrink-0 text-muted-foreground hover:text-foreground"
+                onClick={handleToggleOpen}
+              >
+                {isOpen ? (
+                  <ChevronDown className="h-3.5 w-3.5" />
+                ) : (
+                  <ChevronRight className="h-3.5 w-3.5" />
+                )}
+              </button>
+            )}
+            <TruncateTooltip content={todo.title}>
+              <button
+                className={`text-left text-sm truncate min-w-0 flex-1 ${todo.isDone ? 'line-through text-muted-foreground' : ''}`}
+                onClick={handleTitleClick}
+              >
+                {todo.title}
+              </button>
+            </TruncateTooltip>
+          </div>
+        </TableCell>
+
+        {/* 중요도 */}
+        <TableCell className="w-4 p-0 @[400px]:w-20 text-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="cursor-pointer">
+                <Badge
+                  variant="outline"
+                  className={`hidden @[400px]:inline-flex border ${PRIORITY_CLASS[todo.priority]}`}
+                >
+                  {PRIORITY_LABEL[todo.priority]}
+                </Badge>
+                <Dot
+                  className={`h-4 w-4 scale-200 ${PRIORITY_DOT[todo.priority]} @[400px]:hidden`}
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {TODO_PRIORITY.map((p) => (
+                <DropdownMenuItem
+                  key={p}
+                  onClick={() => handlePriorityChange(p)}
+                  className={todo.priority === p ? 'font-semibold' : ''}
+                >
+                  <Dot className={`h-4 w-4 scale-200 ${PRIORITY_DOT[p]}`} />
+                  {PRIORITY_LABEL[p]}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+
+        {/* 상태 — @[400px]+ */}
+        <TableCell className="hidden @[400px]:table-cell w-24 py-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="cursor-pointer">
+                <Badge variant="outline">{todo.status}</Badge>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="center">
+              {TODO_STATUS.map((s) => (
+                <DropdownMenuItem
+                  key={s}
+                  onClick={() => handleStatusChange(s as TodoStatus)}
+                  className={todo.status === s ? 'font-semibold' : ''}
+                >
+                  {s}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TableCell>
+
+        {/* 마감일 — @[600px]+ */}
+        <TableCell className="hidden @[600px]:table-cell w-28 py-2 text-center">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button className="text-xs text-muted-foreground hover:text-foreground cursor-pointer">
+                {todo.dueDate ? format(new Date(todo.dueDate), 'yyyy.MM.dd') : '—'}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="center">
+              <Calendar
+                mode="single"
+                locale={ko}
+                selected={todo.dueDate ? new Date(todo.dueDate) : undefined}
+                onSelect={handleDueDateChange}
+              />
+              {todo.dueDate && (
+                <div className="border-t px-3 py-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 text-xs w-full text-destructive hover:text-destructive"
+                    onClick={handleDueDateClear}
+                  >
+                    <X className="size-3 mr-1" />
+                    마감일 삭제
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+        </TableCell>
+
+        {/* 연결 + 더보기 메뉴 */}
+        <TableCell className="py-2">
+          <div className="flex items-center justify-end gap-0.5">
+            <AuthorBadge
+              by={todo.updatedBy}
+              byId={todo.updatedById}
+              at={todo.updatedAt}
+              size="sm"
+              className="mr-1"
+            />
+            <LinkedEntityPopoverButton
+              entityType="todo"
+              entityId={todo.id}
+              workspaceId={workspaceId}
+            />
+            <DropdownMenu modal={false}>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <PanePickerSubmenu onPaneSelect={handlePaneSelect}>
+                  {({ onClick }) => (
+                    <DropdownMenuItem onSelect={preventDefault} onClick={onClick}>
+                      상세 보기
+                    </DropdownMenuItem>
+                  )}
+                </PanePickerSubmenu>
+                <DeleteTodoDialog
+                  todoId={todo.id}
+                  workspaceId={workspaceId}
+                  hasSubTodos={subTodos.length > 0}
+                  onDeleted={handleDeleted}
+                  trigger={
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={preventDefault}
+                    >
+                      삭제
+                    </DropdownMenuItem>
+                  }
+                />
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </TableCell>
+      </tr>
+
+      {/* 하위 할 일 확장 행 */}
+      {isOpen && subTodos.length > 0 && (
+        <tr className="border-b border-border bg-muted/20">
+          <td colSpan={7} className="p-0 max-w-0">
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              modifiers={[restrictToVerticalAxis]}
+              onDragStart={handleSubDragStart}
+              onDragEnd={handleSubDragEnd}
+            >
+              <SortableContext items={subTodoIds} strategy={verticalListSortingStrategy}>
+                <div className="pl-10 py-1 divide-y divide-border/50">
+                  {subTodos.map((sub) => (
+                    <SubTodoItem key={sub.id} todo={sub} workspaceId={workspaceId} />
+                  ))}
+                </div>
+              </SortableContext>
+              <DragOverlay dropAnimation={null}>
+                {activeSub ? (
+                  <div className="flex items-center gap-2 px-2 py-1.5 rounded-md border border-border bg-background shadow-lg text-sm opacity-95">
+                    <GripVertical className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <span
+                      className={`truncate ${activeSub.isDone ? 'line-through text-muted-foreground' : ''}`}
+                    >
+                      {activeSub.title}
+                    </span>
+                  </div>
+                ) : null}
+              </DragOverlay>
+            </DndContext>
+          </td>
+        </tr>
+      )}
+    </>
+  )
+})
+
+function preventDefault(e: Event): void {
+  e.preventDefault()
+}

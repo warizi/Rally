@@ -6,7 +6,7 @@ import type { TodoStatus, TodoPriority } from '@entities/todo'
 import { TodoCheckbox } from '@features/todo/todo-field/ui/TodoCheckbox'
 import { TodoStatusSelect } from '@features/todo/todo-field/ui/TodoStatusSelect'
 import { TodoPrioritySelect } from '@features/todo/todo-field/ui/TodoPrioritySelect'
-import { SubTodoListView } from '@features/todo/todo-field/ui/SubTodoListView'
+import { SubTodoListView } from '@widgets/todo/ui/SubTodoListView'
 import { ScrollArea } from '@shared/ui/scroll-area'
 import type { NodeContentProps } from '../../model/node-content-registry'
 

@@ -5,5 +5,8 @@ export {
   useWorkspace,
   useCreateWorkspace,
   useUpdateWorkspace,
-  useDeleteWorkspace
+  useDeleteWorkspace,
+  useExportBackup,
+  useImportBackup
 } from './api/queries'
+export { BackupRestoreSection } from './ui/BackupRestoreSection'

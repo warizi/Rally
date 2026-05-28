@@ -6,8 +6,7 @@ import { useTabStore } from '@/entities/tab-system'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
 import { FolderX } from 'lucide-react'
-import { ImageHeader } from '@/features/image/view-image'
-import { ImageViewer } from '@widgets/image-viewer'
+import { ImageHeader, ImageViewer } from '@widgets/image-viewer'
 
 export function ImagePage({
   tabId,

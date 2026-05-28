@@ -1,5 +1,5 @@
 import { CollapsibleSection } from '@shared/ui/collapsible-section'
-import { TodoKanbanView } from '@features/todo/todo-kanban/ui/TodoKanbanView'
+import { TodoKanbanView } from './TodoKanbanView'
 import type { TodoItem, TodoStatus } from '@entities/todo'
 
 interface Props {

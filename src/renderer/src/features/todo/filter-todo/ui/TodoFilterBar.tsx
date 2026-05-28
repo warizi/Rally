@@ -2,8 +2,7 @@ import { X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@shared/ui/select'
 import { Button } from '@shared/ui/button'
 import { DatePickerButton } from '@shared/ui/date-picker-button'
-import { DEFAULT_FILTER, isFilterActive } from '@features/todo/filter-todo/model/todo-filter'
-import type { TodoFilter } from '@features/todo/filter-todo/model/todo-filter'
+import { DEFAULT_FILTER, isFilterActive, type TodoFilter } from '@entities/todo'
 
 interface Props {
   filter: TodoFilter

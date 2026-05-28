@@ -20,7 +20,7 @@ vi.mock('@/features/workspace/switch-workspace', () => ({
     createElement('div', { 'data-testid': 'workspace-switcher' }, 'WorkspaceSwitcher')
 }))
 
-vi.mock('@/features/settings/manage-settings', () => ({
+vi.mock('@widgets/settings', () => ({
   SettingsDialog: ({ open }: { open: boolean }) =>
     open ? createElement('div', { 'data-testid': 'settings-dialog' }, 'SettingsDialog') : null
 }))

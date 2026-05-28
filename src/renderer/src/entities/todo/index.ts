@@ -20,3 +20,11 @@ export {
   useReorderTodoSub
 } from './api/queries'
 export { useTodoWatcher } from './model/use-todo-watcher'
+export {
+  DEFAULT_FILTER,
+  isFilterActive,
+  filterToParams,
+  filterFromParams,
+  applyFilter,
+  type TodoFilter
+} from './model/todo-filter'

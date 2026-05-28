@@ -7,8 +7,7 @@ import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
 import { toast } from 'sonner'
-import { useCreateWorkspace } from '@entities/workspace'
-import { useImportBackup, BackupRestoreSection } from '@features/workspace/backup-workspace'
+import { useCreateWorkspace, useImportBackup, BackupRestoreSection } from '@entities/workspace'
 import { JSX } from 'react'
 
 const schema = z.object({

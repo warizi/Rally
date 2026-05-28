@@ -30,7 +30,7 @@ import {
   PaneNavOverlay,
   TabNavOverlay,
   SnapshotNavOverlay
-} from '@features/keyboard-control'
+} from '@widgets/keyboard-control'
 import { UpdateChecker } from '../providers/update-checker'
 import { TimerAlarmDialog } from '@/widgets/timer'
 import { useState } from 'react'

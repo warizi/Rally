@@ -25,7 +25,7 @@ import {
   ScheduleFormDialog,
   useCalendar,
   type CalendarViewType
-} from '@features/schedule/manage-schedule'
+} from '@widgets/calendar'
 
 function todoToScheduleItem(todo: TodoItem): ScheduleItem {
   const start = todo.startDate ?? todo.dueDate!

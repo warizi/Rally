@@ -1,8 +1,8 @@
 import { ChevronDown, ChevronRight } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import type { TodoItem } from '@entities/todo'
-import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog'
-import { SubTodoListView } from '@features/todo/todo-field/ui/SubTodoListView'
+import { CreateTodoDialog } from './CreateTodoDialog'
+import { SubTodoListView } from './SubTodoListView'
 
 interface Props {
   todo: TodoItem

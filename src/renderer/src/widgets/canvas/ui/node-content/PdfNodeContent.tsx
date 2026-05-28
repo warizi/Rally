@@ -1,6 +1,5 @@
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
-import { useReadPdfContent } from '@entities/pdf-file'
-import { PdfViewer } from '@features/pdf/view-pdf'
+import { useReadPdfContent, PdfViewer } from '@entities/pdf-file'
 import type { NodeContentProps } from '../../model/node-content-registry'
 
 export function PdfNodeContent({ refId }: NodeContentProps): React.JSX.Element {

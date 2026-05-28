@@ -67,11 +67,8 @@ export default defineConfig(
           rules: [
             { from: 'app', allow: ['pages', 'widgets', 'features', 'entities', 'shared'] },
             { from: 'pages', allow: ['widgets', 'features', 'entities', 'shared'] },
-            { from: 'widgets', allow: ['features', 'entities', 'shared'] },
-            // P0 범위(shared→/entities→features/entities↔entities)는 error 강제.
-            // features→features 와 features→widgets 임시 허용 — P1 작업
-            // (tab-system entity 재배치 + AISettings widgets 의존 정리) 에서 회수 예정.
-            { from: 'features', allow: ['features', 'widgets', 'entities', 'shared'] },
+            { from: 'widgets', allow: ['widgets', 'features', 'entities', 'shared'] },
+            { from: 'features', allow: ['entities', 'shared'] },
             { from: 'entities', allow: ['shared'] },
             { from: 'shared', allow: [] }
           ]
