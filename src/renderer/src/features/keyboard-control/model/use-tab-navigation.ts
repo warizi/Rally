@@ -14,7 +14,7 @@
  * - 이후 trigger keydown: next() / prev() 순환
  * - modifier 해제: focusIndex 탭으로 activateTab → close + mode clear
  */
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 import { useGlobalHotkey } from './use-global-hotkey'
 import { useKeyboardModeStore } from './keyboard-mode-store'
 import { useTabNavStore, type TabNavItem } from './tab-nav-store'

@@ -5,7 +5,7 @@ import {
   TabBar,
   TabDropZone,
   useTabStore
-} from '@/features/tap-system/manage-tab-system'
+} from '@/features/tab-system/manage-tab-system'
 import { cn } from '@/shared/lib/utils'
 
 interface PaneContainerProps {

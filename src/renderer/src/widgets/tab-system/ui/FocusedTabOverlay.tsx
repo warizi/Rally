@@ -1,4 +1,4 @@
-import { selectFocusedTabId, useTabStore } from '@/features/tap-system/manage-tab-system'
+import { selectFocusedTabId, useTabStore } from '@/features/tab-system/manage-tab-system'
 import { PaneRoute } from '@/shared/lib/pane-route'
 import { Button } from '@shared/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'

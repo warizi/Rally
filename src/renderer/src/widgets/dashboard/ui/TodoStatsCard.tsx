@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Check } from 'lucide-react'
 import { useTodosByWorkspace } from '@entities/todo'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { ROUTES } from '@shared/constants/tab-url'
 import { useCountUp } from '@shared/hooks/use-count-up'
 import { Button } from '@shared/ui/button'

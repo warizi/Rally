@@ -8,7 +8,7 @@ import {
   applySessionToStore,
   type SerializedTab,
   type SessionData
-} from '@/features/tap-system/manage-tab-system'
+} from '@/features/tab-system/manage-tab-system'
 import type { TabSnapshot } from '@entities/tab-snapshot'
 
 export function applyTabSnapshot(snapshot: TabSnapshot): void {

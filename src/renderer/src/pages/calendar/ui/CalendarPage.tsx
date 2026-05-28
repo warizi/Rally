@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { useSchedulesByWorkspace, type ScheduleItem } from '@entities/schedule'
 import { useTodosByDateRange, type TodoItem } from '@entities/todo'
 import { RecurringTodoSection } from '@widgets/todo'

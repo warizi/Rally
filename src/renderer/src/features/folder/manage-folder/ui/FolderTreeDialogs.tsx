@@ -1,5 +1,5 @@
 import type { JSX } from 'react'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { FolderColorDialog } from './FolderColorDialog'
 import { FolderNameDialog } from './FolderNameDialog'
 import { DeleteFolderDialog } from './DeleteFolderDialog'

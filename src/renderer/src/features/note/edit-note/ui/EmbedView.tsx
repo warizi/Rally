@@ -19,7 +19,7 @@ import { useImageFilesByWorkspace, useReadImageContent } from '@entities/image-f
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { PdfViewer } from '@/features/pdf/view-pdf/ui/PdfViewer'
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 import type { EmbedDomain } from '../model/note-embed-schema'
 
 /** entity → 탭으로 열기. note/csv/pdf/image 각 detail pathname. */

@@ -34,7 +34,7 @@ const openTabMock = vi.fn()
 const toggleTerminalMock = vi.fn()
 const updateSnapshotMock = vi.fn()
 
-vi.mock('@/features/tap-system/manage-tab-system', () => ({
+vi.mock('@/features/tab-system/manage-tab-system', () => ({
   useTabStore: (selector: (s: unknown) => unknown) =>
     selector({
       openTab: openTabMock,

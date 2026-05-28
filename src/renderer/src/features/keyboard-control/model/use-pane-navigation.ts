@@ -7,11 +7,11 @@
  * NoteEditor 등 입력 가능 영역에 포커스가 있으면 비활성 (useGlobalHotkey
  * 가 처리).
  */
-import { useTabStore } from '@/features/tap-system/manage-tab-system'
+import { useTabStore } from '@/features/tab-system/manage-tab-system'
 import {
   findAdjacentPaneId,
   type ArrowDirection
-} from '@/features/tap-system/manage-tab-system/model/layout'
+} from '@/features/tab-system/manage-tab-system/model/layout'
 import { useKeyboardModeStore } from './keyboard-mode-store'
 import { useGlobalHotkey } from './use-global-hotkey'
 

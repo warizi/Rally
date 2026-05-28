@@ -61,7 +61,7 @@ vi.mock('@entities/image-file', () => ({
   useDuplicateImageFile: () => ({ mutate: vi.fn() })
 }))
 
-vi.mock('@features/tap-system/manage-tab-system', () => ({
+vi.mock('@features/tab-system/manage-tab-system', () => ({
   useTabStore: (selector: (s: { openRightTab: () => void }) => unknown) =>
     selector({ openRightTab: vi.fn() })
 }))

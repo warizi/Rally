@@ -3,7 +3,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Folder } from 'lucide-react'
 import { toast } from 'sonner'
 import { isWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { ROUTES } from '@shared/constants/tab-url'
 import { formatAuthor } from '@shared/lib/format-author'
 

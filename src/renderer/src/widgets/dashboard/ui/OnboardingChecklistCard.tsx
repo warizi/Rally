@@ -7,7 +7,7 @@ import {
   useOnboardingStore,
   type ChecklistStep
 } from '@shared/store/onboarding'
-import { useTabStore } from '@features/tap-system/manage-tab-system'
+import { useTabStore } from '@features/tab-system/manage-tab-system'
 import { Button } from '@shared/ui/button'
 import { DashboardCard } from '@shared/ui/dashboard-card'
 import { TAB_ICON, type TabType } from '@shared/constants/tab-url'
