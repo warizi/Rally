@@ -7,7 +7,7 @@ import {
   applyFilter,
   type TodoFilter
 } from '../todo-filter'
-import type { TodoItem } from '@entities/todo'
+import type { TodoItem } from '../types'
 
 function makeTodoItem(overrides?: Partial<TodoItem>): TodoItem {
   return {

@@ -18,15 +18,11 @@ import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog
 import { useTodosByWorkspace, useActiveTodosByWorkspace } from '@entities/todo'
 import { useCompletedWithRecurring, type CompletedItem } from '@/widgets/recurring'
 import { useTabStore, selectPaneByTabId } from '@/entities/tab-system'
-import { useTodoList } from '@features/todo/todo-list/model/use-todo-list'
-import { useCompletedTodoList } from '@features/todo/todo-list/model/use-completed-todo-list'
-import { useHoldingOnTodoList } from '@features/todo/todo-list/model/use-holding-on-todo-list'
-import { useTodoKanban } from '@features/todo/todo-kanban/model/use-todo-kanban'
-import {
-  filterToParams,
-  filterFromParams,
-  type TodoFilter
-} from '@features/todo/filter-todo/model/todo-filter'
+import { useTodoList } from '@widgets/todo/model/use-todo-list'
+import { useCompletedTodoList } from '@widgets/todo/model/use-completed-todo-list'
+import { useHoldingOnTodoList } from '@widgets/todo/model/use-holding-on-todo-list'
+import { useTodoKanban } from '@widgets/todo/model/use-todo-kanban'
+import { filterToParams, filterFromParams, type TodoFilter } from '@entities/todo'
 import {
   TodoViewToolbar,
   TodoFilterSection,

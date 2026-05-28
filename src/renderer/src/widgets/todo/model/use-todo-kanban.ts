@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
-import type { TodoItem, TodoStatus } from '@entities/todo'
-import { DEFAULT_FILTER, TodoFilter } from '../../filter-todo/model/todo-filter'
+import { DEFAULT_FILTER, type TodoFilter, type TodoItem, type TodoStatus } from '@entities/todo'
 
 export const KANBAN_COLUMNS: TodoStatus[] = ['할일', '진행중', '완료', '보류']
 

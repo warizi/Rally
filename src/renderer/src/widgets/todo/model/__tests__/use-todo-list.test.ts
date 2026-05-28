@@ -1,8 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useTodoList } from '../use-todo-list'
-import { DEFAULT_FILTER } from '../../../filter-todo/model/todo-filter'
-import type { TodoItem } from '@entities/todo'
+import { DEFAULT_FILTER, type TodoItem } from '@entities/todo'
 
 const BASE_TODO: TodoItem = {
   id: 'todo-1',

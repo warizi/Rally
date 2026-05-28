@@ -8,7 +8,7 @@ import type { JSX, ReactNode } from 'react'
 
 vi.mock('../../model/useWorkspaceSwitch')
 
-vi.mock('@features/workspace/backup-workspace', () => ({
+vi.mock('@entities/workspace', () => ({
   useExportBackup: vi.fn(() => ({ mutate: vi.fn(), isPending: false }))
 }))
 

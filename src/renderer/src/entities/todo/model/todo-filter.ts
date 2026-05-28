@@ -1,4 +1,4 @@
-import type { TodoStatus, TodoPriority, TodoItem } from '@entities/todo'
+import type { TodoStatus, TodoPriority, TodoItem } from './types'
 
 export interface TodoFilter {
   status: TodoStatus | 'all'

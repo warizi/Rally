@@ -12,7 +12,7 @@ import {
 } from '@shared/ui/dropdown-menu'
 import type { TodoItem } from '@entities/todo'
 import { LinkedEntityPopoverButton } from '@/widgets/entity-link'
-import { TodoCheckbox } from './TodoCheckbox'
+import { TodoCheckbox } from '@features/todo/todo-field/ui/TodoCheckbox'
 import { EditSubTodoDialog } from './EditSubTodoDialog'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { AuthorBadge } from '@shared/ui/author-badge'

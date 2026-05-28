@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
-import type { TodoItem } from '@entities/todo'
 import {
   applyFilter,
   DEFAULT_FILTER,
   isFilterActive,
-  TodoFilter
-} from '../../filter-todo/model/todo-filter'
+  type TodoFilter,
+  type TodoItem
+} from '@entities/todo'
 
 export function useTodoList(
   allTodos: TodoItem[],

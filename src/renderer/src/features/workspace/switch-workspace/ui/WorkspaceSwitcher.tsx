@@ -10,7 +10,7 @@ import {
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@shared/ui/sidebar'
 import { toast } from 'sonner'
 import { useWorkspaceSwitch } from '../model/useWorkspaceSwitch'
-import { useExportBackup } from '@features/workspace/backup-workspace'
+import { useExportBackup } from '@entities/workspace'
 import { CreateWorkspaceDialog } from './CreateWorkspaceDialog'
 import { EditWorkspaceDialog } from './EditWorkspaceDialog'
 import { DeleteWorkspaceDialog } from './DeleteWorkspaceDialog'

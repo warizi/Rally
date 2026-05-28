@@ -100,3 +100,40 @@ export function useDeleteWorkspace(): UseMutationResult<void, Error, string> {
     }
   })
 }
+
+export function useExportBackup(): UseMutationResult<null, Error, string> {
+  return useMutation({
+    mutationFn: async (workspaceId: string): Promise<null> => {
+      const res: IpcResponse<null> = await window.api.backup.export(workspaceId)
+      if (!res.success) throwIpcError(res)
+      return res.data ?? null
+    }
+  })
+}
+
+interface ImportBackupParams {
+  zipPath: string
+  name: string
+  path: string
+}
+
+export function useImportBackup(): UseMutationResult<
+  Workspace | undefined,
+  Error,
+  ImportBackupParams
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ zipPath, name, path }: ImportBackupParams) => {
+      const res: IpcResponse<Workspace> = await window.api.backup.import(zipPath, name, path)
+      if (!res.success) throwIpcError(res)
+      return res.data
+    },
+    onSuccess: (data) => {
+      if (data) {
+        queryClient.setQueryData<Workspace[]>([QUERY_KEY], (old) => [...(old ?? []), data])
+      }
+      queryClient.invalidateQueries({ queryKey: [QUERY_KEY] })
+    }
+  })
+}

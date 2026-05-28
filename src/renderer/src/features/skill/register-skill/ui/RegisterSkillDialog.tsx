@@ -25,8 +25,7 @@ import {
   FormLabel,
   FormMessage
 } from '@shared/ui/form'
-import { assembleSkillContent, useCreateSkill } from '@entities/skill'
-import { ToolMultiSelect } from '../../lib/ToolMultiSelect'
+import { assembleSkillContent, useCreateSkill, ToolMultiSelect } from '@entities/skill'
 
 interface Props {
   open: boolean

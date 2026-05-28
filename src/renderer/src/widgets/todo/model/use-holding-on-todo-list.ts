@@ -1,6 +1,5 @@
 import { useMemo } from 'react'
-import type { TodoItem } from '@entities/todo'
-import { applyFilter, isFilterActive, type TodoFilter } from '../../filter-todo/model/todo-filter'
+import { applyFilter, isFilterActive, type TodoFilter, type TodoItem } from '@entities/todo'
 
 export function useHoldingOnTodoList(
   activeTodos: TodoItem[],

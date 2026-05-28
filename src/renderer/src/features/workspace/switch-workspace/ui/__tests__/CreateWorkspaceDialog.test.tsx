@@ -4,10 +4,7 @@ import { CreateWorkspaceDialog } from '../CreateWorkspaceDialog'
 import { useCreateWorkspace } from '@entities/workspace'
 
 vi.mock('@entities/workspace', () => ({
-  useCreateWorkspace: vi.fn()
-}))
-
-vi.mock('@features/workspace/backup-workspace', () => ({
+  useCreateWorkspace: vi.fn(),
   useImportBackup: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
   BackupRestoreSection: () => null
 }))

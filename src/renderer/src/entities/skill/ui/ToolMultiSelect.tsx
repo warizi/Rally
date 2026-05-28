@@ -13,7 +13,7 @@ import {
 } from '@shared/ui/command'
 import { ScrollArea } from '@shared/ui/scroll-area'
 import { cn } from '@shared/lib/utils'
-import { RALLY_TOOLS, getToolLabel } from '@entities/skill'
+import { RALLY_TOOLS, getToolLabel } from '../lib/rally-tools'
 
 interface Props {
   value: string[]
@@ -67,18 +67,11 @@ export function ToolMultiSelect({
         <PopoverContent
           className="p-0 w-(--radix-popover-trigger-width) min-w-80"
           align="start"
-          // dialog 의 ScrollArea 가 wheel 을 가로채지 않도록 popover 내부에서 이벤트 차단.
           onWheel={(e) => e.stopPropagation()}
-          // PopoverContent 가 dialog 의 focus trap 으로 인해 pointer 이벤트가 막히는 케이스 방지.
           onPointerDownOutside={(e) => e.stopPropagation()}
         >
           <Command>
             <CommandInput placeholder="이름 또는 라벨로 검색…" className="h-9" />
-            {/*
-              CommandList 의 native overflow 를 끄고 ScrollArea 로 대체.
-              max-h-none 으로 cmdk 기본 300px 제한 해제 → ScrollArea 가 height 결정.
-              cmdk 의 scrollIntoView 는 표준 DOM API 라 ScrollArea viewport 내에서도 동작.
-            */}
             <CommandList className="max-h-none overflow-visible">
               <ScrollArea className="h-[300px]">
                 <CommandEmpty>찾는 tool 이 없습니다.</CommandEmpty>

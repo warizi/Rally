@@ -1,5 +1,5 @@
 import { CollapsibleSection } from '@shared/ui/collapsible-section'
-import { TodoListView } from '@features/todo/todo-list/ui/TodoListView'
+import { TodoListView } from './TodoListView'
 import type { TodoItem } from '@entities/todo'
 
 interface Props {
