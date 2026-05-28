@@ -17,7 +17,7 @@ import type {
   UpdateCanvasNodeData,
   CreateCanvasEdgeData,
   UpdateCanvasEdgeData
-} from './types'
+} from '../model/types'
 
 const CANVAS_KEY = 'canvas'
 const CANVAS_NODE_KEY = 'canvasNode'

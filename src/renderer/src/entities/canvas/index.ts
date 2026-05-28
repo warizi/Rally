@@ -35,7 +35,7 @@ export {
   useUpdateCanvasEdge,
   useRemoveCanvasEdge,
   useSyncCanvasState
-} from './model/queries'
+} from './api/queries'
 export {
   toReactFlowNode,
   toReactFlowEdge,
