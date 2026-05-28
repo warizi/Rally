@@ -66,11 +66,15 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
 
+  // open=false 로 바뀔 때 query reset — effect 안 setState 대신 derived state 패턴.
+  const [prevOpenForQuery, setPrevOpenForQuery] = useState(open)
+  if (prevOpenForQuery !== open) {
+    setPrevOpenForQuery(open)
+    if (!open) setQuery('')
+  }
+
   useEffect(() => {
-    if (!open) {
-      setQuery('')
-      return
-    }
+    if (!open) return
     // popup 열리면 input 자동 focus
     requestAnimationFrame(() => {
       inputRef.current?.focus()
@@ -92,10 +96,13 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
       .slice(0, 50)
   }, [allItems, query])
 
+  // query / open 변경 시 focusIndex reset — derived state 패턴.
   const [focusIndex, setFocusIndex] = useState(0)
-  useEffect(() => {
+  const [prevResetKey, setPrevResetKey] = useState({ query, open })
+  if (prevResetKey.query !== query || prevResetKey.open !== open) {
+    setPrevResetKey({ query, open })
     setFocusIndex(0)
-  }, [query, open])
+  }
 
   const [loading, getEditor] = useInstance()
   void loading

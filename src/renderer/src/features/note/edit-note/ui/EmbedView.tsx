@@ -334,12 +334,16 @@ function ImageEmbedView({
   // 아닌 useEffect + state 로 처리 (ImageViewer 와 동일 패턴). Strict Mode
   // 에서도 cleanup 매칭 정확.
   const [blobUrl, setBlobUrl] = useState<string>('')
+  // blob URL 라이프사이클은 외부 시스템(URL.createObjectURL) 동기화 — render로 derive 불가.
+  // React 권장 'effect for external systems' 케이스이므로 set-state-in-effect 룰을 의도적으로 우회.
   useEffect(() => {
     if (!content?.data || content.data.byteLength === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setBlobUrl('')
       return
     }
     const url = URL.createObjectURL(new Blob([content.data]))
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setBlobUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [content?.data])

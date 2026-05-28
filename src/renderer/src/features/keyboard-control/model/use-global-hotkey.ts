@@ -58,7 +58,10 @@ export function useGlobalHotkey({
   const activeRef = useRef(false)
   // 핸들러 ref — 매 render 마다 최신 함수 유지 (effect 재등록 없이).
   const handlersRef = useRef({ onActivate, onKeyDown, onDeactivate })
-  handlersRef.current = { onActivate, onKeyDown, onDeactivate }
+  // render 중 ref.current 직접 변경은 React 룰 위반 — effect로 분리.
+  useEffect(() => {
+    handlersRef.current = { onActivate, onKeyDown, onDeactivate }
+  })
 
   useEffect(() => {
     if (!enabled) return

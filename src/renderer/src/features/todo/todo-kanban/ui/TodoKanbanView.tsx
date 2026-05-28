@@ -68,8 +68,11 @@ export function TodoKanbanView({
 
   // 부모(TodoPage) 가 콜백을 useCallback 으로 안정화하지 않으므로 ref 패턴으로 흡수.
   // 자식 KanbanBoard / KanbanCard 의 React.memo 가 props 비교를 정상 통과하도록 stable reference 노출.
+  // render 중 ref.current 직접 변경은 React 룰 위반 — effect로 분리.
   const callbacksRef = useRef({ onItemClick, onOpenInPane, onItemDelete })
-  callbacksRef.current = { onItemClick, onOpenInPane, onItemDelete }
+  useEffect(() => {
+    callbacksRef.current = { onItemClick, onOpenInPane, onItemDelete }
+  })
   const stableOnItemClick = useCallback(
     (todoId: string) => callbacksRef.current.onItemClick(todoId),
     []
