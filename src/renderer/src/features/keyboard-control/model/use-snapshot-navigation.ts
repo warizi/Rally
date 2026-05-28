@@ -10,7 +10,7 @@
  * - 이후 s keydown: next() — focusIndex 순환
  * - modifier 해제: focusIndex 스냅샷 apply → close() + mode clear
  */
-import { useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { useTabSnapshots, type TabSnapshot } from '@entities/tab-snapshot'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
@@ -25,8 +25,11 @@ export function useSnapshotNavigation(): void {
   const clearMode = useKeyboardModeStore((s) => s.clearMode)
 
   // ref 로 항상 최신 snapshots 캐싱 — onKeyDown / onDeactivate 클로저 stale 방지.
+  // render 중 ref.current 직접 변경은 React 룰 위반 — effect로 분리.
   const snapshotsRef = useRef<TabSnapshot[]>(snapshots)
-  snapshotsRef.current = snapshots
+  useEffect(() => {
+    snapshotsRef.current = snapshots
+  })
 
   useGlobalHotkey({
     modifiers: { meta: true, shift: true },
