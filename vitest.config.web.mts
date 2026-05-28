@@ -21,8 +21,15 @@ export default defineConfig({
         '**/*.d.ts',
         'src/renderer/src/test/**',
         'src/renderer/src/app/main.tsx',
-        'src/renderer/src/shared/ui/**'
-      ]
+        'src/renderer/src/shared/ui/**',
+        'src/renderer/src/**/index.ts'
+      ],
+      thresholds: {
+        lines: 24,
+        functions: 20,
+        branches: 18,
+        statements: 23
+      }
     }
   },
   resolve: {
