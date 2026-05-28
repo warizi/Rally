@@ -18,5 +18,5 @@ export {
   useReorderTodoList,
   useReorderTodoKanban,
   useReorderTodoSub
-} from './model/queries'
+} from './api/queries'
 export { useTodoWatcher } from './model/use-todo-watcher'
