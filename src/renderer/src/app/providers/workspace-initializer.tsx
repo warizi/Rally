@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
 import { useWorkspaces } from '@entities/workspace'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('workspace')
 
 export function WorkspaceInitializer(): null {
   const { data: workspaces = [] } = useWorkspaces()
@@ -26,7 +29,7 @@ export function WorkspaceInitializer(): null {
       setCurrentWorkspaceId(workspaces[0].id)
     }
     const activeId = isValid ? currentWorkspaceId! : workspaces[0].id
-    window.api.workspace.activate(activeId).catch(console.error)
+    window.api.workspace.activate(activeId).catch(onError)
   }, [workspaces, currentWorkspaceId, isInitialized, setCurrentWorkspaceId])
 
   // Step 3: MCP manage_workspace(switch) 로 main 에서 활성 워크스페이스가 바뀌면

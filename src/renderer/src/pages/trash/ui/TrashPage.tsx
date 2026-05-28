@@ -17,6 +17,9 @@ import {
 } from '@shared/ui/alert-dialog'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useOnboardingStore } from '@shared/store/onboarding'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('onboarding')
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { TAB_ICON, type TabType as TabIconKey } from '@/shared/constants/tab-url'
 import { useTrashList, trashKindLabel, type TrashEntityKind } from '@entities/trash'
@@ -71,7 +74,7 @@ export function TrashPage(): JSX.Element {
   const debouncedSearch = useDebouncedValue(search, 300)
 
   useEffect(() => {
-    useOnboardingStore.getState().markChecklistStep('view_trash').catch(console.error)
+    useOnboardingStore.getState().markChecklistStep('view_trash').catch(onError)
   }, [])
 
   const trashed = useTrashList(workspaceId, {

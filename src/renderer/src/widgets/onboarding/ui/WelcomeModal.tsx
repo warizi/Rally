@@ -5,7 +5,10 @@ import { Button } from '@shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { useWorkspaceIsEmpty } from '@/widgets/workspace'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { toLogError } from '@shared/lib/logger'
 import { WelcomeSlide } from './WelcomeSlides'
+
+const onError = toLogError('onboarding')
 
 const SLIDE_COUNT = 3
 
@@ -68,7 +71,7 @@ export function WelcomeModal({ onCreateSample }: Props): React.JSX.Element | nul
       open={open}
       onOpenChange={(o) => {
         if (!o) {
-          handleClose().catch(console.error)
+          handleClose().catch(onError)
         }
       }}
     >
