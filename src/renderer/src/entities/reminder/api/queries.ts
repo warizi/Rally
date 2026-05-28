@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
-import type { ReminderItem, SetReminderData } from './types'
+import type { ReminderItem, SetReminderData } from '../model/types'
 
 const REMINDER_KEY = 'reminder'
 
