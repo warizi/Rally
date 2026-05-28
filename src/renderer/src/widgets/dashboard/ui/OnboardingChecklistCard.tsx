@@ -11,6 +11,9 @@ import { useTabStore } from '@/entities/tab-system'
 import { Button } from '@shared/ui/button'
 import { DashboardCard } from '@shared/ui/dashboard-card'
 import { TAB_ICON, type TabType } from '@shared/constants/tab-url'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('onboarding')
 
 const PATHNAME_TO_TAB: Record<string, { type: TabType; title: string }> = {
   '/folder': { type: 'folder', title: '파일 탐색기' },
@@ -61,7 +64,7 @@ export function OnboardingChecklistCard({ className }: Props): React.JSX.Element
   }
 
   const handleClose = (): void => {
-    acknowledgeChecklist().catch(console.error)
+    acknowledgeChecklist().catch(onError)
   }
 
   const ratio = counts.done / counts.total

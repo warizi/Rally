@@ -5,6 +5,9 @@ import os from 'os'
 import { is } from '@electron-toolkit/utils'
 import { createRouter } from './router'
 import { registerAllRoutes } from './routes'
+import { scoped } from '../lib/logger'
+
+const log = scoped('mcp-api')
 
 const socketName = is.dev ? 'mcp-dev.sock' : 'mcp.sock'
 const pipeName = is.dev ? 'rally-mcp-dev' : 'rally-mcp'
@@ -40,10 +43,10 @@ export function startMcpApiServer(): void {
       try {
         fs.chmodSync(socketPath, 0o600)
       } catch (err) {
-        console.warn(`[MCP API] failed to chmod socket: ${err}`)
+        log.warn(`failed to chmod socket: ${err}`)
       }
     }
-    console.log(`[MCP API] Listening on ${socketPath}`)
+    log.info(`Listening on ${socketPath}`)
   })
 }
 

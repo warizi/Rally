@@ -1,5 +1,7 @@
 import { trashService } from './index'
+import { scoped } from '../../lib/logger'
 
+const log = scoped('trash-sweeper')
 const CHECK_INTERVAL = 60 * 60 * 1000 // 1시간
 
 let intervalId: ReturnType<typeof setInterval> | null = null
@@ -8,10 +10,10 @@ function runSweep(): void {
   try {
     const purged = trashService.sweepAll()
     if (purged > 0) {
-      console.log(`[TrashSweeper] purged ${purged} batches`)
+      log.info(`purged ${purged} batches`)
     }
   } catch (err) {
-    console.error('[TrashSweeper] sweep failed:', err)
+    log.error('sweep failed:', err)
   }
 }
 

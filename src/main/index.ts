@@ -13,6 +13,7 @@ import { existsSync, mkdirSync, renameSync } from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import icon from '../../resources/icon.png?asset'
+import { scoped } from './lib/logger'
 import { db } from './db'
 import { registerWorkspaceHandlers } from './ipc/workspace'
 import { registerTabSessionHandlers } from './ipc/tab-session'
@@ -80,6 +81,7 @@ function ensureAllWorkspaceCommands(): void {
 // 기본 워크스페이스 위치를 ~/Documents/Rally → ~/Rally로 이동시킨다.
 // 사용자가 직접 설정한 경로는 건드리지 않고, 정확히 옛 기본 경로를 쓰는 워크스페이스만 대상.
 function migrateLegacyDefaultWorkspacePath(): void {
+  const log = scoped('migrate-default-path')
   const legacyPath = join(app.getPath('documents'), 'Rally', '기본 워크스페이스')
   const newPath = join(app.getPath('home'), 'Rally', '기본 워크스페이스')
   if (legacyPath === newPath) return
@@ -89,16 +91,14 @@ function migrateLegacyDefaultWorkspacePath(): void {
   if (!target) return
 
   if (all.some((ws) => ws.id !== target.id && ws.path === newPath)) {
-    console.warn(
-      `[migrate-default-path] another workspace already uses ${newPath}; skipping migration`
-    )
+    log.warn(`another workspace already uses ${newPath}; skipping migration`)
     return
   }
 
   try {
     mkdirSync(dirname(newPath), { recursive: true })
   } catch (err) {
-    console.warn(`[migrate-default-path] cannot create parent dir for ${newPath}:`, err)
+    log.warn(`cannot create parent dir for ${newPath}:`, err)
     return
   }
 
@@ -107,11 +107,11 @@ function migrateLegacyDefaultWorkspacePath(): void {
     try {
       renameSync(legacyPath, newPath)
       moved = true
-      console.log(`[migrate-default-path] moved ${legacyPath} → ${newPath}`)
+      log.info(`moved ${legacyPath} → ${newPath}`)
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code
-      console.warn(
-        `[migrate-default-path] cannot move legacy dir (${code}); creating fresh dir. ` +
+      log.warn(
+        `cannot move legacy dir (${code}); creating fresh dir. ` +
           `Existing data (if any) remains at ${legacyPath}.`
       )
     }
@@ -120,7 +120,7 @@ function migrateLegacyDefaultWorkspacePath(): void {
       try {
         mkdirSync(newPath, { recursive: true })
       } catch (err) {
-        console.warn(`[migrate-default-path] cannot create ${newPath}:`, err)
+        log.warn(`cannot create ${newPath}:`, err)
         return
       }
     }
@@ -128,11 +128,11 @@ function migrateLegacyDefaultWorkspacePath(): void {
 
   try {
     workspaceService.update(target.id, { path: newPath })
-    console.log(
-      `[migrate-default-path] updated workspace ${target.id} path: ${legacyPath} → ${newPath}`
+    log.info(
+      `updated workspace ${target.id} path: ${legacyPath} → ${newPath}`
     )
   } catch (err) {
-    console.warn(`[migrate-default-path] failed to update workspace path in DB:`, err)
+    log.warn(`failed to update workspace path in DB:`, err)
   }
 }
 
@@ -243,7 +243,6 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  ipcMain.on('ping', () => console.log('pong'))
   ipcMain.handle('shell:openExternal', async (_, url: string) => {
     if (/^https?:\/\//.test(url)) {
       await shell.openExternal(url)

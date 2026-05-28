@@ -4,6 +4,9 @@ import { Popover, PopoverContent, PopoverTrigger } from '@shared/ui/popover'
 import { Button } from '@shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { cn } from '@shared/lib/utils'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('onboarding')
 
 interface OnboardingTipProps {
   /** 고유 ID — onboarding.tipsShown 키에 기록 */
@@ -46,7 +49,7 @@ export function OnboardingTip({
 
   const handleDismiss = (): void => {
     setOpen(false)
-    markTipShown(tipId).catch(console.error)
+    markTipShown(tipId).catch(onError)
   }
 
   return (

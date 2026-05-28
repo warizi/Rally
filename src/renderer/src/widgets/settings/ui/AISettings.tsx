@@ -12,6 +12,9 @@ import { Button } from '@/shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { SkillsManager } from '@widgets/skills-manager'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('onboarding')
 
 interface CommandFile {
   name: string
@@ -104,7 +107,7 @@ export function AISettings(): React.JSX.Element {
     try {
       await window.api.mcpClient.register(client)
       await refreshStatus()
-      useOnboardingStore.getState().markChecklistStep('connect_ai').catch(console.error)
+      useOnboardingStore.getState().markChecklistStep('connect_ai').catch(onError)
     } finally {
       setBusy(null)
     }

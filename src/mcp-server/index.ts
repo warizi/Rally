@@ -22,4 +22,7 @@ async function main(): Promise<void> {
   await server.connect(transport)
 }
 
-main().catch(console.error)
+// MCP protocol 은 stdout 을 JSON-RPC 채널로 사용 → console.log 절대 금지.
+// stderr 직출 (console.error 또는 process.stderr.write) 만 허용.
+// eslint-disable-next-line no-console
+main().catch((err) => console.error('[mcp-server] fatal:', err))

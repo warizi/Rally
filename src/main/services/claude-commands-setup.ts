@@ -3,6 +3,10 @@ import { join } from 'path'
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { ensureMcpToken } from '../lib/mcp-token'
+import { scoped } from '../lib/logger'
+
+const mcpLog = scoped('ensureMcpSettings')
+const cmdLog = scoped('ensureClaudeCommands')
 
 function getSourceCommandsDir(): string {
   return is.dev
@@ -43,7 +47,7 @@ function ensureMcpSettings(workspacePath: string): void {
       raw = readFileSync(mcpPath, 'utf-8')
     } catch (err) {
       // 권한(EPERM) 등으로 읽을 수 없으면 이 워크스페이스는 건너뜀
-      console.warn(`[ensureMcpSettings] cannot read ${mcpPath}:`, err)
+      mcpLog.warn(`cannot read ${mcpPath}:`, err)
       return
     }
 
@@ -54,7 +58,7 @@ function ensureMcpSettings(workspacePath: string): void {
       try {
         writeFileSync(mcpPath + '.bak', raw, 'utf-8')
       } catch (err) {
-        console.warn(`[ensureMcpSettings] failed to write backup:`, err)
+        mcpLog.warn(`failed to write backup:`, err)
       }
       config = {}
     }
@@ -84,7 +88,7 @@ function ensureMcpSettings(workspacePath: string): void {
   try {
     writeFileSync(mcpPath, JSON.stringify(config, null, 2), 'utf-8')
   } catch (err) {
-    console.warn(`[ensureMcpSettings] cannot write ${mcpPath}:`, err)
+    mcpLog.warn(`cannot write ${mcpPath}:`, err)
   }
 }
 
@@ -112,7 +116,7 @@ export function ensureClaudeCommands(workspacePath: string): void {
       }
     }
   } catch (err) {
-    console.warn(`[ensureClaudeCommands] failed for ${workspacePath}:`, err)
+    cmdLog.warn(`failed for ${workspacePath}:`, err)
   }
 
   // MCP 서버 설정 (내부에서 자체 에러 처리)

@@ -4,6 +4,9 @@ import { useTodosByWorkspace } from '@entities/todo'
 import { useTags } from '@entities/tag'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useOnboardingStore } from '@shared/store/onboarding'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('onboarding')
 
 /**
  * 데이터 카운트 기반 체크리스트 step 자동 감지.
@@ -21,17 +24,17 @@ export function OnboardingStepWatcher(): null {
 
   useEffect(() => {
     if (!hydrated) return
-    if (notes.length > 0) markStep('first_note').catch(console.error)
+    if (notes.length > 0) markStep('first_note').catch(onError)
   }, [hydrated, notes.length, markStep])
 
   useEffect(() => {
     if (!hydrated) return
-    if (todos.length > 0) markStep('first_todo').catch(console.error)
+    if (todos.length > 0) markStep('first_todo').catch(onError)
   }, [hydrated, todos.length, markStep])
 
   useEffect(() => {
     if (!hydrated) return
-    if (tags.length > 0) markStep('add_tag').catch(console.error)
+    if (tags.length > 0) markStep('add_tag').catch(onError)
   }, [hydrated, tags.length, markStep])
 
   return null

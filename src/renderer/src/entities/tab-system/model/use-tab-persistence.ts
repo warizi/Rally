@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react'
 import type { Tab } from './types'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
+import { scoped } from '@shared/lib/logger'
 import { useTabStore } from './store'
 import { loadSession, saveSession } from '../api/queries'
 import type { SerializedTab, SessionData } from '../api/queries'
+
+const log = scoped('tab-persistence')
 
 // Query Keys
 export const sessionKeys = {
@@ -129,7 +132,7 @@ let initialized = false
 
 function flushSession(wsId: string): void {
   const data = createSaveSessionData()
-  saveSession(wsId, data).catch((err) => console.error('Failed to flush session:', err))
+  saveSession(wsId, data).catch((err) => log.error('Failed to flush session:', err))
 }
 
 const throttledSave = createThrottle(() => {
@@ -165,7 +168,7 @@ export function useSessionPersistence(): void {
         const sessionData = await loadSession(workspaceId)
         applySessionToStore(sessionData)
       } catch (err) {
-        console.error('Failed to load session:', err)
+        log.error('Failed to load session:', err)
         useTabStore.getState().reset()
       }
 

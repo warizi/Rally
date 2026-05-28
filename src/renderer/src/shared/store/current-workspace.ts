@@ -1,4 +1,7 @@
 import { create } from 'zustand'
+import { toLogError } from '@shared/lib/logger'
+
+const onError = toLogError('current-workspace')
 
 interface CurrentWorkspaceStore {
   currentWorkspaceId: string | null
@@ -19,16 +22,16 @@ export const useCurrentWorkspaceStore = create<CurrentWorkspaceStore>()((set, ge
   },
   setCurrentWorkspaceId: (id: string): void => {
     set({ currentWorkspaceId: id })
-    window.api.settings.set('currentWorkspaceId', id).catch(console.error)
-    window.api.workspace.activate(id).catch(console.error)
+    window.api.settings.set('currentWorkspaceId', id).catch(onError)
+    window.api.workspace.activate(id).catch(onError)
   },
   syncCurrentWorkspaceIdFromMain: (id: string): void => {
     if (get().currentWorkspaceId === id) return
     set({ currentWorkspaceId: id })
-    window.api.settings.set('currentWorkspaceId', id).catch(console.error)
+    window.api.settings.set('currentWorkspaceId', id).catch(onError)
   },
   clearCurrentWorkspaceId: (): void => {
     set({ currentWorkspaceId: null })
-    window.api.settings.set('currentWorkspaceId', '').catch(console.error)
+    window.api.settings.set('currentWorkspaceId', '').catch(onError)
   }
 }))
