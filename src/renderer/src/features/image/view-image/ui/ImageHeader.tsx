@@ -7,8 +7,8 @@ import {
 } from '@entities/image-file'
 import { useTabStore } from '@/entities/tab-system'
 import { ImageIcon } from 'lucide-react'
-import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
-import { TagList } from '@features/tag/manage-tag'
+import { LinkedEntityPopoverButton } from '@/widgets/entity-link'
+import { TagList } from '@/widgets/tag'
 import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface ImageHeaderProps {

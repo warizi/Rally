@@ -15,7 +15,7 @@ import {
 import { useUpdateTodo, TODO_STATUS } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
-import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
+import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@/widgets/entity-link'
 import { AuthorBadge } from '@shared/ui/author-badge'
 
 const PRIORITY_STRIP: Record<string, string> = {

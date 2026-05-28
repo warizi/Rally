@@ -17,7 +17,7 @@ import {
 import { useUpdateTodo, TODO_STATUS, TODO_PRIORITY } from '@entities/todo'
 import type { TodoItem, TodoStatus } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
-import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
+import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@/widgets/entity-link'
 
 const PRIORITY_CLASS: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',

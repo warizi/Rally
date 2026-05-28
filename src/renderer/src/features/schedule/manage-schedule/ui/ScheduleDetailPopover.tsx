@@ -26,7 +26,7 @@ import { isTodoItem } from '../model/calendar-utils'
 import { useReminders, REMINDER_OFFSETS } from '@entities/reminder'
 import { ScheduleFormDialog } from './ScheduleFormDialog'
 import { DeleteScheduleDialog } from './DeleteScheduleDialog'
-import { LinkEntityPopover, OpenAllSubmenu } from '@features/entity-link/manage-link'
+import { LinkEntityPopover, OpenAllSubmenu } from '@/widgets/entity-link'
 import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface Props {

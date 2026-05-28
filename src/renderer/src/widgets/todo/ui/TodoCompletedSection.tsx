@@ -1,6 +1,6 @@
 import { CollapsibleSection } from '@shared/ui/collapsible-section'
 import { TodoCompletedView } from '@features/todo/todo-list/ui/TodoCompletedView'
-import type { CompletedItem } from '@features/recurring/manage-recurring'
+import type { CompletedItem } from '@/widgets/recurring'
 
 interface Props {
   items: CompletedItem[]

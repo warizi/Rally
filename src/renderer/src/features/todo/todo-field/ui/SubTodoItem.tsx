@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger
 } from '@shared/ui/dropdown-menu'
 import type { TodoItem } from '@entities/todo'
-import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
+import { LinkedEntityPopoverButton } from '@/widgets/entity-link'
 import { TodoCheckbox } from './TodoCheckbox'
 import { EditSubTodoDialog } from './EditSubTodoDialog'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'

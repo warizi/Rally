@@ -44,7 +44,7 @@ import {
 import type { TodoItem, TodoStatus } from '@entities/todo'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { EditSubTodoDialog } from '@features/todo/todo-field/ui/EditSubTodoDialog'
-import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@features/entity-link/manage-link'
+import { LinkedEntityPopoverButton, PanePickerSubmenu } from '@/widgets/entity-link'
 import { AuthorBadge } from '@shared/ui/author-badge'
 
 const PRIORITY_CLASS: Record<string, string> = {

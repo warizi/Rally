@@ -9,9 +9,9 @@ import {
 } from '@entities/csv-file'
 import { useTabStore } from '@/entities/tab-system'
 import { Sheet } from 'lucide-react'
-import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
-import { TagList } from '@features/tag/manage-tag'
-import { TemplateButton } from '@features/template/manage-template'
+import { LinkedEntityPopoverButton } from '@/widgets/entity-link'
+import { TagList } from '@/widgets/tag'
+import { TemplateButton } from '@/widgets/template'
 import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface CsvHeaderProps {

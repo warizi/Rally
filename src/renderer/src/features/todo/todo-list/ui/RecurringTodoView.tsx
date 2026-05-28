@@ -6,7 +6,7 @@ import { AuthorBadge } from '@shared/ui/author-badge'
 import type { RecurringRuleItem } from '@entities/recurring-rule'
 import type { RecurringCompletionItem } from '@entities/recurring-completion'
 import { useCompleteRecurring } from '@entities/recurring-completion'
-import { useUncompleteRecurring } from '@features/recurring/manage-recurring'
+import { useUncompleteRecurring } from '@/widgets/recurring'
 
 const PRIORITY_DOT: Record<string, string> = {
   high: 'text-rose-400',

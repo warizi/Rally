@@ -13,9 +13,9 @@ import {
 import { useUpdateTodo } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
 import type { RecurringCompletionItem } from '@entities/recurring-completion'
-import { useUncompleteRecurring, type CompletedItem } from '@features/recurring/manage-recurring'
+import { useUncompleteRecurring, type CompletedItem } from '@/widgets/recurring'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
-import { PanePickerSubmenu } from '@features/entity-link/manage-link'
+import { PanePickerSubmenu } from '@/widgets/entity-link'
 
 const PRIORITY_CLASS: Record<string, string> = {
   high: 'bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800',

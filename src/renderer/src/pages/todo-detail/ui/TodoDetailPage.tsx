@@ -13,8 +13,8 @@ import { useTodosByWorkspace, useUpdateTodo } from '@entities/todo'
 import { useTabStore } from '@/entities/tab-system'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { TodoDetailFields, SubTodoSection } from '@widgets/todo'
-import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
-import { TagList } from '@features/tag/manage-tag'
+import { LinkedEntityPopoverButton } from '@/widgets/entity-link'
+import { TagList } from '@/widgets/tag'
 import { AuthorBadgePair } from '@shared/ui/author-badge'
 
 interface Props {
