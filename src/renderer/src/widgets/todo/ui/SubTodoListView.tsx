@@ -17,7 +17,7 @@ import { GripVertical } from 'lucide-react'
 import { Table, TableBody, TableHead, TableHeader, TableRow, TableCell } from '@shared/ui/table'
 import { useReorderTodoSub } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
-import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog'
+import { CreateTodoDialog } from './CreateTodoDialog'
 import { SubTodoItem } from './SubTodoItem'
 
 interface Props {

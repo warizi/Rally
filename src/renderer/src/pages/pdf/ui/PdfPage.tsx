@@ -5,8 +5,7 @@ import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useReadPdfContent } from '@entities/pdf-file'
 import { FolderX } from 'lucide-react'
 import { useTabStore } from '@/entities/tab-system'
-import { PdfHeader } from '@/features/pdf/view-pdf'
-import { PdfViewer } from '@/widgets/pdf-viewer'
+import { PdfHeader, PdfViewer } from '@widgets/pdf-viewer'
 
 export function PdfPage({
   tabId,

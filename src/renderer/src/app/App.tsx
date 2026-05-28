@@ -11,7 +11,7 @@ import { ThemeInitializer } from './providers/theme-initializer'
 import { OnboardingInitializer } from './providers/onboarding-initializer'
 import { OnboardingStepWatcher } from './providers/onboarding-step-watcher'
 import { NoteStyleRuntime } from './providers/note-style-runtime'
-import { WelcomeModalContainer } from '@features/onboarding/welcome-modal'
+import { WelcomeModalContainer } from '@widgets/onboarding'
 
 function App(): React.JSX.Element {
   return (

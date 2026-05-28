@@ -6,7 +6,7 @@ import { ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { ScrollArea } from '@shared/ui/scroll-area'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@shared/ui/tooltip'
-import { PDF_EXTERNAL_CHANGED_EVENT } from '@entities/pdf-file'
+import { PDF_EXTERNAL_CHANGED_EVENT } from '../model/external-changed-event'
 import { useQueryClient } from '@tanstack/react-query'
 
 pdfjs.GlobalWorkerOptions.workerSrc = new URL(

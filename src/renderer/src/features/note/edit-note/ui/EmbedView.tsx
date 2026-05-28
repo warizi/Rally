@@ -18,7 +18,7 @@ import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
 import { useImageFilesByWorkspace, useReadImageContent } from '@entities/image-file'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
-import { PdfViewer } from '@/features/pdf/view-pdf/ui/PdfViewer'
+import { PdfViewer } from '@entities/pdf-file'
 import { useTabStore } from '@/entities/tab-system'
 import type { EmbedDomain } from '../model/note-embed-schema'
 

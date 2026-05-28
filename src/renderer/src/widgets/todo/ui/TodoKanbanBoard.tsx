@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { Plus } from 'lucide-react'
 import type { TodoItem, TodoStatus } from '@entities/todo'
 import { TodoKanbanCard } from './TodoKanbanCard'
-import { CreateTodoDialog } from '@features/todo/create-todo/ui/CreateTodoDialog'
+import { CreateTodoDialog } from './CreateTodoDialog'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 
 interface Props {

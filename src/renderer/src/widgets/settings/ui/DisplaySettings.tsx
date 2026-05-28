@@ -5,7 +5,7 @@ import { applyTheme, applyFontSize, type Theme, type FontSize } from '@/shared/l
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/ui/select'
 import { Separator } from '@/shared/ui/separator'
 import { Switch } from '@/shared/ui/switch'
-import { useDayViewTimeSettings } from '@/features/schedule/manage-schedule/model/use-day-view-time-settings'
+import { useDayViewTimeSettings } from '@widgets/calendar/model/use-day-view-time-settings'
 import { useShowAuthorBadgeSetting } from '@/shared/hooks/use-show-author-badge-setting'
 
 const FONT_SIZE_OPTIONS: { value: FontSize; label: string }[] = [
