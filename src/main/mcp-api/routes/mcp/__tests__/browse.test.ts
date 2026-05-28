@@ -62,21 +62,40 @@ const WS = {
 }
 
 const emptyListResult = {
+  workspace: { id: WS.id, name: WS.name, path: WS.path },
   folders: [],
   notes: [],
   tables: [],
   canvases: [],
+  todos: { active: 0, completed: 0, total: 0 },
   meta: {
     summary: false,
     folderId: null,
     recursive: false,
-    types: [],
-    tagId: null,
-    linkedTo: null,
+    types: null,
     limit: 500,
     offset: 0,
     counts: { folders: 0, notes: 0, tables: 0, canvases: 0 },
     hasMore: { folders: false, notes: false, tables: false, canvases: false }
+  }
+}
+
+function noteEntry(partial: { id: string; title: string; relativePath?: string }): {
+  id: string
+  title: string
+  folderId: string | null
+  updatedAt: string
+  relativePath?: string
+  preview?: string | null
+  folderPath?: string | null
+} {
+  return {
+    id: partial.id,
+    title: partial.title,
+    folderId: null,
+    updatedAt: '2026-01-02T00:00:00.000Z',
+    relativePath: partial.relativePath ?? `${partial.title}.md`,
+    preview: ''
   }
 }
 
@@ -210,39 +229,12 @@ describe('GET /api/mcp/browse — pagination & validation', () => {
 describe('GET /api/mcp/browse — linkedTo / tagId restrict', () => {
   it('linkedTo 만 → 해당 ids 만 통과', async () => {
     vi.mocked(entityLinkService.getLinked).mockReturnValue([
-      { entityType: 'note', entityId: 'n-keep001234', title: '', preview: '' },
-      { entityType: 'canvas', entityId: 'c-keep001234', title: '', preview: '' }
+      { entityType: 'note', entityId: 'n-keep001234', title: '', linkedAt: new Date() },
+      { entityType: 'canvas', entityId: 'c-keep001234', title: '', linkedAt: new Date() }
     ])
     vi.mocked(workspaceItemsService.list).mockReturnValue({
       ...emptyListResult,
-      notes: [
-        {
-          id: 'n-keep001234',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'keep',
-          relativePath: 'keep.md',
-          description: '',
-          preview: '',
-          order: 0,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'n-drop001234',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'drop',
-          relativePath: 'drop.md',
-          description: '',
-          preview: '',
-          order: 1,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
-      ]
+      notes: [noteEntry({ id: 'n-keep001234', title: 'keep' }), noteEntry({ id: 'n-drop001234', title: 'drop' })]
     })
 
     const router = setupRouter()
@@ -285,51 +277,15 @@ describe('GET /api/mcp/browse — linkedTo / tagId restrict', () => {
   it('tagId + linkedTo → AND 교집합', async () => {
     vi.mocked(itemTagService.getItemIdsByTag).mockReturnValue(['n-a000000000', 'n-b000000000'])
     vi.mocked(entityLinkService.getLinked).mockReturnValue([
-      { entityType: 'note', entityId: 'n-b000000000', title: '', preview: '' },
-      { entityType: 'note', entityId: 'n-c000000000', title: '', preview: '' }
+      { entityType: 'note', entityId: 'n-b000000000', title: '', linkedAt: new Date() },
+      { entityType: 'note', entityId: 'n-c000000000', title: '', linkedAt: new Date() }
     ])
     vi.mocked(workspaceItemsService.list).mockReturnValue({
       ...emptyListResult,
       notes: [
-        {
-          id: 'n-a000000000',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'A',
-          relativePath: 'a.md',
-          description: '',
-          preview: '',
-          order: 0,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'n-b000000000',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'B',
-          relativePath: 'b.md',
-          description: '',
-          preview: '',
-          order: 0,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'n-c000000000',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'C',
-          relativePath: 'c.md',
-          description: '',
-          preview: '',
-          order: 0,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
+        noteEntry({ id: 'n-a000000000', title: 'A' }),
+        noteEntry({ id: 'n-b000000000', title: 'B' }),
+        noteEntry({ id: 'n-c000000000', title: 'C' })
       ]
     })
 
@@ -352,32 +308,8 @@ describe('GET /api/mcp/browse — search & tag list', () => {
     vi.mocked(workspaceItemsService.list).mockReturnValue({
       ...emptyListResult,
       notes: [
-        {
-          id: 'n-hello00000',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'Hello World',
-          relativePath: 'hello.md',
-          description: '',
-          preview: '',
-          order: 0,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        },
-        {
-          id: 'n-other00000',
-          workspaceId: WS.id,
-          folderId: null,
-          title: 'Other',
-          relativePath: 'other.md',
-          description: '',
-          preview: '',
-          order: 0,
-          isLocked: false,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        }
+        noteEntry({ id: 'n-hello00000', title: 'Hello World', relativePath: 'hello.md' }),
+        noteEntry({ id: 'n-other00000', title: 'Other', relativePath: 'other.md' })
       ]
     })
 

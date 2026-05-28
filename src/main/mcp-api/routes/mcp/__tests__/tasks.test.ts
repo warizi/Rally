@@ -77,14 +77,16 @@ vi.mock('../../../../repositories/workspace', () => ({
 }))
 
 import { todoService } from '../../../../services/todo'
+import type { TodoItem } from '../../../../services/todo'
 import { todoRepository } from '../../../../repositories/todo'
 import { entityLinkService } from '../../../../services/entity-link'
 import { scheduleService } from '../../../../services/schedule'
 import { recurringRuleService } from '../../../../services/recurring-rule'
+import type { RecurringRuleItem } from '../../../../services/recurring-rule'
 import { recurringCompletionService } from '../../../../services/recurring-completion'
 import { scheduleRepository } from '../../../../repositories/schedule'
 import { reminderService } from '../../../../services/reminder'
-import { historyService } from '../../../../services/history'
+import { historyService, type HistoryTodoEntry } from '../../../../services/history'
 import { workspaceWatcher } from '../../../../services/workspace-watcher'
 import { workspaceRepository } from '../../../../repositories/workspace'
 
@@ -102,8 +104,8 @@ const baseTodo = {
   parentId: null,
   title: 'todo A',
   description: null,
-  status: '진행중' as const,
-  priority: 'medium' as const,
+  status: '진행중',
+  priority: 'medium',
   isDone: false,
   dueDate: null,
   startDate: null,
@@ -112,7 +114,29 @@ const baseTodo = {
   updatedAt: new Date('2026-01-02T00:00:00Z'),
   order: 0,
   subOrder: 0,
-  kanbanOrder: 0
+  kanbanOrder: 0,
+  listOrder: 0,
+  createdBy: 'user',
+  createdById: null,
+  updatedBy: 'user',
+  updatedById: null
+} as unknown as TodoItem
+
+function historyEntry(partial: Partial<HistoryTodoEntry>): HistoryTodoEntry {
+  return {
+    id: 't1',
+    title: 'A',
+    doneAt: new Date('2026-05-01T10:00:00Z'),
+    kind: 'todo',
+    links: [],
+    parentId: null,
+    parentTitle: null,
+    createdBy: 'user',
+    createdById: null,
+    updatedBy: 'user',
+    updatedById: null,
+    ...partial
+  }
 }
 
 beforeEach(() => {
@@ -130,7 +154,7 @@ beforeEach(() => {
   vi.mocked(todoRepository.findByWorkspaceWithFilters).mockReturnValue([])
   vi.mocked(scheduleRepository.findAllByWorkspaceId).mockReturnValue([])
   vi.mocked(reminderService.findByEntity).mockReturnValue([])
-  vi.mocked(historyService.fetch).mockReturnValue({ days: [], hasMore: false, nextDayOffset: null })
+  vi.mocked(historyService.fetch).mockReturnValue({ days: [], hasMore: false, nextDayOffset: 0 })
 })
 
 afterEach(() => {
@@ -249,8 +273,12 @@ describe('GET /api/mcp/tasks?mode=today', () => {
         endTime: null,
         reminderOffsetMs: null,
         createdAt: new Date('2026-01-01T00:00:00Z'),
-        updatedAt: new Date('2026-01-01T00:00:00Z')
-      }
+        updatedAt: new Date('2026-01-01T00:00:00Z'),
+        createdBy: 'user',
+        createdById: null,
+        updatedBy: 'user',
+        updatedById: null
+      } satisfies Partial<RecurringRuleItem> as RecurringRuleItem
     ])
     vi.mocked(recurringCompletionService.findTodayByWorkspace).mockReturnValue([
       {
@@ -302,25 +330,23 @@ describe('GET /api/mcp/tasks?mode=completed', () => {
         {
           date: '2026-05-28',
           todos: [
-            {
+            historyEntry({
               id: 't1',
               title: 'done todo',
               doneAt: new Date('2026-05-28T15:00:00Z'),
-              kind: 'todo',
-              links: []
-            },
-            {
+              kind: 'todo'
+            }),
+            historyEntry({
               id: 'rc1',
               title: 'done recurring',
               doneAt: new Date('2026-05-28T16:00:00Z'),
-              kind: 'recurring',
-              links: []
-            }
+              kind: 'recurring'
+            })
           ]
         }
       ],
       hasMore: false,
-      nextDayOffset: null
+      nextDayOffset: 0
     })
 
     const router = setupRouter()

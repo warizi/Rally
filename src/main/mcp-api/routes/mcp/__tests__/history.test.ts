@@ -30,9 +30,26 @@ vi.mock('../../../../repositories/workspace', () => ({
   }
 }))
 
-import { historyService } from '../../../../services/history'
+import { historyService, type HistoryTodoEntry } from '../../../../services/history'
 import { workspaceWatcher } from '../../../../services/workspace-watcher'
 import { workspaceRepository } from '../../../../repositories/workspace'
+
+function historyEntry(partial: Partial<HistoryTodoEntry>): HistoryTodoEntry {
+  return {
+    id: 't1',
+    title: 'A',
+    doneAt: new Date('2026-05-01T10:00:00Z'),
+    kind: 'todo',
+    links: [],
+    parentId: null,
+    parentTitle: null,
+    createdBy: 'user',
+    createdById: null,
+    updatedBy: 'user',
+    updatedById: null,
+    ...partial
+  }
+}
 
 const WS = {
   id: 'ws-abcdefghij',
@@ -66,19 +83,11 @@ describe('GET /api/mcp/history', () => {
       days: [
         {
           date: '2026-05-01',
-          todos: [
-            {
-              id: 't1',
-              title: 'A',
-              doneAt: new Date('2026-05-01T10:00:00Z'),
-              kind: 'todo',
-              links: []
-            }
-          ]
+          todos: [historyEntry({ id: 't1', title: 'A' })]
         }
       ],
       hasMore: false,
-      nextDayOffset: null
+      nextDayOffset: 0
     })
 
     const router = setupRouter()

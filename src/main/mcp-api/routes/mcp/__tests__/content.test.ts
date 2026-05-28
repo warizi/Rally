@@ -64,6 +64,10 @@ import { csvFileRepository } from '../../../../repositories/csv-file'
 import { workspaceWatcher } from '../../../../services/workspace-watcher'
 import { workspaceRepository } from '../../../../repositories/workspace'
 
+type NoteRow = NonNullable<ReturnType<typeof noteRepository.findById>>
+type CsvRow = NonNullable<ReturnType<typeof csvFileRepository.findById>>
+type NoteCreated = ReturnType<typeof noteService.create>
+
 const WS = {
   id: 'ws-abcdefghij',
   name: 'WS',
@@ -82,9 +86,14 @@ const NOTE_ROW = {
   preview: '',
   order: 0,
   isLocked: false,
+  deletedAt: null,
   createdAt: new Date('2026-01-01T00:00:00Z'),
-  updatedAt: new Date('2026-01-02T00:00:00Z')
-}
+  updatedAt: new Date('2026-01-02T00:00:00Z'),
+  createdBy: 'user',
+  createdById: null,
+  updatedBy: 'user',
+  updatedById: null
+} as unknown as NoteRow
 
 const CSV_ROW = {
   id: 'csv-abcdefgh',
@@ -98,9 +107,20 @@ const CSV_ROW = {
   encoding: 'utf-8',
   columnWidths: null,
   isLocked: false,
+  deletedAt: null,
   createdAt: new Date('2026-01-01T00:00:00Z'),
-  updatedAt: new Date('2026-01-02T00:00:00Z')
-}
+  updatedAt: new Date('2026-01-02T00:00:00Z'),
+  createdBy: 'user',
+  createdById: null,
+  updatedBy: 'user',
+  updatedById: null
+} as unknown as CsvRow
+
+const NOTE_CREATED = {
+  id: NOTE_ROW.id,
+  title: NOTE_ROW.title,
+  relativePath: NOTE_ROW.relativePath
+} as unknown as NoteCreated
 
 beforeEach(() => {
   process.env.MCP_AUTH_TOKEN = TEST_TOKEN
@@ -136,7 +156,17 @@ describe('GET /api/mcp/notes/search (legacy)', () => {
   })
 
   it('q 가 있으면 noteService.search 위임', async () => {
-    vi.mocked(noteService.search).mockResolvedValue([{ id: 'n1', title: 'hit', snippet: 's' }])
+    vi.mocked(noteService.search).mockResolvedValue([
+      {
+        id: 'n1',
+        title: 'hit',
+        relativePath: 'hit.md',
+        folderId: null,
+        updatedAt: new Date(),
+        preview: 's',
+        matchType: 'title'
+      }
+    ])
 
     const router = setupRouter()
     const req = makeReq({
@@ -154,12 +184,12 @@ describe('GET /api/mcp/notes/search (legacy)', () => {
 
 describe('GET /api/mcp/search (unified)', () => {
   it('기본 types=[note] + 옵션 파싱', async () => {
-    vi.mocked(searchService.search).mockReturnValue({
+    vi.mocked(searchService.search).mockResolvedValue({
       results: [],
       total: 0,
       hasMore: false,
       nextOffset: 0
-    })
+    } as unknown as Awaited<ReturnType<typeof searchService.search>>)
 
     const router = setupRouter()
     const req = makeReq({
@@ -179,12 +209,12 @@ describe('GET /api/mcp/search (unified)', () => {
   })
 
   it('types[]=note&types[]=canvas 다중 지정', async () => {
-    vi.mocked(searchService.search).mockReturnValue({
+    vi.mocked(searchService.search).mockResolvedValue({
       results: [],
       total: 0,
       hasMore: false,
       nextOffset: 0
-    })
+    } as unknown as Awaited<ReturnType<typeof searchService.search>>)
 
     const router = setupRouter()
     const req = makeReq({
@@ -340,11 +370,7 @@ describe('POST /api/mcp/content/batch (manage)', () => {
   })
 
   it('note create + update 혼합 → results 반환 + broadcast', async () => {
-    vi.mocked(noteService.create).mockReturnValue({
-      id: NOTE_ROW.id,
-      title: NOTE_ROW.title,
-      relativePath: NOTE_ROW.relativePath
-    })
+    vi.mocked(noteService.create).mockReturnValue(NOTE_CREATED)
     vi.mocked(noteService.writeContent).mockReturnValue(undefined)
     vi.mocked(noteRepository.findById).mockReturnValue(NOTE_ROW)
 
@@ -376,11 +402,7 @@ describe('POST /api/mcp/content/batch (manage)', () => {
   })
 
   it('create 시 type 누락 → 해당 entry error, 다른 entry 영향 없음', async () => {
-    vi.mocked(noteService.create).mockReturnValue({
-      id: NOTE_ROW.id,
-      title: NOTE_ROW.title,
-      relativePath: NOTE_ROW.relativePath
-    })
+    vi.mocked(noteService.create).mockReturnValue(NOTE_CREATED)
     vi.mocked(noteRepository.findById).mockReturnValue(NOTE_ROW)
 
     const router = setupRouter()
@@ -407,11 +429,7 @@ describe('POST /api/mcp/content/batch (manage)', () => {
 
 describe('POST /api/mcp/content (write_content)', () => {
   it('id 미지정 + note 생성 (created=true)', async () => {
-    vi.mocked(noteService.create).mockReturnValue({
-      id: NOTE_ROW.id,
-      title: NOTE_ROW.title,
-      relativePath: NOTE_ROW.relativePath
-    })
+    vi.mocked(noteService.create).mockReturnValue(NOTE_CREATED)
 
     const router = setupRouter()
     const req = makeReq({
