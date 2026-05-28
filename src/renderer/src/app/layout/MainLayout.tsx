@@ -6,7 +6,7 @@ import {
   useTabDnd,
   useTabStore
 } from '@/features/tap-system/manage-tab-system'
-import { useFolderWatcher } from '@entities/folder'
+import { useFolderWatcher } from '@features/folder/manage-folder'
 import {
   useNoteWatcher,
   useCsvWatcher,
