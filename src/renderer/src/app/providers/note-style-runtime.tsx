@@ -1,4 +1,4 @@
-import { useRuntimeNoteStyles } from '@shared/styles/use-runtime-note-styles'
+import { useRuntimeNoteStyles } from '@features/note/manage-note-style'
 
 /**
  * 앱 root 에 한 번 마운트되어, `<style id="rally-note-styles">` 를 동적으로 관리한다.

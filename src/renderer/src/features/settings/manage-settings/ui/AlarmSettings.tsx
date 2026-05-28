@@ -10,7 +10,7 @@ import {
   TOAST_DURATION_OPTIONS,
   TOAST_VISIBLE_COUNT_OPTIONS
 } from '@/shared/hooks/use-toast-settings'
-import { useAlarmSettingsStore } from '@/shared/store/alarm-settings'
+import { useAlarmSettingsStore } from '@features/timer/manage-alarm'
 import { ALARM_SOUNDS, getAlarmSoundUrl, isSilentAlarm } from '@/entities/timer'
 
 export function AlarmSettings(): React.JSX.Element {

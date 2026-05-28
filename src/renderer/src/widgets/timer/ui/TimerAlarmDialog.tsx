@@ -19,7 +19,7 @@ import {
 } from '@/shared/ui/dialog'
 import { Button } from '@/shared/ui/button'
 import { useTimerStore, getAlarmSoundUrl } from '@/entities/timer'
-import { useAlarmSettingsStore, ALARM_REPEAT_INTERVAL_MS } from '@/shared/store/alarm-settings'
+import { useAlarmSettingsStore, ALARM_REPEAT_INTERVAL_MS } from '@features/timer/manage-alarm'
 
 export function TimerAlarmDialog(): React.JSX.Element {
   const alarmActive = useTimerStore((s) => s.alarmActive)

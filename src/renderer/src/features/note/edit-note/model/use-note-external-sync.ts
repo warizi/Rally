@@ -1,6 +1,6 @@
 import { MutableRefObject, useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { NOTE_EXTERNAL_CHANGED_EVENT } from '@entities/note/model/use-note-watcher'
+import { NOTE_EXTERNAL_CHANGED_EVENT } from '@entities/note'
 
 /**
  * 외부 파일 변경 및 캐시 변경 감지 → 에디터 remount 트리거
