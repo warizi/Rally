@@ -68,12 +68,7 @@ function RecurringTodoRow({ rule, completion, workspaceId, date }: RowProps): Re
       <span
         className={`h-2 w-2 rounded-full shrink-0 @[400px]:hidden ${PRIORITY_DOT[rule.priority].replace('text-', 'bg-')}`}
       />
-      <AuthorBadge
-        by={rule.updatedBy}
-        byId={rule.updatedById}
-        at={rule.updatedAt}
-        size="sm"
-      />
+      <AuthorBadge by={rule.updatedBy} byId={rule.updatedById} at={rule.updatedAt} size="sm" />
     </div>
   )
 }

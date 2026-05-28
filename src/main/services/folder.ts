@@ -115,10 +115,7 @@ interface FolderMeta {
   updatedById?: string | null
 }
 
-function buildTree(
-  dbFoldersByPath: Map<string, FolderMeta>,
-  fsEntries: FsEntry[]
-): FolderNode[] {
+function buildTree(dbFoldersByPath: Map<string, FolderMeta>, fsEntries: FsEntry[]): FolderNode[] {
   // 부모 경로별로 자식 목록을 미리 그룹핑 → O(n) 전처리로 재귀 시 O(1) 조회
   const childrenByParent = new Map<string, FsEntry[]>()
   for (const entry of fsEntries) {

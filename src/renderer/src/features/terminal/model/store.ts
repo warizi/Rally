@@ -32,7 +32,6 @@ export const useTerminalStore = create<TerminalStoreState>((set) => ({
 
   removeSession: (id) =>
     set((s) => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [id]: _, ...rest } = s.sessions
       const ids = Object.keys(rest)
       return {

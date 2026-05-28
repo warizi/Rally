@@ -121,7 +121,7 @@ const mockNotes = [
     createdBy: 'user' as const,
     createdById: null,
     updatedBy: 'user' as const,
-    updatedById: null,
+    updatedById: null
   },
   {
     id: 'n-2',
@@ -137,7 +137,7 @@ const mockNotes = [
     createdBy: 'user' as const,
     createdById: null,
     updatedBy: 'user' as const,
-    updatedById: null,
+    updatedById: null
   },
   {
     id: 'n-3',
@@ -153,7 +153,7 @@ const mockNotes = [
     createdBy: 'user' as const,
     createdById: null,
     updatedBy: 'user' as const,
-    updatedById: null,
+    updatedById: null
   },
   {
     id: 'n-4',
@@ -189,7 +189,7 @@ const mockTables = [
     createdBy: 'user' as const,
     createdById: null,
     updatedBy: 'user' as const,
-    updatedById: null,
+    updatedById: null
   },
   {
     id: 't-2',
@@ -225,7 +225,7 @@ const mockCanvases = [
     createdBy: 'user' as const,
     createdById: null,
     updatedBy: 'user' as const,
-    updatedById: null,
+    updatedById: null
   },
   {
     id: 'c-2',

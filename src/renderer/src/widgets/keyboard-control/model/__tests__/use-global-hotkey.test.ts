@@ -60,9 +60,7 @@ describe('useGlobalHotkey', () => {
   it('활성 상태에서 추가 key (Tab) keydown 마다 onKeyDown 누적 호출', () => {
     const onActivate = vi.fn()
     const onKeyDown = vi.fn()
-    renderHook(() =>
-      useGlobalHotkey({ modifiers: { shift: true }, onActivate, onKeyDown })
-    )
+    renderHook(() => useGlobalHotkey({ modifiers: { shift: true }, onActivate, onKeyDown }))
 
     act(() => {
       fireKeyDown({ key: 'Shift', shiftKey: true })
@@ -76,9 +74,7 @@ describe('useGlobalHotkey', () => {
 
   it('shift 해제 시 onDeactivate 호출', () => {
     const onDeactivate = vi.fn()
-    renderHook(() =>
-      useGlobalHotkey({ modifiers: { shift: true }, onDeactivate })
-    )
+    renderHook(() => useGlobalHotkey({ modifiers: { shift: true }, onDeactivate }))
 
     act(() => {
       fireKeyDown({ key: 'Shift', shiftKey: true })
@@ -115,9 +111,7 @@ describe('useGlobalHotkey', () => {
 
   it('스펙에 없는 modifier (cmd) 가 같이 눌리면 activate 안 함 (strict matching)', () => {
     const onActivate = vi.fn()
-    renderHook(() =>
-      useGlobalHotkey({ modifiers: { shift: true }, onActivate })
-    )
+    renderHook(() => useGlobalHotkey({ modifiers: { shift: true }, onActivate }))
 
     act(() => fireKeyDown({ key: 'Shift', shiftKey: true, metaKey: true }))
     expect(onActivate).not.toHaveBeenCalled()
@@ -149,9 +143,7 @@ describe('useGlobalHotkey', () => {
 
   it('enabled=false 시 리스너 미부착', () => {
     const onActivate = vi.fn()
-    renderHook(() =>
-      useGlobalHotkey({ modifiers: { shift: true }, onActivate, enabled: false })
-    )
+    renderHook(() => useGlobalHotkey({ modifiers: { shift: true }, onActivate, enabled: false }))
 
     act(() => fireKeyDown({ key: 'Shift', shiftKey: true }))
     expect(onActivate).not.toHaveBeenCalled()
@@ -160,9 +152,7 @@ describe('useGlobalHotkey', () => {
   it('window blur 시 활성 상태 강제 해제', () => {
     const onActivate = vi.fn()
     const onDeactivate = vi.fn()
-    renderHook(() =>
-      useGlobalHotkey({ modifiers: { shift: true }, onActivate, onDeactivate })
-    )
+    renderHook(() => useGlobalHotkey({ modifiers: { shift: true }, onActivate, onDeactivate }))
 
     act(() => {
       fireKeyDown({ key: 'Shift', shiftKey: true })

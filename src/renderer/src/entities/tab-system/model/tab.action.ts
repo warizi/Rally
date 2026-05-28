@@ -133,12 +133,11 @@ export const createTabActions = (
     if (!pane) return
 
     const newTabIds = pane.tabIds.filter((id) => id !== tabId)
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const { [tabId]: _removed, ...remainingTabs } = tabs
 
     // 마지막 탭이고 다른 패인이 있으면 패인도 닫기
     if (newTabIds.length === 0 && Object.keys(panes).length > 1) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [pane.id]: _removedPane, ...remainingPanes } = panes
       const newLayout = removePaneFromLayout(layout, pane.id)
       const newActivePaneId =
@@ -183,7 +182,6 @@ export const createTabActions = (
 
     // 핀 탭이 없고 다른 패인이 있으면 패인 닫기
     if (pinnedTabIds.length === 0 && Object.keys(panes).length > 1) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [paneId]: _removedPane, ...remainingPanes } = panes
       const newLayout = removePaneFromLayout(layout, paneId)
       const newActivePaneId =
@@ -288,7 +286,6 @@ export const createTabActions = (
       const pane = selectPaneByTabId(tabId)(get())
       if (!pane) return
 
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [tabId]: _old, ...remainingTabs } = tabs
       const updatedTab = {
         ...tab,

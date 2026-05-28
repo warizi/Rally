@@ -121,5 +121,8 @@ export function useGlobalHotkey({
       window.removeEventListener('keyup', handleKeyUp, true)
       window.removeEventListener('blur', handleBlur)
     }
+    // modifiers 객체 자체가 아닌 4개 boolean 속성으로 deps 등록 — 호출자가 매 render
+    // 새 객체를 넘겨도 값이 동일하면 effect 가 재등록되지 않도록.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enabled, modifiers.meta, modifiers.ctrl, modifiers.shift, modifiers.alt])
 }

@@ -483,10 +483,10 @@ describe('remove', () => {
 describe('reorderList', () => {
   it('bulkUpdateListOrder 호출', () => {
     todoService.reorderList('ws-1', [{ id: 'todo-1', order: 5 }])
-    expect(todoRepository.bulkUpdateListOrder).toHaveBeenCalledWith(
-      [{ id: 'todo-1', order: 5 }],
-      { kind: 'user', id: null }
-    )
+    expect(todoRepository.bulkUpdateListOrder).toHaveBeenCalledWith([{ id: 'todo-1', order: 5 }], {
+      kind: 'user',
+      id: null
+    })
   })
   it('없는 workspaceId → NotFoundError', () => {
     vi.mocked(workspaceRepository.findById).mockReturnValue(undefined)
@@ -521,10 +521,10 @@ describe('reorderKanban', () => {
 describe('reorderSub', () => {
   it('bulkUpdateSubOrder 호출', () => {
     todoService.reorderSub('todo-1', [{ id: 'sub-1', order: 2 }])
-    expect(todoRepository.bulkUpdateSubOrder).toHaveBeenCalledWith(
-      [{ id: 'sub-1', order: 2 }],
-      { kind: 'user', id: null }
-    )
+    expect(todoRepository.bulkUpdateSubOrder).toHaveBeenCalledWith([{ id: 'sub-1', order: 2 }], {
+      kind: 'user',
+      id: null
+    })
   })
   it('없는 parentId → NotFoundError', () => {
     vi.mocked(todoRepository.findById).mockReturnValue(undefined)

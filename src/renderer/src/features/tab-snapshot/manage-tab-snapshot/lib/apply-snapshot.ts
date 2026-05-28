@@ -4,11 +4,7 @@
  * MainSidebar 의 onRestoreSnapshot 핸들러와 키보드 단축키 hook 양쪽에서
  * 동일 로직을 쓰도록 lib 으로 분리.
  */
-import {
-  applySessionToStore,
-  type SerializedTab,
-  type SessionData
-} from '@/entities/tab-system'
+import { applySessionToStore, type SerializedTab, type SessionData } from '@/entities/tab-system'
 import type { TabSnapshot } from '@entities/tab-snapshot'
 
 export function applyTabSnapshot(snapshot: TabSnapshot): void {

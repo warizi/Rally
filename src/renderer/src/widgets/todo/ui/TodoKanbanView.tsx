@@ -86,12 +86,14 @@ export function TodoKanbanView({
     []
   )
 
-  // 드래그 중이 아닐 때만 서버 데이터로 동기화
-  useEffect(() => {
-    if (!activeId) {
-      setLocalColumns(columnMap)
-    }
-  }, [columnMap, activeId])
+  // 드래그 중이 아닐 때만 서버 데이터로 동기화.
+  // useEffect + setState 대신 render 중 상태 조정 패턴 사용 (React 19 권장):
+  // https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  const [lastSyncedColumnMap, setLastSyncedColumnMap] = useState(columnMap)
+  if (columnMap !== lastSyncedColumnMap && !activeId) {
+    setLastSyncedColumnMap(columnMap)
+    setLocalColumns(columnMap)
+  }
 
   const sensors = useSensors(
     useSensor(PointerSensor, {

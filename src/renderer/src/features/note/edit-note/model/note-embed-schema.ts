@@ -92,11 +92,7 @@ export function rallyEmbedRemarkPlugin() {
       if (parts.length === 1 && parts[0] === node) return
       const idx = parent.children.indexOf(node as PhrasingContent & RootContent)
       if (idx === -1) return
-      parent.children.splice(
-        idx,
-        1,
-        ...(parts as Array<PhrasingContent & RootContent>)
-      )
+      parent.children.splice(idx, 1, ...(parts as Array<PhrasingContent & RootContent>))
       // 같은 위치는 건너뛰고 다음으로 (children 길이 변경)
       return [SKIP, idx + parts.length] as [typeof SKIP, number]
     })

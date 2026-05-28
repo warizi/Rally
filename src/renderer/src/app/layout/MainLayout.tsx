@@ -1,10 +1,6 @@
 import { SidebarProvider } from '@/shared/ui/sidebar'
 import MainSidebar from './MainSidebar'
-import {
-  useFocusModeEffects,
-  useSessionPersistence,
-  useTabStore
-} from '@/entities/tab-system'
+import { useFocusModeEffects, useSessionPersistence, useTabStore } from '@/entities/tab-system'
 import { useTabDnd } from '@/widgets/tab-system'
 import { useFolderWatcher } from '@features/folder/manage-folder'
 import {

@@ -67,9 +67,7 @@ export function TimerSettingsDialog({ open, onOpenChange }: Props): React.JSX.El
       <DialogContent>
         <DialogHeader>
           <DialogTitle>시간 설정</DialogTitle>
-          <DialogDescription>
-            최소 5초 이상, 최대 24시간까지 설정할 수 있습니다.
-          </DialogDescription>
+          <DialogDescription>최소 5초 이상, 최대 24시간까지 설정할 수 있습니다.</DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 py-2">
           <Label className="text-sm">시 / 분 / 초</Label>
@@ -111,9 +109,7 @@ export function TimerSettingsDialog({ open, onOpenChange }: Props): React.JSX.El
               </SelectContent>
             </Select>
           </div>
-          {!canConfirm && (
-            <p className="text-xs text-destructive">5초 이상으로 설정해주세요.</p>
-          )}
+          {!canConfirm && <p className="text-xs text-destructive">5초 이상으로 설정해주세요.</p>}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

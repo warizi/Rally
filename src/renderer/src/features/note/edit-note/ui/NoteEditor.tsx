@@ -208,9 +208,7 @@ function MilkdownEditor({
       .use(noteToolbarStatePlugin)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
       .use(
-        $view(rallyEmbedSchema.node, () =>
-          createNoteEmbedNodeViewFactory(workspaceId, editorId)
-        )
+        $view(rallyEmbedSchema.node, () => createNoteEmbedNodeViewFactory(workspaceId, editorId))
       )
   )
 

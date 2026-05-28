@@ -8,10 +8,7 @@
  * 가 처리).
  */
 import { useTabStore } from '@/entities/tab-system'
-import {
-  findAdjacentPaneId,
-  type ArrowDirection
-} from '@/entities/tab-system/model/layout'
+import { findAdjacentPaneId, type ArrowDirection } from '@/entities/tab-system/model/layout'
 import { useKeyboardModeStore } from './keyboard-mode-store'
 import { useGlobalHotkey } from './use-global-hotkey'
 

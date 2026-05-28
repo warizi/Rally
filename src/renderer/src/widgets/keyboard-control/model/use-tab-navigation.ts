@@ -53,9 +53,7 @@ export function useTabNavigation(): void {
         if (items.length === 0) return
         const len = items.length
         const initialFocus =
-          direction === 'next'
-            ? (currentIdx + 1) % len
-            : (currentIdx - 1 + len) % len
+          direction === 'next' ? (currentIdx + 1) % len : (currentIdx - 1 + len) % len
         useTabNavStore.getState().start(items, initialFocus)
         setMode('tab-nav')
       } else {

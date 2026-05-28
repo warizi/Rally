@@ -36,18 +36,14 @@ export const useTabNavStore = create<TabNavStore>()((set) => ({
   open: false,
   items: [],
   focusIndex: 0,
-  start: (items, initialFocus) =>
-    set({ open: true, items, focusIndex: initialFocus }),
+  start: (items, initialFocus) => set({ open: true, items, focusIndex: initialFocus }),
   next: () =>
     set((s) => ({
       focusIndex: s.items.length === 0 ? 0 : (s.focusIndex + 1) % s.items.length
     })),
   prev: () =>
     set((s) => ({
-      focusIndex:
-        s.items.length === 0
-          ? 0
-          : (s.focusIndex - 1 + s.items.length) % s.items.length
+      focusIndex: s.items.length === 0 ? 0 : (s.focusIndex - 1 + s.items.length) % s.items.length
     })),
   close: () => set({ open: false, items: [], focusIndex: 0 })
 }))

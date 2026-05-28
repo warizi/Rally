@@ -128,9 +128,7 @@ function migrateLegacyDefaultWorkspacePath(): void {
 
   try {
     workspaceService.update(target.id, { path: newPath })
-    log.info(
-      `updated workspace ${target.id} path: ${legacyPath} → ${newPath}`
-    )
+    log.info(`updated workspace ${target.id} path: ${legacyPath} → ${newPath}`)
   } catch (err) {
     log.warn(`failed to update workspace path in DB:`, err)
   }

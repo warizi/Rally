@@ -130,14 +130,11 @@ describe('rallyEmbedStringifyHandler — round-trip', () => {
   })
 
   it('preserves text + embed + text', () => {
-    expect(roundtrip('before ![[pdf:p1|h=600]] after')).toBe(
-      'before ![[pdf:p1|h=600]] after'
-    )
+    expect(roundtrip('before ![[pdf:p1|h=600]] after')).toBe('before ![[pdf:p1|h=600]] after')
   })
 
   it('preserves multiple embeds across all domains', () => {
-    const md =
-      'a ![[note:n]] b ![[csv:c|h=200]] c ![[pdf:p|h=600]] d ![[image:i|h=400]] e'
+    const md = 'a ![[note:n]] b ![[csv:c|h=200]] c ![[pdf:p|h=600]] d ![[image:i|h=400]] e'
     expect(roundtrip(md)).toBe(md)
   })
 

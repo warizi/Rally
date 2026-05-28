@@ -116,9 +116,7 @@ class WorkspaceWatcherService {
           ]
           // MCP 라우트 같은 main-process 내부 변경은 이미 broadcastChanged 로 broadcast 됐다.
           // recent-writes 트래커에 등록된 path 는 여기서 skip 해 이중 알림을 방지한다.
-          const dedupedPaths = changedRelPaths.filter(
-            (rel) => !isRecentWrite(workspaceId, rel)
-          )
+          const dedupedPaths = changedRelPaths.filter((rel) => !isRecentWrite(workspaceId, rel))
           // 전부 dedup 된 경우 broadcast 자체를 생략 (불필요한 invalidation 도 줄임)
           if (dedupedPaths.length === 0 && changedRelPaths.length > 0) continue
           this.pushChanged(config.channelName, workspaceId, dedupedPaths)

@@ -1,4 +1,10 @@
-import { useMutation, useQuery, useQueryClient, type UseMutationResult, type UseQueryResult } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  type UseMutationResult,
+  type UseQueryResult
+} from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
 import type { TodoItem } from '@entities/todo'
@@ -17,7 +23,11 @@ export function useLinkedTodos(scheduleId: string | undefined): UseQueryResult<T
   })
 }
 
-export function useLinkTodo(): UseMutationResult<void, Error, { scheduleId: string; todoId: string }> {
+export function useLinkTodo(): UseMutationResult<
+  void,
+  Error,
+  { scheduleId: string; todoId: string }
+> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ scheduleId, todoId }) => {
@@ -32,7 +42,11 @@ export function useLinkTodo(): UseMutationResult<void, Error, { scheduleId: stri
   })
 }
 
-export function useUnlinkTodo(): UseMutationResult<void, Error, { scheduleId: string; todoId: string }> {
+export function useUnlinkTodo(): UseMutationResult<
+  void,
+  Error,
+  { scheduleId: string; todoId: string }
+> {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async ({ scheduleId, todoId }) => {

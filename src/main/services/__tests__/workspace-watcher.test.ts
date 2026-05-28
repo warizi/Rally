@@ -306,9 +306,9 @@ describe('applyEvents — 폴더 create 시 subtree 재귀 스캔', () => {
 
     const folder = folderRepository.findByRelativePath(WS_ID, 'mybox')
     expect(folder).toBeDefined()
-    const notes = noteRepository.findByWorkspaceId(WS_ID).filter((n) =>
-      n.relativePath.startsWith('mybox/')
-    )
+    const notes = noteRepository
+      .findByWorkspaceId(WS_ID)
+      .filter((n) => n.relativePath.startsWith('mybox/'))
     expect(notes.map((n) => n.relativePath).sort()).toEqual(['mybox/a.md', 'mybox/b.md'])
     expect(notes.every((n) => n.folderId === folder?.id)).toBe(true)
   })
@@ -359,9 +359,9 @@ describe('applyEvents — 폴더 create 시 subtree 재귀 스캔', () => {
     // 하지만 scan 은 여전히 돌면서 누락 파일 보완
     await applyEvents(WS_ID, WS_PATH, [makeEvent('create', 'mybox')])
 
-    const all = noteRepository.findByWorkspaceId(WS_ID).filter((n) =>
-      n.relativePath.startsWith('mybox/')
-    )
+    const all = noteRepository
+      .findByWorkspaceId(WS_ID)
+      .filter((n) => n.relativePath.startsWith('mybox/'))
     expect(all.map((n) => n.relativePath).sort()).toEqual(['mybox/already.md', 'mybox/new.md'])
     // 기존 record 의 id 유지 확인
     expect(noteRepository.findByRelativePath(WS_ID, 'mybox/already.md')?.id).toBe('n-existing')

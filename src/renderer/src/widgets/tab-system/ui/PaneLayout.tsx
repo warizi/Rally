@@ -1,10 +1,7 @@
 import { Fragment, useCallback, useEffect, useMemo, useRef } from 'react'
 import { PaneContainer } from './PaneContainer'
 import { LayoutNode, SplitDirection, SplitNode } from '@/entities/tab-system'
-import {
-  isPaneNode,
-  isSplitContainerNode
-} from '@/entities/tab-system/model/types'
+import { isPaneNode, isSplitContainerNode } from '@/entities/tab-system/model/types'
 import { PaneRoute } from '@/shared/lib/pane-route'
 import { useTabStore } from '@/entities/tab-system'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/shared/ui/resizable'

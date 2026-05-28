@@ -35,7 +35,10 @@ vi.mock('electron', () => ({
 const WS_ID = 'ws-watcher-int'
 let wsDir: string
 
-function makeEvent(type: 'create' | 'delete', absPath: string): {
+function makeEvent(
+  type: 'create' | 'delete',
+  absPath: string
+): {
   type: 'create' | 'delete'
   path: string
 } {
@@ -78,10 +81,7 @@ describe('event-processor 통합 — 외부 폴더 이동 (real fs)', () => {
     fs.writeFileSync(path.join(myboxAbs, 'note.md'), '# Note')
     fs.writeFileSync(path.join(myboxAbs, 'doc.pdf'), Buffer.from([0x25, 0x50, 0x44, 0x46]))
     fs.writeFileSync(path.join(myboxAbs, 'sub', 'data.csv'), 'a,b\n1,2')
-    fs.writeFileSync(
-      path.join(myboxAbs, 'sub', 'pic.png'),
-      Buffer.from([0x89, 0x50, 0x4e, 0x47])
-    )
+    fs.writeFileSync(path.join(myboxAbs, 'sub', 'pic.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47]))
 
     // FSEvents 시뮬레이션: 최상위 폴더 create 이벤트만 emit
     await applyEvents(WS_ID, wsDir, [makeEvent('create', myboxAbs)])
@@ -120,13 +120,13 @@ describe('event-processor 통합 — 외부 폴더 이동 (real fs)', () => {
     await applyEvents(WS_ID, wsDir, [makeEvent('create', myboxAbs)])
     await applyEvents(WS_ID, wsDir, [makeEvent('create', myboxAbs)])
 
-    const folders = folderRepository.findByWorkspaceId(WS_ID).filter(
-      (f) => f.relativePath === 'mybox'
-    )
+    const folders = folderRepository
+      .findByWorkspaceId(WS_ID)
+      .filter((f) => f.relativePath === 'mybox')
     expect(folders).toHaveLength(1)
-    const notes = noteRepository.findByWorkspaceId(WS_ID).filter(
-      (n) => n.relativePath === 'mybox/note.md'
-    )
+    const notes = noteRepository
+      .findByWorkspaceId(WS_ID)
+      .filter((n) => n.relativePath === 'mybox/note.md')
     expect(notes).toHaveLength(1)
   })
 
@@ -138,15 +138,14 @@ describe('event-processor 통합 — 외부 폴더 이동 (real fs)', () => {
       path.join(myboxAbs, '.images', 'embedded.png'),
       Buffer.from([0x89, 0x50, 0x4e, 0x47])
     )
-    fs.writeFileSync(
-      path.join(myboxAbs, 'visible.png'),
-      Buffer.from([0x89, 0x50, 0x4e, 0x47])
-    )
+    fs.writeFileSync(path.join(myboxAbs, 'visible.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47]))
 
     await applyEvents(WS_ID, wsDir, [makeEvent('create', myboxAbs)])
 
     // 노트 본문 임베드용 .images/ 는 image record 로 잡으면 안 됨
-    expect(imageFileRepository.findByRelativePath(WS_ID, 'mybox/.images/embedded.png')).toBeUndefined()
+    expect(
+      imageFileRepository.findByRelativePath(WS_ID, 'mybox/.images/embedded.png')
+    ).toBeUndefined()
     expect(imageFileRepository.findByRelativePath(WS_ID, 'mybox/visible.png')).toBeDefined()
   })
 })

@@ -216,12 +216,7 @@ function TodoKanbanCardImpl({
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
         >
-          <AuthorBadge
-            by={todo.updatedBy}
-            byId={todo.updatedById}
-            at={todo.updatedAt}
-            size="sm"
-          />
+          <AuthorBadge by={todo.updatedBy} byId={todo.updatedById} at={todo.updatedAt} size="sm" />
           <LinkedEntityPopoverButton
             entityType="todo"
             entityId={todo.id}

@@ -18,14 +18,7 @@ import { AISettings } from './AISettings'
 import { TrashSettings } from './TrashSettings'
 import { KeyboardShortcutsSettings } from './KeyboardShortcutsSettings'
 
-type SettingsTab =
-  | 'general'
-  | 'display'
-  | 'note'
-  | 'alarm'
-  | 'shortcuts'
-  | 'trash'
-  | 'ai'
+type SettingsTab = 'general' | 'display' | 'note' | 'alarm' | 'shortcuts' | 'trash' | 'ai'
 
 interface SettingsDialogProps {
   open: boolean

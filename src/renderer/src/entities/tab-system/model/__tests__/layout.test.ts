@@ -406,37 +406,25 @@ describe('findAdjacentPaneId', () => {
   })
 
   it('horizontal split [L, R] 에서 좌측 → right 이동', () => {
-    const layout = splitNode('s1', 'horizontal', [
-      paneNode('n1', 'L'),
-      paneNode('n2', 'R')
-    ])
+    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'L'), paneNode('n2', 'R')])
     expect(findAdjacentPaneId(layout, 'L', 'right')).toBe('R')
     expect(findAdjacentPaneId(layout, 'R', 'left')).toBe('L')
   })
 
   it('horizontal split 양 끝 → 더 갈 곳 없음', () => {
-    const layout = splitNode('s1', 'horizontal', [
-      paneNode('n1', 'L'),
-      paneNode('n2', 'R')
-    ])
+    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'L'), paneNode('n2', 'R')])
     expect(findAdjacentPaneId(layout, 'L', 'left')).toBeNull()
     expect(findAdjacentPaneId(layout, 'R', 'right')).toBeNull()
   })
 
   it('horizontal split 에서 up/down 은 매칭 안 됨 → null', () => {
-    const layout = splitNode('s1', 'horizontal', [
-      paneNode('n1', 'L'),
-      paneNode('n2', 'R')
-    ])
+    const layout = splitNode('s1', 'horizontal', [paneNode('n1', 'L'), paneNode('n2', 'R')])
     expect(findAdjacentPaneId(layout, 'L', 'down')).toBeNull()
     expect(findAdjacentPaneId(layout, 'L', 'up')).toBeNull()
   })
 
   it('vertical split [T, B] 에서 위 → down', () => {
-    const layout = splitNode('s1', 'vertical', [
-      paneNode('n1', 'T'),
-      paneNode('n2', 'B')
-    ])
+    const layout = splitNode('s1', 'vertical', [paneNode('n1', 'T'), paneNode('n2', 'B')])
     expect(findAdjacentPaneId(layout, 'T', 'down')).toBe('B')
     expect(findAdjacentPaneId(layout, 'B', 'up')).toBe('T')
   })

@@ -596,8 +596,7 @@ export const noteService = {
                   title: note.title,
                   relativePath: note.relativePath,
                   folderId: note.folderId,
-                  updatedAt:
-                    toDate(note.updatedAt),
+                  updatedAt: toDate(note.updatedAt),
                   preview: note.preview,
                   matchType: 'content' as const
                 }

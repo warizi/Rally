@@ -67,8 +67,7 @@ function getBaseTime(entityType: EntityType, entityId: string): Date | null {
   if (entityType === 'schedule') {
     const schedule = scheduleRepository.findById(entityId)
     if (!schedule) return null
-    const startAt =
-      toDate(schedule.startAt)
+    const startAt = toDate(schedule.startAt)
     // allDay: 00:00 → 09:00 보정
     if (schedule.allDay) {
       const adjusted = new Date(startAt)

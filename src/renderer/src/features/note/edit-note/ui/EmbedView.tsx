@@ -343,7 +343,7 @@ function ImageEmbedView({
       return
     }
     const url = URL.createObjectURL(new Blob([content.data]))
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+
     setBlobUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [content?.data])
