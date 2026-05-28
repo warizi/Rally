@@ -23,6 +23,26 @@ jobs:
         continue-on-error: true
       - run: npm run typecheck
 
+  # FSD layer boundary 룰 (eslint-plugin-boundaries) 회귀 차단.
+  # 다른 룰의 잔여 error 가 lint-and-typecheck job 의 continue-on-error
+  # 와 묶여 흐려지지 않도록 boundary 룰만 grep 기반으로 분리 검사한다.
+  fsd-boundary-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-and-install
+      - name: Verify no boundary violations
+        run: |
+          set -o pipefail
+          npx eslint . --no-warn-ignored > /tmp/lint.txt 2>&1 || true
+          count=$(grep -c 'boundaries/element-types' /tmp/lint.txt || true)
+          echo "FSD boundary violations: $count"
+          if [ "$count" != "0" ]; then
+            echo "::error::FSD boundary violations detected"
+            grep -B 1 'boundaries/element-types' /tmp/lint.txt | sed 's/^/  /'
+            exit 1
+          fi
+
   cleanup-completeness:
     runs-on: ubuntu-latest
     steps:
