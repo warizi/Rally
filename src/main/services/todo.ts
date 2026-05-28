@@ -10,6 +10,7 @@ import { recurringCompletionService } from './recurring-completion'
 import { trashService } from './trash'
 import type { RecurringCompletionItem } from './recurring-completion'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate, toNullableDate } from './_shared/date'
 
 export interface TodoItem {
   id: string
@@ -80,23 +81,11 @@ function toTodoItem(todo: ReturnType<typeof todoRepository.findById>): TodoItem 
     listOrder: todo.listOrder,
     kanbanOrder: todo.kanbanOrder,
     subOrder: todo.subOrder,
-    createdAt: todo.createdAt instanceof Date ? todo.createdAt : new Date(todo.createdAt as number),
-    updatedAt: todo.updatedAt instanceof Date ? todo.updatedAt : new Date(todo.updatedAt as number),
-    doneAt: todo.doneAt
-      ? todo.doneAt instanceof Date
-        ? todo.doneAt
-        : new Date(todo.doneAt as number)
-      : null,
-    dueDate: todo.dueDate
-      ? todo.dueDate instanceof Date
-        ? todo.dueDate
-        : new Date(todo.dueDate as number)
-      : null,
-    startDate: todo.startDate
-      ? todo.startDate instanceof Date
-        ? todo.startDate
-        : new Date(todo.startDate as number)
-      : null,
+    createdAt: toDate(todo.createdAt),
+    updatedAt: toDate(todo.updatedAt),
+    doneAt: toNullableDate(todo.doneAt),
+    dueDate: toNullableDate(todo.dueDate),
+    startDate: toNullableDate(todo.startDate),
     createdBy: (todo.createdBy ?? 'user') as 'user' | 'ai',
     createdById: todo.createdById ?? null,
     updatedBy: (todo.updatedBy ?? 'user') as 'user' | 'ai',
@@ -222,7 +211,7 @@ export const todoService = {
     const rows = todoRepository.searchByTitleOrDescription(workspaceId, query)
     const lower = query.toLowerCase()
     return rows.map((r) => {
-      const updatedAt = r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt as number)
+      const updatedAt = toDate(r.updatedAt)
       return {
         id: r.id,
         title: r.title,
