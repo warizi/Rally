@@ -4,7 +4,7 @@ import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Input } from '@shared/ui/input'
 import { ScrollArea } from '@shared/ui/scroll-area'
 import { useTodosByWorkspace } from '@entities/todo'
-import { useLinkTodo } from '@entities/schedule'
+import { useLinkTodo } from '../model/use-linked-todos'
 
 interface Props {
   scheduleId: string

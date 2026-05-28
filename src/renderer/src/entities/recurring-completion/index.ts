@@ -1,9 +1,7 @@
-export type { RecurringCompletionItem, CompletedItem } from './model/types'
+export type { RecurringCompletionItem } from './model/types'
 
 export {
   RECURRING_COMPLETION_KEY,
   useRecurringCompletionsToday,
-  useCompletedWithRecurring,
-  useCompleteRecurring,
-  useUncompleteRecurring
+  useCompleteRecurring
 } from './model/queries'

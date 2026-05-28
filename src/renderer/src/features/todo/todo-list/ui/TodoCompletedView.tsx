@@ -12,8 +12,8 @@ import {
 } from '@shared/ui/dropdown-menu'
 import { useUpdateTodo } from '@entities/todo'
 import type { TodoItem } from '@entities/todo'
-import type { CompletedItem, RecurringCompletionItem } from '@entities/recurring-completion'
-import { useUncompleteRecurring } from '@entities/recurring-completion'
+import type { RecurringCompletionItem } from '@entities/recurring-completion'
+import { useUncompleteRecurring, type CompletedItem } from '@features/recurring/manage-recurring'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { PanePickerSubmenu } from '@features/entity-link/manage-link'
 

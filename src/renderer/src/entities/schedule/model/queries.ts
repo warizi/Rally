@@ -13,7 +13,6 @@ import type {
   UpdateScheduleData,
   ScheduleDateRange
 } from './types'
-import type { TodoItem } from '@entities/todo/model/types'
 
 const SCHEDULE_KEY = 'schedule'
 
@@ -66,18 +65,6 @@ export function useScheduleById(scheduleId: string | undefined): UseQueryResult<
       const res: IpcResponse<ScheduleItem> = await window.api.schedule.findById(scheduleId!)
       if (!res.success) throwIpcError(res)
       return res.data!
-    },
-    enabled: !!scheduleId
-  })
-}
-
-export function useLinkedTodos(scheduleId: string | undefined): UseQueryResult<TodoItem[]> {
-  return useQuery({
-    queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId],
-    queryFn: async (): Promise<TodoItem[]> => {
-      const res: IpcResponse<TodoItem[]> = await window.api.schedule.getLinkedTodos(scheduleId!)
-      if (!res.success) throwIpcError(res)
-      return res.data ?? []
     },
     enabled: !!scheduleId
   })
@@ -164,40 +151,3 @@ export function useMoveSchedule(): UseMutationResult<
   })
 }
 
-export function useLinkTodo(): UseMutationResult<
-  void,
-  Error,
-  { scheduleId: string; todoId: string }
-> {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ scheduleId, todoId }) => {
-      const res = await window.api.schedule.linkTodo(scheduleId, todoId)
-      if (!res.success) throwIpcError(res)
-    },
-    onSuccess: (_, { scheduleId }) => {
-      queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId]
-      })
-    }
-  })
-}
-
-export function useUnlinkTodo(): UseMutationResult<
-  void,
-  Error,
-  { scheduleId: string; todoId: string }
-> {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: async ({ scheduleId, todoId }) => {
-      const res = await window.api.schedule.unlinkTodo(scheduleId, todoId)
-      if (!res.success) throwIpcError(res)
-    },
-    onSuccess: (_, { scheduleId }) => {
-      queryClient.invalidateQueries({
-        queryKey: [SCHEDULE_KEY, 'linkedTodos', scheduleId]
-      })
-    }
-  })
-}

@@ -9,12 +9,9 @@ export {
   useAllSchedulesByWorkspace,
   useSchedulesByWorkspace,
   useScheduleById,
-  useLinkedTodos,
   useCreateSchedule,
   useUpdateSchedule,
   useRemoveSchedule,
-  useMoveSchedule,
-  useLinkTodo,
-  useUnlinkTodo
+  useMoveSchedule
 } from './model/queries'
 export { useScheduleWatcher } from './model/use-schedule-watcher'
