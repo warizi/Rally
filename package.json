@@ -34,6 +34,7 @@
     "coverage:summary": "node scripts/coverage-summary.mjs",
     "check:cleanup": "node scripts/check-cleanup-completeness.mjs",
     "build:mcp": "tsup --config src/mcp-server/tsup.config.ts",
+    "build:mcp:watch": "tsup --config src/mcp-server/tsup.config.ts --watch",
     "build:analyze": "ANALYZE=1 npm run build",
     "build:size": "npm run build && node scripts/measure-bundle.mjs",
     "security:scan": "electronegativity -i src/main -i src/preload",
