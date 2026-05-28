@@ -29,6 +29,15 @@ function getMdFiles(dir: string): { name: string; content: string }[] {
   }))
 }
 
+/**
+ * 외부 MCP 클라이언트 (Claude 등) 가 spawn 할 dist-mcp/index.js 절대 경로.
+ *
+ * dev 모드 reload 정책 (P3):
+ *   - dev 시 `build:mcp:watch` 가 dist-mcp/index.js 를 incremental rewrite.
+ *   - 이미 살아있는 mcp-server 자식 프로세스는 구버전 코드 유지 (프로세스 메모리).
+ *   - 새 세션 (클라이언트 재연결 또는 새 클라이언트) 부터 신버전 자동 반영.
+ *   - Rally main 재시작 불필요 — main 은 이 파일을 import 하지 않고 spawn 만 함.
+ */
 function getMcpServerPath(): string {
   return is.dev
     ? join(process.cwd(), 'dist-mcp', 'index.js')
