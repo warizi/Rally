@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
-import type { TagItem, TaggableEntityType, CreateTagInput, UpdateTagInput } from './types'
+import type { TagItem, TaggableEntityType, CreateTagInput, UpdateTagInput } from '../model/types'
 
 export const TAG_KEY = 'tag'
 export const ITEM_TAG_KEY = 'itemTag'

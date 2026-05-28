@@ -10,6 +10,6 @@ export {
   useRemoveTag,
   useAttachTag,
   useDetachTag
-} from './model/queries'
+} from './api/queries'
 export { TagBadge } from './ui/TagBadge'
 export { useTagWatcher } from './model/use-tag-watcher'
