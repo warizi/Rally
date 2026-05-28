@@ -1,6 +1,9 @@
 import { autoUpdater } from 'electron-updater'
 import { BrowserWindow, Notification } from 'electron'
 import { is } from '@electron-toolkit/utils'
+import { scoped } from './logger'
+
+const log = scoped('updater')
 
 export function setupAutoUpdater(): void {
   if (is.dev) return
@@ -9,11 +12,11 @@ export function setupAutoUpdater(): void {
   autoUpdater.autoInstallOnAppQuit = true
 
   autoUpdater.on('update-available', (info) => {
-    console.log('Update available:', info.version)
+    log.info('Update available:', info.version)
   })
 
   autoUpdater.on('update-downloaded', (info) => {
-    console.log('Update downloaded:', info.version)
+    log.info('Update downloaded:', info.version)
     const win = BrowserWindow.getFocusedWindow()
     if (win) {
       win.webContents.send('update-downloaded', info.version)
@@ -25,7 +28,7 @@ export function setupAutoUpdater(): void {
   })
 
   autoUpdater.on('error', (err) => {
-    console.error('Auto-updater error:', err)
+    log.error('Auto-updater error:', err)
   })
 
   autoUpdater.checkForUpdates()

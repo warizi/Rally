@@ -2,7 +2,10 @@ import { Notification, BrowserWindow } from 'electron'
 import { reminderService } from './reminder'
 import { recurringRuleService } from './recurring-rule'
 import { workspaceService } from './workspace'
+import { scoped } from '../lib/logger'
 import icon from '../../../resources/256x256.png?asset'
+
+const log = scoped('reminder-scheduler')
 
 const CHECK_INTERVAL = 60_000 // 1분
 const STALE_THRESHOLD = 5 * 60_000 // 5분: 이보다 오래된 미발송 알림은 무시
@@ -66,7 +69,7 @@ function checkAndFire(): void {
         fireNotification(title, item.title, item.entityType, item.entityId, item.workspaceId)
         reminderService.markFired(item.id)
       } catch (err) {
-        console.error('[ReminderScheduler] 개별 알림 발송 실패:', item.id, err)
+        log.error('개별 알림 발송 실패:', item.id, err)
         reminderService.markFired(item.id)
       }
     }
@@ -103,10 +106,10 @@ function checkAndFire(): void {
         }
       }
     } catch (err) {
-      console.error('[ReminderScheduler] 반복할일 알림 처리 실패:', err)
+      log.error('반복할일 알림 처리 실패:', err)
     }
   } catch (err) {
-    console.error('[ReminderScheduler] 알림 스캔 실패:', err)
+    log.error('알림 스캔 실패:', err)
   }
 }
 
