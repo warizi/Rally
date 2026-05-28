@@ -3,9 +3,8 @@ import { createElement, type ReactNode } from 'react'
 import { renderHook, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { waitFor } from '@testing-library/react'
-import { useNoteWatcher, NOTE_EXTERNAL_CHANGED_EVENT } from '../use-note-watcher'
-import { markAsOwnWrite } from '../own-write-tracker'
-import type { NoteNode } from '../types'
+import { markAsOwnWrite, NOTE_EXTERNAL_CHANGED_EVENT, type NoteNode } from '@entities/note'
+import { useNoteWatcher } from '../use-note-watcher'
 
 // ─── 테스트 헬퍼 ──────────────────────────────────────────────
 function createWrapper(): {

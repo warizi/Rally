@@ -24,13 +24,29 @@ export default defineConfig(
   {
     settings: {
       react: { version: 'detect' },
+      'import/resolver': {
+        typescript: {
+          alwaysTryTypes: true,
+          project: ['./tsconfig.web.json', './tsconfig.node.json']
+        }
+      },
       'boundaries/elements': [
-        { type: 'app', pattern: 'src/renderer/src/app/*' },
-        { type: 'pages', pattern: 'src/renderer/src/pages/*' },
-        { type: 'widgets', pattern: 'src/renderer/src/widgets/*' },
-        { type: 'features', pattern: 'src/renderer/src/features/*' },
-        { type: 'entities', pattern: 'src/renderer/src/entities/*' },
-        { type: 'shared', pattern: 'src/renderer/src/shared/*' }
+        { type: 'app', pattern: 'src/renderer/src/app', mode: 'folder' },
+        { type: 'pages', pattern: 'src/renderer/src/pages/*', mode: 'folder' },
+        { type: 'widgets', pattern: 'src/renderer/src/widgets/*', mode: 'folder' },
+        {
+          type: 'features',
+          pattern: 'src/renderer/src/features/*/*',
+          mode: 'folder',
+          capture: ['domain', 'action']
+        },
+        {
+          type: 'entities',
+          pattern: 'src/renderer/src/entities/*',
+          mode: 'folder',
+          capture: ['domain']
+        },
+        { type: 'shared', pattern: 'src/renderer/src/shared', mode: 'folder' }
       ]
     }
   },
@@ -52,7 +68,10 @@ export default defineConfig(
             { from: 'app', allow: ['pages', 'widgets', 'features', 'entities', 'shared'] },
             { from: 'pages', allow: ['widgets', 'features', 'entities', 'shared'] },
             { from: 'widgets', allow: ['features', 'entities', 'shared'] },
-            { from: 'features', allow: ['entities', 'shared'] },
+            // P0 범위(shared→/entities→features/entities↔entities)는 error 강제.
+            // features→features 와 features→widgets 임시 허용 — P1 작업
+            // (tab-system entity 재배치 + AISettings widgets 의존 정리) 에서 회수 예정.
+            { from: 'features', allow: ['features', 'widgets', 'entities', 'shared'] },
             { from: 'entities', allow: ['shared'] },
             { from: 'shared', allow: [] }
           ]

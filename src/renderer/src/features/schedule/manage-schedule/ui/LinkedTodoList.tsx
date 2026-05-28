@@ -1,7 +1,7 @@
 import { CheckCircle2, Circle, Link2Off, Plus } from 'lucide-react'
 import { cn } from '@shared/lib/utils'
 import { Button } from '@shared/ui/button'
-import { useLinkedTodos, useUnlinkTodo } from '@entities/schedule'
+import { useLinkedTodos, useUnlinkTodo } from '../model/use-linked-todos'
 import { TodoLinkPopover } from './TodoLinkPopover'
 
 interface Props {

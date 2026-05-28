@@ -6,11 +6,13 @@ import {
   useTabDnd,
   useTabStore
 } from '@/features/tap-system/manage-tab-system'
-import { useFolderWatcher } from '@entities/folder'
-import { useNoteWatcher } from '@entities/note'
-import { useCsvWatcher } from '@entities/csv-file'
-import { usePdfWatcher } from '@entities/pdf-file'
-import { useImageWatcher } from '@entities/image-file'
+import { useFolderWatcher } from '@features/folder/manage-folder'
+import {
+  useNoteWatcher,
+  useCsvWatcher,
+  usePdfWatcher,
+  useImageWatcher
+} from '@features/file-watcher/manage-watchers'
 import { useCanvasWatcher } from '@entities/canvas'
 import { useTodoWatcher } from '@entities/todo'
 import { useScheduleWatcher } from '@entities/schedule'

@@ -3,7 +3,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
-import { useWorkspaceIsEmpty } from '@shared/hooks/use-workspace-is-empty'
+import { useWorkspaceIsEmpty } from '@features/workspace/check-empty'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { WelcomeSlide } from './WelcomeSlides'
 

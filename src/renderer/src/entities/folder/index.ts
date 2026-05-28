@@ -7,4 +7,3 @@ export {
   useMoveFolder,
   useUpdateFolderMeta
 } from './api/queries'
-export { useFolderWatcher } from './model/use-folder-watcher'
