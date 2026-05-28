@@ -4,6 +4,7 @@ import { canvasEdgeRepository } from '../repositories/canvas-edge'
 import { canvasRepository } from '../repositories/canvas'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { assertCanvasUnlockedById } from './canvas'
+import { toDate } from './_shared/date'
 
 export type CanvasEdgeSide = 'top' | 'right' | 'bottom' | 'left'
 export type CanvasEdgeStyle = 'solid' | 'dashed' | 'dotted'
@@ -57,7 +58,7 @@ function toCanvasEdgeItem(
     color: row.color,
     style: row.style,
     arrow: row.arrow,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number)
+    createdAt: toDate(row.createdAt)
   }
 }
 

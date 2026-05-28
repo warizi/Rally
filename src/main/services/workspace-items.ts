@@ -5,6 +5,7 @@ import { noteService } from './note'
 import { csvFileService } from './csv-file'
 import { canvasService } from './canvas'
 import { todoService } from './todo'
+import { toDate } from './_shared/date'
 
 export type WorkspaceItemKind = 'folder' | 'note' | 'table' | 'canvas'
 
@@ -161,7 +162,7 @@ export const workspaceItemsService = {
         }
       }
       if (updatedAfter) {
-        pool = pool.filter((f) => f.updatedAt instanceof Date && f.updatedAt >= updatedAfter)
+        pool = pool.filter((f) => toDate(f.updatedAt) >= updatedAfter)
       }
       foldersTotal = pool.length
       folders = pool.slice(offset, offset + limit).map((f) => ({

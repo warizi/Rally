@@ -13,6 +13,7 @@ import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { trashService } from './trash'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate } from './_shared/date'
 
 export interface CsvFileNode {
   id: string
@@ -59,8 +60,8 @@ function toCsvFileNode(row: {
     folderId: row.folderId,
     order: row.order,
     isLocked: row.isLocked,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt),
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt),
     createdBy: row.createdBy ?? 'user',
     createdById: row.createdById ?? null,
     updatedBy: row.updatedBy ?? 'user',
@@ -189,7 +190,7 @@ export const csvFileService = {
       preview: r.preview,
       folderId: r.folderId,
       matchType: r.title.toLowerCase().includes(lower) ? ('title' as const) : ('content' as const),
-      updatedAt: r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt as number)
+      updatedAt: toDate(r.updatedAt)
     }))
   },
 

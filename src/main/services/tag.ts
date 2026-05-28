@@ -3,6 +3,7 @@ import { ConflictError, NotFoundError } from '../lib/errors'
 import { tagRepository } from '../repositories/tag'
 import { workspaceRepository } from '../repositories/workspace'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate } from './_shared/date'
 
 export interface TagItem {
   id: string
@@ -35,7 +36,7 @@ function toTagItem(row: {
     name: row.name,
     color: row.color,
     description: row.description,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
+    createdAt: toDate(row.createdAt),
     createdBy: row.createdBy ?? 'user',
     createdById: row.createdById ?? null,
     updatedBy: row.updatedBy ?? 'user',

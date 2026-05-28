@@ -12,6 +12,7 @@ import { csvFileRepository } from '../repositories/csv-file'
 import { pdfFileRepository } from '../repositories/pdf-file'
 import { imageFileRepository } from '../repositories/image-file'
 import type { CanvasNodeType } from '../db/schema/canvas-node'
+import { toDate } from './_shared/date'
 
 export interface CanvasNodeItem {
   id: string
@@ -73,8 +74,8 @@ function toCanvasNodeItem(
     color: row.color,
     content: row.content,
     zIndex: row.zIndex,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number),
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt),
     refTitle: refData?.title,
     refPreview: refData?.preview,
     refMeta: refData?.meta

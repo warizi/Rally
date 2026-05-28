@@ -4,6 +4,7 @@ import { recurringRuleRepository } from '../repositories/recurring-rule'
 import { trashService } from './trash'
 import type { RecurringRule } from '../repositories/recurring-rule'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate, toNullableDate } from './_shared/date'
 
 export type RecurrenceType = 'daily' | 'weekday' | 'weekend' | 'custom'
 
@@ -60,11 +61,6 @@ function toMidnight(d: Date): Date {
   return result
 }
 
-function toDate(v: Date | number | null | undefined): Date | null {
-  if (v == null) return null
-  return v instanceof Date ? v : new Date(v)
-}
-
 function parseDaysOfWeek(raw: string | null): number[] | null {
   if (!raw) return null
   return raw
@@ -87,13 +83,13 @@ function toItem(rule: RecurringRule): RecurringRuleItem {
     priority: rule.priority as RecurringRuleItem['priority'],
     recurrenceType: rule.recurrenceType as RecurrenceType,
     daysOfWeek: parseDaysOfWeek(rule.daysOfWeek),
-    startDate: toDate(rule.startDate)!,
-    endDate: toDate(rule.endDate),
+    startDate: toDate(rule.startDate),
+    endDate: toNullableDate(rule.endDate),
     startTime: rule.startTime ?? null,
     endTime: rule.endTime ?? null,
     reminderOffsetMs: rule.reminderOffsetMs ?? null,
-    createdAt: toDate(rule.createdAt)!,
-    updatedAt: toDate(rule.updatedAt)!,
+    createdAt: toDate(rule.createdAt),
+    updatedAt: toDate(rule.updatedAt),
     createdBy: (rule.createdBy ?? 'user') as 'user' | 'ai',
     createdById: rule.createdById ?? null,
     updatedBy: (rule.updatedBy ?? 'user') as 'user' | 'ai',

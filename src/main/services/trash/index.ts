@@ -3,6 +3,7 @@ import { db } from '../../db'
 import { trashBatches } from '../../db/schema'
 import { NotFoundError, ValidationError } from '../../lib/errors'
 import { workspaceRepository } from '../../repositories/workspace'
+import { toMs } from '../_shared/date'
 
 import {
   type TrashEntityKind,
@@ -18,6 +19,7 @@ import { trashRestorer } from './trash-restorer'
 import { trashPurger } from './trash-purger'
 // side-effect: handler 들을 registry 에 등록 (trashService 호출 전에 반드시 import)
 import './handlers'
+import { toDate } from '../_shared/date'
 
 /**
  * 휴지통 시스템 — soft delete + 복구 + 자동 정리.
@@ -104,11 +106,7 @@ export const trashService = {
       rows = rows.filter((r) => r.rootTitle.toLowerCase().includes(lower))
     }
 
-    rows.sort(
-      (a, b) =>
-        (b.deletedAt instanceof Date ? b.deletedAt.getTime() : Number(b.deletedAt)) -
-        (a.deletedAt instanceof Date ? a.deletedAt.getTime() : Number(a.deletedAt))
-    )
+    rows.sort((a, b) => toMs(b.deletedAt) - toMs(a.deletedAt))
 
     const total = rows.length
     const sliced = rows.slice(offset, offset + limit)
@@ -119,7 +117,7 @@ export const trashService = {
       rootEntityId: r.rootEntityId,
       rootTitle: r.rootTitle,
       childCount: r.childCount,
-      deletedAt: r.deletedAt instanceof Date ? r.deletedAt : new Date(r.deletedAt),
+      deletedAt: toDate(r.deletedAt),
       reason: r.reason
     }))
 
@@ -151,7 +149,7 @@ export const trashService = {
       rootEntityId: batch.rootEntityId,
       rootTitle: batch.rootTitle,
       childCount: batch.childCount,
-      deletedAt: batch.deletedAt instanceof Date ? batch.deletedAt : new Date(batch.deletedAt),
+      deletedAt: toDate(batch.deletedAt),
       reason: batch.reason
     }
   },

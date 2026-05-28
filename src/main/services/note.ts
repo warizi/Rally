@@ -12,6 +12,7 @@ import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { noteImageService } from './note-image'
 import { trashService } from './trash'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate } from './_shared/date'
 
 export interface NoteNode {
   id: string
@@ -55,8 +56,8 @@ function toNoteNode(note: {
     folderId: note.folderId,
     order: note.order,
     isLocked: note.isLocked,
-    createdAt: note.createdAt instanceof Date ? note.createdAt : new Date(note.createdAt),
-    updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
+    createdAt: toDate(note.createdAt),
+    updatedAt: toDate(note.updatedAt),
     createdBy: note.createdBy ?? 'user',
     createdById: note.createdById ?? null,
     updatedBy: note.updatedBy ?? 'user',
@@ -569,7 +570,7 @@ export const noteService = {
         title: note.title,
         relativePath: note.relativePath,
         folderId: note.folderId,
-        updatedAt: note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
+        updatedAt: toDate(note.updatedAt),
         preview: note.preview,
         matchType: 'title'
       })
@@ -596,7 +597,7 @@ export const noteService = {
                   relativePath: note.relativePath,
                   folderId: note.folderId,
                   updatedAt:
-                    note.updatedAt instanceof Date ? note.updatedAt : new Date(note.updatedAt),
+                    toDate(note.updatedAt),
                   preview: note.preview,
                   matchType: 'content' as const
                 }

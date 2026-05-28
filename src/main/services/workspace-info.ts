@@ -15,6 +15,7 @@ import {
 import { NotFoundError } from '../lib/errors'
 import { workspaceRepository } from '../repositories/workspace'
 import { todoRepository } from '../repositories/todo'
+import { toDate } from './_shared/date'
 
 export type StatsKind =
   | 'folders'
@@ -174,19 +175,19 @@ export const workspaceInfoService = {
         type: 'note' as const,
         id: r.id,
         title: r.title,
-        updatedAt: (r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt)).toISOString()
+        updatedAt: (toDate(r.updatedAt)).toISOString()
       })),
       ...csvRows.map((r) => ({
         type: 'table' as const,
         id: r.id,
         title: r.title,
-        updatedAt: (r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt)).toISOString()
+        updatedAt: (toDate(r.updatedAt)).toISOString()
       })),
       ...canvasRows.map((r) => ({
         type: 'canvas' as const,
         id: r.id,
         title: r.title,
-        updatedAt: (r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt)).toISOString()
+        updatedAt: (toDate(r.updatedAt)).toISOString()
       })),
       ...todoRows.map((t) => ({
         type: 'todo' as const,

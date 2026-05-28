@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { ConflictError, NotFoundError, ValidationError } from '../lib/errors'
 import { noteStyleTemplateRepository } from '../repositories/note-style-template'
+import { toDate } from './_shared/date'
 
 export interface NoteStyleTemplateItem {
   id: string
@@ -17,7 +18,7 @@ function toItem(row: {
 }): NoteStyleTemplateItem {
   return {
     ...row,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt)
+    createdAt: toDate(row.createdAt)
   }
 }
 

@@ -11,6 +11,7 @@ import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { trashService } from './trash'
 import { type Actor, USER_ACTOR, toUpdatedFields } from './_shared/actor'
+import { toDate } from './_shared/date'
 
 export interface ImageFileNode {
   id: string
@@ -51,8 +52,8 @@ function toImageFileNode(row: {
     preview: row.preview,
     folderId: row.folderId,
     order: row.order,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt),
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt),
     createdBy: row.createdBy ?? 'user',
     createdById: row.createdById ?? null,
     updatedBy: row.updatedBy ?? 'user',

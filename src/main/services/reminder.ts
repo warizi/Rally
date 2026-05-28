@@ -4,6 +4,7 @@ import { reminderRepository } from '../repositories/reminder'
 import { todoRepository } from '../repositories/todo'
 import { scheduleRepository } from '../repositories/schedule'
 import type { Reminder } from '../repositories/reminder'
+import { toDate } from './_shared/date'
 
 // === 허용 오프셋 값 (유효성 검증용) ===
 
@@ -42,10 +43,10 @@ function toReminderItem(row: Reminder): ReminderItem {
     entityType: row.entityType as ReminderItem['entityType'],
     entityId: row.entityId,
     offsetMs: row.offsetMs,
-    remindAt: row.remindAt instanceof Date ? row.remindAt : new Date(row.remindAt as number),
+    remindAt: toDate(row.remindAt),
     isFired: row.isFired,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number)
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt)
   }
 }
 
@@ -60,14 +61,14 @@ function getBaseTime(entityType: EntityType, entityId: string): Date | null {
     // dueDate 우선, 없으면 startDate
     const raw = todo.dueDate ?? todo.startDate
     if (!raw) return null
-    return raw instanceof Date ? raw : new Date(raw as number)
+    return toDate(raw)
   }
 
   if (entityType === 'schedule') {
     const schedule = scheduleRepository.findById(entityId)
     if (!schedule) return null
     const startAt =
-      schedule.startAt instanceof Date ? schedule.startAt : new Date(schedule.startAt as number)
+      toDate(schedule.startAt)
     // allDay: 00:00 → 09:00 보정
     if (schedule.allDay) {
       const adjusted = new Date(startAt)
