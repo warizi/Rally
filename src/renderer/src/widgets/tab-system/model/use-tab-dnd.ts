@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
-import { SplitPosition } from './types'
-import { useTabStore } from './store'
+import type { SplitPosition } from '@/entities/tab-system'
+import { useTabStore } from '@/entities/tab-system'
 
 interface UseTabDndOptions {
   onDragStart?: (tabId: string) => void

@@ -49,3 +49,11 @@ export { PANE_DEFAULTS, LAYOUT_DEFAULTS } from './lib/constants'
 // API
 export type { SerializedTab, SessionData } from './api/queries'
 export { loadSession, saveSession } from './api/queries'
+
+// Hooks (entity-level)
+export { useFocusModeEffects } from './model/use-focus-mode-effects'
+export {
+  useSessionPersistence,
+  sessionKeys,
+  applySessionToStore
+} from './model/use-tab-persistence'
