@@ -8,7 +8,7 @@ import { TodoPrioritySelect } from '@features/todo/todo-field/ui/TodoPrioritySel
 import { DatePickerButton } from '@shared/ui/date-picker-button'
 import { TimePickerButton } from '@shared/ui/time-picker-button'
 import { formatTime, applyTime } from '@shared/lib/datetime'
-import { ReminderSelect } from '@features/reminder'
+import { ReminderSelect } from '@entities/reminder'
 
 const COLLAPSE_KEY = 'rally:todo-detail-metadata-collapsed'
 

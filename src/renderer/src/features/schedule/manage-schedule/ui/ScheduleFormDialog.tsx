@@ -16,8 +16,7 @@ import { useLinkEntity } from '@entities/entity-link'
 import type { ScheduleItem } from '@entities/schedule'
 import { PendingLinkPicker } from '@/widgets/entity-link'
 import type { PendingLink } from '@/widgets/entity-link'
-import { ReminderPendingSelect, ReminderSelect } from '@features/reminder'
-import { useSetReminder } from '@entities/reminder'
+import { ReminderPendingSelect, ReminderSelect, useSetReminder } from '@entities/reminder'
 import { ColorPicker } from './ColorPicker'
 
 const scheduleSchema = z.object({
