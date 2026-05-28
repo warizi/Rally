@@ -60,6 +60,10 @@ export default defineConfig(
     rules: {
       ...eslintPluginReactHooks.configs.recommended.rules,
       ...eslintPluginReactRefresh.configs.vite.rules,
+      // production code 에서 console.* 금지 — electron-log scoped logger 사용 강제.
+      // bootstrap 영역 (preload/index.ts, mcp-server/index.ts) 은 inline disable 로 허용.
+      // 테스트 파일은 아래 override 로 제외.
+      'no-console': 'error',
       'boundaries/element-types': [
         'error',
         {
@@ -74,6 +78,12 @@ export default defineConfig(
           ]
         }
       ]
+    }
+  },
+  {
+    files: ['**/__tests__/**', '**/*.test.{ts,tsx}', '**/*.spec.{ts,tsx}'],
+    rules: {
+      'no-console': 'off'
     }
   },
   eslintConfigPrettier
