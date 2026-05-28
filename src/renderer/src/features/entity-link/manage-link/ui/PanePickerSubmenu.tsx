@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@shared/lib/utils'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import type { LayoutNode, Pane } from '@entities/tab-system'
 
 const SUBMENU_W = 220

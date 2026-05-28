@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useTreeOpenState } from '../use-tree-open-state'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 
 beforeEach(() => {
   useTabStore.getState().reset()

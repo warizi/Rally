@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useTabStore } from '@/features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { ROUTES } from '@shared/constants/tab-url'
 
 const LAST_VERSION_KEY = 'lastAppVersion'

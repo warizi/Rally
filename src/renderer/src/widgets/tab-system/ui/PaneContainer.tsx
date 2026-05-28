@@ -1,11 +1,8 @@
 import { PaneRoute } from '@/shared/lib/pane-route'
 import { PaneContent } from './PaneContent'
-import {
-  selectFocusedTabId,
-  TabBar,
-  TabDropZone,
-  useTabStore
-} from '@/features/tab-system/manage-tab-system'
+import { selectFocusedTabId, useTabStore } from '@/entities/tab-system'
+import { TabBar } from './TabBar'
+import { TabDropZone } from './TabDropZone'
 import { cn } from '@/shared/lib/utils'
 
 interface PaneContainerProps {

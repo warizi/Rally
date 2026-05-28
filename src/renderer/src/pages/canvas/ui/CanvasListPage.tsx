@@ -13,7 +13,7 @@ import {
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { ROUTES } from '@shared/constants/tab-url'
-import { useTabStore, selectPaneByTabId } from '@features/tab-system/manage-tab-system'
+import { useTabStore, selectPaneByTabId } from '@/entities/tab-system'
 import { PanePickerSubmenu } from '@features/entity-link/manage-link'
 import { CreateCanvasDialog } from '@features/canvas/create-canvas/ui/CreateCanvasDialog'
 import { DeleteCanvasDialog } from '@features/canvas/delete-canvas/ui/DeleteCanvasDialog'

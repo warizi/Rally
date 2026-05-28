@@ -1,4 +1,4 @@
-import { Tab } from '@/entities/tab-system'
+import { Tab, useTabStore, selectFocusedTabId } from '@/entities/tab-system'
 import {
   ContextMenu,
   ContextMenuContent,
@@ -16,8 +16,6 @@ import {
   X,
   XCircle
 } from 'lucide-react'
-import { selectFocusedTabId } from '../model/selectors'
-import { useTabStore } from '../model/store'
 
 interface TabContextMenuProps {
   tab: Tab

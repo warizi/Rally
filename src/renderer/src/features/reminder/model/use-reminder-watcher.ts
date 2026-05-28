@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import type { TabType } from '@shared/constants/tab-url'
 
