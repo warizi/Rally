@@ -17,6 +17,7 @@ import {
 } from '../lib/pdf-text'
 import { trashService } from './trash'
 import { type Actor, USER_ACTOR, toUpdatedFields } from './_shared/actor'
+import { toDate } from './_shared/date'
 
 export interface PdfFileNode {
   id: string
@@ -57,8 +58,8 @@ function toPdfFileNode(row: {
     preview: row.preview,
     folderId: row.folderId,
     order: row.order,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt),
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt),
     createdBy: row.createdBy ?? 'user',
     createdById: row.createdById ?? null,
     updatedBy: row.updatedBy ?? 'user',

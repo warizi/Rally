@@ -4,6 +4,7 @@ import { tagRepository } from '../repositories/tag'
 import { itemTagRepository } from '../repositories/item-tag'
 import type { TaggableEntityType } from '../db/schema/tag'
 import type { TagItem } from './tag'
+import { toDate } from './_shared/date'
 
 function toTagItem(row: {
   id: string
@@ -15,7 +16,7 @@ function toTagItem(row: {
 }): TagItem {
   return {
     ...row,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt)
+    createdAt: toDate(row.createdAt)
   }
 }
 

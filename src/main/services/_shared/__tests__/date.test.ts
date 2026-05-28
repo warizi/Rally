@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { toDate, toNullableDate } from '../date'
+import { toDate, toNullableDate, toMs } from '../date'
 
 describe('toDate', () => {
   it('Date 인스턴스는 그대로 반환', () => {
@@ -45,5 +45,21 @@ describe('toNullableDate', () => {
     const result = toNullableDate(0)
     expect(result).toBeInstanceOf(Date)
     expect((result as Date).getTime()).toBe(0)
+  })
+})
+
+describe('toMs', () => {
+  it('Date → epoch ms', () => {
+    const d = new Date(1748000000000)
+    expect(toMs(d)).toBe(1748000000000)
+  })
+
+  it('number 는 그대로 반환', () => {
+    expect(toMs(1748000000000)).toBe(1748000000000)
+  })
+
+  it('0 (epoch) 도 정상', () => {
+    expect(toMs(0)).toBe(0)
+    expect(toMs(new Date(0))).toBe(0)
   })
 })

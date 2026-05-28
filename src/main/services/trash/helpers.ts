@@ -6,6 +6,7 @@ import { db } from '../../db'
 import { reminders } from '../../db/schema'
 import { entityLinkRepository } from '../../repositories/entity-link'
 import { resolveNameConflict } from '../../lib/fs-utils'
+import { toMs } from '../_shared/date'
 
 /**
  * trash 시스템 — 공통 헬퍼.
@@ -84,7 +85,7 @@ export function captureLinks(entityType: string, entityIds: string[]): LinkSnaps
     targetType: r.targetType,
     targetId: r.targetId,
     workspaceId: r.workspaceId,
-    createdAt: r.createdAt instanceof Date ? r.createdAt.getTime() : Number(r.createdAt)
+    createdAt: toMs(r.createdAt)
   }))
 }
 
@@ -103,10 +104,10 @@ export function captureReminders(
     entityType: r.entityType as 'todo' | 'schedule',
     entityId: r.entityId,
     offsetMs: r.offsetMs,
-    remindAt: r.remindAt instanceof Date ? r.remindAt.getTime() : Number(r.remindAt),
+    remindAt: toMs(r.remindAt),
     isFired: r.isFired,
-    createdAt: r.createdAt instanceof Date ? r.createdAt.getTime() : Number(r.createdAt),
-    updatedAt: r.updatedAt instanceof Date ? r.updatedAt.getTime() : Number(r.updatedAt)
+    createdAt: toMs(r.createdAt),
+    updatedAt: toMs(r.updatedAt)
   }))
 }
 

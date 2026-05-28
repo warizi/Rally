@@ -3,6 +3,7 @@ import { ConflictError, NotFoundError, ValidationError } from '../lib/errors'
 import { customSkillRepository, type CustomSkill } from '../repositories/custom-skill'
 import { systemSkillRepository, type SystemSkill } from '../repositories/system-skill'
 import { SYSTEM_SKILL_NAMES, SYSTEM_SKILL_SEEDS, getSystemSkillSeed } from './system-skills-seed'
+import { toDate } from './_shared/date'
 
 export type SkillSource = 'system' | 'custom'
 
@@ -130,8 +131,8 @@ function toSystemItem(row: SystemSkill): SkillItem {
     source: 'system',
     editable: true,
     hasOverride,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt)
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt)
   }
 }
 
@@ -151,8 +152,8 @@ function toItem(row: CustomSkill): SkillItem {
     triggers: safeJsonArray(row.triggersJson),
     source: 'custom',
     editable: true,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt)
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt)
   }
 }
 

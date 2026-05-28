@@ -11,6 +11,7 @@ import { trashService } from './trash'
 import type { Schedule } from '../repositories/schedule'
 import type { Todo } from '../repositories/todo'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate, toNullableDate } from './_shared/date'
 
 // === Domain Types ===
 
@@ -95,12 +96,12 @@ function toScheduleItem(row: Schedule): ScheduleItem {
     description: row.description,
     location: row.location,
     allDay: row.allDay,
-    startAt: row.startAt instanceof Date ? row.startAt : new Date(row.startAt as number),
-    endAt: row.endAt instanceof Date ? row.endAt : new Date(row.endAt as number),
+    startAt: toDate(row.startAt),
+    endAt: toDate(row.endAt),
     color: row.color,
     priority: row.priority as ScheduleItem['priority'],
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number),
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt),
     createdBy: (row.createdBy ?? 'user') as 'user' | 'ai',
     createdById: row.createdById ?? null,
     updatedBy: (row.updatedBy ?? 'user') as 'user' | 'ai',
@@ -121,23 +122,11 @@ function toTodoItem(todo: Todo): TodoItem {
     listOrder: todo.listOrder,
     kanbanOrder: todo.kanbanOrder,
     subOrder: todo.subOrder,
-    createdAt: todo.createdAt instanceof Date ? todo.createdAt : new Date(todo.createdAt as number),
-    updatedAt: todo.updatedAt instanceof Date ? todo.updatedAt : new Date(todo.updatedAt as number),
-    doneAt: todo.doneAt
-      ? todo.doneAt instanceof Date
-        ? todo.doneAt
-        : new Date(todo.doneAt as number)
-      : null,
-    dueDate: todo.dueDate
-      ? todo.dueDate instanceof Date
-        ? todo.dueDate
-        : new Date(todo.dueDate as number)
-      : null,
-    startDate: todo.startDate
-      ? todo.startDate instanceof Date
-        ? todo.startDate
-        : new Date(todo.startDate as number)
-      : null,
+    createdAt: toDate(todo.createdAt),
+    updatedAt: toDate(todo.updatedAt),
+    doneAt: toNullableDate(todo.doneAt),
+    dueDate: toNullableDate(todo.dueDate),
+    startDate: toNullableDate(todo.startDate),
     createdBy: (todo.createdBy ?? 'user') as 'user' | 'ai',
     createdById: todo.createdById ?? null,
     updatedBy: (todo.updatedBy ?? 'user') as 'user' | 'ai',
@@ -211,10 +200,10 @@ export const scheduleService = {
 
     const startAt =
       data.startAt ??
-      (existing.startAt instanceof Date ? existing.startAt : new Date(existing.startAt as number))
+      (toDate(existing.startAt))
     const endAt =
       data.endAt ??
-      (existing.endAt instanceof Date ? existing.endAt : new Date(existing.endAt as number))
+      (toDate(existing.endAt))
 
     if (startAt > endAt) {
       throw new ValidationError('시작 시간이 종료 시간보다 늦을 수 없습니다')

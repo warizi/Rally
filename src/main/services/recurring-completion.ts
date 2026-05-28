@@ -3,6 +3,7 @@ import { NotFoundError } from '../lib/errors'
 import { recurringCompletionRepository } from '../repositories/recurring-completion'
 import { recurringRuleRepository } from '../repositories/recurring-rule'
 import type { RecurringCompletion } from '../repositories/recurring-completion'
+import { toDate } from './_shared/date'
 
 export interface RecurringCompletionItem {
   id: string
@@ -12,10 +13,6 @@ export interface RecurringCompletionItem {
   completedDate: string
   completedAt: Date
   createdAt: Date
-}
-
-function toDate(v: Date | number): Date {
-  return v instanceof Date ? v : new Date(v)
 }
 
 function toItem(row: RecurringCompletion): RecurringCompletionItem {

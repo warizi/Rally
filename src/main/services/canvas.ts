@@ -5,6 +5,7 @@ import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
 import { trashService } from './trash'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
+import { toDate } from './_shared/date'
 
 export interface CanvasItem {
   id: string
@@ -33,8 +34,8 @@ function toCanvasItem(row: NonNullable<ReturnType<typeof canvasRepository.findBy
     viewportY: row.viewportY,
     viewportZoom: row.viewportZoom,
     isLocked: row.isLocked,
-    createdAt: row.createdAt instanceof Date ? row.createdAt : new Date(row.createdAt as number),
-    updatedAt: row.updatedAt instanceof Date ? row.updatedAt : new Date(row.updatedAt as number),
+    createdAt: toDate(row.createdAt),
+    updatedAt: toDate(row.updatedAt),
     createdBy: (row.createdBy ?? 'user') as 'user' | 'ai',
     createdById: row.createdById ?? null,
     updatedBy: (row.updatedBy ?? 'user') as 'user' | 'ai',
@@ -79,7 +80,7 @@ export const canvasService = {
     const rows = canvasRepository.findByWorkspaceId(workspaceId, query)
     const lower = query.toLowerCase()
     return rows.map((r) => {
-      const updatedAt = r.updatedAt instanceof Date ? r.updatedAt : new Date(r.updatedAt as number)
+      const updatedAt = toDate(r.updatedAt)
       return {
         id: r.id,
         title: r.title,

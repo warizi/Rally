@@ -14,3 +14,10 @@ export function toNullableDate(x: Date | number | null | undefined): Date | null
   if (x === null || x === undefined) return null
   return toDate(x)
 }
+
+/**
+ * Date | number → epoch ms (number). trash 정렬 / 백업 마니페스트 등에서 사용.
+ */
+export function toMs(x: Date | number): number {
+  return x instanceof Date ? x.getTime() : Number(x)
+}
