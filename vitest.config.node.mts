@@ -21,8 +21,15 @@ export default defineConfig({
         '**/*.d.ts',
         '**/db/migrations/**',
         '**/types.ts',
-        'src/main/index.ts'
-      ]
+        'src/main/index.ts',
+        'src/main/services/onboarding-sample.ts'
+      ],
+      thresholds: {
+        lines: 47,
+        functions: 38,
+        branches: 45,
+        statements: 46
+      }
     }
   }
 })
