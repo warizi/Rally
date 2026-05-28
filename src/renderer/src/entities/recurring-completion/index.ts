@@ -4,4 +4,4 @@ export {
   RECURRING_COMPLETION_KEY,
   useRecurringCompletionsToday,
   useCompleteRecurring
-} from './model/queries'
+} from './api/queries'

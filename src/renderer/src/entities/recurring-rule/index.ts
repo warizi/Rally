@@ -12,5 +12,5 @@ export {
   useCreateRecurringRule,
   useUpdateRecurringRule,
   useDeleteRecurringRule
-} from './model/queries'
+} from './api/queries'
 export { useRecurringRuleWatcher } from './model/use-recurring-rule-watcher'

@@ -12,7 +12,7 @@ import type {
   CreateScheduleData,
   UpdateScheduleData,
   ScheduleDateRange
-} from './types'
+} from '../model/types'
 
 const SCHEDULE_KEY = 'schedule'
 

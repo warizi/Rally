@@ -13,5 +13,5 @@ export {
   useUpdateSchedule,
   useRemoveSchedule,
   useMoveSchedule
-} from './model/queries'
+} from './api/queries'
 export { useScheduleWatcher } from './model/use-schedule-watcher'

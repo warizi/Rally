@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ENTITY_LINK_KEY } from './queries'
+import { ENTITY_LINK_KEY } from '../api/queries'
 
 export function useEntityLinkWatcher(): void {
   const queryClient = useQueryClient()

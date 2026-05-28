@@ -1,2 +1,2 @@
-export { ENTITY_LINK_KEY, useLinkedEntities, useLinkEntity, useUnlinkEntity } from './model/queries'
+export { ENTITY_LINK_KEY, useLinkedEntities, useLinkEntity, useUnlinkEntity } from './api/queries'
 export { useEntityLinkWatcher } from './model/use-entity-link-watcher'

@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
-import type { RecurringCompletionItem } from './types'
+import type { RecurringCompletionItem } from '../model/types'
 
 export const RECURRING_COMPLETION_KEY = 'recurring-completion'
 const TODO_KEY = 'todo'

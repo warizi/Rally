@@ -7,7 +7,7 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
-import type { TodoItem, CreateTodoData, UpdateTodoData, TodoOrderUpdate } from './types'
+import type { TodoItem, CreateTodoData, UpdateTodoData, TodoOrderUpdate } from '../model/types'
 
 const TODO_KEY = 'todo'
 const HISTORY_KEY = 'history'
