@@ -4,7 +4,7 @@ import TabHeader from '@shared/ui/tab-header'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useReadCsvContent } from '@entities/csv-file'
 import { FolderX } from 'lucide-react'
-import { useTabStore } from '@/features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { CsvHeader } from '@/features/csv/edit-csv'
 import { CsvViewer } from '@/widgets/csv-viewer'
 

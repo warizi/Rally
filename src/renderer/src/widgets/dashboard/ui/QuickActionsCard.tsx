@@ -1,5 +1,5 @@
 import { Calendar, FolderOpen, Zap } from 'lucide-react'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { ROUTES } from '@shared/constants/tab-url'
 import { Button } from '@shared/ui/button'
 import { DashboardCard } from '@shared/ui/dashboard-card'

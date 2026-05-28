@@ -1,7 +1,7 @@
 import { Network } from 'lucide-react'
 import { TabContainer } from '@shared/ui/tab-container'
 import TabHeader from '@shared/ui/tab-header'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
 import { AuthorBadgePair } from '@shared/ui/author-badge'

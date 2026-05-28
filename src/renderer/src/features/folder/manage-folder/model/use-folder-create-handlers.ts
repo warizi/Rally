@@ -6,7 +6,7 @@ import type { CsvFileNode } from '@entities/csv-file'
 import { useImportPdfFile } from '@entities/pdf-file'
 import { useImportImageFile } from '@entities/image-file'
 import type { ImageFileNode } from '@entities/image-file'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 
 /**
  * FolderTree 의 6개 생성/import 핸들러를 묶은 훅.

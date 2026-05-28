@@ -7,7 +7,7 @@ import {
   useReadCsvContent,
   useWriteCsvContent
 } from '@entities/csv-file'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { Sheet } from 'lucide-react'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'

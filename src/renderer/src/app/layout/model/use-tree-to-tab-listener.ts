@@ -1,9 +1,9 @@
 import { useCallback } from 'react'
 import { useDndMonitor, type DragEndEvent } from '@dnd-kit/core'
-import { useTabStore } from '@/features/tab-system/manage-tab-system'
-import { buildTabOptions } from '@/features/tab-system/manage-tab-system/lib/build-tab-options'
+import { useTabStore } from '@/entities/tab-system'
+import { buildTabOptions } from '@/entities/tab-system/lib/build-tab-options'
 import type { TreeDragData } from '@shared/types/tree-drag'
-import type { SplitPosition } from '@/features/tab-system/manage-tab-system'
+import type { SplitPosition } from '@/entities/tab-system'
 
 const SPLIT_POSITIONS: Record<string, SplitPosition> = {
   top: 'top',

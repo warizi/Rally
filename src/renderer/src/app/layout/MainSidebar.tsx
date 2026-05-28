@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Settings, Terminal } from 'lucide-react'
-import { useTabStore } from '@/features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
 import type { TabSnapshot } from '@/entities/tab-snapshot'

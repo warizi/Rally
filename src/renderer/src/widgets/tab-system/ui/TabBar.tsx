@@ -6,7 +6,7 @@ import { AnimatePresence } from 'framer-motion'
 import { Ellipsis } from 'lucide-react'
 import { TabItem } from './TabItem'
 import { TabContextMenu } from './TabContextMenu'
-import { useTabStore } from '../model/store'
+import { useTabStore } from '@/entities/tab-system'
 import { ScrollArea, ScrollBar } from '@/shared/ui/scroll-area'
 import { useSidebar } from '@/shared/ui/sidebar'
 import {

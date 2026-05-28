@@ -3,9 +3,9 @@ import MainSidebar from './MainSidebar'
 import {
   useFocusModeEffects,
   useSessionPersistence,
-  useTabDnd,
   useTabStore
-} from '@/features/tab-system/manage-tab-system'
+} from '@/entities/tab-system'
+import { useTabDnd } from '@/widgets/tab-system'
 import { useFolderWatcher } from '@features/folder/manage-folder'
 import {
   useNoteWatcher,

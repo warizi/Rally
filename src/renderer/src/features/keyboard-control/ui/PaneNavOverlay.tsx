@@ -6,8 +6,8 @@
  * 방향키로 active 가 바뀌면 즉시 강조도 따라간다.
  */
 import { JSX } from 'react'
-import { useTabStore } from '@/features/tab-system/manage-tab-system'
-import { isPaneNode } from '@/features/tab-system/manage-tab-system/model/types'
+import { useTabStore } from '@/entities/tab-system'
+import { isPaneNode } from '@/entities/tab-system/model/types'
 import type { LayoutNode } from '@/entities/tab-system'
 import { useKeyboardModeStore } from '../model/keyboard-mode-store'
 

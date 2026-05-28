@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 import { TabContextMenu } from '../TabContextMenu'
-import { useTabStore } from '../../model/store'
+import { useTabStore } from '@/entities/tab-system'
 
 const MAIN_PANE = 'main'
 

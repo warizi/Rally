@@ -10,7 +10,7 @@ import {
 import { MoreHorizontal, Trash2 } from 'lucide-react'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTodosByWorkspace, useUpdateTodo } from '@entities/todo'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { DeleteTodoDialog } from '@features/todo/delete-todo/ui/DeleteTodoDialog'
 import { TodoDetailFields, SubTodoSection } from '@widgets/todo'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'

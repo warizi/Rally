@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import type { Tab } from '@/entities/tab-system'
+import type { Tab } from './types'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
 import { useTabStore } from './store'
 import { loadSession, saveSession } from '../api/queries'

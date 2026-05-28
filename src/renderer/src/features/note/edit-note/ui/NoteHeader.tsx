@@ -9,7 +9,7 @@ import {
   useReadNoteContent,
   useWriteNoteContent
 } from '@entities/note'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { LinkedEntityPopoverButton } from '@features/entity-link/manage-link'
 import { TagList } from '@features/tag/manage-tag'
 import { TemplateButton } from '@features/template/manage-template'

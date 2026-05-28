@@ -1,7 +1,7 @@
 import { memo, useCallback, useState, useEffect, useRef } from 'react'
 import { Handle, Position, NodeResizer, useStore, type NodeProps } from '@xyflow/react'
 import { FileText, ExternalLink } from 'lucide-react'
-import { useTabStore } from '@features/tab-system/manage-tab-system'
+import { useTabStore } from '@/entities/tab-system'
 import { toTabOptions, PanePickerSubmenu } from '@features/entity-link/manage-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import type { RefNode as RefNodeType } from '@entities/canvas'
