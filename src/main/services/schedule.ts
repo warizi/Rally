@@ -198,12 +198,8 @@ export const scheduleService = {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
 
-    const startAt =
-      data.startAt ??
-      (toDate(existing.startAt))
-    const endAt =
-      data.endAt ??
-      (toDate(existing.endAt))
+    const startAt = data.startAt ?? toDate(existing.startAt)
+    const endAt = data.endAt ?? toDate(existing.endAt)
 
     if (startAt > endAt) {
       throw new ValidationError('시작 시간이 종료 시간보다 늦을 수 없습니다')
@@ -270,12 +266,7 @@ export const scheduleService = {
     scheduleRepository.delete(scheduleId)
   },
 
-  move(
-    scheduleId: string,
-    startAt: Date,
-    endAt: Date,
-    actor: Actor = USER_ACTOR
-  ): ScheduleItem {
+  move(scheduleId: string, startAt: Date, endAt: Date, actor: Actor = USER_ACTOR): ScheduleItem {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
 

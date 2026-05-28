@@ -44,7 +44,6 @@ export const createPaneActions = (
       (p) => p.id !== newPane.id && p.tabIds.length === 0
     )
     if (emptySourcePane && Object.keys(updatedPanes).length > 1) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [emptySourcePane.id]: _removed, ...remainingPanes } = updatedPanes
       updatedPanes = remainingPanes
       newLayout = removePaneFromLayout(newLayout, emptySourcePane.id)
@@ -65,7 +64,6 @@ export const createPaneActions = (
       delete remainingTabs[id]
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { [paneId]: _removedPane, ...remainingPanes } = panes
     const newLayout = removePaneFromLayout(layout, paneId)
     const newActivePaneId = activePaneId === paneId ? Object.keys(remainingPanes)[0] : activePaneId
@@ -93,7 +91,6 @@ export const createPaneActions = (
 
     // 소스 패인이 비면 제거
     if (newSourceTabIds.length === 0) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [sourcePaneId]: _removed, ...remainingPanes } = panes
       remainingPanes[targetPaneId] = { ...targetPane, tabIds: newTargetTabIds, activeTabId: tabId }
       const newLayout = removePaneFromLayout(layout, sourcePaneId)

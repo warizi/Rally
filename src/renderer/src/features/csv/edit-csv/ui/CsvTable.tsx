@@ -226,8 +226,7 @@ export function CsvTable({
               const ci = vc.index
               const isHeaderFocus =
                 sel.selection?.focus.row === -1 && sel.selection?.focus.col === ci
-              const isHeaderEditing =
-                sel.editingCell?.row === -1 && sel.editingCell?.col === ci
+              const isHeaderEditing = sel.editingCell?.row === -1 && sel.editingCell?.col === ci
               return (
                 <div
                   key={`h_${ci}`}

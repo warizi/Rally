@@ -7,11 +7,7 @@ interface WatcherActor {
 
 export function createOnChangedListener(channel: string) {
   return (
-    callback: (
-      workspaceId: string,
-      changedRelPaths: string[],
-      actor: WatcherActor | null
-    ) => void
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
   ) => {
     const handler = (
       _: Electron.IpcRendererEvent,

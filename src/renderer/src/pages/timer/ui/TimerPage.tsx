@@ -65,9 +65,7 @@ function TimerPage(): React.JSX.Element {
 
         {/* 제약 안내 */}
         {!canStart && !isRunning && !isPaused && (
-          <p className="text-xs text-muted-foreground">
-            시간을 설정해주세요. (최소 5초)
-          </p>
+          <p className="text-xs text-muted-foreground">시간을 설정해주세요. (최소 5초)</p>
         )}
 
         {/* 버튼 세트 */}

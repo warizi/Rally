@@ -8,13 +8,7 @@ import type { Tab } from './tab.type'
 // entity 내부 type hub — 다른 entity 파일들이 './types' 통해 접근
 export type { Tab } from './tab.type'
 export type { Pane } from './pane.type'
-export type {
-  LayoutNode,
-  PaneNode,
-  SplitNode,
-  SplitDirection,
-  LayoutNodeType
-} from './layout.type'
+export type { LayoutNode, PaneNode, SplitNode, SplitDirection, LayoutNodeType } from './layout.type'
 
 export type SetState = StoreApi<TabStoreState>['setState']
 export type GetState = StoreApi<TabStoreState>['getState']

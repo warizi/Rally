@@ -175,19 +175,19 @@ export const workspaceInfoService = {
         type: 'note' as const,
         id: r.id,
         title: r.title,
-        updatedAt: (toDate(r.updatedAt)).toISOString()
+        updatedAt: toDate(r.updatedAt).toISOString()
       })),
       ...csvRows.map((r) => ({
         type: 'table' as const,
         id: r.id,
         title: r.title,
-        updatedAt: (toDate(r.updatedAt)).toISOString()
+        updatedAt: toDate(r.updatedAt).toISOString()
       })),
       ...canvasRows.map((r) => ({
         type: 'canvas' as const,
         id: r.id,
         title: r.title,
-        updatedAt: (toDate(r.updatedAt)).toISOString()
+        updatedAt: toDate(r.updatedAt).toISOString()
       })),
       ...todoRows.map((t) => ({
         type: 'todo' as const,

@@ -89,7 +89,9 @@ interface NoteAPI {
     isLocked: boolean
   ) => Promise<IpcResponse<NoteNode>>
   selectFile: () => Promise<string[] | null>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface CsvFileNode {
@@ -147,7 +149,9 @@ interface CsvAPI {
     isLocked: boolean
   ) => Promise<IpcResponse<CsvFileNode>>
   selectFile: () => Promise<string[] | null>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface PdfFileNode {
@@ -189,7 +193,9 @@ interface PdfAPI {
     data: { description?: string }
   ) => Promise<IpcResponse<PdfFileNode>>
   selectFile: () => Promise<string | null>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface ImageFileNode {
@@ -235,7 +241,9 @@ interface ImageAPI {
     data: { description?: string }
   ) => Promise<IpcResponse<ImageFileNode>>
   selectFile: () => Promise<string[] | null>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface NoteImageAPI {
@@ -288,7 +296,9 @@ interface FolderAPI {
     folderId: string,
     data: { color?: string | null; order?: number }
   ) => Promise<IpcResponse<FolderNode>>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface WorkspaceAPI {
@@ -372,7 +382,9 @@ interface TodoAPI {
   reorderKanban: (workspaceId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
   reorderSub: (parentId: string, updates: TodoOrderUpdate[]) => Promise<IpcResponse<void>>
   findCompletedWithRecurring: (workspaceId: string) => Promise<IpcResponse<CompletedItem[]>>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface SettingsAPI {
@@ -570,7 +582,9 @@ interface CanvasAPI {
   ) => Promise<IpcResponse<void>>
   remove: (canvasId: string) => Promise<IpcResponse<void>>
   toggleLock: (canvasId: string, isLocked: boolean) => Promise<IpcResponse<CanvasItem>>
-  onChanged: (callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void) => () => void
+  onChanged: (
+    callback: (workspaceId: string, changedRelPaths: string[], actor: WatcherActor | null) => void
+  ) => () => void
 }
 
 interface SyncCanvasStateData {

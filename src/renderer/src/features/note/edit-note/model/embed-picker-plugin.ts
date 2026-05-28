@@ -28,7 +28,7 @@ function isLineStart(state: import('@milkdown/kit/prose/state').EditorState): bo
   return $from.parentOffset === 0
 }
 
-export function createEmbedPickerPlugin(editorId: string) {
+export function createEmbedPickerPlugin(editorId: string): ReturnType<typeof $prose> {
   return $prose(() => {
     return new Plugin({
       key: embedPickerKey,
@@ -38,9 +38,7 @@ export function createEmbedPickerPlugin(editorId: string) {
           if (text === '@' && isLineStart(view.state) && from === to) {
             queueMicrotask(() => {
               const newRange = { from, to: from + 1 }
-              useEmbedPickerStore
-                .getState()
-                .openPicker(editorId, newRange, getCaretPosition(view))
+              useEmbedPickerStore.getState().openPicker(editorId, newRange, getCaretPosition(view))
             })
           }
           return false

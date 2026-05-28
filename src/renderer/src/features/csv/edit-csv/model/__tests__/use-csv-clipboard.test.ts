@@ -22,7 +22,13 @@ function setup(selection: Selection | null, selectionRange: SelectionRange | nul
   onUpdateCells = vi.fn()
 
   return renderHook(() =>
-    useCsvClipboard(selection, selectionRange, data, headers, onUpdateCells as any)
+    useCsvClipboard(
+      selection,
+      selectionRange,
+      data,
+      headers,
+      onUpdateCells as unknown as Parameters<typeof useCsvClipboard>[4]
+    )
   )
 }
 

@@ -57,12 +57,7 @@ export function SubTodoItem({ sub, workspaceId }: Props): React.JSX.Element {
           </span>
         </TableCell>
         <TableCell className="w-8 py-2">
-          <AuthorBadge
-            by={sub.updatedBy}
-            byId={sub.updatedById}
-            at={sub.updatedAt}
-            size="sm"
-          />
+          <AuthorBadge by={sub.updatedBy} byId={sub.updatedById} at={sub.updatedAt} size="sm" />
         </TableCell>
         <TableCell className="w-8 py-2">
           <LinkedEntityPopoverButton

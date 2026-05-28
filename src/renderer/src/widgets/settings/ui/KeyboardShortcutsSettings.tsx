@@ -75,9 +75,7 @@ export function KeyboardShortcutsSettings(): JSX.Element {
 
       {GROUPS.map((group) => (
         <section key={group.title} className="space-y-3">
-          <h3 className="text-sm font-medium text-foreground/80 border-b pb-1.5">
-            {group.title}
-          </h3>
+          <h3 className="text-sm font-medium text-foreground/80 border-b pb-1.5">{group.title}</h3>
           <div className="space-y-3">
             {group.rows.map((row) => (
               <div key={row.label} className="flex flex-col gap-1.5">
@@ -86,9 +84,7 @@ export function KeyboardShortcutsSettings(): JSX.Element {
                   <div className="shrink-0">{row.keys}</div>
                 </div>
                 {row.description && (
-                  <p className="text-xs text-muted-foreground leading-relaxed">
-                    {row.description}
-                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{row.description}</p>
                 )}
               </div>
             ))}

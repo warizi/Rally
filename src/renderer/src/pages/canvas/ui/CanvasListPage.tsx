@@ -178,32 +178,34 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
                     at={canvas.updatedAt}
                     size="sm"
                   />
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      onClick={(e) => e.stopPropagation()}
-                      className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
-                    >
-                      <MoreHorizontal className="size-3.5 text-muted-foreground" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                    <PanePickerSubmenu onPaneSelect={(paneId) => handleOpenInPane(canvas, paneId)}>
-                      {({ onClick }) => (
-                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
-                          상세 보기
-                        </DropdownMenuItem>
-                      )}
-                    </PanePickerSubmenu>
-                    <DropdownMenuItem
-                      className="text-destructive focus:text-destructive"
-                      onSelect={(e) => e.preventDefault()}
-                      onClick={() => handleRemove(canvas)}
-                    >
-                      삭제
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        onClick={(e) => e.stopPropagation()}
+                        className="opacity-0 group-hover:opacity-100 p-1 hover:bg-accent rounded transition-opacity"
+                      >
+                        <MoreHorizontal className="size-3.5 text-muted-foreground" />
+                      </button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                      <PanePickerSubmenu
+                        onPaneSelect={(paneId) => handleOpenInPane(canvas, paneId)}
+                      >
+                        {({ onClick }) => (
+                          <DropdownMenuItem onSelect={(e) => e.preventDefault()} onClick={onClick}>
+                            상세 보기
+                          </DropdownMenuItem>
+                        )}
+                      </PanePickerSubmenu>
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={(e) => e.preventDefault()}
+                        onClick={() => handleRemove(canvas)}
+                      >
+                        삭제
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
               {canvas.description && (

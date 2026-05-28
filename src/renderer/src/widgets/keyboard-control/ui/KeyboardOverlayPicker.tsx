@@ -26,20 +26,13 @@ interface Props {
   footer?: ReactNode
 }
 
-export function KeyboardOverlayPicker({
-  items,
-  focusIndex,
-  title,
-  footer
-}: Props): JSX.Element {
+export function KeyboardOverlayPicker({ items, focusIndex, title, footer }: Props): JSX.Element {
   return (
     <div
       className="fixed inset-0 z-[100] flex flex-col items-center justify-center gap-4 backdrop-blur-sm bg-background/60 pointer-events-none"
       data-testid="keyboard-overlay-picker"
     >
-      {title && (
-        <div className="text-sm font-medium text-foreground/80 tracking-wide">{title}</div>
-      )}
+      {title && <div className="text-sm font-medium text-foreground/80 tracking-wide">{title}</div>}
       <div className="flex flex-col gap-1.5 max-h-[70vh] overflow-y-auto px-3 py-3">
         {items.length === 0 ? (
           <div className="text-xs text-muted-foreground italic px-3 py-1.5">항목 없음</div>
@@ -56,18 +49,20 @@ export function KeyboardOverlayPicker({
                     : 'border-border/40 bg-card/70 text-foreground/80')
                 }
               >
-                {item.icon && <span className="shrink-0 size-4 flex items-center">{item.icon}</span>}
+                {item.icon && (
+                  <span className="shrink-0 size-4 flex items-center">{item.icon}</span>
+                )}
                 <span className="truncate flex-1">{item.label}</span>
-                {item.meta && <span className="text-xs text-muted-foreground shrink-0">{item.meta}</span>}
+                {item.meta && (
+                  <span className="text-xs text-muted-foreground shrink-0">{item.meta}</span>
+                )}
                 {focus && <Check className="size-3.5 text-primary shrink-0" />}
               </div>
             )
           })
         )}
       </div>
-      {footer && (
-        <div className="text-[11px] text-muted-foreground tracking-wide">{footer}</div>
-      )}
+      {footer && <div className="text-[11px] text-muted-foreground tracking-wide">{footer}</div>}
     </div>
   )
 }

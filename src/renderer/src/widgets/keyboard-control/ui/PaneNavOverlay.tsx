@@ -36,9 +36,7 @@ function LayoutMini({
   }
   const isHorizontal = node.direction === 'horizontal'
   return (
-    <div
-      className={'flex gap-1 w-full h-full ' + (isHorizontal ? 'flex-row' : 'flex-col')}
-    >
+    <div className={'flex gap-1 w-full h-full ' + (isHorizontal ? 'flex-row' : 'flex-col')}>
       {node.children.map((child, i) => (
         <div
           key={child.id}

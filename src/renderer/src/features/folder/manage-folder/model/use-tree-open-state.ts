@@ -59,7 +59,7 @@ export function useTreeOpenState(tabId: string | undefined): {
 
   const collapseAll = useCallback(() => {
     if (!tabId) return
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
     const { [OPEN_STATE_KEY]: _, ...rest } = searchParams ?? {}
     navigateTab(tabId, { searchParams: rest })
   }, [tabId, searchParams, navigateTab])

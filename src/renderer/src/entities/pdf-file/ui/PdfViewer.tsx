@@ -112,52 +112,52 @@ export function PdfViewer({ pdfId, pdfData, hideToolbar = false }: PdfViewerProp
     <div className="flex flex-col h-full" ref={containerRef}>
       {/* 툴바 — hideToolbar 시 미렌더링 */}
       {!hideToolbar && (
-      <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
-        <span className="text-sm text-muted-foreground">
-          {numPages > 0 ? `${numPages}페이지` : ''}
-        </span>
-        <div className="flex items-center gap-1">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={handleZoomOut}
-                disabled={zoomIndex === 0}
-              >
-                <ZoomOut className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>축소</TooltipContent>
-          </Tooltip>
-          <span className="text-xs text-muted-foreground w-12 text-center">
-            {Math.round(scale * 100)}%
+        <div className="flex items-center justify-between px-4 py-2 border-b shrink-0">
+          <span className="text-sm text-muted-foreground">
+            {numPages > 0 ? `${numPages}페이지` : ''}
           </span>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-7"
-                onClick={handleZoomIn}
-                disabled={zoomIndex === ZOOM_STEPS.length - 1}
-              >
-                <ZoomIn className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>확대</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="size-7" onClick={handleRotate}>
-                <RotateCw className="size-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>회전</TooltipContent>
-          </Tooltip>
+          <div className="flex items-center gap-1">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={handleZoomOut}
+                  disabled={zoomIndex === 0}
+                >
+                  <ZoomOut className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>축소</TooltipContent>
+            </Tooltip>
+            <span className="text-xs text-muted-foreground w-12 text-center">
+              {Math.round(scale * 100)}%
+            </span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="size-7"
+                  onClick={handleZoomIn}
+                  disabled={zoomIndex === ZOOM_STEPS.length - 1}
+                >
+                  <ZoomIn className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>확대</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="size-7" onClick={handleRotate}>
+                  <RotateCw className="size-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>회전</TooltipContent>
+            </Tooltip>
+          </div>
         </div>
-      </div>
       )}
 
       {/* PDF 페이지 렌더링 — 확대 시 좌우 스크롤 + 드래그 패닝 */}

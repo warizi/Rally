@@ -195,35 +195,35 @@ export function ScheduleDetailPopover({
                   size="sm"
                 />
                 <div className="flex items-center gap-1">
-                <LinkEntityPopover
-                  entityType="schedule"
-                  entityId={schedule.id}
-                  workspaceId={workspaceId}
-                >
-                  <Button variant="ghost" size="icon-xs">
-                    <Link className="size-3.5" />
+                  <LinkEntityPopover
+                    entityType="schedule"
+                    entityId={schedule.id}
+                    workspaceId={workspaceId}
+                  >
+                    <Button variant="ghost" size="icon-xs">
+                      <Link className="size-3.5" />
+                    </Button>
+                  </LinkEntityPopover>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => {
+                      setOpen(false)
+                      setEditOpen(true)
+                    }}
+                  >
+                    <Pencil className="size-3.5" />
                   </Button>
-                </LinkEntityPopover>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => {
-                    setOpen(false)
-                    setEditOpen(true)
-                  }}
-                >
-                  <Pencil className="size-3.5" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon-xs"
-                  onClick={() => {
-                    setOpen(false)
-                    setDeleteOpen(true)
-                  }}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-xs"
+                    onClick={() => {
+                      setOpen(false)
+                      setDeleteOpen(true)
+                    }}
+                  >
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </div>
               </div>
             )}

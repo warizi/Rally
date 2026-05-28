@@ -7,7 +7,11 @@ import {
 } from '@tanstack/react-query'
 import { throwIpcError } from '@shared/lib/ipc-error'
 import type { IpcResponse } from '@shared/types/ipc'
-import type { RecurringRuleItem, CreateRecurringRuleData, UpdateRecurringRuleData } from '../model/types'
+import type {
+  RecurringRuleItem,
+  CreateRecurringRuleData,
+  UpdateRecurringRuleData
+} from '../model/types'
 
 export const RECURRING_RULE_KEY = 'recurring-rule'
 

@@ -96,7 +96,13 @@ describe('mapFolderOpenState', () => {
 })
 
 describe('mapTabJsons', () => {
-  function fixture() {
+  function fixture(): {
+    mapper: IdMapper
+    todoNew: string
+    tabsJson: string
+    panesJson: string
+    layoutJson: string
+  } {
     const mapper = new IdMapper()
     const todoNew = mapper.register('todo', 'todo-old')
 

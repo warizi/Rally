@@ -64,6 +64,17 @@ export default defineConfig(
       // bootstrap 영역 (preload/index.ts, mcp-server/index.ts) 은 inline disable 로 허용.
       // 테스트 파일은 아래 override 로 제외.
       'no-console': 'error',
+      // `_` 접두사 변수/인자는 의도적 미사용 표식으로 허용 (destructure 제외 패턴 포함).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        {
+          argsIgnorePattern: '^_',
+          varsIgnorePattern: '^_',
+          caughtErrorsIgnorePattern: '^_',
+          destructuredArrayIgnorePattern: '^_',
+          ignoreRestSiblings: true
+        }
+      ],
       'boundaries/element-types': [
         'error',
         {
