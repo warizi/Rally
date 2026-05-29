@@ -44,14 +44,20 @@ beforeEach(() => {
   mocks.panelReset.mockClear()
   mocks.addSession.mockClear()
   mocks.sessions = {}
+  // 기본 mock — 모든 IPC 가 안전한 응답 반환 (unhandled rejection 방지).
+  // 각 테스트가 필요 시 mockResolvedValueOnce 로 override.
   ;(window as unknown as Record<string, unknown>).api = {
     terminal: {
-      getSessions: vi.fn(),
-      create: vi.fn(),
-      saveSnapshot: vi.fn(),
-      destroyAll: vi.fn()
+      getSessions: vi.fn().mockResolvedValue({ success: true, data: [] }),
+      create: vi.fn().mockResolvedValue({ success: false, errorType: 'UnknownError', message: 'unmocked' }),
+      saveSnapshot: vi.fn().mockResolvedValue({ success: true }),
+      destroyAll: vi.fn().mockResolvedValue({ success: true })
     },
-    workspace: { getById: vi.fn() }
+    workspace: {
+      getById: vi
+        .fn()
+        .mockResolvedValue({ success: false, errorType: 'UnknownError', message: 'unmocked' })
+    }
   }
 })
 
@@ -134,12 +140,13 @@ describe('useTerminalSessionPersistence', () => {
     expect(mocks.addSession).not.toHaveBeenCalled()
   })
 
-  it('beforeunload 이벤트 → 등록만 검증 (실제 호출은 환경 의존)', () => {
+  it('beforeunload 이벤트 → 등록만 검증 (실제 호출은 환경 의존)', async () => {
     mocks.workspaceId = 'ws-1'
-    vi.mocked(api().terminal.getSessions).mockResolvedValue({ success: true, data: [] })
     const spy = vi.spyOn(window, 'addEventListener')
     renderHook(() => useTerminalSessionPersistence())
     expect(spy).toHaveBeenCalledWith('beforeunload', expect.any(Function))
     spy.mockRestore()
+    // pending promise (handleSwitch) 가 unhandled rejection 으로 새지 않게 flush
+    await new Promise((r) => setTimeout(r, 20))
   })
 })
