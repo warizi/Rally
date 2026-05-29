@@ -25,10 +25,10 @@ export default defineConfig({
         'src/main/services/onboarding-sample.ts'
       ],
       thresholds: {
-        lines: 71,
-        functions: 55,
+        lines: 72,
+        functions: 58,
         branches: 69,
-        statements: 70
+        statements: 71
       }
     }
   }
