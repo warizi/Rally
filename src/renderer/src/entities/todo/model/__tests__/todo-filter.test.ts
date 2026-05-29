@@ -132,6 +132,73 @@ describe('applyFilter', () => {
     expect(applyFilter([todo], { ...DEFAULT_FILTER, dueDateTo: to })).toHaveLength(0)
   })
 
+  // ── Todo 갭 분석 P1: startDate 필터 (lines 68-77) ─────────────────
+  it('startDateFrom 설정 + startDate 있음 → 포함', () => {
+    const from = new Date('2026-01-10')
+    const todo = makeTodoItem({ startDate: new Date('2026-01-15') })
+    expect(applyFilter([todo], { ...DEFAULT_FILTER, startDateFrom: from })).toHaveLength(1)
+  })
+
+  it('startDateFrom 설정 + startDate=null → 제외', () => {
+    const from = new Date('2026-01-10')
+    const todo = makeTodoItem({ startDate: null })
+    expect(applyFilter([todo], { ...DEFAULT_FILTER, startDateFrom: from })).toHaveLength(0)
+  })
+
+  it('startDateFrom 경계 (같은 날) → 포함', () => {
+    const from = new Date('2026-01-10')
+    const todo = makeTodoItem({ startDate: new Date('2026-01-10') })
+    expect(applyFilter([todo], { ...DEFAULT_FILTER, startDateFrom: from })).toHaveLength(1)
+  })
+
+  it('startDateTo 설정 → end-of-day 23:59:59.999 포함', () => {
+    const to = new Date('2026-01-31')
+    const todo = makeTodoItem({ startDate: new Date('2026-01-31T23:59:00') })
+    expect(applyFilter([todo], { ...DEFAULT_FILTER, startDateTo: to })).toHaveLength(1)
+  })
+
+  it('startDateTo 설정 + startDate=null → 제외', () => {
+    const to = new Date('2026-01-31')
+    const todo = makeTodoItem({ startDate: null })
+    expect(applyFilter([todo], { ...DEFAULT_FILTER, startDateTo: to })).toHaveLength(0)
+  })
+
+  it('startDateFrom + startDateTo 범위 (AND) → 양쪽 안에 들어야 포함', () => {
+    const filter = {
+      ...DEFAULT_FILTER,
+      startDateFrom: new Date('2026-01-10'),
+      startDateTo: new Date('2026-01-20')
+    }
+    const todos = [
+      makeTodoItem({ id: 'in', startDate: new Date('2026-01-15') }),
+      makeTodoItem({ id: 'before', startDate: new Date('2026-01-05') }),
+      makeTodoItem({ id: 'after', startDate: new Date('2026-01-25') })
+    ]
+    const result = applyFilter(todos, filter)
+    expect(result.map((t) => t.id)).toEqual(['in'])
+  })
+
+  it('startDateFrom + dueDateFrom 조합 → 둘 다 만족해야 함', () => {
+    const filter = {
+      ...DEFAULT_FILTER,
+      startDateFrom: new Date('2026-01-10'),
+      dueDateFrom: new Date('2026-01-15')
+    }
+    const todos = [
+      makeTodoItem({
+        id: 'both-ok',
+        startDate: new Date('2026-01-12'),
+        dueDate: new Date('2026-01-20')
+      }),
+      makeTodoItem({
+        id: 'start-only',
+        startDate: new Date('2026-01-12'),
+        dueDate: new Date('2026-01-12')
+      })
+    ]
+    expect(applyFilter(todos, filter).map((t) => t.id)).toEqual(['both-ok'])
+  })
+
   it('status + priority 복합 필터 (AND 적용)', () => {
     const todos = [
       makeTodoItem({ status: '할일', priority: 'high' }),
