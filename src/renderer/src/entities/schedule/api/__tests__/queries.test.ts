@@ -25,8 +25,13 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
+  })
   return {
     qc,
     wrapper: ({ children }: { children: ReactNode }): ReactElement =>

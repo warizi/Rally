@@ -86,7 +86,10 @@ describe('folder IPC handlers', () => {
   })
 
   it('folder:updateMeta → color/order 전달', () => {
-    getHandler('folder:updateMeta')({}, 'ws-aabbcc12', 'fold-aabbcc', { color: '#ff0000', order: 5 })
+    getHandler('folder:updateMeta')({}, 'ws-aabbcc12', 'fold-aabbcc', {
+      color: '#ff0000',
+      order: 5
+    })
     expect(folderService.updateMeta).toHaveBeenCalledWith('ws-aabbcc12', 'fold-aabbcc', {
       color: '#ff0000',
       order: 5

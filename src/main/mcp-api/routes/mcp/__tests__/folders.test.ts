@@ -117,7 +117,12 @@ describe('POST /api/mcp/folders/batch', () => {
     await router.handle(req, cap.res)
 
     expect(cap.getStatusCode()).toBe(200)
-    expect(broadcastMock).toHaveBeenCalledWith('folder:changed', WS.id, ['renamed'], expect.any(Object))
+    expect(broadcastMock).toHaveBeenCalledWith(
+      'folder:changed',
+      WS.id,
+      ['renamed'],
+      expect.any(Object)
+    )
     expect(broadcastMock).toHaveBeenCalledWith('note:changed', WS.id, [], expect.any(Object))
     expect(broadcastMock).toHaveBeenCalledWith('csv:changed', WS.id, [], expect.any(Object))
   })
@@ -193,7 +198,12 @@ describe('POST /api/mcp/folders/batch', () => {
 
     expect(cap.getStatusCode()).toBe(200)
     expect(folderService.remove).toHaveBeenCalledWith(WS.id, FOLDER.id)
-    expect(broadcastMock).toHaveBeenCalledWith('folder:changed', WS.id, ['docs'], expect.any(Object))
+    expect(broadcastMock).toHaveBeenCalledWith(
+      'folder:changed',
+      WS.id,
+      ['docs'],
+      expect.any(Object)
+    )
     expect(broadcastMock).toHaveBeenCalledWith('note:changed', WS.id, [], expect.any(Object))
   })
 })

@@ -8,7 +8,12 @@ import { createElement, type ReactNode, type ReactElement } from 'react'
 import {
   usePdfFilesByWorkspace,
   useImportPdfFile,
-  useDuplicatePdfFile
+  useDuplicatePdfFile,
+  useRenamePdfFile,
+  useRemovePdfFile,
+  useMovePdfFile,
+  useUpdatePdfMeta,
+  useReadPdfContent
 } from '../queries'
 import type { PdfFileNode } from '../../model/types'
 
@@ -30,8 +35,13 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
+  })
   return {
     qc,
     wrapper: ({ children }: { children: ReactNode }): ReactElement =>
@@ -78,5 +88,73 @@ describe('pdf-file queries', () => {
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(invSpy).toHaveBeenCalledWith({ queryKey: ['pdf', 'workspace', 'ws-1'] })
+  })
+
+  it('useRenamePdfFile → pdf + history 둘 다 무효화', async () => {
+    vi.mocked(api().pdf.rename).mockResolvedValue({ success: true, data: PDF })
+    const { wrapper, qc } = makeWrapper()
+    const invSpy = vi.spyOn(qc, 'invalidateQueries')
+    const { result } = renderHook(() => useRenamePdfFile(), { wrapper })
+    await act(async () => {
+      result.current.mutate({ workspaceId: 'ws-1', pdfId: 'pdf-1', newName: 'new.pdf' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invSpy).toHaveBeenCalledWith({ queryKey: ['pdf', 'workspace', 'ws-1'] })
+    expect(invSpy).toHaveBeenCalledWith({ queryKey: ['history', 'ws-1'] })
+  })
+
+  it('useRemovePdfFile → pdf + history 둘 다 무효화', async () => {
+    vi.mocked(api().pdf.remove).mockResolvedValue({ success: true })
+    const { wrapper, qc } = makeWrapper()
+    const invSpy = vi.spyOn(qc, 'invalidateQueries')
+    const { result } = renderHook(() => useRemovePdfFile(), { wrapper })
+    await act(async () => {
+      result.current.mutate({ workspaceId: 'ws-1', pdfId: 'pdf-1' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invSpy).toHaveBeenCalledWith({ queryKey: ['pdf', 'workspace', 'ws-1'] })
+    expect(invSpy).toHaveBeenCalledWith({ queryKey: ['history', 'ws-1'] })
+  })
+
+  it('useMovePdfFile → 4종 leaf type 모두 무효화', async () => {
+    vi.mocked(api().pdf.move).mockResolvedValue({ success: true, data: PDF })
+    const { wrapper, qc } = makeWrapper()
+    const invSpy = vi.spyOn(qc, 'invalidateQueries')
+    const { result } = renderHook(() => useMovePdfFile(), { wrapper })
+    await act(async () => {
+      result.current.mutate({ workspaceId: 'ws-1', pdfId: 'pdf-1', folderId: null, index: 1 })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    for (const key of ['note', 'csv', 'pdf', 'image']) {
+      expect(invSpy).toHaveBeenCalledWith({ queryKey: [key, 'workspace', 'ws-1'] })
+    }
+  })
+
+  it('useUpdatePdfMeta → 무효화', async () => {
+    vi.mocked(api().pdf.updateMeta).mockResolvedValue({ success: true, data: PDF })
+    const { wrapper, qc } = makeWrapper()
+    const invSpy = vi.spyOn(qc, 'invalidateQueries')
+    const { result } = renderHook(() => useUpdatePdfMeta(), { wrapper })
+    await act(async () => {
+      result.current.mutate({ workspaceId: 'ws-1', pdfId: 'pdf-1', data: { description: 'd' } })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(invSpy).toHaveBeenCalledWith({ queryKey: ['pdf', 'workspace', 'ws-1'] })
+    expect(invSpy).toHaveBeenCalledWith({ queryKey: ['history', 'ws-1'] })
+  })
+
+  it('useReadPdfContent → 성공', async () => {
+    const buf = new ArrayBuffer(8)
+    vi.mocked(api().pdf.readContent).mockResolvedValue({ success: true, data: { data: buf } })
+    const { wrapper } = makeWrapper()
+    const { result } = renderHook(() => useReadPdfContent('ws-1', 'pdf-1'), { wrapper })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(result.current.data?.data).toBe(buf)
+  })
+
+  it('useReadPdfContent → pdfId 없으면 disabled', () => {
+    const { wrapper } = makeWrapper()
+    renderHook(() => useReadPdfContent('ws-1', ''), { wrapper })
+    expect(api().pdf.readContent).not.toHaveBeenCalled()
   })
 })

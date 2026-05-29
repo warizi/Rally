@@ -122,7 +122,12 @@ describe('historyService.fetch — empty / basic', () => {
   })
 
   it('완료 todo 1개 → 해당 날짜 day 에 단건 entry', () => {
-    insertTodo({ id: 'tt-aabbcc1', title: '할일1', isDone: true, doneAt: new Date('2026-05-28T10:00:00') })
+    insertTodo({
+      id: 'tt-aabbcc1',
+      title: '할일1',
+      isDone: true,
+      doneAt: new Date('2026-05-28T10:00:00')
+    })
     const result = historyService.fetch(WS_ID)
 
     expect(result.days).toHaveLength(1)
@@ -176,7 +181,12 @@ describe('historyService.fetch — recurring completion', () => {
 
 describe('historyService.fetch — entity links', () => {
   it('todo 와 연결된 note → HistoryLink 배열에 포함', () => {
-    insertTodo({ id: 'tt-link0001', title: 'with link', isDone: true, doneAt: new Date('2026-05-28T10:00:00') })
+    insertTodo({
+      id: 'tt-link0001',
+      title: 'with link',
+      isDone: true,
+      doneAt: new Date('2026-05-28T10:00:00')
+    })
     insertNote('nt-aabbcc1', 'attached')
     insertLink('nt-aabbcc1', 'tt-link0001')
 
@@ -194,8 +204,18 @@ describe('historyService.fetch — entity links', () => {
 
 describe('historyService.fetch — query', () => {
   it('query 매치되는 day 만 반환 (제목 또는 링크 제목 매치)', () => {
-    insertTodo({ id: 'tt-meeting1', title: 'meeting prep', isDone: true, doneAt: new Date('2026-05-28T10:00:00') })
-    insertTodo({ id: 'tt-other001', title: 'other', isDone: true, doneAt: new Date('2026-05-27T10:00:00') })
+    insertTodo({
+      id: 'tt-meeting1',
+      title: 'meeting prep',
+      isDone: true,
+      doneAt: new Date('2026-05-28T10:00:00')
+    })
+    insertTodo({
+      id: 'tt-other001',
+      title: 'other',
+      isDone: true,
+      doneAt: new Date('2026-05-27T10:00:00')
+    })
 
     const result = historyService.fetch(WS_ID, { query: 'meeting' })
     expect(result.days).toHaveLength(1)
@@ -203,7 +223,12 @@ describe('historyService.fetch — query', () => {
   })
 
   it('query 가 어떤 entry 와도 매치 안 됨 → 빈 days', () => {
-    insertTodo({ id: 'tt-nope0001', title: 'foo', isDone: true, doneAt: new Date('2026-05-28T10:00:00') })
+    insertTodo({
+      id: 'tt-nope0001',
+      title: 'foo',
+      isDone: true,
+      doneAt: new Date('2026-05-28T10:00:00')
+    })
 
     const result = historyService.fetch(WS_ID, { query: 'nothing-here' })
     expect(result.days).toEqual([])
@@ -240,7 +265,12 @@ describe('historyService.fetch — pagination', () => {
 
 describe('historyService.fetch — parent-child grouping', () => {
   it('parent + 같은 day 의 sub → parent 직후에 sub 가 그룹화', () => {
-    insertTodo({ id: 'tt-parent01', title: 'parent', isDone: true, doneAt: new Date('2026-05-28T15:00:00') })
+    insertTodo({
+      id: 'tt-parent01',
+      title: 'parent',
+      isDone: true,
+      doneAt: new Date('2026-05-28T15:00:00')
+    })
     insertTodo({
       id: 'tt-sub00001',
       title: 'sub-A',

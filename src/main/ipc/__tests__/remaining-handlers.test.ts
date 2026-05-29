@@ -185,7 +185,12 @@ describe('backup IPC handlers', () => {
 
 describe('canvas-edge IPC handlers', () => {
   it('4개 채널 등록', () => {
-    for (const ch of ['canvasEdge:findByCanvas', 'canvasEdge:create', 'canvasEdge:update', 'canvasEdge:remove']) {
+    for (const ch of [
+      'canvasEdge:findByCanvas',
+      'canvasEdge:create',
+      'canvasEdge:update',
+      'canvasEdge:remove'
+    ]) {
       expect(ipcHandlers.has(ch)).toBe(true)
     }
   })
@@ -229,13 +234,16 @@ describe('reminder IPC handlers', () => {
 
 describe('tab-snapshot IPC handlers', () => {
   it('create / update / delete 위임', () => {
-    getHandler('tabSnapshot:create')({}, {
-      name: 'X',
-      workspaceId: 'ws-1',
-      tabsJson: '[]',
-      panesJson: '[]',
-      layoutJson: '{}'
-    })
+    getHandler('tabSnapshot:create')(
+      {},
+      {
+        name: 'X',
+        workspaceId: 'ws-1',
+        tabsJson: '[]',
+        panesJson: '[]',
+        layoutJson: '{}'
+      }
+    )
     getHandler('tabSnapshot:update')({}, 'snap-1', { name: 'Y' })
     getHandler('tabSnapshot:delete')({}, 'snap-1')
     expect(tabSnapshotService.create).toHaveBeenCalled()
@@ -307,12 +315,15 @@ describe('note-style-template IPC handlers', () => {
 describe('template IPC handlers', () => {
   it('list / create / delete 위임', () => {
     getHandler('template:list')({}, 'ws-1', 'note')
-    getHandler('template:create')({}, {
-      workspaceId: 'ws-1',
-      title: 't',
-      type: 'note',
-      jsonData: '{}'
-    })
+    getHandler('template:create')(
+      {},
+      {
+        workspaceId: 'ws-1',
+        title: 't',
+        type: 'note',
+        jsonData: '{}'
+      }
+    )
     getHandler('template:delete')({}, 'tpl-1')
     expect(templateService.list).toHaveBeenCalledWith('ws-1', 'note')
     expect(templateService.create).toHaveBeenCalled()

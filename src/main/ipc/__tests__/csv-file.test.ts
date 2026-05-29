@@ -58,7 +58,11 @@ describe('csv-file IPC handlers', () => {
 
   it('csv:writeContent → service 위임', () => {
     getHandler('csv:writeContent')({}, 'ws-aabbcc12', 'csv-aabbcc', 'a,b\n1,2')
-    expect(csvFileService.writeContent).toHaveBeenCalledWith('ws-aabbcc12', 'csv-aabbcc', 'a,b\n1,2')
+    expect(csvFileService.writeContent).toHaveBeenCalledWith(
+      'ws-aabbcc12',
+      'csv-aabbcc',
+      'a,b\n1,2'
+    )
   })
 
   it('csv:updateMeta → data 객체 그대로 전달', () => {

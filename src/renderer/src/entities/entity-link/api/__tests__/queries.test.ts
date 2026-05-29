@@ -5,12 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode, type ReactElement } from 'react'
-import {
-  useLinkedEntities,
-  useLinkEntity,
-  useUnlinkEntity,
-  ENTITY_LINK_KEY
-} from '../queries'
+import { useLinkedEntities, useLinkEntity, useUnlinkEntity, ENTITY_LINK_KEY } from '../queries'
 
 vi.mock('@shared/store/onboarding', () => ({
   useOnboardingStore: {
@@ -27,8 +22,13 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
+  })
   return {
     qc,
     wrapper: ({ children }: { children: ReactNode }): ReactElement =>

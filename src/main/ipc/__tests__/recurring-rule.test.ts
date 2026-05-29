@@ -44,11 +44,16 @@ describe('recurring-rule IPC handlers', () => {
     vi.mocked(recurringRuleService.findTodayRules).mockReturnValue([])
     const input = new Date('2026-05-29')
     getHandler('recurringRule:findToday')({}, 'ws-aabbcc12', input)
-    expect(recurringRuleService.findTodayRules).toHaveBeenCalledWith('ws-aabbcc12', expect.any(Date))
+    expect(recurringRuleService.findTodayRules).toHaveBeenCalledWith(
+      'ws-aabbcc12',
+      expect.any(Date)
+    )
   })
 
   it('recurringRule:create → startDate Date 변환 + endDate null 정상 처리', () => {
-    vi.mocked(recurringRuleService.create).mockReturnValue({ id: 'rule-newaab' } as ReturnType<typeof recurringRuleService.create>)
+    vi.mocked(recurringRuleService.create).mockReturnValue({ id: 'rule-newaab' } as ReturnType<
+      typeof recurringRuleService.create
+    >)
 
     getHandler('recurringRule:create')({}, 'ws-aabbcc12', {
       title: 'daily',

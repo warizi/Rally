@@ -65,11 +65,7 @@ vi.mock('../event-processor', () => ({
   applyEvents: applyEventsMock
 }))
 
-import {
-  syncOfflineChanges,
-  reconcileFileType,
-  getSnapshotPath
-} from '../reconciler'
+import { syncOfflineChanges, reconcileFileType, getSnapshotPath } from '../reconciler'
 import type { FileTypeConfig } from '../file-type-config'
 
 beforeEach(() => {
@@ -191,18 +187,12 @@ describe('reconcileFileType', () => {
     await reconcileFileType('ws-aabbcc12', '/ws', cfg)
 
     expect(cfg.repository.createMany).toHaveBeenCalledWith([])
-    expect(cleanupOrphansMock).toHaveBeenCalledWith(
-      'note',
-      ['orphan-1'],
-      expect.any(Function)
-    )
+    expect(cleanupOrphansMock).toHaveBeenCalledWith('note', ['orphan-1'], expect.any(Function))
   })
 
   it('parent folder 찾기 → folderId 매핑', async () => {
     const cfg = makeConfig()
-    vi.mocked(cfg.readFilesAsync).mockResolvedValue([
-      { relativePath: 'subdir/x.md', name: 'x.md' }
-    ])
+    vi.mocked(cfg.readFilesAsync).mockResolvedValue([{ relativePath: 'subdir/x.md', name: 'x.md' }])
     vi.mocked(cfg.repository.findByWorkspaceId).mockReturnValue([])
     folderRepoMocks.findByRelativePath.mockReturnValue({
       id: 'fold-aabbcc',

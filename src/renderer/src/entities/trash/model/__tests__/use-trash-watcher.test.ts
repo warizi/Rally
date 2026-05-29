@@ -21,7 +21,10 @@ afterEach(() => {
   delete (globalThis as unknown as Record<string, unknown>).__trashWatcherMocks
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return {
     qc,
@@ -36,13 +39,30 @@ describe('useTrashWatcher', () => {
     const invSpy = vi.spyOn(qc, 'invalidateQueries')
     const { unmount } = renderHook(() => useTrashWatcher(), { wrapper })
 
-    const m = (globalThis as unknown as { __trashWatcherMocks: { unsub: ReturnType<typeof vi.fn>; onChanged: ReturnType<typeof vi.fn> } }).__trashWatcherMocks
+    const m = (
+      globalThis as unknown as {
+        __trashWatcherMocks: {
+          unsub: ReturnType<typeof vi.fn>
+          onChanged: ReturnType<typeof vi.fn>
+        }
+      }
+    ).__trashWatcherMocks
     const cb = m.onChanged.mock.calls[0][0] as () => void
     cb()
 
     for (const key of [
-      'trash', 'note', 'csv', 'pdf', 'image', 'folder', 'todo',
-      'canvas', 'schedule', 'recurringRule', 'entityLink', 'history'
+      'trash',
+      'note',
+      'csv',
+      'pdf',
+      'image',
+      'folder',
+      'todo',
+      'canvas',
+      'schedule',
+      'recurringRule',
+      'entityLink',
+      'history'
     ]) {
       expect(invSpy).toHaveBeenCalledWith({ queryKey: [key] })
     }

@@ -5,7 +5,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createElement, type ReactNode, type ReactElement } from 'react'
-import { useRecurringCompletionsToday, useCompleteRecurring, RECURRING_COMPLETION_KEY } from '../queries'
+import {
+  useRecurringCompletionsToday,
+  useCompleteRecurring,
+  RECURRING_COMPLETION_KEY
+} from '../queries'
 import type { RecurringCompletionItem } from '../../model/types'
 
 const COMP_RAW = {
@@ -25,8 +29,13 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
+  })
   return {
     qc,
     wrapper: ({ children }: { children: ReactNode }): ReactElement =>
@@ -43,7 +52,9 @@ describe('useRecurringCompletionsToday', () => {
       data: [COMP_RAW]
     })
     const { wrapper } = makeWrapper()
-    const { result } = renderHook(() => useRecurringCompletionsToday('ws-1', new Date()), { wrapper })
+    const { result } = renderHook(() => useRecurringCompletionsToday('ws-1', new Date()), {
+      wrapper
+    })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(result.current.data?.[0].completedAt).toBeInstanceOf(Date)
     expect(result.current.data?.[0].createdAt).toBeInstanceOf(Date)
@@ -58,7 +69,10 @@ describe('useRecurringCompletionsToday', () => {
 
 describe('useCompleteRecurring', () => {
   it('성공 → 4종 키 무효화 (completion-today + todo completedWithRecurring + todo + history)', async () => {
-    vi.mocked(api().recurringCompletion.complete).mockResolvedValue({ success: true, data: COMP_RAW })
+    vi.mocked(api().recurringCompletion.complete).mockResolvedValue({
+      success: true,
+      data: COMP_RAW
+    })
     const { wrapper, qc } = makeWrapper()
     const invSpy = vi.spyOn(qc, 'invalidateQueries')
 

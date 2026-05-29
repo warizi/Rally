@@ -44,7 +44,10 @@ describe('useCsvSearch', () => {
     const { result } = renderHook(() => useCsvSearch(DATA, HEADERS))
     act(() => result.current.setQuery('alice'))
     advanceDebounce()
-    expect(result.current.matches).toEqual([{ row: 0, col: 0 }, { row: 0, col: 1 }])
+    expect(result.current.matches).toEqual([
+      { row: 0, col: 0 },
+      { row: 0, col: 1 }
+    ])
   })
 
   it('헤더 매칭 → row=-1', () => {

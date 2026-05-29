@@ -166,9 +166,7 @@ describe('POST /api/mcp/templates/batch', () => {
       url: '/api/mcp/templates/batch',
       headers: { [AUTH_HEADER]: TEST_TOKEN, 'content-type': 'application/json' },
       body: {
-        actions: [
-          { action: 'create', title: 'New', type: 'note', jsonData: '{}' }
-        ]
+        actions: [{ action: 'create', title: 'New', type: 'note', jsonData: '{}' }]
       }
     })
     const cap = makeRes()

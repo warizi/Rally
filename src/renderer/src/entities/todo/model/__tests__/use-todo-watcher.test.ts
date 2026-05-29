@@ -28,7 +28,10 @@ afterEach(() => {
   delete (globalThis as unknown as Record<string, unknown>).__onChangedMock
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; client: QueryClient } {
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  client: QueryClient
+} {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const wrapper = ({ children }: { children: ReactNode }): ReactElement =>
     createElement(QueryClientProvider, { client }, children)

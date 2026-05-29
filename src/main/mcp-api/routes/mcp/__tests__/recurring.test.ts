@@ -125,7 +125,9 @@ function setupRouter(): ReturnType<typeof createRouter> {
 
 describe('GET /api/mcp/recurring/rules', () => {
   it('전체 rules 직렬화', async () => {
-    vi.mocked(recurringRuleService.findByWorkspace).mockReturnValue([RULE as unknown as RecurringRuleItem])
+    vi.mocked(recurringRuleService.findByWorkspace).mockReturnValue([
+      RULE as unknown as RecurringRuleItem
+    ])
 
     const router = setupRouter()
     const req = makeReq({
@@ -168,7 +170,9 @@ describe('GET /api/mcp/recurring/rules', () => {
 
 describe('GET /api/mcp/recurring/today', () => {
   it('rules + completions 동시 반환 + completed 플래그', async () => {
-    vi.mocked(recurringRuleService.findTodayRules).mockReturnValue([RULE as unknown as RecurringRuleItem])
+    vi.mocked(recurringRuleService.findTodayRules).mockReturnValue([
+      RULE as unknown as RecurringRuleItem
+    ])
     vi.mocked(recurringCompletionService.findTodayByWorkspace).mockReturnValue([COMPLETION])
 
     const router = setupRouter()
@@ -277,7 +281,13 @@ describe('POST /api/mcp/recurring/rules/batch', () => {
       headers: { [AUTH_HEADER]: TEST_TOKEN, 'content-type': 'application/json' },
       body: {
         actions: [
-          { action: 'create', title: 'x', description: '', priority: 'medium', recurrenceType: 'daily' }
+          {
+            action: 'create',
+            title: 'x',
+            description: '',
+            priority: 'medium',
+            recurrenceType: 'daily'
+          }
         ]
       }
     })

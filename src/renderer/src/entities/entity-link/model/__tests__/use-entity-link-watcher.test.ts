@@ -21,7 +21,10 @@ afterEach(() => {
   delete (globalThis as unknown as Record<string, unknown>).__elWatcherMocks
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return {
     qc,
@@ -36,7 +39,11 @@ describe('useEntityLinkWatcher', () => {
     const invSpy = vi.spyOn(qc, 'invalidateQueries')
     const { unmount } = renderHook(() => useEntityLinkWatcher(), { wrapper })
 
-    const m = (globalThis as unknown as { __elWatcherMocks: { unsub: ReturnType<typeof vi.fn>; onChanged: ReturnType<typeof vi.fn> } }).__elWatcherMocks
+    const m = (
+      globalThis as unknown as {
+        __elWatcherMocks: { unsub: ReturnType<typeof vi.fn>; onChanged: ReturnType<typeof vi.fn> }
+      }
+    ).__elWatcherMocks
     const cb = m.onChanged.mock.calls[0][0] as () => void
     cb()
 
