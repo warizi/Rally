@@ -298,7 +298,12 @@ describe('POST /api/mcp/manage-items/batch', () => {
     expect(cap.getStatusCode()).toBe(200)
     expect(noteService.remove).toHaveBeenCalledWith(WS.id, NOTE_ROW.id)
     expect(folderService.remove).toHaveBeenCalledWith(WS.id, FOLDER_ROW.id)
-    expect(broadcastMock).toHaveBeenCalledWith('note:changed', WS.id, ['my-note.md'], expect.any(Object))
+    expect(broadcastMock).toHaveBeenCalledWith(
+      'note:changed',
+      WS.id,
+      ['my-note.md'],
+      expect.any(Object)
+    )
     expect(broadcastMock).toHaveBeenCalledWith('folder:changed', WS.id, [], expect.any(Object))
   })
 

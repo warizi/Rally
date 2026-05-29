@@ -102,7 +102,7 @@ describe('useHoldingOnTodoList', () => {
     expect(result.current.filterActive).toBe(false)
   })
 
-  it("filterActive — priority 변경 시 true", () => {
+  it('filterActive — priority 변경 시 true', () => {
     const filter = { ...DEFAULT_FILTER, priority: 'high' as const }
     const { result } = renderHook(() => useHoldingOnTodoList([], filter))
     expect(result.current.filterActive).toBe(true)

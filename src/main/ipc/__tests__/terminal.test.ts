@@ -106,13 +106,16 @@ describe('terminal IPC handlers', () => {
   })
 
   it('terminal:create (id 있음=복원) → 기존 id 사용 + DB record 생성 안 함', () => {
-    getHandler('terminal:create')({}, {
-      id: 'existing12345',
-      workspaceId: 'ws-aabbcc12',
-      cwd: '/tmp',
-      cols: 80,
-      rows: 24
-    })
+    getHandler('terminal:create')(
+      {},
+      {
+        id: 'existing12345',
+        workspaceId: 'ws-aabbcc12',
+        cwd: '/tmp',
+        cols: 80,
+        rows: 24
+      }
+    )
 
     expect(terminalService.create).toHaveBeenCalledWith(
       'existing12345',
@@ -148,7 +151,10 @@ describe('terminal IPC handlers', () => {
 
   it('terminal:saveSnapshot → repository.saveSnapshot', () => {
     getHandler('terminal:saveSnapshot')({}, 'newid-aabbcc1', 'SCREEN-DATA')
-    expect(terminalSessionRepository.saveSnapshot).toHaveBeenCalledWith('newid-aabbcc1', 'SCREEN-DATA')
+    expect(terminalSessionRepository.saveSnapshot).toHaveBeenCalledWith(
+      'newid-aabbcc1',
+      'SCREEN-DATA'
+    )
   })
 
   it('terminal:getSessions → repository.findActiveByWorkspaceId', () => {

@@ -62,7 +62,12 @@ describe('image-file IPC handlers', () => {
 
   it('image:move → folderId/index 전달', () => {
     getHandler('image:move')({}, 'ws-aabbcc12', 'img-aabbcc', 'fold-aabbcc', 5)
-    expect(imageFileService.move).toHaveBeenCalledWith('ws-aabbcc12', 'img-aabbcc', 'fold-aabbcc', 5)
+    expect(imageFileService.move).toHaveBeenCalledWith(
+      'ws-aabbcc12',
+      'img-aabbcc',
+      'fold-aabbcc',
+      5
+    )
   })
 
   it('image:selectFile → 이미지 확장자 필터', async () => {

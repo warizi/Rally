@@ -21,7 +21,10 @@ afterEach(() => {
   delete (globalThis as unknown as Record<string, unknown>).__canvasWatcherMocks
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return {
     qc,
@@ -36,7 +39,14 @@ describe('useCanvasWatcher', () => {
     const invSpy = vi.spyOn(qc, 'invalidateQueries')
     const { unmount } = renderHook(() => useCanvasWatcher(), { wrapper })
 
-    const m = (globalThis as unknown as { __canvasWatcherMocks: { unsub: ReturnType<typeof vi.fn>; onChanged: ReturnType<typeof vi.fn> } }).__canvasWatcherMocks
+    const m = (
+      globalThis as unknown as {
+        __canvasWatcherMocks: {
+          unsub: ReturnType<typeof vi.fn>
+          onChanged: ReturnType<typeof vi.fn>
+        }
+      }
+    ).__canvasWatcherMocks
     expect(m.onChanged).toHaveBeenCalled()
     const cb = m.onChanged.mock.calls[0][0] as (workspaceId: string) => void
     cb('ws-1')

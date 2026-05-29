@@ -124,7 +124,13 @@ describe('GET /api/mcp/schedules', () => {
   it('search → title/description/location 매치 필터', async () => {
     vi.mocked(scheduleService.findAllByWorkspace).mockReturnValue([
       SCHEDULE as unknown as Schedule,
-      { ...SCHEDULE, id: 'sched-other12', title: 'Other', description: '', location: '' } as unknown as Schedule
+      {
+        ...SCHEDULE,
+        id: 'sched-other12',
+        title: 'Other',
+        description: '',
+        location: ''
+      } as unknown as Schedule
     ])
 
     const router = setupRouter()

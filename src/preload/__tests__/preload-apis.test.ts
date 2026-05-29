@@ -60,7 +60,12 @@ describe('preload csv api', () => {
   })
   it('writeContent → csv:writeContent', () => {
     api.csv.writeContent('ws-aabbcc12', 'csv-aabbcc', 'a,b\n1,2')
-    expect(invokeMock).toHaveBeenCalledWith('csv:writeContent', 'ws-aabbcc12', 'csv-aabbcc', 'a,b\n1,2')
+    expect(invokeMock).toHaveBeenCalledWith(
+      'csv:writeContent',
+      'ws-aabbcc12',
+      'csv-aabbcc',
+      'a,b\n1,2'
+    )
   })
 })
 
@@ -96,7 +101,9 @@ describe('preload folder / canvas / canvas-node / canvas-edge', () => {
 describe('preload todo api', () => {
   it('findByWorkspace → todo:findByWorkspace', () => {
     api.todo.findByWorkspace('ws-aabbcc12', { filter: 'active' })
-    expect(invokeMock).toHaveBeenCalledWith('todo:findByWorkspace', 'ws-aabbcc12', { filter: 'active' })
+    expect(invokeMock).toHaveBeenCalledWith('todo:findByWorkspace', 'ws-aabbcc12', {
+      filter: 'active'
+    })
   })
   it('reorderSub → todo:reorderSub', () => {
     api.todo.reorderSub('parent-1', [])

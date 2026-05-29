@@ -181,7 +181,8 @@ describe('GET /api/mcp/tags/:id/items', () => {
   it('tagId 유효 + items 매핑 (orphan skip)', async () => {
     vi.mocked(tagRepository.findById).mockReturnValue(TAG)
     vi.mocked(itemTagService.getItemIdsByTag).mockImplementation(
-      (_tagId: string, itemType: string) => (itemType === 'note' ? [NOTE_ROW.id, 'orphan-12345'] : [])
+      (_tagId: string, itemType: string) =>
+        itemType === 'note' ? [NOTE_ROW.id, 'orphan-12345'] : []
     )
     vi.mocked(noteRepository.findById).mockImplementation((id: string) =>
       id === NOTE_ROW.id ? NOTE_ROW : undefined

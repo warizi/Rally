@@ -234,7 +234,10 @@ describe('GET /api/mcp/browse — linkedTo / tagId restrict', () => {
     ])
     vi.mocked(workspaceItemsService.list).mockReturnValue({
       ...emptyListResult,
-      notes: [noteEntry({ id: 'n-keep001234', title: 'keep' }), noteEntry({ id: 'n-drop001234', title: 'drop' })]
+      notes: [
+        noteEntry({ id: 'n-keep001234', title: 'keep' }),
+        noteEntry({ id: 'n-drop001234', title: 'drop' })
+      ]
     })
 
     const router = setupRouter()

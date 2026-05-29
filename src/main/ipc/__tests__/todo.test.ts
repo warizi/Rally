@@ -73,11 +73,9 @@ describe('todo IPC handlers', () => {
       throw new ValidationError('bad')
     })
 
-    const result = getHandler<{ success: boolean }>('todo:create')(
-      {},
-      'ws-aabbcc12',
-      { title: 'x' }
-    )
+    const result = getHandler<{ success: boolean }>('todo:create')({}, 'ws-aabbcc12', {
+      title: 'x'
+    })
 
     expect(result).toMatchObject({ success: false })
   })

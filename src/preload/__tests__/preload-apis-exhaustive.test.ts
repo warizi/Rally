@@ -40,7 +40,7 @@ const CHANNEL_OVERRIDES: Record<string, string> = {
   'reminder.removeByEntity': 'reminder:removeByEntity',
   'reminder.findByEntity': 'reminder:findByEntity',
   // tab-snapshot
-  'tabSnapshot.save': 'tabSnapshot:save',
+  'tabSnapshot.save': 'tabSnapshot:save'
   // entity-link uses kebab-case channel for one method
   // entityLink.onChanged subscribes to 'entity-link:changed' — handled as subscriber
 }

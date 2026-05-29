@@ -27,7 +27,12 @@ const SKILL = {
   content: '# SKILL'
 } as unknown as SkillItem
 
-const STATUS = { id: 'sk-1', name: 'my-skill', applied: true, version: '1' } as unknown as SkillApplyStatus
+const STATUS = {
+  id: 'sk-1',
+  name: 'my-skill',
+  applied: true,
+  version: '1'
+} as unknown as SkillApplyStatus
 
 beforeEach(() => {
   ;(window as unknown as Record<string, unknown>).api = {
@@ -45,8 +50,13 @@ beforeEach(() => {
   vi.clearAllMocks()
 })
 
-function makeWrapper(): { wrapper: ({ children }: { children: ReactNode }) => ReactElement; qc: QueryClient } {
-  const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
+function makeWrapper(): {
+  wrapper: ({ children }: { children: ReactNode }) => ReactElement
+  qc: QueryClient
+} {
+  const qc = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
+  })
   return {
     qc,
     wrapper: ({ children }: { children: ReactNode }): ReactElement =>

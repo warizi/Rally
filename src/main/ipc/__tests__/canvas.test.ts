@@ -65,7 +65,9 @@ describe('canvas IPC handlers', () => {
   })
 
   it('canvas:create → workspace + data 전달', () => {
-    vi.mocked(canvasService.create).mockReturnValue({ id: 'canv-newaab' } as ReturnType<typeof canvasService.create>)
+    vi.mocked(canvasService.create).mockReturnValue({ id: 'canv-newaab' } as ReturnType<
+      typeof canvasService.create
+    >)
     const result = getHandler('canvas:create')({}, 'ws-aabbcc12', { title: 'X' })
     expect(canvasService.create).toHaveBeenCalledWith('ws-aabbcc12', { title: 'X' })
     expect(result).toMatchObject({ success: true })

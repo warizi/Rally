@@ -57,7 +57,9 @@ describe('note IPC handlers', () => {
   })
 
   it('note:create → service 위임 + successResponse', () => {
-    vi.mocked(noteService.create).mockReturnValue({ id: 'n-aabbcc1' } as ReturnType<typeof noteService.create>)
+    vi.mocked(noteService.create).mockReturnValue({ id: 'n-aabbcc1' } as ReturnType<
+      typeof noteService.create
+    >)
     const result = getHandler('note:create')({}, 'ws-aabbcc12', null, 'new note')
     expect(noteService.create).toHaveBeenCalledWith('ws-aabbcc12', null, 'new note')
     expect(result).toMatchObject({ success: true })

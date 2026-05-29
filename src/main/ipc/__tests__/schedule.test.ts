@@ -69,7 +69,9 @@ describe('schedule IPC handlers', () => {
   })
 
   it('schedule:create → workspace + data 전달 + 결과 래핑', () => {
-    vi.mocked(scheduleService.create).mockReturnValue({ id: 'sch-newaabb' } as ReturnType<typeof scheduleService.create>)
+    vi.mocked(scheduleService.create).mockReturnValue({ id: 'sch-newaabb' } as ReturnType<
+      typeof scheduleService.create
+    >)
     const result = getHandler('schedule:create')({}, 'ws-aabbcc12', { title: 'meeting' })
     expect(scheduleService.create).toHaveBeenCalledWith('ws-aabbcc12', { title: 'meeting' })
     expect(result).toMatchObject({ success: true })

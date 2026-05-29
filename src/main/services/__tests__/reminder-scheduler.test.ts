@@ -18,7 +18,10 @@ const { getAllWindowsMock } = vi.hoisted(() => ({
 vi.mock('electron', () => {
   // Notification 은 `new Notification(opts)` 형태로 호출됨. mock 인스턴스를 추적하려면
   // class 처럼 동작하는 vi.fn 으로 정의. 호출 인자는 .mock.calls, 인스턴스는 .mock.instances 로 검증.
-  const NotificationMock = vi.fn(function (this: { show: ReturnType<typeof vi.fn>; on: ReturnType<typeof vi.fn> }) {
+  const NotificationMock = vi.fn(function (this: {
+    show: ReturnType<typeof vi.fn>
+    on: ReturnType<typeof vi.fn>
+  }) {
     this.show = vi.fn()
     this.on = vi.fn()
   })
@@ -186,7 +189,9 @@ describe('reminderScheduler', () => {
         updatedBy: 'user',
         updatedById: null
       }
-    ] as unknown as Parameters<typeof recurringRuleService.findTodayRules>['length'] extends 0 ? never : ReturnType<typeof recurringRuleService.findTodayRules>)
+    ] as unknown as Parameters<typeof recurringRuleService.findTodayRules>['length'] extends 0
+      ? never
+      : ReturnType<typeof recurringRuleService.findTodayRules>)
 
     // 시스템 시각을 19:00 으로 (10분 전 == 알림 시각)
     vi.setSystemTime(new Date('2026-05-29T10:00:00Z'))
@@ -196,9 +201,7 @@ describe('reminderScheduler', () => {
 
     reminderScheduler.start()
 
-    expect(Notification).toHaveBeenCalledWith(
-      expect.objectContaining({ body: '데일리 스탠드업' })
-    )
+    expect(Notification).toHaveBeenCalledWith(expect.objectContaining({ body: '데일리 스탠드업' }))
     const firstCallCount = vi.mocked(Notification).mock.calls.length
 
     // 1분 뒤 다시 fire — 같은 날 같은 룰은 중복 발송 안 됨
