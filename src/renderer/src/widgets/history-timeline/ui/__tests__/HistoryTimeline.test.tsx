@@ -1,0 +1,112 @@
+/**
+ * widgets/history-timeline/ui/HistoryTimeline.test.tsx
+ *
+ * isLoading / isError / 빈 결과 / 데이터 있음 4가지 분기 smoke.
+ */
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { render, screen } from '@testing-library/react'
+
+const mocks = vi.hoisted(() => ({
+  data: undefined as
+    | undefined
+    | { pages: Array<{ days: Array<{ date: string; todos: unknown[] }> }> },
+  hasNextPage: false,
+  isFetchingNextPage: false,
+  isLoading: false,
+  isError: false
+}))
+
+vi.mock('@entities/history', () => ({
+  useHistoryInfinite: () => ({
+    data: mocks.data,
+    fetchNextPage: vi.fn(),
+    hasNextPage: mocks.hasNextPage,
+    isFetchingNextPage: mocks.isFetchingNextPage,
+    isLoading: mocks.isLoading,
+    isError: mocks.isError
+  })
+}))
+
+vi.mock('@shared/ui/scroll-area', () => ({
+  ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ScrollBar: () => null
+}))
+
+vi.mock('@/entities/tab-system', () => ({
+  useTabStore: () => null
+}))
+
+vi.mock('@shared/constants/entity-icon', () => ({
+  ENTITY_ICON: { todo: () => null, note: () => null },
+  ENTITY_ICON_COLOR: {}
+}))
+
+vi.mock('framer-motion', () => ({
+  motion: {
+    div: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+  },
+  AnimatePresence: ({ children }: { children: React.ReactNode }) => <>{children}</>
+}))
+
+vi.mock('@dnd-kit/core', () => ({
+  useDraggable: () => ({
+    attributes: {},
+    listeners: {},
+    setNodeRef: vi.fn(),
+    isDragging: false
+  })
+}))
+
+vi.mock('@shared/ui/author-badge', () => ({
+  AuthorBadge: () => null
+}))
+
+vi.mock('../../lib/highlight', () => ({
+  HighlightText: ({ text }: { text: string }) => <>{text}</>
+}))
+
+vi.mock('../../lib/link-to-tab', () => ({
+  linkToTabOptions: () => null
+}))
+
+vi.mock('../../lib/history-link-drag', () => ({
+  buildHistoryLinkDragId: () => 'drag-id'
+}))
+
+import { HistoryTimeline } from '../HistoryTimeline'
+
+beforeEach(() => {
+  mocks.data = undefined
+  mocks.hasNextPage = false
+  mocks.isFetchingNextPage = false
+  mocks.isLoading = false
+  mocks.isError = false
+})
+
+describe('HistoryTimeline', () => {
+  it('isLoading=true → Loader 노출', () => {
+    mocks.isLoading = true
+    const { container } = render(
+      <HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />
+    )
+    expect(container.querySelector('.animate-spin')).toBeInTheDocument()
+  })
+
+  it('isError=true → 에러 메시지', () => {
+    mocks.isError = true
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getByText(/오류가 발생했습니다/)).toBeInTheDocument()
+  })
+
+  it('빈 결과 + 검색어 없음 → "완료된 할 일이 없습니다"', () => {
+    mocks.data = { pages: [{ days: [] }] }
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getByText('완료된 할 일이 없습니다.')).toBeInTheDocument()
+  })
+
+  it('빈 결과 + 검색어 → "조건에 맞는 항목이 없습니다"', () => {
+    mocks.data = { pages: [{ days: [] }] }
+    render(<HistoryTimeline workspaceId="ws" query="hello" fromDate={null} toDate={null} />)
+    expect(screen.getByText('조건에 맞는 항목이 없습니다.')).toBeInTheDocument()
+  })
+})
