@@ -49,7 +49,9 @@ beforeEach(() => {
   ;(window as unknown as Record<string, unknown>).api = {
     terminal: {
       getSessions: vi.fn().mockResolvedValue({ success: true, data: [] }),
-      create: vi.fn().mockResolvedValue({ success: false, errorType: 'UnknownError', message: 'unmocked' }),
+      create: vi
+        .fn()
+        .mockResolvedValue({ success: false, errorType: 'UnknownError', message: 'unmocked' }),
       saveSnapshot: vi.fn().mockResolvedValue({ success: true }),
       destroyAll: vi.fn().mockResolvedValue({ success: true })
     },
