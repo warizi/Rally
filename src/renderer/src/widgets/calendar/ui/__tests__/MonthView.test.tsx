@@ -4,7 +4,7 @@
  * 월 그리드 (7×N) + 요일 헤더 + MonthDayCell 매핑. smoke.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render } from '@testing-library/react'
 
 vi.mock('@dnd-kit/core', () => ({
   DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,

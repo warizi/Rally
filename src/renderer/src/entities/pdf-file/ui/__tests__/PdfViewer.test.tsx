@@ -46,9 +46,15 @@ beforeEach(() => {
   mocks.invalidate.mockReset()
   // happy-dom 에 ResizeObserver 가 없음 → polyfill
   ;(globalThis as { ResizeObserver?: unknown }).ResizeObserver = class {
-    observe(): void {}
-    unobserve(): void {}
-    disconnect(): void {}
+    observe(): void {
+      return
+    }
+    unobserve(): void {
+      return
+    }
+    disconnect(): void {
+      return
+    }
   }
 })
 
