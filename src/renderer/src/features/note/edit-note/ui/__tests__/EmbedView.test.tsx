@@ -70,31 +70,31 @@ beforeEach(() => {
 describe('EmbedView', () => {
   it('note 매칭 → 제목 노출', () => {
     mocks.notes = [{ id: 'n1', title: 'My Note' }]
-    render(<EmbedView domain="note" entityId="n1" />)
+    render(<EmbedView domain="note" entityId="n1" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText('My Note')).toBeInTheDocument()
   })
 
   it('note 미매칭 → "삭제된" 메시지', () => {
-    render(<EmbedView domain="note" entityId="missing" />)
+    render(<EmbedView domain="note" entityId="missing" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText(/삭제된/)).toBeInTheDocument()
   })
 
   it('csv 매칭 → 제목 노출', () => {
     mocks.csvs = [{ id: 'c1', title: 'CSV File' }]
-    render(<EmbedView domain="csv" entityId="c1" />)
+    render(<EmbedView domain="csv" entityId="c1" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText('CSV File')).toBeInTheDocument()
   })
 
   it('pdf 매칭 → 제목 + PdfViewer (smoke)', () => {
     mocks.pdfs = [{ id: 'p1', title: 'PDF File' }]
     mocks.pdfContent = new ArrayBuffer(10)
-    render(<EmbedView domain="pdf" entityId="p1" />)
+    render(<EmbedView domain="pdf" entityId="p1" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText('PDF File')).toBeInTheDocument()
   })
 
   it('image 매칭 → 제목 노출', () => {
     mocks.images = [{ id: 'i1', title: 'Image File' }]
-    render(<EmbedView domain="image" entityId="i1" />)
+    render(<EmbedView domain="image" entityId="i1" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText('Image File')).toBeInTheDocument()
   })
 })
