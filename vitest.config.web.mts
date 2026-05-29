@@ -30,7 +30,6 @@ export default defineConfig({
         branches: 49,
         statements: 56
       }
-      // (small change — keep thresholds for incremental safety)
     }
   },
   resolve: {
