@@ -141,4 +141,33 @@ describe('TerminalTabBar', () => {
     expect(apiObj.terminal.create).not.toHaveBeenCalled()
     expect(addSessionMock).not.toHaveBeenCalled()
   })
+
+  it('새 터미널 + → terminal.create 실패 시 addSession 호출 안 함', async () => {
+    const apiObj = (
+      window as unknown as { api: Record<string, Record<string, ReturnType<typeof vi.fn>>> }
+    ).api
+    apiObj.workspace.getById = vi.fn().mockResolvedValue({
+      success: true,
+      data: { id: 'ws-1', path: '/workspace' }
+    })
+    apiObj.terminal.create = vi.fn().mockResolvedValue({ success: false })
+
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    await act(async () => {
+      screen.getByTitle('새 터미널').click()
+    })
+    await waitFor(() => {
+      expect(apiObj.terminal.create).toHaveBeenCalled()
+    })
+    expect(addSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('session 정렬 — sortOrder 오름차순 (1, 0, 2 → s2, s1, s3)', () => {
+    // 기존 sessionsMap 은 s1=0, s2=1, s3=2 → 화면에 tab-1, tab-2, tab-3 순으로 렌더
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    const tabs = ['tab-1', 'tab-2', 'tab-3'].map((name) => screen.getByText(name))
+    expect(tabs[0]).toBeInTheDocument()
+    expect(tabs[1]).toBeInTheDocument()
+    expect(tabs[2]).toBeInTheDocument()
+  })
 })

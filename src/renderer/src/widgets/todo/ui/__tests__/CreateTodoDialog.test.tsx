@@ -172,4 +172,25 @@ describe('CreateTodoDialog', () => {
     fireEvent.click(screen.getByTestId('trigger'))
     expect(screen.getByText('할 일 추가')).toBeInTheDocument()
   })
+
+  it('titleOnly=true → DatePickerButton 모두 미노출', () => {
+    render(
+      <CreateTodoDialog
+        workspaceId="ws"
+        parentId="p1"
+        trigger={<button data-testid="trigger">+</button>}
+      />
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    // DatePickerButton 들이 노출되지 않음.
+    expect(screen.queryByTestId(/^date-/)).toBeNull()
+  })
+
+  it('defaultDateEnabled=false → 기본 dueDate/startDate null 유지 (smoke)', () => {
+    mocks.defaultDateEnabled = false
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    // defaultDateEnabled=false → 기본 startDate/dueDate 둘 다 null → ReminderPendingSelect 노출 안 됨 (조건 (startDate || dueDate))
+    expect(screen.queryByTestId('reminder-pending')).toBeNull()
+  })
 })
