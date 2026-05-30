@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useTreeOpenState } from '../use-tree-open-state'
 import { useTabStore } from '@/entities/tab-system'
@@ -188,5 +188,30 @@ describe('expandIds', () => {
       'new-1': true,
       'new-2': true
     })
+  })
+
+  it('tabId 없으면 expandIds 무동작 (에러 없음)', () => {
+    const { result } = renderHook(() => useTreeOpenState(undefined))
+    act(() => result.current.expandIds(['f1', 'f2'], null))
+    expect(result.current.openState).toEqual({})
+  })
+
+  it('expandIds 호출 시 treeApi.open 도 각 id 마다 호출됨', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const treeApi = {
+      closeAll: vi.fn(),
+      isOpen: vi.fn(() => false),
+      scrollTo: vi.fn(),
+      open: vi.fn(),
+      close: vi.fn(),
+      get: vi.fn(() => null)
+    }
+    act(() => result.current.expandIds(['a', 'b', 'c'], treeApi))
+    expect(treeApi.open).toHaveBeenCalledWith('a')
+    expect(treeApi.open).toHaveBeenCalledWith('b')
+    expect(treeApi.open).toHaveBeenCalledWith('c')
   })
 })
