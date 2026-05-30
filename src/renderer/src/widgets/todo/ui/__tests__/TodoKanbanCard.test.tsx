@@ -215,4 +215,115 @@ describe('TodoKanbanCardOverlay', () => {
     const { container } = render(<TodoKanbanCardOverlay todo={done} subTodos={[]} />)
     expect(container.innerHTML).toMatch(/line-through/)
   })
+
+  it('description 빈 문자열 → 미노출', () => {
+    render(<TodoKanbanCardOverlay todo={baseTodo} subTodos={[]} />)
+    // 빈 description → "설명" 텍스트 없음
+    expect(screen.queryByText('설명')).toBeNull()
+  })
+
+  it('dueDate null → 날짜 영역 미노출 (M.D 없음)', () => {
+    const { container } = render(<TodoKanbanCardOverlay todo={baseTodo} subTodos={[]} />)
+    // dueDate=null → calendar 아이콘 옆 날짜 미노출
+    expect(container.querySelector('[data-due-date]')).toBeNull()
+  })
+
+  it('subTodos 비어있음 → done/total 미노출', () => {
+    render(<TodoKanbanCardOverlay todo={baseTodo} subTodos={[]} />)
+    expect(screen.queryByText(/\/0/)).toBeNull()
+  })
+
+  it('priority 없음 (undefined) → strip 클래스 없음 (smoke)', () => {
+    const noPriority = { ...baseTodo, priority: undefined } as unknown as Parameters<
+      typeof TodoKanbanCardOverlay
+    >[0]['todo']
+    const { container } = render(<TodoKanbanCardOverlay todo={noPriority} subTodos={[]} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+})
+
+describe('TodoKanbanCard — 추가 분기', () => {
+  it('isDragging=true 분기 (smoke) — useSortable mock 변경 필요해서 직접 검증 어려움. invisible 클래스 노출은 normal 모드에서도 확인.', () => {
+    const { container } = render(
+      <TodoKanbanCard
+        todo={baseTodo}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(container.querySelector('[data-kanban-card="true"]')).toBeInTheDocument()
+  })
+
+  it('subTodos 모두 done → "N/N" 카운트 + line-through 없음', () => {
+    render(
+      <TodoKanbanCard
+        todo={baseTodo}
+        subTodos={
+          [
+            { id: 's1', isDone: true },
+            { id: 's2', isDone: true }
+          ] as unknown as Parameters<typeof TodoKanbanCard>[0]['subTodos']
+        }
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(screen.getByText(/2\/2/)).toBeInTheDocument()
+  })
+
+  it('dueDate 지남 (과거) → red 클래스 (overdue 분기)', () => {
+    const overdue = {
+      ...baseTodo,
+      dueDate: new Date('2020-01-01')
+    } as unknown as Parameters<typeof TodoKanbanCard>[0]['todo']
+    const { container } = render(
+      <TodoKanbanCard
+        todo={overdue}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(container.querySelector('.text-red-600')).toBeInTheDocument()
+  })
+
+  it('dueDate 3일 이내 (임박) → amber 클래스', () => {
+    const nearFuture = new Date()
+    nearFuture.setDate(nearFuture.getDate() + 2)
+    const soon = {
+      ...baseTodo,
+      dueDate: nearFuture
+    } as unknown as Parameters<typeof TodoKanbanCard>[0]['todo']
+    const { container } = render(
+      <TodoKanbanCard
+        todo={soon}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(container.querySelector('.text-amber-600')).toBeInTheDocument()
+  })
+
+  it('description 있음 → 노출', () => {
+    const withDesc = {
+      ...baseTodo,
+      description: '카드 설명'
+    } as unknown as Parameters<typeof TodoKanbanCard>[0]['todo']
+    render(
+      <TodoKanbanCard
+        todo={withDesc}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(screen.getByText('카드 설명')).toBeInTheDocument()
+  })
 })

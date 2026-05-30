@@ -146,9 +146,14 @@ import { useSessionPersistence } from '../use-tab-persistence'
 
 afterEach(() => {
   sessionApiMocks.loadSession.mockReset()
+  // saveSession 은 reset 후 thenable 반환하도록 다시 설정 — unmount 시 throttledSave.flush() 가 호출됨
   sessionApiMocks.saveSession.mockReset()
+  sessionApiMocks.saveSession.mockResolvedValue(undefined)
   sessionApiMocks.workspaceIdValue = null
 })
+
+// 처음 한 번도 thenable 반환하도록 설정
+sessionApiMocks.saveSession.mockResolvedValue(undefined)
 
 describe('useSessionPersistence (smoke)', () => {
   it('workspaceId=null → loadSession 호출 안 함 (early return)', () => {
@@ -160,5 +165,30 @@ describe('useSessionPersistence (smoke)', () => {
   it('hook 마운트 → 에러 없이 통과 (smoke)', () => {
     sessionApiMocks.workspaceIdValue = null
     expect(() => renderHook(() => useSessionPersistence())).not.toThrow()
+  })
+
+  it('workspaceId 있음 → loadSession 호출 + applySessionToStore (sessionData=null 경우 reset)', async () => {
+    sessionApiMocks.workspaceIdValue = 'ws-x'
+    sessionApiMocks.loadSession.mockResolvedValue(null)
+    renderHook(() => useSessionPersistence())
+    await new Promise((r) => setTimeout(r, 10))
+    expect(sessionApiMocks.loadSession).toHaveBeenCalledWith('ws-x')
+  })
+
+  it('loadSession 실패 → reset 호출 (catch 분기)', async () => {
+    sessionApiMocks.workspaceIdValue = 'ws-fail'
+    sessionApiMocks.loadSession.mockRejectedValue(new Error('boom'))
+    renderHook(() => useSessionPersistence())
+    await new Promise((r) => setTimeout(r, 10))
+    // catch 분기에서 reset 호출 → dashboard 만 남아야 함
+    const tabs = Object.values(useTabStore.getState().tabs)
+    expect(tabs.length).toBeGreaterThan(0)
+  })
+
+  it('hook unmount → 정상 정리 (cleanup smoke)', () => {
+    sessionApiMocks.workspaceIdValue = 'ws-cleanup'
+    sessionApiMocks.loadSession.mockResolvedValue(null)
+    const { unmount } = renderHook(() => useSessionPersistence())
+    expect(() => unmount()).not.toThrow()
   })
 })

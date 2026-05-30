@@ -6,7 +6,7 @@
  * view=list → 4 sections. view=kanban → filter + kanban section.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   workspaceId: 'ws-1' as string | null,
@@ -201,5 +201,44 @@ describe('TodoPage', () => {
     mocks.completedItems = [{ type: 'todo', completedAt: new Date() }]
     render(<TodoPage tabId="t1" />)
     expect(screen.queryByText('오늘 할 일을 적어보세요')).toBeNull()
+  })
+
+  it('view-kanban 클릭 → view 전환 + kanban-section 노출', () => {
+    mocks.todos = [{ id: 't1', title: 'A' }]
+    mocks.activeTodos = [{ id: 't1', title: 'A' }]
+    render(<TodoPage tabId="t1" />)
+    fireEvent.click(screen.getByTestId('view-kanban'))
+    expect(screen.getByTestId('kanban-section')).toBeInTheDocument()
+  })
+
+  it('tabId 없음 → searchParams 미사용 + 정상 렌더', () => {
+    mocks.todos = [{ id: 't1', title: 'A' }]
+    mocks.activeTodos = [{ id: 't1', title: 'A' }]
+    render(<TodoPage />)
+    expect(screen.getByText('할 일')).toBeInTheDocument()
+    expect(screen.getByTestId('list-section')).toBeInTheDocument()
+  })
+
+  it('tabSearchParams 의 list*Open=false → smoke 정상 렌더', () => {
+    mocks.todos = [{ id: 't1', title: 'A' }]
+    mocks.activeTodos = [{ id: 't1', title: 'A' }]
+    mocks.tabSearchParams = {
+      listFilterOpen: 'false',
+      listViewOpen: 'false',
+      completedOpen: 'true',
+      holdingOnOpen: 'true'
+    }
+    render(<TodoPage tabId="t1" />)
+    expect(screen.getByTestId('list-section')).toBeInTheDocument()
+    expect(screen.getByTestId('completed-section')).toBeInTheDocument()
+  })
+
+  it('view=kanban + filter section + kanban filter open 분기', () => {
+    mocks.todos = [{ id: 't1', title: 'A' }]
+    mocks.activeTodos = [{ id: 't1', title: 'A' }]
+    mocks.tabSearchParams = { view: 'kanban', kanbanFilterOpen: 'true' }
+    render(<TodoPage tabId="t1" />)
+    expect(screen.getByTestId('kanban-section')).toBeInTheDocument()
+    expect(screen.getByTestId('filter-section')).toBeInTheDocument()
   })
 })

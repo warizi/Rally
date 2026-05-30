@@ -103,4 +103,31 @@ describe('SkillDetailDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: /취소/ }))
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('user skill → ToolMultiSelect 노출 (mcpTools 필드)', () => {
+    render(<SkillDetailDialog skill={userSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByTestId('tool-select')).toBeInTheDocument()
+  })
+
+  it('system skill → ToolMultiSelect + trigger 키워드 input 미노출', () => {
+    render(<SkillDetailDialog skill={systemSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.queryByTestId('tool-select')).toBeNull()
+    expect(screen.queryByPlaceholderText(/할일/)).toBeNull()
+  })
+
+  it('user skill → 트리거 키워드 input 노출 (CSV 형식)', () => {
+    render(<SkillDetailDialog skill={userSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByDisplayValue('trigger1')).toBeInTheDocument()
+  })
+
+  it('저장 버튼 노출 + 저장 텍스트', () => {
+    render(<SkillDetailDialog skill={userSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /^저장$/ })).toBeInTheDocument()
+  })
+
+  it('system skill → Badge "기본" + system DialogDescription 노출', () => {
+    render(<SkillDetailDialog skill={systemSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('기본')).toBeInTheDocument()
+    expect(screen.getAllByText(/SKILL.md 본문/).length).toBeGreaterThan(0)
+  })
 })
