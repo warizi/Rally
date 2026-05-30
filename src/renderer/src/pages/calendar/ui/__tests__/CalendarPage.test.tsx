@@ -161,4 +161,41 @@ describe('CalendarPage', () => {
     render(<CalendarPage tabId="t1" />)
     expect(screen.getByText('캘린더')).toBeInTheDocument()
   })
+
+  it('todos + schedules 모두 있음 → 빈 안내 미노출 + month-view 렌더', () => {
+    mocks.schedules = [{ id: 's1' }]
+    mocks.todos = [{ id: 't1', startDate: new Date(), dueDate: new Date() }]
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.queryByText(/이 범위에 일정이 없어요/)).toBeNull()
+    expect(screen.getByTestId('month-view')).toBeInTheDocument()
+  })
+
+  it('todos 만 있음 (schedules 비어있음, showTodos=true 기본) → 빈 안내 미노출', () => {
+    mocks.todos = [{ id: 't1', startDate: new Date(), dueDate: new Date() }]
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.queryByText(/이 범위에 일정이 없어요/)).toBeNull()
+  })
+
+  it('showTodos="false" + todos 만 있음 → 빈 안내 노출 (todos 무시)', () => {
+    mocks.tabSearchParams = { showTodos: 'false' }
+    mocks.todos = [{ id: 't1', startDate: new Date(), dueDate: new Date() }]
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByText(/이 범위에 일정이 없어요/)).toBeInTheDocument()
+  })
+
+  it('todos 의 startDate/dueDate null → schedules 로 변환 안 됨 (필터링)', () => {
+    mocks.todos = [
+      { id: 't1', startDate: null, dueDate: null },
+      { id: 't2', startDate: new Date(), dueDate: new Date() }
+    ]
+    render(<CalendarPage tabId="t1" />)
+    // 적어도 t2 가 있으므로 빈 안내 미노출
+    expect(screen.queryByText(/이 범위에 일정이 없어요/)).toBeNull()
+  })
+
+  it('viewType="day" 추가 시 RecurringTodoSection 노출 (DayView 가 recurringSection prop 받음)', () => {
+    mocks.viewType = 'day'
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByTestId('day-view')).toBeInTheDocument()
+  })
 })
