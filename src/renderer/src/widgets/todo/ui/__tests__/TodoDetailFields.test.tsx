@@ -115,4 +115,23 @@ describe('TodoDetailFields', () => {
     const pickers = screen.getAllByTestId('time-picker')
     expect(pickers[0]).toHaveAttribute('data-disabled', 'false')
   })
+
+  it('todo-checkbox + status-select + priority-select 모두 노출', () => {
+    render(<TodoDetailFields todo={todo()} workspaceId="ws-1" />)
+    expect(screen.getByTestId('todo-checkbox')).toBeInTheDocument()
+    expect(screen.getByTestId('status-select')).toBeInTheDocument()
+    expect(screen.getByTestId('priority-select')).toBeInTheDocument()
+  })
+
+  it('startDate + dueDate 양쪽 있음 → 두개의 TimePicker 모두 활성', () => {
+    render(
+      <TodoDetailFields
+        todo={todo({ startDate: new Date(), dueDate: new Date() })}
+        workspaceId="ws-1"
+      />
+    )
+    const pickers = screen.getAllByTestId('time-picker')
+    expect(pickers[0]).toHaveAttribute('data-disabled', 'false')
+    expect(pickers[1]).toHaveAttribute('data-disabled', 'false')
+  })
 })
