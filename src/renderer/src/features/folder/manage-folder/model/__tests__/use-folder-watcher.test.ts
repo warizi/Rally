@@ -20,21 +20,26 @@ function createWrapper(): {
 }
 
 // ─── 모의 모듈 ─────────────────────────────────────────────
-const toastInfo = vi.fn()
-const toastDismiss = vi.fn()
+const hoistedMocks = vi.hoisted(() => ({
+  toastInfo: vi.fn(),
+  toastDismiss: vi.fn(),
+  isWorkspaceOwnWriteMock: vi.fn((_id: string) => false),
+  openTabMock: vi.fn()
+}))
+
+const { toastInfo, isWorkspaceOwnWriteMock } = hoistedMocks
 
 vi.mock('sonner', () => ({
-  toast: { info: (...args: unknown[]) => toastInfo(...args), dismiss: () => toastDismiss() }
+  toast: { info: hoistedMocks.toastInfo, dismiss: hoistedMocks.toastDismiss }
 }))
 
-const isWorkspaceOwnWriteMock = vi.fn(() => false)
 vi.mock('@shared/lib/workspace-own-write', () => ({
-  isWorkspaceOwnWrite: (id: string) => isWorkspaceOwnWriteMock(id)
+  isWorkspaceOwnWrite: (id: string) => hoistedMocks.isWorkspaceOwnWriteMock(id)
 }))
 
-const openTabMock = vi.fn()
 vi.mock('@/entities/tab-system', () => ({
-  useTabStore: (selector: (s: unknown) => unknown) => selector({ openTab: openTabMock })
+  useTabStore: (selector: (s: unknown) => unknown) =>
+    selector({ openTab: hoistedMocks.openTabMock })
 }))
 
 vi.mock('@shared/lib/format-author', () => ({
