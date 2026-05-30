@@ -202,4 +202,95 @@ describe('ManageRecurringDialog', () => {
     // 시간 (HH:mm) 패턴이 노출되지 않음
     expect(screen.queryByText(/\d{2}:\d{2}.*~.*\d{2}:\d{2}/)).toBeNull()
   })
+
+  it('startTime 있고 endTime null → startTime 만 노출', () => {
+    mocks.rules = [
+      {
+        id: 'r-start-only',
+        title: '시작만',
+        priority: 'medium',
+        recurrenceType: 'daily',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: '08:00',
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText(/08:00/)).toBeInTheDocument()
+    // ~ 가 시간 사이에 안 들어감 (07:00 ~ 08:00 같은 형식 없음)
+    expect(screen.queryByText(/\d{2}:\d{2}\s*~\s*\d{2}:\d{2}/)).toBeNull()
+  })
+
+  it('custom + daysOfWeek 빈 배열 → "매주" 만 노출', () => {
+    mocks.rules = [
+      {
+        id: 'r-no-days',
+        title: 'NoDays',
+        priority: 'medium',
+        recurrenceType: 'custom',
+        daysOfWeek: [],
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText(/매주/)).toBeInTheDocument()
+  })
+
+  it('"+ 새 반복 할일" 버튼 노출 (트리거)', () => {
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByRole('button', { name: /새 반복 할일/ })).toBeInTheDocument()
+  })
+
+  it('rules 2개 → 2개 모두 노출', () => {
+    mocks.rules = [
+      {
+        id: 'r-1',
+        title: '운동',
+        priority: 'high',
+        recurrenceType: 'daily',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      },
+      {
+        id: 'r-2',
+        title: '독서',
+        priority: 'low',
+        recurrenceType: 'weekend',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('운동')).toBeInTheDocument()
+    expect(screen.getByText('독서')).toBeInTheDocument()
+  })
+
+  it('custom + 모든 요일 (0~6) → 요일 7개 모두 노출', () => {
+    mocks.rules = [
+      {
+        id: 'r-all-days',
+        title: 'AllDays',
+        priority: 'medium',
+        recurrenceType: 'custom',
+        daysOfWeek: [0, 1, 2, 3, 4, 5, 6],
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText(/매주.*일.*월.*화.*수.*목.*금.*토/)).toBeInTheDocument()
+  })
 })
