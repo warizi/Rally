@@ -31,6 +31,8 @@ const mocks = vi.hoisted(() => ({
     description: string
     onTitleChange: (title: string) => void
     onDescriptionChange: (d: string) => void
+    footer?: React.ReactNode
+    editable?: boolean
   }
 }))
 
