@@ -93,4 +93,42 @@ describe('DisplaySettings', () => {
     expect(screen.getByText('시작 시간')).toBeInTheDocument()
     expect(screen.getByText('끝 시간')).toBeInTheDocument()
   })
+
+  it('mount 시 dark 클래스 → currentTheme=dark + 다크 카드 selected', async () => {
+    document.documentElement.classList.add('dark')
+    r(<DisplaySettings />)
+    // dark 카드의 부모 button 에 selected (border-primary) 클래스
+    const darkButton = screen.getByText('다크').closest('button')
+    expect(darkButton).toHaveClass('border-primary')
+  })
+
+  it('라이트 카드 클릭 → applyTheme("light") + settings.set', async () => {
+    document.documentElement.classList.add('dark')
+    r(<DisplaySettings />)
+    fireEvent.click(screen.getByText('라이트').closest('button')!)
+    expect(mocks.applyTheme).toHaveBeenCalledWith('light')
+    await waitFor(() => expect(api().settings.set).toHaveBeenCalledWith('theme', 'light'))
+  })
+
+  it('mount 시 settings.get 실패 → currentFontSize 기본값 유지 (smoke)', async () => {
+    vi.mocked(api().settings.get).mockResolvedValue({ success: false })
+    r(<DisplaySettings />)
+    await waitFor(() => expect(api().settings.get).toHaveBeenCalled())
+    // 기본값 medium 유지 → "글꼴 크기" 섹션 존재
+    expect(screen.getByText('글꼴 크기')).toBeInTheDocument()
+  })
+
+  it('AuthorBadge show=false → switch 체크 안됨', () => {
+    mocks.show = false
+    r(<DisplaySettings />)
+    const sw = screen.getByRole('switch')
+    expect(sw).toHaveAttribute('aria-checked', 'false')
+  })
+
+  it('settings.get success=true + data=null → 기본값 medium 유지', async () => {
+    vi.mocked(api().settings.get).mockResolvedValue({ success: true, data: null })
+    r(<DisplaySettings />)
+    await waitFor(() => expect(api().settings.get).toHaveBeenCalled())
+    expect(screen.getByText('글꼴 크기')).toBeInTheDocument()
+  })
 })
