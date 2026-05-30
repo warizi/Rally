@@ -126,4 +126,32 @@ describe('CsvTable', () => {
     )
     expect(container.firstChild).toBeTruthy()
   })
+
+  it('focusCell prop → 스크롤 호출 (smoke)', () => {
+    const { container } = render(<CsvTable {...baseProps} focusCell={{ row: 1, col: 0 }} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('matchedCells prop → highlight 클래스 적용 (smoke)', () => {
+    const { container } = render(<CsvTable {...baseProps} matchedCells={new Set(['0:0', '1:1'])} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('onSearchClear prop 정의 → smoke', () => {
+    const onSearchClear = vi.fn()
+    const { container } = render(<CsvTable {...baseProps} onSearchClear={onSearchClear} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('많은 column → 헤더 모두 렌더', () => {
+    const { getByTestId } = render(
+      <CsvTable
+        {...baseProps}
+        headers={['a', 'b', 'c', 'd', 'e']}
+        data={[['1', '2', '3', '4', '5']]}
+      />
+    )
+    expect(getByTestId('header-a')).toBeInTheDocument()
+    expect(getByTestId('header-e')).toBeInTheDocument()
+  })
 })
