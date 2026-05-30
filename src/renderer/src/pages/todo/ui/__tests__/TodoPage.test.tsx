@@ -178,4 +178,28 @@ describe('TodoPage', () => {
     expect(screen.getByTestId('holdingon-section')).toBeInTheDocument()
     expect(screen.getByTestId('recurring-section')).toBeInTheDocument()
   })
+
+  it('view=kanban → kanban-section 노출 + list-section 미노출', () => {
+    mocks.todos = [{ id: 't1', title: 'A' }]
+    mocks.activeTodos = [{ id: 't1', title: 'A' }]
+    mocks.view = 'kanban'
+    mocks.tabSearchParams = { view: 'kanban' }
+    render(<TodoPage tabId="t1" />)
+    expect(screen.getByTestId('kanban-section')).toBeInTheDocument()
+    expect(screen.queryByTestId('list-section')).toBeNull()
+  })
+
+  it('tabSearchParams.view=kanban → 초기 view=kanban 적용', () => {
+    mocks.todos = [{ id: 't1', title: 'A' }]
+    mocks.tabSearchParams = { view: 'kanban' }
+    render(<TodoPage tabId="t1" />)
+    // TodoViewToolbar 가 view='kanban' 이면 view-kanban testid 노출
+    expect(screen.getByTestId('view-kanban')).toBeInTheDocument()
+  })
+
+  it('completedItems 있음 + activeTodos 없음 → Empty 미노출 (할 일이 있다고 간주)', () => {
+    mocks.completedItems = [{ type: 'todo', completedAt: new Date() }]
+    render(<TodoPage tabId="t1" />)
+    expect(screen.queryByText('오늘 할 일을 적어보세요')).toBeNull()
+  })
 })
