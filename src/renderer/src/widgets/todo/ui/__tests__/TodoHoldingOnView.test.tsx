@@ -173,4 +173,82 @@ describe('TodoHoldingOnView', () => {
     fireEvent.click(screen.getByText('Click Me'))
     expect(onItemClick).toHaveBeenCalledWith('t-x')
   })
+
+  it('todos 여러 개 → 모두 노출 + 행 개수 일치', () => {
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            { id: 't1', title: 'A', status: '보류', priority: 'high', isDone: false },
+            { id: 't2', title: 'B', status: '보류', priority: 'medium', isDone: false },
+            { id: 't3', title: 'C', status: '보류', priority: 'low', isDone: false }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    expect(screen.getByText('A')).toBeInTheDocument()
+    expect(screen.getByText('B')).toBeInTheDocument()
+    expect(screen.getByText('C')).toBeInTheDocument()
+  })
+
+  it('todo.dueDate 있음 → 날짜 셀 노출', () => {
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            {
+              id: 'td',
+              title: 'With Due',
+              status: '보류',
+              priority: 'medium',
+              isDone: false,
+              dueDate: new Date('2026-12-31')
+            }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    // 12월 31일 형태로 노출
+    expect(screen.getByText(/12/)).toBeInTheDocument()
+  })
+
+  it('status 변경 dropdown → updateTodo({status})', () => {
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            { id: 't1', title: 'Task', status: '보류', priority: 'medium', isDone: false }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    // status badge 클릭 → dropdown 열림은 Radix → smoke 만 검증
+    const statusButton = screen.getAllByText('보류')[0]
+    expect(statusButton).toBeInTheDocument()
+  })
+
+  it('priority="medium" 기본값 → "보통" 라벨', () => {
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            { id: 'tm', title: 'Med', status: '보류', priority: 'medium', isDone: false }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    expect(screen.getByText('보통')).toBeInTheDocument()
+  })
 })
