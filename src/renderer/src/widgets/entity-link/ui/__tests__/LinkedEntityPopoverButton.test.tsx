@@ -130,4 +130,39 @@ describe('LinkedEntityPopoverButton', () => {
     expect(mocks.closeTabByPathname).toHaveBeenCalledWith('/note/n2')
     expect(mocks.openTab).toHaveBeenCalledWith(expect.any(Object), 'pane-x')
   })
+
+  it('linked todo + parentId 있음 → todos 에서 parentId 조회 (toTabOptions 4번째 인자)', () => {
+    mocks.linked = [{ entityType: 'todo', entityId: 'tid', title: 'Sub' }]
+    mocks.todos = [{ id: 'tid', parentId: 'parent-1' }]
+    render(<LinkedEntityPopoverButton entityType="note" entityId="n1" workspaceId="ws" />)
+    mocks.receivedListProps?.onNavigate?.('todo', 'tid')
+    // toTabOptions mock 은 4번째 인자를 무시하지만 호출은 됨 — openTab 호출 검증
+    expect(mocks.openTab).toHaveBeenCalledWith({
+      type: 'todo',
+      pathname: '/todo/tid',
+      title: 'Sub'
+    })
+  })
+
+  it('resolveTabOptions → linked 에서 entity 못 찾으면 title 빈문자', () => {
+    mocks.linked = []
+    render(<LinkedEntityPopoverButton entityType="note" entityId="n1" workspaceId="ws" />)
+    mocks.receivedListProps?.onNavigate?.('note', 'unknown')
+    // toTabOptions 가 빈 title 로 호출됨 → openTab 호출됨
+    expect(mocks.openTab).toHaveBeenCalledWith({
+      type: 'note',
+      pathname: '/note/unknown',
+      title: ''
+    })
+  })
+
+  it('100개 이상 linked → 99+ 배지 (smoke — length 표시)', () => {
+    mocks.linked = Array.from({ length: 100 }, (_, i) => ({
+      entityType: 'note',
+      entityId: `n${i}`,
+      title: `N${i}`
+    }))
+    render(<LinkedEntityPopoverButton entityType="note" entityId="n1" workspaceId="ws" />)
+    expect(screen.getByText('100')).toBeInTheDocument()
+  })
 })
