@@ -153,4 +153,17 @@ describe('TodoDetailPage', () => {
     expect(screen.getByTestId('link-popover')).toBeInTheDocument()
     expect(screen.getByTestId('tag-list')).toBeInTheDocument()
   })
+
+  it('params 없음 (todoId undefined) → "할 일을 찾을 수 없습니다"', () => {
+    mocks.todos = [todo('t-1')]
+    r(<TodoDetailPage />)
+    expect(screen.getByText('할 일을 찾을 수 없습니다')).toBeInTheDocument()
+  })
+
+  it('workspaceId=null + 로딩 false + todos=[] → "할 일을 찾을 수 없습니다"', () => {
+    mocks.workspaceId = null
+    mocks.todos = []
+    r(<TodoDetailPage params={{ todoId: 't-1' }} />)
+    expect(screen.getByText('할 일을 찾을 수 없습니다')).toBeInTheDocument()
+  })
 })
