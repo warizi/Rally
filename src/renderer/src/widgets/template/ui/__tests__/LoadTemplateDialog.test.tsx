@@ -115,4 +115,34 @@ describe('LoadTemplateDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: '취소' }))
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('AlertDialog 취소 (덮어쓰기 X) → onApply 호출 안 함', () => {
+    mocks.templates = [{ id: 't1', title: 'Template A', jsonData: '{}' }]
+    const onApply = vi.fn()
+    render(<LoadTemplateDialog {...base} hasContent onApply={onApply} />)
+    fireEvent.click(screen.getByText('Template A'))
+    fireEvent.click(screen.getByRole('button', { name: '적용' }))
+    // AlertDialog 의 cancel 버튼 (취소) — 적용 안 됨
+    const cancelBtn = screen.getAllByRole('button').find((b) => b.textContent === '취소')
+    if (cancelBtn) fireEvent.click(cancelBtn)
+    expect(onApply).not.toHaveBeenCalled()
+  })
+
+  it('open=false → 콘텐츠 미렌더', () => {
+    render(<LoadTemplateDialog {...base} open={false} />)
+    expect(screen.queryByText('저장된 템플릿이 없습니다')).toBeNull()
+  })
+
+  it('검색어 입력 → 매칭 항목만 노출', () => {
+    mocks.templates = [
+      { id: 't1', title: 'Apple', jsonData: '{}' },
+      { id: 't2', title: 'Banana', jsonData: '{}' }
+    ]
+    render(<LoadTemplateDialog {...base} />)
+    expect(screen.getByText('Apple')).toBeInTheDocument()
+    expect(screen.getByText('Banana')).toBeInTheDocument()
+    fireEvent.change(screen.getByPlaceholderText(/검색/), { target: { value: 'app' } })
+    expect(screen.getByText('Apple')).toBeInTheDocument()
+    expect(screen.queryByText('Banana')).toBeNull()
+  })
 })
