@@ -25,10 +25,10 @@ export default defineConfig({
         'src/renderer/src/**/index.ts'
       ],
       thresholds: {
-        lines: 69,
-        functions: 66,
-        branches: 61,
-        statements: 67
+        lines: 70,
+        functions: 67,
+        branches: 62,
+        statements: 68
       }
     }
   },
