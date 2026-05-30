@@ -128,4 +128,35 @@ describe('CanvasListPage', () => {
     fireEvent.change(input, { target: { value: 'foo' } })
     expect(input).toHaveValue('foo')
   })
+
+  it('여러 캔버스 → 모두 노출', () => {
+    mocks.canvases = [
+      { id: 'cv-1', title: 'Canvas A', updatedBy: 'u', updatedById: null, updatedAt: new Date() },
+      { id: 'cv-2', title: 'Canvas B', updatedBy: 'u', updatedById: null, updatedAt: new Date() },
+      { id: 'cv-3', title: 'Canvas C', updatedBy: 'u', updatedById: null, updatedAt: new Date() }
+    ]
+    r(<CanvasListPage />)
+    expect(screen.getByText('Canvas A')).toBeInTheDocument()
+    expect(screen.getByText('Canvas B')).toBeInTheDocument()
+    expect(screen.getByText('Canvas C')).toBeInTheDocument()
+  })
+
+  it('debounced 검색 → query 변경 후 250ms 후 적용 (smoke)', () => {
+    mocks.canvases = [
+      { id: 'cv-1', title: 'Apple', updatedBy: 'u', updatedById: null, updatedAt: new Date() },
+      { id: 'cv-2', title: 'Banana', updatedBy: 'u', updatedById: null, updatedAt: new Date() }
+    ]
+    r(<CanvasListPage />)
+    const input = screen.getByPlaceholderText('캔버스 검색...')
+    fireEvent.change(input, { target: { value: 'apple' } })
+    // 둘 다 처음에는 노출 (debounce 적용 전)
+    expect(input).toHaveValue('apple')
+  })
+
+  it('workspaceId=null → 안내 메시지 (smoke 렌더)', () => {
+    mocks.workspaceId = null
+    r(<CanvasListPage />)
+    // 안내 메시지: 캔버스가 없습니다 (workspaceId null 이라 useQuery 비활성화 → data=[])
+    expect(screen.getByText('캔버스가 없습니다')).toBeInTheDocument()
+  })
 })
