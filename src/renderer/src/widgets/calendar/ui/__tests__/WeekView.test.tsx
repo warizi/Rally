@@ -167,4 +167,47 @@ describe('WeekView', () => {
       expect(screen.getByTestId(`day-cell-${i}`)).toBeInTheDocument()
     }
   })
+
+  it('small 뷰 날짜 버튼 클릭 → onSelectDate 호출', () => {
+    const onSelectDate = vi.fn()
+    render(
+      <WeekView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={onSelectDate}
+        workspaceId="ws"
+      />
+    )
+    // small 뷰의 7개 요일 버튼 중 첫번째 클릭
+    const dayBtns = screen.getAllByRole('button')
+    if (dayBtns.length > 0) {
+      dayBtns[0].click()
+    }
+    expect(onSelectDate).toHaveBeenCalled()
+  })
+
+  it('singleDay 일정 (non-allDay) + currentDate 매칭 → smoke 렌더', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'Single',
+              startAt: new Date('2026-05-29T14:00:00Z'),
+              endAt: new Date('2026-05-29T15:00:00Z'),
+              allDay: false,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={new Date('2026-05-29')}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByTestId('day-cell-0')).toBeInTheDocument()
+  })
 })
