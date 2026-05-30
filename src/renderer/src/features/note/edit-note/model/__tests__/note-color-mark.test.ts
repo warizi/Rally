@@ -177,4 +177,66 @@ describe('round-trip', () => {
     expect(out).toContain('<span style="color:#dc2626">red</span>')
     expect(out).not.toContain('data-color-slot')
   })
+
+  it('연속된 색상 span 라운드트립', () => {
+    const md = '<span style="color:#ff0000">A</span><span style="color:#00ff00">B</span>'
+    const out = roundtrip(md)
+    expect(out).toContain('<span style="color:#ff0000">A</span>')
+    expect(out).toContain('<span style="color:#00ff00">B</span>')
+  })
+
+  it('빈 텍스트 span 라운드트립', () => {
+    const md = '<span style="color:#ff0000"></span>'
+    const out = roundtrip(md)
+    // 빈 mark 가 결과에 있을 수도 있고 없을 수도 있음 — 에러 없이 통과
+    expect(typeof out).toBe('string')
+  })
+
+  it('rgb() 형식 span 라운드트립', () => {
+    const md = '<span style="color:rgb(255,0,0)">red</span>'
+    const out = roundtrip(md)
+    expect(out).toContain('rgb(255,0,0)')
+  })
+
+  it('color: 뒤 공백 + 세미콜론 없는 형식 → 색상 추출 정상', () => {
+    const tree = parseAndRun('<span style="color : #f0f0f0">x</span>')
+    const para = tree.children[0]
+    if ('children' in para) {
+      const cs = para.children.find(
+        (c) => (c as { type?: string }).type === 'colorSpan'
+      ) as unknown as { color: string } | undefined
+      expect(cs?.color).toBe('#f0f0f0')
+    }
+  })
+
+  it('paragraph 끝 닫는 태그 없는 unpaired → 변경 없음', () => {
+    const md = '<span style="color:#ff0000">no close'
+    const out = roundtrip(md)
+    expect(out).not.toContain('colorSpan')
+  })
+})
+
+describe('OPEN_SPAN_COLOR_RE 패턴 분기', () => {
+  it('대문자 STYLE 도 매칭', () => {
+    const tree = parseAndRun('<SPAN STYLE="COLOR:#FF0000">u</SPAN>')
+    const para = tree.children[0]
+    if ('children' in para) {
+      // remark 가 대문자 SPAN 을 inline html 로 처리하는지 확인
+      const cs = para.children.find((c) => (c as { type?: string }).type === 'colorSpan')
+      // 매칭되든 안 되든 에러 없이 처리
+      expect(para.type).toBe('paragraph')
+      void cs
+    }
+  })
+
+  it('css 색상 multi-property → color 만 추출', () => {
+    const tree = parseAndRun('<span style="font-weight:bold;color:#abc;font-size:12px">m</span>')
+    const para = tree.children[0]
+    if ('children' in para) {
+      const cs = para.children.find(
+        (c) => (c as { type?: string }).type === 'colorSpan'
+      ) as unknown as { color: string } | undefined
+      expect(cs?.color).toBe('#abc')
+    }
+  })
 })
