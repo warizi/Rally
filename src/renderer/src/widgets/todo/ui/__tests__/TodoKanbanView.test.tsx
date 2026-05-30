@@ -85,4 +85,34 @@ describe('TodoKanbanView', () => {
     render(<TodoKanbanView {...baseProps} />)
     expect(screen.getByTestId('drag-overlay')).toBeInTheDocument()
   })
+
+  it('큰 컬럼 (todos > 5개) 렌더 → 카운트 정확', () => {
+    const bigMap = new Map([
+      ['할일', Array.from({ length: 10 }, (_, i) => ({ id: `t${i}` }))],
+      ['진행중', []],
+      ['완료', []],
+      ['보류', []]
+    ]) as unknown as Parameters<typeof TodoKanbanView>[0]['columnMap']
+    render(<TodoKanbanView {...baseProps} columnMap={bigMap} />)
+    expect(screen.getAllByTestId('board-할일')[0]).toHaveTextContent('할일:10')
+  })
+
+  it('filterActive=true → smoke 렌더 (4 보드 모두)', () => {
+    render(<TodoKanbanView {...baseProps} filterActive={true} />)
+    expect(screen.getAllByTestId('board-할일').length).toBeGreaterThan(0)
+    expect(screen.getAllByTestId('board-진행중').length).toBeGreaterThan(0)
+  })
+
+  it('activeColumn=2 → smoke 렌더 (다른 활성 컬럼)', () => {
+    render(<TodoKanbanView {...baseProps} activeColumn={2} />)
+    expect(screen.getAllByTestId('board-완료').length).toBeGreaterThan(0)
+  })
+
+  it('onItemClick / onItemDelete props 정의 → 즉시 호출 안 됨 (smoke)', () => {
+    const onItemClick = vi.fn()
+    const onItemDelete = vi.fn()
+    render(<TodoKanbanView {...baseProps} onItemClick={onItemClick} onItemDelete={onItemDelete} />)
+    expect(onItemClick).not.toHaveBeenCalled()
+    expect(onItemDelete).not.toHaveBeenCalled()
+  })
 })
