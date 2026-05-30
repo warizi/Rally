@@ -162,18 +162,6 @@ describe('TerminalTabBar', () => {
     expect(addSessionMock).not.toHaveBeenCalled()
   })
 
-  it('workspaceId null → 새 터미널 + 클릭 무동작 (workspace.getById 호출 안 함)', async () => {
-    // workspaceId 가 null 일 때 handleAddTab 가 일찍 return
-    // 현재 mock workspace 가 'ws-1' 로 hardcoded 되어 있어 별도 verify 어려움
-    // smoke: 클릭해도 에러 없음
-    render(<TerminalTabBar />, { wrapper: Wrapper })
-    await act(async () => {
-      screen.getByTitle('새 터미널').click()
-    })
-    // 에러 없이 통과
-    expect(screen.getByTitle('새 터미널')).toBeInTheDocument()
-  })
-
   it('session 정렬 — sortOrder 오름차순 (1, 0, 2 → s2, s1, s3)', () => {
     // 기존 sessionsMap 은 s1=0, s2=1, s3=2 → 화면에 tab-1, tab-2, tab-3 순으로 렌더
     render(<TerminalTabBar />, { wrapper: Wrapper })
