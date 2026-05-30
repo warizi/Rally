@@ -97,4 +97,19 @@ describe('EmbedView', () => {
     render(<EmbedView domain="image" entityId="i1" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText('Image File')).toBeInTheDocument()
   })
+
+  it('csv 미매칭 → "삭제된" 메시지', () => {
+    render(<EmbedView domain="csv" entityId="missing" height={300} onHeightChange={() => {}} />)
+    expect(screen.getByText(/삭제된/)).toBeInTheDocument()
+  })
+
+  it('pdf 미매칭 → "삭제된" 메시지', () => {
+    render(<EmbedView domain="pdf" entityId="missing" height={300} onHeightChange={() => {}} />)
+    expect(screen.getByText(/삭제된/)).toBeInTheDocument()
+  })
+
+  it('image 미매칭 → "삭제된" 메시지', () => {
+    render(<EmbedView domain="image" entityId="missing" height={300} onHeightChange={() => {}} />)
+    expect(screen.getByText(/삭제된/)).toBeInTheDocument()
+  })
 })
