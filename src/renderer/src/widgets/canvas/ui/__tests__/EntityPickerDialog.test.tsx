@@ -111,4 +111,69 @@ describe('EntityPickerDialog', () => {
     fireEvent.click(screen.getByText('노트'))
     expect(screen.getByText('Note B')).toBeInTheDocument()
   })
+
+  it('빈 type 목록 → "항목이 없습니다" 노출', () => {
+    render(<EntityPickerDialog {...base} />)
+    expect(screen.getByText('항목이 없습니다')).toBeInTheDocument()
+  })
+
+  it('검색 input → filtered 결과 (case-insensitive)', () => {
+    mocks.todos = [
+      { id: 't1', title: 'Apple', description: 'red fruit' } as never,
+      { id: 't2', title: 'Banana' } as never
+    ]
+    render(<EntityPickerDialog {...base} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'app' } })
+    expect(screen.getByText('Apple')).toBeInTheDocument()
+    expect(screen.queryByText('Banana')).toBeNull()
+  })
+
+  it('검색 → preview 도 매칭', () => {
+    mocks.todos = [{ id: 't1', title: 'X', description: 'matching preview text' } as never]
+    render(<EntityPickerDialog {...base} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), {
+      target: { value: 'matching' }
+    })
+    expect(screen.getByText('X')).toBeInTheDocument()
+  })
+
+  it('preview 있는 항목 → preview 텍스트 노출', () => {
+    mocks.todos = [{ id: 't1', title: 'Item', description: 'Some preview' } as never]
+    render(<EntityPickerDialog {...base} />)
+    expect(screen.getByText('Some preview')).toBeInTheDocument()
+  })
+
+  it('canvas 타입 선택 + 자기 자신 제외', () => {
+    mocks.canvases = [
+      { id: 'c1', title: 'Self Canvas' } as never,
+      { id: 'c2', title: 'Other Canvas' } as never
+    ]
+    render(<EntityPickerDialog {...base} canvasId="c1" />)
+    fireEvent.click(screen.getByText('캔버스'))
+    expect(screen.queryByText('Self Canvas')).toBeNull()
+    expect(screen.getByText('Other Canvas')).toBeInTheDocument()
+  })
+
+  it('type tab 변경 → search 초기화', () => {
+    mocks.todos = [{ id: 't1', title: 'Apple' } as never]
+    mocks.notes = [{ id: 'n1', title: 'NoteB' } as never]
+    render(<EntityPickerDialog {...base} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'app' } })
+    expect(screen.getByText('Apple')).toBeInTheDocument()
+    fireEvent.click(screen.getByText('노트'))
+    // search 초기화 → noteB 노출
+    expect(screen.getByText('NoteB')).toBeInTheDocument()
+    expect((screen.getByPlaceholderText('검색...') as HTMLInputElement).value).toBe('')
+  })
+
+  it('schedule 타입 → description 우선, 없으면 location preview', () => {
+    mocks.schedules = [
+      { id: 's1', title: 'Sched1', description: 'desc1' } as never,
+      { id: 's2', title: 'Sched2', location: 'loc2' } as never
+    ]
+    render(<EntityPickerDialog {...base} />)
+    fireEvent.click(screen.getByText('일정'))
+    expect(screen.getByText('desc1')).toBeInTheDocument()
+    expect(screen.getByText('loc2')).toBeInTheDocument()
+  })
 })
