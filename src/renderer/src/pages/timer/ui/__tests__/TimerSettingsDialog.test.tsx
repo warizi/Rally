@@ -66,4 +66,25 @@ describe('TimerSettingsDialog', () => {
     expect(screen.getByRole('button', { name: '확인' })).toBeDisabled()
     expect(screen.getByText('5초 이상으로 설정해주세요.')).toBeInTheDocument()
   })
+
+  it('1시간 → 1시 0분 0초 노출', () => {
+    mocks.durationMs = 60 * 60 * 1000
+    render(<TimerSettingsDialog open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('1시')).toBeInTheDocument()
+    expect(screen.getByText('0분')).toBeInTheDocument()
+    expect(screen.getByText('0초')).toBeInTheDocument()
+  })
+
+  it('정확히 5초 → 확인 버튼 활성', () => {
+    mocks.durationMs = 5000
+    render(<TimerSettingsDialog open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByRole('button', { name: '확인' })).not.toBeDisabled()
+  })
+
+  it('초기값 30초 → 0시 0분 30초 노출', () => {
+    mocks.durationMs = 30000
+    render(<TimerSettingsDialog open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('0시')).toBeInTheDocument()
+    expect(screen.getByText('30초')).toBeInTheDocument()
+  })
 })
