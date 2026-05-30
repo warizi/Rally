@@ -6,8 +6,12 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
 
+const detailMocks = vi.hoisted(() => ({
+  updateMutate: vi.fn()
+}))
+
 vi.mock('@entities/todo', () => ({
-  useUpdateTodo: () => ({ mutate: vi.fn() })
+  useUpdateTodo: () => ({ mutate: detailMocks.updateMutate })
 }))
 vi.mock('@features/todo/todo-field/ui/TodoCheckbox', () => ({
   TodoCheckbox: () => <div data-testid="todo-checkbox" />
@@ -18,15 +22,45 @@ vi.mock('@features/todo/todo-field/ui/TodoStatusSelect', () => ({
 vi.mock('@features/todo/todo-field/ui/TodoPrioritySelect', () => ({
   TodoPrioritySelect: () => <div data-testid="priority-select" />
 }))
+const datePickerMocks = vi.hoisted(() => ({
+  startDateOnChange: undefined as undefined | ((d: Date | null) => void),
+  dueDateOnChange: undefined as undefined | ((d: Date | null) => void),
+  startTimeOnChange: undefined as undefined | ((t: string | null) => void),
+  dueTimeOnChange: undefined as undefined | ((t: string | null) => void)
+}))
+
 vi.mock('@shared/ui/date-picker-button', () => ({
-  DatePickerButton: ({ placeholder }: { placeholder?: string }) => (
-    <div data-testid="date-picker">{placeholder}</div>
-  )
+  DatePickerButton: ({
+    placeholder,
+    onChange
+  }: {
+    placeholder?: string
+    onChange?: (d: Date | null) => void
+  }) => {
+    // 시작일 placeholder 가 같아 첫 호출 = 시작일, 두번째 = 마감일
+    if (!datePickerMocks.startDateOnChange) {
+      datePickerMocks.startDateOnChange = onChange
+    } else {
+      datePickerMocks.dueDateOnChange = onChange
+    }
+    return <div data-testid="date-picker">{placeholder}</div>
+  }
 }))
 vi.mock('@shared/ui/time-picker-button', () => ({
-  TimePickerButton: ({ disabled }: { disabled?: boolean }) => (
-    <div data-testid="time-picker" data-disabled={String(disabled)} />
-  )
+  TimePickerButton: ({
+    disabled,
+    onChange
+  }: {
+    disabled?: boolean
+    onChange?: (t: string | null) => void
+  }) => {
+    if (!datePickerMocks.startTimeOnChange) {
+      datePickerMocks.startTimeOnChange = onChange
+    } else {
+      datePickerMocks.dueTimeOnChange = onChange
+    }
+    return <div data-testid="time-picker" data-disabled={String(disabled)} />
+  }
 }))
 vi.mock('@entities/reminder', () => ({
   ReminderSelect: ({ disabled }: { disabled?: boolean }) => (
@@ -54,6 +88,11 @@ function todo(over: Partial<TodoItem> = {}): TodoItem {
 
 beforeEach(() => {
   localStorage.clear()
+  detailMocks.updateMutate.mockClear()
+  datePickerMocks.startDateOnChange = undefined
+  datePickerMocks.dueDateOnChange = undefined
+  datePickerMocks.startTimeOnChange = undefined
+  datePickerMocks.dueTimeOnChange = undefined
 })
 
 describe('TodoDetailFields', () => {
@@ -133,5 +172,53 @@ describe('TodoDetailFields', () => {
     const pickers = screen.getAllByTestId('time-picker')
     expect(pickers[0]).toHaveAttribute('data-disabled', 'false')
     expect(pickers[1]).toHaveAttribute('data-disabled', 'false')
+  })
+
+  it('startDate DatePicker onChange (날짜 변경) → updateTodo({startDate}) 호출', () => {
+    render(
+      <TodoDetailFields todo={todo({ startDate: new Date('2026-05-29') })} workspaceId="ws-1" />
+    )
+    const newDate = new Date('2026-06-01')
+    datePickerMocks.startDateOnChange?.(newDate)
+    expect(detailMocks.updateMutate).toHaveBeenCalledWith({
+      workspaceId: 'ws-1',
+      todoId: 't-1',
+      data: { startDate: newDate }
+    })
+  })
+
+  it('dueDate DatePicker onChange → updateTodo({dueDate})', () => {
+    render(<TodoDetailFields todo={todo({ dueDate: new Date('2026-05-29') })} workspaceId="ws-1" />)
+    const newDate = new Date('2026-06-15')
+    datePickerMocks.dueDateOnChange?.(newDate)
+    expect(detailMocks.updateMutate).toHaveBeenCalled()
+  })
+
+  it('startDate DatePicker onChange (null) → updateTodo({startDate:null})', () => {
+    render(<TodoDetailFields todo={todo({ startDate: new Date() })} workspaceId="ws-1" />)
+    datePickerMocks.startDateOnChange?.(null)
+    expect(detailMocks.updateMutate).toHaveBeenCalledWith({
+      workspaceId: 'ws-1',
+      todoId: 't-1',
+      data: { startDate: null }
+    })
+  })
+
+  it('startTime TimePicker onChange → updateTodo({startDate: 적용된 시간})', () => {
+    render(<TodoDetailFields todo={todo({ startDate: new Date() })} workspaceId="ws-1" />)
+    datePickerMocks.startTimeOnChange?.('10:30')
+    // mock applyTime 이 base 를 그대로 반환 → updateTodo 호출됨
+    expect(detailMocks.updateMutate).toHaveBeenCalled()
+  })
+
+  it('dueTime TimePicker onChange (dueDate 없음) → updateTodo({dueDate: applyTime(null, time)})', () => {
+    render(<TodoDetailFields todo={todo({ dueDate: null })} workspaceId="ws-1" />)
+    datePickerMocks.dueTimeOnChange?.('15:00')
+    expect(detailMocks.updateMutate).toHaveBeenCalled()
+  })
+
+  it('생성일 라벨 노출 (createdAt 한국 로케일)', () => {
+    render(<TodoDetailFields todo={todo()} workspaceId="ws-1" />)
+    expect(screen.getByText('생성일')).toBeInTheDocument()
   })
 })
