@@ -112,4 +112,32 @@ describe('EmbedView', () => {
     render(<EmbedView domain="image" entityId="missing" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText(/삭제된/)).toBeInTheDocument()
   })
+
+  it('csv content 빈 문자열 → "빈 CSV" 메시지', () => {
+    mocks.csvs = [{ id: 'c1', title: 'CSV X' }]
+    // content '' → parseCsv 가 즉시 빈 결과 → headers.length===0 → "빈 CSV"
+    render(<EmbedView domain="csv" entityId="c1" height={400} onHeightChange={() => {}} />)
+    expect(screen.getByText('빈 CSV')).toBeInTheDocument()
+  })
+
+  it('pdf content 없음 → "PDF 로딩 중..." 메시지', () => {
+    mocks.pdfs = [{ id: 'p1', title: 'PDF Y' }]
+    mocks.pdfContent = new ArrayBuffer(0)
+    render(<EmbedView domain="pdf" entityId="p1" height={0} onHeightChange={() => {}} />)
+    expect(screen.getByText('PDF 로딩 중...')).toBeInTheDocument()
+  })
+
+  it('csv height=0 → fixed height 미적용 분기', () => {
+    mocks.csvs = [{ id: 'c1', title: 'CSV H0' }]
+    render(<EmbedView domain="csv" entityId="c1" height={0} onHeightChange={() => {}} />)
+    // 제목 노출됨
+    expect(screen.getByText('CSV H0')).toBeInTheDocument()
+  })
+
+  it('domain="invalid" → "알 수 없는 임베드" fallback', () => {
+    render(
+      <EmbedView domain={'invalid' as never} entityId="x" height={100} onHeightChange={() => {}} />
+    )
+    expect(screen.getByText('알 수 없는 임베드')).toBeInTheDocument()
+  })
 })
