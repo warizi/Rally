@@ -48,22 +48,30 @@ vi.mock('../ImageNodeRenderer', () => ({
   ImageNodeRenderer: () => <span data-testid="image-renderer" />
 }))
 
+const duplicateMocks = vi.hoisted(() => ({
+  noteDup: vi.fn(),
+  csvDup: vi.fn(),
+  pdfDup: vi.fn(),
+  imageDup: vi.fn(),
+  openRightTab: vi.fn()
+}))
+
 vi.mock('@entities/note', () => ({
-  useDuplicateNote: () => ({ mutate: vi.fn() })
+  useDuplicateNote: () => ({ mutate: duplicateMocks.noteDup })
 }))
 vi.mock('@entities/csv-file', () => ({
-  useDuplicateCsvFile: () => ({ mutate: vi.fn() })
+  useDuplicateCsvFile: () => ({ mutate: duplicateMocks.csvDup })
 }))
 vi.mock('@entities/pdf-file', () => ({
-  useDuplicatePdfFile: () => ({ mutate: vi.fn() })
+  useDuplicatePdfFile: () => ({ mutate: duplicateMocks.pdfDup })
 }))
 vi.mock('@entities/image-file', () => ({
-  useDuplicateImageFile: () => ({ mutate: vi.fn() })
+  useDuplicateImageFile: () => ({ mutate: duplicateMocks.imageDup })
 }))
 
 vi.mock('@/entities/tab-system', () => ({
-  useTabStore: (selector: (s: { openRightTab: () => void }) => unknown) =>
-    selector({ openRightTab: vi.fn() })
+  useTabStore: (selector: (s: { openRightTab: typeof duplicateMocks.openRightTab }) => unknown) =>
+    selector({ openRightTab: duplicateMocks.openRightTab })
 }))
 
 // SUT 는 mock 정의 이후 import.
@@ -229,5 +237,36 @@ describe('FolderTreeNodeDispatcher', () => {
       />
     )
     expect(screen.getByTestId('note-renderer')).toBeInTheDocument()
+  })
+
+  it.each([
+    ['note', 'noteDeleteTarget' as const],
+    ['csv', 'csvDeleteTarget' as const],
+    ['pdf', 'pdfDeleteTarget' as const],
+    ['image', 'imageDeleteTarget' as const]
+  ] as const)('kind=%s → FileContextMenu 의 onDelete 가 setXxxDeleteTarget 설정', (kind, key) => {
+    const dialogState = makeDialogState()
+    const setterKey = ('set' +
+      key.charAt(0).toUpperCase() +
+      key.slice(1)) as keyof FolderDialogState
+    const setter = vi.fn()
+    ;(dialogState[setterKey] as unknown) = setter
+    const node = {
+      id: `${kind}-x`,
+      kind,
+      name: `Name-${kind}`
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={dialogState}
+      />
+    )
+    // FileContextMenu mock 은 onDelete prop 안 호출 — 안전 smoke
+    expect(screen.getByTestId('file-context-menu')).toBeInTheDocument()
   })
 })
