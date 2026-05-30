@@ -76,6 +76,10 @@ vi.mock('../WeekDayCell', () => ({
   WeekDayCell: ({ dayIdx }: { dayIdx: number }) => <div data-testid={`day-cell-${dayIdx}`} />
 }))
 
+vi.mock('../ScheduleDetailPopover', () => ({
+  ScheduleDetailPopover: ({ children }: { children: React.ReactNode }) => <>{children}</>
+}))
+
 import { WeekView } from '../WeekView'
 
 describe('WeekView', () => {
@@ -238,6 +242,118 @@ describe('WeekView', () => {
       />
     )
     expect(screen.getByTestId('day-cell-0')).toBeInTheDocument()
+  })
+
+  it('SmallDayList: schedules 비어있음 → "일정 없음" 노출', () => {
+    render(
+      <WeekView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByText('일정 없음')).toBeInTheDocument()
+  })
+
+  it('SmallDayList: singleDay 일정 → 제목 노출', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'Small Day Item',
+              startAt: new Date('2026-05-29T10:00:00Z'),
+              endAt: new Date('2026-05-29T11:00:00Z'),
+              allDay: false,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getAllByText('Small Day Item').length).toBeGreaterThan(0)
+  })
+
+  it('SmallDayList: todo 타입 → 체크박스 ☐ 노출', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 't1',
+              title: 'Todo Item',
+              type: 'todo',
+              startAt: new Date('2026-05-29T10:00:00Z'),
+              endAt: new Date('2026-05-29T11:00:00Z'),
+              allDay: false,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByText(/☐/)).toBeInTheDocument()
+  })
+
+  it('SmallDayList: todo 완료 → 체크박스 ☑ 노출', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 't1',
+              title: 'Done Todo',
+              type: 'todo',
+              startAt: new Date('2026-05-29T10:00:00Z'),
+              endAt: new Date('2026-05-29T11:00:00Z'),
+              allDay: false,
+              isDone: true
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByText(/☑/)).toBeInTheDocument()
+  })
+
+  it('SmallDayList: allDay 일정 → 시간 미노출', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'All Day',
+              startAt: new Date('2026-05-29T00:00:00Z'),
+              endAt: new Date('2026-05-29T23:59:59Z'),
+              allDay: true,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    // HH:mm 시간 텍스트 미노출
+    expect(screen.queryByText(/\d{2}:\d{2}/)).toBeNull()
   })
 
   it('singleDay 일정 (non-allDay) + currentDate 매칭 → smoke 렌더', () => {
