@@ -215,3 +215,135 @@ describe('expandIds', () => {
     expect(treeApi.open).toHaveBeenCalledWith('c')
   })
 })
+
+describe('expandToItem', () => {
+  type TreeNode = {
+    id: string
+    kind: 'folder' | 'note'
+    children: TreeNode[]
+  }
+
+  it('빈 트리 → 조용히 무동작', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    act(() => result.current.expandToItem([] as never, 'target', null))
+    expect(result.current.openState).toEqual({})
+  })
+
+  it('루트 노트 → ancestors 없음 → 변화 없음', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const tree: TreeNode[] = [{ id: 'root-note', kind: 'note', children: [] }]
+    act(() => result.current.expandToItem(tree as never, 'root-note', null))
+    expect(result.current.openState).toEqual({})
+  })
+
+  it('1-level nested → ancestor 폴더 1개 열림', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const tree: TreeNode[] = [
+      {
+        id: 'f1',
+        kind: 'folder',
+        children: [{ id: 'note1', kind: 'note', children: [] }]
+      }
+    ]
+    act(() => result.current.expandToItem(tree as never, 'note1', null))
+    expect(result.current.openState).toEqual({ f1: true })
+  })
+
+  it('2-level nested → 두 ancestor 모두 열림', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const tree: TreeNode[] = [
+      {
+        id: 'f1',
+        kind: 'folder',
+        children: [
+          {
+            id: 'f2',
+            kind: 'folder',
+            children: [{ id: 'note1', kind: 'note', children: [] }]
+          }
+        ]
+      }
+    ]
+    act(() => result.current.expandToItem(tree as never, 'note1', null))
+    expect(result.current.openState).toEqual({ f1: true, f2: true })
+  })
+
+  it('itemId 트리에 없음 → 변화 없음', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const tree: TreeNode[] = [{ id: 'f1', kind: 'folder', children: [] }]
+    act(() => result.current.expandToItem(tree as never, 'missing', null))
+    expect(result.current.openState).toEqual({})
+  })
+
+  it('이미 모두 열려있으면 navigateTab 안 호출 (skip)', () => {
+    const tabId = useTabStore.getState().openTab({
+      type: 'folder',
+      pathname: '/folder/ws-1',
+      title: '탐색기',
+      searchParams: { folderOpenState: JSON.stringify({ f1: true }) }
+    })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const tree: TreeNode[] = [
+      {
+        id: 'f1',
+        kind: 'folder',
+        children: [{ id: 'note1', kind: 'note', children: [] }]
+      }
+    ]
+    const before = useTabStore.getState().tabs[tabId]?.searchParams
+    act(() => result.current.expandToItem(tree as never, 'note1', null))
+    const after = useTabStore.getState().tabs[tabId]?.searchParams
+    expect(after).toBe(before)
+  })
+
+  it('treeApi.open 도 각 ancestor 에 호출됨', () => {
+    const tabId = useTabStore
+      .getState()
+      .openTab({ type: 'folder', pathname: '/folder/ws-1', title: '탐색기' })
+    const { result } = renderHook(() => useTreeOpenState(tabId))
+    const tree: TreeNode[] = [
+      {
+        id: 'f1',
+        kind: 'folder',
+        children: [
+          {
+            id: 'f2',
+            kind: 'folder',
+            children: [{ id: 'note1', kind: 'note', children: [] }]
+          }
+        ]
+      }
+    ]
+    const treeApi = {
+      closeAll: vi.fn(),
+      isOpen: vi.fn(() => false),
+      scrollTo: vi.fn(),
+      open: vi.fn(),
+      close: vi.fn(),
+      get: vi.fn(() => null)
+    }
+    act(() => result.current.expandToItem(tree as never, 'note1', treeApi))
+    expect(treeApi.open).toHaveBeenCalledWith('f1')
+    expect(treeApi.open).toHaveBeenCalledWith('f2')
+  })
+
+  it('tabId 없음 → 무동작', () => {
+    const { result } = renderHook(() => useTreeOpenState(undefined))
+    expect(() => act(() => result.current.expandToItem([] as never, 'x', null))).not.toThrow()
+  })
+})
