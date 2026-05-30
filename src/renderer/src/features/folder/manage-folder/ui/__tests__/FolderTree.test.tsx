@@ -5,7 +5,7 @@
  * Toolbar/SearchBar/Dialogs 모두 마운트.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   tree: [] as Array<{ id: string }>,
@@ -13,7 +13,13 @@ const mocks = vi.hoisted(() => ({
 }))
 
 vi.mock('@shared/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>
+  ScrollArea: ({
+    children,
+    viewportRef
+  }: {
+    children: React.ReactNode
+    viewportRef?: React.Ref<HTMLDivElement>
+  }) => <div ref={viewportRef}>{children}</div>
 }))
 
 vi.mock('../../lib/tree', () => ({
@@ -107,7 +113,13 @@ vi.mock('../../model/use-folder-search', () => ({
 }))
 
 vi.mock('@/entities/tab-system', () => ({
-  useTabStore: () => null
+  useTabStore: (sel: (s: Record<string, unknown>) => unknown) => {
+    if (typeof sel !== 'function') return null
+    return sel({
+      findPaneByTabId: () => null,
+      getActiveTab: () => null
+    })
+  }
 }))
 
 vi.mock('../FolderTreeNodeDispatcher', () => ({
@@ -162,5 +174,24 @@ describe('FolderTree', () => {
     render(<FolderTree workspaceId="ws" />)
     // 초기 렌더에선 ready=false 라서 Tree 도 미노출.
     expect(screen.queryByTestId('tree')).toBeNull()
+  })
+
+  it('rAF 실행 후 빈 tree → Empty 컴포넌트 노출', async () => {
+    mocks.tree = []
+    render(<FolderTree workspaceId="ws" />)
+    await waitFor(() => expect(screen.getByTestId('empty')).toBeInTheDocument())
+  })
+
+  it('rAF 실행 후 tree 데이터 있음 → Tree 컴포넌트 노출', async () => {
+    mocks.tree = [{ id: 'root-1' }]
+    render(<FolderTree workspaceId="ws" />)
+    await waitFor(() => expect(screen.getByTestId('tree')).toBeInTheDocument())
+    expect(screen.queryByTestId('empty')).toBeNull()
+  })
+
+  it('tabId 전달 → 정상 렌더 (smoke)', async () => {
+    mocks.tree = [{ id: 'root-1' }]
+    render(<FolderTree workspaceId="ws" tabId="tab-x" />)
+    expect(screen.getByTestId('toolbar')).toBeInTheDocument()
   })
 })
