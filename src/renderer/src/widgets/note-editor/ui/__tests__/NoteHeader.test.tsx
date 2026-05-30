@@ -141,11 +141,9 @@ describe('NoteHeader', () => {
         title: 'T',
         description: 'd',
         createdBy: 'u',
-        createdById: null,
-        createdAt: new Date(),
+        createdAt: 0,
         updatedBy: 'u',
-        updatedById: null,
-        updatedAt: new Date()
+        updatedAt: 0
       }
     ]
     render(<NoteHeader workspaceId="ws" noteId="n1" />)
