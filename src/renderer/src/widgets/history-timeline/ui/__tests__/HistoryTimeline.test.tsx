@@ -136,6 +136,153 @@ describe('HistoryTimeline', () => {
     expect(screen.getByText('Completed Todo')).toBeInTheDocument()
   })
 
+  it('parent + sub-todo 그룹화 (같은 day) → 부모 + 자식 모두 노출', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 'p1',
+                  title: 'Parent Todo',
+                  doneAt: new Date('2026-05-30T10:00:00Z'),
+                  parentId: null,
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                },
+                {
+                  id: 's1',
+                  parentId: 'p1',
+                  parentTitle: 'Parent Todo',
+                  title: 'Sub Todo',
+                  doneAt: new Date('2026-05-30T11:00:00Z'),
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getAllByText('Parent Todo').length).toBeGreaterThan(0)
+    expect(screen.getByText('Sub Todo')).toBeInTheDocument()
+  })
+
+  it('recurring kind → 보라색 아이콘 (text-violet-500)', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'Recurring Done',
+                  doneAt: new Date(),
+                  kind: 'recurring',
+                  parentId: null,
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    const { container } = render(
+      <HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />
+    )
+    expect(container.querySelector('.text-violet-500')).toBeInTheDocument()
+  })
+
+  it('links 있는 todo → LinkNode 노출', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'Todo with Link',
+                  doneAt: new Date(),
+                  parentId: null,
+                  links: [
+                    {
+                      type: 'note',
+                      id: 'n1',
+                      title: 'Linked Note',
+                      description: 'desc',
+                      updatedBy: 'user',
+                      updatedById: null,
+                      updatedAt: new Date()
+                    }
+                  ],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getByText('Linked Note')).toBeInTheDocument()
+  })
+
+  it('여러 day → 각 날짜별 라벨 노출', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'Day1',
+                  doneAt: new Date(),
+                  parentId: null,
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            },
+            {
+              date: '2026-05-29',
+              todos: [
+                {
+                  id: 't2',
+                  title: 'Day2',
+                  doneAt: new Date(),
+                  parentId: null,
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getByText('Day1')).toBeInTheDocument()
+    expect(screen.getByText('Day2')).toBeInTheDocument()
+  })
+
   it('isFetchingNextPage=true → 추가 Loader 노출', () => {
     mocks.data = {
       pages: [
