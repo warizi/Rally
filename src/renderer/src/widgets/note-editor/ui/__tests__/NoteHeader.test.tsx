@@ -131,4 +131,25 @@ describe('NoteHeader', () => {
       data: { description: 'New desc' }
     })
   })
+
+  it('note 있음 → footer prop 전달 (AuthorBadgePair smoke)', () => {
+    mocks.note = {
+      id: 'n1',
+      title: 'T',
+      description: 'd',
+      createdBy: 'u',
+      createdById: null,
+      createdAt: new Date(),
+      updatedBy: 'u',
+      updatedById: null,
+      updatedAt: new Date()
+    }
+    render(<NoteHeader workspaceId="ws" noteId="n1" />)
+    expect(mocks.receivedProps?.footer).toBeTruthy()
+  })
+
+  it('editable prop true 전달', () => {
+    render(<NoteHeader workspaceId="ws" noteId="n1" />)
+    expect(mocks.receivedProps?.editable).toBe(true)
+  })
 })
