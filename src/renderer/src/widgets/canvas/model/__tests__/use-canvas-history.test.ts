@@ -17,18 +17,6 @@ vi.mock('@entities/canvas', () => ({
 
 import { useCanvasHistory } from '../use-canvas-history'
 
-function makeStore(
-  initialState: { nodes: Array<unknown>; edges: Array<unknown> } = { nodes: [], edges: [] }
-): {
-  store: ReturnType<typeof createStore>
-  state: {
-    nodes: Array<{ id: string; data: Record<string, unknown>; position: { x: number; y: number } }>
-    edges: Array<{ id: string; data: Record<string, unknown> }>
-    setNodes: (n: unknown[]) => void
-    setEdges: (e: unknown[]) => void
-  }
-}
-
 function createStore(initial: {
   nodes: Array<{
     id: string
