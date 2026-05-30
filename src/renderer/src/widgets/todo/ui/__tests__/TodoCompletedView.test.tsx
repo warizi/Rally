@@ -147,4 +147,49 @@ describe('TodoCompletedView', () => {
     fireEvent.click(screen.getByRole('checkbox'))
     expect(mocks.uncompleteMutate).toHaveBeenCalled()
   })
+
+  it('여러 todo 항목 → 모두 행 노출', () => {
+    render(
+      <TodoCompletedView
+        items={
+          [
+            {
+              type: 'todo',
+              todo: { id: 't1', title: 'Done 1', priority: 'high', isDone: true }
+            },
+            {
+              type: 'todo',
+              todo: { id: 't2', title: 'Done 2', priority: 'low', isDone: true }
+            }
+          ] as unknown as Parameters<typeof TodoCompletedView>[0]['items']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    expect(screen.getByText('Done 1')).toBeInTheDocument()
+    expect(screen.getByText('Done 2')).toBeInTheDocument()
+  })
+
+  it('todo type + 제목 클릭 → onItemClick(todoId) 호출', () => {
+    const onItemClick = vi.fn()
+    render(
+      <TodoCompletedView
+        items={
+          [
+            {
+              type: 'todo',
+              todo: { id: 't-x', title: 'Click', priority: 'medium', isDone: true }
+            }
+          ] as unknown as Parameters<typeof TodoCompletedView>[0]['items']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={onItemClick}
+      />
+    )
+    fireEvent.click(screen.getByText('Click'))
+    expect(onItemClick).toHaveBeenCalledWith('t-x')
+  })
 })
