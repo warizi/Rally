@@ -128,4 +128,43 @@ describe('WeekView', () => {
     )
     expect(screen.getByTestId('day-cell-0')).toBeInTheDocument()
   })
+
+  it('selectedDate 가 주 안에 있음 → bg-primary 클래스 노출 (small 뷰)', () => {
+    const { container } = render(
+      <WeekView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={new Date('2026-05-29')}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(container.querySelector('.bg-primary')).toBeInTheDocument()
+  })
+
+  it('multiDay schedule (allDay) → 렌더 에러 없음 (7 cell 유지)', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 'all-day-1',
+              title: 'AllDayEvent',
+              startAt: new Date('2026-05-29T00:00:00Z'),
+              endAt: new Date('2026-05-30T00:00:00Z'),
+              allDay: true,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    for (let i = 0; i < 7; i++) {
+      expect(screen.getByTestId(`day-cell-${i}`)).toBeInTheDocument()
+    }
+  })
 })
