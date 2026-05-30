@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   useImageFilesByWorkspace,
   useImportImageFile,
+  useDuplicateImageFile,
   useRenameImageFile,
   useRemoveImageFile,
   useReadImageContent,
@@ -16,6 +17,7 @@ import type { ImageFileNode } from '../../model/types'
 // ─── window.api mock ──────────────────────────────────────────
 const mockReadByWorkspace = vi.fn()
 const mockImport = vi.fn()
+const mockDuplicate = vi.fn()
 const mockRename = vi.fn()
 const mockRemove = vi.fn()
 const mockReadContent = vi.fn()
@@ -27,6 +29,7 @@ beforeEach(() => {
     image: {
       readByWorkspace: mockReadByWorkspace,
       import: mockImport,
+      duplicate: mockDuplicate,
       rename: mockRename,
       remove: mockRemove,
       readContent: mockReadContent,
@@ -223,5 +226,36 @@ describe('useUpdateImageMeta', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['image', 'workspace', 'ws-1'] })
+  })
+})
+
+// ─── useDuplicateImageFile ────────────────────────────────────
+describe('useDuplicateImageFile', () => {
+  it('성공 → image.duplicate 호출 + invalidate', async () => {
+    mockDuplicate.mockResolvedValue({ success: true, data: SAMPLE_IMAGE })
+    const { queryClient, wrapper } = createWrapper()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const { result } = renderHook(() => useDuplicateImageFile(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', imageId: 'img-1' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockDuplicate).toHaveBeenCalledWith('ws-1', 'img-1')
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['image', 'workspace', 'ws-1'] })
+  })
+
+  it('실패 → error', async () => {
+    mockDuplicate.mockResolvedValue({
+      success: false,
+      errorType: 'ValidationError',
+      message: 'fail'
+    })
+    const { wrapper } = createWrapper()
+    const { result } = renderHook(() => useDuplicateImageFile(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', imageId: 'img-1' })
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
   })
 })
