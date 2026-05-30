@@ -138,4 +138,39 @@ describe('ScheduleDetailPopover', () => {
     // 시간 (HH:mm) 미노출
     expect(container.innerHTML).not.toMatch(/10:00.*11:00/)
   })
+
+  it('description 없음 → 설명 텍스트 미노출', () => {
+    const noDesc = {
+      ...baseSchedule,
+      description: null
+    } as unknown as Parameters<typeof ScheduleDetailPopover>[0]['schedule']
+    render(
+      <ScheduleDetailPopover schedule={noDesc} workspaceId="ws">
+        <button>trigger</button>
+      </ScheduleDetailPopover>
+    )
+    expect(screen.queryByText('설명')).toBeNull()
+  })
+
+  it('location 없음 → 위치 텍스트 미노출', () => {
+    const noLoc = {
+      ...baseSchedule,
+      location: null
+    } as unknown as Parameters<typeof ScheduleDetailPopover>[0]['schedule']
+    render(
+      <ScheduleDetailPopover schedule={noLoc} workspaceId="ws">
+        <button>trigger</button>
+      </ScheduleDetailPopover>
+    )
+    expect(screen.queryByText('회의실 A')).toBeNull()
+  })
+
+  it('children (custom trigger) 렌더', () => {
+    render(
+      <ScheduleDetailPopover schedule={baseSchedule} workspaceId="ws">
+        <button data-testid="custom-trigger">cl</button>
+      </ScheduleDetailPopover>
+    )
+    expect(screen.getByTestId('custom-trigger')).toBeInTheDocument()
+  })
 })
