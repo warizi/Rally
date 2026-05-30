@@ -159,4 +159,79 @@ describe('TrashPage', () => {
     r(<TrashPage />)
     expect(screen.getByText('(제목 없음)')).toBeInTheDocument()
   })
+
+  it('검색 input 변경 → search state 갱신 (X 버튼 노출)', () => {
+    r(<TrashPage />)
+    const input = screen.getByPlaceholderText('제목 검색...')
+    fireEvent.change(input, { target: { value: 'hello' } })
+    expect((input as HTMLInputElement).value).toBe('hello')
+  })
+
+  it('검색어 입력 후 X 버튼 클릭 → search 초기화', () => {
+    r(<TrashPage />)
+    const input = screen.getByPlaceholderText('제목 검색...')
+    fireEvent.change(input, { target: { value: 'hello' } })
+    expect((input as HTMLInputElement).value).toBe('hello')
+    // X 버튼 (input 내부 오른쪽)
+    const xButtons = screen.getAllByRole('button')
+    const xBtn = xButtons.find((b) => b.querySelector('svg.lucide-x'))
+    if (xBtn) fireEvent.click(xBtn)
+    expect((input as HTMLInputElement).value).toBe('')
+  })
+
+  it('batches.length 카운트 노출 (3개)', () => {
+    mocks.batches = [
+      {
+        id: 'b1',
+        rootEntityType: 'note',
+        rootTitle: 'A',
+        deletedAt: new Date().toISOString(),
+        childCount: 0
+      },
+      {
+        id: 'b2',
+        rootEntityType: 'note',
+        rootTitle: 'B',
+        deletedAt: new Date().toISOString(),
+        childCount: 0
+      },
+      {
+        id: 'b3',
+        rootEntityType: 'note',
+        rootTitle: 'C',
+        deletedAt: new Date().toISOString(),
+        childCount: 0
+      }
+    ]
+    r(<TrashPage />)
+    expect(screen.getByText('3개 항목')).toBeInTheDocument()
+  })
+
+  it('batches 있음 → 전체 비우기 버튼 enabled', () => {
+    mocks.batches = [
+      {
+        id: 'b1',
+        rootEntityType: 'note',
+        rootTitle: 'A',
+        deletedAt: new Date().toISOString(),
+        childCount: 0
+      }
+    ]
+    r(<TrashPage />)
+    expect(screen.getByRole('button', { name: /전체 비우기/ })).not.toBeDisabled()
+  })
+
+  it('영구 삭제 버튼 노출 → AlertDialog trigger (smoke)', () => {
+    mocks.batches = [
+      {
+        id: 'b1',
+        rootEntityType: 'note',
+        rootTitle: 'Item',
+        deletedAt: new Date().toISOString(),
+        childCount: 0
+      }
+    ]
+    r(<TrashPage />)
+    expect(screen.getByRole('button', { name: /영구 삭제/ })).toBeInTheDocument()
+  })
 })
