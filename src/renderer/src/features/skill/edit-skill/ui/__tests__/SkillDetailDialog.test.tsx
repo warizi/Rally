@@ -5,7 +5,7 @@
  * source='system' vs 'user' 분기 — system 은 description 입력 미노출.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 vi.mock('@entities/skill', () => ({
   useUpdateSkill: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -67,5 +67,40 @@ describe('SkillDetailDialog', () => {
   it('content textarea 노출 (form 필드)', () => {
     render(<SkillDetailDialog skill={userSkill} open={true} onOpenChange={vi.fn()} />)
     expect(screen.getByDisplayValue('# user content')).toBeInTheDocument()
+  })
+
+  it('user skill → description input 노출 (system 만 숨김)', () => {
+    render(<SkillDetailDialog skill={userSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByDisplayValue('user desc')).toBeInTheDocument()
+  })
+
+  it('system skill → description input 미노출', () => {
+    render(<SkillDetailDialog skill={systemSkill} open={true} onOpenChange={vi.fn()} />)
+    expect(screen.queryByDisplayValue('sys desc')).toBeNull()
+  })
+
+  it('system skill + hasOverride → "기본값으로 복원" 버튼 노출', () => {
+    const overrideSkill = { ...systemSkill, hasOverride: true } as unknown as Parameters<
+      typeof SkillDetailDialog
+    >[0]['skill']
+    render(<SkillDetailDialog skill={overrideSkill} open={true} onOpenChange={vi.fn()} />)
+    // 버튼 노출 — 텍스트가 description 과 button 양쪽에 나옴.
+    expect(
+      screen.getAllByText(/기본값으로 복원/).some((el) => el.tagName.toLowerCase() === 'button')
+    ).toBe(true)
+  })
+
+  it('system skill + hasOverride=false → 복원 버튼 미노출', () => {
+    render(<SkillDetailDialog skill={systemSkill} open={true} onOpenChange={vi.fn()} />)
+    // button 형태로는 없어야 한다.
+    const buttons = screen.queryAllByRole('button', { name: /기본값으로 복원/ })
+    expect(buttons).toEqual([])
+  })
+
+  it('취소 클릭 → onOpenChange(false)', () => {
+    const onOpenChange = vi.fn()
+    render(<SkillDetailDialog skill={userSkill} open={true} onOpenChange={onOpenChange} />)
+    fireEvent.click(screen.getByRole('button', { name: /취소/ }))
+    expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 })
