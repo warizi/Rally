@@ -6,7 +6,7 @@
  * children = controlled trigger.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   linked: [] as Array<{ entityType: string; entityId: string }>,
@@ -148,5 +148,62 @@ describe('LinkEntityPopover', () => {
       </LinkEntityPopover>
     )
     expect(container.querySelector('[data-popover-open="true"]')).toBeInTheDocument()
+  })
+
+  it('non-linked 항목 클릭 → linkEntity.mutate 호출 (entityType/Id 지정)', () => {
+    mocks.todos = [{ id: 'td1', title: 'Untouched Todo', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    // Tabs mock 가 모든 TabsContent 를 동시 렌더 → 첫 element 만 클릭.
+    fireEvent.click(screen.getAllByText('Untouched Todo')[0])
+    expect(mocks.linkMutate).toHaveBeenCalledTimes(1)
+    expect(mocks.linkMutate.mock.calls[0][0]).toMatchObject({
+      typeA: 'note',
+      idA: 'n1',
+      typeB: 'todo',
+      idB: 'td1',
+      workspaceId: 'ws'
+    })
+    expect(mocks.unlinkMutate).not.toHaveBeenCalled()
+  })
+
+  it('linked 항목 클릭 → unlinkEntity.mutate 호출', () => {
+    mocks.linked = [{ entityType: 'todo', entityId: 'td1' }]
+    mocks.todos = [{ id: 'td1', title: 'Linked Todo', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    fireEvent.click(screen.getAllByText('Linked Todo')[0])
+    expect(mocks.unlinkMutate).toHaveBeenCalledTimes(1)
+    expect(mocks.unlinkMutate.mock.calls[0][0]).toMatchObject({
+      typeA: 'note',
+      idA: 'n1',
+      typeB: 'todo',
+      idB: 'td1'
+    })
+    expect(mocks.linkMutate).not.toHaveBeenCalled()
+  })
+
+  it('검색 input 에 query 입력 → 매칭만 노출', () => {
+    mocks.todos = [
+      { id: 'td1', title: 'Apple', parentId: null },
+      { id: 'td2', title: 'Banana', parentId: null }
+    ]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    expect(screen.getAllByText('Apple').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Banana').length).toBeGreaterThan(0)
+
+    fireEvent.change(screen.getByPlaceholderText(/검색/), { target: { value: 'app' } })
+    expect(screen.getAllByText('Apple').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Banana')).toBeNull()
   })
 })

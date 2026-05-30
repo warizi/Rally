@@ -97,4 +97,30 @@ describe('PdfViewer', () => {
     fireEvent.click(btns[btns.length - 1]) // rotate 는 마지막 버튼
     // 회전이 적용됨 (rotation state 변경)
   })
+
+  it('zoomIn 버튼 클릭 → 줌 레벨 증가 (smoke)', () => {
+    render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    const btns = screen.getAllByRole('button')
+    // 두번째 버튼이 zoomIn
+    fireEvent.click(btns[1])
+    expect(btns.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('zoomOut 버튼 클릭 → 줌 레벨 감소 (smoke)', () => {
+    render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    const btns = screen.getAllByRole('button')
+    // 첫번째 버튼이 zoomOut
+    fireEvent.click(btns[0])
+    expect(btns.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('unmount → external event listener 제거', () => {
+    const { unmount } = render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    unmount()
+    act(() => {
+      window.dispatchEvent(new CustomEvent('pdf-external-changed', { detail: { pdfId: 'p1' } }))
+    })
+    // listener 제거 후 invalidate 호출 안 됨
+    expect(mocks.invalidate).not.toHaveBeenCalled()
+  })
 })

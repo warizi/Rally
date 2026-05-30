@@ -5,7 +5,7 @@
  * - DnD 로 session 의 sortOrder 변경 + IPC persist
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, act } from '@testing-library/react'
+import { render, screen, act, waitFor } from '@testing-library/react'
 import { createElement } from 'react'
 import type { JSX, ReactNode } from 'react'
 import { TerminalTabBar } from '../TerminalTabBar'
@@ -94,5 +94,51 @@ describe('TerminalTabBar', () => {
       screen.getByText('tab-2').click()
     })
     expect(setActiveSessionMock).toHaveBeenCalledWith('s2')
+  })
+
+  it('새 터미널 + → workspace.getById + terminal.create + addSession 호출', async () => {
+    const apiObj = (
+      window as unknown as { api: Record<string, Record<string, ReturnType<typeof vi.fn>>> }
+    ).api
+    apiObj.workspace.getById = vi.fn().mockResolvedValue({
+      success: true,
+      data: { id: 'ws-1', path: '/workspace' }
+    })
+    apiObj.terminal.create = vi.fn().mockResolvedValue({
+      success: true,
+      data: { id: 's4' }
+    })
+
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    await act(async () => {
+      screen.getByTitle('새 터미널').click()
+    })
+    await waitFor(() => {
+      expect(apiObj.workspace.getById).toHaveBeenCalledWith('ws-1')
+      expect(apiObj.terminal.create).toHaveBeenCalledWith(
+        expect.objectContaining({ workspaceId: 'ws-1', cwd: '/workspace', sortOrder: 3 })
+      )
+      expect(addSessionMock).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 's4', sortOrder: 3 })
+      )
+    })
+  })
+
+  it('새 터미널 + → workspace fetch 실패 시 addSession 호출 안 함', async () => {
+    const apiObj = (
+      window as unknown as { api: Record<string, Record<string, ReturnType<typeof vi.fn>>> }
+    ).api
+    apiObj.workspace.getById = vi.fn().mockResolvedValue({ success: false })
+    apiObj.terminal.create = vi.fn()
+
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    await act(async () => {
+      screen.getByTitle('새 터미널').click()
+    })
+    await waitFor(() => {
+      expect(apiObj.workspace.getById).toHaveBeenCalled()
+    })
+    expect(apiObj.terminal.create).not.toHaveBeenCalled()
+    expect(addSessionMock).not.toHaveBeenCalled()
   })
 })
