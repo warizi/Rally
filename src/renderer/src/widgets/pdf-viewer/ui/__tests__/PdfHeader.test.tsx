@@ -72,4 +72,22 @@ describe('PdfHeader', () => {
     expect(screen.getByTestId('link-popover')).toBeInTheDocument()
     expect(screen.getByTestId('tag-list')).toBeInTheDocument()
   })
+
+  it('pdf 매칭 → 제목 노출 (My PDF)', () => {
+    r(<PdfHeader workspaceId="ws-1" pdfId="p-1" />)
+    // title 이 editable header — input 으로 노출됨
+    expect(screen.getByDisplayValue('My PDF')).toBeInTheDocument()
+  })
+
+  it('pdf 없음 → 제목 빈 input', () => {
+    mocks.pdfFiles = []
+    r(<PdfHeader workspaceId="ws-1" pdfId="missing" />)
+    expect(screen.queryByDisplayValue('My PDF')).not.toBeInTheDocument()
+  })
+
+  it('description 있음 → editable description 노출', () => {
+    mocks.pdfFiles = [{ ...mocks.pdfFiles[0], description: 'pdf description' }]
+    r(<PdfHeader workspaceId="ws-1" pdfId="p-1" />)
+    expect(screen.getByDisplayValue('pdf description')).toBeInTheDocument()
+  })
 })
