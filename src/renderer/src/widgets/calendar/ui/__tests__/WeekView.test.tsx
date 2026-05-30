@@ -40,8 +40,12 @@ vi.mock('../../model/calendar-utils', () => ({
   isTodoItem: (s: { type?: string }) => s.type === 'todo'
 }))
 
+const layoutMocks = vi.hoisted(() => ({
+  weekBars: [] as Array<{ schedule: unknown; lane: number; startCol: number; span: number }>
+}))
+
 vi.mock('../../model/calendar-layout', () => ({
-  computeWeekBars: () => []
+  computeWeekBars: () => layoutMocks.weekBars
 }))
 
 vi.mock('../../model/calendar-move', () => ({
@@ -185,6 +189,55 @@ describe('WeekView', () => {
       dayBtns[0].click()
     }
     expect(onSelectDate).toHaveBeenCalled()
+  })
+
+  it('weekBars 데이터 있음 → bar-area 영역 노출 (smoke 렌더)', () => {
+    layoutMocks.weekBars = [
+      { schedule: { id: 's1', title: 'Bar', allDay: true } as never, lane: 0, startCol: 0, span: 3 }
+    ]
+    render(
+      <WeekView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getAllByTestId('bar-item').length).toBeGreaterThan(0)
+    layoutMocks.weekBars = []
+  })
+
+  it('singleDay + allDay 분류 분기 — multi 와 single 동시', () => {
+    render(
+      <WeekView
+        schedules={
+          [
+            {
+              id: 'm1',
+              title: 'MultiAllDay',
+              startAt: new Date('2026-05-29T00:00:00Z'),
+              endAt: new Date('2026-05-31T00:00:00Z'),
+              allDay: true,
+              isDone: false
+            },
+            {
+              id: 's2',
+              title: 'SingleTimed',
+              startAt: new Date('2026-05-29T10:00:00Z'),
+              endAt: new Date('2026-05-29T11:00:00Z'),
+              allDay: false,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof WeekView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByTestId('day-cell-0')).toBeInTheDocument()
   })
 
   it('singleDay 일정 (non-allDay) + currentDate 매칭 → smoke 렌더', () => {
