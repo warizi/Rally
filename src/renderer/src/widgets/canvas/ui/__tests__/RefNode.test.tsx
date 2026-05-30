@@ -131,7 +131,7 @@ describe('RefNode', () => {
         icon: () => null,
         label: '노트',
         resizable: true,
-        component: null
+        component: undefined
       }
     }
     render(<RefNode {...baseProps} />)
@@ -160,7 +160,7 @@ describe('RefNode', () => {
         icon: () => null,
         label: 'L',
         resizable: false,
-        component: null
+        component: undefined
       }
     }
     const sel = { ...baseProps, selected: true } as unknown as Parameters<typeof RefNode>[0]
