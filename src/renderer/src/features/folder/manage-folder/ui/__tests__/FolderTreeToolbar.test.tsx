@@ -93,4 +93,16 @@ describe('FolderTreeToolbar', () => {
     fireEvent.click(buttons[6])
     expect(onCreateFolder).toHaveBeenCalledTimes(1)
   })
+
+  it('총 7개 버튼 노출 (검색/접기/노트/테이블/PDF/이미지/폴더)', () => {
+    renderToolbar()
+    expect(screen.getAllByRole('button').length).toBe(7)
+  })
+
+  it('createHandlers prop 전달 시 mutations 즉시 호출 안 됨', () => {
+    const { createHandlers } = renderToolbar()
+    expect(createHandlers.handleCreateNote).not.toHaveBeenCalled()
+    expect(createHandlers.handleCreateCsv).not.toHaveBeenCalled()
+    expect(createHandlers.handleImportNote).not.toHaveBeenCalled()
+  })
 })
