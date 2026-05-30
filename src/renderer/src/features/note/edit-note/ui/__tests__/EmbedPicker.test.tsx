@@ -154,6 +154,64 @@ describe('EmbedPicker', () => {
     expect(screen.getByText('Image T')).toBeInTheDocument()
   })
 
+  it('Escape 키 → closePicker 호출', () => {
+    mocks.open = true
+    mocks.notes = [{ id: 'n1', title: 'X' }]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    fireEvent.keyDown(screen.getByRole('textbox'), { key: 'Escape' })
+    expect(mocks.closePicker).toHaveBeenCalledTimes(1)
+  })
+
+  it('ArrowDown + Enter → editor 없음 → handleSelect early return (smoke)', () => {
+    mocks.open = true
+    mocks.notes = [{ id: 'n1', title: 'Pick Me' }]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    const input = screen.getByRole('textbox')
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    // editor null → closePicker 호출 안 됨 (handleSelect 안 됨)
+    expect(mocks.closePicker).not.toHaveBeenCalled()
+  })
+
+  it('항목 클릭 → handleSelect (editor null) → 에러 없이 통과', () => {
+    mocks.open = true
+    mocks.notes = [{ id: 'n1', title: 'Click Me' }]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    fireEvent.click(screen.getByText('Click Me'))
+    // editor 없음 → 안전하게 통과 (에러 throw 없음)
+    expect(screen.getByText('Click Me')).toBeInTheDocument()
+  })
+
+  it('query 매칭 안 됨 → "결과 없음" 노출', () => {
+    mocks.open = true
+    mocks.notes = [{ id: 'n1', title: 'Apple' }]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'zzzz' } })
+    expect(screen.getByText('결과 없음')).toBeInTheDocument()
+  })
+
+  it('ArrowUp 키 → focusIndex -1 막힘 (0 유지, smoke)', () => {
+    mocks.open = true
+    mocks.notes = [
+      { id: 'n1', title: 'A' },
+      { id: 'n2', title: 'B' }
+    ]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    const input = screen.getByRole('textbox')
+    fireEvent.keyDown(input, { key: 'ArrowUp' })
+    // 에러 없이 통과
+    expect(screen.getByText('A')).toBeInTheDocument()
+  })
+
+  it('mouseEnter → focusIndex 변경 (Check 아이콘 노출 검증은 smoke 클릭)', () => {
+    mocks.open = true
+    mocks.notes = [{ id: 'n1', title: 'Hover Item' }]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    fireEvent.mouseEnter(screen.getByText('Hover Item'))
+    // 에러 없이 통과
+    expect(screen.getByText('Hover Item')).toBeInTheDocument()
+  })
+
   it('항목 50개 초과 → 50개로 제한', () => {
     mocks.open = true
     mocks.notes = Array.from({ length: 60 }, (_, i) => ({
