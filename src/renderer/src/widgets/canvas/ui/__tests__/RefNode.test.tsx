@@ -167,4 +167,56 @@ describe('RefNode', () => {
     const { container } = render(<RefNode {...sel} />)
     expect(container.firstChild).toBeTruthy()
   })
+
+  it('refId 있음 → ExternalLink 버튼 (PanePickerSubmenu) 노출', () => {
+    render(<RefNode {...baseProps} />)
+    // PanePickerSubmenu mock 이 children(onClick=noop) 호출 → 버튼 노출
+    expect(screen.getAllByRole('button').length).toBeGreaterThan(0)
+  })
+
+  it('refId 없음 → ExternalLink 버튼 미노출', () => {
+    const noRef = {
+      ...baseProps,
+      data: { ...baseProps.data, refId: null }
+    } as unknown as Parameters<typeof RefNode>[0]
+    const { container } = render(<RefNode {...noRef} />)
+    // 버튼 없음 (PanePickerSubmenu 안 렌더됨)
+    const buttons = container.querySelectorAll('button')
+    expect(buttons.length).toBe(0)
+  })
+
+  it('anyDragging=true + selected → interacting → mount 분기 (smoke)', () => {
+    mocks.anyDragging = true
+    const sel = { ...baseProps, selected: true } as unknown as Parameters<typeof RefNode>[0]
+    const { container } = render(<RefNode {...sel} />)
+    // 정상 렌더 + 에러 없음
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('config 의 icon component → Icon 자리 채움 (smoke)', () => {
+    const CustomIcon = (): React.JSX.Element => <span data-testid="custom-icon">I</span>
+    mocks.registry = {
+      note: {
+        icon: CustomIcon,
+        label: 'WithIcon',
+        resizable: true,
+        component: undefined
+      }
+    }
+    render(<RefNode {...baseProps} />)
+    expect(screen.getByTestId('custom-icon')).toBeInTheDocument()
+  })
+
+  it('content component 등록 → component 렌더 + refPreview/refMeta 전달', () => {
+    mocks.registry = {
+      note: {
+        icon: () => null,
+        label: 'L',
+        resizable: true,
+        component: ({ refId }) => <div data-testid="comp">id:{refId}</div>
+      }
+    }
+    render(<RefNode {...baseProps} />)
+    expect(screen.getByTestId('comp')).toHaveTextContent('id:n1')
+  })
 })

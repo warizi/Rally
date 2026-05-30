@@ -85,4 +85,49 @@ describe('RegisterSkillDialog', () => {
     const submitBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('등록'))
     expect(submitBtn).toBeDisabled()
   })
+
+  it('정상 form 입력 + 제출 → createSkill.mutateAsync 호출 + onOpenChange(false)', async () => {
+    mocks.createMutate.mockResolvedValue({ id: 'skill-1' })
+    const onOpenChange = vi.fn()
+    render(<RegisterSkillDialog open={true} onOpenChange={onOpenChange} />)
+    const inputs = screen.getAllByRole('textbox')
+    // nameSuffix input (첫번째)
+    fireEvent.change(inputs[0], { target: { value: 'my-skill' } })
+    // description textarea (두번째)
+    fireEvent.change(inputs[1], { target: { value: 'desc text' } })
+    const submitBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('등록'))
+    if (submitBtn) fireEvent.click(submitBtn)
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    await waitFor(() => expect(onOpenChange).toHaveBeenCalledWith(false))
+    expect(mocks.toastSuccess).toHaveBeenCalled()
+  })
+
+  it('createSkill 실패 → toast.error 호출 + onOpenChange 호출 안 함', async () => {
+    mocks.createMutate.mockRejectedValue(new Error('boom'))
+    const onOpenChange = vi.fn()
+    render(<RegisterSkillDialog open={true} onOpenChange={onOpenChange} />)
+    const inputs = screen.getAllByRole('textbox')
+    fireEvent.change(inputs[0], { target: { value: 'my-skill' } })
+    fireEvent.change(inputs[1], { target: { value: 'desc' } })
+    const submitBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('등록'))
+    if (submitBtn) fireEvent.click(submitBtn)
+    await waitFor(() => expect(mocks.toastError).toHaveBeenCalled())
+    expect(onOpenChange).not.toHaveBeenCalled()
+  })
+
+  it('빈 description → 설명 에러 메시지', async () => {
+    render(<RegisterSkillDialog open={true} onOpenChange={vi.fn()} />)
+    const inputs = screen.getAllByRole('textbox')
+    fireEvent.change(inputs[0], { target: { value: 'valid-name' } })
+    const submitBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('등록'))
+    if (submitBtn) fireEvent.click(submitBtn)
+    await waitFor(() =>
+      expect(screen.queryByText(/이 skill 이 무엇을 하는지 설명/)).toBeInTheDocument()
+    )
+  })
+
+  it('nameSuffix prefix "rally-" 노출 (InputGroup addon)', () => {
+    render(<RegisterSkillDialog open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getAllByText(/rally-/).length).toBeGreaterThan(0)
+  })
 })

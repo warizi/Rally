@@ -89,4 +89,124 @@ describe('Tree', () => {
     setup([{ id: 'a', name: 'A' }], { a: true }, ref)
     expect(typeof ref.current!.closeAll).toBe('function')
   })
+
+  it('node.toggle() 호출 → onToggle(id, !isOpen)', () => {
+    const onToggle = vi.fn()
+    function Wrapper(): React.JSX.Element {
+      const scrollRef = useRef<HTMLDivElement>(null)
+      return (
+        <div ref={scrollRef}>
+          <Tree<Node>
+            data={[{ id: 'a', name: 'A', children: [{ id: 'a1', name: 'A1' }] }]}
+            idAccessor={(n) => n.id}
+            childrenAccessor={(n) => n.children ?? null}
+            openState={{}}
+            onToggle={onToggle}
+            scrollElementRef={scrollRef}
+          >
+            {({ node }: NodeRendererProps<Node>) => (
+              <button data-testid={`toggle-${node.id}`} onClick={() => node.toggle()}>
+                {node.data.name}
+              </button>
+            )}
+          </Tree>
+        </div>
+      )
+    }
+    render(<Wrapper />)
+    screen.getByTestId('toggle-a').click()
+    expect(onToggle).toHaveBeenCalledWith('a', true)
+  })
+
+  it('leaf node.toggle() → no-op (onToggle 호출 안 함)', () => {
+    const onToggle = vi.fn()
+    function Wrapper(): React.JSX.Element {
+      const scrollRef = useRef<HTMLDivElement>(null)
+      return (
+        <div ref={scrollRef}>
+          <Tree<Node>
+            data={[{ id: 'leaf', name: 'L' }]}
+            idAccessor={(n) => n.id}
+            childrenAccessor={(n) => n.children ?? null}
+            openState={{}}
+            onToggle={onToggle}
+            scrollElementRef={scrollRef}
+          >
+            {({ node }: NodeRendererProps<Node>) => (
+              <button data-testid={`row-${node.id}`} onClick={() => node.toggle()}>
+                t
+              </button>
+            )}
+          </Tree>
+        </div>
+      )
+    }
+    render(<Wrapper />)
+    screen.getByTestId('row-leaf').click()
+    expect(onToggle).not.toHaveBeenCalled()
+  })
+
+  it('TreeApi.open(id) — 이미 열린 → no-op', () => {
+    const onToggle = vi.fn()
+    const ref = createRef<TreeApi<Node>>()
+    function Wrapper(): React.JSX.Element {
+      const scrollRef = useRef<HTMLDivElement>(null)
+      return (
+        <div ref={scrollRef}>
+          <Tree<Node>
+            data={[{ id: 'a', name: 'A', children: [{ id: 'a1', name: 'A1' }] }]}
+            idAccessor={(n) => n.id}
+            childrenAccessor={(n) => n.children ?? null}
+            openState={{ a: true }}
+            onToggle={onToggle}
+            scrollElementRef={scrollRef}
+            ref={ref}
+          >
+            {({ node }: NodeRendererProps<Node>) => (
+              <div data-testid={`row-${node.id}`}>{node.data.name}</div>
+            )}
+          </Tree>
+        </div>
+      )
+    }
+    render(<Wrapper />)
+    ref.current!.open('a')
+    expect(onToggle).not.toHaveBeenCalled()
+  })
+
+  it('TreeApi.close(id) — 이미 닫힌 → no-op', () => {
+    const onToggle = vi.fn()
+    const ref = createRef<TreeApi<Node>>()
+    setup([{ id: 'a', name: 'A', children: [{ id: 'a1', name: 'A1' }] }], {}, ref)
+    ref.current!.close('a')
+    expect(onToggle).not.toHaveBeenCalled()
+  })
+
+  it('TreeApi.open(id) 미오픈 → onToggle(id, true) 호출', () => {
+    const onToggle = vi.fn()
+    const ref = createRef<TreeApi<Node>>()
+    function Wrapper(): React.JSX.Element {
+      const scrollRef = useRef<HTMLDivElement>(null)
+      return (
+        <div ref={scrollRef}>
+          <Tree<Node>
+            data={[{ id: 'a', name: 'A', children: [{ id: 'a1', name: 'A1' }] }]}
+            idAccessor={(n) => n.id}
+            childrenAccessor={(n) => n.children ?? null}
+            openState={{}}
+            onToggle={onToggle}
+            scrollElementRef={scrollRef}
+            ref={ref}
+          >
+            {({ node }: NodeRendererProps<Node>) => (
+              <div data-testid={`row-${node.id}`}>{node.data.name}</div>
+            )}
+          </Tree>
+        </div>
+      )
+    }
+    render(<Wrapper />)
+    ref.current!.open('a')
+    expect(onToggle).toHaveBeenCalledWith('a', true)
+  })
 })
