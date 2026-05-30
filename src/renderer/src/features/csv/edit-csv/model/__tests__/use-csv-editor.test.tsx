@@ -111,4 +111,78 @@ describe('useCsvEditor', () => {
     expect(result.current.canUndo).toBe(false)
     expect(result.current.canRedo).toBe(false)
   })
+
+  it('addRowAt(index) → 특정 위치에 빈 행 추가', () => {
+    const { result } = renderHook(() => useCsvEditor('ws', 'c1', 'a,b\n1,2\n3,4'))
+    act(() => {
+      result.current.addRowAt(1)
+    })
+    // 1번 위치에 빈 행
+    expect(result.current.data).toHaveLength(3)
+    expect(result.current.data[1]).toEqual(['', ''])
+  })
+
+  it('addColumnAt(index) → 특정 위치에 컬럼 추가 + 데이터 빈셀 삽입', () => {
+    const { result } = renderHook(() => useCsvEditor('ws', 'c1', 'a,b\n1,2'))
+    act(() => {
+      result.current.addColumnAt(1, 'mid')
+    })
+    expect(result.current.headers).toEqual(['a', 'mid', 'b'])
+    expect(result.current.data[0]).toEqual(['1', '', '2'])
+  })
+
+  it('updateCells (multi) → 모든 셀 일괄 변경', () => {
+    const { result } = renderHook(() => useCsvEditor('ws', 'c1', 'a,b\n1,2\n3,4'))
+    act(() => {
+      result.current.updateCells([
+        { row: 0, col: 0, value: 'X' },
+        { row: 1, col: 1, value: 'Y' }
+      ])
+    })
+    expect(result.current.data[0][0]).toBe('X')
+    expect(result.current.data[1][1]).toBe('Y')
+  })
+
+  it('reset(content) → 새 content 로 reset + history 초기화', () => {
+    const { result } = renderHook(() => useCsvEditor('ws', 'c1', 'a,b\n1,2'))
+    act(() => {
+      result.current.updateCell(0, 0, 'X')
+    })
+    expect(result.current.canUndo).toBe(true)
+    act(() => {
+      result.current.reset('x,y\n5,6\n7,8')
+    })
+    expect(result.current.headers).toEqual(['x', 'y'])
+    expect(result.current.data).toEqual([
+      ['5', '6'],
+      ['7', '8']
+    ])
+    expect(result.current.canUndo).toBe(false)
+  })
+
+  it('redo 다음 새 변경 → canRedo=false', () => {
+    const { result } = renderHook(() => useCsvEditor('ws', 'c1', 'a,b\n1,2'))
+    act(() => {
+      result.current.updateCell(0, 0, 'X')
+      result.current.undo()
+    })
+    expect(result.current.canRedo).toBe(true)
+    act(() => {
+      result.current.updateCell(0, 0, 'Y')
+    })
+    expect(result.current.canRedo).toBe(false)
+  })
+
+  it('debounce 800ms 후 writeCsv 호출 (smoke)', async () => {
+    const { result } = renderHook(() => useCsvEditor('ws', 'c1', 'a,b\n1,2'))
+    act(() => {
+      result.current.updateCell(0, 0, 'X')
+    })
+    expect(result.current.isDirty).toBe(true)
+    act(() => {
+      vi.advanceTimersByTime(1000)
+    })
+    // isDirty 가 false 로 변경됨 (writeCsv 호출 후)
+    expect(result.current.isDirty).toBe(false)
+  })
 })
