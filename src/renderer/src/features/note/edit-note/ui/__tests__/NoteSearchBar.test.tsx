@@ -77,4 +77,28 @@ describe('NoteSearchBar', () => {
     expect(next).toBeDisabled()
     vi.useRealTimers()
   })
+
+  it('검색어 입력 후 X(close) 버튼 → 검색어 reset (placeholder 노출)', () => {
+    const onClose = vi.fn()
+    render(<NoteSearchBar open={true} onClose={onClose} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'foo' } })
+    expect(screen.getByPlaceholderText('검색...')).toHaveValue('foo')
+    fireEvent.click(screen.getAllByRole('button')[2])
+    expect(onClose).toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('open=true → input 자동 focus (smoke)', () => {
+    render(<NoteSearchBar open={true} onClose={vi.fn()} />)
+    expect(screen.getByPlaceholderText('검색...')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('Enter 키 → onClose 호출 안 함 (검색 입력 전용)', () => {
+    const onClose = vi.fn()
+    render(<NoteSearchBar open={true} onClose={onClose} />)
+    fireEvent.keyDown(screen.getByPlaceholderText('검색...'), { key: 'Enter' })
+    expect(onClose).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
 })

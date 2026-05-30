@@ -143,4 +143,58 @@ describe('PendingLinkPicker', () => {
     expect(screen.getByTestId('tab-csv')).toBeInTheDocument()
     expect(screen.getByTestId('tab-canvas')).toBeInTheDocument()
   })
+
+  it('미선택 항목 클릭 → onAdd 호출', () => {
+    const onAdd = vi.fn()
+    mocks.todos = [{ id: 'td1', title: 'Add Me', parentId: null }]
+    render(
+      <PendingLinkPicker
+        workspaceId="ws"
+        excludeType="note"
+        selected={[]}
+        onAdd={onAdd}
+        onRemove={vi.fn()}
+      />
+    )
+    // entityType excludes 'note' → 첫 active = 'todo'
+    fireEvent.click(screen.getAllByText('Add Me')[0])
+    expect(onAdd).toHaveBeenCalledWith({ type: 'todo', id: 'td1', title: 'Add Me' })
+  })
+
+  it('이미 selected 항목 클릭 → onRemove 호출', () => {
+    const onRemove = vi.fn()
+    mocks.todos = [{ id: 'td1', title: 'Already', parentId: null }]
+    render(
+      <PendingLinkPicker
+        workspaceId="ws"
+        excludeType="note"
+        selected={[{ type: 'todo', id: 'td1', title: 'Already' }]}
+        onAdd={vi.fn()}
+        onRemove={onRemove}
+      />
+    )
+    fireEvent.click(screen.getAllByText('Already')[0])
+    expect(onRemove).toHaveBeenCalledWith(expect.objectContaining({ type: 'todo', id: 'td1' }))
+  })
+
+  it('search input → 필터 적용', () => {
+    mocks.todos = [
+      { id: 'td1', title: 'Foo', parentId: null },
+      { id: 'td2', title: 'Bar', parentId: null }
+    ]
+    render(
+      <PendingLinkPicker
+        workspaceId="ws"
+        excludeType="note"
+        selected={[]}
+        onAdd={vi.fn()}
+        onRemove={vi.fn()}
+      />
+    )
+    expect(screen.getAllByText('Foo').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Bar').length).toBeGreaterThan(0)
+    fireEvent.change(screen.getByPlaceholderText(/검색/), { target: { value: 'foo' } })
+    expect(screen.getAllByText('Foo').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Bar')).toBeNull()
+  })
 })

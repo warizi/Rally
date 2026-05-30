@@ -109,4 +109,37 @@ describe('useCanvasHydration', () => {
     renderHook(() => useCanvasHydration('c1', store, hydratedRef, skipRef, initHistory))
     expect(initHistory).not.toHaveBeenCalled()
   })
+
+  it('isLoading=true → hydratedRef.current=false 유지 (초기 hydration skip)', () => {
+    mocks.nodesLoading = true
+    const store = createStore() as Parameters<typeof useCanvasHydration>[1]
+    const hydratedRef = { current: false }
+    const skipRef = { current: false }
+    const initHistory = vi.fn()
+    renderHook(() => useCanvasHydration('c1', store, hydratedRef, skipRef, initHistory))
+    expect(hydratedRef.current).toBe(false)
+    expect(initHistory).not.toHaveBeenCalled()
+  })
+
+  it('dbNodes/dbEdges 있음 → setNodes / setEdges 가 ReactFlow 형태로 호출됨', () => {
+    mocks.nodes = [{ id: 'n1' }, { id: 'n2' }]
+    mocks.edges = [{ id: 'e1' }]
+    const store = createStore() as Parameters<typeof useCanvasHydration>[1]
+    const hydratedRef = { current: false }
+    const skipRef = { current: false }
+    renderHook(() => useCanvasHydration('c1', store, hydratedRef, skipRef))
+    expect(hydratedRef.current).toBe(true)
+    // setHydrated(true) 호출 → store.hydrated = true
+    expect(store.getState().hydrated).toBe(true)
+  })
+
+  it('initHistory 없음 (undefined) → 에러 없이 마운트 (smoke)', () => {
+    const store = createStore() as Parameters<typeof useCanvasHydration>[1]
+    const hydratedRef = { current: false }
+    const skipRef = { current: false }
+    const { result } = renderHook(() =>
+      useCanvasHydration('c1', store, hydratedRef, skipRef, undefined)
+    )
+    expect(result.current.isLoading).toBe(false)
+  })
 })

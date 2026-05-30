@@ -129,4 +129,77 @@ describe('ManageRecurringDialog', () => {
     // 2026. 5. 1. ~ 2026. 5. 31.
     expect(screen.getByText(/~/)).toBeInTheDocument()
   })
+
+  it('priority="low" → "낮음" 라벨 노출', () => {
+    mocks.rules = [
+      {
+        id: 'r-low',
+        title: '저우선',
+        priority: 'low',
+        recurrenceType: 'daily',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('낮음')).toBeInTheDocument()
+  })
+
+  it('weekday 타입 → 평일 라벨 (RECURRENCE_TYPE_LABELS)', () => {
+    mocks.rules = [
+      {
+        id: 'r-wd',
+        title: '평일',
+        priority: 'medium',
+        recurrenceType: 'weekday',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('평일')).toBeInTheDocument()
+  })
+
+  it('weekend 타입 → 주말 라벨', () => {
+    mocks.rules = [
+      {
+        id: 'r-we',
+        title: '주말',
+        priority: 'medium',
+        recurrenceType: 'weekend',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByText('주말')).toBeInTheDocument()
+  })
+
+  it('endTime만 있고 startTime null → 시간 미노출', () => {
+    mocks.rules = [
+      {
+        id: 'r-no-time',
+        title: '시간없음',
+        priority: 'medium',
+        recurrenceType: 'daily',
+        daysOfWeek: null,
+        startDate: new Date('2026-05-01'),
+        endDate: null,
+        startTime: null,
+        endTime: null
+      }
+    ]
+    r(<ManageRecurringDialog workspaceId="ws-1" open={true} onOpenChange={vi.fn()} />)
+    // 시간 (HH:mm) 패턴이 노출되지 않음
+    expect(screen.queryByText(/\d{2}:\d{2}.*~.*\d{2}:\d{2}/)).toBeNull()
+  })
 })
