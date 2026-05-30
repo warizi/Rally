@@ -105,4 +105,72 @@ describe('TodoHoldingOnView', () => {
       data: { isDone: true }
     })
   })
+
+  it('priority="high" → "높음" 라벨 노출', () => {
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            {
+              id: 't1',
+              title: 'High Task',
+              status: '보류',
+              priority: 'high',
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    expect(screen.getByText('높음')).toBeInTheDocument()
+  })
+
+  it('priority="low" → "낮음" 라벨 노출', () => {
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            {
+              id: 't1',
+              title: 'Low Task',
+              status: '보류',
+              priority: 'low',
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    expect(screen.getByText('낮음')).toBeInTheDocument()
+  })
+
+  it('제목 클릭 → onItemClick(todoId) 호출', () => {
+    const onItemClick = vi.fn()
+    render(
+      <TodoHoldingOnView
+        todos={
+          [
+            {
+              id: 't-x',
+              title: 'Click Me',
+              status: '보류',
+              priority: 'medium',
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof TodoHoldingOnView>[0]['todos']
+        }
+        workspaceId="ws"
+        filterActive={false}
+        onItemClick={onItemClick}
+      />
+    )
+    fireEvent.click(screen.getByText('Click Me'))
+    expect(onItemClick).toHaveBeenCalledWith('t-x')
+  })
 })
