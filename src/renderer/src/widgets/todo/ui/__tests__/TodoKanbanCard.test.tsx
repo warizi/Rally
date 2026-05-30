@@ -104,6 +104,68 @@ describe('TodoKanbanCard', () => {
     )
     expect(screen.getByText(/2\/3/)).toBeInTheDocument()
   })
+
+  it('priority="high" → 빨간 strip 클래스 (bg-red-500)', () => {
+    const { container } = render(
+      <TodoKanbanCard
+        todo={baseTodo}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(container.querySelector('.bg-red-500')).toBeInTheDocument()
+  })
+
+  it('priority="low" → 파란 strip 클래스 (bg-blue-400)', () => {
+    const lowTodo = { ...baseTodo, priority: 'low' } as unknown as Parameters<
+      typeof TodoKanbanCard
+    >[0]['todo']
+    const { container } = render(
+      <TodoKanbanCard
+        todo={lowTodo}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(container.querySelector('.bg-blue-400')).toBeInTheDocument()
+  })
+
+  it('priority="medium" → amber strip 클래스 (bg-amber-400)', () => {
+    const medTodo = { ...baseTodo, priority: 'medium' } as unknown as Parameters<
+      typeof TodoKanbanCard
+    >[0]['todo']
+    const { container } = render(
+      <TodoKanbanCard
+        todo={medTodo}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={vi.fn()}
+        onItemDelete={vi.fn()}
+      />
+    )
+    expect(container.querySelector('.bg-amber-400')).toBeInTheDocument()
+  })
+
+  it('카드 클릭 → onItemClick(todo.id) 호출', () => {
+    const onItemClick = vi.fn()
+    const { container } = render(
+      <TodoKanbanCard
+        todo={baseTodo}
+        subTodos={[]}
+        workspaceId="ws"
+        onItemClick={onItemClick}
+        onItemDelete={vi.fn()}
+      />
+    )
+    const card = container.querySelector('[data-kanban-card="true"]') as HTMLElement
+    expect(card).toBeTruthy()
+    card.click()
+    expect(onItemClick).toHaveBeenCalledWith('t1')
+  })
 })
 
 describe('TodoKanbanCardOverlay', () => {
