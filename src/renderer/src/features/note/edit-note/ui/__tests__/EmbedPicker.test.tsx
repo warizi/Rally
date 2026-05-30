@@ -5,7 +5,7 @@
  * 데이터 4종 (notes/csvs/pdfs/images) 통합 표시.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   open: false,
@@ -115,5 +115,54 @@ describe('EmbedPicker', () => {
     mocks.open = true
     render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
     expect(screen.getByRole('textbox')).toBeInTheDocument()
+  })
+
+  it('query 입력 → 매칭 항목만 노출 (case-insensitive)', () => {
+    mocks.open = true
+    mocks.notes = [
+      { id: 'n1', title: 'Apple Pie' },
+      { id: 'n2', title: 'Banana Bread' }
+    ]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'apple' } })
+    expect(screen.getByText('Apple Pie')).toBeInTheDocument()
+    expect(screen.queryByText('Banana Bread')).toBeNull()
+  })
+
+  it('query 공백 분리 토큰 → 모든 토큰 매칭만 노출', () => {
+    mocks.open = true
+    mocks.notes = [
+      { id: 'n1', title: 'foo bar baz' },
+      { id: 'n2', title: 'foo qux' }
+    ]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'foo bar' } })
+    expect(screen.getByText('foo bar baz')).toBeInTheDocument()
+    expect(screen.queryByText('foo qux')).toBeNull()
+  })
+
+  it('4개 도메인 항목 모두 노출 (notes + csvs + pdfs + images)', () => {
+    mocks.open = true
+    mocks.notes = [{ id: 'n1', title: 'Note T' }]
+    mocks.csvs = [{ id: 'c1', title: 'CSV T' }]
+    mocks.pdfs = [{ id: 'p1', title: 'PDF T' }]
+    mocks.images = [{ id: 'i1', title: 'Image T' }]
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    expect(screen.getByText('Note T')).toBeInTheDocument()
+    expect(screen.getByText('CSV T')).toBeInTheDocument()
+    expect(screen.getByText('PDF T')).toBeInTheDocument()
+    expect(screen.getByText('Image T')).toBeInTheDocument()
+  })
+
+  it('항목 50개 초과 → 50개로 제한', () => {
+    mocks.open = true
+    mocks.notes = Array.from({ length: 60 }, (_, i) => ({
+      id: `n${i}`,
+      title: `Note ${i}`
+    }))
+    render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    expect(screen.getByText('Note 0')).toBeInTheDocument()
+    expect(screen.getByText('Note 49')).toBeInTheDocument()
+    expect(screen.queryByText('Note 50')).toBeNull()
   })
 })

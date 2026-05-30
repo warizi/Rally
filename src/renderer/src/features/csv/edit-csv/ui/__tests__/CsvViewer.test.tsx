@@ -59,12 +59,27 @@ vi.mock('../../model/use-csv-search', () => ({
   })
 }))
 
+const csvTableProps: {
+  current: null | {
+    onAddColumnAt: (index: number, name?: string) => void
+    onRemoveColumn: (colIndex: number) => void
+    columnSizing: Record<string, number>
+  }
+} = { current: null }
+
 vi.mock('../CsvToolbar', () => ({
   CsvToolbar: () => <div data-testid="csv-toolbar" />
 }))
 
 vi.mock('../CsvTable', () => ({
-  CsvTable: () => <div data-testid="csv-table" />
+  CsvTable: (props: {
+    onAddColumnAt: (index: number, name?: string) => void
+    onRemoveColumn: (colIndex: number) => void
+    columnSizing: Record<string, number>
+  }) => {
+    csvTableProps.current = props
+    return <div data-testid="csv-table" />
+  }
 }))
 
 import { CsvViewer } from '../CsvViewer'
@@ -95,5 +110,35 @@ describe('CsvViewer', () => {
       <CsvViewer workspaceId="ws" csvId="c1" initialContent="" initialColumnWidths="not json" />
     )
     expect(screen.getByTestId('csv-table')).toBeInTheDocument()
+  })
+
+  it('onAddColumnAt(index) → columnSizing 의 col_index 이상이 +1 시프트', () => {
+    render(
+      <CsvViewer
+        workspaceId="ws"
+        csvId="c1"
+        initialContent=""
+        initialColumnWidths='{"col_0":100,"col_1":150,"col_2":200}'
+      />
+    )
+    // 초기 sizing 확인
+    expect(csvTableProps.current?.columnSizing).toEqual({ col_0: 100, col_1: 150, col_2: 200 })
+
+    // 인덱스 1 위치에 새 열 추가 → col_1, col_2 가 col_2, col_3 으로 시프트
+    csvTableProps.current?.onAddColumnAt(1, 'NewCol')
+    expect(mocks.editor.addColumnAt).toHaveBeenCalledWith(1, 'NewCol')
+  })
+
+  it('onRemoveColumn(index) → columnSizing 의 col_index 이상이 -1 시프트, index 키 제거', () => {
+    render(
+      <CsvViewer
+        workspaceId="ws"
+        csvId="c1"
+        initialContent=""
+        initialColumnWidths='{"col_0":100,"col_1":150,"col_2":200}'
+      />
+    )
+    csvTableProps.current?.onRemoveColumn(1)
+    expect(mocks.editor.removeColumn).toHaveBeenCalledWith(1)
   })
 })
