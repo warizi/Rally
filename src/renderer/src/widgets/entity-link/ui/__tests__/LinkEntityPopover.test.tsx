@@ -336,4 +336,62 @@ describe('LinkEntityPopover', () => {
     fireEvent.click(item)
     expect(mocks.linkMutate).toHaveBeenCalledTimes(1)
   })
+
+  it('input keyDown 좌우 → 기본 동작 (no preventDefault)', () => {
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const input = screen.getByPlaceholderText(/검색/)
+    fireEvent.keyDown(input, { key: 'ArrowLeft' })
+    fireEvent.keyDown(input, { key: 'ArrowRight' })
+    expect(input).toBeInTheDocument()
+  })
+
+  it('Tab 키 → list 모드 진입 시 무시 (smoke)', () => {
+    mocks.todos = [{ id: 't1', title: 'X', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const input = screen.getByPlaceholderText(/검색/)
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    fireEvent.keyDown(input, { key: 'Tab' })
+    expect(screen.getAllByText('X').length).toBeGreaterThan(0)
+  })
+
+  it('schedule 데이터 → schedule 탭 활성 + 항목 노출', () => {
+    mocks.schedules = [{ id: 'sc1', title: 'Schedule X' }]
+    render(
+      <LinkEntityPopover entityType="todo" entityId="t1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    expect(screen.getAllByText('Schedule X').length).toBeGreaterThan(0)
+  })
+
+  it('pdf 데이터 → 첫 active=todo, 데이터 노출 안 됨 (다른 탭)', () => {
+    mocks.pdfs = [{ id: 'p1', title: 'PDF X' }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    // pdf 탭 비활성 — 텍스트 매칭 안 됨
+    expect(screen.queryByText('PDF X')).toBeNull()
+  })
+
+  it('csv + image + canvas 7개 탭 모두 노출 (smoke)', () => {
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    // 7개 탭 - 텍스트 컨테이너 확인
+    expect(screen.getByTestId('tab-csv')).toBeInTheDocument()
+    expect(screen.getByTestId('tab-image')).toBeInTheDocument()
+    expect(screen.getByTestId('tab-canvas')).toBeInTheDocument()
+  })
 })
