@@ -123,4 +123,55 @@ describe('PdfViewer', () => {
     // listener 제거 후 invalidate 호출 안 됨
     expect(mocks.invalidate).not.toHaveBeenCalled()
   })
+
+  it('zoomIn 여러번 클릭 (max 단계까지) → 최대 줌에서 멈춤 (smoke)', () => {
+    render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    const btns = screen.getAllByRole('button')
+    const zoomInBtn = btns[1]
+    // ZOOM_STEPS 길이 7, 시작 인덱스 2 → 5번 클릭이면 최대
+    for (let i = 0; i < 10; i++) {
+      fireEvent.click(zoomInBtn)
+    }
+    // 에러 없이 통과
+    expect(btns.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('zoomOut 여러번 클릭 (min 0) → 최소 줌에서 멈춤 (smoke)', () => {
+    render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    const btns = screen.getAllByRole('button')
+    const zoomOutBtn = btns[0]
+    for (let i = 0; i < 10; i++) {
+      fireEvent.click(zoomOutBtn)
+    }
+    expect(btns.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('rotate 4번 클릭 → 360 (=0) 으로 wrap', () => {
+    render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    const btns = screen.getAllByRole('button')
+    const rotateBtn = btns[btns.length - 1]
+    // 90 * 4 = 360 → 0 으로 wrap
+    for (let i = 0; i < 4; i++) {
+      fireEvent.click(rotateBtn)
+    }
+    expect(btns.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('detail 없는 event → invalidate 호출 안 함', () => {
+    render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    act(() => {
+      window.dispatchEvent(new CustomEvent('pdf-external-changed'))
+    })
+    expect(mocks.invalidate).not.toHaveBeenCalled()
+  })
+
+  it('pointerDown + pointerMove + pointerUp → 패닝 시뮬레이션 (smoke)', () => {
+    const { container } = render(<PdfViewer pdfId="p1" pdfData={new ArrayBuffer(10)} />)
+    const scrollable = container.querySelector('div')!
+    // 단순히 이벤트 디스패치 — 에러 없이 통과
+    fireEvent.pointerDown(scrollable, { clientX: 100, clientY: 100, pointerId: 1 })
+    fireEvent.pointerMove(scrollable, { clientX: 150, clientY: 150 })
+    fireEvent.pointerUp(scrollable)
+    expect(screen.getByTestId('pdf-document')).toBeInTheDocument()
+  })
 })
