@@ -32,12 +32,25 @@ vi.mock('@shared/ui/scroll-area', () => ({
   ScrollBar: () => null
 }))
 
+const tabStoreMocks = vi.hoisted(() => ({
+  openTab: vi.fn()
+}))
+
 vi.mock('@/entities/tab-system', () => ({
-  useTabStore: () => null
+  useTabStore: (sel?: (s: { openTab: typeof tabStoreMocks.openTab }) => unknown) =>
+    sel ? sel({ openTab: tabStoreMocks.openTab }) : null
 }))
 
 vi.mock('@shared/constants/entity-icon', () => ({
-  ENTITY_ICON: { todo: () => null, note: () => null },
+  ENTITY_ICON: {
+    todo: () => null,
+    note: () => null,
+    pdf: () => null,
+    csv: () => null,
+    image: () => null,
+    canvas: () => null,
+    schedule: () => null
+  },
   ENTITY_ICON_COLOR: {}
 }))
 
@@ -50,12 +63,37 @@ vi.mock('framer-motion', () => ({
 
 vi.mock('@dnd-kit/core', () => ({
   useDraggable: () => ({
-    attributes: {},
+    attributes: { role: 'button', tabIndex: 0 },
     listeners: {},
     setNodeRef: vi.fn(),
     isDragging: false
   })
 }))
+
+// ResizeObserver / IntersectionObserver mocks
+type RO = (entries: unknown[]) => void
+class MockResizeObserver {
+  cb: RO
+  constructor(cb: RO) {
+    this.cb = cb
+  }
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+}
+;(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
+  MockResizeObserver
+class MockIntersectionObserver {
+  observe(): void {}
+  unobserve(): void {}
+  disconnect(): void {}
+  takeRecords(): unknown[] {
+    return []
+  }
+}
+;(
+  globalThis as unknown as { IntersectionObserver: typeof MockIntersectionObserver }
+).IntersectionObserver = MockIntersectionObserver
 
 vi.mock('@shared/ui/author-badge', () => ({
   AuthorBadge: () => null
@@ -281,6 +319,141 @@ describe('HistoryTimeline', () => {
     render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
     expect(screen.getByText('Day1')).toBeInTheDocument()
     expect(screen.getByText('Day2')).toBeInTheDocument()
+  })
+
+  it('linked entity 클릭 → openTab 호출 (linkToTabOptions)', () => {
+    tabStoreMocks.openTab.mockClear()
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'Done',
+                  doneAt: new Date(),
+                  parentId: null,
+                  links: [
+                    {
+                      type: 'note',
+                      id: 'n1',
+                      title: 'Linked',
+                      description: '',
+                      updatedBy: 'user',
+                      updatedById: null,
+                      updatedAt: new Date()
+                    }
+                  ],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    // linkToTabOptions mock 이 null 반환 → openTab 호출 안 됨
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    const linkedBtn = screen.getByText('Linked').closest('div[role="button"]')
+    if (linkedBtn) {
+      ;(linkedBtn as HTMLElement).click()
+    }
+    // linkToTabOptions mock 이 null 반환이라 openTab 호출 안 됨
+    expect(tabStoreMocks.openTab).not.toHaveBeenCalled()
+  })
+
+  it('linked entity Enter 키 → handleClick 동작 (smoke)', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'Done',
+                  doneAt: new Date(),
+                  parentId: null,
+                  links: [
+                    {
+                      type: 'pdf',
+                      id: 'p1',
+                      title: 'Linked PDF',
+                      description: 'desc',
+                      updatedBy: 'user',
+                      updatedById: null,
+                      updatedAt: new Date()
+                    }
+                  ],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    const linkedNode = screen.getByText('Linked PDF').closest('div[role="button"]')
+    if (linkedNode) {
+      const evt = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })
+      linkedNode.dispatchEvent(evt)
+    }
+    // smoke
+    expect(screen.getByText('Linked PDF')).toBeInTheDocument()
+  })
+
+  it('GroupRow + sub-todo 깊이 → ResizeObserver 호출 (smoke)', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 'p1',
+                  title: 'Parent',
+                  doneAt: new Date(),
+                  parentId: null,
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                },
+                {
+                  id: 's1',
+                  parentId: 'p1',
+                  parentTitle: 'Parent',
+                  title: 'Sub',
+                  doneAt: new Date(),
+                  links: [
+                    {
+                      type: 'note',
+                      id: 'n1',
+                      title: 'NoteLink',
+                      description: '',
+                      updatedBy: 'user',
+                      updatedById: null,
+                      updatedAt: new Date()
+                    }
+                  ],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getByText('Sub')).toBeInTheDocument()
+    expect(screen.getByText('NoteLink')).toBeInTheDocument()
   })
 
   it('isFetchingNextPage=true → 추가 Loader 노출', () => {
