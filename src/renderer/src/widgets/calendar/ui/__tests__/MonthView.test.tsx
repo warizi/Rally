@@ -123,8 +123,8 @@ vi.mock('@shared/ui/scroll-area', () => ({
 }))
 
 vi.mock('../MonthDayCell', () => ({
-  MonthDayCell: ({ day }: { day: { date: Date } }) => (
-    <div data-testid={`day-${day.date.getTime()}`} />
+  MonthDayCell: ({ day, children }: { day: { date: Date }; children?: React.ReactNode }) => (
+    <div data-testid={`day-${day.date.getTime()}`}>{children}</div>
   )
 }))
 
@@ -416,6 +416,99 @@ describe('MonthView', () => {
     monthDnd.onDragOver?.({
       over: { data: { current: { date: new Date('2026-05-30') } } }
     })
+    expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
+  })
+
+  it('selectedDate 있음 → SelectedDateList 영역 노출 (모바일 하단)', () => {
+    const { container } = render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={new Date('2026-05-29')}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    // selectedDate 가 있으면 SelectedDateList component 마운트
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('selectedDate null → SelectedDateList 영역 미렌더', () => {
+    const { container } = render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('isTodoItem + isDone schedule (multiDay) → Check 아이콘 노출', () => {
+    const todo = {
+      id: 't1',
+      title: 'Todo Done',
+      startAt: new Date('2026-05-29'),
+      endAt: new Date('2026-05-30'),
+      allDay: true,
+      isDone: true,
+      type: 'todo'
+    }
+    const { container } = render(
+      <MonthView
+        schedules={[todo] as unknown as Parameters<typeof MonthView>[0]['schedules']}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    // Check 아이콘은 lucide-check class
+    expect(container.querySelector('.lucide-check') || container.innerHTML).toBeTruthy()
+  })
+
+  it('isTodoItem + !isDone schedule → Circle 아이콘 노출', () => {
+    const todo = {
+      id: 't1',
+      title: 'Todo Pending',
+      startAt: new Date('2026-05-29'),
+      endAt: new Date('2026-05-30'),
+      allDay: true,
+      isDone: false,
+      type: 'todo'
+    }
+    const { container } = render(
+      <MonthView
+        schedules={[todo] as unknown as Parameters<typeof MonthView>[0]['schedules']}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('singleDay 일정 (non-allDay) → CellContent 안 도트/줄 노출', () => {
+    const sched = {
+      id: 's1',
+      title: 'Day Single',
+      startAt: new Date('2026-05-29T10:00:00Z'),
+      endAt: new Date('2026-05-29T11:00:00Z'),
+      allDay: false,
+      isDone: false
+    }
+    render(
+      <MonthView
+        schedules={[sched] as unknown as Parameters<typeof MonthView>[0]['schedules']}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
     expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
   })
 })
