@@ -137,4 +137,75 @@ describe('CreateWorkspaceDialog', () => {
     // backupZipPath 가 null 이라 "생성 중..." 으로 표시됨 (state)
     expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled()
   })
+
+  it('open=false → DialogContent 미렌더', () => {
+    render(<CreateWorkspaceDialog {...defaultProps} open={false} />)
+    expect(screen.queryByPlaceholderText('워크스페이스 이름')).toBeNull()
+  })
+
+  it('selectDirectory 가 null/undefined 반환 → form path 미설정 (smoke)', async () => {
+    mockSelectDirectory.mockResolvedValue(null)
+    render(<CreateWorkspaceDialog {...defaultProps} />)
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '폴더 선택' }))
+    })
+    fireEvent.change(screen.getByPlaceholderText('워크스페이스 이름'), {
+      target: { value: 'No Path' }
+    })
+    fireEvent.click(screen.getByRole('button', { name: '생성' }))
+    await waitFor(() => {
+      expect(screen.getByText('경로를 선택해주세요')).toBeInTheDocument()
+    })
+    expect(mockMutate).not.toHaveBeenCalled()
+  })
+
+  it('createWorkspace onSuccess → onCreated 호출 + onOpenChange(false)', async () => {
+    mockSelectDirectory.mockResolvedValue('/sel')
+    const onCreated = vi.fn()
+    const onOpenChange = vi.fn()
+    mockMutate.mockImplementation(
+      (_vars: { name: string; path: string }, opts: { onSuccess: (d: { id: string }) => void }) => {
+        opts.onSuccess({ id: 'ws-new' })
+      }
+    )
+    render(
+      <CreateWorkspaceDialog {...defaultProps} onCreated={onCreated} onOpenChange={onOpenChange} />
+    )
+    fireEvent.change(screen.getByPlaceholderText('워크스페이스 이름'), {
+      target: { value: 'X' }
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '폴더 선택' }))
+    })
+    fireEvent.click(screen.getByRole('button', { name: '생성' }))
+    await waitFor(() => {
+      expect(onCreated).toHaveBeenCalledWith('ws-new')
+      expect(onOpenChange).toHaveBeenCalledWith(false)
+    })
+  })
+
+  it('importBackup onSuccess → toast.success + onCreated + onOpenChange(false)', async () => {
+    mockSelectDirectory.mockResolvedValue('/p')
+    const onCreated = vi.fn()
+    const onOpenChange = vi.fn()
+    importMutate.mockImplementation(
+      (_v: unknown, opts: { onSuccess: (d: { id: string }) => void }) => {
+        opts.onSuccess({ id: 'ws-restored' })
+      }
+    )
+    render(
+      <CreateWorkspaceDialog {...defaultProps} onCreated={onCreated} onOpenChange={onOpenChange} />
+    )
+    await act(async () => {
+      backupSectionRef.onBackupSelected?.('/backup.zip', 'Restored')
+    })
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '폴더 선택' }))
+    })
+    fireEvent.click(screen.getByRole('button', { name: '생성' }))
+    await waitFor(() => {
+      expect(onCreated).toHaveBeenCalledWith('ws-restored')
+      expect(onOpenChange).toHaveBeenCalledWith(false)
+    })
+  })
 })
