@@ -34,9 +34,29 @@ vi.mock('@entities/reminder', () => ({
 }))
 
 vi.mock('../TodoFormFields', () => ({
-  TodoFormFields: ({ titleOnly }: { titleOnly?: boolean }) => {
+  TodoFormFields: ({
+    titleOnly,
+    form
+  }: {
+    titleOnly?: boolean
+    form?: { setValue: (k: string, v: string) => void }
+  }) => {
     mocks.formFieldsTitleOnly = !!titleOnly
-    return <div data-testid="todo-form-fields">{titleOnly ? 'title-only' : 'full'}</div>
+    // 테스트에서 form 에 title 을 미리 채우기 위한 helper button.
+    return (
+      <div data-testid="todo-form-fields">
+        {titleOnly ? 'title-only' : 'full'}
+        {form && (
+          <button
+            type="button"
+            data-testid="form-set-title"
+            onClick={() => form.setValue('title', 'Test Todo')}
+          >
+            set-title
+          </button>
+        )}
+      </div>
+    )
   }
 }))
 
@@ -124,5 +144,32 @@ describe('CreateTodoDialog', () => {
     render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
     fireEvent.click(screen.getByTestId('trigger'))
     expect(screen.getByRole('button', { name: '추가' })).toBeDisabled()
+  })
+
+  it('defaultDateEnabled=true → ReminderPendingSelect 노출 (startDate 기본 설정)', () => {
+    mocks.defaultDateEnabled = true
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    expect(screen.getByTestId('reminder-pending')).toBeInTheDocument()
+  })
+
+  it('defaultStatus="진행중" → form 초기 status 반영 (smoke)', () => {
+    render(
+      <CreateTodoDialog
+        workspaceId="ws"
+        defaultStatus="진행중"
+        trigger={<button data-testid="trigger">+</button>}
+      />
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    expect(screen.getByText('할 일 추가')).toBeInTheDocument()
+  })
+
+  it('취소 후 재오픈 → form 다시 noop reset (smoke)', () => {
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByRole('button', { name: '취소' }))
+    fireEvent.click(screen.getByTestId('trigger'))
+    expect(screen.getByText('할 일 추가')).toBeInTheDocument()
   })
 })
