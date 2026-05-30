@@ -6,10 +6,22 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
+const virtualState = {
+  items: [] as Array<{ index: number; start: number; key: number; size: number }>
+}
+
 vi.mock('@tanstack/react-virtual', () => ({
-  useVirtualizer: () => ({
-    getVirtualItems: () => [],
-    getTotalSize: () => 0,
+  useVirtualizer: ({ count }: { count: number }) => ({
+    getVirtualItems: () =>
+      virtualState.items.length > 0
+        ? virtualState.items
+        : Array.from({ length: count }, (_, i) => ({
+            index: i,
+            start: i * 32,
+            key: i,
+            size: 32
+          })),
+    getTotalSize: () => count * 32,
     scrollToIndex: vi.fn(),
     measure: vi.fn(),
     measureElement: vi.fn(),
@@ -89,12 +101,29 @@ const baseProps = {
 describe('CsvTable', () => {
   it('렌더 에러 없음 (smoke)', () => {
     const { container } = render(<CsvTable {...baseProps} />)
-    // virtualizer 가 빈 list 반환하므로 빈 컨테이너지만 렌더는 성공
     expect(container.firstChild).toBeTruthy()
   })
 
   it('빈 데이터 → 에러 없이 렌더 (smoke)', () => {
     const { container } = render(<CsvTable {...baseProps} headers={[]} data={[]} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('헤더 노출 (EditableColumnHeader 매핑)', () => {
+    const { getByTestId } = render(<CsvTable {...baseProps} />)
+    expect(getByTestId('header-col1')).toBeInTheDocument()
+    expect(getByTestId('header-col2')).toBeInTheDocument()
+  })
+
+  it('virtualizer rows 렌더 → EditableCell 노출', () => {
+    const { getAllByTestId } = render(<CsvTable {...baseProps} />)
+    expect(getAllByTestId('editable-cell').length).toBeGreaterThan(0)
+  })
+
+  it('columnSizing prop 적용 (smoke)', () => {
+    const { container } = render(
+      <CsvTable {...baseProps} columnSizing={{ col_0: 200, col_1: 100 }} />
+    )
     expect(container.firstChild).toBeTruthy()
   })
 })
