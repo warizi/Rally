@@ -149,4 +149,57 @@ describe('MonthView', () => {
     const cells = document.querySelectorAll('[data-testid^="day-"]')
     expect(cells.length).toBe(42)
   })
+
+  it('selectedDate prop → 전달됨 (다른 날짜)', () => {
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={new Date('2026-05-15')}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    const cells = document.querySelectorAll('[data-testid^="day-"]')
+    expect(cells.length).toBe(42)
+  })
+
+  it('일요일 라벨 → 빨간색 스타일 클래스 (text-red-500)', () => {
+    const { container } = render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(container.querySelector('.text-red-500')).toBeInTheDocument()
+  })
+
+  it('토요일 라벨 → 파란색 스타일 클래스 (text-blue-500)', () => {
+    const { container } = render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(container.querySelector('.text-blue-500')).toBeInTheDocument()
+  })
+
+  it('빈 schedules 배열 → bar-item 노출 없음', () => {
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    expect(document.querySelectorAll('[data-testid="bar-item"]').length).toBe(0)
+  })
 })
