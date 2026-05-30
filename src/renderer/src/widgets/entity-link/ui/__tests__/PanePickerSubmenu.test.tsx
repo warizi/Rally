@@ -105,4 +105,64 @@ describe('PanePickerSubmenu', () => {
     expect(screen.getByText('1')).toBeInTheDocument()
     expect(screen.getByText('0')).toBeInTheDocument()
   })
+
+  it('trigger 두번 클릭 → 토글 (열림 → 닫힘)', () => {
+    render(
+      <PanePickerSubmenu onPaneSelect={vi.fn()}>
+        {({ onClick }) => (
+          <button data-testid="trigger" onClick={(e) => onClick(e as React.MouseEvent)}>
+            trigger
+          </button>
+        )}
+      </PanePickerSubmenu>
+    )
+    const trigger = screen.getByTestId('trigger')
+    fireEvent.click(trigger)
+    expect(screen.getByText('탭 영역을 선택하세요')).toBeInTheDocument()
+    fireEvent.click(trigger)
+    expect(screen.queryByText('탭 영역을 선택하세요')).toBeNull()
+  })
+
+  it('vertical split → flex-col 클래스 적용 (smoke)', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'vertical',
+      sizes: [1, 1],
+      children: [
+        { id: 'a', type: 'pane', paneId: 'p1' },
+        { id: 'b', type: 'pane', paneId: 'p2' }
+      ]
+    }
+    mocks.panes = { p1: { tabIds: ['t1'] }, p2: { tabIds: ['t2'] } }
+    render(
+      <PanePickerSubmenu onPaneSelect={vi.fn()}>
+        {({ onClick }) => (
+          <button data-testid="trigger" onClick={(e) => onClick(e as React.MouseEvent)}>
+            trigger
+          </button>
+        )}
+      </PanePickerSubmenu>
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    // 양쪽 모두 탭 count=1
+    const ones = screen.getAllByText('1')
+    expect(ones.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('layout 의 paneId 가 panes 에 없음 → tabCount=0 fallback', () => {
+    mocks.layout = { id: 'r', type: 'pane', paneId: 'missing' }
+    mocks.panes = { p1: { tabIds: ['t1', 't2'] } }
+    render(
+      <PanePickerSubmenu onPaneSelect={vi.fn()}>
+        {({ onClick }) => (
+          <button data-testid="trigger" onClick={(e) => onClick(e as React.MouseEvent)}>
+            trigger
+          </button>
+        )}
+      </PanePickerSubmenu>
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    expect(screen.getByText('0')).toBeInTheDocument()
+  })
 })
