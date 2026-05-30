@@ -214,4 +214,38 @@ describe('useFileWatcher', () => {
     // useEffect cleanup 에서 호출되는 unsub() 가 onChanged 의 반환과 동일하다.
     expect(onChanged).toHaveBeenCalled()
   })
+
+  it('changedRelPaths 빈 배열 → toast 호출 안 함', () => {
+    const { triggerChange } = setup({
+      queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
+    })
+    act(() => {
+      vi.advanceTimersByTime(2100)
+    })
+    act(() => {
+      triggerChange('ws-1', [], null)
+    })
+    expect(mocks.toastInfo).not.toHaveBeenCalled()
+  })
+
+  it('변경 후 외부 dispatchEvent 발생 (CustomEvent 이름 + detail)', () => {
+    const eventListener = vi.fn()
+    window.addEventListener('note:external-changed', eventListener)
+    const { triggerChange, client } = setup({
+      queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
+    })
+    // refetchQueries 가 promise 반환 → CustomEvent 발생을 await 대기 위해 mock 으로 변경
+    vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined as never)
+    act(() => {
+      vi.advanceTimersByTime(2100)
+    })
+    act(() => {
+      triggerChange('ws-1', ['a.md'], null)
+    })
+    // refetchQueries 가 한번 호출되어야 한다 (externalItems forEach 안에서).
+    expect(client.refetchQueries).toHaveBeenCalledWith({
+      queryKey: ['note', 'content', 'n1']
+    })
+    window.removeEventListener('note:external-changed', eventListener)
+  })
 })
