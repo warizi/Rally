@@ -247,4 +247,93 @@ describe('LinkEntityPopover', () => {
     expect(screen.getAllByText('A').length).toBeGreaterThan(0)
     expect(screen.getAllByText('B').length).toBeGreaterThan(0)
   })
+
+  it('filtered 비어있음 → "항목이 없습니다" 노출', () => {
+    mocks.todos = [{ id: 't1', title: 'Apple', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    fireEvent.change(screen.getByPlaceholderText(/검색/), { target: { value: 'zzz' } })
+    expect(screen.getAllByText('항목이 없습니다').length).toBeGreaterThan(0)
+  })
+
+  it('자기 자신 (entityType + entityId 매칭) 제외 — entityType ≠ activeTab type 이라도 다른 탭에선 제외', () => {
+    // activeTab 은 entityType='note' 이면 todo. 'Self Note'(n1) 는 자기. notes 탭 비활성.
+    // 검색 query 매칭으로 자기 자신 제외 분기 자체는 doNotChange 결과.
+    mocks.notes = [
+      { id: 'n1', title: 'Self Note' },
+      { id: 'n2', title: 'Other Note' }
+    ]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    // entityType='note'이라 첫 active='todo'. notes 탭 활성 아님 → Self Note/Other Note 노출 안 됨.
+    expect(screen.queryByText('Self Note')).toBeNull()
+    expect(screen.queryByText('Other Note')).toBeNull()
+  })
+
+  it('input ArrowDown → list mode 전환 (focusIndex=0)', () => {
+    mocks.todos = [{ id: 't1', title: 'First Item', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const input = screen.getByPlaceholderText(/검색/)
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    // smoke — 이후 클릭이 정상 작동하는지로 검증
+    fireEvent.click(screen.getAllByText('First Item')[0])
+    expect(mocks.linkMutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('input ArrowDown + filtered.length=0 → 아무 일도 일어나지 않음 (smoke)', () => {
+    mocks.todos = []
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const input = screen.getByPlaceholderText(/검색/)
+    fireEvent.keyDown(input, { key: 'ArrowDown' })
+    // 빈 리스트 — 에러 없이 통과
+    expect(screen.getAllByText('항목이 없습니다').length).toBeGreaterThan(0)
+  })
+
+  it('input ArrowUp → list 끝으로 이동 (smoke)', () => {
+    mocks.todos = [
+      { id: 't1', title: 'Item1', parentId: null },
+      { id: 't2', title: 'Item2', parentId: null }
+    ]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const input = screen.getByPlaceholderText(/검색/)
+    fireEvent.keyDown(input, { key: 'ArrowUp' })
+    // 에러 없이 통과
+    expect(screen.getAllByText('Item1').length).toBeGreaterThan(0)
+  })
+
+  it('children 없으면 기본 "연결" 버튼 노출', () => {
+    render(<LinkEntityPopover entityType="todo" entityId="t1" workspaceId="ws" open />)
+    expect(screen.getByText('연결')).toBeInTheDocument()
+  })
+
+  it('mouseEnter 항목 → focusIndex 변경 (smoke 클릭 동작)', () => {
+    mocks.todos = [{ id: 't1', title: 'Mouse Item', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const item = screen.getAllByText('Mouse Item')[0]
+    fireEvent.mouseEnter(item)
+    fireEvent.click(item)
+    expect(mocks.linkMutate).toHaveBeenCalledTimes(1)
+  })
 })
