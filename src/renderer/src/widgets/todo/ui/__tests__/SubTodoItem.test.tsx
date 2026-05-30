@@ -127,7 +127,7 @@ describe('SubTodoItem', () => {
   it('updatedBy/updatedById/updatedAt props 전달 → AuthorBadge 렌더 (smoke)', () => {
     const withMeta = {
       ...sub,
-      updatedBy: 'ai',
+      updatedBy: 'ai' as const,
       updatedById: 'agent-1',
       updatedAt: new Date(12345)
     }
