@@ -5,7 +5,7 @@
  * 해당 dialog open prop 가 true 로 전달.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 
 vi.mock('@dnd-kit/sortable', () => ({
   useSortable: () => ({
@@ -109,5 +109,35 @@ describe('SubTodoItem', () => {
     )
     expect(screen.queryByTestId('edit-dialog')).not.toBeInTheDocument()
     expect(screen.queryByTestId('delete-dialog')).not.toBeInTheDocument()
+  })
+
+  it('dropdown trigger 클릭 → smoke (Radix portal — 별도 노출 검증 없음)', () => {
+    render(
+      <table>
+        <tbody>
+          <SubTodoItem sub={sub} workspaceId="ws-1" />
+        </tbody>
+      </table>
+    )
+    // smoke: 버튼 클릭 시 에러 없이 처리됨
+    fireEvent.click(screen.getByRole('button'))
+    expect(screen.getByRole('button')).toBeInTheDocument()
+  })
+
+  it('updatedBy/updatedById/updatedAt props 전달 → AuthorBadge 렌더 (smoke)', () => {
+    const withMeta = {
+      ...sub,
+      updatedBy: 'ai',
+      updatedById: 'agent-1',
+      updatedAt: 12345
+    }
+    render(
+      <table>
+        <tbody>
+          <SubTodoItem sub={withMeta} workspaceId="ws-1" />
+        </tbody>
+      </table>
+    )
+    expect(screen.getByTestId('author-badge')).toBeInTheDocument()
   })
 })
