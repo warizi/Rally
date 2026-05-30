@@ -5,9 +5,12 @@ import { createElement } from 'react'
 import type { ReactNode } from 'react'
 import {
   useWorkspaces,
+  useWorkspace,
   useCreateWorkspace,
   useUpdateWorkspace,
-  useDeleteWorkspace
+  useDeleteWorkspace,
+  useExportBackup,
+  useImportBackup
 } from '../queries'
 
 const mockWorkspace = {
@@ -25,6 +28,10 @@ const mockApi = {
     create: vi.fn(),
     update: vi.fn(),
     delete: vi.fn()
+  },
+  backup: {
+    export: vi.fn(),
+    import: vi.fn()
   }
 }
 
@@ -153,6 +160,81 @@ describe('useDeleteWorkspace', () => {
     const { result } = renderHook(() => useDeleteWorkspace(), { wrapper: createWrapper() })
     await act(async () => {
       result.current.mutate('ws-1')
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+describe('useWorkspace (singular)', () => {
+  it('id 로 단일 워크스페이스 조회', async () => {
+    mockApi.workspace.getById.mockResolvedValue({ success: true, data: mockWorkspace })
+    const { result } = renderHook(() => useWorkspace('ws-1'), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockApi.workspace.getById).toHaveBeenCalledWith('ws-1')
+    expect(result.current.data).toEqual(mockWorkspace)
+  })
+
+  it('실패 응답 → error', async () => {
+    mockApi.workspace.getById.mockResolvedValue({
+      success: false,
+      errorType: 'NotFoundError',
+      message: 'not found'
+    })
+    const { result } = renderHook(() => useWorkspace('missing'), { wrapper: createWrapper() })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+describe('useExportBackup', () => {
+  it('exportBackup 호출 → 성공', async () => {
+    mockApi.backup.export.mockResolvedValue({ success: true })
+    const { result } = renderHook(() => useExportBackup(), { wrapper: createWrapper() })
+    await act(async () => {
+      result.current.mutate('ws-1')
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockApi.backup.export).toHaveBeenCalledWith('ws-1')
+  })
+
+  it('실패 → error', async () => {
+    mockApi.backup.export.mockResolvedValue({
+      success: false,
+      errorType: 'InternalError',
+      message: 'fail'
+    })
+    const { result } = renderHook(() => useExportBackup(), { wrapper: createWrapper() })
+    await act(async () => {
+      result.current.mutate('ws-1')
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+describe('useImportBackup', () => {
+  it('importBackup 호출 → 성공 + 새 workspace 데이터 반환', async () => {
+    mockApi.backup.import.mockResolvedValue({
+      success: true,
+      data: { ...mockWorkspace, id: 'ws-new' }
+    })
+    mockApi.workspace.getAll.mockResolvedValue({ success: true, data: [] })
+    const { result } = renderHook(() => useImportBackup(), { wrapper: createWrapper() })
+    await act(async () => {
+      result.current.mutate({ zipPath: '/b.zip', name: 'N', path: '/p' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockApi.backup.import).toHaveBeenCalledWith('/b.zip', 'N', '/p')
+    expect(result.current.data).toMatchObject({ id: 'ws-new' })
+  })
+
+  it('실패 → error', async () => {
+    mockApi.backup.import.mockResolvedValue({
+      success: false,
+      errorType: 'ValidationError',
+      message: 'fail'
+    })
+    const { result } = renderHook(() => useImportBackup(), { wrapper: createWrapper() })
+    await act(async () => {
+      result.current.mutate({ zipPath: '/b.zip', name: 'N', path: '/p' })
     })
     await waitFor(() => expect(result.current.isError).toBe(true))
   })
