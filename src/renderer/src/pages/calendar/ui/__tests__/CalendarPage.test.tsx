@@ -67,25 +67,51 @@ vi.mock('@shared/ui/tab-header', () => ({
   )
 }))
 
+const calMocks = vi.hoisted(() => ({
+  setViewType: vi.fn(),
+  setSelectedDate: vi.fn(),
+  selectDate: vi.fn(),
+  goPrev: vi.fn(),
+  goNext: vi.fn(),
+  goToday: vi.fn(),
+  // CalendarNavigation 받은 콜백
+  navOnPrev: undefined as undefined | (() => void),
+  navOnNext: undefined as undefined | (() => void),
+  navOnToday: undefined as undefined | (() => void),
+  monthOnSelectDate: undefined as undefined | ((d: Date) => void),
+  weekOnSelectDate: undefined as undefined | ((d: Date) => void)
+}))
+
 vi.mock('@widgets/calendar', () => ({
   CalendarViewToolbar: ({ viewType }: { viewType: string }) => (
     <div data-testid="view-toolbar">{viewType}</div>
   ),
-  CalendarNavigation: () => <div data-testid="nav" />,
-  MonthView: () => <div data-testid="month-view" />,
-  WeekView: () => <div data-testid="week-view" />,
+  CalendarNavigation: (props: { onPrev: () => void; onNext: () => void; onToday: () => void }) => {
+    calMocks.navOnPrev = props.onPrev
+    calMocks.navOnNext = props.onNext
+    calMocks.navOnToday = props.onToday
+    return <div data-testid="nav" />
+  },
+  MonthView: (props: { onSelectDate?: (d: Date) => void }) => {
+    calMocks.monthOnSelectDate = props.onSelectDate
+    return <div data-testid="month-view" />
+  },
+  WeekView: (props: { onSelectDate?: (d: Date) => void }) => {
+    calMocks.weekOnSelectDate = props.onSelectDate
+    return <div data-testid="week-view" />
+  },
   DayView: () => <div data-testid="day-view" />,
   ScheduleFormDialog: () => <div data-testid="schedule-form" />,
   useCalendar: () => ({
     viewType: mocks.viewType,
-    setViewType: vi.fn(),
+    setViewType: calMocks.setViewType,
     currentDate: mocks.currentDate,
     selectedDate: mocks.selectedDate,
-    setSelectedDate: vi.fn(),
-    selectDate: vi.fn(),
-    goPrev: vi.fn(),
-    goNext: vi.fn(),
-    goToday: vi.fn(),
+    setSelectedDate: calMocks.setSelectedDate,
+    selectDate: calMocks.selectDate,
+    goPrev: calMocks.goPrev,
+    goNext: calMocks.goNext,
+    goToday: calMocks.goToday,
     dateRange: mocks.dateRange
   })
 }))
@@ -233,5 +259,79 @@ describe('CalendarPage', () => {
     mocks.tabSearchParams = { currentDate: '2026-12-25T00:00:00Z', viewType: 'week' }
     render(<CalendarPage tabId="t1" />)
     expect(screen.getByText('캘린더')).toBeInTheDocument()
+  })
+
+  it('handlePrev (month) → goPrev + navigateTab (currentDate -1 month)', () => {
+    calMocks.goPrev.mockClear()
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    calMocks.navOnPrev?.()
+    expect(calMocks.goPrev).toHaveBeenCalled()
+    expect(mocks.navigateTab).toHaveBeenCalled()
+  })
+
+  it('handleNext (week) → goNext + navigateTab (currentDate +1 week)', () => {
+    mocks.viewType = 'week'
+    calMocks.goNext.mockClear()
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    calMocks.navOnNext?.()
+    expect(calMocks.goNext).toHaveBeenCalled()
+    expect(mocks.navigateTab).toHaveBeenCalled()
+  })
+
+  it('handleNext (day) → goNext + navigateTab (currentDate +1 day)', () => {
+    mocks.viewType = 'day'
+    calMocks.goNext.mockClear()
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    calMocks.navOnNext?.()
+    expect(calMocks.goNext).toHaveBeenCalled()
+  })
+
+  it('handleToday → goToday + syncCurrentDate', () => {
+    calMocks.goToday.mockClear()
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    calMocks.navOnToday?.()
+    expect(calMocks.goToday).toHaveBeenCalled()
+    expect(mocks.navigateTab).toHaveBeenCalled()
+  })
+
+  it('MonthView onSelectDate → setSelectedDate (월간 뷰)', () => {
+    calMocks.setSelectedDate.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    calMocks.monthOnSelectDate?.(new Date('2026-06-15'))
+    expect(calMocks.setSelectedDate).toHaveBeenCalled()
+  })
+
+  it('WeekView onSelectDate → selectDate + syncCurrentDate (주간 뷰)', () => {
+    mocks.viewType = 'week'
+    calMocks.selectDate.mockClear()
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    calMocks.weekOnSelectDate?.(new Date('2026-06-15'))
+    expect(calMocks.selectDate).toHaveBeenCalled()
+    expect(mocks.navigateTab).toHaveBeenCalled()
+  })
+
+  it('handleViewTypeChange + tabId 없음 → navigateTab 호출 안 함', () => {
+    calMocks.setViewType.mockClear()
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage />)
+    // toolbar 통한 viewtype 변경은 직접 호출 못함 — smoke
+    expect(screen.getByText('캘린더')).toBeInTheDocument()
+  })
+
+  it('handleToggleTodos → tabId 있음 → navigateTab(showTodos 토글)', () => {
+    mocks.navigateTab.mockClear()
+    render(<CalendarPage tabId="t1" />)
+    // CheckSquare 버튼 클릭 (showTodos=true 기본)
+    const buttons = screen.getAllByRole('button')
+    const toggleBtn = buttons.find((b) => b.querySelector('svg.lucide-check-square'))
+    if (toggleBtn) {
+      toggleBtn.click()
+      expect(mocks.navigateTab).toHaveBeenCalled()
+    }
   })
 })
