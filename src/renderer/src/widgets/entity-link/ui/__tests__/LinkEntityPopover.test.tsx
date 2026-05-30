@@ -206,4 +206,45 @@ describe('LinkEntityPopover', () => {
     expect(screen.getAllByText('Apple').length).toBeGreaterThan(0)
     expect(screen.queryByText('Banana')).toBeNull()
   })
+
+  it('todos 가 parentId 있음 → todo 탭에서 제외 (parentId 없는 것만 표시)', () => {
+    mocks.todos = [
+      { id: 'p1', title: 'Parent Todo', parentId: null },
+      { id: 's1', title: 'Sub Todo', parentId: 'p1' }
+    ]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    // entityType='note' → 첫 active='todo'. parent 만 노출.
+    expect(screen.getAllByText('Parent Todo').length).toBeGreaterThan(0)
+    expect(screen.queryByText('Sub Todo')).toBeNull()
+  })
+
+  it('schedule 데이터 → 7개 tab 중 schedule tab 노출 (smoke)', () => {
+    mocks.schedules = [{ id: 's1', title: 'Schedule X' }]
+    render(
+      <LinkEntityPopover entityType="todo" entityId="t1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    // entityType='todo' → 첫 active='schedule'. Schedule X 노출.
+    expect(screen.getAllByText('Schedule X').length).toBeGreaterThan(0)
+  })
+
+  it('linkedSet 가 빈 매칭 검사 + 검색 빈문자열 → 모든 항목 노출', () => {
+    mocks.todos = [
+      { id: 't1', title: 'A', parentId: null },
+      { id: 't2', title: 'B', parentId: null }
+    ]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    fireEvent.change(screen.getByPlaceholderText(/검색/), { target: { value: '' } })
+    expect(screen.getAllByText('A').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('B').length).toBeGreaterThan(0)
+  })
 })
