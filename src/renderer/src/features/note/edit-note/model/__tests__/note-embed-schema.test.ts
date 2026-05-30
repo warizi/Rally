@@ -142,4 +142,59 @@ describe('rallyEmbedStringifyHandler — round-trip', () => {
     const md = ['# 제목', '', '본문 ![[csv:abc|h=300]] 끝.'].join('\n')
     expect(roundtrip(md)).toBe(md)
   })
+
+  it('preserves consecutive embeds (no text between)', () => {
+    const md = '![[csv:a]]![[pdf:b|h=400]]'
+    expect(roundtrip(md)).toBe(md)
+  })
+
+  it('preserves embed in list item', () => {
+    const md = ['* 항목 1 ![[note:abc]]', '* 항목 2 ![[csv:xyz|h=200]]'].join('\n')
+    // remark-stringify 기본 list bullet '*'
+    expect(roundtrip(md)).toBe(md)
+  })
+})
+
+describe('rallyEmbedRemarkPlugin (추가 분기)', () => {
+  it('entity ID 안 trim 처리 (앞뒤 공백 제거)', () => {
+    const tree = parseAndRun('![[note:  abc-id  ]]')
+    const para = tree.children[0]
+    if (para.type !== 'paragraph') throw new Error('expected paragraph')
+    const embed = asAny(para.children).find((c) => c.type === RALLY_EMBED_MDAST_TYPE)
+    expect(embed?.entityId).toBe('abc-id')
+  })
+
+  it('h=-5 (음수 → 매칭 안 됨, height 미설정)', () => {
+    // 정규식 (\d+) 는 negative 부호 매칭 안 됨 → 전체 패턴이 매칭 안 됨
+    const tree = parseAndRun('![[note:abc|h=-5]]')
+    const para = tree.children[0]
+    if (para.type !== 'paragraph') throw new Error('expected paragraph')
+    const embeds = asAny(para.children).filter((c) => c.type === RALLY_EMBED_MDAST_TYPE)
+    expect(embeds.length).toBe(0)
+  })
+
+  it('paragraph 가 아닌 텍스트 안 embed (heading) → 처리됨', () => {
+    const tree = parseAndRun('# 제목 ![[note:abc]]')
+    const heading = tree.children[0]
+    if (heading.type !== 'heading') throw new Error('expected heading')
+    const embed = asAny(heading.children).find((c) => c.type === RALLY_EMBED_MDAST_TYPE)
+    expect(embed).toMatchObject({ domain: 'note', entityId: 'abc' })
+  })
+
+  it('한 단락에 동일 domain 3개 → 3개 모두 매칭', () => {
+    const tree = parseAndRun('![[note:a]] ![[note:b]] ![[note:c]]')
+    const para = tree.children[0]
+    if (para.type !== 'paragraph') throw new Error('expected paragraph')
+    const embeds = asAny(para.children).filter((c) => c.type === RALLY_EMBED_MDAST_TYPE)
+    expect(embeds.length).toBe(3)
+    expect(embeds.map((e) => e.entityId)).toEqual(['a', 'b', 'c'])
+  })
+
+  it('text 시작 위치 embed → 앞에 빈 text 노드 추가 안 함', () => {
+    const tree = parseAndRun('![[csv:start]] text after')
+    const para = tree.children[0]
+    if (para.type !== 'paragraph') throw new Error('expected paragraph')
+    // 시작 위치 embed → 빈 text 노드는 안 들어감
+    expect(para.children[0].type).toBe(RALLY_EMBED_MDAST_TYPE)
+  })
 })

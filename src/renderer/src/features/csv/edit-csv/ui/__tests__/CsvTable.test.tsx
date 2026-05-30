@@ -154,4 +154,44 @@ describe('CsvTable', () => {
     expect(getByTestId('header-a')).toBeInTheDocument()
     expect(getByTestId('header-e')).toBeInTheDocument()
   })
+
+  it('headers 비어있음 → "빈 테이블입니다." + 열 추가 버튼 노출', () => {
+    const { getByText } = render(<CsvTable {...baseProps} headers={[]} data={[]} />)
+    expect(getByText('빈 테이블입니다.')).toBeInTheDocument()
+    expect(getByText(/열 추가/)).toBeInTheDocument()
+  })
+
+  it('headers 비어있음 + 열 추가 버튼 클릭 → onAddColumn 호출', () => {
+    const onAddColumn = vi.fn()
+    const { getByText } = render(
+      <CsvTable {...baseProps} headers={[]} data={[]} onAddColumn={onAddColumn} />
+    )
+    fireEventLite(getByText(/열 추가/))
+    expect(onAddColumn).toHaveBeenCalled()
+  })
+
+  it('row 1개 + col 1개 → 단일 셀 렌더 (smoke)', () => {
+    const { getAllByTestId } = render(<CsvTable {...baseProps} headers={['only']} data={[['x']]} />)
+    expect(getAllByTestId('editable-cell').length).toBeGreaterThan(0)
+  })
+
+  it('headers 많음 (10개) → 모두 노출', () => {
+    const headers = Array.from({ length: 10 }, (_, i) => `col${i}`)
+    const data = [Array.from({ length: 10 }, (_, i) => `v${i}`)]
+    const { getByTestId } = render(<CsvTable {...baseProps} headers={headers} data={data} />)
+    expect(getByTestId('header-col0')).toBeInTheDocument()
+    expect(getByTestId('header-col9')).toBeInTheDocument()
+  })
+
+  it('data 많음 (50 rows) → virtualizer 적용 + cell 다수 렌더', () => {
+    const data = Array.from({ length: 50 }, (_, i) => [`v${i}`, `w${i}`])
+    const { getAllByTestId } = render(<CsvTable {...baseProps} headers={['a', 'b']} data={data} />)
+    expect(getAllByTestId('editable-cell').length).toBeGreaterThan(10)
+  })
 })
+
+// fireEvent.click 의 간단 helper — testing-library 의 fireEvent.click 미사용 (모듈 분리)
+function fireEventLite(el: HTMLElement): void {
+  const event = new MouseEvent('click', { bubbles: true, cancelable: true })
+  el.dispatchEvent(event)
+}

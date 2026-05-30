@@ -6,8 +6,35 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
+const monthDnd: {
+  onDragStart?: (e: { active: { data: { current?: unknown } } }) => void
+  onDragOver?: (e: { over: { data: { current?: { date: Date } } } | null }) => void
+  onDragEnd?: (e: {
+    active: { data: { current?: unknown } }
+    over: { data: { current?: { date: Date } } } | null
+  }) => void
+} = {}
+
 vi.mock('@dnd-kit/core', () => ({
-  DndContext: ({ children }: { children: React.ReactNode }) => <>{children}</>,
+  DndContext: ({
+    children,
+    onDragStart,
+    onDragOver,
+    onDragEnd
+  }: {
+    children: React.ReactNode
+    onDragStart?: (e: { active: { data: { current?: unknown } } }) => void
+    onDragOver?: (e: { over: { data: { current?: { date: Date } } } | null }) => void
+    onDragEnd?: (e: {
+      active: { data: { current?: unknown } }
+      over: { data: { current?: { date: Date } } } | null
+    }) => void
+  }) => {
+    monthDnd.onDragStart = onDragStart
+    monthDnd.onDragOver = onDragOver
+    monthDnd.onDragEnd = onDragEnd
+    return <>{children}</>
+  },
   pointerWithin: vi.fn(),
   PointerSensor: vi.fn(),
   useSensor: vi.fn(),
@@ -20,12 +47,18 @@ vi.mock('@dnd-kit/core', () => ({
   })
 }))
 
+const apiMocks = vi.hoisted(() => ({
+  moveScheduleMutate: vi.fn(),
+  updateTodoMutate: vi.fn(),
+  applyDaysDeltaCalls: [] as Array<{ schedule: unknown; daysDelta: number }>
+}))
+
 vi.mock('@entities/schedule', () => ({
-  useMoveSchedule: () => ({ mutate: vi.fn() })
+  useMoveSchedule: () => ({ mutate: apiMocks.moveScheduleMutate })
 }))
 
 vi.mock('@entities/todo', () => ({
-  useUpdateTodo: () => ({ mutate: vi.fn() })
+  useUpdateTodo: () => ({ mutate: apiMocks.updateTodoMutate })
 }))
 
 vi.mock('../../model/calendar-constants', () => ({
@@ -57,7 +90,23 @@ vi.mock('../../model/calendar-layout', () => ({
 }))
 
 vi.mock('../../model/calendar-move', () => ({
-  applyDaysDelta: vi.fn()
+  applyDaysDelta: (
+    schedule: unknown,
+    daysDelta: number,
+    callbacks: {
+      onMoveSchedule: (id: string, start: Date, end: Date) => void
+      onMoveTodo: (id: string, start: Date, end: Date) => void
+    }
+  ) => {
+    apiMocks.applyDaysDeltaCalls.push({ schedule, daysDelta })
+    // Schedule type → onMoveSchedule, todo type → onMoveTodo
+    const s = schedule as { id: string; startAt: Date; endAt: Date; type?: string }
+    if (s.type === 'todo') {
+      callbacks.onMoveTodo(s.id, s.startAt, s.endAt)
+    } else {
+      callbacks.onMoveSchedule(s.id, s.startAt, s.endAt)
+    }
+  }
 }))
 
 vi.mock('../../model/schedule-color', () => ({
@@ -241,5 +290,132 @@ describe('MonthView', () => {
       />
     )
     expect(onSelectDate).not.toHaveBeenCalled()
+  })
+
+  it('handleDragStart → activeSchedule + activeType 설정 (smoke)', () => {
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    monthDnd.onDragStart?.({
+      active: {
+        data: {
+          current: {
+            schedule: { id: 's1', startAt: new Date(), endAt: new Date() },
+            type: 'bar'
+          }
+        }
+      }
+    })
+    // 에러 없이 통과
+    expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
+  })
+
+  it('handleDragStart type !== "bar" → grabDayOffset reset (smoke)', () => {
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    monthDnd.onDragStart?.({
+      active: {
+        data: { current: { schedule: { id: 's1' }, type: 'something-else' } }
+      }
+    })
+    expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
+  })
+
+  it('handleDragEnd over=null → mutate 호출 안 함 (early return)', () => {
+    apiMocks.applyDaysDeltaCalls = []
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    monthDnd.onDragEnd?.({
+      active: { data: { current: { schedule: { id: 's1' } } } },
+      over: null
+    })
+    expect(apiMocks.applyDaysDeltaCalls.length).toBe(0)
+  })
+
+  it('handleDragEnd + schedule data → applyDaysDelta 호출 → moveSchedule.mutate', () => {
+    apiMocks.applyDaysDeltaCalls = []
+    apiMocks.moveScheduleMutate.mockClear()
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    const schedule = {
+      id: 's1',
+      startAt: new Date('2026-05-29'),
+      endAt: new Date('2026-05-29')
+    }
+    monthDnd.onDragEnd?.({
+      active: { data: { current: { schedule } } },
+      over: { data: { current: { date: new Date('2026-06-01') } } }
+    })
+    expect(apiMocks.applyDaysDeltaCalls.length).toBe(1)
+    expect(apiMocks.moveScheduleMutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('handleDragEnd + todo data → applyDaysDelta → updateTodo.mutate', () => {
+    apiMocks.applyDaysDeltaCalls = []
+    apiMocks.updateTodoMutate.mockClear()
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    const todo = {
+      id: 't1',
+      startAt: new Date('2026-05-29'),
+      endAt: new Date('2026-05-29'),
+      type: 'todo'
+    }
+    monthDnd.onDragEnd?.({
+      active: { data: { current: { schedule: todo } } },
+      over: { data: { current: { date: new Date('2026-06-01') } } }
+    })
+    expect(apiMocks.applyDaysDeltaCalls.length).toBe(1)
+    expect(apiMocks.updateTodoMutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('handleDragOver → overDate 설정 (smoke)', () => {
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    monthDnd.onDragOver?.({
+      over: { data: { current: { date: new Date('2026-05-30') } } }
+    })
+    expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
   })
 })
