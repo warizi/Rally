@@ -148,4 +148,19 @@ describe('FolderTree', () => {
     render(<FolderTree workspaceId="ws" />)
     expect(screen.getByTestId('folder-tree-root')).toBeInTheDocument()
   })
+
+  it('빈 tree (ready=false 초기) → Empty/Tree 모두 미노출 (rAF 대기 중)', () => {
+    mocks.tree = []
+    render(<FolderTree workspaceId="ws" />)
+    // ready=true 가 되어야 Empty 노출. 초기 렌더에선 아직 false.
+    expect(screen.queryByTestId('empty')).toBeNull()
+    expect(screen.queryByTestId('tree')).toBeNull()
+  })
+
+  it('tree 데이터 (ready=false 초기) → Tree 컴포넌트 미노출', () => {
+    mocks.tree = [{ id: 'root-1' }]
+    render(<FolderTree workspaceId="ws" />)
+    // 초기 렌더에선 ready=false 라서 Tree 도 미노출.
+    expect(screen.queryByTestId('tree')).toBeNull()
+  })
 })
