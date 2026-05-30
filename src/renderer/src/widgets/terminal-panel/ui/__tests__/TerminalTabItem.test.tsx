@@ -5,7 +5,7 @@
  * 이름변경 dialog open/close.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   removeSession: vi.fn(),
@@ -118,5 +118,22 @@ describe('TerminalTabItem', () => {
     render(<TerminalTabItem session={baseSession} isActive={false} onActivate={vi.fn()} />)
     expect(screen.getByText('이름 변경')).toBeInTheDocument()
     expect(screen.getByText('탭 닫기')).toBeInTheDocument()
+  })
+
+  it('"탭 닫기" 클릭 → terminal.destroy + removeSession 호출', async () => {
+    mocks.destroy.mockResolvedValue({ success: true })
+    mocks.closeSession.mockResolvedValue({ success: true })
+    render(<TerminalTabItem session={baseSession} isActive={false} onActivate={vi.fn()} />)
+    fireEvent.click(screen.getByText('탭 닫기'))
+    await waitFor(() => {
+      expect(mocks.destroy).toHaveBeenCalledWith('s1')
+      expect(mocks.removeSession).toHaveBeenCalledWith('s1')
+    })
+  })
+
+  it('"이름 변경" 클릭 → rename dialog 열림', () => {
+    render(<TerminalTabItem session={baseSession} isActive={false} onActivate={vi.fn()} />)
+    fireEvent.click(screen.getByText('이름 변경'))
+    expect(screen.getByText('터미널 이름 변경')).toBeInTheDocument()
   })
 })
