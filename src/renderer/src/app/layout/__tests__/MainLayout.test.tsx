@@ -223,4 +223,42 @@ describe('MainLayout', () => {
     r()
     expect(screen.getByTestId('drag-overlay')).toBeInTheDocument()
   })
+
+  it('모든 entity watcher 호출됨 (canvas/note/csv/pdf/image/recurring/tag/reminder-changed)', () => {
+    r()
+    expect(mocks.watcherCalls).toContain('canvas')
+    expect(mocks.watcherCalls).toContain('note')
+    expect(mocks.watcherCalls).toContain('csv')
+    expect(mocks.watcherCalls).toContain('pdf')
+    expect(mocks.watcherCalls).toContain('image')
+    expect(mocks.watcherCalls).toContain('recurring')
+    expect(mocks.watcherCalls).toContain('tag')
+    expect(mocks.watcherCalls).toContain('reminder-changed')
+  })
+
+  it('navigation watcher 호출됨 (pane-nav / tab-nav / snapshot-nav)', () => {
+    r()
+    expect(mocks.watcherCalls).toContain('pane-nav')
+    expect(mocks.watcherCalls).toContain('tab-nav')
+    expect(mocks.watcherCalls).toContain('snapshot-nav')
+  })
+
+  it('focus + entity-link + reminder + trash + template + tree-drag-monitor 호출됨', () => {
+    r()
+    expect(mocks.watcherCalls).toContain('focus')
+    expect(mocks.watcherCalls).toContain('entity-link')
+    expect(mocks.watcherCalls).toContain('reminder')
+    expect(mocks.watcherCalls).toContain('trash')
+    expect(mocks.watcherCalls).toContain('template')
+    expect(mocks.watcherCalls).toContain('tree-drag-monitor')
+    expect(mocks.watcherCalls).toContain('history-link-to-tab')
+  })
+
+  it('isTerminalOpen=true + panelSize 변경 → panel-group 노출', () => {
+    mocks.isTerminalOpen = true
+    mocks.panelSize = 50
+    r()
+    expect(screen.getByTestId('panel-group')).toBeInTheDocument()
+    expect(screen.getByTestId('terminal-bottom-panel')).toBeInTheDocument()
+  })
 })
