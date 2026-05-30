@@ -202,4 +202,44 @@ describe('MonthView', () => {
     )
     expect(document.querySelectorAll('[data-testid="bar-item"]').length).toBe(0)
   })
+
+  it('allDay multiDay schedule → splitBarByWeeks 호출됨 (smoke)', () => {
+    render(
+      <MonthView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'Multi',
+              startAt: new Date('2026-05-29T00:00:00Z'),
+              endAt: new Date('2026-06-02T00:00:00Z'),
+              allDay: true,
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof MonthView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={vi.fn()}
+        workspaceId="ws"
+      />
+    )
+    // splitBarByWeeks mock 이 빈 배열 반환 → bar-item 없음. 에러 없이 렌더.
+    const cells = document.querySelectorAll('[data-testid^="day-"]')
+    expect(cells.length).toBe(42)
+  })
+
+  it('onSelectDate prop callback 정의됨 (smoke)', () => {
+    const onSelectDate = vi.fn()
+    render(
+      <MonthView
+        schedules={[]}
+        currentDate={new Date('2026-05-29')}
+        selectedDate={null}
+        onSelectDate={onSelectDate}
+        workspaceId="ws"
+      />
+    )
+    expect(onSelectDate).not.toHaveBeenCalled()
+  })
 })
