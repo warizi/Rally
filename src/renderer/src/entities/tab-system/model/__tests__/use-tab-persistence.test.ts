@@ -121,3 +121,44 @@ describe('applySessionToStore', () => {
     expect(useTabStore.getState().tabs['t1'].error).toBe(true)
   })
 })
+
+// ─── useSessionPersistence hook (smoke) ───────────────────────
+import { vi, afterEach } from 'vitest'
+import { renderHook } from '@testing-library/react'
+
+const sessionApiMocks = vi.hoisted(() => ({
+  loadSession: vi.fn(),
+  saveSession: vi.fn(),
+  workspaceIdValue: null as string | null
+}))
+
+vi.mock('../../api/queries', () => ({
+  loadSession: sessionApiMocks.loadSession,
+  saveSession: sessionApiMocks.saveSession
+}))
+
+vi.mock('@shared/store/current-workspace', () => ({
+  useCurrentWorkspaceStore: (selector: (s: { currentWorkspaceId: string | null }) => unknown) =>
+    selector({ currentWorkspaceId: sessionApiMocks.workspaceIdValue })
+}))
+
+import { useSessionPersistence } from '../use-tab-persistence'
+
+afterEach(() => {
+  sessionApiMocks.loadSession.mockReset()
+  sessionApiMocks.saveSession.mockReset()
+  sessionApiMocks.workspaceIdValue = null
+})
+
+describe('useSessionPersistence (smoke)', () => {
+  it('workspaceId=null → loadSession 호출 안 함 (early return)', () => {
+    sessionApiMocks.workspaceIdValue = null
+    renderHook(() => useSessionPersistence())
+    expect(sessionApiMocks.loadSession).not.toHaveBeenCalled()
+  })
+
+  it('hook 마운트 → 에러 없이 통과 (smoke)', () => {
+    sessionApiMocks.workspaceIdValue = null
+    expect(() => renderHook(() => useSessionPersistence())).not.toThrow()
+  })
+})
