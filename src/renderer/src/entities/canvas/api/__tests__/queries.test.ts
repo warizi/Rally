@@ -11,10 +11,12 @@ import {
   useUpdateCanvas,
   useUpdateCanvasViewport,
   useRemoveCanvas,
+  useToggleCanvasLock,
   useCreateCanvasNode,
   useUpdateCanvasNode,
   useUpdateCanvasNodePositions,
   useRemoveCanvasNode,
+  useSyncCanvasState,
   useCreateCanvasEdge,
   useUpdateCanvasEdge,
   useRemoveCanvasEdge
@@ -26,12 +28,14 @@ const mockCreate = vi.fn()
 const mockUpdate = vi.fn()
 const mockUpdateViewport = vi.fn()
 const mockRemove = vi.fn()
+const mockToggleLock = vi.fn()
 
 const mockNodeFindByCanvas = vi.fn()
 const mockNodeCreate = vi.fn()
 const mockNodeUpdate = vi.fn()
 const mockNodeUpdatePositions = vi.fn()
 const mockNodeRemove = vi.fn()
+const mockNodeSyncState = vi.fn()
 
 const mockEdgeFindByCanvas = vi.fn()
 const mockEdgeCreate = vi.fn()
@@ -46,14 +50,16 @@ beforeEach(() => {
       create: mockCreate,
       update: mockUpdate,
       updateViewport: mockUpdateViewport,
-      remove: mockRemove
+      remove: mockRemove,
+      toggleLock: mockToggleLock
     },
     canvasNode: {
       findByCanvas: mockNodeFindByCanvas,
       create: mockNodeCreate,
       update: mockNodeUpdate,
       updatePositions: mockNodeUpdatePositions,
-      remove: mockNodeRemove
+      remove: mockNodeRemove,
+      syncState: mockNodeSyncState
     },
     canvasEdge: {
       findByCanvas: mockEdgeFindByCanvas,
@@ -358,5 +364,84 @@ describe('useRemoveCanvasEdge', () => {
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(mockEdgeRemove).toHaveBeenCalledWith('e-1')
     expect(mockEdgeRemove.mock.calls[0]).toHaveLength(1)
+  })
+})
+
+describe('useToggleCanvasLock', () => {
+  it('canvas.toggleLock(canvasId, isLocked) 호출 + invalidate', async () => {
+    mockToggleLock.mockResolvedValue({
+      success: true,
+      data: { id: 'c-1', isLocked: true }
+    })
+    const { queryClient, wrapper } = createWrapper()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const { result } = renderHook(() => useToggleCanvasLock(), { wrapper })
+    result.current.mutate({ canvasId: 'c-1', isLocked: true, workspaceId: 'ws-1' })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockToggleLock).toHaveBeenCalledWith('c-1', true)
+    // workspaceId queryKey 무효화 호출됨
+    expect(invalidateSpy).toHaveBeenCalled()
+  })
+
+  it('실패 → error', async () => {
+    mockToggleLock.mockResolvedValue({
+      success: false,
+      errorType: 'LockedError',
+      message: 'fail'
+    })
+    const { wrapper } = createWrapper()
+    const { result } = renderHook(() => useToggleCanvasLock(), { wrapper })
+    result.current.mutate({ canvasId: 'c-1', isLocked: false, workspaceId: 'ws-1' })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+describe('useSyncCanvasState', () => {
+  it('canvasNode.syncState(canvasId, data) 호출 + invalidate', async () => {
+    mockNodeSyncState.mockResolvedValue({ success: true })
+    const { queryClient, wrapper } = createWrapper()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const { result } = renderHook(() => useSyncCanvasState(), { wrapper })
+    const syncData = {
+      nodes: [
+        {
+          id: 'n1',
+          x: 100,
+          y: 200,
+          width: 50,
+          height: 50,
+          color: null,
+          content: 'a',
+          zIndex: 0,
+          refId: null,
+          type: 'text' as const
+        }
+      ],
+      edges: []
+    }
+    result.current.mutate({
+      canvasId: 'c-1',
+      data: syncData as Parameters<typeof window.api.canvasNode.syncState>[1]
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockNodeSyncState).toHaveBeenCalledWith('c-1', syncData)
+    expect(invalidateSpy).toHaveBeenCalled()
+  })
+
+  it('실패 → error', async () => {
+    mockNodeSyncState.mockResolvedValue({
+      success: false,
+      errorType: 'InternalError',
+      message: 'fail'
+    })
+    const { wrapper } = createWrapper()
+    const { result } = renderHook(() => useSyncCanvasState(), { wrapper })
+    result.current.mutate({
+      canvasId: 'c-1',
+      data: { nodes: [], edges: [] } as Parameters<typeof window.api.canvasNode.syncState>[1]
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
   })
 })
