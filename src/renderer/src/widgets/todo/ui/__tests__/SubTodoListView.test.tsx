@@ -99,4 +99,50 @@ describe('SubTodoListView', () => {
     render(<SubTodoListView subTodos={[]} workspaceId="ws" parentId="p" />)
     expect(screen.getByTestId('overlay')).toBeInTheDocument()
   })
+
+  it('빈 subTodos → DragOverlay 안에 콘텐츠 없음 (activeSub=null)', () => {
+    render(<SubTodoListView subTodos={[]} workspaceId="ws" parentId="p" />)
+    const overlay = screen.getByTestId('overlay')
+    // activeSub=null → null 자식
+    expect(overlay.children.length).toBe(0)
+  })
+
+  it('subTodos 3개 → SubTodoItem 3개 + table 헤더 정상', () => {
+    render(
+      <SubTodoListView
+        subTodos={
+          [
+            { id: 's1', title: 'X1' },
+            { id: 's2', title: 'X2' },
+            { id: 's3', title: 'X3' }
+          ] as unknown as Parameters<typeof SubTodoListView>[0]['subTodos']
+        }
+        workspaceId="ws"
+        parentId="p"
+      />
+    )
+    expect(screen.getAllByTestId(/^sub-/)).toHaveLength(3)
+    expect(screen.getByText('제목')).toBeInTheDocument()
+  })
+
+  it('parentId / workspaceId prop 정상 전달 (smoke — empty case CreateTodoDialog)', () => {
+    render(<SubTodoListView subTodos={[]} workspaceId="ws-x" parentId="parent-1" />)
+    // CreateTodoDialog mock 이 trigger 만 렌더 → 안내 버튼 노출
+    expect(screen.getByText(/버튼을 눌러/)).toBeInTheDocument()
+  })
+
+  it('parent ID/workspaceId 다른 값 → smoke 정상 렌더', () => {
+    render(
+      <SubTodoListView
+        subTodos={
+          [{ id: 's1', title: 'OnlyOne' }] as unknown as Parameters<
+            typeof SubTodoListView
+          >[0]['subTodos']
+        }
+        workspaceId="ws-other"
+        parentId="parent-other"
+      />
+    )
+    expect(screen.getByText('OnlyOne')).toBeInTheDocument()
+  })
 })
