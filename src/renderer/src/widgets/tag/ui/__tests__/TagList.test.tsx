@@ -27,6 +27,13 @@ const mocks = vi.hoisted(() => ({
     onToggle: (t: FakeTag) => void
     onCreateClick: () => void
     onRemove: (t: FakeTag) => void
+  },
+  createDialogProps: null as null | {
+    onSubmit: (data: { name: string; color: string }) => void
+  },
+  updateDialogProps: null as null | {
+    onSubmit: (data: { name?: string }) => void
+    onRemove: () => void
   }
 }))
 
@@ -62,13 +69,25 @@ vi.mock('../TagPicker', () => ({
 }))
 
 vi.mock('../TagCreateDialog', () => ({
-  TagCreateDialog: ({ open }: { open: boolean }) =>
-    open ? <div data-testid="create-dialog" /> : null
+  TagCreateDialog: (props: {
+    open: boolean
+    onSubmit: (data: { name: string; color: string }) => void
+  }) => {
+    mocks.createDialogProps = props
+    return props.open ? <div data-testid="create-dialog" /> : null
+  }
 }))
 
 vi.mock('../TagUpdateDialog', () => ({
-  TagUpdateDialog: ({ open, tag }: { open: boolean; tag: FakeTag }) =>
-    open ? <div data-testid="update-dialog">{tag.name}</div> : null
+  TagUpdateDialog: (props: {
+    open: boolean
+    tag: FakeTag
+    onSubmit: (data: { name?: string }) => void
+    onRemove: () => void
+  }) => {
+    mocks.updateDialogProps = props
+    return props.open ? <div data-testid="update-dialog">{props.tag.name}</div> : null
+  }
 }))
 
 import { TagList } from '../TagList'
@@ -163,5 +182,42 @@ describe('TagList', () => {
     render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
     fireEvent.click(screen.getByText('TagA'))
     expect(screen.getByTestId('update-dialog')).toBeInTheDocument()
+  })
+
+  it('TagCreateDialog onSubmit 호출 → createTag.mutate + attachTag (onSuccess)', () => {
+    mocks.createMutate.mockImplementation((_arg, opts) => {
+      opts?.onSuccess?.({ id: 'new-tag', name: 'NewTag', color: '#fff' })
+    })
+    render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
+    mocks.createDialogProps?.onSubmit({ name: 'NewTag', color: '#fff' })
+    expect(mocks.createMutate).toHaveBeenCalledWith(
+      { workspaceId: 'ws', input: { name: 'NewTag', color: '#fff' } },
+      expect.any(Object)
+    )
+    expect(mocks.attachMutate).toHaveBeenCalledWith({
+      itemType: 'note',
+      tagId: 'new-tag',
+      itemId: 'n1'
+    })
+  })
+
+  it('TagUpdateDialog onSubmit → updateTag.mutate', () => {
+    mocks.itemTags = [{ id: 't1', name: 'TagA', color: '#f00' }]
+    render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
+    fireEvent.click(screen.getByText('TagA'))
+    mocks.updateDialogProps?.onSubmit({ name: 'TagA-Renamed' })
+    expect(mocks.updateMutate).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 't1', input: { name: 'TagA-Renamed' } }),
+      expect.any(Object)
+    )
+  })
+
+  it('TagUpdateDialog onRemove → editTag 가 deleteTarget 로 (mutate 즉시 호출 안 됨)', () => {
+    mocks.itemTags = [{ id: 't1', name: 'TagA', color: '#f00' }]
+    render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
+    fireEvent.click(screen.getByText('TagA'))
+    mocks.updateDialogProps?.onRemove()
+    // 확인 다이얼로그 단계 — removeMutate 직접 호출 안 됨
+    expect(mocks.removeMutate).not.toHaveBeenCalled()
   })
 })

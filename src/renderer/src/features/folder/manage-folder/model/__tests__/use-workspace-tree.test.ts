@@ -259,3 +259,77 @@ describe('within-kind 정렬', () => {
     expect(children[1]).toMatchObject({ id: 'c1', name: 'zebra' })
   })
 })
+
+// ─── useWorkspaceTree hook ──────────────────────────────────
+import { vi } from 'vitest'
+import { renderHook } from '@testing-library/react'
+
+vi.mock('@entities/folder', () => ({
+  useFolderTree: vi.fn(() => ({ data: [], isLoading: false }))
+}))
+vi.mock('@entities/note', () => ({
+  useNotesByWorkspace: vi.fn(() => ({ data: [], isLoading: false }))
+}))
+vi.mock('@entities/csv-file', () => ({
+  useCsvFilesByWorkspace: vi.fn(() => ({ data: [], isLoading: false }))
+}))
+vi.mock('@entities/pdf-file', () => ({
+  usePdfFilesByWorkspace: vi.fn(() => ({ data: [], isLoading: false }))
+}))
+vi.mock('@entities/image-file', () => ({
+  useImageFilesByWorkspace: vi.fn(() => ({ data: [], isLoading: false }))
+}))
+
+import { useWorkspaceTree } from '../use-workspace-tree'
+import { useFolderTree } from '@entities/folder'
+import { useNotesByWorkspace } from '@entities/note'
+
+describe('useWorkspaceTree hook', () => {
+  it('빈 데이터 → tree=[], isLoading=false', () => {
+    const { result } = renderHook(() => useWorkspaceTree('ws-1'))
+    expect(result.current.tree).toEqual([])
+    expect(result.current.isLoading).toBe(false)
+  })
+
+  it('하나라도 로딩 중 → isLoading=true', () => {
+    vi.mocked(useFolderTree).mockReturnValueOnce({
+      data: [],
+      isLoading: true
+    } as never)
+    const { result } = renderHook(() => useWorkspaceTree('ws-1'))
+    expect(result.current.isLoading).toBe(true)
+  })
+
+  it('folders + notes 결합 → buildWorkspaceTree 호출 결과', () => {
+    vi.mocked(useFolderTree).mockReturnValueOnce({
+      data: [
+        {
+          id: 'f1',
+          name: 'Folder 1',
+          color: null,
+          order: 0,
+          parentId: null,
+          children: []
+        }
+      ],
+      isLoading: false
+    } as never)
+    vi.mocked(useNotesByWorkspace).mockReturnValueOnce({
+      data: [
+        {
+          id: 'n1',
+          title: 'Note A',
+          relativePath: 'a.md',
+          description: '',
+          preview: '',
+          folderId: null,
+          order: 0,
+          isLocked: false
+        }
+      ],
+      isLoading: false
+    } as never)
+    const { result } = renderHook(() => useWorkspaceTree('ws-1'))
+    expect(result.current.tree.length).toBeGreaterThan(0)
+  })
+})

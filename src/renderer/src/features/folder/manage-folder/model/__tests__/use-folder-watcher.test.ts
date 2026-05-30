@@ -19,16 +19,50 @@ function createWrapper(): {
   }
 }
 
+// ─── 모의 모듈 ─────────────────────────────────────────────
+const hoistedMocks = vi.hoisted(() => ({
+  toastInfo: vi.fn(),
+  toastDismiss: vi.fn(),
+  isWorkspaceOwnWriteMock: vi.fn((_id: string) => false),
+  openTabMock: vi.fn()
+}))
+
+const { toastInfo, isWorkspaceOwnWriteMock } = hoistedMocks
+
+vi.mock('sonner', () => ({
+  toast: { info: hoistedMocks.toastInfo, dismiss: hoistedMocks.toastDismiss }
+}))
+
+vi.mock('@shared/lib/workspace-own-write', () => ({
+  isWorkspaceOwnWrite: (id: string) => hoistedMocks.isWorkspaceOwnWriteMock(id)
+}))
+
+vi.mock('@/entities/tab-system', () => ({
+  useTabStore: (selector: (s: unknown) => unknown) =>
+    selector({ openTab: hoistedMocks.openTabMock })
+}))
+
+vi.mock('@shared/lib/format-author', () => ({
+  formatAuthor: () => 'AI 봇'
+}))
+
 // ─── window.api mock ──────────────────────────────────────────
-let capturedCb: (workspaceId: string) => void
+type ChangedCb = (
+  workspaceId: string,
+  changedRelPaths: string[],
+  actor: { kind: 'user' | 'ai'; id: string | null } | null
+) => void
+let capturedCb: ChangedCb
 const mockUnsubscribe = vi.fn()
-const mockOnChanged = vi.fn().mockImplementation((cb: (workspaceId: string) => void) => {
+const mockOnChanged = vi.fn().mockImplementation((cb: ChangedCb) => {
   capturedCb = cb
   return mockUnsubscribe
 })
 
 beforeEach(() => {
   vi.clearAllMocks()
+  isWorkspaceOwnWriteMock.mockReturnValue(false)
+  vi.useFakeTimers()
   ;(window as unknown as Record<string, unknown>).api = {
     folder: { onChanged: mockOnChanged }
   }
@@ -36,6 +70,7 @@ beforeEach(() => {
 
 afterEach(() => {
   delete (window as unknown as Record<string, unknown>).api
+  vi.useRealTimers()
 })
 
 // ─── 구독 등록 ────────────────────────────────────────────────
@@ -56,10 +91,58 @@ describe('이벤트 수신 → invalidation', () => {
     renderHook(() => useFolderWatcher(), { wrapper })
 
     act(() => {
-      capturedCb('ws-1')
+      capturedCb('ws-1', [], null)
     })
 
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['folder', 'tree', 'ws-1'] })
+  })
+
+  it('readyRef true + 외부 변경 → toast.info 호출', () => {
+    const { wrapper } = createWrapper()
+    renderHook(() => useFolderWatcher(), { wrapper })
+    act(() => {
+      vi.advanceTimersByTime(2100)
+    })
+    act(() => {
+      capturedCb('ws-1', ['a/b.md'], null)
+    })
+    expect(toastInfo).toHaveBeenCalledTimes(1)
+    expect(toastInfo.mock.calls[0][0]).toBe('외부에서 폴더가 변경되었습니다')
+  })
+
+  it('actor.kind=ai → AI 변경 토스트', () => {
+    const { wrapper } = createWrapper()
+    renderHook(() => useFolderWatcher(), { wrapper })
+    act(() => {
+      vi.advanceTimersByTime(2100)
+    })
+    act(() => {
+      capturedCb('ws-1', ['a.md'], { kind: 'ai', id: 'agent-1' })
+    })
+    expect(toastInfo).toHaveBeenCalledTimes(1)
+    expect(toastInfo.mock.calls[0][0]).toContain('폴더를 변경하였습니다')
+  })
+
+  it('isWorkspaceOwnWrite=true → toast 미호출', () => {
+    isWorkspaceOwnWriteMock.mockReturnValue(true)
+    const { wrapper } = createWrapper()
+    renderHook(() => useFolderWatcher(), { wrapper })
+    act(() => {
+      vi.advanceTimersByTime(2100)
+    })
+    act(() => {
+      capturedCb('ws-1', ['a.md'], null)
+    })
+    expect(toastInfo).not.toHaveBeenCalled()
+  })
+
+  it('readyRef false (2s 이전) → toast 미호출', () => {
+    const { wrapper } = createWrapper()
+    renderHook(() => useFolderWatcher(), { wrapper })
+    act(() => {
+      capturedCb('ws-1', ['a.md'], null)
+    })
+    expect(toastInfo).not.toHaveBeenCalled()
   })
 })
 

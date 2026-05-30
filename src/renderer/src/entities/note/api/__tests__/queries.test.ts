@@ -5,36 +5,45 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import {
   useNotesByWorkspace,
   useCreateNote,
+  useImportNote,
+  useDuplicateNote,
   useRenameNote,
   useRemoveNote,
   useReadNoteContent,
   useWriteNoteContent,
   useMoveNote,
-  useUpdateNoteMeta
+  useUpdateNoteMeta,
+  useToggleNoteLock
 } from '../queries'
 import type { NoteNode } from '../../model/types'
 
 // ─── window.api mock ──────────────────────────────────────────
 const mockReadByWorkspace = vi.fn()
 const mockCreate = vi.fn()
+const mockImport = vi.fn()
+const mockDuplicate = vi.fn()
 const mockRename = vi.fn()
 const mockRemove = vi.fn()
 const mockReadContent = vi.fn()
 const mockWriteContent = vi.fn()
 const mockMove = vi.fn()
 const mockUpdateMeta = vi.fn()
+const mockToggleLock = vi.fn()
 
 beforeEach(() => {
   ;(window as unknown as Record<string, unknown>).api = {
     note: {
       readByWorkspace: mockReadByWorkspace,
       create: mockCreate,
+      import: mockImport,
+      duplicate: mockDuplicate,
       rename: mockRename,
       remove: mockRemove,
       readContent: mockReadContent,
       writeContent: mockWriteContent,
       move: mockMove,
-      updateMeta: mockUpdateMeta
+      updateMeta: mockUpdateMeta,
+      toggleLock: mockToggleLock
     }
   }
   vi.clearAllMocks()
@@ -236,5 +245,87 @@ describe('useUpdateNoteMeta', () => {
 
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['note', 'workspace', 'ws-1'] })
+  })
+})
+
+// ─── useImportNote ───────────────────────────────────────────
+describe('useImportNote', () => {
+  it('성공 → note.import 호출 + invalidate', async () => {
+    mockImport.mockResolvedValue({ success: true, data: SAMPLE_NOTE })
+    const { queryClient, wrapper } = createWrapper()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const { result } = renderHook(() => useImportNote(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', folderId: null, sourcePath: '/src.md' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockImport).toHaveBeenCalledWith('ws-1', null, '/src.md')
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['note', 'workspace', 'ws-1'] })
+  })
+
+  it('실패 → error', async () => {
+    mockImport.mockResolvedValue({
+      success: false,
+      errorType: 'ValidationError',
+      message: 'fail'
+    })
+    const { wrapper } = createWrapper()
+    const { result } = renderHook(() => useImportNote(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', folderId: null, sourcePath: '/src.md' })
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+  })
+})
+
+// ─── useDuplicateNote ────────────────────────────────────────
+describe('useDuplicateNote', () => {
+  it('성공 → note.duplicate 호출 + invalidate', async () => {
+    mockDuplicate.mockResolvedValue({ success: true, data: SAMPLE_NOTE })
+    const { queryClient, wrapper } = createWrapper()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const { result } = renderHook(() => useDuplicateNote(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', noteId: 'n1' })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockDuplicate).toHaveBeenCalledWith('ws-1', 'n1')
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['note', 'workspace', 'ws-1'] })
+  })
+})
+
+// ─── useToggleNoteLock ───────────────────────────────────────
+describe('useToggleNoteLock', () => {
+  it('성공 → note.toggleLock(workspaceId, noteId, isLocked) 호출 + invalidate', async () => {
+    mockToggleLock.mockResolvedValue({
+      success: true,
+      data: { ...SAMPLE_NOTE, isLocked: true }
+    })
+    const { queryClient, wrapper } = createWrapper()
+    const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries')
+
+    const { result } = renderHook(() => useToggleNoteLock(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', noteId: 'n1', isLocked: true })
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(mockToggleLock).toHaveBeenCalledWith('ws-1', 'n1', true)
+    expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['note', 'workspace', 'ws-1'] })
+  })
+
+  it('실패 → error', async () => {
+    mockToggleLock.mockResolvedValue({
+      success: false,
+      errorType: 'LockedError',
+      message: 'fail'
+    })
+    const { wrapper } = createWrapper()
+    const { result } = renderHook(() => useToggleNoteLock(), { wrapper })
+    act(() => {
+      result.current.mutate({ workspaceId: 'ws-1', noteId: 'n1', isLocked: false })
+    })
+    await waitFor(() => expect(result.current.isError).toBe(true))
   })
 })
