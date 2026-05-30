@@ -132,4 +132,33 @@ describe('CalendarPage', () => {
     expect(screen.getByText('캘린더')).toBeInTheDocument()
     expect(screen.queryByTestId('schedule-form')).not.toBeInTheDocument()
   })
+
+  it('workspaceId=null → "워크스페이스를 선택해주세요" 메시지', () => {
+    mocks.workspaceId = null
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByText('워크스페이스를 선택해주세요')).toBeInTheDocument()
+  })
+
+  it('schedules + todos 모두 비어있음 → "이 범위에 일정이 없어요" 빈 안내', () => {
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByText(/이 범위에 일정이 없어요/)).toBeInTheDocument()
+  })
+
+  it('schedules 있음 → 빈 안내 미노출', () => {
+    mocks.schedules = [{ id: 's1' }]
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.queryByText(/이 범위에 일정이 없어요/)).toBeNull()
+  })
+
+  it('viewType=day → DayView + RecurringTodoSection 노출', () => {
+    mocks.viewType = 'day'
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByTestId('day-view')).toBeInTheDocument()
+  })
+
+  it('tabSearchParams.showTodos="false" → 표시 모드 변경 (CheckSquare button 노출)', () => {
+    mocks.tabSearchParams = { showTodos: 'false' }
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByText('캘린더')).toBeInTheDocument()
+  })
 })
