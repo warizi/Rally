@@ -170,4 +170,64 @@ describe('FolderTreeNodeDispatcher', () => {
     expect(screen.getByTestId(rendererTestId)).toBeInTheDocument()
     expect(screen.queryByTestId('folder-context-menu')).toBeNull()
   })
+
+  it('matchedIds 가 node.id 포함 → isMatch=true (smoke)', () => {
+    const noteNode = {
+      id: 'note-match',
+      kind: 'note',
+      name: 'Matched Note'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(noteNode)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+        matchedIds={new Set(['note-match'])}
+      />
+    )
+    expect(screen.getByTestId('note-renderer')).toBeInTheDocument()
+  })
+
+  it('activeMatchId === node.id → ref 적용 (smoke)', () => {
+    const noteNode = {
+      id: 'note-active',
+      kind: 'note',
+      name: 'Active Match'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(noteNode)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+        matchedIds={new Set(['note-active'])}
+        activeMatchId={'note-active'}
+      />
+    )
+    expect(screen.getByTestId('note-renderer')).toBeInTheDocument()
+  })
+
+  it('activePathname 가 node 와 매칭 → isActive=true 인 NoteNodeRenderer 호출 (smoke)', () => {
+    const noteNode = {
+      id: 'note-x',
+      kind: 'note',
+      name: 'NoteX'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(noteNode)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname="/folder/note/note-x"
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    expect(screen.getByTestId('note-renderer')).toBeInTheDocument()
+  })
 })
