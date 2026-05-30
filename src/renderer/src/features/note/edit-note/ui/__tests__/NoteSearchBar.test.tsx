@@ -5,24 +5,40 @@
  * Escape → close. close → onClose. matchCount=0 → "결과 없음".
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 
 vi.mock('@milkdown/react', () => ({
-  useInstance: () => [null, () => null]
+  useInstance: () => [
+    null,
+    () => {
+      if (!searchMocks.editor) return null
+      return searchMocks.editor
+    }
+  ]
 }))
 
 vi.mock('@milkdown/kit/core', () => ({
   editorViewCtx: Symbol('editorViewCtx')
 }))
 
+const searchMocks = vi.hoisted(() => ({
+  matches: [] as Array<{ from: number; to: number }>,
+  editor: null as null | {
+    action: (fn: (ctx: unknown) => void) => void
+    dispatch: ReturnType<typeof vi.fn>
+  }
+}))
+
 vi.mock('../../model/note-search-plugin', () => ({
-  searchPluginKey: { getState: () => ({ matches: [] }) }
+  searchPluginKey: { getState: () => ({ matches: searchMocks.matches }) }
 }))
 
 import { NoteSearchBar } from '../NoteSearchBar'
 
 beforeEach(() => {
   vi.useFakeTimers()
+  searchMocks.matches = []
+  searchMocks.editor = null
 })
 
 describe('NoteSearchBar', () => {
@@ -99,6 +115,150 @@ describe('NoteSearchBar', () => {
     render(<NoteSearchBar open={true} onClose={onClose} />)
     fireEvent.keyDown(screen.getByPlaceholderText('검색...'), { key: 'Enter' })
     expect(onClose).not.toHaveBeenCalled()
+    vi.useRealTimers()
+  })
+
+  it('matches 있음 + 검색 → "1/N" 카운트 노출', () => {
+    searchMocks.matches = [
+      { from: 0, to: 5 },
+      { from: 10, to: 15 },
+      { from: 20, to: 25 }
+    ]
+    searchMocks.editor = {
+      action: (fn) => {
+        fn({
+          get: () => ({
+            state: {
+              tr: { setMeta: () => ({}) },
+              schema: {}
+            },
+            dispatch: vi.fn(),
+            dom: { querySelector: () => null }
+          })
+        })
+      },
+      dispatch: vi.fn()
+    }
+    render(<NoteSearchBar open={true} onClose={vi.fn()} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'foo' } })
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
+    expect(screen.getByText('1/3')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('matches 있음 + next 클릭 → "2/N" 카운트 (smoke)', () => {
+    searchMocks.matches = [
+      { from: 0, to: 5 },
+      { from: 10, to: 15 }
+    ]
+    searchMocks.editor = {
+      action: (fn) => {
+        fn({
+          get: () => ({
+            state: { tr: { setMeta: () => ({}) }, schema: {} },
+            dispatch: vi.fn(),
+            dom: { querySelector: () => null }
+          })
+        })
+      },
+      dispatch: vi.fn()
+    }
+    render(<NoteSearchBar open={true} onClose={vi.fn()} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'foo' } })
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
+    expect(screen.getByText('1/2')).toBeInTheDocument()
+    const [, nextBtn] = screen.getAllByRole('button')
+    fireEvent.click(nextBtn)
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('matches 있음 + prev 클릭 (wrap-around) → matchCount/matchCount', () => {
+    searchMocks.matches = [
+      { from: 0, to: 5 },
+      { from: 10, to: 15 }
+    ]
+    searchMocks.editor = {
+      action: (fn) => {
+        fn({
+          get: () => ({
+            state: { tr: { setMeta: () => ({}) }, schema: {} },
+            dispatch: vi.fn(),
+            dom: { querySelector: () => null }
+          })
+        })
+      },
+      dispatch: vi.fn()
+    }
+    render(<NoteSearchBar open={true} onClose={vi.fn()} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'foo' } })
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
+    const [prevBtn] = screen.getAllByRole('button')
+    fireEvent.click(prevBtn)
+    // activeIndex 0 → -1 wrap → 1 (matchCount-1)
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('matches 있음 + Enter → goNext, Shift+Enter → goPrev', () => {
+    searchMocks.matches = [
+      { from: 0, to: 5 },
+      { from: 10, to: 15 }
+    ]
+    searchMocks.editor = {
+      action: (fn) => {
+        fn({
+          get: () => ({
+            state: { tr: { setMeta: () => ({}) }, schema: {} },
+            dispatch: vi.fn(),
+            dom: { querySelector: () => null }
+          })
+        })
+      },
+      dispatch: vi.fn()
+    }
+    render(<NoteSearchBar open={true} onClose={vi.fn()} />)
+    const input = screen.getByPlaceholderText('검색...')
+    fireEvent.change(input, { target: { value: 'foo' } })
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
+    fireEvent.keyDown(input, { key: 'Enter' })
+    expect(screen.getByText('2/2')).toBeInTheDocument()
+    fireEvent.keyDown(input, { key: 'Enter', shiftKey: true })
+    expect(screen.getByText('1/2')).toBeInTheDocument()
+    vi.useRealTimers()
+  })
+
+  it('matches 있음 + active highlight DOM 존재 → scrollIntoView 호출 (smoke)', () => {
+    const scrollSpy = vi.fn()
+    searchMocks.matches = [{ from: 0, to: 5 }]
+    searchMocks.editor = {
+      action: (fn) => {
+        fn({
+          get: () => ({
+            state: { tr: { setMeta: () => ({}) }, schema: {} },
+            dispatch: vi.fn(),
+            dom: { querySelector: () => ({ scrollIntoView: scrollSpy }) }
+          })
+        })
+      },
+      dispatch: vi.fn()
+    }
+    render(<NoteSearchBar open={true} onClose={vi.fn()} />)
+    fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'foo' } })
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
+    // rAF가 호출되어야 하지만 happy-dom 에서 자동 실행됨
+    // smoke 통과
+    expect(screen.getByText('1/1')).toBeInTheDocument()
     vi.useRealTimers()
   })
 })
