@@ -5,7 +5,7 @@
  * 제출 → createTodo.mutate. 취소 → onOpenChange(false).
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   createMutate: vi.fn(),
@@ -33,24 +33,19 @@ vi.mock('@entities/reminder', () => ({
   useSetReminder: () => ({ mutate: mocks.setReminderMutate })
 }))
 
-vi.mock('../TodoFormFields', () => ({
-  TodoFormFields: ({
-    titleOnly,
-    form
-  }: {
-    titleOnly?: boolean
-    form?: { setValue: (k: string, v: string) => void }
-  }) => {
+vi.mock('../TodoFormFields', async () => {
+  const rhf = await vi.importActual<typeof import('react-hook-form')>('react-hook-form')
+  function FormFieldsMock({ titleOnly }: { titleOnly?: boolean }): React.JSX.Element {
     mocks.formFieldsTitleOnly = !!titleOnly
-    // 테스트에서 form 에 title 을 미리 채우기 위한 helper button.
+    const ctx = rhf.useFormContext()
     return (
       <div data-testid="todo-form-fields">
         {titleOnly ? 'title-only' : 'full'}
-        {form && (
+        {ctx && (
           <button
             type="button"
             data-testid="form-set-title"
-            onClick={() => form.setValue('title', 'Test Todo')}
+            onClick={() => ctx.setValue('title', 'Test Todo')}
           >
             set-title
           </button>
@@ -58,7 +53,8 @@ vi.mock('../TodoFormFields', () => ({
       </div>
     )
   }
-}))
+  return { TodoFormFields: FormFieldsMock }
+})
 
 vi.mock('../../model/use-todo-default-date-setting', () => ({
   useTodoDefaultDateSetting: () => ({ enabled: mocks.defaultDateEnabled })
@@ -221,5 +217,86 @@ describe('CreateTodoDialog', () => {
     // DatePicker 와 TimePicker 가 시작일/마감일 둘 다 (총 2개씩)
     expect(screen.getAllByTestId(/^date-/).length).toBeGreaterThanOrEqual(2)
     expect(screen.getAllByTestId(/^time-/).length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('제출 (날짜 없음) → createTodo.mutate 호출 + dueDate=null', async () => {
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByTestId('form-set-title'))
+    fireEvent.click(screen.getByRole('button', { name: '추가' }))
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    const arg = mocks.createMutate.mock.calls[0][0]
+    expect(arg.data.title).toBe('Test Todo')
+    expect(arg.data.dueDate).toBeNull()
+    expect(arg.data.startDate).toBeNull()
+    expect(arg.data.parentId).toBeNull()
+  })
+
+  it('제출 + parentId 있음 → data.parentId 전달', async () => {
+    render(
+      <CreateTodoDialog
+        workspaceId="ws"
+        parentId="parent-1"
+        trigger={<button data-testid="trigger">+</button>}
+      />
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByTestId('form-set-title'))
+    fireEvent.click(screen.getByRole('button', { name: '추가' }))
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    expect(mocks.createMutate.mock.calls[0][0].data.parentId).toBe('parent-1')
+  })
+
+  it('제출 (defaultDateEnabled) → 같은 날 → 시간 09:00/10:00 자동 설정', async () => {
+    mocks.defaultDateEnabled = true
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByTestId('form-set-title'))
+    fireEvent.click(screen.getByRole('button', { name: '추가' }))
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    const arg = mocks.createMutate.mock.calls[0][0]
+    // startDate 09:00, dueDate 10:00
+    expect((arg.data.startDate as Date).getHours()).toBe(9)
+    expect((arg.data.dueDate as Date).getHours()).toBe(10)
+  })
+
+  it('제출 onSuccess → pendingLinks 있으면 linkEntity.mutate 호출 안 됨 (pending=빈)', async () => {
+    mocks.createMutate.mockImplementation(
+      (_v: unknown, opts: { onSuccess: (data: { id: string }) => void }) => {
+        opts.onSuccess({ id: 'new-todo-1' })
+      }
+    )
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByTestId('form-set-title'))
+    fireEvent.click(screen.getByRole('button', { name: '추가' }))
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    expect(mocks.linkMutate).not.toHaveBeenCalled()
+    expect(mocks.setReminderMutate).not.toHaveBeenCalled()
+    expect(screen.queryByText('할 일 추가')).not.toBeInTheDocument()
+  })
+
+  it('defaultStatus 미지정 → 기본 "할일"', async () => {
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByTestId('form-set-title'))
+    fireEvent.click(screen.getByRole('button', { name: '추가' }))
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    expect(mocks.createMutate.mock.calls[0][0].data.status).toBe('할일')
+  })
+
+  it('defaultStatus="진행중" + 제출 → data.status="진행중"', async () => {
+    render(
+      <CreateTodoDialog
+        workspaceId="ws"
+        defaultStatus="진행중"
+        trigger={<button data-testid="trigger">+</button>}
+      />
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    fireEvent.click(screen.getByTestId('form-set-title'))
+    fireEvent.click(screen.getByRole('button', { name: '추가' }))
+    await waitFor(() => expect(mocks.createMutate).toHaveBeenCalledTimes(1))
+    expect(mocks.createMutate.mock.calls[0][0].data.status).toBe('진행중')
   })
 })

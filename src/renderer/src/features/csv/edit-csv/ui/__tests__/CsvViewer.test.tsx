@@ -64,6 +64,9 @@ const csvTableProps: {
     onAddColumnAt: (index: number, name?: string) => void
     onRemoveColumn: (colIndex: number) => void
     columnSizing: Record<string, number>
+    onColumnSizingChange: (
+      updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
+    ) => void
   }
 } = { current: null }
 
@@ -76,6 +79,9 @@ vi.mock('../CsvTable', () => ({
     onAddColumnAt: (index: number, name?: string) => void
     onRemoveColumn: (colIndex: number) => void
     columnSizing: Record<string, number>
+    onColumnSizingChange: (
+      updater: Record<string, number> | ((prev: Record<string, number>) => Record<string, number>)
+    ) => void
   }) => {
     csvTableProps.current = props
     return <div data-testid="csv-table" />
@@ -158,5 +164,68 @@ describe('CsvViewer', () => {
       />
     )
     expect(csvTableProps.current?.columnSizing).toEqual({ col_0: 120 })
+  })
+
+  it('onColumnSizingChange (값 객체) → columnSizing 업데이트', async () => {
+    render(<CsvViewer workspaceId="ws" csvId="c1" initialContent="" initialColumnWidths={null} />)
+    csvTableProps.current?.onColumnSizingChange({ col_0: 200 })
+    // 직접 호출 후 props 다음 렌더에 반영
+    await new Promise((r) => setTimeout(r, 10))
+    expect(csvTableProps.current?.columnSizing).toEqual({ col_0: 200 })
+  })
+
+  it('onColumnSizingChange (업데이터 함수) → 이전 값 + 변경', async () => {
+    render(
+      <CsvViewer
+        workspaceId="ws"
+        csvId="c1"
+        initialContent=""
+        initialColumnWidths='{"col_0":100}'
+      />
+    )
+    csvTableProps.current?.onColumnSizingChange((prev) => ({ ...prev, col_1: 150 }))
+    await new Promise((r) => setTimeout(r, 10))
+    expect(csvTableProps.current?.columnSizing).toEqual({ col_0: 100, col_1: 150 })
+  })
+
+  it('shiftSizingInsert: index=1 삽입 → col_1, col_2 가 col_2, col_3 로 시프트', async () => {
+    render(
+      <CsvViewer
+        workspaceId="ws"
+        csvId="c1"
+        initialContent=""
+        initialColumnWidths='{"col_0":100,"col_1":150,"col_2":200}'
+      />
+    )
+    csvTableProps.current?.onAddColumnAt(1, 'X')
+    await new Promise((r) => setTimeout(r, 10))
+    // col_0 유지, col_1 → col_2 (150), col_2 → col_3 (200)
+    expect(csvTableProps.current?.columnSizing).toEqual({
+      col_0: 100,
+      col_2: 150,
+      col_3: 200
+    })
+  })
+
+  it('shiftSizingRemove: index=1 삭제 → col_1 제거 + col_2 가 col_1 로 시프트', async () => {
+    render(
+      <CsvViewer
+        workspaceId="ws"
+        csvId="c1"
+        initialContent=""
+        initialColumnWidths='{"col_0":100,"col_1":150,"col_2":200}'
+      />
+    )
+    csvTableProps.current?.onRemoveColumn(1)
+    await new Promise((r) => setTimeout(r, 10))
+    expect(csvTableProps.current?.columnSizing).toEqual({
+      col_0: 100,
+      col_1: 200
+    })
+  })
+
+  it('initialColumnWidths=null → 빈 columnSizing', () => {
+    render(<CsvViewer workspaceId="ws" csvId="c1" initialContent="" initialColumnWidths={null} />)
+    expect(csvTableProps.current?.columnSizing).toEqual({})
   })
 })

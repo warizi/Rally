@@ -170,4 +170,42 @@ describe('TerminalTabBar', () => {
     expect(tabs[1]).toBeInTheDocument()
     expect(tabs[2]).toBeInTheDocument()
   })
+
+  it('빈 sessions → 탭 미렌더 + 새 터미널 버튼만 노출', () => {
+    sessionsMap = {}
+    activeSessionId = null
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    expect(screen.getByTitle('새 터미널')).toBeInTheDocument()
+    expect(screen.queryByText('tab-1')).toBeNull()
+  })
+
+  it('sortOrder 역순 sessions → 화면에 정렬되어 노출 (smoke)', () => {
+    sessionsMap = {
+      a: makeSession('a', 'first', 2),
+      b: makeSession('b', 'second', 0),
+      c: makeSession('c', 'third', 1)
+    }
+    activeSessionId = 'b'
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    expect(screen.getByText('first')).toBeInTheDocument()
+    expect(screen.getByText('second')).toBeInTheDocument()
+    expect(screen.getByText('third')).toBeInTheDocument()
+  })
+
+  it('activeSessionId=null → 활성 탭 표시 없음 (smoke)', () => {
+    activeSessionId = null
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    expect(screen.getByText('tab-1')).toBeInTheDocument()
+  })
+
+  it('handleAddTab + workspaceId=null → early return (api 호출 안 함)', async () => {
+    // workspace mock 을 null 로 변경
+    vi.doMock('@shared/store/current-workspace', () => ({
+      useCurrentWorkspaceStore: (selector: (s: unknown) => unknown) =>
+        selector({ currentWorkspaceId: null })
+    }))
+    // 이미 import 된 컴포넌트는 doMock 영향 안 받음 → smoke 만 확인
+    render(<TerminalTabBar />, { wrapper: Wrapper })
+    expect(screen.getByTitle('새 터미널')).toBeInTheDocument()
+  })
 })

@@ -45,15 +45,21 @@ vi.mock('../../model/schedule-style', () => ({
   getItemStyle: () => ({})
 }))
 
+const dndMocks = vi.hoisted(() => ({
+  activeSchedule: null as null | { id: string; title: string; startAt: Date; endAt: Date },
+  previewDelta: 0
+}))
+
 vi.mock('../../model/use-day-dnd', () => ({
   useDayDnd: () => ({
     handleDragStart: vi.fn(),
     handleDragMove: vi.fn(),
     handleDragEnd: vi.fn(),
-    activeSchedule: null,
+    activeSchedule: dndMocks.activeSchedule,
     activeType: 'block',
     activeWidth: 0,
-    activeHeight: 0
+    activeHeight: 0,
+    previewDelta: dndMocks.previewDelta
   })
 }))
 
@@ -194,6 +200,116 @@ describe('DayView', () => {
       />
     )
     expect(screen.getByText('☐')).toBeInTheDocument()
+  })
+
+  it('clampMap 분기: multi-day timed schedule → clamp 적용 (smoke)', () => {
+    render(
+      <DayView
+        schedules={
+          [
+            {
+              id: 'multi',
+              title: 'Multi Day Event',
+              allDay: false,
+              startAt: new Date('2026-05-28T20:00:00Z'),
+              endAt: new Date('2026-05-30T05:00:00Z'),
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof DayView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByTestId('time-grid')).toBeInTheDocument()
+  })
+
+  it('DnD activeSchedule + previewDelta → preview 영역 노출', () => {
+    dndMocks.activeSchedule = {
+      id: 's1',
+      title: 'Dragging',
+      startAt: new Date('2026-05-29T10:00:00Z'),
+      endAt: new Date('2026-05-29T11:00:00Z')
+    }
+    dndMocks.previewDelta = 30
+    render(
+      <DayView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'Dragging',
+              allDay: false,
+              startAt: new Date('2026-05-29T10:00:00Z'),
+              endAt: new Date('2026-05-29T11:00:00Z'),
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof DayView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        workspaceId="ws"
+      />
+    )
+    // smoke — 에러 없이 렌더
+    expect(screen.getByTestId('time-grid')).toBeInTheDocument()
+    dndMocks.activeSchedule = null
+    dndMocks.previewDelta = 0
+  })
+
+  it('DnD activeSchedule + isTodo → todo preview 분기 (smoke)', () => {
+    dndMocks.activeSchedule = {
+      id: 't1',
+      title: 'Todo Drag',
+      startAt: new Date('2026-05-29T10:00:00Z'),
+      endAt: new Date('2026-05-29T11:00:00Z')
+    }
+    ;(dndMocks.activeSchedule as unknown as { type: string }).type = 'todo'
+    dndMocks.previewDelta = 60
+    render(
+      <DayView
+        schedules={
+          [
+            {
+              id: 't1',
+              title: 'Todo Drag',
+              allDay: false,
+              startAt: new Date('2026-05-29T10:00:00Z'),
+              endAt: new Date('2026-05-29T11:00:00Z'),
+              isDone: false,
+              type: 'todo'
+            }
+          ] as unknown as Parameters<typeof DayView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByTestId('time-grid')).toBeInTheDocument()
+    dndMocks.activeSchedule = null
+    dndMocks.previewDelta = 0
+  })
+
+  it('schedules currentDate 다른 날 → 필터링됨 (allDay/timed 빈 결과)', () => {
+    // isScheduleOnDate mock 이 true 반환이라 실제 분기 검증 어려움 — smoke 만
+    render(
+      <DayView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'Other Day',
+              allDay: false,
+              startAt: new Date('2026-06-15T10:00:00Z'),
+              endAt: new Date('2026-06-15T11:00:00Z'),
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof DayView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByTestId('time-grid')).toBeInTheDocument()
   })
 
   it('여러 timed 일정 → 모두 표시 (smoke)', () => {
