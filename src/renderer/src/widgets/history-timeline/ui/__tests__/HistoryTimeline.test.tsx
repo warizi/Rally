@@ -109,4 +109,60 @@ describe('HistoryTimeline', () => {
     render(<HistoryTimeline workspaceId="ws" query="hello" fromDate={null} toDate={null} />)
     expect(screen.getByText('조건에 맞는 항목이 없습니다.')).toBeInTheDocument()
   })
+
+  it('데이터 있음 → 날짜 + 항목 노출', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'Completed Todo',
+                  doneAt: new Date('2026-05-30T10:00:00Z'),
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    render(<HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />)
+    expect(screen.getByText('Completed Todo')).toBeInTheDocument()
+  })
+
+  it('isFetchingNextPage=true → 추가 Loader 노출', () => {
+    mocks.data = {
+      pages: [
+        {
+          days: [
+            {
+              date: '2026-05-30',
+              todos: [
+                {
+                  id: 't1',
+                  title: 'X',
+                  doneAt: new Date(),
+                  links: [],
+                  updatedBy: 'user',
+                  updatedById: null
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    } as never
+    mocks.isFetchingNextPage = true
+    mocks.hasNextPage = true
+    const { container } = render(
+      <HistoryTimeline workspaceId="ws" query="" fromDate={null} toDate={null} />
+    )
+    expect(container.querySelectorAll('.animate-spin').length).toBeGreaterThan(0)
+  })
 })
