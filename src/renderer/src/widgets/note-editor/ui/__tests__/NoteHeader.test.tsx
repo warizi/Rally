@@ -135,17 +135,19 @@ describe('NoteHeader', () => {
   })
 
   it('note 있음 → footer prop 전달 (AuthorBadgePair smoke)', () => {
-    mocks.note = {
-      id: 'n1',
-      title: 'T',
-      description: 'd',
-      createdBy: 'u',
-      createdById: null,
-      createdAt: new Date(),
-      updatedBy: 'u',
-      updatedById: null,
-      updatedAt: new Date()
-    }
+    mocks.notes = [
+      {
+        id: 'n1',
+        title: 'T',
+        description: 'd',
+        createdBy: 'u',
+        createdById: null,
+        createdAt: new Date(),
+        updatedBy: 'u',
+        updatedById: null,
+        updatedAt: new Date()
+      }
+    ]
     render(<NoteHeader workspaceId="ws" noteId="n1" />)
     expect(mocks.receivedProps?.footer).toBeTruthy()
   })
