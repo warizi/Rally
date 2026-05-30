@@ -146,7 +146,7 @@ describe('CsvHeader', () => {
 
   it('csv.description 노출', () => {
     r(<CsvHeader workspaceId="ws-1" csvId="csv-1" />)
-    expect(screen.getByText('description')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('description')).toBeInTheDocument()
   })
 
   it('데이터 행 1개 → hasContent=true', () => {
