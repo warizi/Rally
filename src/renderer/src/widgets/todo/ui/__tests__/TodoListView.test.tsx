@@ -89,4 +89,35 @@ describe('TodoListView', () => {
     expect(screen.getByText('상태')).toBeInTheDocument()
     expect(screen.getByText('마감일')).toBeInTheDocument()
   })
+
+  it('subTodoMap → 자식 todo 도 렌더', () => {
+    const subMap = new Map<string, TodoItem[]>()
+    subMap.set('t1', [todo('s1', 'Sub Task 1'), todo('s2', 'Sub Task 2')])
+    render(
+      <TodoListView
+        todos={[todo('t1')]}
+        subTodoMap={subMap}
+        workspaceId="ws-1"
+        filterActive={false}
+        onItemClick={vi.fn()}
+      />
+    )
+    // TodoListItem mock 이 자식까지 보여주진 않지만 렌더 에러 없음.
+    expect(screen.getByText('Todo t1')).toBeInTheDocument()
+  })
+
+  it('onItemDeleted prop → 전달 (smoke)', () => {
+    const onItemDeleted = vi.fn()
+    render(
+      <TodoListView
+        todos={[todo('t1')]}
+        subTodoMap={new Map()}
+        workspaceId="ws-1"
+        filterActive={false}
+        onItemClick={vi.fn()}
+        onItemDeleted={onItemDeleted}
+      />
+    )
+    expect(screen.getByText('Todo t1')).toBeInTheDocument()
+  })
 })
