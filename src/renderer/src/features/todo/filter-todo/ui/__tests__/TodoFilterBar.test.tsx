@@ -48,4 +48,30 @@ describe('TodoFilterBar', () => {
     fireEvent.click(screen.getByTitle('필터 초기화'))
     expect(fn).toHaveBeenCalledWith(DEFAULT_FILTER)
   })
+
+  it('필터 활성 (status="할일") → 초기화 X 버튼 노출', () => {
+    const active: TodoFilter = { ...DEFAULT_FILTER, status: '할일' }
+    render(<TodoFilterBar filter={active} onFilterChange={vi.fn()} />)
+    expect(screen.getByTitle('필터 초기화')).toBeInTheDocument()
+  })
+
+  it('필터 활성 (startDateFrom 설정) → 초기화 X 버튼 노출', () => {
+    const active: TodoFilter = { ...DEFAULT_FILTER, startDateFrom: new Date('2026-05-01') }
+    render(<TodoFilterBar filter={active} onFilterChange={vi.fn()} />)
+    expect(screen.getByTitle('필터 초기화')).toBeInTheDocument()
+  })
+
+  it('필터 활성 (dueDateTo 설정) → 초기화 X 버튼 노출', () => {
+    const active: TodoFilter = { ...DEFAULT_FILTER, dueDateTo: new Date('2026-12-31') }
+    render(<TodoFilterBar filter={active} onFilterChange={vi.fn()} />)
+    expect(screen.getByTitle('필터 초기화')).toBeInTheDocument()
+  })
+
+  it('DatePickerButton placeholder 4종 (시작일 시작/종료 + 마감일 시작/종료) 노출', () => {
+    render(<TodoFilterBar filter={DEFAULT_FILTER} onFilterChange={vi.fn()} />)
+    expect(screen.getByText('시작일 시작')).toBeInTheDocument()
+    expect(screen.getByText('시작일 종료')).toBeInTheDocument()
+    expect(screen.getByText('마감일 시작')).toBeInTheDocument()
+    expect(screen.getByText('마감일 종료')).toBeInTheDocument()
+  })
 })
