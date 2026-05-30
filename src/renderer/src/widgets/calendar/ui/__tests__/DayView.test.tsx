@@ -172,4 +172,57 @@ describe('DayView', () => {
     expect(screen.getByText('☑')).toBeInTheDocument()
     expect(container.innerHTML).toMatch(/line-through/)
   })
+
+  it('allDay todo + !isDone → ☐ (체크 안됨)', () => {
+    render(
+      <DayView
+        schedules={
+          [
+            {
+              id: 't2',
+              title: 'Pending Todo',
+              allDay: true,
+              startAt: new Date('2026-05-29'),
+              endAt: new Date('2026-05-29'),
+              isDone: false,
+              type: 'todo'
+            }
+          ] as unknown as Parameters<typeof DayView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByText('☐')).toBeInTheDocument()
+  })
+
+  it('여러 timed 일정 → 모두 표시 (smoke)', () => {
+    render(
+      <DayView
+        schedules={
+          [
+            {
+              id: 's1',
+              title: 'Event 1',
+              allDay: false,
+              startAt: new Date('2026-05-29T09:00:00Z'),
+              endAt: new Date('2026-05-29T10:00:00Z'),
+              isDone: false
+            },
+            {
+              id: 's2',
+              title: 'Event 2',
+              allDay: false,
+              startAt: new Date('2026-05-29T14:00:00Z'),
+              endAt: new Date('2026-05-29T15:00:00Z'),
+              isDone: false
+            }
+          ] as unknown as Parameters<typeof DayView>[0]['schedules']
+        }
+        currentDate={new Date('2026-05-29')}
+        workspaceId="ws"
+      />
+    )
+    expect(screen.getByTestId('time-grid')).toBeInTheDocument()
+  })
 })

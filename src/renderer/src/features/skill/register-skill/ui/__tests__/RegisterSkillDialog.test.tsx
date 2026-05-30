@@ -60,4 +60,29 @@ describe('RegisterSkillDialog', () => {
     }
     expect(mocks.createMutate).not.toHaveBeenCalled()
   })
+
+  it('nameSuffix 잘못된 문자 (대문자 등) → 정규식 에러 메시지', async () => {
+    render(<RegisterSkillDialog open={true} onOpenChange={vi.fn()} />)
+    const nameInputs = screen.getAllByRole('textbox')
+    const nameInput = nameInputs[0]
+    fireEvent.change(nameInput, { target: { value: 'BadName!' } })
+    const submitBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('등록'))
+    if (submitBtn) {
+      fireEvent.click(submitBtn)
+      await waitFor(() => expect(screen.queryByText(/영소문자\/숫자\/하이픈/)).toBeInTheDocument())
+    }
+    expect(mocks.createMutate).not.toHaveBeenCalled()
+  })
+
+  it('ToolMultiSelect 마운트', () => {
+    render(<RegisterSkillDialog open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByTestId('tool-select')).toBeInTheDocument()
+  })
+
+  it('isPending=true → 등록 버튼 disabled', () => {
+    mocks.isPending = true
+    render(<RegisterSkillDialog open={true} onOpenChange={vi.fn()} />)
+    const submitBtn = screen.getAllByRole('button').find((b) => b.textContent?.includes('등록'))
+    expect(submitBtn).toBeDisabled()
+  })
 })

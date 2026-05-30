@@ -91,4 +91,38 @@ describe('ScheduleFormDialog', () => {
     fireEvent.click(screen.getByRole('button', { name: '취소' }))
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('initialData 있음 → ReminderSelect (수정 모드) 노출', () => {
+    render(
+      <ScheduleFormDialog
+        workspaceId="ws"
+        open={true}
+        onOpenChange={vi.fn()}
+        initialData={
+          {
+            id: 's1',
+            title: 'X',
+            startAt: new Date(),
+            endAt: new Date(),
+            allDay: false,
+            description: '',
+            location: '',
+            color: null,
+            priority: 'medium'
+          } as unknown as Parameters<typeof ScheduleFormDialog>[0]['initialData']
+        }
+      />
+    )
+    expect(screen.getByTestId('reminder-select')).toBeInTheDocument()
+  })
+
+  it('initialData 없음 → ReminderPendingSelect (새 일정 모드) 노출', () => {
+    render(<ScheduleFormDialog workspaceId="ws" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByTestId('reminder-pending')).toBeInTheDocument()
+  })
+
+  it('PendingLinkPicker 새 일정 모드에서 노출', () => {
+    render(<ScheduleFormDialog workspaceId="ws" open={true} onOpenChange={vi.fn()} />)
+    expect(screen.getByTestId('pending-link-picker')).toBeInTheDocument()
+  })
 })
