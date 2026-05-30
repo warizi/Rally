@@ -184,4 +184,52 @@ describe('RecurringRuleFormDialog', () => {
     expect(mocks.toastSuccess).toHaveBeenCalled()
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
+
+  it('mode=edit + 제출 성공 → updateRule.mutate + toast + onOpenChange(false)', async () => {
+    const onOpenChange = vi.fn()
+    mocks.updateMutate.mockImplementation((_arg, opts) => opts?.onSuccess?.())
+    const rule = {
+      id: 'r1',
+      title: 'X',
+      description: '',
+      priority: 'medium',
+      recurrenceType: 'daily',
+      daysOfWeek: null,
+      startDate: '2026-01-01',
+      endDate: null,
+      startTime: null,
+      endTime: null,
+      reminderOffsetMs: null
+    } as unknown as Parameters<typeof RecurringRuleFormDialog>[0] extends {
+      mode: 'edit'
+      rule: infer R
+    }
+      ? R
+      : never
+    render(
+      <RecurringRuleFormDialog
+        mode="edit"
+        workspaceId="ws"
+        rule={rule}
+        open={true}
+        onOpenChange={onOpenChange}
+      />
+    )
+    fireEvent.click(screen.getByRole('button', { name: '저장' }))
+    await waitFor(() =>
+      expect(mocks.updateMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ ruleId: 'r1', workspaceId: 'ws' }),
+        expect.any(Object)
+      )
+    )
+    expect(mocks.toastSuccess).toHaveBeenCalled()
+    expect(onOpenChange).toHaveBeenCalledWith(false)
+  })
+
+  it('open=false → 콘텐츠 미렌더', () => {
+    render(
+      <RecurringRuleFormDialog mode="create" workspaceId="ws" open={false} onOpenChange={vi.fn()} />
+    )
+    expect(screen.queryByText('반복 할일 추가')).not.toBeInTheDocument()
+  })
 })
