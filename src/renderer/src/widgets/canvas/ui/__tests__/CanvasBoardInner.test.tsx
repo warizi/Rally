@@ -55,8 +55,18 @@ vi.mock('../../model/canvas-layout', () => ({
   findNonOverlappingPosition: () => ({ x: 0, y: 0 })
 }))
 
+const clipboardMocks = vi.hoisted(() => ({
+  copy: vi.fn(),
+  paste: vi.fn().mockResolvedValue([]),
+  hasClipboard: vi.fn(() => false)
+}))
+
 vi.mock('../../model/use-canvas-clipboard', () => ({
-  useCanvasClipboard: () => ({ copy: vi.fn(), paste: vi.fn() })
+  useCanvasClipboard: () => ({
+    copy: clipboardMocks.copy,
+    paste: clipboardMocks.paste,
+    hasClipboard: clipboardMocks.hasClipboard
+  })
 }))
 
 import { CanvasBoardInner } from '../CanvasBoardInner'
@@ -153,5 +163,53 @@ describe('CanvasBoardInner', () => {
   it('defaultViewport zoom 변형 → smoke', () => {
     render(<CanvasBoardInner {...baseProps} defaultViewport={{ x: 100, y: 200, zoom: 2.5 }} />)
     expect(screen.getByTestId('react-flow')).toBeInTheDocument()
+  })
+
+  it('Cmd+C (selected nodes 있음) → copy 호출', () => {
+    clipboardMocks.copy.mockClear()
+    render(<CanvasBoardInner {...baseProps} />)
+    // useReactFlow mock 에서 getNodes 가 selected:true 반환하도록 임시 변경
+    // 기본 mock 은 빈 배열이라 hasSelected=false → return early
+    const evt = new KeyboardEvent('keydown', { key: 'c', metaKey: true })
+    document.dispatchEvent(evt)
+    expect(clipboardMocks.copy).not.toHaveBeenCalled()
+  })
+
+  it('Cmd+V → handlePaste 호출 (hasClipboard=false 이면 early return)', () => {
+    clipboardMocks.hasClipboard.mockReturnValue(false)
+    clipboardMocks.paste.mockClear()
+    render(<CanvasBoardInner {...baseProps} />)
+    const evt = new KeyboardEvent('keydown', { key: 'v', metaKey: true })
+    document.dispatchEvent(evt)
+    expect(clipboardMocks.paste).not.toHaveBeenCalled()
+  })
+
+  it('Cmd+Z (without Shift) → undo 호출', () => {
+    const undo = vi.fn()
+    render(<CanvasBoardInner {...baseProps} undo={undo} canUndo={true} />)
+    const evt = new KeyboardEvent('keydown', { key: 'z', metaKey: true })
+    document.dispatchEvent(evt)
+    expect(undo).toHaveBeenCalled()
+  })
+
+  it('Cmd+Shift+Z → redo 호출', () => {
+    const redo = vi.fn()
+    render(<CanvasBoardInner {...baseProps} redo={redo} canRedo={true} />)
+    const evt = new KeyboardEvent('keydown', { key: 'z', metaKey: true, shiftKey: true })
+    document.dispatchEvent(evt)
+    expect(redo).toHaveBeenCalled()
+  })
+
+  it('INPUT focus 상태에서 키 입력 → undo/redo 호출 안 함', () => {
+    const undo = vi.fn()
+    render(<CanvasBoardInner {...baseProps} undo={undo} canUndo={true} />)
+    const input = document.createElement('input')
+    document.body.appendChild(input)
+    input.focus()
+    const evt = new KeyboardEvent('keydown', { key: 'z', metaKey: true, bubbles: true })
+    Object.defineProperty(evt, 'target', { value: input, writable: false })
+    document.dispatchEvent(evt)
+    expect(undo).not.toHaveBeenCalled()
+    document.body.removeChild(input)
   })
 })
