@@ -124,4 +124,47 @@ describe('RefNode', () => {
     const { container } = render(<RefNode {...sel} />)
     expect(container.innerHTML).toMatch(/ring-2/)
   })
+
+  it('config.label 있음 → label 노출 (config 사용)', () => {
+    mocks.registry = {
+      note: {
+        icon: () => null,
+        label: '노트',
+        resizable: true,
+        component: undefined
+      }
+    }
+    render(<RefNode {...baseProps} />)
+    expect(screen.getAllByText('My Note').length).toBeGreaterThan(0)
+  })
+
+  it('dragging=true → mounted false로 전환 (smoke)', () => {
+    const drag = { ...baseProps, dragging: true } as unknown as Parameters<typeof RefNode>[0]
+    render(<RefNode {...drag} />)
+    // dragging 시 노드는 렌더는 되지만 content unmount 분기
+    expect(screen.getAllByText('My Note').length).toBeGreaterThan(0)
+  })
+
+  it('color 지정 → smoke 렌더', () => {
+    const colored = {
+      ...baseProps,
+      data: { ...baseProps.data, color: '#ff0000' }
+    } as unknown as Parameters<typeof RefNode>[0]
+    const { container } = render(<RefNode {...colored} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('config.resizable=false → NodeResizer mount 다른 분기 (smoke)', () => {
+    mocks.registry = {
+      note: {
+        icon: () => null,
+        label: 'L',
+        resizable: false,
+        component: undefined
+      }
+    }
+    const sel = { ...baseProps, selected: true } as unknown as Parameters<typeof RefNode>[0]
+    const { container } = render(<RefNode {...sel} />)
+    expect(container.firstChild).toBeTruthy()
+  })
 })

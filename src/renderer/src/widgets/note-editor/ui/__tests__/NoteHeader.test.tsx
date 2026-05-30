@@ -31,6 +31,8 @@ const mocks = vi.hoisted(() => ({
     description: string
     onTitleChange: (title: string) => void
     onDescriptionChange: (d: string) => void
+    footer?: React.ReactNode
+    editable?: boolean
   }
 }))
 
@@ -130,5 +132,26 @@ describe('NoteHeader', () => {
       noteId: 'n1',
       data: { description: 'New desc' }
     })
+  })
+
+  it('note 있음 → footer prop 전달 (AuthorBadgePair smoke)', () => {
+    mocks.notes = [
+      {
+        id: 'n1',
+        title: 'T',
+        description: 'd',
+        createdBy: 'u',
+        createdAt: 0,
+        updatedBy: 'u',
+        updatedAt: 0
+      }
+    ]
+    render(<NoteHeader workspaceId="ws" noteId="n1" />)
+    expect(mocks.receivedProps?.footer).toBeTruthy()
+  })
+
+  it('editable prop true 전달', () => {
+    render(<NoteHeader workspaceId="ws" noteId="n1" />)
+    expect(mocks.receivedProps?.editable).toBe(true)
   })
 })
