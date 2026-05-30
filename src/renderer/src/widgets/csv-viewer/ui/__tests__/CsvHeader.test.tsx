@@ -131,4 +131,27 @@ describe('CsvHeader', () => {
     // 제목은 ''
     expect(screen.queryByText('My CSV')).not.toBeInTheDocument()
   })
+
+  it('content 가 빈문자 → hasContent=false (effectivelyEmpty)', () => {
+    mocks.content = ''
+    r(<CsvHeader workspaceId="ws-1" csvId="csv-1" />)
+    expect(screen.getByTestId('template-button')).toHaveAttribute('data-has', 'false')
+  })
+
+  it('content 공백만 → hasContent=false', () => {
+    mocks.content = '   \n\t  '
+    r(<CsvHeader workspaceId="ws-1" csvId="csv-1" />)
+    expect(screen.getByTestId('template-button')).toHaveAttribute('data-has', 'false')
+  })
+
+  it('csv.description 노출', () => {
+    r(<CsvHeader workspaceId="ws-1" csvId="csv-1" />)
+    expect(screen.getByDisplayValue('description')).toBeInTheDocument()
+  })
+
+  it('데이터 행 1개 → hasContent=true', () => {
+    mocks.content = 'h1,h2\nv1,v2\n'
+    r(<CsvHeader workspaceId="ws-1" csvId="csv-1" />)
+    expect(screen.getByTestId('template-button')).toHaveAttribute('data-has', 'true')
+  })
 })

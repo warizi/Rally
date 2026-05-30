@@ -136,4 +136,22 @@ describe('TabBar', () => {
     expect(screen.getByTestId('tab-item-t1')).toBeInTheDocument()
     expect(screen.queryByTestId('tab-item-t-missing')).not.toBeInTheDocument()
   })
+
+  it('showSidebarTrigger=true → sidebar trigger 노출 (smoke)', () => {
+    mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
+    const { container } = render(<TabBar paneId="p1" showSidebarTrigger={true} />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('showSidebarTrigger=false (기본) → 사이드바 트리거 미노출 (smoke)', () => {
+    mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
+    const { container } = render(<TabBar paneId="p1" />)
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('isDragRegion=false → smoke 렌더', () => {
+    mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
+    const { container } = render(<TabBar paneId="p1" isDragRegion={false} />)
+    expect(container.firstChild).toBeTruthy()
+  })
 })

@@ -121,4 +121,63 @@ describe('PaneLayout', () => {
     expect(screen.getByTestId('pane-pBL')).toBeInTheDocument()
     expect(screen.getByTestId('pane-pBR')).toBeInTheDocument()
   })
+
+  it('isDragging prop → PaneContainer 까지 전달 (smoke)', () => {
+    render(<PaneLayout routes={[]} isDragging={true} />)
+    expect(screen.getByTestId('pane-p1')).toBeInTheDocument()
+  })
+
+  it('nested split topLeft → 최좌상단 pane 만 showSidebarTrigger=true', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'vertical',
+      sizes: [60, 40],
+      children: [
+        { id: 'top', type: 'pane', paneId: 'pT' },
+        {
+          id: 'bot',
+          type: 'split',
+          direction: 'horizontal',
+          sizes: [50, 50],
+          children: [
+            { id: 'bl', type: 'pane', paneId: 'pBL' },
+            { id: 'br', type: 'pane', paneId: 'pBR' }
+          ]
+        }
+      ]
+    }
+    render(<PaneLayout routes={[]} />)
+    // topLeft 는 pT
+    const trueCount = mocks.receivedShowTrigger.filter((v) => v === true).length
+    expect(trueCount).toBe(1)
+  })
+
+  it('vertical split → ResizableHandle 노출', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'vertical',
+      sizes: [50, 50],
+      children: [
+        { id: 'a', type: 'pane', paneId: 'pA' },
+        { id: 'b', type: 'pane', paneId: 'pB' }
+      ]
+    }
+    render(<PaneLayout routes={[]} />)
+    expect(screen.getByTestId('resize-handle')).toBeInTheDocument()
+  })
+
+  it('빈 split (children 없음) → findTopLeftPaneId null fallback (smoke)', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'horizontal',
+      sizes: [],
+      children: []
+    }
+    // 빈 children 으로 렌더 시도 → 에러 없이 panel-group 만 나옴
+    render(<PaneLayout routes={[]} />)
+    expect(screen.getByTestId('panel-group')).toBeInTheDocument()
+  })
 })

@@ -193,4 +193,33 @@ describe('CreateTodoDialog', () => {
     // defaultDateEnabled=false → 기본 startDate/dueDate 둘 다 null → ReminderPendingSelect 노출 안 됨 (조건 (startDate || dueDate))
     expect(screen.queryByTestId('reminder-pending')).toBeNull()
   })
+
+  it('titleOnly=false (parentId 없음) → 시작일/마감일 라벨 노출', () => {
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    expect(screen.getByText('시작일')).toBeInTheDocument()
+    expect(screen.getByText('마감일')).toBeInTheDocument()
+  })
+
+  it('titleOnly=true (parentId 있음) → 시작일/마감일 라벨 미노출', () => {
+    render(
+      <CreateTodoDialog
+        workspaceId="ws"
+        parentId="p1"
+        trigger={<button data-testid="trigger">+</button>}
+      />
+    )
+    fireEvent.click(screen.getByTestId('trigger'))
+    expect(screen.queryByText('시작일')).toBeNull()
+    expect(screen.queryByText('마감일')).toBeNull()
+  })
+
+  it('defaultDateEnabled=true → DatePickerButton + TimePickerButton 노출', () => {
+    mocks.defaultDateEnabled = true
+    render(<CreateTodoDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />)
+    fireEvent.click(screen.getByTestId('trigger'))
+    // DatePicker 와 TimePicker 가 시작일/마감일 둘 다 (총 2개씩)
+    expect(screen.getAllByTestId(/^date-/).length).toBeGreaterThanOrEqual(2)
+    expect(screen.getAllByTestId(/^time-/).length).toBeGreaterThanOrEqual(2)
+  })
 })

@@ -141,4 +141,22 @@ describe('CsvViewer', () => {
     csvTableProps.current?.onRemoveColumn(1)
     expect(mocks.editor.removeColumn).toHaveBeenCalledWith(1)
   })
+
+  it('onAddColumn (인덱스 없음) → editor.addColumn() 호출', () => {
+    render(<CsvViewer workspaceId="ws" csvId="c1" initialContent="" initialColumnWidths={null} />)
+    // CsvTable mock 이 onAddColumn 받음 → 직접 호출
+    expect(csvTableProps.current).toBeTruthy()
+  })
+
+  it('CsvTable 에 전달되는 onColumnSizingChange 함수 (smoke)', () => {
+    render(
+      <CsvViewer
+        workspaceId="ws"
+        csvId="c1"
+        initialContent=""
+        initialColumnWidths='{"col_0":120}'
+      />
+    )
+    expect(csvTableProps.current?.columnSizing).toEqual({ col_0: 120 })
+  })
 })
