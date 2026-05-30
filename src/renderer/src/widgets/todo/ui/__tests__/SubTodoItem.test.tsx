@@ -129,7 +129,7 @@ describe('SubTodoItem', () => {
       ...sub,
       updatedBy: 'ai',
       updatedById: 'agent-1',
-      updatedAt: 12345
+      updatedAt: new Date(12345)
     }
     render(
       <table>
