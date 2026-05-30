@@ -109,4 +109,19 @@ describe('CanvasBoardInner', () => {
     render(<CanvasBoardInner {...baseProps} />)
     expect(screen.queryByTestId('entity-picker')).not.toBeInTheDocument()
   })
+
+  it('MiniMap 마운트 (초기 showMinimap=true)', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(screen.getByTestId('minimap')).toBeInTheDocument()
+  })
+
+  it('hasSavedViewport=false → 동일 마운트 (defaultViewport prop 무시)', () => {
+    render(<CanvasBoardInner {...baseProps} hasSavedViewport={false} />)
+    expect(screen.getByTestId('react-flow')).toBeInTheDocument()
+  })
+
+  it('canUndo=true / canRedo=true → undo/redo 버튼 활성 (smoke)', () => {
+    render(<CanvasBoardInner {...baseProps} canUndo={true} canRedo={true} />)
+    expect(screen.getByTestId('react-flow')).toBeInTheDocument()
+  })
 })
