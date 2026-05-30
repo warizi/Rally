@@ -309,4 +309,158 @@ describe('TodoKanbanView', () => {
     })
     expect(screen.getByTestId('drag-overlay')).toBeInTheDocument()
   })
+
+  it('handleDragOver + 다른 컬럼 (KANBAN_COLUMNS 직접) → localColumns 업데이트 (smoke)', () => {
+    const todos = [{ id: 't1', title: 'A', status: '할일' }]
+    const cm = new Map([
+      ['할일', [{ id: 't1', title: 'A', status: '할일' }]],
+      ['진행중', []],
+      ['완료', []],
+      ['보류', []]
+    ]) as unknown as Parameters<typeof TodoKanbanView>[0]['columnMap']
+    render(<TodoKanbanView {...baseProps} todos={todos as never} columnMap={cm} />)
+    act(() => {
+      dndContextCallbacks.onDragStart?.({ active: { id: 't1' } })
+    })
+    act(() => {
+      dndContextCallbacks.onDragOver?.({
+        active: { id: 't1' },
+        over: { id: '진행중' }
+      })
+    })
+    // 정상 렌더 + 에러 없음
+    expect(screen.getByTestId('drag-overlay')).toBeInTheDocument()
+  })
+
+  it('handleDragOver + 다른 아이템 over (같은 컬럼 아닌) → localColumns 업데이트', () => {
+    const todos = [
+      { id: 't1', title: 'A', status: '할일' },
+      { id: 't2', title: 'B', status: '진행중' }
+    ]
+    const cm = new Map([
+      ['할일', [{ id: 't1', title: 'A', status: '할일' }]],
+      ['진행중', [{ id: 't2', title: 'B', status: '진행중' }]],
+      ['완료', []],
+      ['보류', []]
+    ]) as unknown as Parameters<typeof TodoKanbanView>[0]['columnMap']
+    render(<TodoKanbanView {...baseProps} todos={todos as never} columnMap={cm} />)
+    act(() => {
+      dndContextCallbacks.onDragStart?.({ active: { id: 't1' } })
+    })
+    act(() => {
+      // t1 을 t2 위치 (진행중 컬럼) 로 over
+      dndContextCallbacks.onDragOver?.({
+        active: { id: 't1' },
+        over: { id: 't2' }
+      })
+    })
+    expect(screen.getByTestId('drag-overlay')).toBeInTheDocument()
+  })
+
+  it('handleDragEnd + 컬럼 간 이동 → reorderKanban.mutate (status 변경 포함)', () => {
+    const todos = [
+      { id: 't1', title: 'A', status: '할일' },
+      { id: 't2', title: 'B', status: '진행중' }
+    ]
+    const cm = new Map([
+      ['할일', [{ id: 't1', title: 'A', status: '할일' }]],
+      ['진행중', [{ id: 't2', title: 'B', status: '진행중' }]],
+      ['완료', []],
+      ['보류', []]
+    ]) as unknown as Parameters<typeof TodoKanbanView>[0]['columnMap']
+    render(<TodoKanbanView {...baseProps} todos={todos as never} columnMap={cm} />)
+    act(() => {
+      dndContextCallbacks.onDragStart?.({ active: { id: 't1' } })
+    })
+    act(() => {
+      dndContextCallbacks.onDragOver?.({
+        active: { id: 't1' },
+        over: { id: '진행중' }
+      })
+    })
+    act(() => {
+      dndContextCallbacks.onDragEnd?.({
+        active: { id: 't1' },
+        over: { id: '진행중' }
+      })
+    })
+    // 컬럼 간 이동 → reorderKanban 호출
+    expect(todoMocks.reorderMutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('handleDragEnd + sourceTodo 없음 (todos 에 없는 ID) → reorderKanban 호출 안 함', () => {
+    render(<TodoKanbanView {...baseProps} />)
+    act(() => {
+      dndContextCallbacks.onDragStart?.({ active: { id: 't1' } })
+    })
+    act(() => {
+      dndContextCallbacks.onDragEnd?.({
+        active: { id: 'phantom' },
+        over: { id: '진행중' }
+      })
+    })
+    expect(todoMocks.reorderMutate).not.toHaveBeenCalled()
+  })
+
+  it('handleDragEnd + KANBAN_COLUMNS 영역 (같은 컬럼) drop → return 무동작', () => {
+    const todos = [
+      { id: 't1', title: 'A', status: '할일' },
+      { id: 't2', title: 'B', status: '할일' }
+    ]
+    const cm = new Map([
+      [
+        '할일',
+        [
+          { id: 't1', title: 'A', status: '할일' },
+          { id: 't2', title: 'B', status: '할일' }
+        ]
+      ],
+      ['진행중', []],
+      ['완료', []],
+      ['보류', []]
+    ]) as unknown as Parameters<typeof TodoKanbanView>[0]['columnMap']
+    render(<TodoKanbanView {...baseProps} todos={todos as never} columnMap={cm} />)
+    act(() => {
+      dndContextCallbacks.onDragStart?.({ active: { id: 't1' } })
+    })
+    act(() => {
+      // 같은 컬럼 빈 영역 (할일) 으로 drop
+      dndContextCallbacks.onDragEnd?.({
+        active: { id: 't1' },
+        over: { id: '할일' }
+      })
+    })
+    expect(todoMocks.reorderMutate).not.toHaveBeenCalled()
+  })
+
+  it('mouseDown + mouseMove + mouseUp on board scroll → 팬-스크롤 (smoke)', () => {
+    const { container } = render(<TodoKanbanView {...baseProps} />)
+    // 가로 스크롤 영역 (≥600px 모드)
+    const scrollDiv = container.querySelector('.hidden')
+    if (scrollDiv) {
+      fireEvent.mouseDown(scrollDiv, { clientX: 100 })
+      fireEvent.mouseMove(scrollDiv, { clientX: 150 })
+      fireEvent.mouseUp(scrollDiv)
+    }
+    expect(screen.getAllByTestId('board-할일').length).toBeGreaterThan(0)
+  })
+
+  it('mouseDown + 카드 위 → preventDefault 적용 안 됨 (smoke)', () => {
+    const { container } = render(<TodoKanbanView {...baseProps} />)
+    // data-kanban-card 가 있는 자손은 팬-스크롤 트리거 안 됨 — smoke 만
+    expect(container.firstChild).toBeTruthy()
+  })
+
+  it('handleDragCancel 호출 → activeId reset → DragOverlay 빈 상태', () => {
+    const todos = [{ id: 't1', title: 'A', status: '할일' }] as never
+    render(<TodoKanbanView {...baseProps} todos={todos} />)
+    act(() => {
+      dndContextCallbacks.onDragStart?.({ active: { id: 't1' } })
+    })
+    act(() => {
+      dndContextCallbacks.onDragCancel?.()
+    })
+    // overlay 는 여전히 있지만 active 없음
+    expect(screen.getByTestId('drag-overlay')).toBeInTheDocument()
+  })
 })

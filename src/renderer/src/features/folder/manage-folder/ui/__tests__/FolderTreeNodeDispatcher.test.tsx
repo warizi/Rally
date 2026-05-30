@@ -10,6 +10,12 @@ import type { NodeApi, NodeRendererProps } from '../../lib/tree'
 import type { WorkspaceTreeNode, FolderTreeNode } from '../../model/types'
 
 // 무거운 의존성을 가벼운 마커로 대체 → 어떤 분기가 선택됐는지 DOM 으로 확인.
+const ctxMenuMocks = vi.hoisted(() => ({
+  fileOnDuplicate: undefined as undefined | (() => void),
+  fileOnDelete: undefined as undefined | (() => void),
+  fileKind: undefined as undefined | string
+}))
+
 vi.mock('../FolderContextMenu', () => ({
   FolderContextMenu: ({ children, name }: { children: React.ReactNode; name: string }) => (
     <div data-testid="folder-context-menu" data-name={name}>
@@ -21,16 +27,25 @@ vi.mock('../FileContextMenu', () => ({
   FileContextMenu: ({
     children,
     name,
-    kind
+    kind,
+    onDuplicate,
+    onDelete
   }: {
     children: React.ReactNode
     name: string
     kind: string
-  }) => (
-    <div data-testid="file-context-menu" data-kind={kind} data-name={name}>
-      {children}
-    </div>
-  )
+    onDuplicate?: () => void
+    onDelete?: () => void
+  }) => {
+    ctxMenuMocks.fileOnDuplicate = onDuplicate
+    ctxMenuMocks.fileOnDelete = onDelete
+    ctxMenuMocks.fileKind = kind
+    return (
+      <div data-testid="file-context-menu" data-kind={kind} data-name={name}>
+        {children}
+      </div>
+    )
+  }
 }))
 vi.mock('../FolderNodeRenderer', () => ({
   FolderNodeRenderer: () => <span data-testid="folder-renderer" />
@@ -268,5 +283,215 @@ describe('FolderTreeNodeDispatcher', () => {
     )
     // FileContextMenu mock 은 onDelete prop 안 호출 — 안전 smoke
     expect(screen.getByTestId('file-context-menu')).toBeInTheDocument()
+  })
+
+  it('note: onDuplicate 호출 → useDuplicateNote mutate 호출', () => {
+    duplicateMocks.noteDup.mockClear()
+    const node = {
+      id: 'n1',
+      kind: 'note',
+      name: 'NoteName'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    ctxMenuMocks.fileOnDuplicate?.()
+    expect(duplicateMocks.noteDup).toHaveBeenCalledWith(
+      { workspaceId: 'ws1', noteId: 'n1' },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    )
+  })
+
+  it('note: onDuplicate onSuccess → openRightTab 호출', () => {
+    duplicateMocks.openRightTab.mockClear()
+    duplicateMocks.noteDup.mockImplementation(
+      (
+        _v: unknown,
+        opts: { onSuccess: (n: { id: string; title: string } | undefined) => void }
+      ) => {
+        opts.onSuccess({ id: 'n-new', title: 'New Note' })
+      }
+    )
+    const node = {
+      id: 'n1',
+      kind: 'note',
+      name: 'NoteName'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    ctxMenuMocks.fileOnDuplicate?.()
+    expect(duplicateMocks.openRightTab).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: 'note',
+        title: 'New Note',
+        pathname: '/folder/note/n-new'
+      }),
+      'p1'
+    )
+  })
+
+  it('note: onDuplicate onSuccess (data=null) → openRightTab 호출 안 함', () => {
+    duplicateMocks.openRightTab.mockClear()
+    duplicateMocks.noteDup.mockImplementation(
+      (_v: unknown, opts: { onSuccess: (n: undefined) => void }) => {
+        opts.onSuccess(undefined)
+      }
+    )
+    const node = {
+      id: 'n1',
+      kind: 'note',
+      name: 'X'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    ctxMenuMocks.fileOnDuplicate?.()
+    expect(duplicateMocks.openRightTab).not.toHaveBeenCalled()
+  })
+
+  it('csv: onDuplicate → useDuplicateCsvFile.mutate 호출', () => {
+    duplicateMocks.csvDup.mockClear()
+    const node = {
+      id: 'c1',
+      kind: 'csv',
+      name: 'Csv'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    ctxMenuMocks.fileOnDuplicate?.()
+    expect(duplicateMocks.csvDup).toHaveBeenCalled()
+  })
+
+  it('pdf: onDuplicate → useDuplicatePdfFile.mutate 호출', () => {
+    duplicateMocks.pdfDup.mockClear()
+    const node = {
+      id: 'p1',
+      kind: 'pdf',
+      name: 'Pdf'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    ctxMenuMocks.fileOnDuplicate?.()
+    expect(duplicateMocks.pdfDup).toHaveBeenCalled()
+  })
+
+  it('image: onDuplicate → useDuplicateImageFile.mutate 호출', () => {
+    duplicateMocks.imageDup.mockClear()
+    const node = {
+      id: 'i1',
+      kind: 'image',
+      name: 'Image'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    ctxMenuMocks.fileOnDuplicate?.()
+    expect(duplicateMocks.imageDup).toHaveBeenCalled()
+  })
+
+  it('file onDelete → 각 kind 의 setXxxDeleteTarget 호출 (note)', () => {
+    const dialogState = makeDialogState()
+    const setter = vi.fn()
+    dialogState.setNoteDeleteTarget = setter
+    const node = {
+      id: 'n1',
+      kind: 'note',
+      name: 'NoteX'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname=""
+        createHandlers={makeHandlers()}
+        dialogState={dialogState}
+      />
+    )
+    ctxMenuMocks.fileOnDelete?.()
+    expect(setter).toHaveBeenCalledWith({ id: 'n1', name: 'NoteX' })
+  })
+
+  it('activePathname 다른 kind 매칭 (csv) → isActive=true 전달 (smoke)', () => {
+    const node = {
+      id: 'c1',
+      kind: 'csv',
+      name: 'Csv'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname="/folder/csv/c1"
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    expect(screen.getByTestId('csv-renderer')).toBeInTheDocument()
+  })
+
+  it('activePathname 다른 kind 매칭 (pdf)', () => {
+    const node = {
+      id: 'p1',
+      kind: 'pdf',
+      name: 'Pdf'
+    } as unknown as WorkspaceTreeNode
+    render(
+      <FolderTreeNodeDispatcher
+        arboristProps={makeArboristProps(node)}
+        workspaceId="ws1"
+        sourcePaneId="p1"
+        activePathname="/folder/pdf/p1"
+        createHandlers={makeHandlers()}
+        dialogState={makeDialogState()}
+      />
+    )
+    expect(screen.getByTestId('pdf-renderer')).toBeInTheDocument()
   })
 })

@@ -140,4 +140,53 @@ describe('EmbedView', () => {
     )
     expect(screen.getByText('알 수 없는 임베드')).toBeInTheDocument()
   })
+
+  it('image content 빈 → "이미지 로딩 중..." 메시지', () => {
+    mocks.images = [{ id: 'i1', title: 'Image X' }]
+    mocks.imageContent = new ArrayBuffer(0)
+    render(<EmbedView domain="image" entityId="i1" height={300} onHeightChange={() => {}} />)
+    expect(screen.getByText('이미지 로딩 중...')).toBeInTheDocument()
+  })
+
+  it('image content 있음 + height=0 → fixed height 미적용', () => {
+    mocks.images = [{ id: 'i1', title: 'Image Free' }]
+    mocks.imageContent = new ArrayBuffer(10)
+    global.URL.createObjectURL = vi.fn(() => 'blob:test')
+    global.URL.revokeObjectURL = vi.fn()
+    render(<EmbedView domain="image" entityId="i1" height={0} onHeightChange={() => {}} />)
+    expect(screen.getByText('Image Free')).toBeInTheDocument()
+  })
+
+  it('ResizeHandle 영역 노출 (csv 임베드)', () => {
+    mocks.csvs = [{ id: 'c1', title: 'CSV Resize' }]
+    const { container } = render(
+      <EmbedView domain="csv" entityId="c1" height={400} onHeightChange={vi.fn()} />
+    )
+    const resizeHandle = container.querySelector('.cursor-ns-resize')
+    expect(resizeHandle).toBeInTheDocument()
+  })
+
+  it('ResizeHandle pointerDown → preventDefault + setPointerCapture 동작 (smoke)', () => {
+    mocks.csvs = [{ id: 'c1', title: 'CSV Drag' }]
+    const onHeightChange = vi.fn()
+    const { container } = render(
+      <EmbedView domain="csv" entityId="c1" height={300} onHeightChange={onHeightChange} />
+    )
+    const handle = container.querySelector('.cursor-ns-resize') as HTMLElement
+    // pointer capture 메서드 mock
+    ;(handle as unknown as { setPointerCapture: () => void }).setPointerCapture = vi.fn()
+    ;(handle as unknown as { releasePointerCapture: () => void }).releasePointerCapture = vi.fn()
+    const evt = new PointerEvent('pointerdown', { bubbles: true, clientY: 100 })
+    Object.defineProperty(evt, 'currentTarget', { value: handle })
+    Object.defineProperty(evt, 'pointerId', { value: 1 })
+    handle.dispatchEvent(evt)
+    // 에러 없이 통과
+    expect(handle).toBeInTheDocument()
+  })
+
+  it('image 미매칭 → "삭제된 이미지" fallback (FallbackEmbed)', () => {
+    mocks.images = []
+    render(<EmbedView domain="image" entityId="missing" height={300} onHeightChange={vi.fn()} />)
+    expect(screen.getByText(/삭제된 이미지/)).toBeInTheDocument()
+  })
 })

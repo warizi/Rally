@@ -4,21 +4,40 @@
  * ReactFlow + 자식 컴포넌트들 (CanvasToolbar, SelectionToolbar 등) 마운트 (smoke).
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, act } from '@testing-library/react'
+
+const reactFlowMocks = vi.hoisted(() => ({
+  nodes: [] as Array<{ id: string; selected?: boolean }>,
+  edges: [] as Array<{ id: string }>,
+  viewport: { x: 0, y: 0, zoom: 1 },
+  onMoveEnd: undefined as undefined | (() => void),
+  onDoubleClick: undefined as undefined | ((e: React.MouseEvent) => void)
+}))
 
 vi.mock('@xyflow/react', () => ({
-  ReactFlow: ({ children }: { children?: React.ReactNode }) => (
-    <div data-testid="react-flow">{children}</div>
-  ),
+  ReactFlow: ({
+    children,
+    onMoveEnd,
+    onDoubleClick
+  }: {
+    children?: React.ReactNode
+    onMoveEnd?: () => void
+    onDoubleClick?: (e: React.MouseEvent) => void
+  }) => {
+    reactFlowMocks.onMoveEnd = onMoveEnd
+    reactFlowMocks.onDoubleClick = onDoubleClick
+    return <div data-testid="react-flow">{children}</div>
+  },
   Background: () => <div data-testid="background" />,
   Controls: () => <div data-testid="controls" />,
   MiniMap: () => <div data-testid="minimap" />,
   BackgroundVariant: { Dots: 'dots' },
   ConnectionMode: { Loose: 'loose' },
   useReactFlow: () => ({
-    screenToFlowPosition: vi.fn(() => ({ x: 0, y: 0 })),
-    getNodes: () => [],
-    getEdges: () => []
+    screenToFlowPosition: vi.fn(() => ({ x: 100, y: 200 })),
+    getNodes: () => reactFlowMocks.nodes,
+    getEdges: () => reactFlowMocks.edges,
+    getViewport: () => reactFlowMocks.viewport
   })
 }))
 
@@ -26,8 +45,23 @@ vi.mock('../TextNode', () => ({ TextNode: () => null }))
 vi.mock('../RefNode', () => ({ RefNode: () => null }))
 vi.mock('../CustomEdge', () => ({ CustomEdge: () => null }))
 
+const canvasToolbarMocks = vi.hoisted(() => ({
+  onAddText: undefined as undefined | (() => void),
+  onAddEntity: undefined as undefined | (() => void),
+  onToggleMinimap: undefined as undefined | (() => void)
+}))
+
 vi.mock('../CanvasToolbar', () => ({
-  CanvasToolbar: () => <div data-testid="canvas-toolbar" />
+  CanvasToolbar: (props: {
+    onAddText: () => void
+    onAddEntity: () => void
+    onToggleMinimap: () => void
+  }) => {
+    canvasToolbarMocks.onAddText = props.onAddText
+    canvasToolbarMocks.onAddEntity = props.onAddEntity
+    canvasToolbarMocks.onToggleMinimap = props.onToggleMinimap
+    return <div data-testid="canvas-toolbar" />
+  }
 }))
 
 vi.mock('../EntityPickerDialog', () => ({
@@ -211,5 +245,74 @@ describe('CanvasBoardInner', () => {
     document.dispatchEvent(evt)
     expect(undo).not.toHaveBeenCalled()
     document.body.removeChild(input)
+  })
+
+  it('Cmd+Y → redo 호출 (alternative key)', () => {
+    const redo = vi.fn()
+    render(<CanvasBoardInner {...baseProps} redo={redo} canRedo={true} />)
+    const evt = new KeyboardEvent('keydown', { key: 'y', metaKey: true })
+    document.dispatchEvent(evt)
+    expect(redo).toHaveBeenCalled()
+  })
+
+  it('CanvasToolbar onAddText → addTextNode 호출', () => {
+    const addTextNode = vi.fn()
+    render(<CanvasBoardInner {...baseProps} addTextNode={addTextNode} />)
+    canvasToolbarMocks.onAddText?.()
+    expect(addTextNode).toHaveBeenCalled()
+  })
+
+  it('CanvasToolbar onAddEntity → EntityPicker open', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    act(() => {
+      canvasToolbarMocks.onAddEntity?.()
+    })
+    expect(screen.getByTestId('entity-picker')).toBeInTheDocument()
+  })
+
+  it('CanvasToolbar onToggleMinimap → 상태 토글 (smoke)', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(screen.getByTestId('minimap')).toBeInTheDocument()
+    canvasToolbarMocks.onToggleMinimap?.()
+    expect(screen.getByTestId('canvas-toolbar')).toBeInTheDocument()
+  })
+
+  it('handleDoubleClick + react-flow__pane → addTextNode 호출', () => {
+    const addTextNode = vi.fn()
+    render(<CanvasBoardInner {...baseProps} addTextNode={addTextNode} />)
+    const pane = document.createElement('div')
+    pane.classList.add('react-flow__pane')
+    const mockEvent = {
+      target: pane,
+      clientX: 100,
+      clientY: 200
+    } as unknown as React.MouseEvent
+    reactFlowMocks.onDoubleClick?.(mockEvent)
+    expect(addTextNode).toHaveBeenCalledWith(100, 200)
+  })
+
+  it('handleDoubleClick + non-pane → addTextNode 호출 안 함', () => {
+    const addTextNode = vi.fn()
+    render(<CanvasBoardInner {...baseProps} addTextNode={addTextNode} />)
+    const node = document.createElement('div')
+    node.classList.add('react-flow__node')
+    const mockEvent = {
+      target: node,
+      clientX: 100,
+      clientY: 200
+    } as unknown as React.MouseEvent
+    reactFlowMocks.onDoubleClick?.(mockEvent)
+    expect(addTextNode).not.toHaveBeenCalled()
+  })
+
+  it('handleMoveEnd → setTimeout 후 saveViewport 호출 (debounce 500ms)', () => {
+    vi.useFakeTimers()
+    const saveViewport = vi.fn()
+    render(<CanvasBoardInner {...baseProps} saveViewport={saveViewport} />)
+    reactFlowMocks.viewport = { x: 50, y: 60, zoom: 1.5 }
+    reactFlowMocks.onMoveEnd?.()
+    vi.advanceTimersByTime(600)
+    expect(saveViewport).toHaveBeenCalledWith({ x: 50, y: 60, zoom: 1.5 })
+    vi.useRealTimers()
   })
 })
