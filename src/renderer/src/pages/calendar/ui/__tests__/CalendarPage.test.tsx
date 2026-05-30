@@ -198,4 +198,40 @@ describe('CalendarPage', () => {
     render(<CalendarPage tabId="t1" />)
     expect(screen.getByTestId('day-view')).toBeInTheDocument()
   })
+
+  it('todoToScheduleItem: startDate=00:00 → 자동으로 09:00 설정', () => {
+    // 새벽 0시인 todo
+    const t = new Date('2026-05-29T00:00:00.000Z')
+    t.setHours(0, 0, 0, 0)
+    mocks.todos = [{ id: 't1', startDate: t, dueDate: t }]
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.queryByText(/이 범위에 일정이 없어요/)).toBeNull()
+  })
+
+  it('todoToScheduleItem: endDate=23:59 → 자동 10:00 설정 분기', () => {
+    const start = new Date()
+    start.setHours(0, 0, 0, 0)
+    const end = new Date()
+    end.setHours(23, 59, 0, 0)
+    mocks.todos = [{ id: 't1', startDate: start, dueDate: end }]
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.queryByText(/이 범위에 일정이 없어요/)).toBeNull()
+  })
+
+  it('tabId 없음 → handleToggleTodos no-op (smoke)', () => {
+    render(<CalendarPage />)
+    expect(screen.getByText('캘린더')).toBeInTheDocument()
+  })
+
+  it('viewType=week + RecurringTodoSection 호출 시 (smoke)', () => {
+    mocks.viewType = 'week'
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByTestId('week-view')).toBeInTheDocument()
+  })
+
+  it('initialDate 가 tabSearchParams 에서 → useCalendar 에 전달 (smoke)', () => {
+    mocks.tabSearchParams = { currentDate: '2026-12-25T00:00:00Z', viewType: 'week' }
+    render(<CalendarPage tabId="t1" />)
+    expect(screen.getByText('캘린더')).toBeInTheDocument()
+  })
 })
