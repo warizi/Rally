@@ -1,12 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { CreateWorkspaceDialog } from '../CreateWorkspaceDialog'
-import { useCreateWorkspace } from '@entities/workspace'
+import { useCreateWorkspace, useImportBackup } from '@entities/workspace'
+
+const importMutate = vi.fn()
+const backupSectionRef: { onBackupSelected: ((zipPath: string, name: string) => void) | null } = {
+  onBackupSelected: null
+}
 
 vi.mock('@entities/workspace', () => ({
   useCreateWorkspace: vi.fn(),
-  useImportBackup: vi.fn(() => ({ mutate: vi.fn(), isPending: false })),
-  BackupRestoreSection: () => null
+  useImportBackup: vi.fn(),
+  BackupRestoreSection: ({
+    onBackupSelected
+  }: {
+    onBackupSelected: (zipPath: string, name: string) => void
+  }) => {
+    backupSectionRef.onBackupSelected = onBackupSelected
+    return null
+  }
 }))
 
 const mockMutate = vi.fn()
@@ -18,6 +30,8 @@ const mockReturn = (isPending: boolean): any => ({ mutate: mockMutate, isPending
 beforeEach(() => {
   vi.clearAllMocks()
   vi.mocked(useCreateWorkspace).mockReturnValue(mockReturn(false))
+  vi.mocked(useImportBackup).mockReturnValue({ mutate: importMutate, isPending: false } as never)
+  backupSectionRef.onBackupSelected = null
   ;(window as unknown as Record<string, unknown>).api = {
     workspace: { selectDirectory: mockSelectDirectory }
   }
@@ -87,6 +101,40 @@ describe('CreateWorkspaceDialog', () => {
 
     render(<CreateWorkspaceDialog {...defaultProps} />)
 
+    expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled()
+  })
+
+  it('백업 zip 선택 후 제출 → importBackup 호출 (createWorkspace 호출 안 함)', async () => {
+    mockSelectDirectory.mockResolvedValue('/path')
+    render(<CreateWorkspaceDialog {...defaultProps} />)
+
+    // BackupRestoreSection 이 onBackupSelected 호출 시뮬레이트
+    await act(async () => {
+      backupSectionRef.onBackupSelected?.('/backup.zip', 'Restored WS')
+    })
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '폴더 선택' }))
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '생성' }))
+
+    await waitFor(() => {
+      expect(importMutate).toHaveBeenCalledWith(
+        expect.objectContaining({ zipPath: '/backup.zip', path: '/path' }),
+        expect.any(Object)
+      )
+    })
+    expect(mockMutate).not.toHaveBeenCalled()
+  })
+
+  it('복구 중 → "복구 중..." 라벨 + 버튼 disabled', () => {
+    vi.mocked(useImportBackup).mockReturnValue({
+      mutate: importMutate,
+      isPending: true
+    } as never)
+    render(<CreateWorkspaceDialog {...defaultProps} />)
+    // backupZipPath 가 null 이라 "생성 중..." 으로 표시됨 (state)
     expect(screen.getByRole('button', { name: '생성 중...' })).toBeDisabled()
   })
 })
