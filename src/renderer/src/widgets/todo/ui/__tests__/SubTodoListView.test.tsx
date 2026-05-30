@@ -76,4 +76,27 @@ describe('SubTodoListView', () => {
     render(<SubTodoListView subTodos={[]} workspaceId="ws" parentId="p" />)
     expect(screen.getByText(/하위 할 일을 추가하세요/)).toBeInTheDocument()
   })
+
+  it('subTodos 있음 → CreateTodoDialog 안내 미노출', () => {
+    render(
+      <SubTodoListView
+        subTodos={
+          [{ id: 's1', title: 'A' }] as unknown as Parameters<typeof SubTodoListView>[0]['subTodos']
+        }
+        workspaceId="ws"
+        parentId="p"
+      />
+    )
+    expect(screen.queryByText(/하위 할 일을 추가하세요/)).toBeNull()
+  })
+
+  it('table 헤더 (제목 라벨) 노출', () => {
+    render(<SubTodoListView subTodos={[]} workspaceId="ws" parentId="p" />)
+    expect(screen.getByText('제목')).toBeInTheDocument()
+  })
+
+  it('DragOverlay 컨테이너 노출 (activeSub=null)', () => {
+    render(<SubTodoListView subTodos={[]} workspaceId="ws" parentId="p" />)
+    expect(screen.getByTestId('overlay')).toBeInTheDocument()
+  })
 })
