@@ -86,4 +86,20 @@ describe('ImageHeader', () => {
     // LinkedPopover 는 여전히 노출
     expect(screen.getByTestId('link-popover')).toBeInTheDocument()
   })
+
+  it('image 매칭 → 제목 input 노출', () => {
+    r(<ImageHeader workspaceId="ws-1" imageId="i-1" />)
+    expect(screen.getByDisplayValue('My Image')).toBeInTheDocument()
+  })
+
+  it('description 노출', () => {
+    r(<ImageHeader workspaceId="ws-1" imageId="i-1" />)
+    expect(screen.getByDisplayValue('desc')).toBeInTheDocument()
+  })
+
+  it('image 없음 → 제목 input 빈 값', () => {
+    mocks.imageFiles = []
+    r(<ImageHeader workspaceId="ws-1" imageId="i-missing" />)
+    expect(screen.queryByDisplayValue('My Image')).toBeNull()
+  })
 })
