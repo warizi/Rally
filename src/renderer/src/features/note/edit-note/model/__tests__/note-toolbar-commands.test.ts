@@ -102,7 +102,9 @@ describe('toggleColorCommand', () => {
   })
 
   it('동일 color 모든 nodes → removeMark 호출 + true', () => {
-    const markType = { create: (a: { color: string }) => ({ type: 'color', attrs: a }) }
+    const markType: MockMarkType = {
+      create: (a) => ({ type: 'color', attrs: a })
+    }
     const innerFactory = mocks.commandFactoryCapture!({}) as (color?: string) => unknown
     const cmd = innerFactory('#ff0000') as (state: unknown, dispatch?: unknown) => boolean
     const { state, removeMarkCalls, addMarkCalls } = makeState({
@@ -117,7 +119,9 @@ describe('toggleColorCommand', () => {
   })
 
   it('mark 없거나 다른 색 → removeMark + addMark 호출', () => {
-    const markType = { create: (a: { color: string }) => ({ type: 'color', attrs: a }) }
+    const markType: MockMarkType = {
+      create: (a) => ({ type: 'color', attrs: a })
+    }
     const innerFactory = mocks.commandFactoryCapture!({}) as (color?: string) => unknown
     const cmd = innerFactory('#00ff00') as (state: unknown, dispatch?: unknown) => boolean
     const { state, removeMarkCalls, addMarkCalls } = makeState({
