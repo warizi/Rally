@@ -124,4 +124,34 @@ describe('CanvasBoardInner', () => {
     render(<CanvasBoardInner {...baseProps} canUndo={true} canRedo={true} />)
     expect(screen.getByTestId('react-flow')).toBeInTheDocument()
   })
+
+  it('CanvasToolbar 마운트', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(screen.getByTestId('canvas-toolbar')).toBeInTheDocument()
+  })
+
+  it('SelectionToolbar 마운트', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(screen.getByTestId('selection-toolbar')).toBeInTheDocument()
+  })
+
+  it('NodeColorToolbar 마운트', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(screen.getByTestId('node-color-toolbar')).toBeInTheDocument()
+  })
+
+  it('EdgeEditToolbar 마운트', () => {
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(screen.getByTestId('edge-edit-toolbar')).toBeInTheDocument()
+  })
+
+  it('nodes/edges 빈 배열 → smoke', () => {
+    render(<CanvasBoardInner {...baseProps} nodes={[]} edges={[]} />)
+    expect(screen.getByTestId('react-flow')).toBeInTheDocument()
+  })
+
+  it('defaultViewport zoom 변형 → smoke', () => {
+    render(<CanvasBoardInner {...baseProps} defaultViewport={{ x: 100, y: 200, zoom: 2.5 }} />)
+    expect(screen.getByTestId('react-flow')).toBeInTheDocument()
+  })
 })
