@@ -1,7 +1,7 @@
 /**
  * features/note/edit-note/ui/EmbedView.test.tsx
  *
- * 4 domain 분기 (note/csv/pdf/image) smoke.
+ * 5 domain 분기 (note/csv/pdf/image/canvas) smoke.
  * fallback: id 못찾으면 "삭제된 X" 노출.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   csvs: [] as Array<{ id: string; title: string }>,
   pdfs: [] as Array<{ id: string; title: string }>,
   images: [] as Array<{ id: string; title: string }>,
+  canvases: [] as Array<{ id: string; title: string }>,
   csvContent: '',
   pdfContent: new ArrayBuffer(0),
   imageContent: new ArrayBuffer(0)
@@ -46,6 +47,11 @@ vi.mock('@entities/image-file', () => ({
   useReadImageContent: () => ({ data: mocks.imageContent })
 }))
 
+vi.mock('@entities/canvas', () => ({
+  useCanvasesByWorkspace: () => ({ data: mocks.canvases }),
+  CanvasReadOnlyBoard: () => <div data-testid="canvas-board" />
+}))
+
 vi.mock('@/shared/store/current-workspace', () => ({
   useCurrentWorkspaceStore: () => 'ws-1'
 }))
@@ -65,6 +71,7 @@ beforeEach(() => {
   mocks.csvs = []
   mocks.pdfs = []
   mocks.images = []
+  mocks.canvases = []
 })
 
 describe('EmbedView', () => {
@@ -96,6 +103,18 @@ describe('EmbedView', () => {
     mocks.images = [{ id: 'i1', title: 'Image File' }]
     render(<EmbedView domain="image" entityId="i1" height={300} onHeightChange={() => {}} />)
     expect(screen.getByText('Image File')).toBeInTheDocument()
+  })
+
+  it('canvas 매칭 → 제목 + CanvasReadOnlyBoard (smoke)', () => {
+    mocks.canvases = [{ id: 'cv1', title: 'My Canvas' }]
+    render(<EmbedView domain="canvas" entityId="cv1" height={400} onHeightChange={() => {}} />)
+    expect(screen.getByText('My Canvas')).toBeInTheDocument()
+    expect(screen.getByTestId('canvas-board')).toBeInTheDocument()
+  })
+
+  it('canvas 미매칭 → "[삭제된 캔버스]" 메시지', () => {
+    render(<EmbedView domain="canvas" entityId="missing" height={400} onHeightChange={() => {}} />)
+    expect(screen.getByText('[삭제된 캔버스]')).toBeInTheDocument()
   })
 
   it('csv 미매칭 → "삭제된" 메시지', () => {

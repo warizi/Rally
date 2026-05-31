@@ -5,6 +5,7 @@
  *   ![[note:id]]              — 노트 (제목 링크 형식, 높이 메타 없음)
  *   ![[csv:id|h=400]]         — CSV (h 메타 = 컨테이너 height)
  *   ![[pdf:id|h=600]]         — PDF
+ *   ![[canvas:id|h=400]]      — 캔버스 (read-only 미리보기, h 메타 = 컨테이너 height)
  *
  * 이미지(`![h=NNN](.images/xxx.png)`) 는 기존 image 노드 + alt 메타로 별도 처리.
  *
@@ -26,9 +27,9 @@ import type { Handle } from 'mdast-util-to-markdown'
 export const RALLY_EMBED_NODE_NAME = 'rally_embed'
 export const RALLY_EMBED_MDAST_TYPE = 'rallyEmbed'
 
-export type EmbedDomain = 'note' | 'csv' | 'pdf' | 'image'
+export type EmbedDomain = 'note' | 'csv' | 'pdf' | 'image' | 'canvas'
 
-const EMBED_DOMAINS: readonly EmbedDomain[] = ['note', 'csv', 'pdf', 'image'] as const
+const EMBED_DOMAINS: readonly EmbedDomain[] = ['note', 'csv', 'pdf', 'image', 'canvas'] as const
 
 function isEmbedDomain(s: string): s is EmbedDomain {
   return (EMBED_DOMAINS as readonly string[]).includes(s)
@@ -38,7 +39,7 @@ function isEmbedDomain(s: string): s is EmbedDomain {
  *
  * image 도메인은 workspace image-file 라이브러리 참조 (DnD 로 넣은 .images/
  * inline 이미지는 기존 markdown `![alt](path)` 그대로 — schema 자체가 다름). */
-const EMBED_RE = /!\[\[(note|csv|pdf|image):([^\]|]+?)(?:\|h=(\d+))?\]\]/g
+const EMBED_RE = /!\[\[(note|csv|pdf|image|canvas):([^\]|]+?)(?:\|h=(\d+))?\]\]/g
 
 interface RallyEmbedMdastNode {
   type: typeof RALLY_EMBED_MDAST_TYPE

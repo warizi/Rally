@@ -1,29 +1,35 @@
 /**
- * 임베드 시각화 — 4 도메인 분기.
+ * 임베드 시각화 — 5 도메인 분기.
  *
  * - note: id → 제목 fetch (workspace list), 아이콘 + 제목 link 형식 (클릭 무동작)
  * - csv: id → content fetch, 단순 표 렌더 (read-only, 툴바 없이)
  * - pdf: id → content fetch, PdfViewer hideToolbar 로 렌더
  * - image: id → workspace image-file content fetch, blob URL 로 표시
+ * - canvas: id → CanvasReadOnlyBoard 로 read-only 미리보기 (pan/zoom O, 편집 X)
  *
  * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
 import { useEffect, useState } from 'react'
-import { FileText, Sheet, FileX, Image as ImageIcon } from 'lucide-react'
+import { FileText, Sheet, FileX, Image as ImageIcon, Network } from 'lucide-react'
 import Papa from 'papaparse'
 import { ScrollArea, ScrollBar } from '@shared/ui/scroll-area'
 import { useNotesByWorkspace } from '@entities/note'
 import { useCsvFilesByWorkspace, useReadCsvContent } from '@entities/csv-file'
 import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
 import { useImageFilesByWorkspace, useReadImageContent } from '@entities/image-file'
+import { useCanvasesByWorkspace, CanvasReadOnlyBoard } from '@entities/canvas'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { PdfViewer } from '@entities/pdf-file'
 import { useTabStore } from '@/entities/tab-system'
 import type { EmbedDomain } from '../model/note-embed-schema'
 
-/** entity → 탭으로 열기. note/csv/pdf/image 각 detail pathname. */
+/** entity → 탭으로 열기. note/csv/pdf/image 는 `/folder/{domain}/{id}`, canvas 는 `/canvas/{id}`. */
 function openEntityTab(domain: EmbedDomain, id: string, title: string): void {
+  if (domain === 'canvas') {
+    useTabStore.getState().openTab({ type: 'canvas-detail', pathname: `/canvas/${id}`, title })
+    return
+  }
   const pathname =
     domain === 'note'
       ? `/folder/note/${id}`
@@ -66,6 +72,15 @@ export function EmbedView({ domain, entityId, height, onHeightChange }: Props): 
   if (domain === 'image')
     return (
       <ImageEmbedView
+        workspaceId={workspaceId}
+        entityId={entityId}
+        height={height}
+        onHeightChange={onHeightChange}
+      />
+    )
+  if (domain === 'canvas')
+    return (
+      <CanvasEmbedView
         workspaceId={workspaceId}
         entityId={entityId}
         height={height}
@@ -373,6 +388,43 @@ function ImageEmbedView({
         ) : (
           <div className="p-4 text-xs text-muted-foreground">이미지 로딩 중...</div>
         )}
+      </div>
+      <ResizeHandle onHeightChange={onHeightChange} />
+    </div>
+  )
+}
+
+// ─── canvas ────────────────────────────────────────────
+
+function CanvasEmbedView({
+  workspaceId,
+  entityId,
+  height,
+  onHeightChange
+}: {
+  workspaceId: string
+  entityId: string
+  height: number
+  onHeightChange: (h: number) => void
+}): React.JSX.Element {
+  const { data: canvases = [] } = useCanvasesByWorkspace(workspaceId)
+  const canvas = canvases.find((c) => c.id === entityId)
+  if (!canvas) return <FallbackEmbed label="[삭제된 캔버스]" />
+  return (
+    <div
+      className="flex flex-col my-2 border rounded overflow-hidden bg-card"
+      style={{ height: height > 0 ? height : 400 }}
+      contentEditable={false}
+    >
+      <div
+        className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0 cursor-pointer hover:bg-muted/60"
+        onClick={() => openEntityTab('canvas', canvas.id, canvas.title)}
+      >
+        <Network className="size-3.5" />
+        {canvas.title}
+      </div>
+      <div className="flex-1 min-h-0">
+        <CanvasReadOnlyBoard canvasId={entityId} />
       </div>
       <ResizeHandle onHeightChange={onHeightChange} />
     </div>

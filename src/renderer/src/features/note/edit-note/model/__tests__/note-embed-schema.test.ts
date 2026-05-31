@@ -61,8 +61,8 @@ describe('rallyEmbedRemarkPlugin', () => {
     expect(para.children[2]).toEqual({ type: 'text', value: ' after' })
   })
 
-  it('recognizes all 4 domains', () => {
-    for (const domain of ['note', 'csv', 'pdf', 'image'] as const) {
+  it('recognizes all 5 domains', () => {
+    for (const domain of ['note', 'csv', 'pdf', 'image', 'canvas'] as const) {
       const tree = parseAndRun(`![[${domain}:id123]]`)
       const para = tree.children[0]
       if (para.type !== 'paragraph') throw new Error('expected paragraph')
@@ -134,7 +134,8 @@ describe('rallyEmbedStringifyHandler — round-trip', () => {
   })
 
   it('preserves multiple embeds across all domains', () => {
-    const md = 'a ![[note:n]] b ![[csv:c|h=200]] c ![[pdf:p|h=600]] d ![[image:i|h=400]] e'
+    const md =
+      'a ![[note:n]] b ![[csv:c|h=200]] c ![[pdf:p|h=600]] d ![[image:i|h=400]] e ![[canvas:cv|h=400]] f'
     expect(roundtrip(md)).toBe(md)
   })
 
