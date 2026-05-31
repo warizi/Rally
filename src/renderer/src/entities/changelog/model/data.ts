@@ -6,6 +6,17 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14.1',
+    date: '2026-06-01',
+    changes: [
+      {
+        type: 'improvement',
+        title: '노트 임베드 캔버스 추가',
+        description: '노트 안에 캔버스를 임베드 할 수 있도록 추가되었습니다.'
+      }
+    ]
+  },
+  {
     version: '1.14.0',
     date: '2026-05-27',
     changes: [
