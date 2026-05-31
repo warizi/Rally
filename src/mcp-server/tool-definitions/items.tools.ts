@@ -144,6 +144,7 @@ Supported types and response shape per entry:
                ![[csv:<id>|h=<px>]]        — embed a csv (h: container height, omit for content-fit)
                ![[pdf:<id>|h=<px>]]        — embed a pdf
                ![[image:<id>|h=<px>]]      — embed an image-file (workspace library, not inline .images/)
+               ![[canvas:<id>]]            — embed a canvas as inline link (title only, no h meta)
              Use the embedded id with read again to fetch the linked item's content.
 - csv      : { id, success:true, type:'csv',      title, relativePath, content, encoding, columnWidths }
 - canvas   : { id, success:true, type:'canvas',   title, description, nodes, edges, createdAt, updatedAt }
@@ -300,9 +301,10 @@ WARNING: When updating note content, image references (![](/.images/xxx.png)) re
 will be permanently deleted from disk. Always preserve existing image references.
 
 Note content can also include Obsidian-style cross-item embeds — keep / insert them verbatim:
-  ![[note:<id>]]   ![[csv:<id>|h=<px>]]   ![[pdf:<id>|h=<px>]]   ![[image:<id>|h=<px>]]
+  ![[note:<id>]]   ![[csv:<id>|h=<px>]]   ![[pdf:<id>|h=<px>]]   ![[image:<id>|h=<px>]]   ![[canvas:<id>]]
 h is optional and only sets the container height in the editor; omit to use content-fit (csv/note) or
-domain default (pdf 600 / image 400). Use ids returned by browse/search.`,
+domain default (pdf 600 / image 400). note and canvas render as inline title links (no h meta).
+Use ids returned by browse/search.`,
     schema: {
       actions: z
         .array(

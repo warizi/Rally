@@ -1,5 +1,6 @@
 /**
- * `@` trigger plugin — 라인 시작 @ 입력 감지 시 picker store 활성화.
+ * `@` trigger plugin — @ 입력 감지 시 picker store 활성화.
+ * 라인/블록 시작이거나 바로 앞 글자가 공백일 때만 발동 (단어 중간 @ 는 무시).
  *
  * 검색어 입력은 picker popup 의 별도 input 이 받음 (IME 한글 등 호환).
  * plugin 은 @ 감지 + range/position 기록만 담당. 후속 텍스트 입력은
@@ -23,9 +24,20 @@ function getCaretPosition(view: import('@milkdown/kit/prose/view').EditorView): 
   return { x: coords.left, y: coords.bottom }
 }
 
-function isLineStart(state: import('@milkdown/kit/prose/state').EditorState): boolean {
-  const { $from } = state.selection
-  return $from.parentOffset === 0
+/**
+ * @ 발동 위치 판정 — `from` 은 @ 가 삽입될 위치.
+ * - 블록(라인) 시작(parentOffset===0) 이거나
+ * - 바로 앞 글자(`from-1`)가 공백이면 true.
+ * 그 외(단어 중간) 는 false → 이메일/멘션 등 일반 @ 입력은 무시.
+ */
+function isTriggerBoundary(
+  state: import('@milkdown/kit/prose/state').EditorState,
+  from: number
+): boolean {
+  const $from = state.doc.resolve(from)
+  if ($from.parentOffset === 0) return true
+  const before = state.doc.textBetween(from - 1, from)
+  return /\s/.test(before)
 }
 
 export function createEmbedPickerPlugin(editorId: string): ReturnType<typeof $prose> {
@@ -34,8 +46,8 @@ export function createEmbedPickerPlugin(editorId: string): ReturnType<typeof $pr
       key: embedPickerKey,
       props: {
         handleTextInput(view, from, to, text) {
-          // @ 입력 감지 (라인 시작에서만)
-          if (text === '@' && isLineStart(view.state) && from === to) {
+          // @ 입력 감지 (라인/블록 시작 또는 앞 글자가 공백일 때)
+          if (text === '@' && from === to && isTriggerBoundary(view.state, from)) {
             queueMicrotask(() => {
               const newRange = { from, to: from + 1 }
               useEmbedPickerStore.getState().openPicker(editorId, newRange, getCaretPosition(view))

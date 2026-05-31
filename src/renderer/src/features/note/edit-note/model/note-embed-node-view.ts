@@ -33,8 +33,8 @@ class NoteEmbedNodeView implements NodeView {
   ) {
     void this.workspaceId // workspaceId 는 EmbedView 내부 hook 에서 useCurrentWorkspaceStore 로 가져옴
     this.portalId = nanoid()
-    // 노트(링크)는 span(inline), csv/pdf/image 는 div(block) — span 안 div 는 HTML
-    // 유효성 X. 도메인별 tag 분기.
+    // 노트/캔버스(링크)는 span(inline), csv/pdf/image 는 div(block) — span 안 div 는
+    // HTML 유효성 X. 도메인별 tag 분기.
     const domain = node.attrs.domain as string
     const isBlock = domain === 'csv' || domain === 'pdf' || domain === 'image'
     this.dom = document.createElement(isBlock ? 'div' : 'span')

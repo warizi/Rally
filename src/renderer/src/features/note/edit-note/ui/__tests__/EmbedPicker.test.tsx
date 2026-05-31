@@ -2,7 +2,7 @@
  * features/note/edit-note/ui/EmbedPicker.test.tsx
  *
  * store.open + editorId 일치 → 표시. 불일치/close → null.
- * 데이터 4종 (notes/csvs/pdfs/images) 통합 표시.
+ * 데이터 5종 (notes/csvs/pdfs/images/canvases) 통합 표시.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
@@ -16,7 +16,8 @@ const mocks = vi.hoisted(() => ({
   notes: [] as Array<{ id: string; title: string }>,
   csvs: [] as Array<{ id: string; title: string }>,
   pdfs: [] as Array<{ id: string; title: string }>,
-  images: [] as Array<{ id: string; title: string }>
+  images: [] as Array<{ id: string; title: string }>,
+  canvases: [] as Array<{ id: string; title: string }>
 }))
 
 vi.mock('@milkdown/react', () => ({
@@ -62,6 +63,10 @@ vi.mock('@entities/image-file', () => ({
   useImageFilesByWorkspace: () => ({ data: mocks.images })
 }))
 
+vi.mock('@entities/canvas', () => ({
+  useCanvasesByWorkspace: () => ({ data: mocks.canvases })
+}))
+
 vi.mock('@shared/ui/icons/PdfIcon', () => ({
   PdfIcon: () => null
 }))
@@ -79,6 +84,7 @@ beforeEach(() => {
   mocks.csvs = []
   mocks.pdfs = []
   mocks.images = []
+  mocks.canvases = []
   mocks.closePicker.mockReset()
 })
 
@@ -141,17 +147,19 @@ describe('EmbedPicker', () => {
     expect(screen.queryByText('foo qux')).toBeNull()
   })
 
-  it('4개 도메인 항목 모두 노출 (notes + csvs + pdfs + images)', () => {
+  it('5개 도메인 항목 모두 노출 (notes + csvs + pdfs + images + canvases)', () => {
     mocks.open = true
     mocks.notes = [{ id: 'n1', title: 'Note T' }]
     mocks.csvs = [{ id: 'c1', title: 'CSV T' }]
     mocks.pdfs = [{ id: 'p1', title: 'PDF T' }]
     mocks.images = [{ id: 'i1', title: 'Image T' }]
+    mocks.canvases = [{ id: 'cv1', title: 'Canvas T' }]
     render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
     expect(screen.getByText('Note T')).toBeInTheDocument()
     expect(screen.getByText('CSV T')).toBeInTheDocument()
     expect(screen.getByText('PDF T')).toBeInTheDocument()
     expect(screen.getByText('Image T')).toBeInTheDocument()
+    expect(screen.getByText('Canvas T')).toBeInTheDocument()
   })
 
   it('Escape 키 → closePicker 호출', () => {

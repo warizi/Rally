@@ -1,5 +1,5 @@
 /**
- * @ trigger picker UI — 4 도메인 통합 검색 + 자체 input (IME 호환).
+ * @ trigger picker UI — 5 도메인 통합 검색 + 자체 input (IME 호환).
  *
  * 동작:
  * - store.open → popup 표시 + 자동 focus
@@ -11,12 +11,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useInstance } from '@milkdown/react'
 import { editorViewCtx } from '@milkdown/kit/core'
-import { Check, FileText, Sheet, Image as ImageIcon, type LucideIcon } from 'lucide-react'
+import { Check, FileText, Sheet, Image as ImageIcon, Network, type LucideIcon } from 'lucide-react'
 import { useEmbedPickerStore } from '../model/embed-picker-store'
 import { useNotesByWorkspace } from '@entities/note'
 import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useImageFilesByWorkspace } from '@entities/image-file'
+import { useCanvasesByWorkspace } from '@entities/canvas'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { RALLY_EMBED_NODE_NAME, type EmbedDomain } from '../model/note-embed-schema'
 
@@ -30,7 +31,8 @@ const ICONS: Record<EmbedDomain, LucideIcon | typeof PdfIcon> = {
   note: FileText,
   csv: Sheet,
   pdf: PdfIcon,
-  image: ImageIcon
+  image: ImageIcon,
+  canvas: Network
 }
 
 interface Props {
@@ -51,15 +53,17 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
   const { data: csvs = [] } = useCsvFilesByWorkspace(workspaceId)
   const { data: pdfs = [] } = usePdfFilesByWorkspace(workspaceId)
   const { data: images = [] } = useImageFilesByWorkspace(workspaceId)
+  const { data: canvases = [] } = useCanvasesByWorkspace(workspaceId)
 
   const allItems = useMemo<PickerItem[]>(
     () => [
       ...notes.map((n) => ({ domain: 'note' as const, id: n.id, title: n.title })),
       ...csvs.map((c) => ({ domain: 'csv' as const, id: c.id, title: c.title })),
       ...pdfs.map((p) => ({ domain: 'pdf' as const, id: p.id, title: p.title })),
-      ...images.map((i) => ({ domain: 'image' as const, id: i.id, title: i.title }))
+      ...images.map((i) => ({ domain: 'image' as const, id: i.id, title: i.title })),
+      ...canvases.map((cv) => ({ domain: 'canvas' as const, id: cv.id, title: cv.title }))
     ],
-    [notes, csvs, pdfs, images]
+    [notes, csvs, pdfs, images, canvases]
   )
 
   // 자체 input state (IME 호환 — ProseMirror 외부에서 한글 입력 가능)
@@ -115,7 +119,7 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
       const schema = view.state.schema
       const embedType = schema.nodes[RALLY_EMBED_NODE_NAME]
       if (!embedType) return
-      // 기본 height — note: 0 (inline 링크), csv: 0 (콘텐츠 크기), pdf/image: 고정.
+      // 기본 height — note/canvas: 0 (inline 링크), csv: 0 (콘텐츠 크기), pdf/image: 고정.
       const defaultHeight = item.domain === 'pdf' ? 600 : item.domain === 'image' ? 400 : 0
       const node = embedType.create({
         domain: item.domain,
