@@ -5,7 +5,7 @@
  * - csv: id → content fetch, 단순 표 렌더 (read-only, 툴바 없이)
  * - pdf: id → content fetch, PdfViewer hideToolbar 로 렌더
  * - image: id → workspace image-file content fetch, blob URL 로 표시
- * - canvas: id → CanvasReadOnlyBoard 로 read-only 미리보기 (pan/zoom O, 편집 X)
+ * - canvas: id → 제목 link 형식 (노트 임베드와 동일, 클릭 시 캔버스 탭 열기)
  *
  * fallback: id 못 찾으면 "[삭제된 X]" 표시.
  */
@@ -17,7 +17,7 @@ import { useNotesByWorkspace } from '@entities/note'
 import { useCsvFilesByWorkspace, useReadCsvContent } from '@entities/csv-file'
 import { usePdfFilesByWorkspace, useReadPdfContent } from '@entities/pdf-file'
 import { useImageFilesByWorkspace, useReadImageContent } from '@entities/image-file'
-import { useCanvasesByWorkspace, CanvasReadOnlyBoard } from '@entities/canvas'
+import { useCanvasesByWorkspace } from '@entities/canvas'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { PdfViewer } from '@entities/pdf-file'
@@ -78,15 +78,7 @@ export function EmbedView({ domain, entityId, height, onHeightChange }: Props): 
         onHeightChange={onHeightChange}
       />
     )
-  if (domain === 'canvas')
-    return (
-      <CanvasEmbedView
-        workspaceId={workspaceId}
-        entityId={entityId}
-        height={height}
-        onHeightChange={onHeightChange}
-      />
-    )
+  if (domain === 'canvas') return <CanvasEmbedView workspaceId={workspaceId} entityId={entityId} />
   return <FallbackEmbed label="알 수 없는 임베드" />
 }
 
@@ -396,37 +388,26 @@ function ImageEmbedView({
 
 // ─── canvas ────────────────────────────────────────────
 
+/** 노트 임베드와 동일한 제목 link 형식 — 아이콘 + 제목 inline, 클릭 시 캔버스 탭 열기. */
 function CanvasEmbedView({
   workspaceId,
-  entityId,
-  height,
-  onHeightChange
+  entityId
 }: {
   workspaceId: string
   entityId: string
-  height: number
-  onHeightChange: (h: number) => void
 }): React.JSX.Element {
   const { data: canvases = [] } = useCanvasesByWorkspace(workspaceId)
   const canvas = canvases.find((c) => c.id === entityId)
   if (!canvas) return <FallbackEmbed label="[삭제된 캔버스]" />
   return (
-    <div
-      className="flex flex-col my-2 border rounded overflow-hidden bg-card"
-      style={{ height: height > 0 ? height : 400 }}
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-sm bg-accent text-accent-foreground hover:bg-accent/80 cursor-pointer select-none"
+      title={canvas.title}
       contentEditable={false}
+      onClick={() => openEntityTab('canvas', canvas.id, canvas.title)}
     >
-      <div
-        className="flex items-center gap-2 px-3 py-1.5 border-b text-sm font-medium bg-muted/40 shrink-0 cursor-pointer hover:bg-muted/60"
-        onClick={() => openEntityTab('canvas', canvas.id, canvas.title)}
-      >
-        <Network className="size-3.5" />
-        {canvas.title}
-      </div>
-      <div className="flex-1 min-h-0">
-        <CanvasReadOnlyBoard canvasId={entityId} />
-      </div>
-      <ResizeHandle onHeightChange={onHeightChange} />
-    </div>
+      <Network className="size-3.5 shrink-0" />
+      <span className="truncate">{canvas.title}</span>
+    </span>
   )
 }

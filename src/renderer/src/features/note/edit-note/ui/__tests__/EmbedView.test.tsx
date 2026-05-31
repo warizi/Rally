@@ -48,8 +48,7 @@ vi.mock('@entities/image-file', () => ({
 }))
 
 vi.mock('@entities/canvas', () => ({
-  useCanvasesByWorkspace: () => ({ data: mocks.canvases }),
-  CanvasReadOnlyBoard: () => <div data-testid="canvas-board" />
+  useCanvasesByWorkspace: () => ({ data: mocks.canvases })
 }))
 
 vi.mock('@/shared/store/current-workspace', () => ({
@@ -105,15 +104,14 @@ describe('EmbedView', () => {
     expect(screen.getByText('Image File')).toBeInTheDocument()
   })
 
-  it('canvas 매칭 → 제목 + CanvasReadOnlyBoard (smoke)', () => {
+  it('canvas 매칭 → 제목 link 형식 (노트 임베드와 동일)', () => {
     mocks.canvases = [{ id: 'cv1', title: 'My Canvas' }]
-    render(<EmbedView domain="canvas" entityId="cv1" height={400} onHeightChange={() => {}} />)
+    render(<EmbedView domain="canvas" entityId="cv1" height={0} onHeightChange={() => {}} />)
     expect(screen.getByText('My Canvas')).toBeInTheDocument()
-    expect(screen.getByTestId('canvas-board')).toBeInTheDocument()
   })
 
   it('canvas 미매칭 → "[삭제된 캔버스]" 메시지', () => {
-    render(<EmbedView domain="canvas" entityId="missing" height={400} onHeightChange={() => {}} />)
+    render(<EmbedView domain="canvas" entityId="missing" height={0} onHeightChange={() => {}} />)
     expect(screen.getByText('[삭제된 캔버스]')).toBeInTheDocument()
   })
 

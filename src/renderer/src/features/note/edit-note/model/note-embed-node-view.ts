@@ -33,12 +33,10 @@ class NoteEmbedNodeView implements NodeView {
   ) {
     void this.workspaceId // workspaceId 는 EmbedView 내부 hook 에서 useCurrentWorkspaceStore 로 가져옴
     this.portalId = nanoid()
-    // 노트(링크)는 span(inline), csv/pdf/image/canvas 는 div(block) — span 안 div 는
-    // HTML 유효성 X. 도메인별 tag 분기. block 호스트는 width:100% 로 본문 칼럼을
-    // 채운다 (canvas 처럼 내재 너비 없는 임베드가 inline-block 으로 collapse 되는 것 방지).
+    // 노트/캔버스(링크)는 span(inline), csv/pdf/image 는 div(block) — span 안 div 는
+    // HTML 유효성 X. 도메인별 tag 분기.
     const domain = node.attrs.domain as string
-    const isBlock =
-      domain === 'csv' || domain === 'pdf' || domain === 'image' || domain === 'canvas'
+    const isBlock = domain === 'csv' || domain === 'pdf' || domain === 'image'
     this.dom = document.createElement(isBlock ? 'div' : 'span')
     this.dom.setAttribute('data-rally-embed', 'true')
     this.dom.setAttribute('data-portal-id', this.portalId)

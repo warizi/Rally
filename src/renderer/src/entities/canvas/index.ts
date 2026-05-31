@@ -44,4 +44,3 @@ export {
   parseSide
 } from './model/converters'
 export { useCanvasWatcher } from './model/use-canvas-watcher'
-export { CanvasReadOnlyBoard } from './ui/CanvasReadOnlyBoard'

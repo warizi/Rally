@@ -119,9 +119,8 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
       const schema = view.state.schema
       const embedType = schema.nodes[RALLY_EMBED_NODE_NAME]
       if (!embedType) return
-      // 기본 height — note: 0 (inline 링크), csv: 0 (콘텐츠 크기), pdf/image/canvas: 고정.
-      const defaultHeight =
-        item.domain === 'pdf' ? 600 : item.domain === 'image' || item.domain === 'canvas' ? 400 : 0
+      // 기본 height — note/canvas: 0 (inline 링크), csv: 0 (콘텐츠 크기), pdf/image: 고정.
+      const defaultHeight = item.domain === 'pdf' ? 600 : item.domain === 'image' ? 400 : 0
       const node = embedType.create({
         domain: item.domain,
         entityId: item.id,
