@@ -148,6 +148,7 @@ export function TodoPage({ tabId }: Props): React.JSX.Element {
   return (
     <TabContainer
       scrollable={view !== 'kanban'}
+      maxWidth={view === 'kanban' ? 'full' : 1200}
       header={
         <TabHeader
           title="할 일"
