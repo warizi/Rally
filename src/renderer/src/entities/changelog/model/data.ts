@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14.2',
+    date: '2026-06-02',
+    changes: [
+      {
+        type: 'improvement',
+        title: '칸반보드 좌우 넓이 확장',
+        description:
+          '칸반보드의 좌우 넓이가 확장되어 더 많은 내용을 한눈에 볼 수 있게 되었습니다. 시각적으로 더 쾌적한 작업 환경을 제공합니다.'
+      }
+    ]
+  },
+  {
     version: '1.14.1',
     date: '2026-06-01',
     changes: [
