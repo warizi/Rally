@@ -30,6 +30,7 @@ import { registerEntityLinkHandlers } from './ipc/entity-link'
 import { registerCanvasHandlers } from './ipc/canvas'
 import { registerCanvasNodeHandlers } from './ipc/canvas-node'
 import { registerCanvasEdgeHandlers } from './ipc/canvas-edge'
+import { registerCanvasGroupHandlers } from './ipc/canvas-group'
 import { registerNoteImageHandlers } from './ipc/note-image'
 import { registerReminderHandlers } from './ipc/reminder'
 import { registerTagHandlers } from './ipc/tag'
@@ -267,6 +268,7 @@ app.whenReady().then(() => {
   registerCanvasHandlers()
   registerCanvasNodeHandlers()
   registerCanvasEdgeHandlers()
+  registerCanvasGroupHandlers()
   registerNoteImageHandlers()
   registerReminderHandlers()
   registerTagHandlers()

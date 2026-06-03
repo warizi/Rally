@@ -4,6 +4,7 @@ import type {
   CanvasEdgeStyle,
   CanvasEdgeArrow,
   CanvasNode,
+  CanvasFlowNode,
   CanvasEdge,
   CanvasNodeItem,
   CanvasEdgeItem,
@@ -40,7 +41,7 @@ let clipboard: { nodes: ClipboardNode[]; edges: ClipboardEdge[] } | null = null
 let pasteCount = 0
 
 export function useCanvasClipboard(): {
-  copy: (nodes: CanvasNode[], edges: CanvasEdge[]) => boolean
+  copy: (nodes: CanvasFlowNode[], edges: CanvasEdge[]) => boolean
   paste: (
     canvasId: string,
     viewportCenter: { x: number; y: number },
@@ -55,8 +56,11 @@ export function useCanvasClipboard(): {
   ) => Promise<string[]>
   hasClipboard: () => boolean
 } {
-  function copy(nodes: CanvasNode[], edges: CanvasEdge[]): boolean {
-    const selectedNodes = nodes.filter((n) => n.selected)
+  function copy(nodes: CanvasFlowNode[], edges: CanvasEdge[]): boolean {
+    // 그룹 노드는 클립보드에서 제외 (복사 대상은 일반 노드만)
+    const selectedNodes = nodes.filter(
+      (n): n is CanvasNode => n.selected === true && n.type !== 'groupNode'
+    )
     if (selectedNodes.length === 0) return false
 
     const selectedIds = new Set(selectedNodes.map((n) => n.id))

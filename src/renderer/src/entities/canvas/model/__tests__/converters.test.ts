@@ -1,6 +1,29 @@
 import { describe, it, expect } from 'vitest'
-import { toReactFlowNode, toReactFlowEdge, parseSide, toCreateCanvasEdgeData } from '../converters'
-import type { CanvasNodeItem, CanvasEdgeItem } from '../types'
+import {
+  toReactFlowNode,
+  toReactFlowGroupNode,
+  toReactFlowEdge,
+  parseSide,
+  toCreateCanvasEdgeData,
+  GROUP_Z_INDEX
+} from '../converters'
+import type { CanvasNodeItem, CanvasEdgeItem, CanvasGroupItem } from '../types'
+
+function makeGroupItem(overrides: Partial<CanvasGroupItem> = {}): CanvasGroupItem {
+  return {
+    id: 'group-1',
+    canvasId: 'canvas-1',
+    label: '그룹',
+    x: 10,
+    y: 20,
+    width: 300,
+    height: 200,
+    color: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ...overrides
+  }
+}
 
 function makeNodeItem(overrides: Partial<CanvasNodeItem> = {}): CanvasNodeItem {
   return {
@@ -15,6 +38,7 @@ function makeNodeItem(overrides: Partial<CanvasNodeItem> = {}): CanvasNodeItem {
     color: null,
     content: 'hello',
     zIndex: 0,
+    groupId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides
@@ -45,6 +69,13 @@ describe('toReactFlowNode', () => {
     expect(result.data.nodeType).toBe('text')
   })
 
+  it('groupId → data.groupId 로 전달 (text/ref 모두)', () => {
+    const text = toReactFlowNode(makeNodeItem({ type: 'text', groupId: 'g-1' }))
+    expect(text.data.groupId).toBe('g-1')
+    const ref = toReactFlowNode(makeNodeItem({ type: 'todo', refId: 'r-1', groupId: 'g-1' }))
+    expect(ref.data.groupId).toBe('g-1')
+  })
+
   it('ref 타입 (todo) → type: refNode, data.nodeType: todo', () => {
     const result = toReactFlowNode(
       makeNodeItem({ type: 'todo', refId: 'ref-1', refTitle: '할 일 제목' })
@@ -73,6 +104,18 @@ describe('toReactFlowNode', () => {
   it('style.width/height → DB width/height 반영', () => {
     const result = toReactFlowNode(makeNodeItem({ width: 300, height: 400 }))
     expect(result.style).toEqual({ width: 300, height: 400 })
+  })
+
+  it('group → type: groupNode, nodeType: group, zIndex 뒤로(GROUP_Z_INDEX), 음수', () => {
+    const result = toReactFlowGroupNode(makeGroupItem({ label: '작업', color: '#f00' }))
+    expect(result.type).toBe('groupNode')
+    expect(result.data.nodeType).toBe('group')
+    expect(result.data.label).toBe('작업')
+    expect(result.data.color).toBe('#f00')
+    expect(result.zIndex).toBe(GROUP_Z_INDEX)
+    expect(GROUP_Z_INDEX).toBeLessThan(0)
+    expect(result.position).toEqual({ x: 10, y: 20 })
+    expect(result.style).toEqual({ width: 300, height: 200 })
   })
 
   it('zIndex → 그대로 전달', () => {

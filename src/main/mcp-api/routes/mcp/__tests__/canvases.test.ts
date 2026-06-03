@@ -25,6 +25,14 @@ vi.mock('../../../../services/canvas-node', () => ({
 vi.mock('../../../../services/canvas-edge', () => ({
   canvasEdgeService: { findByCanvas: vi.fn(), create: vi.fn(), remove: vi.fn() }
 }))
+vi.mock('../../../../services/canvas-group', () => ({
+  canvasGroupService: {
+    findByCanvas: vi.fn(),
+    create: vi.fn(),
+    update: vi.fn(),
+    remove: vi.fn()
+  }
+}))
 vi.mock('../../../../services/workspace-watcher', () => ({
   workspaceWatcher: { getActiveWorkspaceId: vi.fn() }
 }))
@@ -35,12 +43,14 @@ vi.mock('../../../../repositories/workspace', () => ({
 import { canvasService } from '../../../../services/canvas'
 import { canvasNodeService } from '../../../../services/canvas-node'
 import { canvasEdgeService } from '../../../../services/canvas-edge'
+import { canvasGroupService } from '../../../../services/canvas-group'
 import { workspaceWatcher } from '../../../../services/workspace-watcher'
 import { workspaceRepository } from '../../../../repositories/workspace'
 
 type Canvas = NonNullable<ReturnType<typeof canvasService.findById>>
 type CanvasNode = ReturnType<typeof canvasNodeService.create>
 type CanvasEdge = ReturnType<typeof canvasEdgeService.create>
+type CanvasGroup = ReturnType<typeof canvasGroupService.create>
 
 const WS = {
   id: 'ws-abcdefghij',
@@ -68,6 +78,7 @@ beforeEach(() => {
   vi.mocked(workspaceRepository.findById).mockReturnValue(WS)
   vi.mocked(canvasNodeService.findByCanvas).mockReturnValue([])
   vi.mocked(canvasEdgeService.findByCanvas).mockReturnValue([])
+  vi.mocked(canvasGroupService.findByCanvas).mockReturnValue([])
 })
 
 afterEach(() => {
@@ -274,6 +285,67 @@ describe('POST /api/mcp/canvases/:canvasId/edit', () => {
       CANVAS.id,
       expect.objectContaining({ fromNode: 'n-newaa', toNode: 'n-existing0' })
     )
+  })
+
+  it('add_group + add_node (groupTempId 활용) → node.groupId 로 해석', async () => {
+    vi.mocked(canvasService.findById).mockReturnValue(CANVAS)
+    vi.mocked(canvasGroupService.create).mockReturnValue({
+      id: 'g-newaa'
+    } as unknown as CanvasGroup)
+    vi.mocked(canvasNodeService.create).mockReturnValue({
+      id: 'n-newaa',
+      type: 'text',
+      x: 0,
+      y: 0
+    } as unknown as CanvasNode)
+
+    const router = setupRouter()
+    const req = makeReq({
+      method: 'POST',
+      url: `/api/mcp/canvases/${CANVAS.id}/edit`,
+      headers: { [AUTH_HEADER]: TEST_TOKEN, 'content-type': 'application/json' },
+      body: {
+        actions: [
+          {
+            action: 'add_group',
+            groupTempId: 'grp-1',
+            label: '그룹',
+            x: 0,
+            y: 0,
+            width: 300,
+            height: 200
+          },
+          { action: 'add_node', type: 'text', x: 10, y: 10, groupId: 'grp-1' }
+        ]
+      }
+    })
+    const cap = makeRes()
+    await router.handle(req, cap.res)
+
+    expect(cap.getStatusCode()).toBe(200)
+    expect(canvasGroupService.create).toHaveBeenCalledTimes(1)
+    // groupTempId 'grp-1' 가 새 group id 로 해석돼 node.groupId 로 들어가야 함
+    expect(canvasNodeService.create).toHaveBeenCalledWith(
+      CANVAS.id,
+      expect.objectContaining({ groupId: 'g-newaa' })
+    )
+  })
+
+  it('remove_group → canvasGroupService.remove 호출', async () => {
+    vi.mocked(canvasService.findById).mockReturnValue(CANVAS)
+
+    const router = setupRouter()
+    const req = makeReq({
+      method: 'POST',
+      url: `/api/mcp/canvases/${CANVAS.id}/edit`,
+      headers: { [AUTH_HEADER]: TEST_TOKEN, 'content-type': 'application/json' },
+      body: { actions: [{ action: 'remove_group', groupId: 'g-x' }] }
+    })
+    const cap = makeRes()
+    await router.handle(req, cap.res)
+
+    expect(cap.getStatusCode()).toBe(200)
+    expect(canvasGroupService.remove).toHaveBeenCalledWith('g-x')
   })
 
   it('빈 actions → 400', async () => {

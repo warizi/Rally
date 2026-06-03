@@ -10,6 +10,7 @@ import type {
 import { canvasService } from '../../../services/canvas'
 import { canvasNodeService } from '../../../services/canvas-node'
 import { canvasEdgeService } from '../../../services/canvas-edge'
+import { canvasGroupService } from '../../../services/canvas-group'
 import { ValidationError } from '../../../lib/errors'
 import { withTransaction } from '../../../lib/transaction'
 import { broadcastChanged } from '../../lib/broadcast'
@@ -24,6 +25,7 @@ export function registerMcpCanvasRoutes(router: Router): void {
     assertOwnedByWorkspace(canvas, wsId, `Canvas not found: ${params.canvasId}`)
     const nodes = canvasNodeService.findByCanvas(params.canvasId)
     const edges = canvasEdgeService.findByCanvas(params.canvasId)
+    const groups = canvasGroupService.findByCanvas(params.canvasId)
     return {
       canvas: {
         id: canvas.id,
@@ -33,7 +35,8 @@ export function registerMcpCanvasRoutes(router: Router): void {
         updatedAt: canvas.updatedAt.toISOString()
       },
       nodes,
-      edges
+      edges,
+      groups
     }
   })
 
@@ -145,6 +148,7 @@ export function registerMcpCanvasRoutes(router: Router): void {
       // 다중 액션을 단일 트랜잭션으로 — pure DB이므로 안전하게 묶음
       const results = withTransaction((): EditCanvasResult[] => {
         const tempIdMap = new Map<string, string>()
+        const groupTempIdMap = new Map<string, string>()
         const acc: EditCanvasResult[] = []
 
         for (const action of actions) {
@@ -161,6 +165,9 @@ export function registerMcpCanvasRoutes(router: Router): void {
               acc.push({ action: 'update', success: true })
               break
             case 'add_node': {
+              const groupId = action.groupId
+                ? (groupTempIdMap.get(action.groupId) ?? action.groupId)
+                : undefined
               const result = canvasNodeService.create(params.canvasId, {
                 type: action.type,
                 x: action.x,
@@ -169,7 +176,8 @@ export function registerMcpCanvasRoutes(router: Router): void {
                 height: action.height,
                 content: action.content,
                 refId: action.refId,
-                color: action.color
+                color: action.color,
+                groupId
               })
               if (action.tempId) tempIdMap.set(action.tempId, result.id)
               acc.push({
@@ -202,6 +210,38 @@ export function registerMcpCanvasRoutes(router: Router): void {
             case 'remove_edge':
               canvasEdgeService.remove(action.edgeId)
               acc.push({ action: 'remove_edge', edgeId: action.edgeId, success: true })
+              break
+            case 'add_group': {
+              const result = canvasGroupService.create(params.canvasId, {
+                label: action.label,
+                x: action.x,
+                y: action.y,
+                width: action.width,
+                height: action.height,
+                color: action.color
+              })
+              if (action.groupTempId) groupTempIdMap.set(action.groupTempId, result.id)
+              acc.push({
+                action: 'add_group',
+                tempId: action.groupTempId || undefined,
+                id: result.id
+              })
+              break
+            }
+            case 'update_group':
+              canvasGroupService.update(action.groupId, {
+                label: action.label,
+                x: action.x,
+                y: action.y,
+                width: action.width,
+                height: action.height,
+                color: action.color
+              })
+              acc.push({ action: 'update_group', groupId: action.groupId, success: true })
+              break
+            case 'remove_group':
+              canvasGroupService.remove(action.groupId)
+              acc.push({ action: 'remove_group', groupId: action.groupId, success: true })
               break
           }
         }

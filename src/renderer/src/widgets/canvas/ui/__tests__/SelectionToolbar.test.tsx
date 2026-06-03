@@ -43,27 +43,27 @@ beforeEach(() => {
 
 describe('SelectionToolbar', () => {
   it('totalSelected=0 → null 반환 (미렌더)', () => {
-    const { container } = render(<SelectionToolbar onCopy={vi.fn()} />)
+    const { container } = render(<SelectionToolbar onCopy={vi.fn()} onGroupSelection={vi.fn()} />)
     expect(container.firstChild).toBeNull()
   })
 
   it('선택 1개 → "1개 선택됨" 노출', () => {
     mocks.nodes = [{ id: 'a', selected: true }]
-    render(<SelectionToolbar onCopy={vi.fn()} />)
+    render(<SelectionToolbar onCopy={vi.fn()} onGroupSelection={vi.fn()} />)
     expect(screen.getByText('1개 선택됨')).toBeInTheDocument()
   })
 
   it('선택 노드 있음 → 복사 버튼 노출 + onCopy 호출', () => {
     mocks.nodes = [{ id: 'a', selected: true }]
     const onCopy = vi.fn()
-    render(<SelectionToolbar onCopy={onCopy} />)
+    render(<SelectionToolbar onCopy={onCopy} onGroupSelection={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /복사/ }))
     expect(onCopy).toHaveBeenCalled()
   })
 
   it('엣지만 선택 → 복사 버튼 미노출, 삭제만 노출', () => {
     mocks.edges = [{ id: 'e1', selected: true }]
-    render(<SelectionToolbar onCopy={vi.fn()} />)
+    render(<SelectionToolbar onCopy={vi.fn()} onGroupSelection={vi.fn()} />)
     expect(screen.queryByRole('button', { name: /복사/ })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: /삭제/ })).toBeInTheDocument()
   })
@@ -74,7 +74,7 @@ describe('SelectionToolbar', () => {
       { id: 'b', selected: false }
     ]
     mocks.edges = [{ id: 'e1', selected: true }]
-    render(<SelectionToolbar onCopy={vi.fn()} />)
+    render(<SelectionToolbar onCopy={vi.fn()} onGroupSelection={vi.fn()} />)
     fireEvent.click(screen.getByRole('button', { name: /삭제/ }))
     expect(mocks.deleteElements).toHaveBeenCalledWith({
       nodes: [{ id: 'a', selected: true }],

@@ -3,15 +3,17 @@ import type { NodeChange, EdgeChange } from '@xyflow/react'
 import { applyNodeChanges, applyEdgeChanges } from '@xyflow/react'
 import { createStore, type StoreApi } from 'zustand/vanilla'
 import { useStore } from 'zustand'
-import type { CanvasNode, CanvasEdge } from '@entities/canvas'
+import type { CanvasFlowNode, CanvasEdge } from '@entities/canvas'
 
 // ─── Store Interface ────────────────────────────────────
+// nodes 배열은 일반 노드(text/ref)와 그룹 노드(groupNode)를 함께 담는다.
+// ReactFlow 가 단일 nodes 배열을 요구하므로 그룹도 여기에 합류시킨다.
 
 export interface CanvasFlowState {
-  nodes: CanvasNode[]
+  nodes: CanvasFlowNode[]
   edges: CanvasEdge[]
   hydrated: boolean
-  setNodes: (nodes: CanvasNode[]) => void
+  setNodes: (nodes: CanvasFlowNode[]) => void
   setEdges: (edges: CanvasEdge[]) => void
   applyNodeChanges: (changes: NodeChange[]) => void
   applyEdgeChanges: (changes: EdgeChange[]) => void
@@ -33,7 +35,7 @@ function getOrCreateStore(canvasId: string): StoreApi<CanvasFlowState> {
       setNodes: (nodes) => set({ nodes }),
       setEdges: (edges) => set({ edges }),
       applyNodeChanges: (changes) =>
-        set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) as CanvasNode[] })),
+        set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) as CanvasFlowNode[] })),
       applyEdgeChanges: (changes) =>
         set((s) => ({ edges: applyEdgeChanges(changes, s.edges) as CanvasEdge[] })),
       setHydrated: (hydrated) => set({ hydrated }),
@@ -48,7 +50,7 @@ function getOrCreateStore(canvasId: string): StoreApi<CanvasFlowState> {
 
 export function useCanvasStore(canvasId: string): {
   store: StoreApi<CanvasFlowState>
-  nodes: CanvasNode[]
+  nodes: CanvasFlowNode[]
   edges: CanvasEdge[]
   hydrated: boolean
   hydratedRef: React.MutableRefObject<boolean>

@@ -12,13 +12,17 @@ import type { StoreApi } from 'zustand/vanilla'
 const mocks = vi.hoisted(() => ({
   updateNode: vi.fn(),
   updatePositions: vi.fn(),
-  removeNode: vi.fn()
+  removeNode: vi.fn(),
+  updateGroup: vi.fn(),
+  removeGroup: vi.fn()
 }))
 
 vi.mock('@entities/canvas', () => ({
   useUpdateCanvasNode: () => ({ mutate: mocks.updateNode }),
   useUpdateCanvasNodePositions: () => ({ mutate: mocks.updatePositions }),
-  useRemoveCanvasNode: () => ({ mutate: mocks.removeNode })
+  useRemoveCanvasNode: () => ({ mutate: mocks.removeNode }),
+  useUpdateCanvasGroup: () => ({ mutate: mocks.updateGroup }),
+  useRemoveCanvasGroup: () => ({ mutate: mocks.removeGroup })
 }))
 
 import { useCanvasNodeChanges } from '../use-canvas-node-changes'
@@ -28,7 +32,9 @@ function makeStore(): { store: StoreApi<CanvasFlowState>; applyCalls: NodeChange
   const applyCalls: NodeChange[][] = []
   const store = {
     getState: () => ({
-      applyNodeChanges: (changes: NodeChange[]) => applyCalls.push(changes)
+      nodes: [],
+      applyNodeChanges: (changes: NodeChange[]) => applyCalls.push(changes),
+      setNodes: vi.fn()
     })
   } as unknown as StoreApi<CanvasFlowState>
   return { store, applyCalls }
@@ -38,6 +44,8 @@ beforeEach(() => {
   mocks.updateNode.mockClear()
   mocks.updatePositions.mockClear()
   mocks.removeNode.mockClear()
+  mocks.updateGroup.mockClear()
+  mocks.removeGroup.mockClear()
 })
 
 describe('useCanvasNodeChanges', () => {

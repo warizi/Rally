@@ -2,7 +2,8 @@ import { useRef, useState, useCallback } from 'react'
 import type { MutableRefObject } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import type { UseMutationResult } from '@tanstack/react-query'
-import { toReactFlowNode, toReactFlowEdge } from '@entities/canvas'
+import { toReactFlowNode, toReactFlowGroupNode, toReactFlowEdge } from '@entities/canvas'
+import type { CanvasFlowNode } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
 
 const MAX_HISTORY = 50
@@ -18,6 +19,7 @@ interface NodeSnapshot {
   color: string | null
   content: string | null
   zIndex: number
+  groupId: string | null
 }
 
 interface EdgeSnapshot {
@@ -32,26 +34,56 @@ interface EdgeSnapshot {
   arrow: string
 }
 
+interface GroupSnapshot {
+  id: string
+  label: string | null
+  x: number
+  y: number
+  width: number
+  height: number
+  color: string | null
+}
+
 interface Snapshot {
   nodes: NodeSnapshot[]
   edges: EdgeSnapshot[]
+  groups: GroupSnapshot[]
 }
 
 function captureSnapshot(store: StoreApi<CanvasFlowState>): Snapshot {
   const { nodes, edges } = store.getState()
+  const groups: GroupSnapshot[] = []
+  const nodeSnaps: NodeSnapshot[] = []
+  for (const n of nodes) {
+    if (n.type === 'groupNode') {
+      groups.push({
+        id: n.id,
+        label: n.data.label,
+        x: n.position.x,
+        y: n.position.y,
+        width: n.data.width,
+        height: n.data.height,
+        color: n.data.color
+      })
+    } else {
+      nodeSnaps.push({
+        id: n.id,
+        type: n.data.nodeType,
+        refId: 'refId' in n.data ? (n.data.refId ?? null) : null,
+        x: n.position.x,
+        y: n.position.y,
+        width: n.data.width,
+        height: n.data.height,
+        color: n.data.color,
+        content: n.data.content,
+        zIndex: n.zIndex ?? 0,
+        groupId: 'groupId' in n.data ? (n.data.groupId ?? null) : null
+      })
+    }
+  }
   return {
-    nodes: nodes.map((n) => ({
-      id: n.id,
-      type: n.data.nodeType,
-      refId: 'refId' in n.data ? (n.data.refId ?? null) : null,
-      x: n.position.x,
-      y: n.position.y,
-      width: n.data.width,
-      height: n.data.height,
-      color: n.data.color,
-      content: n.data.content,
-      zIndex: n.zIndex ?? 0
-    })),
+    nodes: nodeSnaps,
+    groups,
     edges: edges.map((e) => ({
       id: e.id,
       fromNode: e.source,
@@ -71,25 +103,39 @@ function restoreSnapshot(
   snapshot: Snapshot,
   canvasId: string
 ): void {
-  store.getState().setNodes(
-    snapshot.nodes.map((n) =>
-      toReactFlowNode({
-        id: n.id,
-        canvasId,
-        type: n.type as 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image',
-        refId: n.refId,
-        x: n.x,
-        y: n.y,
-        width: n.width,
-        height: n.height,
-        color: n.color,
-        content: n.content,
-        zIndex: n.zIndex,
-        createdAt: new Date(),
-        updatedAt: new Date()
-      })
-    )
+  const groupNodes: CanvasFlowNode[] = snapshot.groups.map((g) =>
+    toReactFlowGroupNode({
+      id: g.id,
+      canvasId,
+      label: g.label,
+      x: g.x,
+      y: g.y,
+      width: g.width,
+      height: g.height,
+      color: g.color,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
   )
+  const flowNodes: CanvasFlowNode[] = snapshot.nodes.map((n) =>
+    toReactFlowNode({
+      id: n.id,
+      canvasId,
+      type: n.type as 'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image',
+      refId: n.refId,
+      x: n.x,
+      y: n.y,
+      width: n.width,
+      height: n.height,
+      color: n.color,
+      content: n.content,
+      zIndex: n.zIndex,
+      groupId: n.groupId,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    })
+  )
+  store.getState().setNodes([...groupNodes, ...flowNodes])
   store.getState().setEdges(
     snapshot.edges.map((e) =>
       toReactFlowEdge({
@@ -156,7 +202,7 @@ export function useCanvasHistory(
       try {
         await syncStateMutation.mutateAsync({
           canvasId,
-          data: { nodes: snapshot.nodes, edges: snapshot.edges }
+          data: { nodes: snapshot.nodes, edges: snapshot.edges, groups: snapshot.groups }
         })
       } finally {
         skipHydrationRef.current = false

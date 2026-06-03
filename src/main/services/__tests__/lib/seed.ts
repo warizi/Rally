@@ -96,6 +96,7 @@ interface CanvasNodeOverride {
   zIndex?: number
   color?: string | null
   content?: string | null
+  groupId?: string | null
   createdAt?: Date
   updatedAt?: Date
 }
@@ -255,6 +256,7 @@ export const seed = {
       color: overrides.color ?? null,
       content: overrides.content ?? null,
       zIndex: overrides.zIndex ?? 0,
+      groupId: overrides.groupId ?? null,
       createdAt: overrides.createdAt ?? now(),
       updatedAt: overrides.updatedAt ?? now(),
       deletedAt: null,

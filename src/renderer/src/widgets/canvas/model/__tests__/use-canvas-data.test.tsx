@@ -31,7 +31,9 @@ vi.mock('@entities/canvas', () => ({
   useUpdateCanvasNode: () => ({ mutate: mocks.updateNode }),
   useUpdateCanvasEdge: () => ({ mutate: mocks.updateEdge }),
   useUpdateCanvasViewport: () => ({ mutate: mocks.updateViewport }),
-  useSyncCanvasState: () => mocks.syncStateMutation
+  useSyncCanvasState: () => mocks.syncStateMutation,
+  useCreateCanvasGroup: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useUpdateCanvasNodePositions: () => ({ mutate: vi.fn() })
 }))
 
 vi.mock('@/entities/tab-system', () => ({

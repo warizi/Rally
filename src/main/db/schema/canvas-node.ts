@@ -1,6 +1,7 @@
 import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { isNotNull } from 'drizzle-orm'
 import { canvases } from './canvas'
+import { canvasGroups } from './canvas-group'
 import { trashBatches } from './trash-batch'
 
 export type CanvasNodeType =
@@ -41,6 +42,9 @@ export const canvasNodes = sqliteTable(
     color: text('color'),
     content: text('content'),
     zIndex: integer('z_index').notNull().default(0),
+    groupId: text('group_id').references(() => canvasGroups.id, {
+      onDelete: 'set null'
+    }),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull(),
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' }).notNull(),
     deletedAt: integer('deleted_at', { mode: 'timestamp_ms' }),
@@ -51,6 +55,7 @@ export const canvasNodes = sqliteTable(
   (t) => [
     index('idx_canvas_nodes_canvas').on(t.canvasId),
     index('idx_canvas_nodes_ref').on(t.type, t.refId).where(isNotNull(t.refId)),
+    index('idx_canvas_nodes_group').on(t.groupId).where(isNotNull(t.groupId)),
     index('idx_canvas_nodes_deleted').on(t.deletedAt),
     index('idx_canvas_nodes_trash_batch').on(t.trashBatchId)
   ]

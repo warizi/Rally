@@ -4,6 +4,7 @@ import { assertCanvasUnlockedById } from './canvas'
 import { db } from '../db'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { canvasEdgeRepository } from '../repositories/canvas-edge'
+import { canvasGroupRepository } from '../repositories/canvas-group'
 import { canvasRepository } from '../repositories/canvas'
 import { todoRepository } from '../repositories/todo'
 import { noteRepository } from '../repositories/note'
@@ -26,6 +27,7 @@ export interface CanvasNodeItem {
   color: string | null
   content: string | null
   zIndex: number
+  groupId: string | null
   createdAt: Date
   updatedAt: Date
   refTitle?: string
@@ -42,6 +44,7 @@ export interface CreateCanvasNodeData {
   height?: number
   color?: string
   content?: string
+  groupId?: string | null
 }
 
 export interface UpdateCanvasNodeData {
@@ -50,6 +53,10 @@ export interface UpdateCanvasNodeData {
   width?: number
   height?: number
   zIndex?: number
+  /** 그룹 편입(groupId) / 이탈(null). 좌표 동시 갱신 시 x/y도 함께. */
+  groupId?: string | null
+  x?: number
+  y?: number
 }
 
 interface RefData {
@@ -74,6 +81,7 @@ function toCanvasNodeItem(
     color: row.color,
     content: row.content,
     zIndex: row.zIndex,
+    groupId: row.groupId,
     createdAt: toDate(row.createdAt),
     updatedAt: toDate(row.updatedAt),
     refTitle: refData?.title,
@@ -191,6 +199,7 @@ export const canvasNodeService = {
       color: data.color ?? null,
       content: data.content ?? null,
       zIndex: 0,
+      groupId: data.groupId ?? null,
       createdAt: now,
       updatedAt: now
     })
@@ -207,6 +216,9 @@ export const canvasNodeService = {
       ...(data.width !== undefined ? { width: data.width } : {}),
       ...(data.height !== undefined ? { height: data.height } : {}),
       ...(data.zIndex !== undefined ? { zIndex: data.zIndex } : {}),
+      ...(data.groupId !== undefined ? { groupId: data.groupId } : {}),
+      ...(data.x !== undefined ? { x: data.x } : {}),
+      ...(data.y !== undefined ? { y: data.y } : {}),
       updatedAt: new Date()
     })
     if (!updated) throw new NotFoundError(`Canvas node not found: ${nodeId}`)
@@ -242,6 +254,7 @@ export const canvasNodeService = {
       color: string | null
       content: string | null
       zIndex: number
+      groupId?: string | null
     }[],
     edges: {
       id: string
@@ -253,13 +266,38 @@ export const canvasNodeService = {
       color: string | null
       style: string
       arrow: string
-    }[]
+    }[],
+    groups: {
+      id: string
+      label: string | null
+      x: number
+      y: number
+      width: number
+      height: number
+      color: string | null
+    }[] = []
   ): void {
     assertCanvasUnlockedById(canvasId)
     const now = new Date()
     db.$client.transaction(() => {
       canvasEdgeRepository.deleteByCanvasId(canvasId)
       canvasNodeRepository.deleteByCanvasId(canvasId)
+      canvasGroupRepository.deleteByCanvasId(canvasId)
+      // 그룹을 먼저 생성해야 노드의 group_id FK가 유효
+      canvasGroupRepository.bulkCreate(
+        groups.map((g) => ({
+          id: g.id,
+          canvasId,
+          label: g.label,
+          x: g.x,
+          y: g.y,
+          width: g.width,
+          height: g.height,
+          color: g.color,
+          createdAt: now,
+          updatedAt: now
+        }))
+      )
       canvasNodeRepository.bulkCreate(
         nodes.map((n) => ({
           id: n.id,
@@ -273,6 +311,7 @@ export const canvasNodeService = {
           color: n.color,
           content: n.content,
           zIndex: n.zIndex,
+          groupId: n.groupId ?? null,
           createdAt: now,
           updatedAt: now
         }))

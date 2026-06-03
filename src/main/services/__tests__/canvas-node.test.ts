@@ -60,6 +60,7 @@ const MOCK_NODE_ROW = {
   color: null,
   content: 'hello',
   zIndex: 0,
+  groupId: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   deletedAt: null,

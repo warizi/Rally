@@ -2,7 +2,7 @@ import { memo, useCallback } from 'react'
 import { useStore } from '@xyflow/react'
 import { Paintbrush, X } from 'lucide-react'
 import type { StoreApi } from 'zustand/vanilla'
-import { useUpdateCanvasNode, type CanvasNode } from '@entities/canvas'
+import { useUpdateCanvasNode, useUpdateCanvasGroup, type CanvasFlowNode } from '@entities/canvas'
 import type { CanvasFlowState } from '../model/use-canvas-store'
 
 const PRESET_COLORS = [
@@ -22,36 +22,41 @@ interface NodeColorToolbarProps {
 
 function NodeColorToolbarComponent({ store }: NodeColorToolbarProps): React.JSX.Element | null {
   const { mutate: updateNode } = useUpdateCanvasNode()
+  const { mutate: updateGroup } = useUpdateCanvasGroup()
 
-  const selectedNodes = useStore((s) => s.nodes.filter((n) => n.selected)) as CanvasNode[]
+  // 일반 노드 + 그룹 노드 모두 색상 대상 (그룹은 테두리+배경 동시 적용됨)
+  const selected = useStore((s) => s.nodes.filter((n) => n.selected)) as CanvasFlowNode[]
   const selectedEdgeCount = useStore((s) => s.edges.filter((e) => e.selected).length)
-  const hasSelection = selectedNodes.length > 0 && selectedEdgeCount === 0
+  const hasSelection = selected.length > 0 && selectedEdgeCount === 0
 
-  const currentColor =
-    hasSelection && selectedNodes.length === 1 ? selectedNodes[0].data.color : null
+  const currentColor = hasSelection && selected.length === 1 ? selected[0].data.color : null
 
   const handleColorChange = useCallback(
     (color: string | null) => {
       // Optimistic store update for instant visual feedback
       const storeNodes = store.getState().nodes
-      const selectedIds = new Set(selectedNodes.map((n) => n.id))
+      const selectedIds = new Set(selected.map((n) => n.id))
       store.getState().setNodes(
         storeNodes.map((node) => {
           if (!selectedIds.has(node.id)) return node
-          return { ...node, data: { ...node.data, color } }
-        }) as CanvasNode[]
+          return { ...node, data: { ...node.data, color } } as CanvasFlowNode
+        })
       )
 
-      // Persist to DB
-      for (const node of selectedNodes) {
-        updateNode({
-          nodeId: node.id,
-          data: { color: color ?? '' },
-          canvasId: node.data.canvasId
-        })
+      // Persist to DB — 그룹은 updateGroup, 일반 노드는 updateNode
+      for (const node of selected) {
+        if (node.type === 'groupNode') {
+          updateGroup({ groupId: node.id, data: { color }, canvasId: node.data.canvasId })
+        } else {
+          updateNode({
+            nodeId: node.id,
+            data: { color: color ?? '' },
+            canvasId: node.data.canvasId
+          })
+        }
       }
     },
-    [selectedNodes, updateNode, store]
+    [selected, updateNode, updateGroup, store]
   )
 
   if (!hasSelection) return null

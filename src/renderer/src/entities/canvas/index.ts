@@ -2,6 +2,7 @@ export type {
   CanvasItem,
   CanvasNodeItem,
   CanvasEdgeItem,
+  CanvasGroupItem,
   CanvasNodeType,
   CanvasEdgeSide,
   CanvasEdgeStyle,
@@ -10,18 +11,24 @@ export type {
   UpdateCanvasNodeData,
   CreateCanvasEdgeData,
   UpdateCanvasEdgeData,
+  CreateCanvasGroupData,
+  UpdateCanvasGroupData,
   TextNode,
   RefNode,
+  GroupNode,
   CanvasNode,
+  CanvasFlowNode,
   CanvasEdge,
   CanvasEdgeData,
-  RefNodeData
+  RefNodeData,
+  GroupNodeData
 } from './model/types'
 export {
   useCanvasesByWorkspace,
   useCanvasById,
   useCanvasNodes,
   useCanvasEdges,
+  useCanvasGroups,
   useCreateCanvas,
   useUpdateCanvas,
   useUpdateCanvasViewport,
@@ -34,13 +41,18 @@ export {
   useCreateCanvasEdge,
   useUpdateCanvasEdge,
   useRemoveCanvasEdge,
-  useSyncCanvasState
+  useSyncCanvasState,
+  useCreateCanvasGroup,
+  useUpdateCanvasGroup,
+  useRemoveCanvasGroup
 } from './api/queries'
 export {
   toReactFlowNode,
+  toReactFlowGroupNode,
   toReactFlowEdge,
   toPositionUpdate,
   toCreateCanvasEdgeData,
-  parseSide
+  parseSide,
+  GROUP_Z_INDEX
 } from './model/converters'
 export { useCanvasWatcher } from './model/use-canvas-watcher'

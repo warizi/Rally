@@ -197,6 +197,7 @@ export const CanvasNodeImport = z
     color: z.string().nullable(),
     content: z.string().nullable(),
     zIndex: z.number(),
+    groupId: z.string().nullable().optional(),
     createdAt: Ts,
     updatedAt: Ts
   })
