@@ -16,15 +16,19 @@ import type {
   CanvasItem,
   CanvasNodeItem,
   CanvasEdgeItem,
+  CanvasGroupItem,
   CreateCanvasNodeData,
   UpdateCanvasNodeData,
   CreateCanvasEdgeData,
-  UpdateCanvasEdgeData
+  UpdateCanvasEdgeData,
+  CreateCanvasGroupData,
+  UpdateCanvasGroupData
 } from '../model/types'
 
 const CANVAS_KEY = 'canvas'
 const CANVAS_NODE_KEY = 'canvasNode'
 const CANVAS_EDGE_KEY = 'canvasEdge'
+const CANVAS_GROUP_KEY = 'canvasGroup'
 const HISTORY_KEY = 'history'
 
 // ─── Canvas Queries ──────────────────────────────────────
@@ -86,6 +90,78 @@ export function useCanvasEdges(canvasId: string | undefined): UseQueryResult<Can
       return res.data ?? []
     },
     enabled: !!canvasId
+  })
+}
+
+// ─── Canvas Group Queries ────────────────────────────────
+
+export function useCanvasGroups(canvasId: string | undefined): UseQueryResult<CanvasGroupItem[]> {
+  return useQuery({
+    queryKey: [CANVAS_GROUP_KEY, 'canvas', canvasId],
+    queryFn: async (): Promise<CanvasGroupItem[]> => {
+      const res: IpcResponse<CanvasGroupItem[]> =
+        await window.api.canvasGroup.findByCanvas(canvasId!)
+      if (!res.success) throwIpcError(res)
+      return res.data ?? []
+    },
+    enabled: !!canvasId
+  })
+}
+
+// ─── Canvas Group Mutations ──────────────────────────────
+
+export function useCreateCanvasGroup(): UseMutationResult<
+  CanvasGroupItem,
+  Error,
+  { canvasId: string; data: CreateCanvasGroupData }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ canvasId, data }) => {
+      const res = await window.api.canvasGroup.create(canvasId, data)
+      if (!res.success) throwIpcError(res)
+      return res.data!
+    },
+    onSuccess: (_, { canvasId }) => {
+      queryClient.invalidateQueries({ queryKey: [CANVAS_GROUP_KEY, 'canvas', canvasId] })
+    }
+  })
+}
+
+export function useUpdateCanvasGroup(): UseMutationResult<
+  CanvasGroupItem,
+  Error,
+  { groupId: string; data: UpdateCanvasGroupData; canvasId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ groupId, data }) => {
+      const res = await window.api.canvasGroup.update(groupId, data)
+      if (!res.success) throwIpcError(res)
+      return res.data!
+    },
+    onSuccess: (_, { canvasId }) => {
+      queryClient.invalidateQueries({ queryKey: [CANVAS_GROUP_KEY, 'canvas', canvasId] })
+    }
+  })
+}
+
+export function useRemoveCanvasGroup(): UseMutationResult<
+  void,
+  Error,
+  { groupId: string; canvasId: string }
+> {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ groupId }) => {
+      const res = await window.api.canvasGroup.remove(groupId)
+      if (!res.success) throwIpcError(res)
+    },
+    onSuccess: (_, { canvasId }) => {
+      queryClient.invalidateQueries({ queryKey: [CANVAS_GROUP_KEY, 'canvas', canvasId] })
+      // 멤버 노드의 groupId 가 풀리므로 노드 목록도 갱신
+      queryClient.invalidateQueries({ queryKey: [CANVAS_NODE_KEY, 'canvas', canvasId] })
+    }
   })
 }
 

@@ -36185,12 +36185,15 @@ Actions (mutually exclusive groups):
 - create: { action:'create', title, description?, nodes?[], edges?[] }  \u2014 single action; canvasId is omitted; response includes new canvasId
 - delete: { action:'delete' }                                            \u2014 single action with canvasId
 - update: { action:'update', title?, description? }                      \u2014 meta update; needs canvasId
-- add_node: { action:'add_node', tempId?, type, x, y, width?, height?, content?, refId?, color? }
+- add_node: { action:'add_node', tempId?, type, x, y, width?, height?, content?, refId?, color?, groupId? }
 - remove_node: { action:'remove_node', nodeId }
 - add_edge: { action:'add_edge', fromNode, toNode, fromSide?, toSide?, label?, color?, style?, arrow? }
 - remove_edge: { action:'remove_edge', edgeId }
+- add_group: { action:'add_group', groupTempId?, label?, x, y, width, height, color? }   \u2014 a group node (dashed container rendered behind nodes/edges); nodes join it via add_node.groupId
+- update_group: { action:'update_group', groupId, label?, x?, y?, width?, height?, color? }
+- remove_group: { action:'remove_group', groupId }                                        \u2014 deletes the group only; member nodes are kept (their groupId is cleared)
 
-For non-create / non-delete actions: provide canvasId. add_node / remove_node / add_edge / remove_edge can be mixed in one call. add_edge can reference add_node's tempId.`,
+For non-create / non-delete actions: provide canvasId. add_node / remove_node / add_edge / remove_edge / add_group / update_group / remove_group can be mixed in one call. add_edge can reference add_node's tempId; add_node.groupId can reference add_group's groupTempId.`,
     schema: {
       canvasId: external_exports3.string().optional().describe("Canvas id \u2014 required for all actions except a single create."),
       actions: external_exports3.array(
@@ -36240,7 +36243,8 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
             height: external_exports3.number().optional(),
             content: external_exports3.string().optional(),
             refId: external_exports3.string().optional(),
-            color: external_exports3.string().optional()
+            color: external_exports3.string().optional(),
+            groupId: external_exports3.string().optional()
           }),
           external_exports3.object({ action: external_exports3.literal("remove_node"), nodeId: external_exports3.string() }),
           external_exports3.object({
@@ -36254,7 +36258,28 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
             style: EDGE_STYLE.optional(),
             arrow: EDGE_ARROW.optional()
           }),
-          external_exports3.object({ action: external_exports3.literal("remove_edge"), edgeId: external_exports3.string() })
+          external_exports3.object({ action: external_exports3.literal("remove_edge"), edgeId: external_exports3.string() }),
+          external_exports3.object({
+            action: external_exports3.literal("add_group"),
+            groupTempId: external_exports3.string().optional(),
+            label: external_exports3.string().optional(),
+            x: external_exports3.number(),
+            y: external_exports3.number(),
+            width: external_exports3.number(),
+            height: external_exports3.number(),
+            color: external_exports3.string().optional()
+          }),
+          external_exports3.object({
+            action: external_exports3.literal("update_group"),
+            groupId: external_exports3.string(),
+            label: external_exports3.string().nullable().optional(),
+            x: external_exports3.number().optional(),
+            y: external_exports3.number().optional(),
+            width: external_exports3.number().optional(),
+            height: external_exports3.number().optional(),
+            color: external_exports3.string().nullable().optional()
+          }),
+          external_exports3.object({ action: external_exports3.literal("remove_group"), groupId: external_exports3.string() })
         ])
       ).min(1).describe("Array of canvas actions")
     },

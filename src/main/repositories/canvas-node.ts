@@ -56,6 +56,9 @@ export const canvasNodeRepository = {
         | 'width'
         | 'height'
         | 'zIndex'
+        | 'groupId'
+        | 'x'
+        | 'y'
         | 'updatedAt'
         | 'deletedAt'
         | 'trashBatchId'
@@ -63,6 +66,18 @@ export const canvasNodeRepository = {
     >
   ): CanvasNode | undefined {
     return db.update(canvasNodes).set(data).where(eq(canvasNodes.id, id)).returning().get()
+  },
+
+  /**
+   * 그룹 삭제 시 멤버 노드의 groupId 해제.
+   * 마이그레이션이 ALTER TABLE 로 추가한 FK는 ON DELETE SET NULL 액션을 보장하지
+   * 못하므로(SQLite 제약) 서비스 레벨에서 명시적으로 끊는다.
+   */
+  clearGroupId(groupId: string): void {
+    db.update(canvasNodes)
+      .set({ groupId: null, updatedAt: new Date() })
+      .where(eq(canvasNodes.groupId, groupId))
+      .run()
   },
 
   bulkUpdatePositions(updates: { id: string; x: number; y: number }[]): void {

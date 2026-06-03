@@ -11,6 +11,7 @@ import { CanvasToolbar } from '../CanvasToolbar'
 const base = {
   onAddText: vi.fn(),
   onAddEntity: vi.fn(),
+  onAddGroup: vi.fn(),
   minimap: false,
   onToggleMinimap: vi.fn(),
   onUndo: vi.fn(),
@@ -51,14 +52,14 @@ describe('CanvasToolbar', () => {
   it('canUndo=false → Undo 버튼 disabled', () => {
     const { container } = render(<CanvasToolbar {...base} canUndo={false} />)
     const btns = container.querySelectorAll('button')
-    // Undo는 4번째 버튼 (텍스트, 요소, Undo, Redo, 미리보기)
-    expect(btns[2]).toBeDisabled()
+    // 순서: 텍스트, 요소, 그룹, Undo, Redo, 미리보기 → Undo는 4번째(index 3)
+    expect(btns[3]).toBeDisabled()
   })
 
   it('canRedo=false → Redo 버튼 disabled', () => {
     const { container } = render(<CanvasToolbar {...base} canRedo={false} />)
     const btns = container.querySelectorAll('button')
-    expect(btns[3]).toBeDisabled()
+    expect(btns[4]).toBeDisabled()
   })
 
   it('minimap=true → 미리보기 버튼 활성 스타일 (bg-accent)', () => {

@@ -37,6 +37,10 @@ export function CanvasBoard({ canvasId, tabId }: CanvasBoardProps): React.JSX.El
         saveViewport={canvasData.saveViewport}
         addTextNode={canvasData.addTextNode}
         addRefNode={canvasData.addRefNode}
+        addGroup={canvasData.addGroup}
+        groupSelectedNodes={canvasData.groupSelectedNodes}
+        setNodeGroup={canvasData.setNodeGroup}
+        persistNodePositions={canvasData.persistNodePositions}
         canvasId={canvasId}
         createNodeAsync={canvasData.createNodeAsync}
         createEdgeAsync={canvasData.createEdgeAsync}

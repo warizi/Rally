@@ -1,0 +1,2 @@
+ALTER TABLE `canvas_nodes` ADD `group_id` text REFERENCES canvas_groups(id);--> statement-breakpoint
+CREATE INDEX `idx_canvas_nodes_group` ON `canvas_nodes` (`group_id`) WHERE "canvas_nodes"."group_id" is not null;

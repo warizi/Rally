@@ -232,6 +232,13 @@
       "when": 1780500002000,
       "tag": "0032_supreme_virginia_dare",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "6",
+      "when": 1780500003000,
+      "tag": "0033_nifty_supernaut",
+      "breakpoints": true
     }
   ]
 }

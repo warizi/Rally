@@ -361,7 +361,24 @@ export const backupDeserializer = {
           }))
         )
 
-        // 10. canvas_nodes
+        // 10. canvas_groups — 노드(group_id FK)보다 먼저 등록/삽입해야 함
+        batchInsert(
+          canvasGroups,
+          canvasGroupsJson.map((g) => ({
+            id: mapper.register('canvas-group', g.id),
+            canvasId: mapper.map('canvas', g.canvasId),
+            label: g.label,
+            color: g.color,
+            x: g.x,
+            y: g.y,
+            width: g.width,
+            height: g.height,
+            createdAt: toDate(g.createdAt),
+            updatedAt: toDate(g.updatedAt)
+          }))
+        )
+
+        // 11. canvas_nodes
         batchInsert(
           canvasNodes,
           canvasNodesJson.map((n) => ({
@@ -376,12 +393,14 @@ export const backupDeserializer = {
             color: n.color,
             content: n.content,
             zIndex: n.zIndex,
+            // 그룹이 백업에 없으면(고아 참조) null 로 강등 — import 전체 실패 방지
+            groupId: n.groupId ? mapper.mapOrSkip('canvas-group', n.groupId) : null,
             createdAt: toDate(n.createdAt),
             updatedAt: toDate(n.updatedAt)
           }))
         )
 
-        // 11. canvas_edges
+        // 12. canvas_edges
         batchInsert(
           canvasEdges,
           canvasEdgesJson.map((e) => ({
@@ -396,23 +415,6 @@ export const backupDeserializer = {
             style: e.style,
             arrow: e.arrow,
             createdAt: toDate(e.createdAt)
-          }))
-        )
-
-        // 12. canvas_groups
-        batchInsert(
-          canvasGroups,
-          canvasGroupsJson.map((g) => ({
-            id: mapper.register('canvas-group', g.id),
-            canvasId: mapper.map('canvas', g.canvasId),
-            label: g.label,
-            color: g.color,
-            x: g.x,
-            y: g.y,
-            width: g.width,
-            height: g.height,
-            createdAt: toDate(g.createdAt),
-            updatedAt: toDate(g.updatedAt)
           }))
         )
 

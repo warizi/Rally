@@ -77,6 +77,10 @@ export const canvasGroupRepository = {
     db.delete(canvasGroups).where(eq(canvasGroups.id, id)).run()
   },
 
+  deleteByCanvasId(canvasId: string): void {
+    db.delete(canvasGroups).where(eq(canvasGroups.canvasId, canvasId)).run()
+  },
+
   bulkCreate(items: CanvasGroupInsert[]): void {
     if (items.length === 0) return
     db.insert(canvasGroups).values(items).run()

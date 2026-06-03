@@ -8,6 +8,7 @@ import { templateApi } from './template'
 import { canvasApi } from './canvas'
 import { canvasNodeApi } from './canvas-node'
 import { canvasEdgeApi } from './canvas-edge'
+import { canvasGroupApi } from './canvas-group'
 import { todoApi } from './todo'
 import { recurringRuleApi } from './recurring-rule'
 import { recurringCompletionApi } from './recurring-completion'
@@ -43,6 +44,7 @@ export const api = {
   canvas: canvasApi,
   canvasNode: canvasNodeApi,
   canvasEdge: canvasEdgeApi,
+  canvasGroup: canvasGroupApi,
   todo: todoApi,
   recurringRule: recurringRuleApi,
   recurringCompletion: recurringCompletionApi,

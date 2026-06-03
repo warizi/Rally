@@ -10,6 +10,7 @@ import {
 } from '@xyflow/react'
 import { TextNode } from './TextNode'
 import { RefNode } from './RefNode'
+import { GroupNode } from './GroupNode'
 import { CustomEdge } from './CustomEdge'
 import { CanvasToolbar } from './CanvasToolbar'
 import { EntityPickerDialog } from './EntityPickerDialog'
@@ -18,23 +19,24 @@ import { NodeColorToolbar } from './NodeColorToolbar'
 import { EdgeEditToolbar } from './EdgeEditToolbar'
 import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 import { findNonOverlappingPosition } from '../model/canvas-layout'
+import { findGroupForNode } from '../model/canvas-layout'
 import { useCanvasClipboard } from '../model/use-canvas-clipboard'
-import type { CanvasNodeType, CanvasNode, CanvasEdge } from '@entities/canvas'
+import type { CanvasNodeType, CanvasFlowNode, CanvasEdge } from '@entities/canvas'
 import type {
   CanvasNodeItem,
   CanvasEdgeItem,
   CreateCanvasNodeData,
   CreateCanvasEdgeData
 } from '@entities/canvas'
-import type { OnNodesChange, OnEdgesChange, OnConnect, NodeChange } from '@xyflow/react'
+import type { OnNodesChange, OnEdgesChange, OnConnect, NodeChange, OnNodeDrag } from '@xyflow/react'
 import type { StoreApi } from 'zustand/vanilla'
 import type { CanvasFlowState } from '../model/use-canvas-store'
 
-const NODE_TYPES = { textNode: TextNode, refNode: RefNode }
+const NODE_TYPES = { textNode: TextNode, refNode: RefNode, groupNode: GroupNode }
 const EDGE_TYPES = { customEdge: CustomEdge }
 
 interface CanvasBoardInnerProps {
-  nodes: CanvasNode[]
+  nodes: CanvasFlowNode[]
   edges: CanvasEdge[]
   defaultViewport: { x: number; y: number; zoom: number }
   onNodesChange: OnNodesChange
@@ -43,6 +45,10 @@ interface CanvasBoardInnerProps {
   saveViewport: (viewport: { x: number; y: number; zoom: number }) => void
   addTextNode: (x: number, y: number) => void
   addRefNode: (type: CanvasNodeType, refId: string, x: number, y: number) => void
+  addGroup: (x: number, y: number, width?: number, height?: number) => void
+  groupSelectedNodes: () => void
+  setNodeGroup: (nodeId: string, groupId: string | null) => void
+  persistNodePositions: (updates: { id: string; x: number; y: number }[]) => void
   canvasId: string
   createNodeAsync: (args: {
     canvasId: string
@@ -70,6 +76,10 @@ export function CanvasBoardInner({
   saveViewport,
   addTextNode,
   addRefNode,
+  addGroup,
+  groupSelectedNodes,
+  setNodeGroup,
+  persistNodePositions,
   canvasId,
   createNodeAsync,
   createEdgeAsync,
@@ -86,6 +96,13 @@ export function CanvasBoardInner({
   const [showMinimap, setShowMinimap] = useState(true)
   const { copy, paste, hasClipboard } = useCanvasClipboard()
   const pendingSelectionRef = useRef<string[] | null>(null)
+  // 그룹 드래그 시작 시점 스냅샷 (그룹/멤버 시작 위치) — 멤버 동반 이동용
+  const groupDragRef = useRef<{
+    groupId: string
+    startX: number
+    startY: number
+    members: { id: string; x: number; y: number }[]
+  } | null>(null)
 
   const nodeTypes = useMemo(() => NODE_TYPES, [])
   const edgeTypes = useMemo(() => EDGE_TYPES, [])
@@ -130,6 +147,88 @@ export function CanvasBoardInner({
     addTextNode(x, y)
   }, [getViewportCenter, nodes, addTextNode])
 
+  const handleAddGroup = useCallback(() => {
+    const center = getViewportCenter()
+    addGroup(center.x - 160, center.y - 120)
+  }, [getViewportCenter, addGroup])
+
+  // 그룹 드래그 시작 — 그룹/멤버 시작 위치 스냅샷
+  const handleNodeDragStart: OnNodeDrag = useCallback(
+    (_event, node) => {
+      if (node.type !== 'groupNode') {
+        groupDragRef.current = null
+        return
+      }
+      const all = store.getState().nodes
+      const members = all.filter(
+        (n) => n.type !== 'groupNode' && 'groupId' in n.data && n.data.groupId === node.id
+      )
+      groupDragRef.current = {
+        groupId: node.id,
+        startX: node.position.x,
+        startY: node.position.y,
+        members: members.map((m) => ({ id: m.id, x: m.position.x, y: m.position.y }))
+      }
+    },
+    [store]
+  )
+
+  // 그룹 드래그 중 — 멤버 노드 실시간 동반 이동 (시작 위치 + delta)
+  const handleNodeDrag: OnNodeDrag = useCallback(
+    (_event, node) => {
+      const snap = groupDragRef.current
+      if (!snap || node.id !== snap.groupId || snap.members.length === 0) return
+      const dx = node.position.x - snap.startX
+      const dy = node.position.y - snap.startY
+      const nextPos = new Map(snap.members.map((m) => [m.id, { x: m.x + dx, y: m.y + dy }]))
+      store
+        .getState()
+        .setNodes(
+          store
+            .getState()
+            .nodes.map((n) => (nextPos.has(n.id) ? { ...n, position: nextPos.get(n.id)! } : n))
+        )
+    },
+    [store]
+  )
+
+  // 노드/그룹 드래그 종료
+  const handleNodeDragStop: OnNodeDrag = useCallback(
+    (_event, node, draggedNodes) => {
+      // 그룹 드래그 종료 → 멤버 최종 위치 영속화
+      if (node.type === 'groupNode') {
+        const snap = groupDragRef.current
+        groupDragRef.current = null
+        if (snap && snap.groupId === node.id && snap.members.length > 0) {
+          const dx = node.position.x - snap.startX
+          const dy = node.position.y - snap.startY
+          persistNodePositions(snap.members.map((m) => ({ id: m.id, x: m.x + dx, y: m.y + dy })))
+        }
+        return
+      }
+      // 일반 노드 드래그 종료 → 드래그된 모든 노드의 그룹 편입/이탈 판정
+      // (Shift 다중선택 드래그 시 draggedNodes 에 전부 들어옴; 단일 드래그면 [node])
+      const all = store.getState().nodes
+      const targets = (draggedNodes?.length ? draggedNodes : [node]).filter(
+        (n) => n.type !== 'groupNode'
+      )
+      for (const dn of targets) {
+        const sn = all.find((n) => n.id === dn.id)
+        if (!sn || sn.type === 'groupNode') continue
+        const center = {
+          x: sn.position.x + sn.data.width / 2,
+          y: sn.position.y + sn.data.height / 2
+        }
+        const targetGroupId = findGroupForNode(all, center)
+        const currentGroupId = 'groupId' in sn.data ? (sn.data.groupId ?? null) : null
+        if (targetGroupId !== currentGroupId) {
+          setNodeGroup(dn.id, targetGroupId)
+        }
+      }
+    },
+    [store, setNodeGroup, persistNodePositions]
+  )
+
   const handleEntitySelect = useCallback(
     (type: CanvasNodeType, refId: string) => {
       const center = getViewportCenter()
@@ -145,7 +244,7 @@ export function CanvasBoardInner({
   // ─── Clipboard ────────────────────────────────────────
 
   const handleCopy = useCallback(() => {
-    const allNodes = reactFlow.getNodes() as CanvasNode[]
+    const allNodes = reactFlow.getNodes() as CanvasFlowNode[]
     const allEdges = reactFlow.getEdges() as CanvasEdge[]
     copy(allNodes, allEdges)
   }, [reactFlow, copy])
@@ -184,7 +283,7 @@ export function CanvasBoardInner({
       }
 
       if ((e.metaKey || e.ctrlKey) && e.key === 'c') {
-        const allNodes = reactFlow.getNodes() as CanvasNode[]
+        const allNodes = reactFlow.getNodes() as CanvasFlowNode[]
         const hasSelected = allNodes.some((n) => n.selected)
         if (!hasSelected) return
         const allEdges = reactFlow.getEdges() as CanvasEdge[]
@@ -218,6 +317,7 @@ export function CanvasBoardInner({
       <CanvasToolbar
         onAddText={handleAddText}
         onAddEntity={() => setEntityPickerOpen(true)}
+        onAddGroup={handleAddGroup}
         minimap={showMinimap}
         onToggleMinimap={() => setShowMinimap((v) => !v)}
         onUndo={undo}
@@ -231,6 +331,9 @@ export function CanvasBoardInner({
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
+        onNodeDragStart={handleNodeDragStart}
+        onNodeDrag={handleNodeDrag}
+        onNodeDragStop={handleNodeDragStop}
         onMoveEnd={handleMoveEnd}
         onDoubleClick={handleDoubleClick}
         nodeTypes={nodeTypes}
@@ -258,7 +361,7 @@ export function CanvasBoardInner({
         {showMinimap && <MiniMap zoomable pannable className="!bg-background !border-border" />}
       </ReactFlow>
       <NodeColorToolbar store={store} />
-      <SelectionToolbar onCopy={handleCopy} />
+      <SelectionToolbar onCopy={handleCopy} onGroupSelection={groupSelectedNodes} />
       <EdgeEditToolbar canvasId={canvasId} store={store} />
       <EntityPickerDialog
         open={entityPickerOpen}

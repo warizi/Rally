@@ -58,11 +58,20 @@ describe('canvas-node IPC handlers', () => {
     expect(canvasNodeService.updatePositions).toHaveBeenCalledWith(updates)
   })
 
-  it('canvasNode:syncState → nodes/edges 분해 후 service 호출', () => {
+  it('canvasNode:syncState → nodes/edges/groups 분해 후 service 호출', () => {
     const nodes = [{ id: 'n1' }]
     const edges = [{ id: 'e1' }]
     getHandler('canvasNode:syncState')({}, 'canv-aabbcc', { nodes, edges })
-    expect(canvasNodeService.syncState).toHaveBeenCalledWith('canv-aabbcc', nodes, edges)
+    // groups 미지정 시 빈 배열로 전달
+    expect(canvasNodeService.syncState).toHaveBeenCalledWith('canv-aabbcc', nodes, edges, [])
+  })
+
+  it('canvasNode:syncState → groups 지정 시 그대로 전달', () => {
+    const nodes = [{ id: 'n1' }]
+    const edges = [{ id: 'e1' }]
+    const groups = [{ id: 'g1' }]
+    getHandler('canvasNode:syncState')({}, 'canv-aabbcc', { nodes, edges, groups })
+    expect(canvasNodeService.syncState).toHaveBeenCalledWith('canv-aabbcc', nodes, edges, groups)
   })
 
   it('canvasNode:remove → nodeId 전달', () => {

@@ -502,11 +502,25 @@ interface CanvasNodeItem {
   color: string | null
   content: string | null
   zIndex: number
+  groupId: string | null
   createdAt: Date
   updatedAt: Date
   refTitle?: string
   refPreview?: string
   refMeta?: Record<string, unknown>
+}
+
+interface CanvasGroupItem {
+  id: string
+  canvasId: string
+  label: string | null
+  x: number
+  y: number
+  width: number
+  height: number
+  color: string | null
+  createdAt: Date
+  updatedAt: Date
 }
 
 interface CanvasEdgeItem {
@@ -532,6 +546,7 @@ interface CreateCanvasNodeData {
   height?: number
   color?: string
   content?: string
+  groupId?: string | null
 }
 
 interface UpdateCanvasNodeData {
@@ -540,6 +555,27 @@ interface UpdateCanvasNodeData {
   width?: number
   height?: number
   zIndex?: number
+  groupId?: string | null
+  x?: number
+  y?: number
+}
+
+interface CreateCanvasGroupData {
+  label?: string
+  x: number
+  y: number
+  width: number
+  height: number
+  color?: string
+}
+
+interface UpdateCanvasGroupData {
+  label?: string | null
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  color?: string | null
 }
 
 interface CreateCanvasEdgeData {
@@ -599,6 +635,7 @@ interface SyncCanvasStateData {
     color: string | null
     content: string | null
     zIndex: number
+    groupId?: string | null
   }[]
   edges: {
     id: string
@@ -610,6 +647,15 @@ interface SyncCanvasStateData {
     color: string | null
     style: string
     arrow: string
+  }[]
+  groups?: {
+    id: string
+    label: string | null
+    x: number
+    y: number
+    width: number
+    height: number
+    color: string | null
   }[]
 }
 
@@ -627,6 +673,13 @@ interface CanvasEdgeAPI {
   create: (canvasId: string, data: CreateCanvasEdgeData) => Promise<IpcResponse<CanvasEdgeItem>>
   update: (edgeId: string, data: UpdateCanvasEdgeData) => Promise<IpcResponse<CanvasEdgeItem>>
   remove: (edgeId: string) => Promise<IpcResponse<void>>
+}
+
+interface CanvasGroupAPI {
+  findByCanvas: (canvasId: string) => Promise<IpcResponse<CanvasGroupItem[]>>
+  create: (canvasId: string, data: CreateCanvasGroupData) => Promise<IpcResponse<CanvasGroupItem>>
+  update: (groupId: string, data: UpdateCanvasGroupData) => Promise<IpcResponse<CanvasGroupItem>>
+  remove: (groupId: string) => Promise<IpcResponse<void>>
 }
 
 interface ScheduleAPI {
@@ -1158,6 +1211,7 @@ interface API {
   canvas: CanvasAPI
   canvasNode: CanvasNodeAPI
   canvasEdge: CanvasEdgeAPI
+  canvasGroup: CanvasGroupAPI
   reminder: ReminderAPI
   tag: TagAPI
   itemTag: ItemTagAPI

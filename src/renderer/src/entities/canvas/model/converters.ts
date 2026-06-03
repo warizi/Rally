@@ -1,5 +1,15 @@
 import type { Node } from '@xyflow/react'
-import type { CanvasNodeItem, CanvasEdgeItem, CanvasNode, CanvasEdge } from './types'
+import type {
+  CanvasNodeItem,
+  CanvasGroupItem,
+  CanvasEdgeItem,
+  CanvasNode,
+  GroupNode,
+  CanvasEdge
+} from './types'
+
+/** 그룹 노드는 일반 노드·엣지보다 항상 뒤(아래)에 렌더되도록 음수 zIndex 고정 */
+export const GROUP_Z_INDEX = -1
 
 export function toReactFlowNode(item: CanvasNodeItem): CanvasNode {
   if (item.type === 'text') {
@@ -14,7 +24,8 @@ export function toReactFlowNode(item: CanvasNodeItem): CanvasNode {
         nodeType: 'text' as const,
         color: item.color,
         width: item.width,
-        height: item.height
+        height: item.height,
+        groupId: item.groupId
       },
       style: { width: item.width, height: item.height },
       zIndex: item.zIndex
@@ -36,10 +47,33 @@ export function toReactFlowNode(item: CanvasNodeItem): CanvasNode {
       color: item.color,
       width: item.width,
       height: item.height,
-      refMeta: item.refMeta
+      refMeta: item.refMeta,
+      groupId: item.groupId
     },
     style: { width: item.width, height: item.height },
     zIndex: item.zIndex
+  }
+}
+
+export function toReactFlowGroupNode(item: CanvasGroupItem): GroupNode {
+  return {
+    id: item.id,
+    type: 'groupNode' as const,
+    position: { x: item.x, y: item.y },
+    data: {
+      canvasId: item.canvasId,
+      nodeType: 'group' as const,
+      label: item.label,
+      color: item.color,
+      width: item.width,
+      height: item.height
+    },
+    style: { width: item.width, height: item.height },
+    // 항상 뒤로 — 일반 노드·엣지보다 아래 레이어
+    zIndex: GROUP_Z_INDEX,
+    // 그룹 박스는 selectable 하되 드래그로 자식과 함께 이동(인터랙션 레이어에서 처리)
+    selectable: true,
+    draggable: true
   }
 }
 

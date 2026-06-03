@@ -7,6 +7,7 @@ import type {
 } from '../../../services/canvas-edge'
 import type { canvasNodeService } from '../../../services/canvas-node'
 import type { canvasEdgeService } from '../../../services/canvas-edge'
+import type { canvasGroupService } from '../../../services/canvas-group'
 import type { noteService } from '../../../services/note'
 
 // ─── Items ──────────────────────────────────────────────────
@@ -127,6 +128,7 @@ export interface ReadCanvasResponse {
   canvas: CanvasInfo
   nodes: ReturnType<typeof canvasNodeService.findByCanvas>
   edges: ReturnType<typeof canvasEdgeService.findByCanvas>
+  groups: ReturnType<typeof canvasGroupService.findByCanvas>
 }
 
 export interface CreatedNodeInfo {
@@ -175,6 +177,7 @@ export interface EditCanvasResult {
   id?: string
   nodeId?: string
   edgeId?: string
+  groupId?: string
 }
 
 export interface UpdateCanvasAction {
@@ -198,6 +201,8 @@ export interface AddNodeAction {
   content?: string
   refId?: string
   color?: string
+  /** 그룹 편입 — group tempId(add_group의 groupTempId) 또는 실제 group id */
+  groupId?: string
 }
 
 export interface RemoveNodeAction {
@@ -222,6 +227,34 @@ export interface RemoveEdgeAction {
   edgeId: string
 }
 
+export interface AddGroupAction {
+  action: 'add_group'
+  /** add_node.groupId 가 참조할 임시 id */
+  groupTempId?: string
+  label?: string
+  x: number
+  y: number
+  width: number
+  height: number
+  color?: string
+}
+
+export interface UpdateGroupAction {
+  action: 'update_group'
+  groupId: string
+  label?: string | null
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  color?: string | null
+}
+
+export interface RemoveGroupAction {
+  action: 'remove_group'
+  groupId: string
+}
+
 export type EditCanvasAction =
   | UpdateCanvasAction
   | DeleteCanvasAction
@@ -229,6 +262,9 @@ export type EditCanvasAction =
   | RemoveNodeAction
   | AddEdgeAction
   | RemoveEdgeAction
+  | AddGroupAction
+  | UpdateGroupAction
+  | RemoveGroupAction
 
 // ─── Todos ──────────────────────────────────────────────────
 

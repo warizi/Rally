@@ -16,7 +16,8 @@ const mocks = vi.hoisted(() => ({
   nodes: [] as FakeNode[],
   edges: [] as Array<{ selected: boolean }>,
   setNodes: vi.fn(),
-  mutate: vi.fn()
+  mutate: vi.fn(),
+  mutateGroup: vi.fn()
 }))
 
 vi.mock('@xyflow/react', () => ({
@@ -25,7 +26,8 @@ vi.mock('@xyflow/react', () => ({
 }))
 
 vi.mock('@entities/canvas', () => ({
-  useUpdateCanvasNode: () => ({ mutate: mocks.mutate })
+  useUpdateCanvasNode: () => ({ mutate: mocks.mutate }),
+  useUpdateCanvasGroup: () => ({ mutate: mocks.mutateGroup })
 }))
 
 import { NodeColorToolbar } from '../NodeColorToolbar'
@@ -39,6 +41,7 @@ beforeEach(() => {
   mocks.edges = []
   mocks.setNodes.mockReset()
   mocks.mutate.mockReset()
+  mocks.mutateGroup.mockReset()
 })
 
 describe('NodeColorToolbar', () => {
@@ -69,6 +72,18 @@ describe('NodeColorToolbar', () => {
     expect(mocks.mutate).toHaveBeenCalledWith(
       expect.objectContaining({ nodeId: 'a', data: { color: '#ef4444' } })
     )
+  })
+
+  it('그룹 선택 + 색상 클릭 → updateGroup(color) 호출 (테두리+배경 동시)', () => {
+    mocks.nodes = [
+      { id: 'g1', selected: true, type: 'groupNode', data: { color: null, canvasId: 'c1' } } as never
+    ]
+    render(<NodeColorToolbar store={fakeStore} />)
+    fireEvent.click(screen.getAllByRole('button')[0])
+    expect(mocks.mutateGroup).toHaveBeenCalledWith(
+      expect.objectContaining({ groupId: 'g1', data: { color: '#ef4444' } })
+    )
+    expect(mocks.mutate).not.toHaveBeenCalled()
   })
 
   it('현재 색상 있음 → clear 버튼 9개 노출 + 클릭 → null 전달', () => {

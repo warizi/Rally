@@ -1,10 +1,11 @@
-import { Type, Plus, Map, Undo2, Redo2 } from 'lucide-react'
+import { Type, Plus, Map, Undo2, Redo2, Group } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@shared/ui/tooltip'
 
 interface CanvasToolbarProps {
   onAddText: () => void
   onAddEntity: () => void
+  onAddGroup: () => void
   minimap: boolean
   onToggleMinimap: () => void
   onUndo: () => void
@@ -16,6 +17,7 @@ interface CanvasToolbarProps {
 export function CanvasToolbar({
   onAddText,
   onAddEntity,
+  onAddGroup,
   minimap,
   onToggleMinimap,
   onUndo,
@@ -46,6 +48,16 @@ export function CanvasToolbar({
             </Button>
           </TooltipTrigger>
           <TooltipContent>할일, 노트, 일정 등 추가</TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-8 px-3" onClick={onAddGroup}>
+              <Group className="size-4 mr-1.5" />
+              그룹
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>그룹 노드 추가</TooltipContent>
         </Tooltip>
 
         <div className="w-px h-5 bg-border" />

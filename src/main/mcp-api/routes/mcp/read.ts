@@ -30,6 +30,7 @@ import { noteService } from '../../../services/note'
 import { csvFileService } from '../../../services/csv-file'
 import { canvasNodeService } from '../../../services/canvas-node'
 import { canvasEdgeService } from '../../../services/canvas-edge'
+import { canvasGroupService } from '../../../services/canvas-group'
 import { imageFileService } from '../../../services/image-file'
 import { noteImageService } from '../../../services/note-image'
 import { pdfFileService } from '../../../services/pdf-file'
@@ -78,6 +79,7 @@ type ReadEntry =
       description: string | null
       nodes: ReturnType<typeof canvasNodeService.findByCanvas>
       edges: ReturnType<typeof canvasEdgeService.findByCanvas>
+      groups: ReturnType<typeof canvasGroupService.findByCanvas>
       createdAt: string
       updatedAt: string
     }
@@ -233,6 +235,7 @@ export function registerMcpReadRoutes(router: Router): void {
             if (canvas && canvas.workspaceId === wsId) {
               const nodes = canvasNodeService.findByCanvas(id)
               const edges = canvasEdgeService.findByCanvas(id)
+              const groups = canvasGroupService.findByCanvas(id)
               return {
                 id,
                 success: true,
@@ -241,6 +244,7 @@ export function registerMcpReadRoutes(router: Router): void {
                 description: canvas.description,
                 nodes,
                 edges,
+                groups,
                 createdAt: toIso(canvas.createdAt),
                 updatedAt: toIso(canvas.updatedAt)
               }

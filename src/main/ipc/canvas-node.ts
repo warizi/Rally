@@ -41,11 +41,16 @@ export function registerCanvasNodeHandlers(): void {
     'canvasNode:syncState',
     (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
       handle(() => {
-        const { nodes, edges } = data as { nodes: unknown[]; edges: unknown[] }
+        const { nodes, edges, groups } = data as {
+          nodes: unknown[]
+          edges: unknown[]
+          groups?: unknown[]
+        }
         canvasNodeService.syncState(
           canvasId,
           nodes as Parameters<typeof canvasNodeService.syncState>[1],
-          edges as Parameters<typeof canvasNodeService.syncState>[2]
+          edges as Parameters<typeof canvasNodeService.syncState>[2],
+          (groups ?? []) as Parameters<typeof canvasNodeService.syncState>[3]
         )
       })
   )

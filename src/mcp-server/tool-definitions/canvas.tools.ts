@@ -21,12 +21,15 @@ Actions (mutually exclusive groups):
 - create: { action:'create', title, description?, nodes?[], edges?[] }  — single action; canvasId is omitted; response includes new canvasId
 - delete: { action:'delete' }                                            — single action with canvasId
 - update: { action:'update', title?, description? }                      — meta update; needs canvasId
-- add_node: { action:'add_node', tempId?, type, x, y, width?, height?, content?, refId?, color? }
+- add_node: { action:'add_node', tempId?, type, x, y, width?, height?, content?, refId?, color?, groupId? }
 - remove_node: { action:'remove_node', nodeId }
 - add_edge: { action:'add_edge', fromNode, toNode, fromSide?, toSide?, label?, color?, style?, arrow? }
 - remove_edge: { action:'remove_edge', edgeId }
+- add_group: { action:'add_group', groupTempId?, label?, x, y, width, height, color? }   — a group node (dashed container rendered behind nodes/edges); nodes join it via add_node.groupId
+- update_group: { action:'update_group', groupId, label?, x?, y?, width?, height?, color? }
+- remove_group: { action:'remove_group', groupId }                                        — deletes the group only; member nodes are kept (their groupId is cleared)
 
-For non-create / non-delete actions: provide canvasId. add_node / remove_node / add_edge / remove_edge can be mixed in one call. add_edge can reference add_node's tempId.`,
+For non-create / non-delete actions: provide canvasId. add_node / remove_node / add_edge / remove_edge / add_group / update_group / remove_group can be mixed in one call. add_edge can reference add_node's tempId; add_node.groupId can reference add_group's groupTempId.`,
     schema: {
       canvasId: z
         .string()
@@ -84,7 +87,8 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
               height: z.number().optional(),
               content: z.string().optional(),
               refId: z.string().optional(),
-              color: z.string().optional()
+              color: z.string().optional(),
+              groupId: z.string().optional()
             }),
             z.object({ action: z.literal('remove_node'), nodeId: z.string() }),
             z.object({
@@ -98,7 +102,28 @@ For non-create / non-delete actions: provide canvasId. add_node / remove_node / 
               style: EDGE_STYLE.optional(),
               arrow: EDGE_ARROW.optional()
             }),
-            z.object({ action: z.literal('remove_edge'), edgeId: z.string() })
+            z.object({ action: z.literal('remove_edge'), edgeId: z.string() }),
+            z.object({
+              action: z.literal('add_group'),
+              groupTempId: z.string().optional(),
+              label: z.string().optional(),
+              x: z.number(),
+              y: z.number(),
+              width: z.number(),
+              height: z.number(),
+              color: z.string().optional()
+            }),
+            z.object({
+              action: z.literal('update_group'),
+              groupId: z.string(),
+              label: z.string().nullable().optional(),
+              x: z.number().optional(),
+              y: z.number().optional(),
+              width: z.number().optional(),
+              height: z.number().optional(),
+              color: z.string().nullable().optional()
+            }),
+            z.object({ action: z.literal('remove_group'), groupId: z.string() })
           ])
         )
         .min(1)

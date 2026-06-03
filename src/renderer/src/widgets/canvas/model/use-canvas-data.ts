@@ -7,6 +7,8 @@ import {
   useUpdateCanvasEdge,
   useUpdateCanvasViewport,
   useSyncCanvasState,
+  useCreateCanvasGroup,
+  useUpdateCanvasNodePositions,
   type CanvasNodeItem
 } from '@entities/canvas'
 import { useTabStore } from '@/entities/tab-system'
@@ -74,6 +76,8 @@ export function useCanvasData(canvasId: string, tabId?: string) {
   const { mutateAsync: createEdgeAsync } = useCreateCanvasEdge()
   const { mutate: updateNode } = useUpdateCanvasNode()
   const { mutate: updateEdge } = useUpdateCanvasEdge()
+  const { mutate: createGroup, mutateAsync: createGroupAsync } = useCreateCanvasGroup()
+  const { mutate: updateNodePositions } = useUpdateCanvasNodePositions()
 
   const saveViewport = useCallback(
     (viewport: { x: number; y: number; zoom: number }) => {
@@ -121,6 +125,49 @@ export function useCanvasData(canvasId: string, tabId?: string) {
     [canvasId, createNode]
   )
 
+  // ── 그룹 ──
+  const addGroup = useCallback(
+    (x: number, y: number, width = 320, height = 240) => {
+      createGroup({ canvasId, data: { x, y, width, height } })
+    },
+    [canvasId, createGroup]
+  )
+
+  /** 선택된 일반 노드들을 감싸는 그룹 생성 + 멤버 groupId 설정 */
+  const groupSelectedNodes = useCallback(async () => {
+    const selected = store.getState().nodes.filter((n) => n.selected && n.type !== 'groupNode')
+    if (selected.length === 0) return
+    const PAD = 30
+    const minX = Math.min(...selected.map((n) => n.position.x)) - PAD
+    const minY = Math.min(...selected.map((n) => n.position.y)) - PAD - 24 // 라벨 공간
+    const maxX = Math.max(...selected.map((n) => n.position.x + n.data.width)) + PAD
+    const maxY = Math.max(...selected.map((n) => n.position.y + n.data.height)) + PAD
+    const group = await createGroupAsync({
+      canvasId,
+      data: { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
+    })
+    for (const n of selected) {
+      updateNode({ nodeId: n.id, data: { groupId: group.id }, canvasId })
+    }
+  }, [store, canvasId, createGroupAsync, updateNode])
+
+  /** 노드의 그룹 소속 변경(드래그 편입/이탈) */
+  const setNodeGroup = useCallback(
+    (nodeId: string, groupId: string | null) => {
+      updateNode({ nodeId, data: { groupId }, canvasId })
+    },
+    [canvasId, updateNode]
+  )
+
+  /** 멤버 노드 위치 일괄 영속화 (그룹 드래그 종료 시) */
+  const persistNodePositions = useCallback(
+    (updates: { id: string; x: number; y: number }[]) => {
+      if (updates.length === 0) return
+      updateNodePositions({ updates, canvasId })
+    },
+    [canvasId, updateNodePositions]
+  )
+
   const hasSavedViewport = !!tabSearchParams?.vx
 
   return {
@@ -136,6 +183,10 @@ export function useCanvasData(canvasId: string, tabId?: string) {
     saveViewport,
     addTextNode,
     addRefNode,
+    addGroup,
+    groupSelectedNodes,
+    setNodeGroup,
+    persistNodePositions,
     createNode,
     createNodeAsync,
     createEdgeAsync,

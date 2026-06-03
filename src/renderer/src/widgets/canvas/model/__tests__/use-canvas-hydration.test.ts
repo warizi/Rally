@@ -9,18 +9,29 @@ import { renderHook } from '@testing-library/react'
 const mocks = vi.hoisted(() => ({
   nodes: [] as Array<{ id: string; content?: string }>,
   edges: [] as Array<{ id: string }>,
+  groups: [] as Array<{ id: string }>,
   nodesLoading: false,
-  edgesLoading: false
+  edgesLoading: false,
+  groupsLoading: false
 }))
 
 vi.mock('@entities/canvas', () => ({
   useCanvasNodes: () => ({ data: mocks.nodes, isLoading: mocks.nodesLoading }),
   useCanvasEdges: () => ({ data: mocks.edges, isLoading: mocks.edgesLoading }),
+  useCanvasGroups: () => ({ data: mocks.groups, isLoading: mocks.groupsLoading }),
   toReactFlowNode: (n: { id: string }) => ({
     ...n,
+    type: 'textNode',
     position: { x: 0, y: 0 },
     data: { content: '', color: null, width: 0, height: 0 },
     zIndex: 0
+  }),
+  toReactFlowGroupNode: (g: { id: string }) => ({
+    ...g,
+    type: 'groupNode',
+    position: { x: 0, y: 0 },
+    data: { label: null, color: null, width: 0, height: 0 },
+    zIndex: -1
   }),
   toReactFlowEdge: (e: { id: string }) => ({ ...e, source: '', target: '' })
 }))
