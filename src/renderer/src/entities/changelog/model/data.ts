@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.14.3',
+    date: '2026-06-03',
+    changes: [
+      {
+        type: 'improvement',
+        title: '캔버스 그룹 노드 추가',
+        description:
+          '캔버스에 그룹 노드를 추가하였습니다. 이제 캔버스에서 여러 노드를 그룹화하여 함께 이동하거나 스타일을 적용할 수 있습니다. 그룹 노드는 다른 노드를 포함할 수 있으며, 그룹 전체에 배경색과 테두리를 설정할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.14.2',
     date: '2026-06-02',
     changes: [
