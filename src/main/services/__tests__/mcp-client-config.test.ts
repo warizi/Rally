@@ -5,7 +5,7 @@
  * node 의존성 제거. inspectStatus 의 outdated 감지 로직 회귀 차단.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync, mkdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -140,5 +140,80 @@ describe('register / unregister 라운드트립', () => {
     mcpClientConfigService.unregister('claudeCode')
     const status = mcpClientConfigService.getStatus().claudeCode
     expect(status.registered).toBe(false)
+  })
+})
+
+describe('codex — TOML config.toml 라운드트립', () => {
+  // codex config 경로: ~/.codex/config.toml
+  function configPath(): string {
+    return join(tmpHome, '.codex', 'config.toml')
+  }
+
+  it('codex 는 모든 OS 에서 supported', () => {
+    const status = mcpClientConfigService.getStatus().codex
+    expect(status.supported).toBe(true)
+    expect(status.configPath).toBe(configPath())
+  })
+
+  it('register 시 TOML 블록 작성 + registered/outdated=false', () => {
+    const status = mcpClientConfigService.register('codex')
+    expect(status.registered).toBe(true)
+    expect(status.outdated).toBe(false)
+
+    const SERVER_KEY = mcpClientConfigService.getServerKey()
+    const raw = readFileSync(configPath(), 'utf-8')
+    expect(raw).toContain(`[mcp_servers.${SERVER_KEY}]`)
+    expect(raw).toContain(`[mcp_servers.${SERVER_KEY}.env]`)
+    expect(raw).toContain(`command = "${FAKE_ELECTRON_BINARY}"`)
+    expect(raw).toContain('ELECTRON_RUN_AS_NODE = "1"')
+    expect(raw).toContain(`MCP_AUTH_TOKEN = "${FAKE_TOKEN}"`)
+  })
+
+  it('register 가 기존 사용자 설정을 보존', () => {
+    mkdirSync(join(tmpHome, '.codex'), { recursive: true })
+    writeFileSync(
+      configPath(),
+      '# my config\nmodel = "gpt-5-codex"\n\n[mcp_servers.context7]\ncommand = "npx"\n',
+      'utf-8'
+    )
+    mcpClientConfigService.register('codex')
+    const raw = readFileSync(configPath(), 'utf-8')
+    expect(raw).toContain('# my config')
+    expect(raw).toContain('model = "gpt-5-codex"')
+    expect(raw).toContain('[mcp_servers.context7]')
+    expect(mcpClientConfigService.getStatus().codex.registered).toBe(true)
+  })
+
+  it('이전 command="node" TOML 등록은 outdated', () => {
+    const SERVER_KEY = mcpClientConfigService.getServerKey()
+    const current = mcpClientConfigService.getServerConfig() as Record<string, unknown>
+    const args = current.args as string[]
+    mkdirSync(join(tmpHome, '.codex'), { recursive: true })
+    writeFileSync(
+      configPath(),
+      [
+        `[mcp_servers.${SERVER_KEY}]`,
+        'command = "node"',
+        `args = ["${args[0]}"]`,
+        '',
+        `[mcp_servers.${SERVER_KEY}.env]`,
+        'ELECTRON_RUN_AS_NODE = "1"',
+        `MCP_AUTH_TOKEN = "${FAKE_TOKEN}"`
+      ].join('\n'),
+      'utf-8'
+    )
+    const status = mcpClientConfigService.getStatus().codex
+    expect(status.registered).toBe(true)
+    expect(status.outdated).toBe(true)
+  })
+
+  it('unregister 시 블록 제거 (다른 서버는 유지)', () => {
+    mkdirSync(join(tmpHome, '.codex'), { recursive: true })
+    writeFileSync(configPath(), '[mcp_servers.context7]\ncommand = "npx"\n', 'utf-8')
+    mcpClientConfigService.register('codex')
+    mcpClientConfigService.unregister('codex')
+    const status = mcpClientConfigService.getStatus().codex
+    expect(status.registered).toBe(false)
+    expect(readFileSync(configPath(), 'utf-8')).toContain('[mcp_servers.context7]')
   })
 })

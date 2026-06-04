@@ -15,10 +15,11 @@ import { DisplaySettings } from './DisplaySettings'
 import { NoteSettings } from './NoteSettings'
 import { AlarmSettings } from './AlarmSettings'
 import { AISettings } from './AISettings'
+import { CodexSettings } from './CodexSettings'
 import { TrashSettings } from './TrashSettings'
 import { KeyboardShortcutsSettings } from './KeyboardShortcutsSettings'
 
-type SettingsTab = 'general' | 'display' | 'note' | 'alarm' | 'shortcuts' | 'trash' | 'ai'
+type SettingsTab = 'general' | 'display' | 'note' | 'alarm' | 'shortcuts' | 'trash' | 'ai' | 'codex'
 
 interface SettingsDialogProps {
   open: boolean
@@ -32,7 +33,8 @@ const TABS: { id: SettingsTab; label: string }[] = [
   { id: 'alarm', label: '알림' },
   { id: 'shortcuts', label: '단축키' },
   { id: 'trash', label: '휴지통' },
-  { id: 'ai', label: 'AI (Claude)' }
+  { id: 'ai', label: 'AI (Claude)' },
+  { id: 'codex', label: 'AI (Codex)' }
 ]
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): React.JSX.Element {
@@ -96,6 +98,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
                 {activeTab === 'shortcuts' && <KeyboardShortcutsSettings />}
                 {activeTab === 'trash' && <TrashSettings />}
                 {activeTab === 'ai' && <AISettings />}
+                {activeTab === 'codex' && <CodexSettings />}
               </div>
             </ScrollArea>
           </div>

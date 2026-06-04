@@ -16,6 +16,13 @@ describe('formatAuthor', () => {
   it('ai + byId=null → "AI"', () => {
     expect(formatAuthor('ai', null)).toBe('AI')
   })
+
+  it('알려진 클라이언트 키워드 → 친근명 (대소문자 무관)', () => {
+    expect(formatAuthor('ai', 'claude-code')).toBe('Claude')
+    expect(formatAuthor('ai', 'Codex')).toBe('Codex')
+    expect(formatAuthor('ai', 'chatgpt-desktop')).toBe('ChatGPT')
+    expect(formatAuthor('ai', 'openai')).toBe('OpenAI')
+  })
 })
 
 describe('formatAuthorRelativeTime', () => {

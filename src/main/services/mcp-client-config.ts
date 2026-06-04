@@ -3,8 +3,15 @@ import { join, dirname } from 'path'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { ensureMcpToken } from '../lib/mcp-token'
+import {
+  readEntry as readCodexEntry,
+  removeEntry as removeCodexEntry,
+  upsertEntry as upsertCodexEntry,
+  type CodexMcpEntry
+} from './codex-toml'
 
-export type McpClientId = 'claudeDesktop' | 'claudeCode'
+// codex: Codex CLI 와 Desktop(IDE 확장) 이 ~/.codex/config.toml 을 공유하므로 단일 클라이언트로 취급.
+export type McpClientId = 'claudeDesktop' | 'claudeCode' | 'codex'
 
 export interface McpClientStatus {
   /** 클라이언트별 설정 파일 경로 */
@@ -22,6 +29,14 @@ export interface McpClientStatus {
 export interface McpClientStatusMap {
   claudeDesktop: McpClientStatus
   claudeCode: McpClientStatus
+  codex: McpClientStatus
+}
+
+/** 클라이언트별 설정 파일 포맷 — Claude 는 JSON, Codex 는 TOML */
+type ConfigFormat = 'json' | 'toml'
+
+function getConfigFormat(client: McpClientId): ConfigFormat {
+  return client === 'codex' ? 'toml' : 'json'
 }
 
 const SERVER_KEY = is.dev ? 'rally-dev' : 'rally'
@@ -66,6 +81,10 @@ function getConfigPath(client: McpClientId): string {
     // Linux: 비공식 경로지만 일부 사용자 사용
     return join(home, '.config', 'Claude', 'claude_desktop_config.json')
   }
+  if (client === 'codex') {
+    // Codex CLI + Desktop(IDE) 공유 설정
+    return join(home, '.codex', 'config.toml')
+  }
   // claudeCode: ~/.claude.json
   return join(home, '.claude.json')
 }
@@ -74,7 +93,47 @@ function isClientSupported(client: McpClientId): boolean {
   if (client === 'claudeDesktop') {
     return process.platform === 'darwin' || process.platform === 'win32'
   }
+  // claudeCode, codex: 모든 OS 지원 (CLI 기반)
   return true
+}
+
+/** buildServerConfig() 의 Record 를 codex-toml 의 엔트리 형태로 변환 */
+function toEntry(serverConfig: Record<string, unknown>): CodexMcpEntry {
+  return {
+    command: serverConfig.command as string,
+    args: (serverConfig.args as string[]) ?? [],
+    env: (serverConfig.env as Record<string, string>) ?? {}
+  }
+}
+
+/**
+ * 등록된 entry 가 현재 앱 기준과 다른지 (포맷 무관 공통 로직).
+ * - command 가 현재 Electron binary 와 다름 (구버전 'node' 등)
+ * - ELECTRON_RUN_AS_NODE 누락
+ * - 현재 dist-mcp 경로가 args 에 없음
+ * - MCP_AUTH_TOKEN 불일치
+ */
+function isEntryOutdated(entry: {
+  command?: string
+  args?: string[]
+  env?: Record<string, string>
+}): boolean {
+  const args = entry.args ?? []
+  const env = entry.env ?? {}
+  return (
+    entry.command !== app.getPath('exe') ||
+    env.ELECTRON_RUN_AS_NODE !== '1' ||
+    !args.includes(getMcpServerPath()) ||
+    env.MCP_AUTH_TOKEN !== ensureMcpToken()
+  )
+}
+
+function safeReadText(path: string): string {
+  try {
+    return readFileSync(path, 'utf-8')
+  } catch {
+    return ''
+  }
 }
 
 interface ConfigShape {
@@ -108,26 +167,24 @@ function inspectStatus(client: McpClientId): McpClientStatus {
   if (!configExists) {
     return { configPath, supported: true, configExists: false, registered: false, outdated: false }
   }
+
+  if (getConfigFormat(client) === 'toml') {
+    // 배포-1/보안-2 의 outdated 감지 로직을 TOML 엔트리에도 동일 적용.
+    const entry = readCodexEntry(safeReadText(configPath), SERVER_KEY)
+    const registered = !!entry
+    const outdated = registered ? isEntryOutdated(entry) : false
+    return { configPath, supported: true, configExists, registered, outdated }
+  }
+
   const config = readConfig(configPath)
   const entry = config.mcpServers?.[SERVER_KEY]
   const registered = !!entry
-  let outdated = false
-  if (registered && entry) {
-    const args = (entry.args as unknown[] | undefined) ?? []
-    const currentPath = getMcpServerPath()
-    const env = (entry.env as Record<string, string> | undefined) ?? {}
-    const command = entry.command as string | undefined
-    // 배포-1: 등록된 command 가 현재 Electron binary 와 다르면 (예: 이전 'node')
-    // outdated → 재등록으로 ELECTRON_RUN_AS_NODE 모드 적용.
-    const currentCommand = app.getPath('exe')
-    // 보안-2: 등록된 토큰이 현재 토큰과 다르면 outdated → 사용자 재등록 유도.
-    const currentToken = ensureMcpToken()
-    outdated =
-      command !== currentCommand ||
-      env.ELECTRON_RUN_AS_NODE !== '1' ||
-      !args.includes(currentPath) ||
-      env.MCP_AUTH_TOKEN !== currentToken
-  }
+  const outdated =
+    registered && entry
+      ? isEntryOutdated(
+          entry as { command?: string; args?: string[]; env?: Record<string, string> }
+        )
+      : false
   return { configPath, supported: true, configExists, registered, outdated }
 }
 
@@ -144,7 +201,8 @@ export const mcpClientConfigService = {
   getStatus(): McpClientStatusMap {
     return {
       claudeDesktop: inspectStatus('claudeDesktop'),
-      claudeCode: inspectStatus('claudeCode')
+      claudeCode: inspectStatus('claudeCode'),
+      codex: inspectStatus('codex')
     }
   },
 
@@ -153,6 +211,16 @@ export const mcpClientConfigService = {
       throw new Error(`${client}는 이 OS에서 지원되지 않습니다`)
     }
     const configPath = getConfigPath(client)
+
+    if (getConfigFormat(client) === 'toml') {
+      // 기존 config.toml 의 사용자 설정(주석·포맷)을 보존하며 rally 블록만 교체.
+      const current = existsSync(configPath) ? safeReadText(configPath) : ''
+      const next = upsertCodexEntry(current, SERVER_KEY, toEntry(buildServerConfig()))
+      mkdirSync(dirname(configPath), { recursive: true })
+      writeFileSync(configPath, next, 'utf-8')
+      return inspectStatus(client)
+    }
+
     const config = readConfig(configPath)
     if (!config.mcpServers) config.mcpServers = {}
     config.mcpServers[SERVER_KEY] = buildServerConfig()
@@ -166,6 +234,14 @@ export const mcpClientConfigService = {
     }
     const configPath = getConfigPath(client)
     if (!existsSync(configPath)) return inspectStatus(client)
+
+    if (getConfigFormat(client) === 'toml') {
+      const current = safeReadText(configPath)
+      const next = removeCodexEntry(current, SERVER_KEY)
+      if (next !== current) writeFileSync(configPath, next, 'utf-8')
+      return inspectStatus(client)
+    }
+
     const config = readConfig(configPath)
     if (config.mcpServers && SERVER_KEY in config.mcpServers) {
       delete config.mcpServers[SERVER_KEY]
