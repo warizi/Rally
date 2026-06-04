@@ -6,6 +6,29 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.1',
+    date: '2026-06-05',
+    changes: [
+      {
+        type: 'improvement',
+        title: '마크다운 코드블럭 구문 강조',
+        description:
+          '노트 내 마크다운 코드블럭에 구문 강조 기능이 추가되었습니다. 이제 프로그래밍 언어를 지정하면 해당 언어에 맞는 구문 강조가 적용되어 가독성이 향상됩니다.'
+      },
+      {
+        type: 'improvement',
+        title: '마크다운 문법 힌트 토글 설정',
+        description:
+          '설정 > 노트 탭에서 마크다운 문법 힌트 표시 여부를 켜고 끌 수 있습니다. 이 설정을 활성화하면 노트 에디터에서 마크다운 문법이 시각적으로 구분되어 편집이 더 쉬워집니다.'
+      },
+      {
+        type: 'improvement',
+        title: '마크다운 에디터 문법 검사 토글 설정',
+        description: '설정 > 노트 탭에서 마크다운 문법 검사 표시 여부를 켜고 끌 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.15.0',
     date: '2026-06-05',
     changes: [
