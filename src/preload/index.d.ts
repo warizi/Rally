@@ -849,7 +849,7 @@ interface AppInfoAPI {
   getSkillFiles: () => Promise<IpcResponse<CommandFile[]>>
 }
 
-type McpClientId = 'claudeDesktop' | 'claudeCode'
+type McpClientId = 'claudeDesktop' | 'claudeCode' | 'codex'
 
 interface McpClientStatus {
   configPath: string
@@ -862,6 +862,7 @@ interface McpClientStatus {
 interface McpClientStatusMap {
   claudeDesktop: McpClientStatus
   claudeCode: McpClientStatus
+  codex: McpClientStatus
 }
 
 interface McpClientStatusBundle {

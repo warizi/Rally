@@ -1,9 +1,9 @@
 import { ipcRenderer } from 'electron'
 
+type McpClientId = 'claudeDesktop' | 'claudeCode' | 'codex'
+
 export const mcpClientApi = {
   getStatus: () => ipcRenderer.invoke('mcpClient:getStatus'),
-  register: (client: 'claudeDesktop' | 'claudeCode') =>
-    ipcRenderer.invoke('mcpClient:register', client),
-  unregister: (client: 'claudeDesktop' | 'claudeCode') =>
-    ipcRenderer.invoke('mcpClient:unregister', client)
+  register: (client: McpClientId) => ipcRenderer.invoke('mcpClient:register', client),
+  unregister: (client: McpClientId) => ipcRenderer.invoke('mcpClient:unregister', client)
 }
