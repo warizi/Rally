@@ -263,8 +263,8 @@ export function AISettings(): React.JSX.Element {
           <div className="mt-3 space-y-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">MCP 서버 경로</label>
-              <div className="flex items-center gap-2">
-                <code className="flex-1 text-xs bg-muted px-3 py-2 rounded-md break-all select-all">
+              <div className="flex items-center gap-2 min-w-0">
+                <code className="flex-1 min-w-0 text-xs bg-muted px-3 py-2 rounded-md break-all select-all">
                   {mcpServerPath}
                 </code>
                 <Button
@@ -289,7 +289,7 @@ export function AISettings(): React.JSX.Element {
                 rally 항목만 추가하면 됩니다.
               </p>
               <div className="relative">
-                <pre className="text-xs bg-muted px-3 py-3 rounded-md overflow-x-auto select-all">
+                <pre className="text-xs bg-muted px-3 py-3 pr-10 rounded-md whitespace-pre-wrap break-all select-all">
                   {mcpConfig}
                 </pre>
                 <Button
