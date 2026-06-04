@@ -30,9 +30,12 @@ const SELECTORS: Record<StyleElementKey, ElementSelectors> = {
   // 본문은 .ProseMirror 직속 <p> 만 (리스트/blockquote 안의 nested <p> 제외).
   paragraph: { text: '.ProseMirror > p' },
   codeInline: { text: 'code:not(pre code)' },
-  // pre 와 pre code 모두에 텍스트 스타일 (global.css `pre code` 0.875em 오버라이드).
-  // 배경/마진은 pre 컨테이너에만.
-  codeBlock: { text: 'pre, pre code', container: 'pre' },
+  // pre 와 CodeMirror 기반 code-block 컴포넌트 모두에 텍스트 스타일.
+  // 배경/마진은 pre 또는 .milkdown-code-block 컨테이너에만.
+  codeBlock: {
+    text: 'pre, pre code, .milkdown-code-block .cm-content, .milkdown-code-block .cm-line',
+    container: 'pre, .milkdown-code-block'
+  },
   // 인용구는 내부 <p> 까지 텍스트 스타일 확장. 컨테이너는 blockquote 자체.
   blockquote: { text: 'blockquote, blockquote p', container: 'blockquote' },
   hr: { text: 'hr' }
@@ -54,7 +57,7 @@ const DECORATIONS: Partial<Record<StyleElementKey, ElementDecoration>> = {
   },
   codeBlock: {
     text: ['padding: 0', 'border-radius: 0'],
-    container: ['padding: 12px 16px', 'border-radius: 6px', 'overflow-x: auto']
+    container: ['padding: 8px 12px 10px', 'border-radius: 6px', 'overflow-x: auto']
   },
   blockquote: {
     container: ['padding-left: 12px', 'border-left-style: solid']
