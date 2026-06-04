@@ -48,7 +48,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps): Rea
           className={cn(
             'bg-background fixed top-[50%] left-[50%] z-50',
             'translate-x-[-50%] translate-y-[-50%]',
-            'w-full max-w-3xl h-[480px]',
+            'w-full max-w-4xl h-[560px]',
             'flex flex-col',
             'rounded-lg border shadow-lg outline-none',
             'data-[state=open]:animate-in data-[state=closed]:animate-out',
