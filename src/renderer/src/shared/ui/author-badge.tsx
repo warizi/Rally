@@ -51,6 +51,12 @@ const ICON_SIZE: Record<'sm' | 'md', string> = {
   md: 'size-3.5'
 }
 
+// Claude / OpenAI(Codex) 브랜드 로고는 원 안에서 작아 보여 한 단계 크게.
+const ICON_SIZE_BRAND: Record<'sm' | 'md', string> = {
+  sm: 'size-3.5',
+  md: 'size-4'
+}
+
 const WRAPPER_SIZE: Record<'sm' | 'md', string> = {
   sm: 'size-5',
   md: 'size-6'
@@ -73,12 +79,25 @@ function pickIcon(by: AuthorKind, byId: string | null) {
   return Bot
 }
 
+/** Claude / OpenAI(Codex) 브랜드 로고인지 — 이 경우만 아이콘을 크게 표시 */
+function isBrandIcon(by: AuthorKind, byId: string | null): boolean {
+  if (by !== 'ai') return false
+  const id = byId?.toLowerCase() ?? ''
+  return (
+    id.includes('claude') ||
+    id.includes('codex') ||
+    id.includes('chatgpt') ||
+    id.includes('openai')
+  )
+}
+
 /**
  * 단일 아이콘 + 툴팁. 부모에 TooltipProvider 가 있어야 한다.
  * 동그란 흰색 배경 위에 아이콘.
  */
 function BadgeIcon({ by, byId, at, action, size, className }: BadgeIconProps) {
   const Icon = pickIcon(by, byId)
+  const iconSize = isBrandIcon(by, byId) ? ICON_SIZE_BRAND[size] : ICON_SIZE[size]
   const tooltipText = formatAuthorTooltip(by, byId, at, action)
 
   return (
@@ -92,7 +111,7 @@ function BadgeIcon({ by, byId, at, action, size, className }: BadgeIconProps) {
           )}
           aria-label={tooltipText}
         >
-          <Icon className={cn(ICON_SIZE[size])} aria-hidden />
+          <Icon className={cn(iconSize)} aria-hidden />
         </span>
       </TooltipTrigger>
       <TooltipContent>{tooltipText}</TooltipContent>
