@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
+import { SkillsManager } from '@widgets/skills-manager'
 import { toLogError } from '@shared/lib/logger'
 
 const onError = toLogError('onboarding')
@@ -254,6 +255,8 @@ export function CodexSettings(): React.JSX.Element {
           </div>
         )}
       </div>
+
+      <SkillsManager target="codex" />
     </div>
   )
 }

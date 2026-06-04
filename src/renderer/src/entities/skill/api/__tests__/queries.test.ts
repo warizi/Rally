@@ -30,8 +30,7 @@ const SKILL = {
 const STATUS = {
   id: 'sk-1',
   name: 'my-skill',
-  applied: true,
-  version: '1'
+  applied: { claude: true, codex: false }
 } as unknown as SkillApplyStatus
 
 beforeEach(() => {
@@ -163,7 +162,7 @@ describe('useApplySkill / useUnapplySkill', () => {
 
     const { result } = renderHook(() => useApplySkill(), { wrapper })
     await act(async () => {
-      result.current.mutate({ id: 'sk-1' })
+      result.current.mutate({ id: 'sk-1', target: 'claude' })
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(invSpy).toHaveBeenCalledWith({ queryKey: ['skill', 'status'] })
@@ -176,7 +175,7 @@ describe('useApplySkill / useUnapplySkill', () => {
 
     const { result } = renderHook(() => useUnapplySkill(), { wrapper })
     await act(async () => {
-      result.current.mutate({ id: 'sk-1' })
+      result.current.mutate({ id: 'sk-1', target: 'codex' })
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     expect(invSpy).toHaveBeenCalledWith({ queryKey: ['skill', 'status'] })

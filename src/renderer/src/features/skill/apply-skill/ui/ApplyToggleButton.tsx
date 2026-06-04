@@ -2,14 +2,21 @@ import { JSX, useState } from 'react'
 import { toast } from 'sonner'
 import { CheckIcon, DownloadIcon, Loader2Icon, TrashIcon } from 'lucide-react'
 import { Button } from '@shared/ui/button'
-import { useApplySkill, useUnapplySkill, type SkillItem } from '@entities/skill'
+import { useApplySkill, useUnapplySkill, type SkillItem, type SkillTarget } from '@entities/skill'
 
 interface Props {
   skill: SkillItem
   applied: boolean
+  /** 적용 대상 클라이언트 (기본 claude) */
+  target?: SkillTarget
 }
 
-export function ApplyToggleButton({ skill, applied }: Props): JSX.Element {
+const APPLY_HINT: Record<SkillTarget, string> = {
+  claude: 'Claude 에 적용 (~/.claude/skills 에 SKILL.md 작성)',
+  codex: 'Codex 에 적용 (~/.codex/prompts 에 작성 — /name 으로 호출)'
+}
+
+export function ApplyToggleButton({ skill, applied, target = 'claude' }: Props): JSX.Element {
   const applyMutation = useApplySkill()
   const unapplyMutation = useUnapplySkill()
   const [hovering, setHovering] = useState(false)
@@ -21,10 +28,10 @@ export function ApplyToggleButton({ skill, applied }: Props): JSX.Element {
     e.stopPropagation()
     try {
       if (applied) {
-        await unapplyMutation.mutateAsync({ id: skill.id })
+        await unapplyMutation.mutateAsync({ id: skill.id, target })
         toast.success(`${skill.name} 적용을 해제했습니다.`)
       } else {
-        await applyMutation.mutateAsync({ id: skill.id })
+        await applyMutation.mutateAsync({ id: skill.id, target })
         toast.success(`${skill.name} 을(를) 적용했습니다.`)
       }
     } catch (err) {
@@ -73,7 +80,7 @@ export function ApplyToggleButton({ skill, applied }: Props): JSX.Element {
       variant="outline"
       onClick={handleClick}
       className="h-7 px-2 gap-1 text-xs"
-      title="Claude 에 적용 (~/.claude/skills 에 SKILL.md 작성)"
+      title={APPLY_HINT[target]}
     >
       <DownloadIcon className="size-3" />
       적용
