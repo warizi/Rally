@@ -21,8 +21,10 @@ describe('buildNoteStyleCss', () => {
     expect(css).toMatch(/\[data-rally-note\]\s+code:not\(pre code\)/)
   })
 
-  it('codeBlock 은 pre + pre code 듀얼 selector (텍스트), pre (컨테이너)', () => {
+  it('codeBlock 은 pre 와 CodeMirror 컴포넌트 selector 를 함께 사용', () => {
     expect(css).toMatch(/\[data-rally-note\]\s+pre,\s*\[data-rally-note\]\s+pre code/)
+    expect(css).toMatch(/\[data-rally-note\]\s+\.milkdown-code-block\s+\.cm-content/)
+    expect(css).toMatch(/\[data-rally-note\]\s+\.milkdown-code-block\s*\{/)
   })
 
   it('h1 라이트 rule 에 font-size / line-height / color 포함', () => {
@@ -37,7 +39,9 @@ describe('buildNoteStyleCss', () => {
   it('codeInline / codeBlock 의 라이트 rule 에 background-color 포함', () => {
     expect(css).toMatch(/code:not\(pre code\) \{[\s\S]*?background-color:/)
     // codeBlock 의 pre 컨테이너 rule
-    const preBlockMatch = css.match(/\[data-rally-note\] pre \{([\s\S]*?)\}/)
+    const preBlockMatch = css.match(
+      /\[data-rally-note\] pre, \[data-rally-note\] \.milkdown-code-block \{([\s\S]*?)\}/
+    )
     expect(preBlockMatch).not.toBeNull()
     expect(preBlockMatch![1]).toMatch(/background-color:/)
   })
@@ -55,16 +59,20 @@ describe('buildNoteStyleCss', () => {
     expect(m![1]).toMatch(/border-radius:\s*4px/)
   })
 
-  it('codeBlock pre 컨테이너에 시각 속성 (padding 12px 16px, border-radius 6px, overflow-x auto)', () => {
-    const m = css.match(/\[data-rally-note\] pre \{([\s\S]*?)\}/)
+  it('codeBlock pre 컨테이너에 시각 속성 (padding 8px 12px 10px, border-radius 6px, overflow-x auto)', () => {
+    const m = css.match(
+      /\[data-rally-note\] pre, \[data-rally-note\] \.milkdown-code-block \{([\s\S]*?)\}/
+    )
     expect(m).not.toBeNull()
-    expect(m![1]).toMatch(/padding:\s*12px 16px/)
+    expect(m![1]).toMatch(/padding:\s*8px 12px 10px/)
     expect(m![1]).toMatch(/border-radius:\s*6px/)
     expect(m![1]).toMatch(/overflow-x:\s*auto/)
   })
 
   it('codeBlock pre code 텍스트 rule 은 padding/border-radius 0 (내부 코드)', () => {
-    const m = css.match(/\[data-rally-note\] pre, \[data-rally-note\] pre code \{([\s\S]*?)\}/)
+    const m = css.match(
+      /\[data-rally-note\] pre, \[data-rally-note\] pre code, \[data-rally-note\] \.milkdown-code-block \.cm-content, \[data-rally-note\] \.milkdown-code-block \.cm-line \{([\s\S]*?)\}/
+    )
     expect(m).not.toBeNull()
     expect(m![1]).toMatch(/padding:\s*0/)
     expect(m![1]).toMatch(/border-radius:\s*0/)

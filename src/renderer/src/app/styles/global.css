@@ -49,11 +49,7 @@
   --main-height: calc(100vh - var(--header-height));
   --background: oklch(1 0 0);
   --root-background: oklch(0.96 0 0);
-  --root-gradient: linear-gradient(
-    135deg,
-    oklch(0.96 0.03 240) 0%,
-    oklch(0.95 0.035 30) 100%
-  );
+  --root-gradient: linear-gradient(135deg, oklch(0.96 0.03 240) 0%, oklch(0.95 0.035 30) 100%);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -92,11 +88,7 @@
   --crepe-color-inline-area: oklch(0.145 0 0);
   --background: oklch(14.958% 0.00002 271.152);
   --root-background: oklch(9.693% 0.00001 271.152);
-  --root-gradient: linear-gradient(
-    135deg,
-    oklch(0.22 0.06 240) 0%,
-    oklch(0.18 0.07 30) 100%
-  );
+  --root-gradient: linear-gradient(135deg, oklch(0.22 0.06 240) 0%, oklch(0.18 0.07 30) 100%);
   --foreground: oklch(0.885 0 0);
   --card: oklch(0.145 0 0);
   --card-foreground: oklch(0.985 0 0);
@@ -194,6 +186,11 @@
   margin-right: 0.4em;
   user-select: none;
   pointer-events: none;
+}
+
+/* 설정 "노트 문법 검사" off — 문법 힌트 숨김 */
+.rally-syntax-hint-off .syntax-hint {
+  display: none;
 }
 
 /* ─── Existing Styles ───────────────────────── */
@@ -294,6 +291,292 @@
   font-size: 0.875em;
 }
 
+.milkdown .ProseMirror .milkdown-code-block {
+  /* Catppuccin Latte — 파스텔 라이트 팔레트 */
+  --rally-code-keyword: #8839ef;
+  --rally-code-name: #1e66f5;
+  --rally-code-variable: #4c4f69;
+  --rally-code-function: #1e66f5;
+  --rally-code-constant: #fe640b;
+  --rally-code-definition: #179299;
+  --rally-code-type: #df8e1d;
+  --rally-code-operator: #04a5e5;
+  --rally-code-regexp: #ea76cb;
+  --rally-code-comment: #9ca0b0;
+  --rally-code-heading: #4c4f69;
+  --rally-code-atom: #fe640b;
+  --rally-code-string: #40a02b;
+  --rally-code-invalid: #d20f39;
+  position: relative;
+  background-color: var(--muted);
+  color: var(--foreground);
+  padding: 6px 12px 8px;
+  border-radius: 6px;
+  overflow: visible !important;
+  margin: 8px 0;
+  font-size: 0.875em;
+}
+
+html.dark .milkdown .ProseMirror .milkdown-code-block {
+  /* Catppuccin Mocha — 파스텔 다크 팔레트 */
+  --rally-code-keyword: #cba6f7;
+  --rally-code-name: #89b4fa;
+  --rally-code-variable: #cdd6f4;
+  --rally-code-function: #89b4fa;
+  --rally-code-constant: #fab387;
+  --rally-code-definition: #94e2d5;
+  --rally-code-type: #f9e2af;
+  --rally-code-operator: #89dceb;
+  --rally-code-regexp: #f5c2e7;
+  --rally-code-comment: #7f849c;
+  --rally-code-heading: #cdd6f4;
+  --rally-code-atom: #fab387;
+  --rally-code-string: #a6e3a1;
+  --rally-code-invalid: #f38ba8;
+}
+
+/* 툴바는 세로 공간을 차지하지 않도록 코드블록 우상단에 absolute 오버레이로 띄운다.
+   언어 버튼 + 복사 버튼이 첫 줄 우측(보통 빈 영역)에 겹쳐 보이고, 코드는 맨 위부터 시작. */
+.milkdown .ProseMirror .milkdown-code-block .tools {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  left: auto;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+  width: auto;
+  min-height: 0;
+  margin: 0;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .tools-button-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* 언어 선택 / 복사 버튼 — Rally 의 shadcn ghost 아이콘 버튼과 통일 (투명 배경, hover 시 accent) */
+.milkdown .ProseMirror .milkdown-code-block .language-button,
+.milkdown .ProseMirror .milkdown-code-block .copy-button,
+.milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-button:hover,
+.milkdown .ProseMirror .milkdown-code-block .copy-button:hover,
+.milkdown .ProseMirror .milkdown-code-block .preview-toggle-button:hover,
+.milkdown .ProseMirror .milkdown-code-block .language-button[data-expanded='true'] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-button {
+  min-width: 0;
+  margin: 0;
+  padding: 0 6px;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .copy-button,
+.milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
+  width: 24px;
+  padding: 0;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .preview-toggle-button {
+  display: none;
+}
+
+/* @milkdown/crepe code-mirror.css 의 `.tools .tools-button-group button` (type selector 로
+   specificity 가 높아 위 .copy-button 룰을 이김) 가 검은 배경 + svg fill 을 강제하므로
+   동일 경로 + .ProseMirror 로 specificity 를 올려 ghost 스타일로 덮어쓴다. */
+.milkdown .ProseMirror .milkdown-code-block .tools .tools-button-group button {
+  background: transparent;
+  color: var(--muted-foreground);
+  border: none;
+  border-radius: 6px;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  opacity: 1;
+  font-weight: 500;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .tools .tools-button-group button:hover {
+  background: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.milkdown .ProseMirror .milkdown-code-block .tools .tools-button-group button svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  width: 14px;
+  height: 14px;
+}
+
+/* 버튼이 우상단 클러스터라, floating-ui 가 버튼 좌측 기준으로 앵커링한 inline left/top 을
+   덮어써(!important) 드롭다운을 버튼 클러스터 바로 아래·우측 정렬로 붙인다. */
+.milkdown .ProseMirror .milkdown-code-block .language-picker {
+  position: absolute;
+  top: 28px !important;
+  left: auto !important;
+  right: 0;
+  z-index: 30;
+}
+
+/* 버튼이 우상단에 있어 floating-ui(bottom-start)로 열면 드롭다운이 우측으로 넘침.
+   list-wrapper 를 앵커(언어 버튼) 우측에 맞춰 좌측으로 펼치도록 right 정렬. */
+.milkdown .ProseMirror .milkdown-code-block .list-wrapper {
+  position: absolute;
+  top: 0;
+  left: auto;
+  right: 0;
+  width: 184px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background-color: var(--popover);
+  color: var(--popover-foreground);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  /* crepe 테마가 넣는 padding-top(12px) 제거 — 검색 칸 숨겨서 불필요 */
+  padding: 0;
+}
+
+/* 언어 검색 칸은 숨김 — 리스트만 노출 */
+.milkdown .ProseMirror .milkdown-code-block .search-box {
+  display: none;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .search-icon,
+.milkdown .ProseMirror .milkdown-code-block .clear-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted-foreground);
+}
+
+.milkdown .ProseMirror .milkdown-code-block .search-input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  background: transparent;
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 18px;
+  outline: none;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .search-input::placeholder {
+  color: var(--muted-foreground);
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list {
+  max-height: 172px;
+  overflow-y: auto;
+  padding: 2px 4px 4px;
+  margin: 0;
+  list-style: none;
+  /* Rally .scrollbar-thin 과 동일한 톤 */
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 24px;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+  background-clip: padding-box;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list-item {
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  cursor: pointer;
+  outline: none;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list-item[aria-selected='true'] {
+  font-weight: 500;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .language-list-item:hover,
+.milkdown .ProseMirror .milkdown-code-block .language-list-item[aria-selected='true'] {
+  background-color: var(--accent);
+  color: var(--accent-foreground);
+}
+
+.milkdown .ProseMirror .milkdown-code-block .hidden {
+  display: none;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .milkdown-icon,
+.milkdown .ProseMirror .milkdown-code-block .expand-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .milkdown-icon svg,
+.milkdown .ProseMirror .milkdown-code-block .search-icon svg,
+.milkdown .ProseMirror .milkdown-code-block .clear-icon svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2;
+}
+
+/* 언어 버튼 옆 chevron 은 텍스트보다 살짝 작게 */
+.milkdown .ProseMirror .milkdown-code-block .expand-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke-width: 2;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host {
+  overflow-x: auto;
+}
+
+.milkdown .ProseMirror .milkdown-code-block .cm-editor {
+  background-color: transparent;
+}
+
 .milkdown .ProseMirror a {
   color: var(--primary);
   text-decoration: underline;
@@ -328,7 +611,7 @@
 }
 
 /* scroll area 내부 동작중 컨텐츠가 커지면 부모 넓이에 넘치는 걸 방지함 */
-.scroll-area-w-content-fit [data-slot='scroll-area-viewport']>div {
+.scroll-area-w-content-fit [data-slot='scroll-area-viewport'] > div {
   display: block !important;
 }
 
@@ -377,11 +660,7 @@
 /* MiniMap 다크모드: React Flow `.react-flow.dark` 셀렉터가 Rally의 루트 .dark 와
    매칭되지 않아 라이트 색상이 잔존. xy- CSS 변수로 테마 토큰 주입. */
 .dark .react-flow__minimap {
-  --xy-minimap-mask-background-color-default: color-mix(
-    in oklch,
-    var(--muted) 60%,
-    transparent
-  );
+  --xy-minimap-mask-background-color-default: color-mix(in oklch, var(--muted) 60%, transparent);
   --xy-minimap-node-background-color-default: var(--muted-foreground);
 }
 

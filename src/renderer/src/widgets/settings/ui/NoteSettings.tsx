@@ -26,7 +26,14 @@ import { Input } from '@/shared/ui/input'
 import { Label } from '@/shared/ui/label'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import { Separator } from '@/shared/ui/separator'
+import { Switch } from '@/shared/ui/switch'
 import { cn } from '@/shared/lib/utils'
+import { useSyntaxHintSetting } from '@/shared/hooks/use-syntax-hint-setting'
+import { useSpellcheckSetting } from '@/shared/hooks/use-spellcheck-setting'
+import {
+  configureRallyCodeBlock,
+  rallyCodeBlockPlugins
+} from '@/shared/lib/note-code-block-highlighting'
 import { NoteToolbarPaletteSection } from './NoteToolbarPaletteSection'
 
 const PREVIEW_MARKDOWN = `# 제목 1: Rally 노트 미리보기
@@ -55,7 +62,7 @@ const PREVIEW_MARKDOWN = `# 제목 1: Rally 노트 미리보기
 
 구분선(hr) 위/아래 본문입니다.
 
-\`\`\`
+\`\`\`ts
 function preview() {
   return 'code block sample'
 }
@@ -78,6 +85,8 @@ const ELEMENT_LABEL: Record<StyleElementKey, string> = {
 
 export function NoteSettings(): React.JSX.Element {
   const { settings, isLoading, save, reset } = useNoteStyle()
+  const { show: syntaxHintShow, setShow: setSyntaxHintShow } = useSyntaxHintSetting()
+  const { show: spellcheckShow, setShow: setSpellcheckShow } = useSpellcheckSetting()
   const [activeElement, setActiveElement] = useState<StyleElementKey>('h1')
 
   if (isLoading) {
@@ -95,6 +104,40 @@ export function NoteSettings(): React.JSX.Element {
 
   return (
     <div className="space-y-4">
+      {/* 마크다운 문법 힌트 토글 */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-medium">마크다운 문법 힌트</h3>
+          <p className="text-xs text-muted-foreground">
+            커서가 있는 제목·인용구 블록에 마크다운 문법(
+            <code className="bg-muted px-1 rounded">#</code>,{' '}
+            <code className="bg-muted px-1 rounded">&gt;</code>)을 표시합니다.
+          </p>
+        </div>
+        <Switch
+          checked={syntaxHintShow}
+          onCheckedChange={(v) => void setSyntaxHintShow(v)}
+          aria-label="마크다운 문법 힌트 토글"
+        />
+      </div>
+
+      {/* 문법 검사(맞춤법) 토글 */}
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h3 className="text-sm font-medium">문법 검사</h3>
+          <p className="text-xs text-muted-foreground">
+            맞춤법이 틀린 단어에 빨간 밑줄을 표시합니다.
+          </p>
+        </div>
+        <Switch
+          checked={spellcheckShow}
+          onCheckedChange={(v) => void setSpellcheckShow(v)}
+          aria-label="문법 검사 토글"
+        />
+      </div>
+
+      <Separator />
+
       {/* 상단: 설명 + 초기화 버튼 */}
       <div className="flex items-center justify-between">
         <div>
@@ -505,9 +548,11 @@ function PreviewMilkdownEditor(): React.JSX.Element {
           ...prev,
           editable: () => false
         }))
+        configureRallyCodeBlock(ctx)
       })
       .use(commonmark)
       .use(gfm)
+      .use(rallyCodeBlockPlugins)
   )
 
   return <Milkdown />

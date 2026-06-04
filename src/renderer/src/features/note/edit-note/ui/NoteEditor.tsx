@@ -18,11 +18,18 @@ import { upload, uploadConfig } from '@milkdown/kit/plugin/upload'
 import { clipboard } from '@milkdown/kit/plugin/clipboard'
 import { $view, callCommand } from '@milkdown/kit/utils'
 import { useWriteNoteContent } from '@entities/note'
+import { useSyntaxHintSetting } from '@/shared/hooks/use-syntax-hint-setting'
+import { useSpellcheckSetting } from '@/shared/hooks/use-spellcheck-setting'
+import {
+  configureRallyCodeBlock,
+  rallyCodeBlockPlugins
+} from '@/shared/lib/note-code-block-highlighting'
 import { useNoteExternalSync } from '../model/use-note-external-sync'
 import { createNoteImageNodeViewFactory } from '../model/note-image-node-view'
 import { noteSearchPlugin } from '../model/note-search-plugin'
 import { autolinkPlugin } from '../model/note-link-input-rule'
 import { syntaxHintPlugin } from '../model/note-syntax-hint-plugin'
+import { noteTabIndentPlugin } from '../model/note-tab-indent-plugin'
 import { notePasteNormalizePlugin } from '../model/note-paste-normalize'
 import {
   colorMarkSchema,
@@ -146,6 +153,14 @@ function MilkdownEditor({
     setToolbarHostEl(editorRef.current)
   }, [loading])
 
+  // 문법 검사(spellcheck) 설정 → ProseMirror contenteditable 의 spellcheck 속성에 반영.
+  const { show: spellcheckOn } = useSpellcheckSetting()
+  useEffect(() => {
+    if (loading) return
+    const pm = wrapperRef.current?.querySelector('.ProseMirror')
+    pm?.setAttribute('spellcheck', String(spellcheckOn))
+  }, [loading, spellcheckOn])
+
   useEditor((root) =>
     Editor.make()
       .config((ctx) => {
@@ -188,6 +203,7 @@ function MilkdownEditor({
             [RALLY_EMBED_MDAST_TYPE]: rallyEmbedStringifyHandler
           }
         }))
+        configureRallyCodeBlock(ctx)
       })
       .use(commonmark)
       .use(gfm)
@@ -200,12 +216,14 @@ function MilkdownEditor({
       .use(noteSearchPlugin)
       .use(autolinkPlugin)
       .use(syntaxHintPlugin)
+      .use(noteTabIndentPlugin)
       .use(colorMarkSchema)
       .use(toggleColorCommand)
       .use(rallyEmbedSchema)
       .use(createEmbedPickerPlugin(editorId))
       .use(embedProtectPlugin)
       .use(noteToolbarStatePlugin)
+      .use(rallyCodeBlockPlugins)
       .use($view(imageSchema.node, () => createNoteImageNodeViewFactory(workspaceId)))
       .use(
         $view(rallyEmbedSchema.node, () => createNoteEmbedNodeViewFactory(workspaceId, editorId))
@@ -351,8 +369,11 @@ export function NoteEditor({ workspaceId, noteId, initialContent }: NoteEditorPr
     }
   }, [])
 
+  // 설정 off 면 .syntax-hint 를 CSS 로 숨김 (에디터 재생성 없이 즉시 반영)
+  const { show: syntaxHintShow } = useSyntaxHintSetting()
+
   return (
-    <div className="h-full" data-rally-note>
+    <div className={`h-full${syntaxHintShow ? '' : ' rally-syntax-hint-off'}`} data-rally-note>
       <MilkdownProvider key={editorKey}>
         <MilkdownEditor
           workspaceId={workspaceId}
