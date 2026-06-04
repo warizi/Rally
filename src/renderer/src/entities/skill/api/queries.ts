@@ -11,6 +11,7 @@ import type {
   CreateCustomSkillInput,
   SkillApplyStatus,
   SkillItem,
+  SkillTarget,
   UpdateCustomSkillInput
 } from '../model/types'
 
@@ -116,12 +117,12 @@ export function useResetSystemSkill(): UseMutationResult<
 export function useApplySkill(): UseMutationResult<
   SkillApplyStatus | undefined,
   Error,
-  { id: string }
+  { id: string; target: SkillTarget }
 > {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id }) => {
-      const res: IpcResponse<SkillApplyStatus> = await window.api.skill.apply(id)
+    mutationFn: async ({ id, target }) => {
+      const res: IpcResponse<SkillApplyStatus> = await window.api.skill.apply(id, target)
       if (!res.success) throwIpcError(res)
       return res.data
     },
@@ -134,12 +135,12 @@ export function useApplySkill(): UseMutationResult<
 export function useUnapplySkill(): UseMutationResult<
   SkillApplyStatus | undefined,
   Error,
-  { id: string }
+  { id: string; target: SkillTarget }
 > {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id }) => {
-      const res: IpcResponse<SkillApplyStatus> = await window.api.skill.unapply(id)
+    mutationFn: async ({ id, target }) => {
+      const res: IpcResponse<SkillApplyStatus> = await window.api.skill.unapply(id, target)
       if (!res.success) throwIpcError(res)
       return res.data
     },

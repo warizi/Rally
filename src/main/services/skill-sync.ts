@@ -1,28 +1,17 @@
 import { app } from 'electron'
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { PermissionError, ValidationError } from '../lib/errors'
 import { skillService, SYSTEM_SKILL_NAMES } from './skill'
+import { toCodexPrompt } from './codex-prompt'
 
 /**
- * Claude Code (CLI) 가 읽는 user-scope skill 디렉터리.
- * ~/.claude/skills/<name>/SKILL.md 가 표준 경로.
- *
- * NOTE: Claude Desktop 은 filesystem-based skill 로딩을 지원하지 않으므로
- * 이 서비스는 Claude Code 만 대상으로 한다. Desktop 은 별도 `.skill` ZIP 내보내기
- * 후 Settings UI 에서 수동 업로드 필요 (skill-export 서비스 참고).
+ * skill 을 적용할 대상 클라이언트.
+ * - claude: Claude Code 가 읽는 ~/.claude/skills/<name>/SKILL.md (자동 트리거)
+ * - codex:  Codex CLI/Desktop 가 읽는 ~/.codex/prompts/<name>.md (수동 /name 슬래시 커맨드)
  */
-function getUserSkillsRoot(): string {
-  return join(app.getPath('home'), '.claude', 'skills')
-}
-
-function getSkillDir(name: string): string {
-  return join(getUserSkillsRoot(), name)
-}
-
-function getSkillFile(name: string): string {
-  return join(getSkillDir(name), 'SKILL.md')
-}
+export type SkillTarget = 'claude' | 'codex'
+export const SKILL_TARGETS: SkillTarget[] = ['claude', 'codex']
 
 /**
  * '.', '/', '..', 빈 문자열 등을 차단해 디렉터리 탈출 방지.
@@ -34,79 +23,57 @@ function assertSafeName(name: string): void {
   }
 }
 
-function writeSkillFile(name: string, content: string): void {
-  assertSafeName(name)
-  const dir = getSkillDir(name)
-  try {
-    mkdirSync(dir, { recursive: true })
-    writeFileSync(getSkillFile(name), content, 'utf-8')
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
-      throw new PermissionError(
-        `~/.claude/skills/${name} 에 쓰기 권한이 없습니다. 폴더 권한을 확인해 주세요.`
-      )
-    }
-    throw err
+function rethrowAsPermission(err: unknown, label: string): never {
+  const code = (err as NodeJS.ErrnoException).code
+  if (code === 'EACCES' || code === 'EPERM') {
+    throw new PermissionError(`${label} 에 접근 권한이 없습니다. 폴더 권한을 확인해 주세요.`)
   }
+  throw err as Error
 }
 
-function removeSkillDir(name: string): void {
-  assertSafeName(name)
-  const dir = getSkillDir(name)
-  if (!existsSync(dir)) return
-  try {
-    rmSync(dir, { recursive: true, force: true })
-  } catch (err) {
-    const code = (err as NodeJS.ErrnoException).code
-    if (code === 'EACCES' || code === 'EPERM') {
-      throw new PermissionError(
-        `~/.claude/skills/${name} 삭제 권한이 없습니다. 폴더 권한을 확인해 주세요.`
-      )
-    }
-    throw err
-  }
+/** 타겟 클라이언트별 적용/해제/조회 추상화 */
+interface SkillApplyTarget {
+  readonly id: SkillTarget
+  applyContent(name: string, content: string): void
+  remove(name: string): void
+  isApplied(name: string): boolean
+  listAppliedNames(): string[]
 }
 
-export interface SkillApplyStatus {
-  /** SkillItem.id */
-  id: string
-  name: string
-  applied: boolean
+// --- Claude: ~/.claude/skills/<name>/SKILL.md (디렉터리 기반) ---
+
+function claudeSkillsRoot(): string {
+  return join(app.getPath('home'), '.claude', 'skills')
 }
 
-export const skillSyncService = {
-  getUserSkillsRoot,
-
-  /**
-   * skill id 로 ~/.claude/skills/<name>/SKILL.md 를 쓴다.
-   * system skill 은 번들된 SKILL.md 를, custom 은 DB content 를 사용.
-   */
-  apply(id: string): SkillApplyStatus {
-    const item = skillService.get(id)
-    writeSkillFile(item.name, item.content)
-    return { id: item.id, name: item.name, applied: true }
-  },
-
-  /**
-   * skill id 로 적용된 파일을 제거. 파일이 없어도 OK (idempotent).
-   */
-  unapply(id: string): SkillApplyStatus {
-    const item = skillService.get(id)
-    removeSkillDir(item.name)
-    return { id: item.id, name: item.name, applied: false }
-  },
-
-  isApplied(name: string): boolean {
+const claudeTarget: SkillApplyTarget = {
+  id: 'claude',
+  applyContent(name, content) {
     assertSafeName(name)
-    return existsSync(getSkillFile(name))
+    const dir = join(claudeSkillsRoot(), name)
+    try {
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, 'SKILL.md'), content, 'utf-8')
+    } catch (err) {
+      rethrowAsPermission(err, `~/.claude/skills/${name}`)
+    }
   },
-
-  /**
-   * 현재 ~/.claude/skills/ 아래에 존재하는 모든 skill 디렉터리 이름.
-   */
-  listAppliedNames(): string[] {
-    const root = getUserSkillsRoot()
+  remove(name) {
+    assertSafeName(name)
+    const dir = join(claudeSkillsRoot(), name)
+    if (!existsSync(dir)) return
+    try {
+      rmSync(dir, { recursive: true, force: true })
+    } catch (err) {
+      rethrowAsPermission(err, `~/.claude/skills/${name}`)
+    }
+  },
+  isApplied(name) {
+    assertSafeName(name)
+    return existsSync(join(claudeSkillsRoot(), name, 'SKILL.md'))
+  },
+  listAppliedNames() {
+    const root = claudeSkillsRoot()
     if (!existsSync(root)) return []
     try {
       return readdirSync(root).filter((name) => {
@@ -120,28 +87,140 @@ export const skillSyncService = {
     } catch {
       return []
     }
+  }
+}
+
+// --- Codex: ~/.codex/prompts/<name>.md (파일 기반, frontmatter 제거) ---
+
+function codexPromptsRoot(): string {
+  return join(app.getPath('home'), '.codex', 'prompts')
+}
+
+const codexTarget: SkillApplyTarget = {
+  id: 'codex',
+  applyContent(name, content) {
+    assertSafeName(name)
+    const root = codexPromptsRoot()
+    try {
+      mkdirSync(root, { recursive: true })
+      writeFileSync(join(root, `${name}.md`), toCodexPrompt(content), 'utf-8')
+    } catch (err) {
+      rethrowAsPermission(err, `~/.codex/prompts/${name}.md`)
+    }
+  },
+  remove(name) {
+    assertSafeName(name)
+    const file = join(codexPromptsRoot(), `${name}.md`)
+    if (!existsSync(file)) return
+    try {
+      unlinkSync(file)
+    } catch (err) {
+      rethrowAsPermission(err, `~/.codex/prompts/${name}.md`)
+    }
+  },
+  isApplied(name) {
+    assertSafeName(name)
+    return existsSync(join(codexPromptsRoot(), `${name}.md`))
+  },
+  listAppliedNames() {
+    const root = codexPromptsRoot()
+    if (!existsSync(root)) return []
+    try {
+      return readdirSync(root)
+        .filter((f) => f.endsWith('.md'))
+        .map((f) => f.slice(0, -'.md'.length))
+    } catch {
+      return []
+    }
+  }
+}
+
+const TARGETS: Record<SkillTarget, SkillApplyTarget> = {
+  claude: claudeTarget,
+  codex: codexTarget
+}
+
+export interface SkillApplyStatus {
+  /** SkillItem.id */
+  id: string
+  name: string
+  /** 타겟별 적용 여부 */
+  applied: Record<SkillTarget, boolean>
+}
+
+function buildStatus(id: string, name: string): SkillApplyStatus {
+  return {
+    id,
+    name,
+    applied: {
+      claude: claudeTarget.isApplied(name),
+      codex: codexTarget.isApplied(name)
+    }
+  }
+}
+
+export const skillSyncService = {
+  /** Claude skills 루트 (기존 호환용) */
+  getUserSkillsRoot: claudeSkillsRoot,
+
+  /**
+   * skill id 를 지정 타겟에 적용.
+   * - claude: ~/.claude/skills/<name>/SKILL.md (DB content 그대로)
+   * - codex:  ~/.codex/prompts/<name>.md (frontmatter 제거 본문)
+   */
+  apply(id: string, target: SkillTarget = 'claude'): SkillApplyStatus {
+    const item = skillService.get(id)
+    TARGETS[target].applyContent(item.name, item.content)
+    return buildStatus(item.id, item.name)
+  },
+
+  /** skill id 를 지정 타겟에서 해제. 적용된 적 없어도 OK (idempotent). */
+  unapply(id: string, target: SkillTarget = 'claude'): SkillApplyStatus {
+    const item = skillService.get(id)
+    TARGETS[target].remove(item.name)
+    return buildStatus(item.id, item.name)
+  },
+
+  /** 내용 변경/리셋으로 stale 된 적용본을 모든 타겟에서 제거. */
+  unapplyStale(id: string): void {
+    const item = skillService.get(id)
+    for (const t of SKILL_TARGETS) {
+      if (TARGETS[t].isApplied(item.name)) TARGETS[t].remove(item.name)
+    }
+  },
+
+  isApplied(name: string, target: SkillTarget = 'claude'): boolean {
+    return TARGETS[target].isApplied(name)
+  },
+
+  listAppliedNames(target: SkillTarget = 'claude'): string[] {
+    return TARGETS[target].listAppliedNames()
   },
 
   /**
-   * 전체 skill 목록 + 적용 여부를 합쳐 반환. UI 새로고침 시 단일 호출로 충분하도록 설계.
+   * 전체 skill 목록 + 타겟별 적용 여부를 합쳐 반환. UI 새로고침 시 단일 호출로 충분하도록 설계.
    */
   status(): SkillApplyStatus[] {
-    const applied = new Set(this.listAppliedNames())
+    const appliedClaude = new Set(claudeTarget.listAppliedNames())
+    const appliedCodex = new Set(codexTarget.listAppliedNames())
     return skillService.list().map((item) => ({
       id: item.id,
       name: item.name,
-      applied: applied.has(item.name)
+      applied: {
+        claude: appliedClaude.has(item.name),
+        codex: appliedCodex.has(item.name)
+      }
     }))
   },
 
   /**
-   * 커스텀 skill 삭제 시 함께 호출 — 적용 파일이 있으면 정리.
+   * 커스텀 skill 삭제 시 함께 호출 — 모든 타겟의 적용 파일 정리.
    */
   cleanupByName(name: string): void {
     if (!/^[a-z0-9][a-z0-9_-]{0,59}$/.test(name)) return
     if (SYSTEM_SKILL_NAMES.includes(name as (typeof SYSTEM_SKILL_NAMES)[number])) {
       return
     }
-    removeSkillDir(name)
+    for (const t of SKILL_TARGETS) TARGETS[t].remove(name)
   }
 }

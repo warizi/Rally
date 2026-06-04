@@ -207,8 +207,8 @@ const INVOKE_CASES: Array<{ ns: ApiNamespace; method: string; args: unknown[]; c
     { ns: 'skill', method: 'update', args: ['sk-1', {}] },
     { ns: 'skill', method: 'remove', args: ['ws-1', 'sk-1'] },
     { ns: 'skill', method: 'resetSystem', args: ['sys-1'] },
-    { ns: 'skill', method: 'apply', args: ['sk-1'] },
-    { ns: 'skill', method: 'unapply', args: ['sk-1'] },
+    { ns: 'skill', method: 'apply', args: ['sk-1', 'claude'] },
+    { ns: 'skill', method: 'unapply', args: ['sk-1', 'codex'] },
     { ns: 'skill', method: 'status', args: [] },
     { ns: 'skill', method: 'export', args: ['sk-1'] },
 

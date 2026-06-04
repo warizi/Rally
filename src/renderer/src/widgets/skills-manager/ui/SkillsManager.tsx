@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { PlusIcon } from 'lucide-react'
-import { useSkillStatus, useSkills, type SkillItem } from '@entities/skill'
+import { useSkillStatus, useSkills, type SkillItem, type SkillTarget } from '@entities/skill'
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { Button } from '@shared/ui/button'
 import {
@@ -12,7 +12,12 @@ import {
 } from '@features/skill'
 import { SkillCard } from './SkillCard'
 
-export function SkillsManager(): React.JSX.Element {
+interface Props {
+  /** 적용 대상 클라이언트 (기본 claude) */
+  target?: SkillTarget
+}
+
+export function SkillsManager({ target = 'claude' }: Props): React.JSX.Element {
   const skillsQuery = useSkills()
   const statusQuery = useSkillStatus()
   const [selected, setSelected] = useState<SkillItem | null>(null)
@@ -20,7 +25,7 @@ export function SkillsManager(): React.JSX.Element {
 
   const skills = skillsQuery.data ?? []
   const status = statusQuery.data ?? []
-  const appliedNames = new Set(status.filter((s) => s.applied).map((s) => s.name))
+  const appliedNames = new Set(status.filter((s) => s.applied[target]).map((s) => s.name))
 
   const systemSkills = skills.filter((s) => s.source === 'system')
   const customSkills = skills.filter((s) => s.source === 'custom')
@@ -36,21 +41,33 @@ export function SkillsManager(): React.JSX.Element {
         <OnboardingTipIcon
           tipId="skills_manage"
           title="Skills 관리"
-          description="기본 skill 과 사용자가 등록한 커스텀 skill 을 한 곳에서 관리합니다. 원클릭으로 Claude Desktop / Code 에 적용·해제할 수 있어요."
+          description="기본 skill 과 사용자가 등록한 커스텀 skill 을 한 곳에서 관리합니다. 원클릭으로 적용·해제할 수 있어요."
           side="right"
           align="start"
         />
       </div>
-      <p className="text-xs text-muted-foreground mb-3">
-        <strong>적용</strong> 은{' '}
-        <code className="bg-muted px-1 rounded">~/.claude/skills/&lt;name&gt;/SKILL.md</code> 에
-        작성됩니다 — Claude Code 가 자동 인식합니다. Claude Desktop 은 filesystem skill 을 지원하지
-        않으므로{' '}
-        <strong>
-          <code className="bg-muted px-1 rounded">.skill</code> 파일로 내보내기
-        </strong>{' '}
-        후 앱 Settings 에서 수동 업로드하세요.
-      </p>
+      {target === 'claude' ? (
+        <p className="text-xs text-muted-foreground mb-3">
+          <strong>적용</strong> 은{' '}
+          <code className="bg-muted px-1 rounded">~/.claude/skills/&lt;name&gt;/SKILL.md</code> 에
+          작성됩니다 — Claude Code 가 자동 인식합니다. Claude Desktop 은 filesystem skill 을
+          지원하지 않으므로{' '}
+          <strong>
+            <code className="bg-muted px-1 rounded">.skill</code> 파일로 내보내기
+          </strong>{' '}
+          후 앱 Settings 에서 수동 업로드하세요.
+        </p>
+      ) : (
+        <p className="text-xs text-muted-foreground mb-3">
+          <strong>적용</strong> 은{' '}
+          <code className="bg-muted px-1 rounded">~/.codex/prompts/&lt;name&gt;.md</code> 에
+          작성됩니다. Codex 에는 자동 트리거 skill 이 없어{' '}
+          <strong>
+            <code className="bg-muted px-1 rounded">/&lt;name&gt;</code> 슬래시 커맨드
+          </strong>{' '}
+          로 수동 호출하는 프롬프트가 됩니다 (frontmatter 는 제거되어 본문만 적용).
+        </p>
+      )}
 
       {isLoading && (
         <div className="text-xs text-muted-foreground py-3">Skill 목록을 불러오는 중…</div>
@@ -82,7 +99,11 @@ export function SkillsManager(): React.JSX.Element {
                     onClick={() => setSelected(skill)}
                     actions={
                       <>
-                        <ApplyToggleButton skill={skill} applied={appliedNames.has(skill.name)} />
+                        <ApplyToggleButton
+                          skill={skill}
+                          applied={appliedNames.has(skill.name)}
+                          target={target}
+                        />
                         <ExportSkillButton skill={skill} />
                         <RemoveSkillButton skill={skill} />
                       </>
@@ -122,7 +143,11 @@ export function SkillsManager(): React.JSX.Element {
                     onClick={() => setSelected(skill)}
                     actions={
                       <>
-                        <ApplyToggleButton skill={skill} applied={appliedNames.has(skill.name)} />
+                        <ApplyToggleButton
+                          skill={skill}
+                          applied={appliedNames.has(skill.name)}
+                          target={target}
+                        />
                         <ExportSkillButton skill={skill} />
                         <RemoveSkillButton skill={skill} />
                       </>

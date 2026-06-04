@@ -52,15 +52,27 @@ describe('ApplyToggleButton', () => {
   it('applied=false 클릭 → applyMutation + 성공 토스트', async () => {
     render(<ApplyToggleButton skill={SKILL} applied={false} />)
     fireEvent.click(screen.getByRole('button'))
-    await waitFor(() => expect(mocks.applyAsync).toHaveBeenCalledWith({ id: 's-1' }))
+    await waitFor(() =>
+      expect(mocks.applyAsync).toHaveBeenCalledWith({ id: 's-1', target: 'claude' })
+    )
     expect(mocks.toastSuccess).toHaveBeenCalledWith(expect.stringContaining('적용했습니다'))
   })
 
   it('applied=true 클릭 → unapplyMutation + 해제 토스트', async () => {
     render(<ApplyToggleButton skill={SKILL} applied={true} />)
     fireEvent.click(screen.getByRole('button'))
-    await waitFor(() => expect(mocks.unapplyAsync).toHaveBeenCalledWith({ id: 's-1' }))
+    await waitFor(() =>
+      expect(mocks.unapplyAsync).toHaveBeenCalledWith({ id: 's-1', target: 'claude' })
+    )
     expect(mocks.toastSuccess).toHaveBeenCalledWith(expect.stringContaining('해제했습니다'))
+  })
+
+  it('target=codex → codex 타겟으로 적용', async () => {
+    render(<ApplyToggleButton skill={SKILL} applied={false} target="codex" />)
+    fireEvent.click(screen.getByRole('button'))
+    await waitFor(() =>
+      expect(mocks.applyAsync).toHaveBeenCalledWith({ id: 's-1', target: 'codex' })
+    )
   })
 
   it('mutate 실패 → toast.error', async () => {

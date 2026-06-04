@@ -32,7 +32,7 @@ afterEach(() => {
 describe('skillSyncService.apply', () => {
   it('system skill 을 ~/.claude/skills/<name>/SKILL.md 로 작성 (DB content)', () => {
     const result = skillSyncService.apply('system:rally')
-    expect(result.applied).toBe(true)
+    expect(result.applied.claude).toBe(true)
     expect(result.name).toBe('rally')
     const expected = join(tmpHome, '.claude', 'skills', 'rally', 'SKILL.md')
     expect(existsSync(expected)).toBe(true)
@@ -47,7 +47,7 @@ describe('skillSyncService.apply', () => {
       content: '---\nname: my-custom\ndescription: my desc\n---\n# custom body\n'
     })
     const result = skillSyncService.apply(created.id)
-    expect(result.applied).toBe(true)
+    expect(result.applied.claude).toBe(true)
     const file = join(tmpHome, '.claude', 'skills', 'rally-my-custom', 'SKILL.md')
     expect(readFileSync(file, 'utf-8')).toContain('# custom body')
   })
@@ -102,13 +102,68 @@ describe('skillSyncService.isApplied / listAppliedNames', () => {
 })
 
 describe('skillSyncService.status', () => {
-  it('전체 skill 목록 + 적용 여부 반환', () => {
+  it('전체 skill 목록 + 타겟별 적용 여부 반환', () => {
     skillSyncService.apply('system:rally')
     const status = skillSyncService.status()
     const rally = status.find((s) => s.name === 'rally')
     const rallyDo = status.find((s) => s.name === 'rally-do')
-    expect(rally?.applied).toBe(true)
-    expect(rallyDo?.applied).toBe(false)
+    expect(rally?.applied).toEqual({ claude: true, codex: false })
+    expect(rallyDo?.applied).toEqual({ claude: false, codex: false })
+  })
+})
+
+describe('codex 타겟', () => {
+  it('apply(codex) → ~/.codex/prompts/<name>.md 에 frontmatter 제거 본문 작성', () => {
+    const created = skillService.create({
+      name: 'rally-codex-test',
+      description: 'd',
+      content: '---\nname: rally-codex-test\ndescription: d\n---\n# 본문 시작\n내용\n'
+    })
+    const result = skillSyncService.apply(created.id, 'codex')
+    expect(result.applied).toEqual({ claude: false, codex: true })
+
+    const file = join(tmpHome, '.codex', 'prompts', 'rally-codex-test.md')
+    expect(existsSync(file)).toBe(true)
+    const body = readFileSync(file, 'utf-8')
+    expect(body).toContain('# 본문 시작')
+    expect(body).not.toContain('---') // frontmatter 제거됨
+    // claude 쪽은 영향 없음
+    expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally-codex-test'))).toBe(false)
+  })
+
+  it('claude/codex 각각 독립 적용 + status 분리', () => {
+    skillSyncService.apply('system:rally', 'claude')
+    skillSyncService.apply('system:rally', 'codex')
+    const rally = skillSyncService.status().find((s) => s.name === 'rally')
+    expect(rally?.applied).toEqual({ claude: true, codex: true })
+    expect(skillSyncService.isApplied('rally', 'codex')).toBe(true)
+    expect(skillSyncService.listAppliedNames('codex')).toContain('rally')
+  })
+
+  it('unapply(codex) → 파일 제거 (claude 유지)', () => {
+    skillSyncService.apply('system:rally', 'claude')
+    skillSyncService.apply('system:rally', 'codex')
+    skillSyncService.unapply('system:rally', 'codex')
+    expect(existsSync(join(tmpHome, '.codex', 'prompts', 'rally.md'))).toBe(false)
+    expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally', 'SKILL.md'))).toBe(true)
+  })
+
+  it('unapplyStale → 모든 타겟에서 제거', () => {
+    skillSyncService.apply('system:rally', 'claude')
+    skillSyncService.apply('system:rally', 'codex')
+    skillSyncService.unapplyStale('system:rally')
+    const rally = skillSyncService.status().find((s) => s.name === 'rally')
+    expect(rally?.applied).toEqual({ claude: false, codex: false })
+  })
+
+  it('cleanupByName → claude + codex 모두 정리', () => {
+    skillService.create({ name: 'rally-both', description: 'd', content: 'c' })
+    const item = skillService.list().find((s) => s.name === 'rally-both')!
+    skillSyncService.apply(item.id, 'claude')
+    skillSyncService.apply(item.id, 'codex')
+    skillSyncService.cleanupByName('rally-both')
+    expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally-both'))).toBe(false)
+    expect(existsSync(join(tmpHome, '.codex', 'prompts', 'rally-both.md'))).toBe(false)
   })
 })
 

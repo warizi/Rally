@@ -1143,10 +1143,12 @@ interface UpdateCustomSkillInput {
   triggers?: string[]
 }
 
+type SkillTarget = 'claude' | 'codex'
+
 interface SkillApplyStatus {
   id: string
   name: string
-  applied: boolean
+  applied: Record<SkillTarget, boolean>
 }
 
 interface SkillAPI {
@@ -1156,8 +1158,8 @@ interface SkillAPI {
   update: (id: string, input: UpdateCustomSkillInput) => Promise<IpcResponse<SkillItem>>
   remove: (workspaceId: string, id: string) => Promise<IpcResponse<{ batchId: string }>>
   resetSystem: (id: string) => Promise<IpcResponse<SkillItem>>
-  apply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
-  unapply: (id: string) => Promise<IpcResponse<SkillApplyStatus>>
+  apply: (id: string, target?: SkillTarget) => Promise<IpcResponse<SkillApplyStatus>>
+  unapply: (id: string, target?: SkillTarget) => Promise<IpcResponse<SkillApplyStatus>>
   status: () => Promise<IpcResponse<SkillApplyStatus[]>>
   export: (id: string) => Promise<IpcResponse<{ path: string } | null>>
 }

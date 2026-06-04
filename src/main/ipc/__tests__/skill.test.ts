@@ -24,6 +24,7 @@ vi.mock('../../services/skill-sync', () => ({
     isApplied: vi.fn(),
     apply: vi.fn(),
     unapply: vi.fn(),
+    unapplyStale: vi.fn(),
     status: vi.fn(),
     cleanupByName: vi.fn()
   }
@@ -66,28 +67,16 @@ describe('skill IPC handlers', () => {
     }
   })
 
-  it('skill:update → 적용 상태면 자동 unapply', () => {
+  it('skill:update → 모든 타겟 stale 적용본 해제 (unapplyStale)', () => {
     vi.mocked(skillService.update).mockReturnValue({
       id: 'sk-aabbcc1',
       name: 'my-skill'
     } as unknown as ReturnType<typeof skillService.update>)
-    vi.mocked(skillSyncService.isApplied).mockReturnValue(true)
 
     getHandler('skill:update')({}, 'sk-aabbcc1', { description: 'new' })
 
     expect(skillService.update).toHaveBeenCalled()
-    expect(skillSyncService.unapply).toHaveBeenCalledWith('sk-aabbcc1')
-  })
-
-  it('skill:update → 미적용 상태면 unapply 호출 안 됨', () => {
-    vi.mocked(skillService.update).mockReturnValue({
-      id: 'sk-aabbcc1',
-      name: 'my-skill'
-    } as unknown as ReturnType<typeof skillService.update>)
-    vi.mocked(skillSyncService.isApplied).mockReturnValue(false)
-
-    getHandler('skill:update')({}, 'sk-aabbcc1', { description: 'new' })
-    expect(skillSyncService.unapply).not.toHaveBeenCalled()
+    expect(skillSyncService.unapplyStale).toHaveBeenCalledWith('sk-aabbcc1')
   })
 
   it('skill:remove → ensureCustomDeletable + softRemove + cleanupByName 순서 호출', () => {
@@ -108,16 +97,15 @@ describe('skill IPC handlers', () => {
     expect(result).toEqual({ success: true, data: { batchId: 'batch-aabbcc' } })
   })
 
-  it('skill:resetSystem → 적용 상태면 자동 unapply', () => {
+  it('skill:resetSystem → 모든 타겟 stale 적용본 해제 (unapplyStale)', () => {
     vi.mocked(skillService.resetSystem).mockReturnValue({
       id: 'sys-aabbcc',
       name: 'system-skill'
     } as unknown as ReturnType<typeof skillService.resetSystem>)
-    vi.mocked(skillSyncService.isApplied).mockReturnValue(true)
 
     getHandler('skill:resetSystem')({}, 'sys-aabbcc')
 
-    expect(skillSyncService.unapply).toHaveBeenCalledWith('sys-aabbcc')
+    expect(skillSyncService.unapplyStale).toHaveBeenCalledWith('sys-aabbcc')
   })
 
   it('skill:export → handleAsync (Promise 반환)', async () => {

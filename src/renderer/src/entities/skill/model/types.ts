@@ -19,10 +19,14 @@ export interface SkillItem {
   updatedAt: Date
 }
 
+/** skill 을 적용할 대상 클라이언트 */
+export type SkillTarget = 'claude' | 'codex'
+
 export interface SkillApplyStatus {
   id: string
   name: string
-  applied: boolean
+  /** 타겟별 적용 여부 */
+  applied: Record<SkillTarget, boolean>
 }
 
 export interface CreateCustomSkillInput {

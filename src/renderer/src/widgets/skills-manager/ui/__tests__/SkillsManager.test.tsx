@@ -15,7 +15,7 @@ interface FakeSkill {
 
 const mocks = vi.hoisted(() => ({
   skills: [] as FakeSkill[],
-  status: [] as Array<{ name: string; applied: boolean }>,
+  status: [] as Array<{ name: string; applied: { claude: boolean; codex: boolean } }>,
   skillsLoading: false,
   skillsError: null as Error | null,
   statusLoading: false,
@@ -110,10 +110,23 @@ describe('SkillsManager', () => {
       { id: 's2', name: 'b', source: 'system' }
     ]
     mocks.status = [
-      { name: 'a', applied: true },
-      { name: 'b', applied: false }
+      { name: 'a', applied: { claude: true, codex: false } },
+      { name: 'b', applied: { claude: false, codex: false } }
     ]
     render(<SkillsManager />)
+    expect(screen.getByText(/적용됨 1/)).toBeInTheDocument()
+  })
+
+  it('target=codex → codex 적용 카운트 반영', () => {
+    mocks.skills = [
+      { id: 's1', name: 'a', source: 'system' },
+      { id: 's2', name: 'b', source: 'system' }
+    ]
+    mocks.status = [
+      { name: 'a', applied: { claude: false, codex: true } },
+      { name: 'b', applied: { claude: true, codex: false } }
+    ]
+    render(<SkillsManager target="codex" />)
     expect(screen.getByText(/적용됨 1/)).toBeInTheDocument()
   })
 

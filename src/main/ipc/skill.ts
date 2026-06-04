@@ -6,7 +6,7 @@ import {
   type CreateCustomSkillInput,
   type UpdateCustomSkillInput
 } from '../services/skill'
-import { skillSyncService } from '../services/skill-sync'
+import { skillSyncService, type SkillTarget } from '../services/skill-sync'
 import { skillExportService } from '../services/skill-export'
 import { trashService } from '../services/trash'
 
@@ -29,12 +29,9 @@ export function registerSkillHandlers(): void {
     (_: IpcMainInvokeEvent, id: string, input: UpdateCustomSkillInput): IpcResponse =>
       handle(() => {
         const updated = skillService.update(id, input)
-        // 수정 시점에 ~/.claude/skills/<name>/SKILL.md 가 존재 = 적용된 상태.
-        // 그 파일은 새 내용 반영 안 되어 stale 이므로 명시적으로 해제 → UI 도 적용됨 배지 제거.
-        // 사용자가 새 내용을 적용하려면 "적용" 버튼 다시 클릭.
-        if (skillSyncService.isApplied(updated.name)) {
-          skillSyncService.unapply(id)
-        }
+        // 수정 시점에 적용돼 있던 파일(claude/codex)은 새 내용이 반영 안 되어 stale 이므로
+        // 모든 타겟에서 해제 → UI 도 적용됨 배지 제거. 새 내용 적용은 "적용" 버튼 재클릭.
+        skillSyncService.unapplyStale(id)
         return updated
       })
   )
@@ -58,22 +55,22 @@ export function registerSkillHandlers(): void {
     (_: IpcMainInvokeEvent, id: string): IpcResponse =>
       handle(() => {
         const reset = skillService.resetSystem(id)
-        // 리셋도 적용 파일을 stale 로 만들므로 동일하게 자동 해제.
-        if (skillSyncService.isApplied(reset.name)) {
-          skillSyncService.unapply(id)
-        }
+        // 리셋도 적용 파일을 stale 로 만들므로 모든 타겟에서 자동 해제.
+        skillSyncService.unapplyStale(id)
         return reset
       })
   )
 
   ipcMain.handle(
     'skill:apply',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillSyncService.apply(id))
+    (_: IpcMainInvokeEvent, id: string, target: SkillTarget = 'claude'): IpcResponse =>
+      handle(() => skillSyncService.apply(id, target))
   )
 
   ipcMain.handle(
     'skill:unapply',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => skillSyncService.unapply(id))
+    (_: IpcMainInvokeEvent, id: string, target: SkillTarget = 'claude'): IpcResponse =>
+      handle(() => skillSyncService.unapply(id, target))
   )
 
   ipcMain.handle('skill:status', (): IpcResponse => handle(() => skillSyncService.status()))
