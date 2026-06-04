@@ -6,6 +6,24 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.0',
+    date: '2026-06-05',
+    changes: [
+      {
+        type: 'feature',
+        title: 'Codex MCP 연결 기능 추가',
+        description:
+          'Codex MCP 서버와 연결할 수 있는 기능이 추가되었습니다. 이제 Codex MCP 서버를 통해 AI 에이전트가 워크스페이스 내에서 작업을 수행할 수 있습니다. 설정 > AI(Codex) 탭에서 Codex MCP 서버를 연결할 수 있습니다.'
+      },
+      {
+        type: 'feature',
+        title: 'Codex Skill 도구 추가',
+        description:
+          'Codex MCP 서버와 함께 사용할 수 있는 Codex Skill 도구가 추가되었습니다. 이제 AI 에이전트가 Codex MCP 서버를 통해 워크스페이스 내에서 작업을 수행할 때 Codex Skill을 활용할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.14.3',
     date: '2026-06-03',
     changes: [
