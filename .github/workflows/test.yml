@@ -91,7 +91,24 @@ jobs:
           path: coverage/node/
           retention-days: 7
 
+  # PR 차단용 빠른 renderer test — 4-way shard 병렬 실행 (coverage 미측정).
+  # 가장 느린 shard 기준 1분 이하 목표. coverage 지표는 coverage-web job 이 담당.
   test-web:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: test-web (shard ${{ matrix.shard }}/4)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-and-install
+      - name: Run renderer tests (shard ${{ matrix.shard }}/4)
+        run: npm run test:web -- --shard ${{ matrix.shard }}/4
+
+  # coverage 지표 전용 job — PR 차단 게이트(test-web shard)와 분리해 병렬 실행.
+  # 느려도 빠른 게이트를 막지 않으며 coverage-summary 에 web 커버리지를 공급한다.
+  coverage-web:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -108,7 +125,7 @@ jobs:
 
   coverage-summary:
     runs-on: ubuntu-latest
-    needs: [test-node, test-web]
+    needs: [test-node, coverage-web]
     if: always()
     permissions:
       pull-requests: write
