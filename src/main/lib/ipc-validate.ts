@@ -60,6 +60,24 @@ export function validateIpcAsync<TSchemas extends readonly ZodType[], TResult>(
     })
 }
 
+/**
+ * 인자가 없는(또는 무시하는) IPC 채널용 명시 검증 래퍼.
+ *
+ * dialog/select·단순 no-arg 조회처럼 렌더러 인자가 없는 채널도 raw handler 대신 이
+ * 래퍼를 거치게 해, "검증 경로를 통과했다"는 사실을 정적으로 보장한다. 렌더러가 보낸
+ * 인자는 전부 폐기하고 handler 에 전달하지 않으므로, 미검증 입력이 service 로 흘러가지
+ * 않는다.
+ *
+ * `handle(...)` wrapping 을 하지 않고 handler 반환값을 그대로 통과시켜 기존 응답 shape
+ * (IpcResponse / dialog raw 값 / Promise) 를 보존한다. 즉 no-arg handler 본문은
+ * 기존 그대로 두고 한 겹만 감싼다.
+ */
+export function validateNoArgs<TResult>(
+  handler: () => TResult
+): (event: IpcMainInvokeEvent, ...rawArgs: unknown[]) => TResult {
+  return () => handler()
+}
+
 function parseAll(schemas: readonly ZodType[], rawArgs: unknown[]): unknown[] {
   return schemas.map((schema, i) => schema.parse(rawArgs[i]))
 }

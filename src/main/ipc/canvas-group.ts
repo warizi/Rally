@@ -1,31 +1,30 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { canvasGroupCreateSchema, canvasGroupUpdateSchema } from './schemas'
 import { canvasGroupService } from '../services/canvas-group'
-import type { CreateCanvasGroupData, UpdateCanvasGroupData } from '../services/canvas-group'
 
 export function registerCanvasGroupHandlers(): void {
   ipcMain.handle(
     'canvasGroup:findByCanvas',
-    (_: IpcMainInvokeEvent, canvasId: string): IpcResponse =>
-      handle(() => canvasGroupService.findByCanvas(canvasId))
+    validateIpc([idSchema], (canvasId) => canvasGroupService.findByCanvas(canvasId))
   )
 
   ipcMain.handle(
     'canvasGroup:create',
-    (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
-      handle(() => canvasGroupService.create(canvasId, data as CreateCanvasGroupData))
+    validateIpc([idSchema, canvasGroupCreateSchema] as const, (canvasId, data) =>
+      canvasGroupService.create(canvasId, data)
+    )
   )
 
   ipcMain.handle(
     'canvasGroup:update',
-    (_: IpcMainInvokeEvent, groupId: string, data: unknown): IpcResponse =>
-      handle(() => canvasGroupService.update(groupId, data as UpdateCanvasGroupData))
+    validateIpc([idSchema, canvasGroupUpdateSchema] as const, (groupId, data) =>
+      canvasGroupService.update(groupId, data)
+    )
   )
 
   ipcMain.handle(
     'canvasGroup:remove',
-    (_: IpcMainInvokeEvent, groupId: string): IpcResponse =>
-      handle(() => canvasGroupService.remove(groupId))
+    validateIpc([idSchema], (groupId) => canvasGroupService.remove(groupId))
   )
 }

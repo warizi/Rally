@@ -1,18 +1,16 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { tabSessionUpsertSchema } from './schemas'
 import { tabSessionService } from '../services/tab-session'
 
 export function registerTabSessionHandlers(): void {
   ipcMain.handle(
     'tabSession:getByWorkspaceId',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => tabSessionService.getByWorkspaceId(workspaceId))
+    validateIpc([idSchema], (workspaceId) => tabSessionService.getByWorkspaceId(workspaceId))
   )
 
   ipcMain.handle(
     'tabSession:upsert',
-    (_: IpcMainInvokeEvent, data: unknown): IpcResponse =>
-      handle(() => tabSessionService.upsert(data as Parameters<typeof tabSessionService.upsert>[0]))
+    validateIpc([tabSessionUpsertSchema], (data) => tabSessionService.upsert(data))
   )
 }

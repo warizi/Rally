@@ -72,8 +72,18 @@ describe('schedule IPC handlers', () => {
     vi.mocked(scheduleService.create).mockReturnValue({ id: 'sch-newaabb' } as ReturnType<
       typeof scheduleService.create
     >)
-    const result = getHandler('schedule:create')({}, 'ws-aabbcc12', { title: 'meeting' })
-    expect(scheduleService.create).toHaveBeenCalledWith('ws-aabbcc12', { title: 'meeting' })
+    const startAt = new Date('2026-06-01T10:00:00.000Z')
+    const endAt = new Date('2026-06-01T11:00:00.000Z')
+    const result = getHandler('schedule:create')({}, 'ws-aabbcc12', {
+      title: 'meeting',
+      startAt,
+      endAt
+    })
+    expect(scheduleService.create).toHaveBeenCalledWith('ws-aabbcc12', {
+      title: 'meeting',
+      startAt,
+      endAt
+    })
     expect(result).toMatchObject({ success: true })
   })
 })

@@ -1,31 +1,30 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { reminderEntityTypeSchema, reminderSetSchema } from './schemas'
 import { reminderService } from '../services/reminder'
-import type { SetReminderData } from '../services/reminder'
 
 export function registerReminderHandlers(): void {
   ipcMain.handle(
     'reminder:findByEntity',
-    (_: IpcMainInvokeEvent, entityType: 'todo' | 'schedule', entityId: string): IpcResponse =>
-      handle(() => reminderService.findByEntity(entityType, entityId))
+    validateIpc([reminderEntityTypeSchema, idSchema] as const, (entityType, entityId) =>
+      reminderService.findByEntity(entityType, entityId)
+    )
   )
 
   ipcMain.handle(
     'reminder:set',
-    (_: IpcMainInvokeEvent, data: SetReminderData): IpcResponse =>
-      handle(() => reminderService.set(data))
+    validateIpc([reminderSetSchema], (data) => reminderService.set(data))
   )
 
   ipcMain.handle(
     'reminder:remove',
-    (_: IpcMainInvokeEvent, reminderId: string): IpcResponse =>
-      handle(() => reminderService.remove(reminderId))
+    validateIpc([idSchema], (reminderId) => reminderService.remove(reminderId))
   )
 
   ipcMain.handle(
     'reminder:removeByEntity',
-    (_: IpcMainInvokeEvent, entityType: 'todo' | 'schedule', entityId: string): IpcResponse =>
-      handle(() => reminderService.removeByEntity(entityType, entityId))
+    validateIpc([reminderEntityTypeSchema, idSchema] as const, (entityType, entityId) =>
+      reminderService.removeByEntity(entityType, entityId)
+    )
   )
 }

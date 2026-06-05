@@ -1,12 +1,13 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
-import { historyService, type HistoryFetchOptions } from '../services/history'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { historyFetchOptionsSchema } from './schemas'
+import { historyService } from '../services/history'
 
 export function registerHistoryHandlers(): void {
   ipcMain.handle(
     'history:fetch',
-    (_: IpcMainInvokeEvent, workspaceId: string, options?: HistoryFetchOptions): IpcResponse =>
-      handle(() => historyService.fetch(workspaceId, options ?? {}))
+    validateIpc([idSchema, historyFetchOptionsSchema] as const, (workspaceId, options) =>
+      historyService.fetch(workspaceId, options ?? {})
+    )
   )
 }

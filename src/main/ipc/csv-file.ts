@@ -1,83 +1,85 @@
-import { dialog, ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
-import { validateIpc, idSchema } from '../lib/ipc-validate'
-import { externalFilePathSchema } from './schemas'
+import { dialog, ipcMain } from 'electron'
+import { validateIpc, validateNoArgs, idSchema } from '../lib/ipc-validate'
+import {
+  nullableIdSchema,
+  titleSchema,
+  contentSchema,
+  orderIndexSchema,
+  booleanSchema,
+  csvUpdateMetaSchema,
+  externalFilePathSchema
+} from './schemas'
 import { csvFileService } from '../services/csv-file'
 
 export function registerCsvFileHandlers(): void {
   ipcMain.handle(
     'csv:readByWorkspace',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => csvFileService.readByWorkspaceFromDb(workspaceId))
+    validateIpc([idSchema], (workspaceId) => csvFileService.readByWorkspaceFromDb(workspaceId))
   )
 
   ipcMain.handle(
     'csv:create',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      folderId: string | null,
-      name: string
-    ): IpcResponse => handle(() => csvFileService.create(workspaceId, folderId, name))
+    validateIpc([idSchema, nullableIdSchema, titleSchema] as const, (workspaceId, folderId, name) =>
+      csvFileService.create(workspaceId, folderId, name)
+    )
   )
 
   ipcMain.handle(
     'csv:rename',
-    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string, newName: string): IpcResponse =>
-      handle(() => csvFileService.rename(workspaceId, csvId, newName))
+    validateIpc([idSchema, idSchema, titleSchema] as const, (workspaceId, csvId, newName) =>
+      csvFileService.rename(workspaceId, csvId, newName)
+    )
   )
 
   ipcMain.handle(
     'csv:remove',
-    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string): IpcResponse =>
-      handle(() => csvFileService.remove(workspaceId, csvId))
+    validateIpc([idSchema, idSchema] as const, (workspaceId, csvId) =>
+      csvFileService.remove(workspaceId, csvId)
+    )
   )
 
   ipcMain.handle(
     'csv:readContent',
-    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string): IpcResponse =>
-      handle(() => csvFileService.readContent(workspaceId, csvId))
+    validateIpc([idSchema, idSchema] as const, (workspaceId, csvId) =>
+      csvFileService.readContent(workspaceId, csvId)
+    )
   )
 
   ipcMain.handle(
     'csv:writeContent',
-    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string, content: string): IpcResponse =>
-      handle(() => csvFileService.writeContent(workspaceId, csvId, content))
+    validateIpc([idSchema, idSchema, contentSchema] as const, (workspaceId, csvId, content) =>
+      csvFileService.writeContent(workspaceId, csvId, content)
+    )
   )
 
   ipcMain.handle(
     'csv:move',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      csvId: string,
-      folderId: string | null,
-      index: number
-    ): IpcResponse => handle(() => csvFileService.move(workspaceId, csvId, folderId, index))
+    validateIpc(
+      [idSchema, idSchema, nullableIdSchema, orderIndexSchema] as const,
+      (workspaceId, csvId, folderId, index) => csvFileService.move(workspaceId, csvId, folderId, index)
+    )
   )
 
   ipcMain.handle(
     'csv:updateMeta',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      csvId: string,
-      data: { description?: string; columnWidths?: string }
-    ): IpcResponse => handle(() => csvFileService.updateMeta(workspaceId, csvId, data))
+    validateIpc(
+      [idSchema, idSchema, csvUpdateMetaSchema] as const,
+      (workspaceId, csvId, data) => csvFileService.updateMeta(workspaceId, csvId, data)
+    )
   )
 
   ipcMain.handle(
     'csv:duplicate',
-    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string): IpcResponse =>
-      handle(() => csvFileService.duplicate(workspaceId, csvId))
+    validateIpc([idSchema, idSchema] as const, (workspaceId, csvId) =>
+      csvFileService.duplicate(workspaceId, csvId)
+    )
   )
 
   // 위험 입력: 렌더러가 넘긴 소스 경로로 파일 읽기 → path traversal 차단.
   ipcMain.handle(
     'csv:import',
     validateIpc(
-      [idSchema, idSchema.nullable(), externalFilePathSchema] as const,
+      [idSchema, nullableIdSchema, externalFilePathSchema] as const,
       (workspaceId, folderId, sourcePath) =>
         csvFileService.import(workspaceId, folderId, sourcePath)
     )
@@ -85,15 +87,20 @@ export function registerCsvFileHandlers(): void {
 
   ipcMain.handle(
     'csv:toggleLock',
-    (_: IpcMainInvokeEvent, workspaceId: string, csvId: string, isLocked: boolean): IpcResponse =>
-      handle(() => csvFileService.toggleLock(workspaceId, csvId, isLocked))
+    validateIpc(
+      [idSchema, idSchema, booleanSchema] as const,
+      (workspaceId, csvId, isLocked) => csvFileService.toggleLock(workspaceId, csvId, isLocked)
+    )
   )
 
-  ipcMain.handle('csv:selectFile', async (): Promise<string[] | null> => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'CSV', extensions: ['csv'] }]
+  ipcMain.handle(
+    'csv:selectFile',
+    validateNoArgs(async (): Promise<string[] | null> => {
+      const result = await dialog.showOpenDialog({
+        properties: ['openFile', 'multiSelections'],
+        filters: [{ name: 'CSV', extensions: ['csv'] }]
+      })
+      return result.canceled ? null : result.filePaths
     })
-    return result.canceled ? null : result.filePaths
-  })
+  )
 }

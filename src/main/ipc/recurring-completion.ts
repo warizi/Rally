@@ -1,24 +1,27 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { dateSchema } from './schemas'
 import { recurringCompletionService } from '../services/recurring-completion'
 
 export function registerRecurringCompletionHandlers(): void {
   ipcMain.handle(
     'recurringCompletion:complete',
-    (_: IpcMainInvokeEvent, ruleId: string, date: Date): IpcResponse =>
-      handle(() => recurringCompletionService.complete(ruleId, new Date(date)))
+    validateIpc([idSchema, dateSchema] as const, (ruleId, date) =>
+      recurringCompletionService.complete(ruleId, new Date(date))
+    )
   )
 
   ipcMain.handle(
     'recurringCompletion:uncomplete',
-    (_: IpcMainInvokeEvent, completionId: string): IpcResponse =>
-      handle(() => recurringCompletionService.uncomplete(completionId))
+    validateIpc([idSchema], (completionId) =>
+      recurringCompletionService.uncomplete(completionId)
+    )
   )
 
   ipcMain.handle(
     'recurringCompletion:findTodayByWorkspace',
-    (_: IpcMainInvokeEvent, workspaceId: string, date: Date): IpcResponse =>
-      handle(() => recurringCompletionService.findTodayByWorkspace(workspaceId, new Date(date)))
+    validateIpc([idSchema, dateSchema] as const, (workspaceId, date) =>
+      recurringCompletionService.findTodayByWorkspace(workspaceId, new Date(date))
+    )
   )
 }

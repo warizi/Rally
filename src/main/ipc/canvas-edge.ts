@@ -1,31 +1,30 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { canvasEdgeCreateSchema, canvasEdgeUpdateSchema } from './schemas'
 import { canvasEdgeService } from '../services/canvas-edge'
-import type { CreateCanvasEdgeData, UpdateCanvasEdgeData } from '../services/canvas-edge'
 
 export function registerCanvasEdgeHandlers(): void {
   ipcMain.handle(
     'canvasEdge:findByCanvas',
-    (_: IpcMainInvokeEvent, canvasId: string): IpcResponse =>
-      handle(() => canvasEdgeService.findByCanvas(canvasId))
+    validateIpc([idSchema], (canvasId) => canvasEdgeService.findByCanvas(canvasId))
   )
 
   ipcMain.handle(
     'canvasEdge:create',
-    (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
-      handle(() => canvasEdgeService.create(canvasId, data as CreateCanvasEdgeData))
+    validateIpc([idSchema, canvasEdgeCreateSchema] as const, (canvasId, data) =>
+      canvasEdgeService.create(canvasId, data)
+    )
   )
 
   ipcMain.handle(
     'canvasEdge:update',
-    (_: IpcMainInvokeEvent, edgeId: string, data: unknown): IpcResponse =>
-      handle(() => canvasEdgeService.update(edgeId, data as UpdateCanvasEdgeData))
+    validateIpc([idSchema, canvasEdgeUpdateSchema] as const, (edgeId, data) =>
+      canvasEdgeService.update(edgeId, data)
+    )
   )
 
   ipcMain.handle(
     'canvasEdge:remove',
-    (_: IpcMainInvokeEvent, edgeId: string): IpcResponse =>
-      handle(() => canvasEdgeService.remove(edgeId))
+    validateIpc([idSchema], (edgeId) => canvasEdgeService.remove(edgeId))
   )
 }

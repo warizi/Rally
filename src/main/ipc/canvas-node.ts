@@ -1,57 +1,54 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import {
+  canvasNodeCreateSchema,
+  canvasNodeUpdateSchema,
+  canvasNodePositionsSchema,
+  canvasSyncStateSchema
+} from './schemas'
 import { canvasNodeService } from '../services/canvas-node'
-import type { CreateCanvasNodeData, UpdateCanvasNodeData } from '../services/canvas-node'
 
 export function registerCanvasNodeHandlers(): void {
   ipcMain.handle(
     'canvasNode:findByCanvas',
-    (_: IpcMainInvokeEvent, canvasId: string): IpcResponse =>
-      handle(() => canvasNodeService.findByCanvas(canvasId))
+    validateIpc([idSchema], (canvasId) => canvasNodeService.findByCanvas(canvasId))
   )
 
   ipcMain.handle(
     'canvasNode:create',
-    (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
-      handle(() => canvasNodeService.create(canvasId, data as CreateCanvasNodeData))
+    validateIpc([idSchema, canvasNodeCreateSchema] as const, (canvasId, data) =>
+      canvasNodeService.create(canvasId, data)
+    )
   )
 
   ipcMain.handle(
     'canvasNode:update',
-    (_: IpcMainInvokeEvent, nodeId: string, data: unknown): IpcResponse =>
-      handle(() => canvasNodeService.update(nodeId, data as UpdateCanvasNodeData))
+    validateIpc([idSchema, canvasNodeUpdateSchema] as const, (nodeId, data) =>
+      canvasNodeService.update(nodeId, data)
+    )
   )
 
   ipcMain.handle(
     'canvasNode:updatePositions',
-    (_: IpcMainInvokeEvent, updates: unknown): IpcResponse =>
-      handle(() =>
-        canvasNodeService.updatePositions(updates as { id: string; x: number; y: number }[])
-      )
+    validateIpc([canvasNodePositionsSchema], (updates) =>
+      canvasNodeService.updatePositions(updates)
+    )
   )
 
   ipcMain.handle(
     'canvasNode:remove',
-    (_: IpcMainInvokeEvent, nodeId: string): IpcResponse =>
-      handle(() => canvasNodeService.remove(nodeId))
+    validateIpc([idSchema], (nodeId) => canvasNodeService.remove(nodeId))
   )
 
   ipcMain.handle(
     'canvasNode:syncState',
-    (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
-      handle(() => {
-        const { nodes, edges, groups } = data as {
-          nodes: unknown[]
-          edges: unknown[]
-          groups?: unknown[]
-        }
-        canvasNodeService.syncState(
-          canvasId,
-          nodes as Parameters<typeof canvasNodeService.syncState>[1],
-          edges as Parameters<typeof canvasNodeService.syncState>[2],
-          (groups ?? []) as Parameters<typeof canvasNodeService.syncState>[3]
-        )
-      })
+    validateIpc([idSchema, canvasSyncStateSchema] as const, (canvasId, data) => {
+      canvasNodeService.syncState(
+        canvasId,
+        data.nodes as Parameters<typeof canvasNodeService.syncState>[1],
+        data.edges as Parameters<typeof canvasNodeService.syncState>[2],
+        (data.groups ?? []) as Parameters<typeof canvasNodeService.syncState>[3]
+      )
+    })
   )
 }

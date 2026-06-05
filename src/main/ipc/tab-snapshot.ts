@@ -1,46 +1,28 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { tabSnapshotCreateSchema, tabSnapshotUpdateSchema } from './schemas'
 import { tabSnapshotService } from '../services/tab-snapshot'
-
-type CreateInput = {
-  name: string
-  description?: string
-  workspaceId: string
-  tabsJson: string
-  panesJson: string
-  layoutJson: string
-}
-
-type UpdateInput = {
-  name?: string
-  description?: string
-  tabsJson?: string
-  panesJson?: string
-  layoutJson?: string
-}
 
 export function registerTabSnapshotHandlers(): void {
   ipcMain.handle(
     'tabSnapshot:getByWorkspaceId',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => tabSnapshotService.getByWorkspaceId(workspaceId))
+    validateIpc([idSchema], (workspaceId) => tabSnapshotService.getByWorkspaceId(workspaceId))
   )
 
   ipcMain.handle(
     'tabSnapshot:create',
-    (_: IpcMainInvokeEvent, data: CreateInput): IpcResponse =>
-      handle(() => tabSnapshotService.create(data))
+    validateIpc([tabSnapshotCreateSchema], (data) => tabSnapshotService.create(data))
   )
 
   ipcMain.handle(
     'tabSnapshot:update',
-    (_: IpcMainInvokeEvent, id: string, data: UpdateInput): IpcResponse =>
-      handle(() => tabSnapshotService.update(id, data))
+    validateIpc([idSchema, tabSnapshotUpdateSchema] as const, (id, data) =>
+      tabSnapshotService.update(id, data)
+    )
   )
 
   ipcMain.handle(
     'tabSnapshot:delete',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => tabSnapshotService.delete(id))
+    validateIpc([idSchema], (id) => tabSnapshotService.delete(id))
   )
 }
