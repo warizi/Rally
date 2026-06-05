@@ -4,9 +4,10 @@ import { existsSync, readFileSync, readdirSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
+import { validateIpc, validateNoArgs } from '../lib/ipc-validate'
+import { mcpClientIdSchema } from './schemas'
 import {
   mcpClientConfigService,
-  type McpClientId,
   type McpClientStatus,
   type McpClientStatusMap
 } from '../services/mcp-client-config'
@@ -33,63 +34,76 @@ function readMdFiles(dir: string): CommandFile[] {
 }
 
 export function registerAppInfoHandlers(): void {
-  ipcMain.handle('appInfo:getVersion', (): IpcResponse<string> => {
-    return handle(() => app.getVersion())
-  })
+  ipcMain.handle(
+    'appInfo:getVersion',
+    validateNoArgs((): IpcResponse<string> => handle(() => app.getVersion()))
+  )
 
-  ipcMain.handle('appInfo:getMcpServerPath', (): IpcResponse<string> => {
-    return handle(() => {
-      if (is.dev) {
-        return join(process.cwd(), 'dist-mcp', 'index.js')
-      }
-      return join(process.resourcesPath, 'dist-mcp', 'index.js')
-    })
-  })
+  ipcMain.handle(
+    'appInfo:getMcpServerPath',
+    validateNoArgs((): IpcResponse<string> =>
+      handle(() => {
+        if (is.dev) {
+          return join(process.cwd(), 'dist-mcp', 'index.js')
+        }
+        return join(process.resourcesPath, 'dist-mcp', 'index.js')
+      })
+    )
+  )
 
-  ipcMain.handle('appInfo:getCommandFiles', (): IpcResponse<CommandFile[]> => {
-    return handle(() => {
-      const commandsDir = is.dev
-        ? join(process.cwd(), '.claude', 'commands')
-        : join(process.resourcesPath, '.claude', 'commands')
-      return readMdFiles(commandsDir)
-    })
-  })
+  ipcMain.handle(
+    'appInfo:getCommandFiles',
+    validateNoArgs((): IpcResponse<CommandFile[]> =>
+      handle(() => {
+        const commandsDir = is.dev
+          ? join(process.cwd(), '.claude', 'commands')
+          : join(process.resourcesPath, '.claude', 'commands')
+        return readMdFiles(commandsDir)
+      })
+    )
+  )
 
-  ipcMain.handle('appInfo:getSkillFiles', (): IpcResponse<CommandFile[]> => {
-    return handle(() => {
-      const skillsDir = is.dev
-        ? join(process.cwd(), '.claude', 'skills')
-        : join(process.resourcesPath, '.claude', 'skills')
-      return readMdFiles(skillsDir)
-    })
-  })
+  ipcMain.handle(
+    'appInfo:getSkillFiles',
+    validateNoArgs((): IpcResponse<CommandFile[]> =>
+      handle(() => {
+        const skillsDir = is.dev
+          ? join(process.cwd(), '.claude', 'skills')
+          : join(process.resourcesPath, '.claude', 'skills')
+        return readMdFiles(skillsDir)
+      })
+    )
+  )
 
   ipcMain.handle(
     'mcpClient:getStatus',
-    (): IpcResponse<{
-      status: McpClientStatusMap
-      serverKey: string
-      serverConfig: Record<string, unknown>
-    }> => {
-      return handle(() => ({
-        status: mcpClientConfigService.getStatus(),
-        serverKey: mcpClientConfigService.getServerKey(),
-        serverConfig: mcpClientConfigService.getServerConfig()
-      }))
-    }
+    validateNoArgs(
+      (): IpcResponse<{
+        status: McpClientStatusMap
+        serverKey: string
+        serverConfig: Record<string, unknown>
+      }> =>
+        handle(() => ({
+          status: mcpClientConfigService.getStatus(),
+          serverKey: mcpClientConfigService.getServerKey(),
+          serverConfig: mcpClientConfigService.getServerConfig()
+        }))
+    )
   )
 
   ipcMain.handle(
     'mcpClient:register',
-    (_evt, client: McpClientId): IpcResponse<McpClientStatus> => {
-      return handle(() => mcpClientConfigService.register(client))
-    }
+    validateIpc(
+      [mcpClientIdSchema],
+      (client): McpClientStatus => mcpClientConfigService.register(client)
+    )
   )
 
   ipcMain.handle(
     'mcpClient:unregister',
-    (_evt, client: McpClientId): IpcResponse<McpClientStatus> => {
-      return handle(() => mcpClientConfigService.unregister(client))
-    }
+    validateIpc(
+      [mcpClientIdSchema],
+      (client): McpClientStatus => mcpClientConfigService.unregister(client)
+    )
   )
 }

@@ -1,52 +1,57 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import {
+  canvasFindOptionsSchema,
+  canvasCreateSchema,
+  canvasUpdateSchema,
+  canvasViewportSchema,
+  booleanSchema
+} from './schemas'
 import { canvasService } from '../services/canvas'
 
 export function registerCanvasHandlers(): void {
   ipcMain.handle(
     'canvas:findByWorkspace',
-    (_: IpcMainInvokeEvent, workspaceId: string, options?: { search?: string }): IpcResponse =>
-      handle(() => canvasService.findByWorkspace(workspaceId, options?.search))
+    validateIpc([idSchema, canvasFindOptionsSchema] as const, (workspaceId, options) =>
+      canvasService.findByWorkspace(workspaceId, options?.search)
+    )
   )
 
   ipcMain.handle(
     'canvas:findById',
-    (_: IpcMainInvokeEvent, canvasId: string): IpcResponse =>
-      handle(() => canvasService.findById(canvasId))
+    validateIpc([idSchema], (canvasId) => canvasService.findById(canvasId))
   )
 
   ipcMain.handle(
     'canvas:create',
-    (_: IpcMainInvokeEvent, workspaceId: string, data: unknown): IpcResponse =>
-      handle(() =>
-        canvasService.create(workspaceId, data as { title: string; description?: string })
-      )
+    validateIpc([idSchema, canvasCreateSchema] as const, (workspaceId, data) =>
+      canvasService.create(workspaceId, data)
+    )
   )
 
   ipcMain.handle(
     'canvas:update',
-    (_: IpcMainInvokeEvent, canvasId: string, data: unknown): IpcResponse =>
-      handle(() => canvasService.update(canvasId, data as { title?: string; description?: string }))
+    validateIpc([idSchema, canvasUpdateSchema] as const, (canvasId, data) =>
+      canvasService.update(canvasId, data)
+    )
   )
 
   ipcMain.handle(
     'canvas:updateViewport',
-    (_: IpcMainInvokeEvent, canvasId: string, viewport: unknown): IpcResponse =>
-      handle(() =>
-        canvasService.updateViewport(canvasId, viewport as { x: number; y: number; zoom: number })
-      )
+    validateIpc([idSchema, canvasViewportSchema] as const, (canvasId, viewport) =>
+      canvasService.updateViewport(canvasId, viewport)
+    )
   )
 
   ipcMain.handle(
     'canvas:remove',
-    (_: IpcMainInvokeEvent, canvasId: string): IpcResponse =>
-      handle(() => canvasService.remove(canvasId))
+    validateIpc([idSchema], (canvasId) => canvasService.remove(canvasId))
   )
 
   ipcMain.handle(
     'canvas:toggleLock',
-    (_: IpcMainInvokeEvent, canvasId: string, isLocked: boolean): IpcResponse =>
-      handle(() => canvasService.toggleLock(canvasId, isLocked))
+    validateIpc([idSchema, booleanSchema] as const, (canvasId, isLocked) =>
+      canvasService.toggleLock(canvasId, isLocked)
+    )
   )
 }

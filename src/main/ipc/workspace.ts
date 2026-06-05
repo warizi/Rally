@@ -1,25 +1,26 @@
-import { ipcMain, IpcMainInvokeEvent, dialog } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
+import { ipcMain, dialog } from 'electron'
 import { workspaceService } from '../services/workspace'
-import type { WorkspaceUpdate } from '../repositories/workspace'
 import { handle } from '../lib/handle'
-import { validateIpc } from '../lib/ipc-validate'
-import { workspaceNameSchema, workspacePathSchema } from './schemas'
+import { validateIpc, validateNoArgs, idSchema } from '../lib/ipc-validate'
+import { workspaceNameSchema, workspacePathSchema, workspaceUpdateSchema } from './schemas'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 
 export function registerWorkspaceHandlers(): void {
-  ipcMain.handle('workspace:getAll', (): IpcResponse => handle(() => workspaceService.getAll()))
+  ipcMain.handle(
+    'workspace:getAll',
+    validateNoArgs(() => handle(() => workspaceService.getAll()))
+  )
 
   ipcMain.handle(
     'workspace:getById',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => workspaceService.getById(id))
+    validateIpc([idSchema], (id) => workspaceService.getById(id))
   )
 
   // 보안-1 Phase 3: name / path 검증 (path traversal 차단, 길이 제한).
   ipcMain.handle(
     'workspace:create',
-    validateIpc([workspaceNameSchema, workspacePathSchema], (name, path) => {
+    validateIpc([workspaceNameSchema, workspacePathSchema] as const, (name, path) => {
       const ws = workspaceService.create(name, path)
       ensureClaudeCommands(ws.path)
       return ws
@@ -28,38 +29,39 @@ export function registerWorkspaceHandlers(): void {
 
   ipcMain.handle(
     'workspace:update',
-    (_: IpcMainInvokeEvent, id: string, data: WorkspaceUpdate): IpcResponse =>
-      handle(() => {
-        const updated = workspaceService.update(id, data)
-        // path가 변경된 경우 watcher 재시작 (fire-and-forget)
-        // ensureWatching이 activeWorkspacePath와 비교하므로 path 미변경 시 no-op
-        if (data.path !== undefined && updated) {
-          void workspaceWatcher.ensureWatching(id, updated.path)
-        }
-        return updated
-      })
+    validateIpc([idSchema, workspaceUpdateSchema] as const, (id, data) => {
+      const updated = workspaceService.update(id, data)
+      // path가 변경된 경우 watcher 재시작 (fire-and-forget)
+      // ensureWatching이 activeWorkspacePath와 비교하므로 path 미변경 시 no-op
+      if (data.path !== undefined && updated) {
+        void workspaceWatcher.ensureWatching(id, updated.path)
+      }
+      return updated
+    })
   )
 
   ipcMain.handle(
     'workspace:delete',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse => handle(() => workspaceService.delete(id))
+    validateIpc([idSchema], (id) => workspaceService.delete(id))
   )
 
   ipcMain.handle(
     'workspace:activate',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
-      handle(() => {
-        const ws = workspaceService.getById(id)
-        ensureClaudeCommands(ws.path)
-        void workspaceWatcher.ensureWatching(ws.id, ws.path)
-        return ws
-      })
+    validateIpc([idSchema], (id) => {
+      const ws = workspaceService.getById(id)
+      ensureClaudeCommands(ws.path)
+      void workspaceWatcher.ensureWatching(ws.id, ws.path)
+      return ws
+    })
   )
 
-  ipcMain.handle('workspace:selectDirectory', async (): Promise<string | null> => {
-    const { canceled, filePaths } = await dialog.showOpenDialog({
-      properties: ['openDirectory', 'createDirectory']
+  ipcMain.handle(
+    'workspace:selectDirectory',
+    validateNoArgs(async (): Promise<string | null> => {
+      const { canceled, filePaths } = await dialog.showOpenDialog({
+        properties: ['openDirectory', 'createDirectory']
+      })
+      return canceled ? null : filePaths[0]
     })
-    return canceled ? null : filePaths[0]
-  })
+  )
 }

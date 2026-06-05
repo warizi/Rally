@@ -51,8 +51,8 @@ describe('canvas-node IPC handlers', () => {
 
   it('canvasNode:updatePositions → updates 배열 전달', () => {
     const updates = [
-      { id: 'n1', x: 10, y: 20 },
-      { id: 'n2', x: 30, y: 40 }
+      { id: 'node-aaaa1', x: 10, y: 20 },
+      { id: 'node-bbbb2', x: 30, y: 40 }
     ]
     getHandler('canvasNode:updatePositions')({}, updates)
     expect(canvasNodeService.updatePositions).toHaveBeenCalledWith(updates)

@@ -140,7 +140,7 @@ beforeEach(() => {
 describe('backup IPC handlers', () => {
   it('backup:export → dialog 취소 시 success null', async () => {
     vi.mocked(workspaceService.getById).mockReturnValue({
-      id: 'ws-1',
+      id: 'ws-aabbcc12',
       name: 'W',
       path: '/p',
       createdAt: new Date(),
@@ -148,14 +148,14 @@ describe('backup IPC handlers', () => {
     })
     vi.mocked(dialog.showSaveDialog).mockResolvedValue({ canceled: true, filePath: '' })
 
-    const result = await getHandler('backup:export')({}, 'ws-1')
+    const result = await getHandler('backup:export')({}, 'ws-aabbcc12')
     expect(result).toEqual({ success: true, data: null })
     expect(backupService.export).not.toHaveBeenCalled()
   })
 
   it('backup:export → 정상 → service.export 호출', async () => {
     vi.mocked(workspaceService.getById).mockReturnValue({
-      id: 'ws-1',
+      id: 'ws-aabbcc12',
       name: 'W',
       path: '/p',
       createdAt: new Date(),
@@ -167,8 +167,8 @@ describe('backup IPC handlers', () => {
     })
     vi.mocked(backupService.export).mockResolvedValue(undefined as never)
 
-    await getHandler('backup:export')({}, 'ws-1')
-    expect(backupService.export).toHaveBeenCalledWith('ws-1', '/x.zip')
+    await getHandler('backup:export')({}, 'ws-aabbcc12')
+    expect(backupService.export).toHaveBeenCalledWith('ws-aabbcc12', '/x.zip')
   })
 
   it('backup:selectFile → 취소 시 null', async () => {
@@ -196,39 +196,42 @@ describe('canvas-edge IPC handlers', () => {
   })
 
   it('canvasEdge:create → service 위임', () => {
-    getHandler('canvasEdge:create')({}, 'canv-1', { fromNode: 'a', toNode: 'b' })
-    expect(canvasEdgeService.create).toHaveBeenCalledWith('canv-1', {
-      fromNode: 'a',
-      toNode: 'b'
+    getHandler('canvasEdge:create')({}, 'canv-aabbcc', {
+      fromNode: 'node-aaaa1',
+      toNode: 'node-bbbb2'
+    })
+    expect(canvasEdgeService.create).toHaveBeenCalledWith('canv-aabbcc', {
+      fromNode: 'node-aaaa1',
+      toNode: 'node-bbbb2'
     })
   })
 
   it('canvasEdge:remove → service 위임', () => {
-    getHandler('canvasEdge:remove')({}, 'edge-1')
-    expect(canvasEdgeService.remove).toHaveBeenCalledWith('edge-1')
+    getHandler('canvasEdge:remove')({}, 'edge-aabbcc')
+    expect(canvasEdgeService.remove).toHaveBeenCalledWith('edge-aabbcc')
   })
 })
 
 describe('item-tag IPC handlers', () => {
   it('attach → service 위임', () => {
-    getHandler('itemTag:attach')({}, 'note', 'tag-1', 'n-1')
-    expect(itemTagService.attach).toHaveBeenCalledWith('note', 'tag-1', 'n-1')
+    getHandler('itemTag:attach')({}, 'note', 'tag-aabbcc1', 'note-aabbcc')
+    expect(itemTagService.attach).toHaveBeenCalledWith('note', 'tag-aabbcc1', 'note-aabbcc')
   })
   it('detach → service 위임', () => {
-    getHandler('itemTag:detach')({}, 'note', 'tag-1', 'n-1')
-    expect(itemTagService.detach).toHaveBeenCalledWith('note', 'tag-1', 'n-1')
+    getHandler('itemTag:detach')({}, 'note', 'tag-aabbcc1', 'note-aabbcc')
+    expect(itemTagService.detach).toHaveBeenCalledWith('note', 'tag-aabbcc1', 'note-aabbcc')
   })
 })
 
 describe('reminder IPC handlers', () => {
   it('reminder:set → service.set', () => {
-    const data = { entityType: 'todo' as const, entityId: 't-1', offsetMs: 1000 }
+    const data = { entityType: 'todo' as const, entityId: 'todo-aabbcc', offsetMs: 1000 }
     getHandler('reminder:set')({}, data)
     expect(reminderService.set).toHaveBeenCalledWith(data)
   })
   it('reminder:removeByEntity → service 위임', () => {
-    getHandler('reminder:removeByEntity')({}, 'todo', 't-1')
-    expect(reminderService.removeByEntity).toHaveBeenCalledWith('todo', 't-1')
+    getHandler('reminder:removeByEntity')({}, 'todo', 'todo-aabbcc')
+    expect(reminderService.removeByEntity).toHaveBeenCalledWith('todo', 'todo-aabbcc')
   })
 })
 
@@ -238,41 +241,41 @@ describe('tab-snapshot IPC handlers', () => {
       {},
       {
         name: 'X',
-        workspaceId: 'ws-1',
+        workspaceId: 'ws-aabbcc12',
         tabsJson: '[]',
         panesJson: '[]',
         layoutJson: '{}'
       }
     )
-    getHandler('tabSnapshot:update')({}, 'snap-1', { name: 'Y' })
-    getHandler('tabSnapshot:delete')({}, 'snap-1')
+    getHandler('tabSnapshot:update')({}, 'snap-aabbcc', { name: 'Y' })
+    getHandler('tabSnapshot:delete')({}, 'snap-aabbcc')
     expect(tabSnapshotService.create).toHaveBeenCalled()
-    expect(tabSnapshotService.update).toHaveBeenCalledWith('snap-1', { name: 'Y' })
-    expect(tabSnapshotService.delete).toHaveBeenCalledWith('snap-1')
+    expect(tabSnapshotService.update).toHaveBeenCalledWith('snap-aabbcc', { name: 'Y' })
+    expect(tabSnapshotService.delete).toHaveBeenCalledWith('snap-aabbcc')
   })
 })
 
 describe('tag IPC handlers', () => {
   it('getAll / create / update / remove 위임', () => {
-    getHandler('tag:getAll')({}, 'ws-1')
-    getHandler('tag:create')({}, 'ws-1', { name: 'T' })
-    getHandler('tag:update')({}, 'tag-1', { name: 'T2' })
-    getHandler('tag:remove')({}, 'tag-1')
-    expect(tagService.getAll).toHaveBeenCalledWith('ws-1')
-    expect(tagService.create).toHaveBeenCalledWith('ws-1', { name: 'T' })
-    expect(tagService.update).toHaveBeenCalledWith('tag-1', { name: 'T2' })
-    expect(tagService.remove).toHaveBeenCalledWith('tag-1')
+    getHandler('tag:getAll')({}, 'ws-aabbcc12')
+    getHandler('tag:create')({}, 'ws-aabbcc12', { name: 'T', color: '#ffffff' })
+    getHandler('tag:update')({}, 'tag-aabbcc1', { name: 'T2' })
+    getHandler('tag:remove')({}, 'tag-aabbcc1')
+    expect(tagService.getAll).toHaveBeenCalledWith('ws-aabbcc12')
+    expect(tagService.create).toHaveBeenCalledWith('ws-aabbcc12', { name: 'T', color: '#ffffff' })
+    expect(tagService.update).toHaveBeenCalledWith('tag-aabbcc1', { name: 'T2' })
+    expect(tagService.remove).toHaveBeenCalledWith('tag-aabbcc1')
   })
 })
 
 describe('entity-link IPC handlers', () => {
   it('link / unlink / getLinked 위임', () => {
-    getHandler('entityLink:link')({}, 'note', 'n-1', 'todo', 't-1', 'ws-1')
-    getHandler('entityLink:unlink')({}, 'note', 'n-1', 'todo', 't-1')
-    getHandler('entityLink:getLinked')({}, 'todo', 't-1')
-    expect(entityLinkService.link).toHaveBeenCalledWith('note', 'n-1', 'todo', 't-1', 'ws-1')
-    expect(entityLinkService.unlink).toHaveBeenCalledWith('note', 'n-1', 'todo', 't-1')
-    expect(entityLinkService.getLinked).toHaveBeenCalledWith('todo', 't-1')
+    getHandler('entityLink:link')({}, 'note', 'note-aabbcc', 'todo', 'todo-aabbcc', 'ws-aabbcc12')
+    getHandler('entityLink:unlink')({}, 'note', 'note-aabbcc', 'todo', 'todo-aabbcc')
+    getHandler('entityLink:getLinked')({}, 'todo', 'todo-aabbcc')
+    expect(entityLinkService.link).toHaveBeenCalledWith('note', 'note-aabbcc', 'todo', 'todo-aabbcc', 'ws-aabbcc12')
+    expect(entityLinkService.unlink).toHaveBeenCalledWith('note', 'note-aabbcc', 'todo', 'todo-aabbcc')
+    expect(entityLinkService.getLinked).toHaveBeenCalledWith('todo', 'todo-aabbcc')
   })
 })
 
@@ -290,13 +293,13 @@ describe('note-image IPC handlers', () => {
 describe('recurring-completion IPC handlers', () => {
   it('complete → date 를 새 Date 로 wrap', () => {
     const d = new Date()
-    getHandler('recurringCompletion:complete')({}, 'rule-1', d)
-    expect(recurringCompletionService.complete).toHaveBeenCalledWith('rule-1', expect.any(Date))
+    getHandler('recurringCompletion:complete')({}, 'rule-aabbcc', d)
+    expect(recurringCompletionService.complete).toHaveBeenCalledWith('rule-aabbcc', expect.any(Date))
   })
   it('uncomplete / findTodayByWorkspace 위임', () => {
-    getHandler('recurringCompletion:uncomplete')({}, 'comp-1')
-    getHandler('recurringCompletion:findTodayByWorkspace')({}, 'ws-1', new Date())
-    expect(recurringCompletionService.uncomplete).toHaveBeenCalledWith('comp-1')
+    getHandler('recurringCompletion:uncomplete')({}, 'comp-aabbcc')
+    getHandler('recurringCompletion:findTodayByWorkspace')({}, 'ws-aabbcc12', new Date())
+    expect(recurringCompletionService.uncomplete).toHaveBeenCalledWith('comp-aabbcc')
     expect(recurringCompletionService.findTodayByWorkspace).toHaveBeenCalled()
   })
 })
@@ -305,29 +308,29 @@ describe('note-style-template IPC handlers', () => {
   it('list / create / remove 위임', () => {
     getHandler('noteStyleTemplate:list')()
     getHandler('noteStyleTemplate:create')({}, { name: 'n', settingsJson: '{}' })
-    getHandler('noteStyleTemplate:remove')({}, 'tpl-1')
+    getHandler('noteStyleTemplate:remove')({}, 'tmpl-aabbcc')
     expect(noteStyleTemplateService.list).toHaveBeenCalled()
     expect(noteStyleTemplateService.create).toHaveBeenCalledWith({ name: 'n', settingsJson: '{}' })
-    expect(noteStyleTemplateService.remove).toHaveBeenCalledWith('tpl-1')
+    expect(noteStyleTemplateService.remove).toHaveBeenCalledWith('tmpl-aabbcc')
   })
 })
 
 describe('template IPC handlers', () => {
   it('list / create / delete 위임', () => {
-    getHandler('template:list')({}, 'ws-1', 'note')
+    getHandler('template:list')({}, 'ws-aabbcc12', 'note')
     getHandler('template:create')(
       {},
       {
-        workspaceId: 'ws-1',
+        workspaceId: 'ws-aabbcc12',
         title: 't',
         type: 'note',
         jsonData: '{}'
       }
     )
-    getHandler('template:delete')({}, 'tpl-1')
-    expect(templateService.list).toHaveBeenCalledWith('ws-1', 'note')
+    getHandler('template:delete')({}, 'tmpl-aabbcc')
+    expect(templateService.list).toHaveBeenCalledWith('ws-aabbcc12', 'note')
     expect(templateService.create).toHaveBeenCalled()
-    expect(templateService.delete).toHaveBeenCalledWith('tpl-1')
+    expect(templateService.delete).toHaveBeenCalledWith('tmpl-aabbcc')
   })
 })
 
@@ -342,9 +345,18 @@ describe('app-settings IPC handlers', () => {
 
 describe('tab-session IPC handlers', () => {
   it('getByWorkspaceId / upsert 위임', () => {
-    getHandler('tabSession:getByWorkspaceId')({}, 'ws-1')
-    getHandler('tabSession:upsert')({}, { workspaceId: 'ws-1', tabsJson: '[]' })
-    expect(tabSessionService.getByWorkspaceId).toHaveBeenCalledWith('ws-1')
+    getHandler('tabSession:getByWorkspaceId')({}, 'ws-aabbcc12')
+    getHandler('tabSession:upsert')(
+      {},
+      {
+        workspaceId: 'ws-aabbcc12',
+        tabsJson: '[]',
+        panesJson: '[]',
+        layoutJson: '{}',
+        activePaneId: 'pane-aabbcc'
+      }
+    )
+    expect(tabSessionService.getByWorkspaceId).toHaveBeenCalledWith('ws-aabbcc12')
     expect(tabSessionService.upsert).toHaveBeenCalled()
   })
 })
@@ -356,8 +368,8 @@ describe('history IPC handlers', () => {
       hasMore: false,
       nextDayOffset: 0
     })
-    getHandler('history:fetch')({}, 'ws-1')
-    expect(historyService.fetch).toHaveBeenCalledWith('ws-1', {})
+    getHandler('history:fetch')({}, 'ws-aabbcc12')
+    expect(historyService.fetch).toHaveBeenCalledWith('ws-aabbcc12', {})
   })
 
   it('fetch → options 전달', () => {
@@ -366,8 +378,8 @@ describe('history IPC handlers', () => {
       hasMore: false,
       nextDayOffset: 0
     })
-    getHandler('history:fetch')({}, 'ws-1', { dayOffset: 5 })
-    expect(historyService.fetch).toHaveBeenCalledWith('ws-1', { dayOffset: 5 })
+    getHandler('history:fetch')({}, 'ws-aabbcc12', { dayOffset: 5 })
+    expect(historyService.fetch).toHaveBeenCalledWith('ws-aabbcc12', { dayOffset: 5 })
   })
 })
 

@@ -1,18 +1,18 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, nonEmptyStringSchema } from '../lib/ipc-validate'
+import { z } from 'zod'
 import { appSettingsRepository } from '../repositories/app-settings'
 
 export function registerAppSettingsHandlers(): void {
   ipcMain.handle(
     'settings:get',
-    (_: IpcMainInvokeEvent, key: string): IpcResponse =>
-      handle(() => appSettingsRepository.get(key))
+    validateIpc([nonEmptyStringSchema], (key) => appSettingsRepository.get(key))
   )
 
   ipcMain.handle(
     'settings:set',
-    (_: IpcMainInvokeEvent, key: string, value: string): IpcResponse =>
-      handle(() => appSettingsRepository.set(key, value))
+    validateIpc([nonEmptyStringSchema, z.string().max(1_000_000)] as const, (key, value) =>
+      appSettingsRepository.set(key, value)
+    )
   )
 }

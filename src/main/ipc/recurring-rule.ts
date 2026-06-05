@@ -1,49 +1,45 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { dateSchema, recurringRuleCreateSchema, recurringRuleUpdateSchema } from './schemas'
 import { recurringRuleService } from '../services/recurring-rule'
-import type { CreateRecurringRuleData, UpdateRecurringRuleData } from '../services/recurring-rule'
 
 export function registerRecurringRuleHandlers(): void {
   ipcMain.handle(
     'recurringRule:findByWorkspace',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => recurringRuleService.findByWorkspace(workspaceId))
+    validateIpc([idSchema], (workspaceId) => recurringRuleService.findByWorkspace(workspaceId))
   )
 
   ipcMain.handle(
     'recurringRule:findToday',
-    (_: IpcMainInvokeEvent, workspaceId: string, date: Date): IpcResponse =>
-      handle(() => recurringRuleService.findTodayRules(workspaceId, new Date(date)))
+    validateIpc([idSchema, dateSchema] as const, (workspaceId, date) =>
+      recurringRuleService.findTodayRules(workspaceId, new Date(date))
+    )
   )
 
   ipcMain.handle(
     'recurringRule:create',
-    (_: IpcMainInvokeEvent, workspaceId: string, data: CreateRecurringRuleData): IpcResponse =>
-      handle(() =>
-        recurringRuleService.create(workspaceId, {
-          ...data,
-          startDate: new Date(data.startDate),
-          endDate: data.endDate ? new Date(data.endDate) : null
-        })
-      )
+    validateIpc([idSchema, recurringRuleCreateSchema] as const, (workspaceId, data) =>
+      recurringRuleService.create(workspaceId, {
+        ...data,
+        startDate: new Date(data.startDate),
+        endDate: data.endDate ? new Date(data.endDate) : null
+      })
+    )
   )
 
   ipcMain.handle(
     'recurringRule:update',
-    (_: IpcMainInvokeEvent, ruleId: string, data: UpdateRecurringRuleData): IpcResponse =>
-      handle(() =>
-        recurringRuleService.update(ruleId, {
-          ...data,
-          ...(data.startDate && { startDate: new Date(data.startDate) }),
-          ...(data.endDate && { endDate: new Date(data.endDate) })
-        })
-      )
+    validateIpc([idSchema, recurringRuleUpdateSchema] as const, (ruleId, data) =>
+      recurringRuleService.update(ruleId, {
+        ...data,
+        ...(data.startDate && { startDate: new Date(data.startDate) }),
+        ...(data.endDate && { endDate: new Date(data.endDate) })
+      })
+    )
   )
 
   ipcMain.handle(
     'recurringRule:delete',
-    (_: IpcMainInvokeEvent, ruleId: string): IpcResponse =>
-      handle(() => recurringRuleService.delete(ruleId))
+    validateIpc([idSchema], (ruleId) => recurringRuleService.delete(ruleId))
   )
 }

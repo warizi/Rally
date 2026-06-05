@@ -65,9 +65,9 @@ describe('trash IPC handlers', () => {
   })
 
   it('trash:setRetention → service.setRetention + { value }', () => {
-    const result = getHandler('trash:setRetention')({}, '30d')
-    expect(trashService.setRetention).toHaveBeenCalledWith('30d')
-    expect(result).toEqual({ success: true, data: { value: '30d' } })
+    const result = getHandler('trash:setRetention')({}, '30')
+    expect(trashService.setRetention).toHaveBeenCalledWith('30')
+    expect(result).toEqual({ success: true, data: { value: '30' } })
   })
 
   it('trash:sweepNow → sweepAll 결과를 { purged } 로 래핑', () => {

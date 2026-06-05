@@ -1,8 +1,11 @@
-import { ipcMain, IpcMainInvokeEvent, IpcMainEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain, IpcMainEvent } from 'electron'
 import { validateIpc, idSchema } from '../lib/ipc-validate'
-import { terminalCreateSchema } from './schemas'
+import {
+  terminalCreateSchema,
+  terminalUpdateSessionSchema,
+  contentSchema,
+  jsonStringSchema
+} from './schemas'
 import { nanoid } from 'nanoid'
 import { terminalService } from '../services/terminal'
 import { terminalSessionRepository } from '../repositories/terminal-session'
@@ -49,7 +52,7 @@ export function registerTerminalHandlers(): void {
     validateIpc([idSchema], (workspaceId) => terminalService.destroyAll(workspaceId))
   )
 
-  // 키 입력 (fire-and-forget)
+  // 키 입력 (fire-and-forget) — ipcMain.on 이라 invoke 응답 없음.
   ipcMain.on('terminal:write', (_: IpcMainEvent, args: { id: string; data: string }) => {
     terminalService.write(args.id, args.data)
   })
@@ -65,45 +68,46 @@ export function registerTerminalHandlers(): void {
   // 스냅샷 저장 (id = DB 세션 ID = PTY ID → 동일하게 동작)
   ipcMain.handle(
     'terminal:saveSnapshot',
-    (_: IpcMainInvokeEvent, id: string, snapshot: string): IpcResponse =>
-      handle(() => terminalSessionRepository.saveSnapshot(id, snapshot))
+    validateIpc([idSchema, contentSchema] as const, (id, snapshot) =>
+      terminalSessionRepository.saveSnapshot(id, snapshot)
+    )
   )
 
   // DB: 워크스페이스의 활성 세션 목록
   ipcMain.handle(
     'terminal:getSessions',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => terminalSessionRepository.findActiveByWorkspaceId(workspaceId))
+    validateIpc([idSchema], (workspaceId) =>
+      terminalSessionRepository.findActiveByWorkspaceId(workspaceId)
+    )
   )
 
   // DB: 레이아웃 조회
   ipcMain.handle(
     'terminal:getLayout',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => terminalLayoutRepository.findByWorkspaceId(workspaceId) ?? null)
+    validateIpc([idSchema], (workspaceId) =>
+      terminalLayoutRepository.findByWorkspaceId(workspaceId) ?? null
+    )
   )
 
   // DB: 세션 메타 갱신 (이름, cwd, rows, cols)
   ipcMain.handle(
     'terminal:updateSession',
-    (
-      _: IpcMainInvokeEvent,
-      id: string,
-      data: Parameters<typeof terminalSessionRepository.update>[1]
-    ): IpcResponse => handle(() => terminalSessionRepository.update(id, data))
+    validateIpc([idSchema, terminalUpdateSessionSchema] as const, (id, data) =>
+      terminalSessionRepository.update(id, data)
+    )
   )
 
   // DB: 레이아웃 저장 (upsert)
   ipcMain.handle(
     'terminal:saveLayout',
-    (_: IpcMainInvokeEvent, workspaceId: string, layoutJson: string): IpcResponse =>
-      handle(() => terminalLayoutRepository.upsert(workspaceId, layoutJson))
+    validateIpc([idSchema, jsonStringSchema] as const, (workspaceId, layoutJson) =>
+      terminalLayoutRepository.upsert(workspaceId, layoutJson)
+    )
   )
 
   // DB: 탭 소프트 삭제
   ipcMain.handle(
     'terminal:closeSession',
-    (_: IpcMainInvokeEvent, id: string): IpcResponse =>
-      handle(() => terminalSessionRepository.softDelete(id))
+    validateIpc([idSchema], (id) => terminalSessionRepository.softDelete(id))
   )
 }

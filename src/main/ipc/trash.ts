@@ -1,12 +1,8 @@
-import { ipcMain, type IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
+import { ipcMain } from 'electron'
 import { handle } from '../lib/handle'
-import {
-  trashService,
-  type TrashEntityKind,
-  type TrashListOptions,
-  type TrashRetentionKey
-} from '../services/trash'
+import { validateIpc, validateNoArgs, idSchema } from '../lib/ipc-validate'
+import { trashListOptionsSchema, trashRetentionKeySchema, trashEntityKindSchema } from './schemas'
+import { trashService } from '../services/trash'
 
 /**
  * trashService.softRemove/restore/purge 가 자동으로 'trash:changed' broadcast를 emit하므로
@@ -15,74 +11,74 @@ import {
 export function registerTrashHandlers(): void {
   ipcMain.handle(
     'trash:list',
-    (_: IpcMainInvokeEvent, workspaceId: string, options?: TrashListOptions): IpcResponse =>
-      handle(() => trashService.list(workspaceId, options ?? {}))
+    validateIpc([idSchema, trashListOptionsSchema] as const, (workspaceId, options) =>
+      trashService.list(workspaceId, options ?? {})
+    )
   )
 
   ipcMain.handle(
     'trash:count',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => trashService.countByWorkspace(workspaceId))
+    validateIpc([idSchema], (workspaceId) => trashService.countByWorkspace(workspaceId))
   )
 
   ipcMain.handle(
     'trash:restore',
-    (_: IpcMainInvokeEvent, _workspaceId: string, batchId: string): IpcResponse =>
-      handle(() => trashService.restore(batchId))
+    validateIpc([idSchema, idSchema] as const, (_workspaceId, batchId) =>
+      trashService.restore(batchId)
+    )
   )
 
   ipcMain.handle(
     'trash:purge',
-    (_: IpcMainInvokeEvent, _workspaceId: string, batchId: string): IpcResponse =>
-      handle(() => {
-        trashService.purge(batchId)
-        return { success: true }
-      })
+    validateIpc([idSchema, idSchema] as const, (_workspaceId, batchId) => {
+      trashService.purge(batchId)
+      return { success: true }
+    })
   )
 
   ipcMain.handle(
     'trash:emptyAll',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => {
-        const purgedBatchIds: string[] = []
-        let hasMore = true
-        // 페이지네이션 한계(200)를 고려해 반복
-        while (hasMore) {
-          const list = trashService.list(workspaceId, { limit: 200 })
-          for (const batch of list.batches) {
-            trashService.purge(batch.id)
-            purgedBatchIds.push(batch.id)
-          }
-          hasMore = list.hasMore && list.batches.length > 0
+    validateIpc([idSchema], (workspaceId) => {
+      const purgedBatchIds: string[] = []
+      let hasMore = true
+      // 페이지네이션 한계(200)를 고려해 반복
+      while (hasMore) {
+        const list = trashService.list(workspaceId, { limit: 200 })
+        for (const batch of list.batches) {
+          trashService.purge(batch.id)
+          purgedBatchIds.push(batch.id)
         }
-        return { purgedBatchIds }
-      })
+        hasMore = list.hasMore && list.batches.length > 0
+      }
+      return { purgedBatchIds }
+    })
   )
 
-  ipcMain.handle('trash:getRetention', (): IpcResponse => handle(() => trashService.getRetention()))
+  ipcMain.handle(
+    'trash:getRetention',
+    validateNoArgs(() => handle(() => trashService.getRetention()))
+  )
 
   ipcMain.handle(
     'trash:setRetention',
-    (_: IpcMainInvokeEvent, value: TrashRetentionKey): IpcResponse =>
-      handle(() => {
-        trashService.setRetention(value)
-        return { value }
-      })
+    validateIpc([trashRetentionKeySchema], (value) => {
+      trashService.setRetention(value)
+      return { value }
+    })
   )
 
   ipcMain.handle(
     'trash:sweepNow',
-    (): IpcResponse => handle(() => ({ purged: trashService.sweepAll() }))
+    validateNoArgs(() => handle(() => ({ purged: trashService.sweepAll() })))
   )
 
   ipcMain.handle(
     'trash:softRemove',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      entityType: TrashEntityKind,
-      entityId: string
-    ): IpcResponse =>
-      handle(() => ({ batchId: trashService.softRemove(workspaceId, entityType, entityId) }))
+    validateIpc(
+      [idSchema, trashEntityKindSchema, idSchema] as const,
+      (workspaceId, entityType, entityId) => ({
+        batchId: trashService.softRemove(workspaceId, entityType, entityId)
+      })
+    )
   )
 }
