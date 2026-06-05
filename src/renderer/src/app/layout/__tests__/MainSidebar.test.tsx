@@ -90,12 +90,13 @@ describe('MainSidebar', () => {
     expect(toggleTerminalMock).toHaveBeenCalledTimes(1)
   })
 
-  it('S4 — 설정 메뉴 클릭 → SettingsDialog 열림', () => {
+  it('S4 — 설정 메뉴 클릭 → SettingsDialog 열림', async () => {
     render(<MainSidebar />, { wrapper: Wrapper })
     expect(screen.queryByTestId('settings-dialog')).toBeNull()
 
+    // SettingsDialog 는 lazy(편집기 스택 번들 분리) → 클릭 후 비동기 로드를 기다린다.
     fireEvent.click(screen.getByText('설정'))
-    expect(screen.getByTestId('settings-dialog')).toBeInTheDocument()
+    expect(await screen.findByTestId('settings-dialog')).toBeInTheDocument()
   })
 
   it('S6 — 시스템 그룹에 "업데이트 내역" 항목이 렌더되고 클릭 시 changelog 탭 오픈', () => {
