@@ -41,7 +41,7 @@ describe('main BrowserWindow webPreferences', () => {
 describe('외부 URL 열기 경로는 allowlist 로 가드된다', () => {
   it('공용 allowlist 함수를 import 한다', () => {
     expect(indexSource).toMatch(
-      /import\s*\{\s*isAllowedExternalUrl\s*\}\s*from\s*['"]\.\/lib\/external-url['"]/
+      /import\s*\{[^}]*\bisAllowedExternalUrl\b[^}]*\}\s*from\s*['"]\.\/lib\/external-url['"]/
     )
   })
 
@@ -61,5 +61,32 @@ describe('외부 URL 열기 경로는 allowlist 로 가드된다', () => {
     expect(indexSource).not.toMatch(
       /setWindowOpenHandler\(\(details\)\s*=>\s*\{\s*shell\.openExternal\(details\.url\)/
     )
+  })
+})
+
+describe('will-navigate 정책으로 임의 navigation 을 차단한다 (LIMIT_NAVIGATION)', () => {
+  it('navigation allowlist 함수를 import 한다', () => {
+    expect(indexSource).toMatch(
+      /import\s*\{[^}]*\bisAllowedAppNavigation\b[^}]*\}\s*from\s*['"]\.\/lib\/external-url['"]/
+    )
+  })
+
+  it("webContents 에 'will-navigate' 핸들러가 등록되어 있다", () => {
+    expect(indexSource).toMatch(/webContents\.on\(\s*['"]will-navigate['"]/)
+  })
+
+  it("redirect 우회 차단을 위해 'will-redirect' 도 동일 정책으로 등록되어 있다", () => {
+    expect(indexSource).toMatch(/webContents\.on\(\s*['"]will-redirect['"]/)
+  })
+
+  it('허용되지 않은 navigation 은 event.preventDefault() 로 차단한다', () => {
+    expect(indexSource).toMatch(
+      /if\s*\(\s*!isAllowedAppNavigation\([\s\S]*?\)\s*\)\s*\{[\s\S]*?event\.preventDefault\(\)/
+    )
+  })
+
+  it('navigation 차단은 isAllowedAppNavigation 정책으로 판정한다 (직접 허용 금지)', () => {
+    // will-navigate 콜백이 isAllowedAppNavigation 을 거치지 않고 그냥 통과시키지 않는다.
+    expect(indexSource).toMatch(/will-navigate['"]\s*,\s*blockUnlessAppNavigation/)
   })
 })

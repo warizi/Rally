@@ -40,7 +40,7 @@
     "build:analyze": "ANALYZE=1 npm run build",
     "build:size": "npm run build && node scripts/measure-bundle.mjs",
     "security:scan": "electronegativity -i src/main -i src/preload",
-    "security:scan:high": "electronegativity -i src/main -i src/preload -s high"
+    "security:scan:high": "electronegativity -i src/main -i src/preload -s high -x LimitNavigationGlobalCheck"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
