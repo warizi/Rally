@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { Settings, Terminal } from 'lucide-react'
 import { useTabStore } from '@/entities/tab-system'
 import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
@@ -6,7 +6,6 @@ import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
 import type { TabSnapshot } from '@/entities/tab-snapshot'
 import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
-import { SettingsDialog } from '@widgets/settings'
 import { sidebar_items, system_sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { useTerminalPanelStore } from '@/features/terminal'
@@ -25,8 +24,16 @@ import {
   SidebarTrigger
 } from '@/shared/ui/sidebar'
 
+// SettingsDialog 는 milkdown/codemirror/prosemirror 편집기 스택(~480KB gzip)을 끌어온다.
+// 앱 셸(eager)에서 직접 import 하면 메인 청크에 합류하므로, 최초로 설정을 열 때만 로드한다.
+// 한 번 열린 뒤에는 계속 mount 유지 → Radix Dialog 의 닫힘 애니메이션 보존.
+const SettingsDialog = lazy(() =>
+  import('@widgets/settings').then((m) => ({ default: m.SettingsDialog }))
+)
+
 function MainSidebar(): React.JSX.Element {
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [settingsMounted, setSettingsMounted] = useState(false)
   const openTab = useTabStore((state) => state.openTab)
   const { mutate: updateSnapshot } = useUpdateTabSnapshot()
   const tabs = useTabStore((state) => state.tabs)
@@ -128,7 +135,10 @@ function MainSidebar(): React.JSX.Element {
                     <SidebarMenuButton
                       className="cursor-pointer"
                       tooltip="설정"
-                      onClick={() => setSettingsOpen(true)}
+                      onClick={() => {
+                        setSettingsMounted(true)
+                        setSettingsOpen(true)
+                      }}
                     >
                       <Settings />
                       <span>설정</span>
@@ -145,7 +155,11 @@ function MainSidebar(): React.JSX.Element {
           </div>
         </SidebarFooter>
       </Sidebar>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      {settingsMounted && (
+        <Suspense fallback={null}>
+          <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+        </Suspense>
+      )}
     </>
   )
 }

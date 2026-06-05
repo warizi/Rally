@@ -55,14 +55,24 @@ export default defineConfig({
       // 비대화를 방지하고 라우트 lazy 효과를 극대화.
       rollupOptions: {
         output: {
-          manualChunks: {
-            xyflow: ['@xyflow/react'],
-            'react-pdf': ['react-pdf'],
-            xterm: ['@xterm/xterm', '@xterm/addon-fit', '@xterm/addon-serialize'],
-            recharts: ['recharts'],
-            milkdown: ['@milkdown/kit', '@milkdown/react'],
-            'dnd-kit': ['@dnd-kit/core', '@dnd-kit/sortable', '@dnd-kit/modifiers'],
-            'framer-motion': ['framer-motion']
+          // 무거운 vendor 는 별도 청크로 분리해 메인 청크 비대화를 막고 라우트 lazy 효과를
+          // 극대화한다. 특히 노트/코드 편집기 스택(codemirror/lezer/prosemirror)은 lazy 경계
+          // (설정 다이얼로그·노트 페이지) 뒤에서만 필요하므로 메인 청크에서 떼어낸다.
+          // verify-chunks.mjs 가 이 청크들의 존재를 회귀로 검증한다.
+          manualChunks(id) {
+            if (!id.includes('node_modules')) return undefined
+            if (/[\\/]@xyflow[\\/]/.test(id)) return 'xyflow'
+            if (/[\\/]react-pdf[\\/]/.test(id)) return 'react-pdf'
+            if (/[\\/]@xterm[\\/]/.test(id)) return 'xterm'
+            if (/[\\/]recharts[\\/]/.test(id)) return 'recharts'
+            if (/[\\/]@milkdown[\\/]/.test(id)) return 'milkdown'
+            if (/[\\/]@dnd-kit[\\/]/.test(id)) return 'dnd-kit'
+            if (/[\\/]framer-motion[\\/]/.test(id)) return 'framer-motion'
+            if (/[\\/](@codemirror|@lezer|@uiw[\\/]react-codemirror)[\\/]/.test(id)) {
+              return 'codemirror'
+            }
+            if (/[\\/]prosemirror-[^\\/]+[\\/]/.test(id)) return 'prosemirror'
+            return undefined
           }
         }
       }

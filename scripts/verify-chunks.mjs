@@ -19,7 +19,10 @@ const EXPECTED_CHUNKS = [
   'recharts',
   'milkdown',
   'dnd-kit',
-  'framer-motion'
+  'framer-motion',
+  // 노트/코드 편집기 스택 — 메인 청크에서 분리되어 lazy 로드되는지 회귀 검증.
+  'codemirror',
+  'prosemirror'
 ]
 
 function main() {
