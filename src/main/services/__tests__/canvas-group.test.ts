@@ -70,9 +70,9 @@ describe('create', () => {
 
   it('canvas 없음 → NotFoundError', () => {
     vi.mocked(canvasRepository.findById).mockReturnValue(undefined)
-    expect(() =>
-      canvasGroupService.create('bad', { x: 0, y: 0, width: 100, height: 100 })
-    ).toThrow(NotFoundError)
+    expect(() => canvasGroupService.create('bad', { x: 0, y: 0, width: 100, height: 100 })).toThrow(
+      NotFoundError
+    )
   })
 
   it('잠금 캔버스 → 수정 불가 (LockedError)', () => {

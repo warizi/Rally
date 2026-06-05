@@ -99,8 +99,9 @@ export function useCanvasGroups(canvasId: string | undefined): UseQueryResult<Ca
   return useQuery({
     queryKey: [CANVAS_GROUP_KEY, 'canvas', canvasId],
     queryFn: async (): Promise<CanvasGroupItem[]> => {
-      const res: IpcResponse<CanvasGroupItem[]> =
-        await window.api.canvasGroup.findByCanvas(canvasId!)
+      const res: IpcResponse<CanvasGroupItem[]> = await window.api.canvasGroup.findByCanvas(
+        canvasId!
+      )
       if (!res.success) throwIpcError(res)
       return res.data ?? []
     },

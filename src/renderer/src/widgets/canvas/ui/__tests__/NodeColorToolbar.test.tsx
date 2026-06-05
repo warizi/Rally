@@ -76,7 +76,12 @@ describe('NodeColorToolbar', () => {
 
   it('그룹 선택 + 색상 클릭 → updateGroup(color) 호출 (테두리+배경 동시)', () => {
     mocks.nodes = [
-      { id: 'g1', selected: true, type: 'groupNode', data: { color: null, canvasId: 'c1' } } as never
+      {
+        id: 'g1',
+        selected: true,
+        type: 'groupNode',
+        data: { color: null, canvasId: 'c1' }
+      } as never
     ]
     render(<NodeColorToolbar store={fakeStore} />)
     fireEvent.click(screen.getAllByRole('button')[0])

@@ -16,9 +16,9 @@ class MockResizeObserver {
     this.cb = cb
     resizeObservers.push(cb)
   }
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
 }
 ;(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
   MockResizeObserver

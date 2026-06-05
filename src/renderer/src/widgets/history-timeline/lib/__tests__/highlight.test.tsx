@@ -34,9 +34,7 @@ describe('HighlightText', () => {
   })
 
   it('첫 번째 매칭 위치 기준 wrap', () => {
-    const { container } = render(
-      <>{HighlightText({ text: 'foo bar foo', query: 'foo' })}</>
-    )
+    const { container } = render(<>{HighlightText({ text: 'foo bar foo', query: 'foo' })}</>)
     const marks = container.querySelectorAll('mark')
     expect(marks).toHaveLength(1) // 첫 매칭만
   })
