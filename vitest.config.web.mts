@@ -24,12 +24,16 @@ export default defineConfig({
         'src/renderer/src/shared/ui/**',
         'src/renderer/src/**/index.ts'
       ],
-      thresholds: {
-        lines: 75,
-        functions: 73,
-        branches: 66,
-        statements: 73
-      }
+      // 샤딩된 coverage 실행(blob)에서는 부분 커버리지라 threshold 를 끈다.
+      // 임계값은 머지된 리포트(coverage-web-merge job)에서만 평가한다.
+      thresholds: process.env.VITEST_SKIP_THRESHOLDS
+        ? undefined
+        : {
+            lines: 75,
+            functions: 73,
+            branches: 66,
+            statements: 73
+          }
     }
   },
   resolve: {

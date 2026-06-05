@@ -31,6 +31,8 @@
     "test:coverage": "npm run test:coverage:node && npm run test:coverage:web",
     "test:coverage:node": "npm rebuild better-sqlite3 --silent && vitest run --coverage --config vitest.config.node.mts && npx @electron/rebuild -f",
     "test:coverage:web": "vitest run --coverage --config vitest.config.web.mts",
+    "test:coverage:web:shard": "vitest run --coverage --reporter=blob --config vitest.config.web.mts",
+    "test:coverage:web:merge": "vitest run --merge-reports --coverage --config vitest.config.web.mts",
     "coverage:summary": "node scripts/coverage-summary.mjs",
     "check:cleanup": "node scripts/check-cleanup-completeness.mjs",
     "build:mcp": "tsup --config src/mcp-server/tsup.config.ts",

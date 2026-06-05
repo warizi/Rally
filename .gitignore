@@ -11,6 +11,9 @@ out
 # coverage
 coverage
 
+# vitest blob reports (sharded coverage merge)
+.vitest-reports
+
 # env
 .env
 .env.*
