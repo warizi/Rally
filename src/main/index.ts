@@ -14,6 +14,7 @@ import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import icon from '../../resources/icon.png?asset'
 import { scoped } from './lib/logger'
+import { isAllowedExternalUrl } from './lib/external-url'
 import { db } from './db'
 import { registerWorkspaceHandlers } from './ipc/workspace'
 import { registerTabSessionHandlers } from './ipc/tab-session'
@@ -222,7 +223,9 @@ function createWindow(): void {
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (isAllowedExternalUrl(details.url)) {
+      shell.openExternal(details.url)
+    }
     return { action: 'deny' }
   })
 
@@ -243,7 +246,7 @@ app.whenReady().then(() => {
   })
 
   ipcMain.handle('shell:openExternal', async (_, url: string) => {
-    if (/^https?:\/\//.test(url)) {
+    if (isAllowedExternalUrl(url)) {
       await shell.openExternal(url)
     }
   })
