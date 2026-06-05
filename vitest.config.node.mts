@@ -22,6 +22,9 @@ export default defineConfig({
         '**/db/migrations/**',
         '**/types.ts',
         'src/main/index.ts',
+        // 앱 부트스트랩 orchestration 모듈 — 런타임(앱 시작) 코드라 단위 테스트 대상이 아니다.
+        // 보안/navigation 정책은 window-security.test 가 소스 스캔으로, 동작은 build 가 검증한다.
+        'src/main/bootstrap/**',
         'src/main/services/onboarding-sample.ts'
       ],
       thresholds: {
