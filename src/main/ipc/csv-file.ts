@@ -1,6 +1,8 @@
 import { dialog, ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { externalFilePathSchema } from './schemas'
 import { csvFileService } from '../services/csv-file'
 
 export function registerCsvFileHandlers(): void {
@@ -71,14 +73,14 @@ export function registerCsvFileHandlers(): void {
       handle(() => csvFileService.duplicate(workspaceId, csvId))
   )
 
+  // 위험 입력: 렌더러가 넘긴 소스 경로로 파일 읽기 → path traversal 차단.
   ipcMain.handle(
     'csv:import',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      folderId: string | null,
-      sourcePath: string
-    ): IpcResponse => handle(() => csvFileService.import(workspaceId, folderId, sourcePath))
+    validateIpc(
+      [idSchema, idSchema.nullable(), externalFilePathSchema] as const,
+      (workspaceId, folderId, sourcePath) =>
+        csvFileService.import(workspaceId, folderId, sourcePath)
+    )
   )
 
   ipcMain.handle(

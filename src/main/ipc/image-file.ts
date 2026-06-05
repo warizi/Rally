@@ -1,6 +1,8 @@
 import { dialog, ipcMain, IpcMainInvokeEvent } from 'electron'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import { externalFilePathSchema } from './schemas'
 import { imageFileService } from '../services/image-file'
 
 export function registerImageFileHandlers(): void {
@@ -10,14 +12,14 @@ export function registerImageFileHandlers(): void {
       handle(() => imageFileService.readByWorkspaceFromDb(workspaceId))
   )
 
+  // 위험 입력: 렌더러가 넘긴 소스 경로로 파일 읽기 → path traversal 차단.
   ipcMain.handle(
     'image:import',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      folderId: string | null,
-      sourcePath: string
-    ): IpcResponse => handle(() => imageFileService.import(workspaceId, folderId, sourcePath))
+    validateIpc(
+      [idSchema, idSchema.nullable(), externalFilePathSchema] as const,
+      (workspaceId, folderId, sourcePath) =>
+        imageFileService.import(workspaceId, folderId, sourcePath)
+    )
   )
 
   ipcMain.handle(

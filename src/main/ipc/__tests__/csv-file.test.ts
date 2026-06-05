@@ -85,3 +85,16 @@ describe('csv-file IPC handlers', () => {
     expect(result).toEqual(['/x.csv'])
   })
 })
+
+describe('csv:import 런타임 입력 검증', () => {
+  it('path travers(..) 소스 경로 → service 미호출 + errorResponse', () => {
+    const result = getHandler<{ success: boolean }>('csv:import')(
+      {},
+      'ws-aabbcc12',
+      null,
+      '../../etc/passwd'
+    )
+    expect(result).toMatchObject({ success: false })
+    expect(csvFileService.import).not.toHaveBeenCalled()
+  })
+})

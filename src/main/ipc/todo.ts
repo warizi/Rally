@@ -1,63 +1,71 @@
-import { ipcMain, IpcMainInvokeEvent } from 'electron'
-import type { IpcResponse } from '../lib/ipc-response'
-import { handle } from '../lib/handle'
+import { ipcMain } from 'electron'
+import { validateIpc, idSchema } from '../lib/ipc-validate'
+import {
+  createTodoSchema,
+  updateTodoSchema,
+  todoOrderUpdatesSchema,
+  todoDateRangeSchema,
+  todoFilterOptionsSchema
+} from './schemas'
 import { todoService } from '../services/todo'
-import type { CreateTodoData, UpdateTodoData, TodoOrderUpdate } from '../services/todo'
 
 export function registerTodoHandlers(): void {
   ipcMain.handle(
     'todo:findByWorkspace',
-    (
-      _: IpcMainInvokeEvent,
-      workspaceId: string,
-      options?: { filter?: 'all' | 'active' | 'completed' }
-    ): IpcResponse => handle(() => todoService.findByWorkspace(workspaceId, options?.filter))
+    validateIpc([idSchema, todoFilterOptionsSchema] as const, (workspaceId, options) =>
+      todoService.findByWorkspace(workspaceId, options?.filter)
+    )
   )
 
   ipcMain.handle(
     'todo:findByDateRange',
-    (_: IpcMainInvokeEvent, workspaceId: string, range: { start: Date; end: Date }): IpcResponse =>
-      handle(() => todoService.findByWorkspaceAndDateRange(workspaceId, range))
+    validateIpc([idSchema, todoDateRangeSchema] as const, (workspaceId, range) =>
+      todoService.findByWorkspaceAndDateRange(workspaceId, range)
+    )
   )
 
   ipcMain.handle(
     'todo:create',
-    (_: IpcMainInvokeEvent, workspaceId: string, data: CreateTodoData): IpcResponse =>
-      handle(() => todoService.create(workspaceId, data))
+    validateIpc([idSchema, createTodoSchema] as const, (workspaceId, data) =>
+      todoService.create(workspaceId, data)
+    )
   )
 
   ipcMain.handle(
     'todo:update',
-    (_: IpcMainInvokeEvent, todoId: string, data: UpdateTodoData): IpcResponse =>
-      handle(() => todoService.update(todoId, data))
+    validateIpc([idSchema, updateTodoSchema] as const, (todoId, data) =>
+      todoService.update(todoId, data)
+    )
   )
 
   ipcMain.handle(
     'todo:remove',
-    (_: IpcMainInvokeEvent, todoId: string): IpcResponse => handle(() => todoService.remove(todoId))
+    validateIpc([idSchema], (todoId) => todoService.remove(todoId))
   )
 
   ipcMain.handle(
     'todo:reorderList',
-    (_: IpcMainInvokeEvent, workspaceId: string, updates: TodoOrderUpdate[]): IpcResponse =>
-      handle(() => todoService.reorderList(workspaceId, updates))
+    validateIpc([idSchema, todoOrderUpdatesSchema] as const, (workspaceId, updates) =>
+      todoService.reorderList(workspaceId, updates)
+    )
   )
 
   ipcMain.handle(
     'todo:reorderKanban',
-    (_: IpcMainInvokeEvent, workspaceId: string, updates: TodoOrderUpdate[]): IpcResponse =>
-      handle(() => todoService.reorderKanban(workspaceId, updates))
+    validateIpc([idSchema, todoOrderUpdatesSchema] as const, (workspaceId, updates) =>
+      todoService.reorderKanban(workspaceId, updates)
+    )
   )
 
   ipcMain.handle(
     'todo:reorderSub',
-    (_: IpcMainInvokeEvent, parentId: string, updates: TodoOrderUpdate[]): IpcResponse =>
-      handle(() => todoService.reorderSub(parentId, updates))
+    validateIpc([idSchema, todoOrderUpdatesSchema] as const, (parentId, updates) =>
+      todoService.reorderSub(parentId, updates)
+    )
   )
 
   ipcMain.handle(
     'todo:findCompletedWithRecurring',
-    (_: IpcMainInvokeEvent, workspaceId: string): IpcResponse =>
-      handle(() => todoService.findCompletedWithRecurring(workspaceId))
+    validateIpc([idSchema], (workspaceId) => todoService.findCompletedWithRecurring(workspaceId))
   )
 }

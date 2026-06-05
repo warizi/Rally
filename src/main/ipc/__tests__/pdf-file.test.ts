@@ -83,3 +83,16 @@ describe('pdf-file IPC handlers', () => {
     expect(result).toBeNull()
   })
 })
+
+describe('pdf:import 런타임 입력 검증', () => {
+  it('path traversal(..) 소스 경로 → service 미호출 + errorResponse', () => {
+    const result = getHandler<{ success: boolean }>('pdf:import')(
+      {},
+      'ws-aabbcc12',
+      null,
+      '../../secret.pdf'
+    )
+    expect(result).toMatchObject({ success: false })
+    expect(pdfFileService.import).not.toHaveBeenCalled()
+  })
+})
