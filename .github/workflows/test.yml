@@ -106,15 +106,47 @@ jobs:
       - name: Run renderer tests (shard ${{ matrix.shard }}/4)
         run: npm run test:web -- --shard ${{ matrix.shard }}/4
 
-  # coverage 지표 전용 job — PR 차단 게이트(test-web shard)와 분리해 병렬 실행.
-  # 느려도 빠른 게이트를 막지 않으며 coverage-summary 에 web 커버리지를 공급한다.
+  # coverage 지표 — 4-way shard 병렬 측정 (blob 리포트). 단일 3분 실행을 shard 당 1분 이하로 단축.
+  # 부분 커버리지라 shard 에서는 threshold 를 끄고(VITEST_SKIP_THRESHOLDS), 임계값은 merge 단계에서 평가.
   coverage-web:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    name: coverage-web (shard ${{ matrix.shard }}/4)
+    env:
+      VITEST_SKIP_THRESHOLDS: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-and-install
-      - name: Run renderer tests with coverage
-        run: npm run test:coverage:web
+      - name: Run renderer coverage (shard ${{ matrix.shard }}/4)
+        run: npm run test:coverage:web:shard -- --shard ${{ matrix.shard }}/4
+      - name: Upload coverage blob (shard ${{ matrix.shard }})
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-web-blob-${{ matrix.shard }}
+          path: .vitest-reports/
+          retention-days: 1
+
+  # shard blob 들을 병합해 단일 web coverage 리포트 생성 (테스트 재실행 없이 ~수초).
+  # 머지된 리포트에서만 coverage threshold 를 평가한다.
+  coverage-web-merge:
+    runs-on: ubuntu-latest
+    needs: coverage-web
+    if: always()
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup-and-install
+      - name: Download coverage blobs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-web-blob-*
+          path: .vitest-reports/
+          merge-multiple: true
+      - name: Merge coverage reports
+        run: npm run test:coverage:web:merge
       - name: Upload coverage (web)
         if: always()
         uses: actions/upload-artifact@v4
@@ -125,7 +157,7 @@ jobs:
 
   coverage-summary:
     runs-on: ubuntu-latest
-    needs: [test-node, coverage-web]
+    needs: [test-node, coverage-web-merge]
     if: always()
     permissions:
       pull-requests: write
