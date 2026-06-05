@@ -83,6 +83,9 @@ jobs:
         run: npx electron-vite build
       - name: Verify expected chunks exist
         run: node scripts/verify-chunks.mjs
+      # 번들 budget 게이트: 메인 청크/전체 gzip 상한 초과 시 차단(PR #315 분리 효과 회귀 방지).
+      - name: Check bundle budget
+        run: node scripts/check-bundle-budget.mjs
       - name: Print bundle size summary
         run: node scripts/measure-bundle.mjs >> $GITHUB_STEP_SUMMARY
 
