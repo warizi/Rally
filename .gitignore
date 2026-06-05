@@ -8,6 +8,9 @@ out
 .eslintcache
 *.log*
 
+# typescript incremental build cache (생성 산출물 — 추적 안 함)
+*.tsbuildinfo
+
 # coverage
 coverage
 
