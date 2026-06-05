@@ -1,9 +1,8 @@
 import { ipcRenderer } from 'electron'
-import type { TabSessionInsert } from '../../main/repositories/tab-session'
+import type { TabSessionUpsertInput } from '../types/tab'
 
 export const tabSessionApi = {
   getByWorkspaceId: (workspaceId: string) =>
     ipcRenderer.invoke('tabSession:getByWorkspaceId', workspaceId),
-  upsert: (data: Omit<TabSessionInsert, 'updatedAt'>) =>
-    ipcRenderer.invoke('tabSession:upsert', data)
+  upsert: (data: TabSessionUpsertInput) => ipcRenderer.invoke('tabSession:upsert', data)
 }
