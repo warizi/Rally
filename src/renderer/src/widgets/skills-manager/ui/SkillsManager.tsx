@@ -61,8 +61,7 @@ export function SkillsManager({ target = 'claude' }: Props): React.JSX.Element {
         <p className="text-xs text-muted-foreground mb-3">
           <strong>적용</strong> 은{' '}
           <code className="bg-muted px-1 rounded">~/.agents/skills/&lt;name&gt;/SKILL.md</code> 에
-          작성됩니다. Codex CLI 가 읽는 filesystem skill 형식이라 SKILL.md 원문이 그대로
-          적용됩니다.
+          작성됩니다. Codex CLI 가 읽는 filesystem skill 형식이라 SKILL.md 원문이 그대로 적용됩니다.
         </p>
       )}
 

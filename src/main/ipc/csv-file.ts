@@ -56,15 +56,15 @@ export function registerCsvFileHandlers(): void {
     'csv:move',
     validateIpc(
       [idSchema, idSchema, nullableIdSchema, orderIndexSchema] as const,
-      (workspaceId, csvId, folderId, index) => csvFileService.move(workspaceId, csvId, folderId, index)
+      (workspaceId, csvId, folderId, index) =>
+        csvFileService.move(workspaceId, csvId, folderId, index)
     )
   )
 
   ipcMain.handle(
     'csv:updateMeta',
-    validateIpc(
-      [idSchema, idSchema, csvUpdateMetaSchema] as const,
-      (workspaceId, csvId, data) => csvFileService.updateMeta(workspaceId, csvId, data)
+    validateIpc([idSchema, idSchema, csvUpdateMetaSchema] as const, (workspaceId, csvId, data) =>
+      csvFileService.updateMeta(workspaceId, csvId, data)
     )
   )
 
@@ -87,9 +87,8 @@ export function registerCsvFileHandlers(): void {
 
   ipcMain.handle(
     'csv:toggleLock',
-    validateIpc(
-      [idSchema, idSchema, booleanSchema] as const,
-      (workspaceId, csvId, isLocked) => csvFileService.toggleLock(workspaceId, csvId, isLocked)
+    validateIpc([idSchema, idSchema, booleanSchema] as const, (workspaceId, csvId, isLocked) =>
+      csvFileService.toggleLock(workspaceId, csvId, isLocked)
     )
   )
 

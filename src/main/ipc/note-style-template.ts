@@ -13,9 +13,7 @@ export function registerNoteStyleTemplateHandlers(): void {
 
   ipcMain.handle(
     'noteStyleTemplate:create',
-    validateIpc([noteStyleTemplateCreateSchema], (input) =>
-      noteStyleTemplateService.create(input)
-    )
+    validateIpc([noteStyleTemplateCreateSchema], (input) => noteStyleTemplateService.create(input))
   )
 
   ipcMain.handle(

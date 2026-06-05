@@ -13,9 +13,7 @@ export function registerRecurringCompletionHandlers(): void {
 
   ipcMain.handle(
     'recurringCompletion:uncomplete',
-    validateIpc([idSchema], (completionId) =>
-      recurringCompletionService.uncomplete(completionId)
-    )
+    validateIpc([idSchema], (completionId) => recurringCompletionService.uncomplete(completionId))
   )
 
   ipcMain.handle(

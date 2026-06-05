@@ -259,7 +259,9 @@ export const canvasViewportSchema = z.object({
   zoom: z.number()
 })
 
-export const canvasFindOptionsSchema = z.object({ search: z.string().max(1000).optional() }).optional()
+export const canvasFindOptionsSchema = z
+  .object({ search: z.string().max(1000).optional() })
+  .optional()
 
 export const canvasNodeCreateSchema = z.object({
   type: canvasNodeTypeSchema,

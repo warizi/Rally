@@ -21,8 +21,7 @@ export function registerFolderHandlers(): void {
     'folder:create',
     validateIpc(
       [idSchema, nullableIdSchema, titleSchema] as const,
-      (workspaceId, parentFolderId, name) =>
-        folderService.create(workspaceId, parentFolderId, name)
+      (workspaceId, parentFolderId, name) => folderService.create(workspaceId, parentFolderId, name)
     )
   )
 

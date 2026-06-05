@@ -47,9 +47,8 @@ export function registerNoteHandlers(): void {
 
   ipcMain.handle(
     'note:writeContent',
-    validateIpc(
-      [idSchema, idSchema, contentSchema] as const,
-      (workspaceId, noteId, content) => noteService.writeContent(workspaceId, noteId, content)
+    validateIpc([idSchema, idSchema, contentSchema] as const, (workspaceId, noteId, content) =>
+      noteService.writeContent(workspaceId, noteId, content)
     )
   )
 
@@ -64,9 +63,8 @@ export function registerNoteHandlers(): void {
 
   ipcMain.handle(
     'note:updateMeta',
-    validateIpc(
-      [idSchema, idSchema, descriptionMetaSchema] as const,
-      (workspaceId, noteId, data) => noteService.updateMeta(workspaceId, noteId, data)
+    validateIpc([idSchema, idSchema, descriptionMetaSchema] as const, (workspaceId, noteId, data) =>
+      noteService.updateMeta(workspaceId, noteId, data)
     )
   )
 
@@ -88,9 +86,8 @@ export function registerNoteHandlers(): void {
 
   ipcMain.handle(
     'note:toggleLock',
-    validateIpc(
-      [idSchema, idSchema, booleanSchema] as const,
-      (workspaceId, noteId, isLocked) => noteService.toggleLock(workspaceId, noteId, isLocked)
+    validateIpc([idSchema, idSchema, booleanSchema] as const, (workspaceId, noteId, isLocked) =>
+      noteService.toggleLock(workspaceId, noteId, isLocked)
     )
   )
 

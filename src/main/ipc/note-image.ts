@@ -19,9 +19,8 @@ export function registerNoteImageHandlers(): void {
 
   ipcMain.handle(
     'noteImage:saveFromBuffer',
-    validateIpc(
-      [idSchema, arrayBufferSchema, fileExtSchema] as const,
-      (workspaceId, buffer, ext) => noteImageService.saveFromBuffer(workspaceId, buffer, ext)
+    validateIpc([idSchema, arrayBufferSchema, fileExtSchema] as const, (workspaceId, buffer, ext) =>
+      noteImageService.saveFromBuffer(workspaceId, buffer, ext)
     )
   )
 

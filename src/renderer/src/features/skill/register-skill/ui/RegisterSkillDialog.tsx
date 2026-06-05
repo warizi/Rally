@@ -1,5 +1,5 @@
 import { JSX, useMemo } from 'react'
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
@@ -72,16 +72,19 @@ export function RegisterSkillDialog({ open, onOpenChange }: Props): JSX.Element 
     }
   })
 
-  const watched = form.watch()
+  // useWatch(hook) 로 폼 값을 반응적으로 구독 — form.watch()(메서드 호출)는 React
+  // Compiler 가 memoize 할 수 없어 incompatible-library 경고를 유발한다. 동작(전체 필드
+  // 구독 → 미리보기 갱신)은 동일하다.
+  const watched = useWatch({ control: form.control })
   const fullName = watched.nameSuffix ? `${NAME_PREFIX}${watched.nameSuffix}` : ''
   const preview = useMemo(
     () =>
       assembleSkillContent({
         name: fullName || `${NAME_PREFIX}skill-name`,
         description: watched.description || '<description>',
-        body: watched.body,
-        mcpTools: watched.mcpTools,
-        triggers: csvToArray(watched.triggersCsv)
+        body: watched.body ?? '',
+        mcpTools: watched.mcpTools ?? [],
+        triggers: csvToArray(watched.triggersCsv ?? '')
       }),
     [fullName, watched]
   )
