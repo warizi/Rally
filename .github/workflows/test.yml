@@ -127,6 +127,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-web-blob-${{ matrix.shard }}
+          # .vitest-reports 는 dot 디렉토리라 upload-artifact 기본 제외 → 명시적으로 포함.
+          include-hidden-files: true
           path: .vitest-reports/
           retention-days: 1
 
