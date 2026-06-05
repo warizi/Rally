@@ -1,14 +1,13 @@
 import { app } from 'electron'
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync, unlinkSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readdirSync, rmSync, statSync, writeFileSync } from 'fs'
 import { join } from 'path'
 import { PermissionError, ValidationError } from '../lib/errors'
 import { skillService, SYSTEM_SKILL_NAMES } from './skill'
-import { toCodexPrompt } from './codex-prompt'
 
 /**
  * skill 을 적용할 대상 클라이언트.
  * - claude: Claude Code 가 읽는 ~/.claude/skills/<name>/SKILL.md (자동 트리거)
- * - codex:  Codex CLI/Desktop 가 읽는 ~/.codex/prompts/<name>.md (수동 /name 슬래시 커맨드)
+ * - codex:  Codex CLI/Desktop 가 읽는 ~/.agents/skills/<name>/SKILL.md
  */
 export type SkillTarget = 'claude' | 'codex'
 export const SKILL_TARGETS: SkillTarget[] = ['claude', 'codex']
@@ -90,45 +89,51 @@ const claudeTarget: SkillApplyTarget = {
   }
 }
 
-// --- Codex: ~/.codex/prompts/<name>.md (파일 기반, frontmatter 제거) ---
+// --- Codex: ~/.agents/skills/<name>/SKILL.md (디렉터리 기반) ---
 
-function codexPromptsRoot(): string {
-  return join(app.getPath('home'), '.codex', 'prompts')
+function codexSkillsRoot(): string {
+  return join(app.getPath('home'), '.agents', 'skills')
 }
 
 const codexTarget: SkillApplyTarget = {
   id: 'codex',
   applyContent(name, content) {
     assertSafeName(name)
-    const root = codexPromptsRoot()
+    const dir = join(codexSkillsRoot(), name)
     try {
-      mkdirSync(root, { recursive: true })
-      writeFileSync(join(root, `${name}.md`), toCodexPrompt(content), 'utf-8')
+      mkdirSync(dir, { recursive: true })
+      writeFileSync(join(dir, 'SKILL.md'), content, 'utf-8')
     } catch (err) {
-      rethrowAsPermission(err, `~/.codex/prompts/${name}.md`)
+      rethrowAsPermission(err, `~/.agents/skills/${name}`)
     }
   },
   remove(name) {
     assertSafeName(name)
-    const file = join(codexPromptsRoot(), `${name}.md`)
-    if (!existsSync(file)) return
+    const dir = join(codexSkillsRoot(), name)
+    if (!existsSync(dir)) return
     try {
-      unlinkSync(file)
+      rmSync(dir, { recursive: true, force: true })
     } catch (err) {
-      rethrowAsPermission(err, `~/.codex/prompts/${name}.md`)
+      rethrowAsPermission(err, `~/.agents/skills/${name}`)
     }
   },
   isApplied(name) {
     assertSafeName(name)
-    return existsSync(join(codexPromptsRoot(), `${name}.md`))
+    return existsSync(join(codexSkillsRoot(), name, 'SKILL.md'))
   },
   listAppliedNames() {
-    const root = codexPromptsRoot()
+    const root = codexSkillsRoot()
     if (!existsSync(root)) return []
     try {
       return readdirSync(root)
-        .filter((f) => f.endsWith('.md'))
-        .map((f) => f.slice(0, -'.md'.length))
+        .filter((name) => {
+          try {
+            const full = join(root, name)
+            return statSync(full).isDirectory() && existsSync(join(full, 'SKILL.md'))
+          } catch {
+            return false
+          }
+        })
     } catch {
       return []
     }
@@ -166,7 +171,7 @@ export const skillSyncService = {
   /**
    * skill id 를 지정 타겟에 적용.
    * - claude: ~/.claude/skills/<name>/SKILL.md (DB content 그대로)
-   * - codex:  ~/.codex/prompts/<name>.md (frontmatter 제거 본문)
+   * - codex:  ~/.agents/skills/<name>/SKILL.md (DB content 그대로)
    */
   apply(id: string, target: SkillTarget = 'claude'): SkillApplyStatus {
     const item = skillService.get(id)

@@ -13,7 +13,7 @@ interface Props {
 
 const APPLY_HINT: Record<SkillTarget, string> = {
   claude: 'Claude 에 적용 (~/.claude/skills 에 SKILL.md 작성)',
-  codex: 'Codex 에 적용 (~/.codex/prompts 에 작성 — /name 으로 호출)'
+  codex: 'Codex 에 적용 (~/.agents/skills 에 SKILL.md 작성)'
 }
 
 export function ApplyToggleButton({ skill, applied, target = 'claude' }: Props): JSX.Element {

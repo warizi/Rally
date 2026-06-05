@@ -113,7 +113,7 @@ describe('skillSyncService.status', () => {
 })
 
 describe('codex 타겟', () => {
-  it('apply(codex) → ~/.codex/prompts/<name>.md 에 frontmatter 제거 본문 작성', () => {
+  it('apply(codex) → ~/.agents/skills/<name>/SKILL.md 에 DB content 작성', () => {
     const created = skillService.create({
       name: 'rally-codex-test',
       description: 'd',
@@ -122,11 +122,11 @@ describe('codex 타겟', () => {
     const result = skillSyncService.apply(created.id, 'codex')
     expect(result.applied).toEqual({ claude: false, codex: true })
 
-    const file = join(tmpHome, '.codex', 'prompts', 'rally-codex-test.md')
+    const file = join(tmpHome, '.agents', 'skills', 'rally-codex-test', 'SKILL.md')
     expect(existsSync(file)).toBe(true)
     const body = readFileSync(file, 'utf-8')
     expect(body).toContain('# 본문 시작')
-    expect(body).not.toContain('---') // frontmatter 제거됨
+    expect(body).toContain('---') // Codex skill 은 SKILL.md 원문을 유지
     // claude 쪽은 영향 없음
     expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally-codex-test'))).toBe(false)
   })
@@ -144,7 +144,7 @@ describe('codex 타겟', () => {
     skillSyncService.apply('system:rally', 'claude')
     skillSyncService.apply('system:rally', 'codex')
     skillSyncService.unapply('system:rally', 'codex')
-    expect(existsSync(join(tmpHome, '.codex', 'prompts', 'rally.md'))).toBe(false)
+    expect(existsSync(join(tmpHome, '.agents', 'skills', 'rally'))).toBe(false)
     expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally', 'SKILL.md'))).toBe(true)
   })
 
@@ -163,7 +163,7 @@ describe('codex 타겟', () => {
     skillSyncService.apply(item.id, 'codex')
     skillSyncService.cleanupByName('rally-both')
     expect(existsSync(join(tmpHome, '.claude', 'skills', 'rally-both'))).toBe(false)
-    expect(existsSync(join(tmpHome, '.codex', 'prompts', 'rally-both.md'))).toBe(false)
+    expect(existsSync(join(tmpHome, '.agents', 'skills', 'rally-both'))).toBe(false)
   })
 })
 
