@@ -53,7 +53,7 @@ describe('ScheduleFormDialog', () => {
       <ScheduleFormDialog workspaceId="ws" trigger={<button data-testid="trigger">+</button>} />
     )
     fireEvent.click(screen.getByTestId('trigger'))
-    expect(screen.getByText(/일정/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '일정 추가' })).toBeInTheDocument()
   })
 
   it('controlled open=true → 즉시 dialog 노출', () => {

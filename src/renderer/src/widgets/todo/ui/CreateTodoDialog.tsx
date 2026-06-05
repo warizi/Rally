@@ -2,7 +2,14 @@ import { useState, useCallback } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Form } from '@shared/ui/form'
 import { DatePickerButton } from '@shared/ui/date-picker-button'
@@ -185,6 +192,9 @@ export function CreateTodoDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{parentId ? '하위 할 일 추가' : '할 일 추가'}</DialogTitle>
+            <DialogDescription className="sr-only">
+              할 일의 제목과 세부 정보를 입력합니다.
+            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

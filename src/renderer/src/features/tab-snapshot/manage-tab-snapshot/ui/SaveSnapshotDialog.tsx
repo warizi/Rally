@@ -2,7 +2,14 @@ import { JSX } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Textarea } from '@shared/ui/textarea'
@@ -56,6 +63,9 @@ export function SaveSnapshotDialog({ open, onOpenChange, workspaceId }: Props): 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>현재 탭 저장</DialogTitle>
+          <DialogDescription className="sr-only">
+            현재 탭 구성을 스냅샷으로 저장합니다.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>

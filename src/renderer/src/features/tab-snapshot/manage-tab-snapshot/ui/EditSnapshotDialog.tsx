@@ -2,7 +2,14 @@ import { JSX, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Textarea } from '@shared/ui/textarea'
@@ -50,6 +57,9 @@ export function EditSnapshotDialog({ open, onOpenChange, snapshot }: Props): JSX
       <DialogContent>
         <DialogHeader>
           <DialogTitle>스냅샷 수정</DialogTitle>
+          <DialogDescription className="sr-only">
+            스냅샷의 이름과 설명을 수정합니다.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>

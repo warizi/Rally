@@ -26,8 +26,10 @@ vi.mock('@shared/hooks/use-count-up', () => ({
 
 vi.mock('recharts', () => ({
   Area: () => null,
+  // <svg> 로 감싸 children(<defs>/<linearGradient> 등 SVG 요소)을 SVG 네임스페이스에서
+  // 렌더 — <div> 로 감싸면 React 가 SVG 태그 casing 경고를 낸다.
   AreaChart: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="area-chart">{children}</div>
+    <svg data-testid="area-chart">{children}</svg>
   ),
   CartesianGrid: () => null,
   XAxis: () => null

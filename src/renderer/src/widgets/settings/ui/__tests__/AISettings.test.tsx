@@ -109,14 +109,15 @@ beforeEach(() => {
 })
 
 describe('AISettings — smoke', () => {
-  it('SkillsManager 마운트', () => {
+  it('SkillsManager 마운트', async () => {
     render(<AISettings />)
-    expect(screen.getByTestId('skills-manager')).toBeInTheDocument()
+    // mount 시 비동기 IPC effect(상태 갱신)가 act 밖에서 settle 되지 않도록 대기.
+    await waitFor(() => expect(screen.getByTestId('skills-manager')).toBeInTheDocument())
   })
 
-  it('두 클라이언트 라벨 노출', () => {
+  it('두 클라이언트 라벨 노출', async () => {
     render(<AISettings />)
-    expect(screen.getByText('Claude Desktop')).toBeInTheDocument()
+    await waitFor(() => expect(screen.getByText('Claude Desktop')).toBeInTheDocument())
     expect(screen.getByText(/Claude Code/)).toBeInTheDocument()
   })
 })

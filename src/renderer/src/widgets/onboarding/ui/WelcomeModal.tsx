@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
-import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { useWorkspaceIsEmpty } from '@/widgets/workspace'
@@ -77,6 +77,7 @@ export function WelcomeModal({ onCreateSample }: Props): React.JSX.Element | nul
     >
       <DialogContent className="sm:max-w-xl" showCloseButton={!busy}>
         <DialogTitle className="sr-only">Rally 환영 화면</DialogTitle>
+        <DialogDescription className="sr-only">Rally 초기 설정을 안내합니다.</DialogDescription>
         <div className="flex min-h-[320px] flex-col gap-6">
           <div className="flex-1 py-4">
             <WelcomeSlide index={slide} />

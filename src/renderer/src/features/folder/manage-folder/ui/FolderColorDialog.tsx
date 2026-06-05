@@ -1,6 +1,13 @@
 import { JSX, useState } from 'react'
 import { Check } from 'lucide-react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 
 const PRESET_COLORS: { label: string; value: string | null }[] = [
@@ -47,6 +54,9 @@ export function FolderColorDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>폴더 색상</DialogTitle>
+          <DialogDescription className="sr-only">
+            폴더에 표시할 색상을 선택합니다.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="grid grid-cols-7 gap-x-1 gap-y-1.5 py-2">

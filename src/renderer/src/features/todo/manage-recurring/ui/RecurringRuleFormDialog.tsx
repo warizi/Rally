@@ -2,7 +2,14 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Form } from '@shared/ui/form'
 import { useCreateRecurringRule, useUpdateRecurringRule } from '@entities/recurring-rule'
@@ -95,6 +102,9 @@ export function RecurringRuleFormDialog(props: Props): React.JSX.Element {
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{mode === 'create' ? '반복 할일 추가' : '반복 할일 수정'}</DialogTitle>
+          <DialogDescription className="sr-only">
+            반복 할일의 반복 주기와 내용을 설정합니다.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
