@@ -37,3 +37,29 @@ describe('main BrowserWindow webPreferences', () => {
     expect(indexSource).toMatch(/preload:\s*join\(__dirname,\s*['"]\.\.\/preload\/index\.js['"]\)/)
   })
 })
+
+describe('외부 URL 열기 경로는 allowlist 로 가드된다', () => {
+  it('공용 allowlist 함수를 import 한다', () => {
+    expect(indexSource).toMatch(
+      /import\s*\{\s*isAllowedExternalUrl\s*\}\s*from\s*['"]\.\/lib\/external-url['"]/
+    )
+  })
+
+  it('setWindowOpenHandler 는 isAllowedExternalUrl 통과 시에만 openExternal 호출', () => {
+    expect(indexSource).toMatch(
+      /setWindowOpenHandler\(\(details\)\s*=>\s*\{[\s\S]*?if\s*\(isAllowedExternalUrl\(details\.url\)\)\s*\{[\s\S]*?shell\.openExternal\(details\.url\)/
+    )
+  })
+
+  it('shell:openExternal IPC 는 isAllowedExternalUrl 통과 시에만 openExternal 호출', () => {
+    expect(indexSource).toMatch(
+      /shell:openExternal['"][\s\S]*?if\s*\(isAllowedExternalUrl\(url\)\)\s*\{[\s\S]*?shell\.openExternal\(url\)/
+    )
+  })
+
+  it('검증 없이 details.url 을 직접 openExternal 에 넘기지 않는다', () => {
+    expect(indexSource).not.toMatch(
+      /setWindowOpenHandler\(\(details\)\s*=>\s*\{\s*shell\.openExternal\(details\.url\)/
+    )
+  })
+})
