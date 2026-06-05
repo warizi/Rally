@@ -5,7 +5,7 @@
  * snapshot=null → submit 무시.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   updateSnapshot: vi.fn(),
@@ -56,8 +56,10 @@ describe('EditSnapshotDialog', () => {
   it('snapshot=null → 저장 클릭해도 mutate 안 함', async () => {
     render(<EditSnapshotDialog open={true} onOpenChange={vi.fn()} snapshot={null} />)
     fireEvent.change(screen.getByPlaceholderText('스냅샷 이름'), { target: { value: 'foo' } })
-    fireEvent.click(screen.getByRole('button', { name: '저장' }))
-    await new Promise((r) => setTimeout(r, 30))
+    // 저장 클릭 → react-hook-form 비동기 validation 이 act 안에서 settle 되도록 감싼다.
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: '저장' }))
+    })
     expect(mocks.updateSnapshot).not.toHaveBeenCalled()
   })
 

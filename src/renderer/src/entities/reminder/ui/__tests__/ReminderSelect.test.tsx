@@ -12,10 +12,14 @@ const mocks = vi.hoisted(() => ({
   removeMutate: vi.fn()
 }))
 
-vi.mock('@entities/reminder', () => ({
+// 컴포넌트가 같은 slice 내부 상대 경로로 import 하므로 barrel 대신 해당 모듈을 mock.
+vi.mock('../../api/queries', () => ({
   useReminders: () => ({ data: mocks.reminders }),
   useSetReminder: () => ({ mutate: mocks.setMutate }),
-  useRemoveReminder: () => ({ mutate: mocks.removeMutate }),
+  useRemoveReminder: () => ({ mutate: mocks.removeMutate })
+}))
+
+vi.mock('../../model/types', () => ({
   REMINDER_OFFSETS: [
     { value: 600000, label: '10분 전' },
     { value: 1800000, label: '30분 전' }

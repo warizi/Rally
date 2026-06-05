@@ -8,7 +8,7 @@
  *   4. 자기 todo 만 변경 시 그 항목만 재렌더 (다른 항목 격리)
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { fireEvent } from '@testing-library/react'
+import { fireEvent, waitFor } from '@testing-library/react'
 import { Profiler, useMemo, type ProfilerOnRenderCallback } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { SortableContext } from '@dnd-kit/sortable'
@@ -138,7 +138,8 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
 
     fireEvent.click(checkbox)
 
-    await vi.waitFor(() => {
+    // RTL waitFor 는 polling 을 act 로 감싸 비동기 state update 를 flush (vi.waitFor 는 미감쌈).
+    await waitFor(() => {
       expect(window.api.todo.update).toHaveBeenCalled()
     })
     const call = (window.api.todo.update as ReturnType<typeof vi.fn>).mock.calls[0]

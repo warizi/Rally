@@ -133,8 +133,12 @@ export function LoadTemplateDialog({
               <ul className="p-1">
                 {filtered.map((t) => (
                   <li key={t.id}>
-                    <button
-                      type="button"
+                    {/* 행 선택 영역은 div(role=button) — 안에 삭제 <Button> 이 들어가도
+                        <button> 중첩(HTML invalid)이 되지 않는다. 키보드 선택 지원. */}
+                    <div
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={selectedId === t.id}
                       onClick={() => setSelectedId(t.id)}
                       onDoubleClick={() => {
                         setSelectedId(t.id)
@@ -144,8 +148,14 @@ export function LoadTemplateDialog({
                           applyTemplate(t)
                         }
                       }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          setSelectedId(t.id)
+                        }
+                      }}
                       className={cn(
-                        'group w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-left text-sm',
+                        'group w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md text-left text-sm cursor-pointer',
                         'transition-colors',
                         selectedId === t.id
                           ? 'bg-accent text-accent-foreground'
@@ -157,6 +167,7 @@ export function LoadTemplateDialog({
                         type="button"
                         variant="ghost"
                         size="icon"
+                        aria-label="템플릿 삭제"
                         className="size-6 shrink-0 opacity-0 group-hover:opacity-100 hover:text-destructive"
                         onClick={(e) => {
                           e.stopPropagation()
@@ -165,7 +176,7 @@ export function LoadTemplateDialog({
                       >
                         <Trash2 className="size-3.5" />
                       </Button>
-                    </button>
+                    </div>
                   </li>
                 ))}
               </ul>

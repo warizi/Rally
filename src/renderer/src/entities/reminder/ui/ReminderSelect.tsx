@@ -2,13 +2,11 @@ import { Bell } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Checkbox } from '@shared/ui/checkbox'
-import {
-  useReminders,
-  useSetReminder,
-  useRemoveReminder,
-  REMINDER_OFFSETS
-} from '@entities/reminder'
-import type { ReminderItem } from '@entities/reminder'
+// 같은 slice 내부는 public barrel(@entities/reminder) 대신 상대 경로로 import —
+// barrel 이 이 컴포넌트를 다시 export 하므로 self-import 시 Rollup circular chunk 발생.
+import { useReminders, useSetReminder, useRemoveReminder } from '../api/queries'
+import { REMINDER_OFFSETS } from '../model/types'
+import type { ReminderItem } from '../model/types'
 
 interface Props {
   entityType: 'todo' | 'schedule'

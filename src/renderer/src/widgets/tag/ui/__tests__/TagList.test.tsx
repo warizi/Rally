@@ -4,7 +4,7 @@
  * itemTags 배지 + TagPicker + dialog 3종. 토글 / 생성 / 삭제 flow.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen, fireEvent, act } from '@testing-library/react'
 
 interface FakeTag {
   id: string
@@ -157,7 +157,7 @@ describe('TagList', () => {
 
   it('TagPicker onCreateClick → TagCreateDialog 열림', () => {
     render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
-    mocks.pickerProps?.onCreateClick()
+    act(() => mocks.pickerProps?.onCreateClick())
     // useState 비동기지만 동기 렌더로 재확인
   })
 
@@ -172,7 +172,7 @@ describe('TagList', () => {
   it('handleRequestRemove (Picker onRemove) 호출 시 mutate 즉시 호출 안 됨', () => {
     mocks.allTags = [{ id: 't1', name: 'A', color: '#f00' }]
     render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
-    mocks.pickerProps?.onRemove({ id: 't1', name: 'A', color: '#f00' })
+    act(() => mocks.pickerProps?.onRemove({ id: 't1', name: 'A', color: '#f00' }))
     // 확인 다이얼로그 단계 — mutate 는 직접 호출되지 않음.
     expect(mocks.removeMutate).not.toHaveBeenCalled()
   })
@@ -216,7 +216,7 @@ describe('TagList', () => {
     mocks.itemTags = [{ id: 't1', name: 'TagA', color: '#f00' }]
     render(<TagList workspaceId="ws" itemType="note" itemId="n1" />)
     fireEvent.click(screen.getByText('TagA'))
-    mocks.updateDialogProps?.onRemove()
+    act(() => mocks.updateDialogProps?.onRemove())
     // 확인 다이얼로그 단계 — removeMutate 직접 호출 안 됨
     expect(mocks.removeMutate).not.toHaveBeenCalled()
   })
