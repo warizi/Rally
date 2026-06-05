@@ -51,6 +51,10 @@ function TreeInner<T>(props: TreeProps<T>, ref: ForwardedRef<TreeApi<T>>): React
     return m
   }, [flat])
 
+  // TanStack Virtual 의 useVirtualizer 는 memoize 할 수 없는 함수를 반환하는 라이브러리
+  // 특성상 React Compiler 가 이 컴포넌트의 memoize 를 스킵한다(의도된 동작, stale UI 위험
+  // 없음). 코드로 호환되게 만들 방법이 없어 해당 경고만 범위를 최소화해 억제한다.
+  // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count: flat.length,
     getScrollElement: () => scrollElementRef.current,

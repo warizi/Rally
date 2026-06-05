@@ -84,8 +84,9 @@ export function registerTerminalHandlers(): void {
   // DB: 레이아웃 조회
   ipcMain.handle(
     'terminal:getLayout',
-    validateIpc([idSchema], (workspaceId) =>
-      terminalLayoutRepository.findByWorkspaceId(workspaceId) ?? null
+    validateIpc(
+      [idSchema],
+      (workspaceId) => terminalLayoutRepository.findByWorkspaceId(workspaceId) ?? null
     )
   )
 

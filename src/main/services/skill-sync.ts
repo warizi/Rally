@@ -125,15 +125,14 @@ const codexTarget: SkillApplyTarget = {
     const root = codexSkillsRoot()
     if (!existsSync(root)) return []
     try {
-      return readdirSync(root)
-        .filter((name) => {
-          try {
-            const full = join(root, name)
-            return statSync(full).isDirectory() && existsSync(join(full, 'SKILL.md'))
-          } catch {
-            return false
-          }
-        })
+      return readdirSync(root).filter((name) => {
+        try {
+          const full = join(root, name)
+          return statSync(full).isDirectory() && existsSync(join(full, 'SKILL.md'))
+        } catch {
+          return false
+        }
+      })
     } catch {
       return []
     }

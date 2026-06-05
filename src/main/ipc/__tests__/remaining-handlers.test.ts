@@ -273,8 +273,19 @@ describe('entity-link IPC handlers', () => {
     getHandler('entityLink:link')({}, 'note', 'note-aabbcc', 'todo', 'todo-aabbcc', 'ws-aabbcc12')
     getHandler('entityLink:unlink')({}, 'note', 'note-aabbcc', 'todo', 'todo-aabbcc')
     getHandler('entityLink:getLinked')({}, 'todo', 'todo-aabbcc')
-    expect(entityLinkService.link).toHaveBeenCalledWith('note', 'note-aabbcc', 'todo', 'todo-aabbcc', 'ws-aabbcc12')
-    expect(entityLinkService.unlink).toHaveBeenCalledWith('note', 'note-aabbcc', 'todo', 'todo-aabbcc')
+    expect(entityLinkService.link).toHaveBeenCalledWith(
+      'note',
+      'note-aabbcc',
+      'todo',
+      'todo-aabbcc',
+      'ws-aabbcc12'
+    )
+    expect(entityLinkService.unlink).toHaveBeenCalledWith(
+      'note',
+      'note-aabbcc',
+      'todo',
+      'todo-aabbcc'
+    )
     expect(entityLinkService.getLinked).toHaveBeenCalledWith('todo', 'todo-aabbcc')
   })
 })
@@ -294,7 +305,10 @@ describe('recurring-completion IPC handlers', () => {
   it('complete → date 를 새 Date 로 wrap', () => {
     const d = new Date()
     getHandler('recurringCompletion:complete')({}, 'rule-aabbcc', d)
-    expect(recurringCompletionService.complete).toHaveBeenCalledWith('rule-aabbcc', expect.any(Date))
+    expect(recurringCompletionService.complete).toHaveBeenCalledWith(
+      'rule-aabbcc',
+      expect.any(Date)
+    )
   })
   it('uncomplete / findTodayByWorkspace 위임', () => {
     getHandler('recurringCompletion:uncomplete')({}, 'comp-aabbcc')

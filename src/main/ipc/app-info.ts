@@ -41,37 +41,40 @@ export function registerAppInfoHandlers(): void {
 
   ipcMain.handle(
     'appInfo:getMcpServerPath',
-    validateNoArgs((): IpcResponse<string> =>
-      handle(() => {
-        if (is.dev) {
-          return join(process.cwd(), 'dist-mcp', 'index.js')
-        }
-        return join(process.resourcesPath, 'dist-mcp', 'index.js')
-      })
+    validateNoArgs(
+      (): IpcResponse<string> =>
+        handle(() => {
+          if (is.dev) {
+            return join(process.cwd(), 'dist-mcp', 'index.js')
+          }
+          return join(process.resourcesPath, 'dist-mcp', 'index.js')
+        })
     )
   )
 
   ipcMain.handle(
     'appInfo:getCommandFiles',
-    validateNoArgs((): IpcResponse<CommandFile[]> =>
-      handle(() => {
-        const commandsDir = is.dev
-          ? join(process.cwd(), '.claude', 'commands')
-          : join(process.resourcesPath, '.claude', 'commands')
-        return readMdFiles(commandsDir)
-      })
+    validateNoArgs(
+      (): IpcResponse<CommandFile[]> =>
+        handle(() => {
+          const commandsDir = is.dev
+            ? join(process.cwd(), '.claude', 'commands')
+            : join(process.resourcesPath, '.claude', 'commands')
+          return readMdFiles(commandsDir)
+        })
     )
   )
 
   ipcMain.handle(
     'appInfo:getSkillFiles',
-    validateNoArgs((): IpcResponse<CommandFile[]> =>
-      handle(() => {
-        const skillsDir = is.dev
-          ? join(process.cwd(), '.claude', 'skills')
-          : join(process.resourcesPath, '.claude', 'skills')
-        return readMdFiles(skillsDir)
-      })
+    validateNoArgs(
+      (): IpcResponse<CommandFile[]> =>
+        handle(() => {
+          const skillsDir = is.dev
+            ? join(process.cwd(), '.claude', 'skills')
+            : join(process.resourcesPath, '.claude', 'skills')
+          return readMdFiles(skillsDir)
+        })
     )
   )
 

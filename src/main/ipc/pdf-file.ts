@@ -57,15 +57,15 @@ export function registerPdfFileHandlers(): void {
     'pdf:move',
     validateIpc(
       [idSchema, idSchema, nullableIdSchema, orderIndexSchema] as const,
-      (workspaceId, pdfId, folderId, index) => pdfFileService.move(workspaceId, pdfId, folderId, index)
+      (workspaceId, pdfId, folderId, index) =>
+        pdfFileService.move(workspaceId, pdfId, folderId, index)
     )
   )
 
   ipcMain.handle(
     'pdf:updateMeta',
-    validateIpc(
-      [idSchema, idSchema, descriptionMetaSchema] as const,
-      (workspaceId, pdfId, data) => pdfFileService.updateMeta(workspaceId, pdfId, data)
+    validateIpc([idSchema, idSchema, descriptionMetaSchema] as const, (workspaceId, pdfId, data) =>
+      pdfFileService.updateMeta(workspaceId, pdfId, data)
     )
   )
 

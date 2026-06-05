@@ -7,13 +7,7 @@ export function registerEntityLinkHandlers(): void {
   ipcMain.handle(
     'entityLink:link',
     validateIpc(
-      [
-        linkableEntityTypeSchema,
-        idSchema,
-        linkableEntityTypeSchema,
-        idSchema,
-        idSchema
-      ] as const,
+      [linkableEntityTypeSchema, idSchema, linkableEntityTypeSchema, idSchema, idSchema] as const,
       (typeA, idA, typeB, idB, workspaceId) =>
         entityLinkService.link(typeA, idA, typeB, idB, workspaceId)
     )
