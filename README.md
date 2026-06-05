@@ -8,45 +8,56 @@
 ## 주요 기능
 
 ### 워크스페이스
+
 - 여러 워크스페이스를 생성·전환하여 프로젝트별 데이터 분리 관리
 
 ### 노트 (Markdown)
+
 - Milkdown 기반 WYSIWYG 마크다운 편집기
 - 폴더 계층 구조 및 파일 시스템 동기화
 - 내용 미리보기(최대 200자) 자동 생성
 
 ### 할 일 (Todo)
+
 - 리스트 / 칸반 / 서브태스크(계층) 뷰
 - 상태(할일·진행중·완료·보류), 우선순위(high·medium·low), 마감일·시작일
 - 드래그 앤 드롭 순서 조정
 
 ### 반복 할일 (Recurring Todo)
+
 - 매일·평일·주말·커스텀 요일 반복 규칙
 - 시작/종료일, 알림 오프셋 설정
 
 ### 캘린더 / 스케줄
+
 - 일정 생성 (종일·시간 지정), 색상·우선순위 태그
 - 스케줄 연계 Todo 지원
 
 ### 캔버스
+
 - React Flow 기반 자유 배치 화이트보드
 - 노드·엣지·그룹 지원, 뷰포트 상태 저장
 
 ### 파일 뷰어
+
 - PDF 뷰어 (react-pdf)
 - 이미지 뷰어 (zoom·pan)
 - CSV 뷰어 (TanStack Table + 가상 스크롤)
 
 ### 터미널
+
 - xterm.js + node-pty 기반 내장 터미널
 
 ### 태그 & 엔티티 링크
+
 - 노트·Todo·파일 등 항목 간 태그 및 양방향 링크
 
 ### 리마인더
+
 - Todo·스케줄 알림 (오프셋 기반 예약 발송)
 
 ### MCP 서버 (내장)
+
 - 앱 내 HTTP MCP 서버를 통해 Claude 등 AI 에이전트와 연동
 - 워크스페이스·노트·캔버스·할 일 등 주요 리소스를 MCP 도구로 노출
 - **MCP v2 — 총 15개 도구** (`read_*` / `manage_*` prefix 통일 + 의도 단위 도메인 통합)
@@ -66,22 +77,22 @@
 
 ## 기술 스택
 
-| 영역 | 기술 |
-|------|------|
-| 런타임 | Electron 39 |
-| UI | React 19, TypeScript 5 |
-| 빌드 | electron-vite 5, Vite 7 |
-| 스타일 | Tailwind CSS v4, shadcn/ui (New York) |
-| 상태 관리 | Zustand v5 (UI), TanStack React Query v5 (IPC/비동기) |
-| 라우팅 | React Router v7 (Hash-based) |
-| DB | SQLite (better-sqlite3), Drizzle ORM |
-| 폼/검증 | react-hook-form + Zod |
-| 에디터 | Milkdown (마크다운) |
-| 캔버스 | @xyflow/react (React Flow) |
-| 터미널 | xterm.js + node-pty |
-| DnD | @dnd-kit/core + @dnd-kit/sortable |
-| 애니메이션 | framer-motion |
-| 테스트 | Vitest + Testing Library + happy-dom |
+| 영역       | 기술                                                  |
+| ---------- | ----------------------------------------------------- |
+| 런타임     | Electron 39                                           |
+| UI         | React 19, TypeScript 5                                |
+| 빌드       | electron-vite 5, Vite 7                               |
+| 스타일     | Tailwind CSS v4, shadcn/ui (New York)                 |
+| 상태 관리  | Zustand v5 (UI), TanStack React Query v5 (IPC/비동기) |
+| 라우팅     | React Router v7 (Hash-based)                          |
+| DB         | SQLite (better-sqlite3), Drizzle ORM                  |
+| 폼/검증    | react-hook-form + Zod                                 |
+| 에디터     | Milkdown (마크다운)                                   |
+| 캔버스     | @xyflow/react (React Flow)                            |
+| 터미널     | xterm.js + node-pty                                   |
+| DnD        | @dnd-kit/core + @dnd-kit/sortable                     |
+| 애니메이션 | framer-motion                                         |
+| 테스트     | Vitest + Testing Library + happy-dom                  |
 
 ---
 
@@ -119,6 +130,12 @@ repositories/  → 순수 CRUD (findAll / findById / create / update / delete)
 services/      → 비즈니스 로직 (검증, ID 생성, 날짜 처리, Custom Error)
 ipc/           → IPC 핸들러 등록 + handle() 래퍼
 ```
+
+### 품질 게이트
+
+품질 기준은 수치와 CI 자동 게이트로 명문화되어 있다 — lint(`--max-warnings 0`), typecheck,
+coverage threshold, **bundle budget**(메인 청크 gzip ≤ 430KB), Electron security(HIGH=0),
+FSD boundary, IPC contract drift 등. 평가 축·개선 전후 지표·남은 tradeoff는 [`QUALITY.md`](./QUALITY.md) 참고.
 
 ---
 
