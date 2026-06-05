@@ -278,9 +278,9 @@ describe('entity-link IPC handlers', () => {
 
 describe('note-image IPC handlers', () => {
   it('3개 채널 위임', () => {
-    getHandler('noteImage:saveFromPath')({}, 'ws-1', '/x.png')
-    getHandler('noteImage:saveFromBuffer')({}, 'ws-1', new ArrayBuffer(0), 'png')
-    getHandler('noteImage:readImage')({}, 'ws-1', '.images/x.png')
+    getHandler('noteImage:saveFromPath')({}, 'ws-aabbcc12', '/x.png')
+    getHandler('noteImage:saveFromBuffer')({}, 'ws-aabbcc12', new ArrayBuffer(0), 'png')
+    getHandler('noteImage:readImage')({}, 'ws-aabbcc12', '.images/x.png')
     expect(noteImageService.saveFromPath).toHaveBeenCalled()
     expect(noteImageService.saveFromBuffer).toHaveBeenCalled()
     expect(noteImageService.readImage).toHaveBeenCalled()

@@ -84,3 +84,16 @@ describe('image-file IPC handlers', () => {
     expect(result).toEqual(['/a.png'])
   })
 })
+
+describe('image:import 런타임 입력 검증', () => {
+  it('path traversal(..) 소스 경로 → service 미호출 + errorResponse', () => {
+    const result = getHandler<{ success: boolean }>('image:import')(
+      {},
+      'ws-aabbcc12',
+      null,
+      '../../../etc/passwd'
+    )
+    expect(result).toMatchObject({ success: false })
+    expect(imageFileService.import).not.toHaveBeenCalled()
+  })
+})
