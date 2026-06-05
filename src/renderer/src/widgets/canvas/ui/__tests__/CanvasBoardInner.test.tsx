@@ -273,7 +273,7 @@ describe('CanvasBoardInner', () => {
   it('CanvasToolbar onToggleMinimap → 상태 토글 (smoke)', () => {
     render(<CanvasBoardInner {...baseProps} />)
     expect(screen.getByTestId('minimap')).toBeInTheDocument()
-    canvasToolbarMocks.onToggleMinimap?.()
+    act(() => canvasToolbarMocks.onToggleMinimap?.())
     expect(screen.getByTestId('canvas-toolbar')).toBeInTheDocument()
   })
 

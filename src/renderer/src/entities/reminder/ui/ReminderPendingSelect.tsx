@@ -2,7 +2,8 @@ import { Bell } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { Popover, PopoverTrigger, PopoverContent } from '@shared/ui/popover'
 import { Checkbox } from '@shared/ui/checkbox'
-import { REMINDER_OFFSETS } from '@entities/reminder'
+// 같은 slice 내부는 public barrel 대신 상대 경로 (self-import circular chunk 방지).
+import { REMINDER_OFFSETS } from '../model/types'
 
 interface Props {
   selected: number[]

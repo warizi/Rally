@@ -117,6 +117,8 @@ All page elements rendered inside a tab **must use container queries**, not view
 - Every tab page component must be a descendant of `<TabContainer>` to inherit the `@container` context
 - Example: `className="grid grid-cols-1 @[400px]:grid-cols-2 @[800px]:grid-cols-3"`
 
+**Documented exception — `FolderPage`:** `FolderPage` (`src/renderer/src/pages/folder/ui/FolderPage.tsx`) does **not** use `TabContainer`. `FolderTree` owns a full-height virtualized scroll container (`ScrollArea viewportRef` + `useVirtualizer` `scrollElement`); wrapping it in `TabContainer` (even `scrollable={false}`) inserts padding/wrapper divs that change the scroll target and break virtualization and drag-and-drop. The folder feature also uses no container queries, so it does not need the `@container` context. This exception is locked by `FolderPage.test.tsx` (fails if `TabContainer` is added).
+
 ### State Management
 
 - **Zustand v5** — client/UI state

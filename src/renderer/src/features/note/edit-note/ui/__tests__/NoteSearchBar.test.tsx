@@ -75,7 +75,9 @@ describe('NoteSearchBar', () => {
   it('검색어 입력 + 200ms debounce 후 "결과 없음" (matchCount=0)', () => {
     render(<NoteSearchBar open={true} onClose={vi.fn()} />)
     fireEvent.change(screen.getByPlaceholderText('검색...'), { target: { value: 'hello' } })
-    vi.advanceTimersByTime(250)
+    act(() => {
+      vi.advanceTimersByTime(250)
+    })
     expect(screen.getByText('결과 없음')).toBeInTheDocument()
     vi.useRealTimers()
   })
