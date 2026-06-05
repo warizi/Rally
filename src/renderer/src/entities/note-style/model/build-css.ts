@@ -56,8 +56,14 @@ const DECORATIONS: Partial<Record<StyleElementKey, ElementDecoration>> = {
     text: ['padding: 2px 6px', 'border-radius: 4px']
   },
   codeBlock: {
+    // 긴 한 줄 코드가 노트 너비를 밀지 않도록 컨테이너 내부에서만 가로 스크롤 (max-width: 100%).
     text: ['padding: 0', 'border-radius: 0'],
-    container: ['padding: 8px 12px 10px', 'border-radius: 6px', 'overflow-x: auto']
+    container: [
+      'padding: 8px 12px 10px',
+      'border-radius: 6px',
+      'overflow-x: auto',
+      'max-width: 100%'
+    ]
   },
   blockquote: {
     container: ['padding-left: 12px', 'border-left-style: solid']

@@ -280,7 +280,9 @@
   color: var(--foreground);
   padding: 12px 16px;
   border-radius: 6px;
+  /* 긴 한 줄 코드가 노트 전체 너비를 밀지 않도록 블록 내부에서만 좌우 스크롤. */
   overflow-x: auto;
+  max-width: 100%;
   margin: 8px 0;
 }
 
@@ -312,7 +314,11 @@
   color: var(--foreground);
   padding: 6px 12px 8px;
   border-radius: 6px;
+  /* toolbar/language-picker dropdown 이 잘리지 않도록 컨테이너 overflow 는 visible 유지.
+     실제 가로 스크롤은 내부 .codemirror-host / .cm-scroller 가 담당한다.
+     max-width 로 컨테이너 자체가 노트 너비를 넘어 확장되는 것만 차단. */
   overflow: visible !important;
+  max-width: 100%;
   margin: 8px 0;
   font-size: 0.875em;
 }
@@ -571,10 +577,53 @@ html.dark .milkdown .ProseMirror .milkdown-code-block {
 
 .milkdown .ProseMirror .milkdown-code-block .codemirror-host {
   overflow-x: auto;
+  max-width: 100%;
 }
 
 .milkdown .ProseMirror .milkdown-code-block .cm-editor {
   background-color: transparent;
+  max-width: 100%;
+}
+
+/* 코드블럭 가로 스크롤바를 앱의 .scrollbar-thin 톤과 통일.
+   pre = 일반 fenced block, .codemirror-host/.cm-scroller = CodeMirror block 의 실제 스크롤 컨테이너. */
+.milkdown .ProseMirror pre,
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host,
+.milkdown .ProseMirror .milkdown-code-block .cm-scroller {
+  scrollbar-gutter: stable;
+}
+.milkdown .ProseMirror pre::-webkit-scrollbar,
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host::-webkit-scrollbar,
+.milkdown .ProseMirror .milkdown-code-block .cm-scroller::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+.milkdown .ProseMirror pre::-webkit-scrollbar-track,
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host::-webkit-scrollbar-track,
+.milkdown .ProseMirror .milkdown-code-block .cm-scroller::-webkit-scrollbar-track {
+  background: transparent;
+}
+.milkdown .ProseMirror pre::-webkit-scrollbar-thumb,
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host::-webkit-scrollbar-thumb,
+.milkdown .ProseMirror .milkdown-code-block .cm-scroller::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  min-height: 24px;
+  min-width: 24px;
+}
+.milkdown .ProseMirror pre::-webkit-scrollbar-thumb:hover,
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host::-webkit-scrollbar-thumb:hover,
+.milkdown .ProseMirror .milkdown-code-block .cm-scroller::-webkit-scrollbar-thumb:hover {
+  background-color: var(--muted-foreground);
+  background-clip: padding-box;
+}
+.milkdown .ProseMirror pre::-webkit-scrollbar-corner,
+.milkdown .ProseMirror .milkdown-code-block .codemirror-host::-webkit-scrollbar-corner,
+.milkdown .ProseMirror .milkdown-code-block .cm-scroller::-webkit-scrollbar-corner {
+  background: transparent;
 }
 
 .milkdown .ProseMirror a {

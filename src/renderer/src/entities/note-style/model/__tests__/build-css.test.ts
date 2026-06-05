@@ -59,7 +59,7 @@ describe('buildNoteStyleCss', () => {
     expect(m![1]).toMatch(/border-radius:\s*4px/)
   })
 
-  it('codeBlock pre 컨테이너에 시각 속성 (padding 8px 12px 10px, border-radius 6px, overflow-x auto)', () => {
+  it('codeBlock pre 컨테이너에 시각 속성 (padding 8px 12px 10px, border-radius 6px, overflow-x auto, max-width 100%)', () => {
     const m = css.match(
       /\[data-rally-note\] pre, \[data-rally-note\] \.milkdown-code-block \{([\s\S]*?)\}/
     )
@@ -67,6 +67,8 @@ describe('buildNoteStyleCss', () => {
     expect(m![1]).toMatch(/padding:\s*8px 12px 10px/)
     expect(m![1]).toMatch(/border-radius:\s*6px/)
     expect(m![1]).toMatch(/overflow-x:\s*auto/)
+    // 긴 한 줄 코드가 노트 너비를 밀지 않도록 max-width 제한.
+    expect(m![1]).toMatch(/max-width:\s*100%/)
   })
 
   it('codeBlock pre code 텍스트 rule 은 padding/border-radius 0 (내부 코드)', () => {
