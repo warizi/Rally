@@ -60,12 +60,9 @@ export function SkillsManager({ target = 'claude' }: Props): React.JSX.Element {
       ) : (
         <p className="text-xs text-muted-foreground mb-3">
           <strong>적용</strong> 은{' '}
-          <code className="bg-muted px-1 rounded">~/.codex/prompts/&lt;name&gt;.md</code> 에
-          작성됩니다. Codex 에는 자동 트리거 skill 이 없어{' '}
-          <strong>
-            <code className="bg-muted px-1 rounded">/&lt;name&gt;</code> 슬래시 커맨드
-          </strong>{' '}
-          로 수동 호출하는 프롬프트가 됩니다 (frontmatter 는 제거되어 본문만 적용).
+          <code className="bg-muted px-1 rounded">~/.agents/skills/&lt;name&gt;/SKILL.md</code> 에
+          작성됩니다. Codex CLI 가 읽는 filesystem skill 형식이라 SKILL.md 원문이 그대로
+          적용됩니다.
         </p>
       )}
 
