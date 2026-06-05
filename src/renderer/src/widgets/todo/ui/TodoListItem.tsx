@@ -258,14 +258,9 @@ interface ContentProps extends Props {
   isDragging: boolean
 }
 
-// 테스트에서 inner 의 memo 동작을 직접 검증하기 위해 export.
-// 일반 사용은 외部 wrapper `TodoListItem` 을 통해서만.
-//
-// 테스트 계측 (zero-cost in production):
-//   globalThis.__TODO_LIST_ITEM_RENDER_COUNTER__ 가 Map 이면 본 함수 호출 시
-//   카운트를 증가. React.memo 가 skip 하면 본 함수는 호출되지 않으므로
-//   카운터가 증가 안 함 → memo 효과를 정확히 측정 가능.
-//   production 에서는 globalThis 에 해당 키가 없어 if-체크 한 번으로 끝.
+// 테스트에서 inner 의 memo 동작을 직접 검증하기 위해 export (일반 사용은 wrapper
+// `TodoListItem` 경유). memo skip 측정은 production 계측 없이 테스트가 React Profiler
+// 로 항목별 commit 을 카운트한다 (TodoListItem.test.tsx S6).
 export const TodoListItemContent = memo(function TodoListItemContent({
   todo,
   subTodos,
@@ -281,11 +276,6 @@ export const TodoListItemContent = memo(function TodoListItemContent({
   transition,
   isDragging
 }: ContentProps): React.JSX.Element {
-  const tlicCounter = (globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> })
-    .__TODO_LIST_ITEM_RENDER_COUNTER__
-  if (tlicCounter) {
-    tlicCounter.set(todo.id, (tlicCounter.get(todo.id) ?? 0) + 1)
-  }
   const [isOpen, setIsOpen] = useState(false)
   const [activeSubId, setActiveSubId] = useState<string | null>(null)
   const updateTodo = useUpdateTodo()

@@ -9,7 +9,7 @@
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { fireEvent, waitFor } from '@testing-library/react'
-import { Profiler, useMemo, type ProfilerOnRenderCallback } from 'react'
+import { Profiler, useMemo, type ProfilerOnRenderCallback, type ReactNode } from 'react'
 import { DndContext } from '@dnd-kit/core'
 import { SortableContext } from '@dnd-kit/sortable'
 import { readFileSync } from 'fs'
@@ -21,6 +21,18 @@ import type { DraggableAttributes, DraggableSyntheticListeners } from '@dnd-kit/
 import { renderWithCounter } from '@/test/render-counter'
 import { TestProviders } from '@/test/providers'
 import { mockApi, defaultApiMock } from '@/test/ipc-mock'
+
+// TodoListItemContent body 실행 측정용(S6) — 본문이 렌더하는 TruncateTooltip(content=title)을
+// mock 해 호출 content 를 기록한다. React.memo 가 skip 하면 본문이 실행되지 않아 tooltip 도
+// 호출되지 않으므로, production globalThis 계측 없이 body 실행을 항목별로 정확히 측정한다.
+// 어떤 테스트도 tooltip 동작을 검증하지 않고, mock 은 children(제목 span)을 그대로 렌더한다.
+const tooltipProbe = vi.hoisted(() => ({ contents: [] as string[] }))
+vi.mock('@shared/ui/truncate-tooltip', () => ({
+  TruncateTooltip: ({ content, children }: { content: string; children: ReactNode }) => {
+    tooltipProbe.contents.push(String(content))
+    return children
+  }
+}))
 
 const TODO_LIST_ITEM_PATH = path.resolve(__dirname, '../TodoListItem.tsx')
 
@@ -230,68 +242,52 @@ describe('TodoListItem — 메모이제이션 + 행동 회귀', () => {
   // 5개 중 1개만 변경 시 그 항목만 inner 렌더, 나머지는 0건 → "100항목 ≤ 2" 달성.
   // ──────────────────────────────────────────────
   it('S6 — TodoListItemContent inner body skips for unchanged items (P1-4.5 split effect)', () => {
-    // production-instrumentation counter: TodoListItemContent body 가 실제로
-    // 호출될 때만 증가. React.memo skip 시 호출 안 됨 → 정확한 memo 효과 측정.
-    const counter = new Map<string, number>()
-    ;(
-      globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> }
-    ).__TODO_LIST_ITEM_RENDER_COUNTER__ = counter
+    // 본문이 렌더하는 TruncateTooltip(content=title) mock 호출로 body 실행을 측정.
+    // memo skip 시 본문 미실행 → tooltip 미호출. (production globalThis 계측 대체)
+    const initial = Array.from({ length: 5 }, (_, i) => makeTodo(`t${i}`))
 
-    try {
-      const initial = Array.from({ length: 5 }, (_, i) => makeTodo(`t${i}`))
+    const stableSetNodeRef = (): void => {}
+    const stableAttrs = {} as DraggableAttributes
+    const stableListeners: DraggableSyntheticListeners = undefined
 
-      const stableSetNodeRef = (): void => {}
-      const stableAttrs = {} as DraggableAttributes
-      const stableListeners: DraggableSyntheticListeners = undefined
-
-      function InnerList({ todos }: { todos: TodoItem[] }): React.JSX.Element {
-        return (
-          <TestProviders>
-            <table>
-              <tbody>
-                {todos.map((todo) => (
-                  <TodoListItemContent
-                    key={todo.id}
-                    todo={todo}
-                    subTodos={EMPTY_SUB_TODOS}
-                    workspaceId="ws1"
-                    filterActive={false}
-                    onItemClick={stableOnItemClick}
-                    sortableAttributes={stableAttrs}
-                    sortableListeners={stableListeners}
-                    setNodeRef={stableSetNodeRef}
-                    transform={null}
-                    transition={undefined}
-                    isDragging={false}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </TestProviders>
-        )
-      }
-
-      const { result } = renderWithCounter(<InnerList todos={initial} />)
-      counter.clear() // 초기 마운트 제외
-
-      const changed = initial.map((t, i) => (i === 2 ? { ...t, title: 'Changed!' } : t))
-      result.rerender(<InnerList todos={changed} />)
-
-      const changedCount = counter.get('t2') ?? 0
-      const others = ['t0', 't1', 't3', 't4'].map((id) => counter.get(id) ?? 0)
-      const otherTotal = others.reduce((a, b) => a + b, 0)
-
-      console.log(
-        `[POST-P1-4.5] Inner body executions: changed=${changedCount}, others=${otherTotal}`
+    function InnerList({ todos }: { todos: TodoItem[] }): React.JSX.Element {
+      return (
+        <TestProviders>
+          <table>
+            <tbody>
+              {todos.map((todo) => (
+                <TodoListItemContent
+                  key={todo.id}
+                  todo={todo}
+                  subTodos={EMPTY_SUB_TODOS}
+                  workspaceId="ws1"
+                  filterActive={false}
+                  onItemClick={stableOnItemClick}
+                  sortableAttributes={stableAttrs}
+                  sortableListeners={stableListeners}
+                  setNodeRef={stableSetNodeRef}
+                  transform={null}
+                  transition={undefined}
+                  isDragging={false}
+                />
+              ))}
+            </tbody>
+          </table>
+        </TestProviders>
       )
-
-      expect(changedCount, '바뀐 항목 inner body 는 실행됨').toBeGreaterThanOrEqual(1)
-      expect(otherTotal, '바뀌지 않은 inner body 는 0건 실행 (P1-4.5 핵심)').toBe(0)
-    } finally {
-      ;(
-        globalThis as { __TODO_LIST_ITEM_RENDER_COUNTER__?: Map<string, number> }
-      ).__TODO_LIST_ITEM_RENDER_COUNTER__ = undefined
     }
+
+    const { result } = renderWithCounter(<InnerList todos={initial} />)
+    tooltipProbe.contents.length = 0 // 초기 마운트 제외
+
+    const changed = initial.map((t, i) => (i === 2 ? { ...t, title: 'Changed!' } : t))
+    result.rerender(<InnerList todos={changed} />)
+
+    const changedCount = tooltipProbe.contents.filter((c) => c === 'Changed!').length
+    const otherTotal = tooltipProbe.contents.filter((c) => c.startsWith('Todo t')).length
+
+    expect(changedCount, '바뀐 항목 inner body 는 실행됨').toBeGreaterThanOrEqual(1)
+    expect(otherTotal, '바뀌지 않은 inner body 는 0건 실행 (P1-4.5 핵심)').toBe(0)
   })
 
   // ──────────────────────────────────────────────
