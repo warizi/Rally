@@ -1,5 +1,11 @@
 import { useState, useMemo } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription
+} from '@shared/ui/dialog'
 import { Input } from '@shared/ui/input'
 import { Search } from 'lucide-react'
 import { useCurrentWorkspaceStore } from '@shared/store/current-workspace'
@@ -39,6 +45,9 @@ export function EntityPickerDialog({
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>요소 추가</DialogTitle>
+          <DialogDescription className="sr-only">
+            캔버스에 추가할 요소를 선택합니다.
+          </DialogDescription>
         </DialogHeader>
         {open && workspaceId ? (
           <EntityPickerContent

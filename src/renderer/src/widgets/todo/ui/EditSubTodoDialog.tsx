@@ -2,7 +2,14 @@ import { useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@shared/ui/form'
 import { Input } from '@shared/ui/input'
@@ -49,6 +56,7 @@ export function EditSubTodoDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>하위 할 일 수정</DialogTitle>
+          <DialogDescription className="sr-only">하위 할 일의 내용을 수정합니다.</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

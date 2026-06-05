@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { CalendarRange, Clock, MoreHorizontal, Repeat } from 'lucide-react'
 import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@shared/ui/dialog'
 import { Badge } from '@shared/ui/badge'
 import { Button } from '@shared/ui/button'
 import { ScrollArea } from '@shared/ui/scroll-area'
@@ -92,6 +92,9 @@ export function ManageRecurringDialog({
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="sm:max-w-2xl flex flex-col h-[80vh]">
+          <DialogDescription className="sr-only">
+            등록된 반복 할일을 확인하고 추가·수정·삭제합니다.
+          </DialogDescription>
           <div className="flex items-center gap-3">
             <DialogTitle>반복 할일 관리</DialogTitle>
             <Button size="sm" onClick={() => setCreateOpen(true)}>

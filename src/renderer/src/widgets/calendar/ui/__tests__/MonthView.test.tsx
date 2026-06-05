@@ -4,7 +4,7 @@
  * 월 그리드 (7×N) + 요일 헤더 + MonthDayCell 매핑. smoke.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, act } from '@testing-library/react'
 
 const monthDnd: {
   onDragStart?: (e: { active: { data: { current?: unknown } } }) => void
@@ -302,16 +302,18 @@ describe('MonthView', () => {
         workspaceId="ws"
       />
     )
-    monthDnd.onDragStart?.({
-      active: {
-        data: {
-          current: {
-            schedule: { id: 's1', startAt: new Date(), endAt: new Date() },
-            type: 'bar'
+    act(() =>
+      monthDnd.onDragStart?.({
+        active: {
+          data: {
+            current: {
+              schedule: { id: 's1', startAt: new Date(), endAt: new Date() },
+              type: 'bar'
+            }
           }
         }
-      }
-    })
+      })
+    )
     // 에러 없이 통과
     expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
   })
@@ -326,11 +328,13 @@ describe('MonthView', () => {
         workspaceId="ws"
       />
     )
-    monthDnd.onDragStart?.({
-      active: {
-        data: { current: { schedule: { id: 's1' }, type: 'something-else' } }
-      }
-    })
+    act(() =>
+      monthDnd.onDragStart?.({
+        active: {
+          data: { current: { schedule: { id: 's1' }, type: 'something-else' } }
+        }
+      })
+    )
     expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
   })
 
@@ -345,10 +349,12 @@ describe('MonthView', () => {
         workspaceId="ws"
       />
     )
-    monthDnd.onDragEnd?.({
-      active: { data: { current: { schedule: { id: 's1' } } } },
-      over: null
-    })
+    act(() =>
+      monthDnd.onDragEnd?.({
+        active: { data: { current: { schedule: { id: 's1' } } } },
+        over: null
+      })
+    )
     expect(apiMocks.applyDaysDeltaCalls.length).toBe(0)
   })
 
@@ -369,10 +375,12 @@ describe('MonthView', () => {
       startAt: new Date('2026-05-29'),
       endAt: new Date('2026-05-29')
     }
-    monthDnd.onDragEnd?.({
-      active: { data: { current: { schedule } } },
-      over: { data: { current: { date: new Date('2026-06-01') } } }
-    })
+    act(() =>
+      monthDnd.onDragEnd?.({
+        active: { data: { current: { schedule } } },
+        over: { data: { current: { date: new Date('2026-06-01') } } }
+      })
+    )
     expect(apiMocks.applyDaysDeltaCalls.length).toBe(1)
     expect(apiMocks.moveScheduleMutate).toHaveBeenCalledTimes(1)
   })
@@ -395,10 +403,12 @@ describe('MonthView', () => {
       endAt: new Date('2026-05-29'),
       type: 'todo'
     }
-    monthDnd.onDragEnd?.({
-      active: { data: { current: { schedule: todo } } },
-      over: { data: { current: { date: new Date('2026-06-01') } } }
-    })
+    act(() =>
+      monthDnd.onDragEnd?.({
+        active: { data: { current: { schedule: todo } } },
+        over: { data: { current: { date: new Date('2026-06-01') } } }
+      })
+    )
     expect(apiMocks.applyDaysDeltaCalls.length).toBe(1)
     expect(apiMocks.updateTodoMutate).toHaveBeenCalledTimes(1)
   })
@@ -413,9 +423,11 @@ describe('MonthView', () => {
         workspaceId="ws"
       />
     )
-    monthDnd.onDragOver?.({
-      over: { data: { current: { date: new Date('2026-05-30') } } }
-    })
+    act(() =>
+      monthDnd.onDragOver?.({
+        over: { data: { current: { date: new Date('2026-05-30') } } }
+      })
+    )
     expect(document.querySelectorAll('[data-testid^="day-"]').length).toBe(42)
   })
 

@@ -16,7 +16,14 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger
 } from '@shared/ui/context-menu'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
@@ -152,6 +159,9 @@ export function TerminalTabItem({ session, isActive, onActivate }: Props): React
         <DialogContent>
           <DialogHeader>
             <DialogTitle>터미널 이름 변경</DialogTitle>
+            <DialogDescription className="sr-only">
+              터미널 탭의 이름을 변경합니다.
+            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleRenameSubmit)}>

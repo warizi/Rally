@@ -3,7 +3,14 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { startOfDay, endOfDay, setHours, setMinutes } from 'date-fns'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from '@shared/ui/form'
 import { Input } from '@shared/ui/input'
@@ -230,6 +237,9 @@ export function ScheduleFormDialog({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{isEdit ? '일정 수정' : '일정 추가'}</DialogTitle>
+            <DialogDescription className="sr-only">
+              일정의 제목, 시간, 반복 등을 설정합니다.
+            </DialogDescription>
           </DialogHeader>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

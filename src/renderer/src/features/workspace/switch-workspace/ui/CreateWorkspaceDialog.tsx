@@ -2,7 +2,14 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@shared/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter
+} from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
 import { Input } from '@shared/ui/input'
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@shared/ui/form'
@@ -91,6 +98,9 @@ export function CreateWorkspaceDialog({ open, onOpenChange, onCreated }: Props):
       <DialogContent>
         <DialogHeader>
           <DialogTitle>워크스페이스 추가</DialogTitle>
+          <DialogDescription className="sr-only">
+            새 워크스페이스의 이름과 위치를 입력합니다.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSubmit)}>
