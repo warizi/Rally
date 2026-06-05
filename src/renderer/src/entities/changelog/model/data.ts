@@ -6,6 +6,17 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.2',
+    date: '2026-06-05',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Codex Skill 오류 수정',
+        description: 'Codex Skill이 잘못 적용되던 문제가 수정되었습니다.'
+      }
+    ]
+  },
+  {
     version: '1.15.1',
     date: '2026-06-05',
     changes: [
