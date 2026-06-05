@@ -12,8 +12,7 @@ const mocks = vi.hoisted(() => ({
   linkMutate: vi.fn(),
   setReminderMutate: vi.fn(),
   defaultDateEnabled: false,
-  isPending: false,
-  formFieldsTitleOnly: false
+  isPending: false
 }))
 
 vi.mock('@entities/todo', () => ({
@@ -36,10 +35,9 @@ vi.mock('@entities/reminder', () => ({
 vi.mock('../TodoFormFields', async () => {
   const rhf = await vi.importActual<typeof import('react-hook-form')>('react-hook-form')
   function FormFieldsMock({ titleOnly }: { titleOnly?: boolean }): React.JSX.Element {
-    mocks.formFieldsTitleOnly = !!titleOnly
     const ctx = rhf.useFormContext()
     return (
-      <div data-testid="todo-form-fields">
+      <div data-testid="todo-form-fields" data-title-only={String(!!titleOnly)}>
         {titleOnly ? 'title-only' : 'full'}
         {ctx && (
           <button
@@ -85,7 +83,6 @@ beforeEach(() => {
   mocks.setReminderMutate.mockReset()
   mocks.defaultDateEnabled = false
   mocks.isPending = false
-  mocks.formFieldsTitleOnly = false
 })
 
 describe('CreateTodoDialog', () => {
@@ -106,7 +103,7 @@ describe('CreateTodoDialog', () => {
     )
     fireEvent.click(screen.getByTestId('trigger'))
     expect(screen.getByText('하위 할 일 추가')).toBeInTheDocument()
-    expect(mocks.formFieldsTitleOnly).toBe(true)
+    expect(screen.getByTestId('todo-form-fields')).toHaveAttribute('data-title-only', 'true')
   })
 
   it('titleOnly=true → 시작일/마감일/알림/링크 picker 미노출', () => {

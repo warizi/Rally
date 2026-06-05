@@ -77,16 +77,16 @@ class MockResizeObserver {
   constructor(cb: RO) {
     this.cb = cb
   }
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
 }
 ;(globalThis as unknown as { ResizeObserver: typeof MockResizeObserver }).ResizeObserver =
   MockResizeObserver
 class MockIntersectionObserver {
-  observe(): void {}
-  unobserve(): void {}
-  disconnect(): void {}
+  observe = vi.fn()
+  unobserve = vi.fn()
+  disconnect = vi.fn()
   takeRecords(): unknown[] {
     return []
   }

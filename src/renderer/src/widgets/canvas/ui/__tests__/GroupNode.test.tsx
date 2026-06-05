@@ -24,7 +24,14 @@ import { GroupNode } from '../GroupNode'
 const baseProps = {
   id: 'g1',
   selected: false,
-  data: { nodeType: 'group', label: '작업 그룹', canvasId: 'c1', color: null, width: 300, height: 200 }
+  data: {
+    nodeType: 'group',
+    label: '작업 그룹',
+    canvasId: 'c1',
+    color: null,
+    width: 300,
+    height: 200
+  }
 } as unknown as Parameters<typeof GroupNode>[0]
 
 beforeEach(() => {
