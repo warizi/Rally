@@ -470,6 +470,7 @@ export function registerMcpBrowseRoutes(router: Router): void {
 
     // ── similar: search 시 의미상 유사한 항목 top 3 (토큰 절약) ──────────
     // 제목 substring 으로는 안 잡히지만 의미상 관련된 note/csv/canvas 를 보강.
+    // 일반 검색과 동일한 필터(folderId/recursive, tagId, linkedTo, updatedAfter, types)를 적용하고,
     // 이미 결과에 포함된 항목은 제외. vec 비활성 시 생략(substring 과 중복이라 무의미).
     if (search && vecEnabled) {
       const searchTypes = types
@@ -481,17 +482,32 @@ export function registerMcpBrowseRoutes(router: Router): void {
           const arr = response[key]
           if (Array.isArray(arr)) for (const it of arr) present.add((it as { id: string }).id)
         }
+        // 폴더 스코프 (note/csv 만 폴더 보유, canvas 는 폴더 무관)
+        const passesFolder = (hitType: SearchType, folderId: string | null): boolean => {
+          if (hitType === 'canvas') return true
+          if (fileScope.folderId === null) return folderId === null
+          if (fileScope.folderIds) return folderId !== null && fileScope.folderIds.has(folderId)
+          return true
+        }
         try {
           const res = await searchService.search(wsId, search, {
             types: searchTypes,
             mode: 'semantic',
-            limit: 12
+            limit: 30
           })
           const similar: { type: BrowseType; id: string; title: string }[] = []
           for (const h of res.results) {
             if (present.has(h.id)) continue
             const bt = SEARCH_TO_BROWSE[h.type]
             if (!bt) continue
+            if (!passesFolder(h.type, h.folderId)) continue
+            // tagId / linkedTo restrict (일반 검색과 동일)
+            if (restrictMap) {
+              const allowed = restrictMap.get(bt)
+              if (!allowed || !allowed.has(h.id)) continue
+            }
+            // updatedAfter
+            if (updatedAfter && new Date(h.updatedAt).getTime() < updatedAfter.getTime()) continue
             similar.push({ type: bt, id: h.id, title: h.title })
             if (similar.length >= 3) break
           }

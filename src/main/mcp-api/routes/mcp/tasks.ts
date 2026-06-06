@@ -537,8 +537,16 @@ export function registerMcpTasksRoutes(router: Router): void {
     const response = handleActiveMode(wsId, types, query, resolveLinks)
 
     // similar: todo 검색 시 제목엔 없지만 의미상 유사한 할일 top 3 보강 (토큰 절약)
+    // 단, todo 한정 필터(parentId/priority/linkedTo/dueWithin)가 걸리면 시맨틱 검색이 그
+    // 필터를 반영 못 해 일반 검색과 불일치 → 그런 경우엔 similar 생략 (일관성 우선).
     const search = (query.get('search') ?? '').trim()
-    if (search && vecEnabled && types.includes('todo')) {
+    const hasTodoFilter =
+      query.get('parentId') !== null ||
+      query.get('priority') !== null ||
+      query.getAll('priority[]').length > 0 ||
+      query.get('linkedTo[type]') !== null ||
+      query.get('dueWithin') !== null
+    if (search && vecEnabled && types.includes('todo') && !hasTodoFilter) {
       const present = new Set<string>()
       if (Array.isArray(response.todos)) {
         for (const t of response.todos) present.add((t as { id: string }).id)
