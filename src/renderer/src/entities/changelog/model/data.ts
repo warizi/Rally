@@ -6,6 +6,24 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.4',
+    date: '2026-06-07',
+    changes: [
+      {
+        type: 'feature',
+        title: '의미 기반 벡터 검색',
+        description:
+          '단어가 정확히 일치하지 않아도 의미가 비슷한 항목을 찾아주는 벡터 검색이 추가되었습니다. 예를 들어 "동물"로 검색하면 "강아지" 노트가 함께 나옵니다. 노트·할일·표·캔버스가 검색 대상이며, 링크 연결 팝업과 노트 임베드 "@" 검색에서도 일반 검색과 함께 의미가 유사한 결과를 보여줍니다.'
+      },
+      {
+        type: 'feature',
+        title: 'AI 검색에 의미 검색 적용',
+        description:
+          'AI(MCP)가 워크스페이스를 검색할 때도 의미 기반 검색을 활용합니다. 항목 탐색(browse)과 할일 조회(read_tasks) 응답에 제목이 일치하지 않아도 의미상 관련된 항목을 함께 제공해, AI가 필요한 노트·할일을 더 정확하게 찾아냅니다.'
+      }
+    ]
+  },
+  {
     version: '1.15.3',
     date: '2026-06-06',
     changes: [
