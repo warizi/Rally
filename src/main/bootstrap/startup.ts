@@ -4,7 +4,8 @@ import { existsSync, mkdirSync, renameSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { scoped } from '../lib/logger'
-import { db } from '../db'
+import { db, rawSqlite, vecEnabled } from '../db'
+import { EMBEDDING_DIM } from '../services/embedding-config'
 import { workspaceService } from '../services/workspace'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 import { seedSystemSkills } from '../services/skill'
@@ -14,6 +15,20 @@ function runMigrations(): void {
     ? join(process.cwd(), 'src/main/db/migrations')
     : join(process.resourcesPath, 'migrations')
   migrate(db, { migrationsFolder })
+}
+
+/**
+ * sqlite-vec 가상 테이블 생성. drizzle 마이그레이션이 vec0 모듈을 모르므로 런타임에서 처리.
+ * vecEnabled=false(확장 로드 실패)면 생성하지 않아 마이그레이션/부팅이 깨지지 않는다.
+ */
+function ensureVecTable(): void {
+  if (!vecEnabled) {
+    scoped('vec').warn('sqlite-vec disabled — skipping vec table creation')
+    return
+  }
+  rawSqlite.exec(
+    `CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[${EMBEDDING_DIM}])`
+  )
 }
 
 function initializeDatabase(): void {
@@ -90,11 +105,12 @@ function migrateLegacyDefaultWorkspacePath(): void {
 
 /**
  * 앱 시작 시 1회 실행되는 DB/워크스페이스 초기화 시퀀스 (순서 유지).
- * 1) 마이그레이션 → 2) 기본 워크스페이스 보장 → 3) 시스템 skill seed →
- * 4) legacy 기본 경로 이전 → 5) 워크스페이스별 claude 커맨드 보장.
+ * 1) 마이그레이션 → 2) vec0 가상 테이블 보장 → 3) 기본 워크스페이스 보장 →
+ * 4) 시스템 skill seed → 5) legacy 기본 경로 이전 → 6) 워크스페이스별 claude 커맨드 보장.
  */
 export function runStartup(): void {
   runMigrations()
+  ensureVecTable()
   initializeDatabase()
   seedSystemSkills()
   migrateLegacyDefaultWorkspacePath()

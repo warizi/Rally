@@ -239,6 +239,13 @@
       "when": 1780500003000,
       "tag": "0033_nifty_supernaut",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "6",
+      "when": 1780500004000,
+      "tag": "0034_jazzy_black_panther",
+      "breakpoints": true
     }
   ]
 }

@@ -22,6 +22,9 @@ extraResources:
     to: bin
 asarUnpack:
   - resources/**
+  # sqlite-vec 네이티브 확장(.dylib/.so/.dll)은 asar 내부에서 로드 불가 → 언팩 필수
+  - '**/node_modules/sqlite-vec/**'
+  - '**/node_modules/sqlite-vec-*/**'
 win:
   executableName: rally
 nsis:
