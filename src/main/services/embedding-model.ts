@@ -2,6 +2,7 @@ import { app, utilityProcess, type UtilityProcess } from 'electron'
 import path from 'path'
 import { scoped } from '../lib/logger'
 import { EMBEDDING_MODEL, EMBEDDING_DIM } from './embedding-config'
+import { ensureModel } from './model-bootstrap'
 
 const log = scoped('embedding-model')
 
@@ -57,6 +58,8 @@ function ensureChild(): UtilityProcess {
  */
 export async function embed(texts: string[], kind: EmbedKind): Promise<number[][]> {
   if (texts.length === 0) return []
+  // 추론 전 모델이 로컬에 있도록 보장 (없으면 GitHub Release에서 1회 다운로드)
+  await ensureModel()
   const c = ensureChild()
   const id = nextId++
   return new Promise<number[][]>((resolve, reject) => {
@@ -83,7 +86,8 @@ export async function embedOne(text: string, kind: EmbedKind): Promise<number[]>
   return v
 }
 
-/** 워커 사전 기동(워밍업). */
+/** 워커 사전 기동(워밍업) + 모델 보장. */
 export async function warmup(): Promise<void> {
+  await ensureModel()
   ensureChild()
 }

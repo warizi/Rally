@@ -15,3 +15,12 @@ export const EMBEDDING_DIM = 1024
 
 /** sqlite-vec 가상 테이블 이름 */
 export const VEC_TABLE = 'vec_embeddings'
+
+/**
+ * 모델 자체 호스팅 URL (GitHub Release 자산). HF 비의존.
+ * zip 루트는 `Xenova/bge-m3/...` 구조여야 하며, 첫 실행 시 userData/models 로 받아 압축 해제.
+ * RALLY_MODEL_URL 환경변수로 오버라이드 가능(테스트/대체 호스트).
+ */
+export const MODEL_DOWNLOAD_URL =
+  process.env.RALLY_MODEL_URL ||
+  'https://github.com/warizi/Rally/releases/download/models/bge-m3.zip'

@@ -31,10 +31,14 @@ async function getExtractor(): Promise<FeatureExtractor> {
   if (extractorPromise) return extractorPromise
   extractorPromise = (async () => {
     const { pipeline, env } = await import('@xenova/transformers')
-    if (process.env.EMBED_CACHE_DIR) {
-      env.cacheDir = path.join(process.env.EMBED_CACHE_DIR)
+    // 자체 호스팅: 모델은 main이 GitHub Release에서 받아 userData/models 에 둠 → 로컬만 로드.
+    const dir = process.env.EMBED_CACHE_DIR
+    if (dir) {
+      env.cacheDir = path.join(dir)
+      env.localModelPath = path.join(dir)
     }
-    env.allowLocalModels = false
+    env.allowLocalModels = true
+    env.allowRemoteModels = false // HuggingFace 폴백 차단 (외부 요청 0)
     return (await pipeline('feature-extraction', EMBEDDING_MODEL)) as unknown as FeatureExtractor
   })()
   return extractorPromise

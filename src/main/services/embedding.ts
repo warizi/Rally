@@ -6,6 +6,7 @@ import { db, rawSqlite, vecEnabled } from '../db'
 import { embeddingMeta, notes, todos, schedules, csvFiles, canvases } from '../db/schema'
 import { EMBEDDABLE_ENTITY_TYPES, type EmbeddableEntityType } from '../db/schema/embedding'
 import { embed } from './embedding-model'
+import { ensureModel } from './model-bootstrap'
 import { chunkNote, composeShortText } from './embedding-chunk'
 import { EMBEDDING_MODEL } from './embedding-config'
 import { scoped } from '../lib/logger'
@@ -290,6 +291,13 @@ async function backfillAll(): Promise<void> {
   if (!vecEnabled || backfillRunning) return
   backfillRunning = true
   try {
+    // 모델을 1회만 보장 (다운로드 실패 시 엔티티마다 재시도 폭주 방지 → 백필 스킵)
+    try {
+      await ensureModel()
+    } catch (e) {
+      log.warn('embedding model unavailable — skipping backfill', e)
+      return
+    }
     let total = 0
     for (const type of EMBEDDABLE_ENTITY_TYPES) {
       const indexed = indexedIds(type)
