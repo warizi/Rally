@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.5',
+    date: '2026-06-07',
+    changes: [
+      {
+        type: 'fix',
+        title: '검색 워크스페이스 격리',
+        description:
+          '의미 기반 검색에서 다른 워크스페이스의 노트·할일·표·캔버스가 결과에 섞여 나오던 문제가 수정되었습니다. 이제 검색은 현재 워크스페이스의 항목만 보여줍니다. (AI(MCP) 검색에도 동일하게 적용됩니다.)'
+      }
+    ]
+  },
+  {
     version: '1.15.4',
     date: '2026-06-07',
     changes: [
