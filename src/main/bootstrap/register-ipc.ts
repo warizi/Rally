@@ -31,6 +31,7 @@ import { registerHistoryHandlers } from '../ipc/history'
 import { registerTrashHandlers } from '../ipc/trash'
 import { registerOnboardingHandlers } from '../ipc/onboarding'
 import { registerSkillHandlers } from '../ipc/skill'
+import { registerSearchHandlers } from '../ipc/search'
 
 /**
  * 모든 IPC handler 등록을 한곳에서 묶는다. 신규 도메인 IPC 추가 시 이 파일만 수정.
@@ -74,4 +75,5 @@ export function registerAllIpcHandlers(): void {
   registerTrashHandlers()
   registerOnboardingHandlers()
   registerSkillHandlers()
+  registerSearchHandlers()
 }

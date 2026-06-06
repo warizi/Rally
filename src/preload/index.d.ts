@@ -32,6 +32,7 @@ import type { TrashAPI } from './types/trash'
 import type { OnboardingAPI } from './types/onboarding'
 import type { NoteStyleTemplateAPI } from './types/note-style-template'
 import type { SkillAPI } from './types/skill'
+import type { SearchAPI } from './types/search'
 import type { ShellAPI } from './types/shell'
 
 interface API {
@@ -67,6 +68,7 @@ interface API {
   onboarding: OnboardingAPI
   noteStyleTemplate: NoteStyleTemplateAPI
   skill: SkillAPI
+  search: SearchAPI
 }
 
 declare global {

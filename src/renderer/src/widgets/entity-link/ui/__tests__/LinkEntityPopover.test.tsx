@@ -40,6 +40,10 @@ vi.mock('@entities/entity-link', () => ({
   useLinkEntity: () => ({ mutate: mocks.linkMutate }),
   useUnlinkEntity: () => ({ mutate: mocks.unlinkMutate })
 }))
+// 하이브리드 검색 훅 — 미정의 결과로 두면 클라이언트 제목 필터 폴백 경로 사용
+vi.mock('@entities/search', () => ({
+  useEntitySearch: () => ({ data: undefined })
+}))
 
 vi.mock('@shared/lib/entity-link', () => ({
   ENTITY_TYPE_LABEL: {

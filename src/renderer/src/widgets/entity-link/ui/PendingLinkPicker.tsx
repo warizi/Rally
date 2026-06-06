@@ -13,6 +13,7 @@ import { useImageFilesByWorkspace } from '@entities/image-file'
 import { useCanvasesByWorkspace } from '@entities/canvas'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
+import { useLinkSearch } from '../model/use-link-search'
 
 export interface PendingLink {
   type: LinkableEntityType
@@ -79,12 +80,8 @@ export function PendingLinkPicker({
     [todos, schedules, notes, pdfs, csvs, images, canvases]
   )
 
-  const filtered = useMemo(() => {
-    const items = optionsByType[activeTab] ?? []
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter((item) => item.title.toLowerCase().includes(q))
-  }, [optionsByType, activeTab, search])
+  // 하이브리드(벡터+FTS) 검색 — 지원 도메인은 의미 검색 포함, 그 외는 제목 필터 폴백
+  const filtered = useLinkSearch(workspaceId, activeTab, search, optionsByType)
 
   function handleToggle(item: EntityOption): void {
     const key = `${item.type}:${item.id}`

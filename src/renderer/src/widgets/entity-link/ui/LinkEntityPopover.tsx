@@ -14,6 +14,7 @@ import { useCanvasesByWorkspace } from '@entities/canvas'
 import { useLinkedEntities, useLinkEntity, useUnlinkEntity } from '@entities/entity-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
+import { useLinkSearch } from '../model/use-link-search'
 
 interface Props {
   entityType: LinkableEntityType
@@ -95,12 +96,8 @@ export function LinkEntityPopover({
     }
   }, [todos, schedules, notes, pdfs, csvs, images, canvasList, entityType, entityId])
 
-  const filtered = useMemo(() => {
-    const items = optionsByType[activeTab] ?? []
-    const q = search.trim().toLowerCase()
-    if (!q) return items
-    return items.filter((item) => item.title.toLowerCase().includes(q))
-  }, [optionsByType, activeTab, search])
+  // 하이브리드(벡터+FTS) 검색 — 지원 도메인은 의미 검색 포함, 그 외는 제목 필터 폴백
+  const filtered = useLinkSearch(workspaceId, activeTab, search, optionsByType)
 
   const handleToggleLink = useCallback(
     (target: EntityOption): void => {
