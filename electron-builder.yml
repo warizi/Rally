@@ -25,6 +25,9 @@ asarUnpack:
   # sqlite-vec 네이티브 확장(.dylib/.so/.dll)은 asar 내부에서 로드 불가 → 언팩 필수
   - '**/node_modules/sqlite-vec/**'
   - '**/node_modules/sqlite-vec-*/**'
+  # transformers.js + onnxruntime-node 네이티브 바이너리 → 언팩 필수
+  - '**/node_modules/@xenova/transformers/**'
+  - '**/node_modules/onnxruntime-node/**'
 win:
   executableName: rally
 nsis:
