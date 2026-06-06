@@ -4,6 +4,7 @@ import { canvasRepository } from '../repositories/canvas'
 import { workspaceRepository } from '../repositories/workspace'
 import { itemTagService } from './item-tag'
 import { trashService } from './trash'
+import { embeddingService } from './embedding'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 import { toDate } from './_shared/date'
 
@@ -116,6 +117,7 @@ export const canvasService = {
       updatedAt: now,
       ...toCreatedFields(actor)
     })
+    embeddingService.enqueue('canvas', row.id)
     return toCanvasItem(row)
   },
 
@@ -134,6 +136,7 @@ export const canvasService = {
       ...toUpdatedFields(actor)
     })
     if (!updated) throw new NotFoundError(`Canvas not found: ${canvasId}`)
+    embeddingService.enqueue('canvas', canvasId)
     return toCanvasItem(updated)
   },
 
@@ -152,6 +155,8 @@ export const canvasService = {
     if (!canvas) throw new NotFoundError(`Canvas not found: ${canvasId}`)
     // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과.
     if (!options.permanent) assertCanvasUnlocked(canvas)
+
+    embeddingService.remove('canvas', canvasId)
 
     if (!options.permanent) {
       trashService.softRemove(canvas.workspaceId, 'canvas', canvasId)

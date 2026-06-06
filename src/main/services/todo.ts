@@ -4,6 +4,7 @@ import { todoRepository } from '../repositories/todo'
 import { workspaceRepository } from '../repositories/workspace'
 import { entityLinkService } from './entity-link'
 import { itemTagService } from './item-tag'
+import { embeddingService } from './embedding'
 import { reminderService } from './reminder'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { recurringCompletionService } from './recurring-completion'
@@ -275,6 +276,7 @@ export const todoService = {
       ...toCreatedFields(actor)
     })
 
+    embeddingService.enqueue('todo', row.id)
     return toTodoItem(row)
   },
 
@@ -370,6 +372,7 @@ export const todoService = {
       }
     }
 
+    embeddingService.enqueue('todo', todoId)
     return toTodoItem(updated)
   },
 
@@ -381,6 +384,8 @@ export const todoService = {
     const todo = todoRepository.findById(todoId)
     if (!todo) throw new NotFoundError(`Todo not found: ${todoId}`)
 
+    embeddingService.remove('todo', todoId)
+
     if (!options.permanent) {
       // 휴지통 이동 — entity-link / reminder snapshot은 trashService가 처리
       trashService.softRemove(todo.workspaceId, 'todo', todoId)
@@ -389,6 +394,7 @@ export const todoService = {
 
     // 영구 삭제 경로 — 기존 동작 유지
     const subtodoIds = todoRepository.findAllDescendantIds(todoId)
+    for (const subId of subtodoIds) embeddingService.remove('todo', subId)
     reminderService.removeByEntities('todo', [todoId, ...subtodoIds])
     entityLinkService.removeAllLinksForTodos([todoId, ...subtodoIds])
     for (const id of [todoId, ...subtodoIds]) {

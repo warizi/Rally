@@ -11,6 +11,7 @@ import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { noteImageService } from './note-image'
 import { trashService } from './trash'
+import { embeddingService } from './embedding'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 import { toDate } from './_shared/date'
 
@@ -273,6 +274,7 @@ export const noteService = {
       ...toCreatedFields(actor)
     })
 
+    embeddingService.enqueue('note', row.id)
     return toNoteNode(row)
   },
 
@@ -333,6 +335,7 @@ export const noteService = {
       siblings.map((s) => ({ id: s.id, kind: s.kind }))
     )
 
+    embeddingService.enqueue('note', newId)
     return toNoteNode(noteRepository.findById(newId)!)
   },
 
@@ -374,6 +377,7 @@ export const noteService = {
       ...toUpdatedFields(actor)
     })!
 
+    embeddingService.enqueue('note', noteId)
     return toNoteNode(updated)
   },
 
@@ -388,6 +392,9 @@ export const noteService = {
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
     // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과 (이미 사용자가 휴지통에서 의도 확정).
     if (!options.permanent) assertNoteUnlocked(note)
+
+    // 삭제(휴지통/영구 모두) 시 임베딩 인덱스 제거. 복구 시 백필/재편집에서 재인덱싱됨.
+    embeddingService.remove('note', noteId)
 
     if (!options.permanent) {
       // 휴지통 이동 — fs는 trashService가 워크스페이스 밖 .trash로 옮김.
@@ -460,6 +467,7 @@ export const noteService = {
 
     const preview = content.slice(0, 200).replace(/\s+/g, ' ').trim()
     noteRepository.update(noteId, { preview, updatedAt: new Date(), ...toUpdatedFields(actor) })
+    embeddingService.enqueue('note', noteId)
   },
 
   /**
@@ -631,6 +639,7 @@ export const noteService = {
       ...toUpdatedFields(actor)
     })!
 
+    embeddingService.enqueue('note', noteId)
     return toNoteNode(updated)
   },
 

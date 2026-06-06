@@ -1,4 +1,3 @@
-import { app } from 'electron'
 import path from 'path'
 import { scoped } from '../lib/logger'
 import { EMBEDDING_MODEL, EMBEDDING_DIM } from './embedding-config'
@@ -19,6 +18,7 @@ let extractorPromise: Promise<FeatureExtractor> | null = null
 async function getExtractor(): Promise<FeatureExtractor> {
   if (extractorPromise) return extractorPromise
   extractorPromise = (async () => {
+    const { app } = await import('electron')
     const { pipeline, env } = await import('@xenova/transformers')
     // 모델 캐시를 userData 하위로 고정 (프로덕션에서 읽기전용 asar 회피).
     env.cacheDir = path.join(app.getPath('userData'), 'models')

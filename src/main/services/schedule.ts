@@ -6,6 +6,7 @@ import { workspaceRepository } from '../repositories/workspace'
 import { todoRepository } from '../repositories/todo'
 import { entityLinkService } from './entity-link'
 import { reminderService } from './reminder'
+import { embeddingService } from './embedding'
 import { canvasNodeRepository } from '../repositories/canvas-node'
 import { trashService } from './trash'
 import type { Schedule } from '../repositories/schedule'
@@ -191,6 +192,7 @@ export const scheduleService = {
       ...toCreatedFields(actor)
     })
 
+    embeddingService.enqueue('schedule', row.id)
     return toScheduleItem(row)
   },
 
@@ -242,6 +244,7 @@ export const scheduleService = {
       reminderService.recalculate('schedule', scheduleId)
     }
 
+    embeddingService.enqueue('schedule', scheduleId)
     return toScheduleItem(row)
   },
 
@@ -251,6 +254,8 @@ export const scheduleService = {
   remove(scheduleId: string, options: { permanent?: boolean } = {}): void {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
+
+    embeddingService.remove('schedule', scheduleId)
 
     if (!options.permanent) {
       if (!existing.workspaceId) {

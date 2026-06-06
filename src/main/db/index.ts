@@ -22,6 +22,8 @@ try {
   sqliteVec.load(sqlite)
   vecEnabledFlag = true
 } catch (e) {
+  // 부팅 초기(logger 준비 전)라 console 사용. 로드 실패는 치명적이지 않음.
+  // eslint-disable-next-line no-console
   console.warn('[db] sqlite-vec load failed — semantic search disabled', e)
 }
 
