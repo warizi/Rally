@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.3',
+    date: '2026-06-06',
+    changes: [
+      {
+        type: 'improvement',
+        title: '앱 보안 및 안정성 향상',
+        description:
+          '앱의 전반적인 보안과 안정성이 향상되었습니다. 여러 가지 내부 개선과 최적화를 통해 앱이 더 빠르고 안정적으로 실행되도록 개선되었습니다.'
+      }
+    ]
+  },
+  {
     version: '1.15.2',
     date: '2026-06-05',
     changes: [
