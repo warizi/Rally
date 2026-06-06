@@ -36,3 +36,31 @@ export function useEntitySearch(
     placeholderData: keepPreviousData
   })
 }
+
+/**
+ * 여러 도메인 동시 하이브리드/시맨틱 검색 (예: 임베드 피커의 note/csv/canvas 통합).
+ * types 가 비면 비활성.
+ */
+export function useEntitySearchMulti(
+  workspaceId: string | null | undefined,
+  query: string,
+  types: SearchType[],
+  mode: SearchMode = 'hybrid'
+): UseQueryResult<SearchHit[]> {
+  const trimmed = query.trim()
+  return useQuery({
+    queryKey: [SEARCH_KEY, 'multi', workspaceId, types, mode, trimmed],
+    enabled: !!workspaceId && !!trimmed && types.length > 0,
+    queryFn: async (): Promise<SearchHit[]> => {
+      const res: IpcResponse<SearchResultData> = await window.api.search.query(
+        workspaceId!,
+        trimmed,
+        { types, mode, limit: 50 }
+      )
+      if (!res.success) throwIpcError(res)
+      return res.data?.results ?? []
+    },
+    staleTime: 30_000,
+    placeholderData: keepPreviousData
+  })
+}

@@ -18,8 +18,18 @@ import { useCsvFilesByWorkspace } from '@entities/csv-file'
 import { usePdfFilesByWorkspace } from '@entities/pdf-file'
 import { useImageFilesByWorkspace } from '@entities/image-file'
 import { useCanvasesByWorkspace } from '@entities/canvas'
+import { useEntitySearchMulti, type SearchType } from '@entities/search'
+import { useDebouncedValue } from '@shared/hooks/use-debounced-value'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
 import { RALLY_EMBED_NODE_NAME, type EmbedDomain } from '../model/note-embed-schema'
+
+// 벡터 검색 지원 SearchType → EmbedDomain (note/csv/canvas만 임베딩 대상)
+const SEARCH_TO_DOMAIN: Partial<Record<SearchType, EmbedDomain>> = {
+  note: 'note',
+  table: 'csv',
+  canvas: 'canvas'
+}
+const VECTOR_SEARCH_TYPES: SearchType[] = ['note', 'table', 'canvas']
 
 interface PickerItem {
   domain: EmbedDomain
@@ -85,20 +95,59 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
     })
   }, [open])
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase().normalize('NFC')
-    if (!q) return allItems.slice(0, 50)
-    // 공백 분리한 모든 토큰이 title 에 포함되어야 매칭 (any position).
-    // macOS 파일명은 자주 NFD (자모 분리) 로 저장됨 — 사용자 입력 (NFC) 과
-    // 매칭 안 되는 문제 방지하기 위해 양쪽 normalize.
+  // 일반(제목 키워드) + 벡터(의미) 검색.
+  // - 일반: 클라이언트 다중 토큰 substring (즉시, 5도메인 전체)
+  // - 벡터: note/csv/canvas 시맨틱 결과 중 일반에 없는 것 (제목 안 맞아도 의미로 매칭)
+  const itemMap = useMemo(() => {
+    const m = new Map<string, PickerItem>()
+    for (const it of allItems) m.set(`${it.domain}:${it.id}`, it)
+    return m
+  }, [allItems])
+
+  const trimmedQuery = query.trim()
+  const debouncedQuery = useDebouncedValue(trimmedQuery, 200)
+  const { data: hits, isFetching: semanticLoading } = useEntitySearchMulti(
+    workspaceId,
+    debouncedQuery,
+    VECTOR_SEARCH_TYPES,
+    'semantic'
+  )
+
+  const { keyword, semantic } = useMemo(() => {
+    const q = trimmedQuery.toLowerCase().normalize('NFC')
+    if (!q) return { keyword: allItems.slice(0, 50), semantic: [] as PickerItem[] }
     const tokens = q.split(/\s+/).filter(Boolean)
-    return allItems
+    const keyword = allItems
       .filter((i) => {
         const lower = i.title.toLowerCase().normalize('NFC')
         return tokens.every((t) => lower.includes(t))
       })
       .slice(0, 50)
-  }, [allItems, query])
+    const kwSet = new Set(keyword.map((i) => `${i.domain}:${i.id}`))
+    const semantic: PickerItem[] = []
+    if (hits) {
+      const seen = new Set<string>()
+      for (const h of hits) {
+        const domain = SEARCH_TO_DOMAIN[h.type]
+        if (!domain) continue
+        const k = `${domain}:${h.id}`
+        if (kwSet.has(k) || seen.has(k)) continue
+        const item = itemMap.get(k)
+        if (item) {
+          seen.add(k)
+          semantic.push(item)
+        }
+      }
+    }
+    return { keyword, semantic }
+  }, [allItems, trimmedQuery, hits, itemMap])
+
+  const grouped = trimmedQuery.length > 0
+  // 키보드 내비게이션용 평면 목록 (keyword 다음 semantic)
+  const results = useMemo(
+    () => (grouped ? [...keyword, ...semantic] : keyword),
+    [grouped, keyword, semantic]
+  )
 
   // query / open 변경 시 focusIndex reset — derived state 패턴.
   const [focusIndex, setFocusIndex] = useState(0)
@@ -138,13 +187,13 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
   function handleInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>): void {
     if (e.key === 'ArrowDown') {
       e.preventDefault()
-      setFocusIndex((i) => Math.min(filtered.length - 1, i + 1))
+      setFocusIndex((i) => Math.min(results.length - 1, i + 1))
     } else if (e.key === 'ArrowUp') {
       e.preventDefault()
       setFocusIndex((i) => Math.max(0, i - 1))
     } else if (e.key === 'Enter') {
       e.preventDefault()
-      const item = filtered[focusIndex]
+      const item = results[focusIndex]
       if (item) handleSelect(item)
     } else if (e.key === 'Escape') {
       e.preventDefault()
@@ -167,6 +216,32 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
 
   if (!open) return null
 
+  const headerClass =
+    'px-2 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground'
+  const mutedClass = 'text-xs text-muted-foreground text-center py-2'
+
+  const renderItem = (item: PickerItem, i: number): React.JSX.Element => {
+    const Icon = ICONS[item.domain]
+    const isFocus = i === focusIndex
+    return (
+      <button
+        key={`${item.domain}:${item.id}`}
+        type="button"
+        onClick={() => handleSelect(item)}
+        onMouseEnter={() => setFocusIndex(i)}
+        className={
+          'w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left cursor-pointer ' +
+          (isFocus ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')
+        }
+      >
+        <Icon className="size-3.5 shrink-0" />
+        <span className="truncate flex-1">{item.title}</span>
+        <span className="text-[10px] text-muted-foreground shrink-0">{item.domain}</span>
+        {isFocus && <Check className="size-3 text-primary shrink-0" />}
+      </button>
+    )
+  }
+
   return (
     <div
       ref={containerRef}
@@ -183,30 +258,29 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
         className="w-full px-2 py-1 mb-1 text-xs bg-transparent border-b outline-none"
       />
       <div className="max-h-60 overflow-y-auto">
-        {filtered.length === 0 ? (
-          <div className="text-xs text-muted-foreground text-center py-4">결과 없음</div>
+        {!grouped ? (
+          results.length === 0 ? (
+            <div className={mutedClass}>결과 없음</div>
+          ) : (
+            results.map((item, i) => renderItem(item, i))
+          )
         ) : (
-          filtered.map((item, i) => {
-            const Icon = ICONS[item.domain]
-            const isFocus = i === focusIndex
-            return (
-              <button
-                key={`${item.domain}:${item.id}`}
-                type="button"
-                onClick={() => handleSelect(item)}
-                onMouseEnter={() => setFocusIndex(i)}
-                className={
-                  'w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left cursor-pointer ' +
-                  (isFocus ? 'bg-accent text-accent-foreground' : 'hover:bg-accent')
-                }
-              >
-                <Icon className="size-3.5 shrink-0" />
-                <span className="truncate flex-1">{item.title}</span>
-                <span className="text-[10px] text-muted-foreground shrink-0">{item.domain}</span>
-                {isFocus && <Check className="size-3 text-primary shrink-0" />}
-              </button>
-            )
-          })
+          <>
+            <div className={headerClass}>일반 검색</div>
+            {keyword.length === 0 ? (
+              <div className={mutedClass}>일치하는 제목 없음</div>
+            ) : (
+              keyword.map((item, i) => renderItem(item, i))
+            )}
+            <div className={headerClass}>벡터 검색</div>
+            {semanticLoading && semantic.length === 0 ? (
+              <div className={mutedClass}>검색 중…</div>
+            ) : semantic.length === 0 ? (
+              <div className={mutedClass}>관련 항목 없음</div>
+            ) : (
+              semantic.map((item, j) => renderItem(item, keyword.length + j))
+            )}
+          </>
         )}
       </div>
     </div>

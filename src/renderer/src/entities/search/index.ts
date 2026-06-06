@@ -1,2 +1,2 @@
-export { useEntitySearch } from './api/queries'
+export { useEntitySearch, useEntitySearchMulti } from './api/queries'
 export type { SearchHit, SearchType, SearchMode } from './model/types'
