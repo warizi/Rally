@@ -31,6 +31,7 @@ import { terminalApi } from './terminal'
 import { noteStyleTemplateApi } from './note-style-template'
 import { skillApi } from './skill'
 import { searchApi } from './search'
+import { embeddingApi } from './embedding'
 
 export { shellApi } from './shell'
 
@@ -67,5 +68,6 @@ export const api = {
   terminal: terminalApi,
   noteStyleTemplate: noteStyleTemplateApi,
   skill: skillApi,
-  search: searchApi
+  search: searchApi,
+  embedding: embeddingApi
 }

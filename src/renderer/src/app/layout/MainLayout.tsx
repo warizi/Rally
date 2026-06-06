@@ -19,6 +19,7 @@ import { useReminderChangedWatcher } from '@entities/reminder'
 import { useEntityLinkWatcher } from '@entities/entity-link'
 import { useReminderWatcher } from '@features/reminder'
 import { useTrashWatcher } from '@entities/trash'
+import { useEmbeddingProgressWatcher } from '@features/embedding-progress'
 import {
   usePaneNavigation,
   useTabNavigation,
@@ -135,6 +136,8 @@ function MainLayout(): React.JSX.Element {
   useReminderWatcher()
   // 휴지통 변경 push 이벤트 구독 (소프트 삭제 / 복구 / 영구 삭제 시 활성 list 캐시 무효화)
   useTrashWatcher()
+  // 임베딩 진행(모델 다운로드 / 백필 인덱싱) 토스트+프로그래스바
+  useEmbeddingProgressWatcher()
   // 화면 전체보기(focus) 모드 ESC 핸들러 + 자동 해제
   useFocusModeEffects()
   // 글로벌 키보드 단축키 — pane 이동 / 탭 이동 / 탭 스냅샷 전환

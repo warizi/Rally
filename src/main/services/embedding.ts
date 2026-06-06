@@ -7,6 +7,7 @@ import { embeddingMeta, notes, todos, schedules, csvFiles, canvases } from '../d
 import { EMBEDDABLE_ENTITY_TYPES, type EmbeddableEntityType } from '../db/schema/embedding'
 import { embed } from './embedding-model'
 import { ensureModel } from './model-bootstrap'
+import { emitEmbeddingProgress } from '../lib/embedding-progress'
 import { chunkNote, composeShortText } from './embedding-chunk'
 import { EMBEDDING_MODEL } from './embedding-config'
 import { scoped } from '../lib/logger'
@@ -298,22 +299,41 @@ async function backfillAll(): Promise<void> {
       log.warn('embedding model unavailable — skipping backfill', e)
       return
     }
-    let total = 0
+    // 1) 계획: 전체 missing 수 파악 (진행률 분모)
+    const plan: { type: EmbeddableEntityType; ids: string[] }[] = []
+    let totalToDo = 0
     for (const type of EMBEDDABLE_ENTITY_TYPES) {
       const indexed = indexedIds(type)
       const missing = activeIds(type).filter((id) => !indexed.has(id))
-      if (missing.length === 0) continue
-      log.info(`backfill ${type}: ${missing.length} missing`)
-      for (const id of missing) {
+      if (missing.length > 0) {
+        plan.push({ type, ids: missing })
+        totalToDo += missing.length
+      }
+    }
+    if (totalToDo === 0) return
+
+    // 2) 순차 인덱싱 + 진행률 push (pct 변할 때만)
+    log.info(`backfill: ${totalToDo} entities to index`)
+    emitEmbeddingProgress({ key: 'index', value: 0, done: false })
+    let done = 0
+    let lastPct = -1
+    for (const { type, ids } of plan) {
+      for (const id of ids) {
         try {
           await processEntity(type, id)
-          total++
         } catch (e) {
           log.warn(`backfill failed for ${type}:${id}`, e)
         }
+        done++
+        const pct = Math.floor((done / totalToDo) * 100)
+        if (pct !== lastPct) {
+          lastPct = pct
+          emitEmbeddingProgress({ key: 'index', value: pct, done: false })
+        }
       }
     }
-    if (total > 0) log.info(`backfill complete: ${total} entities indexed`)
+    emitEmbeddingProgress({ key: 'index', value: 100, done: true })
+    log.info(`backfill complete: ${done} entities indexed`)
   } finally {
     backfillRunning = false
   }

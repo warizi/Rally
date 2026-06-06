@@ -1,10 +1,11 @@
-import { app, net, BrowserWindow } from 'electron'
+import { app, net } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import { Readable } from 'stream'
 import { pipeline } from 'stream/promises'
 import AdmZip from 'adm-zip'
 import { scoped } from '../lib/logger'
+import { emitEmbeddingProgress } from '../lib/embedding-progress'
 import { EMBEDDING_MODEL, MODEL_DOWNLOAD_URL } from './embedding-config'
 
 const log = scoped('model-bootstrap')
@@ -29,12 +30,6 @@ function isModelPresent(): boolean {
   )
 }
 
-function broadcastProgress(received: number, total: number, done: boolean): void {
-  for (const w of BrowserWindow.getAllWindows()) {
-    w.webContents.send('embedding-model:download-progress', { received, total, done })
-  }
-}
-
 async function downloadTo(url: string, dest: string): Promise<void> {
   // electron net.fetch: 시스템 프록시/인증서 적용 (사내망 대응)
   const res = await net.fetch(url)
@@ -42,10 +37,17 @@ async function downloadTo(url: string, dest: string): Promise<void> {
   const total = Number(res.headers.get('content-length') || 0)
 
   let received = 0
+  let lastPct = -1
   const src = Readable.fromWeb(res.body as Parameters<typeof Readable.fromWeb>[0])
   src.on('data', (chunk: Buffer) => {
     received += chunk.length
-    broadcastProgress(received, total, false)
+    if (total > 0) {
+      const pct = Math.floor((received / total) * 100)
+      if (pct !== lastPct) {
+        lastPct = pct
+        emitEmbeddingProgress({ key: 'download', value: pct, done: false })
+      }
+    }
   })
   await pipeline(src, fs.createWriteStream(dest))
 }
@@ -64,13 +66,19 @@ export function ensureModel(): Promise<void> {
     const tmp = path.join(modelsRoot(), `.download-${process.pid}.zip`)
     try {
       log.info(`downloading model: ${MODEL_DOWNLOAD_URL}`)
+      emitEmbeddingProgress({ key: 'download', value: 0, done: false })
       await downloadTo(MODEL_DOWNLOAD_URL, tmp)
       log.info('extracting model...')
+      // 다운로드 100% 후 압축 해제 단계 (진행률은 100 유지, 완료는 아래에서)
+      emitEmbeddingProgress({ key: 'download', value: 100, done: false })
       // zip 루트가 Xenova/bge-m3/... 이므로 modelsRoot 로 풀면 제자리에 위치
       new AdmZip(tmp).extractAllTo(modelsRoot(), true)
       if (!isModelPresent()) throw new Error('model extraction incomplete (missing files)')
-      broadcastProgress(1, 1, true)
+      emitEmbeddingProgress({ key: 'download', value: 100, done: true })
       log.info('model ready')
+    } catch (err) {
+      emitEmbeddingProgress({ key: 'download', value: 0, done: true }) // 실패 시 토스트 닫힘
+      throw err
     } finally {
       fs.rmSync(tmp, { force: true })
     }
