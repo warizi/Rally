@@ -35903,7 +35903,10 @@ All filters are AND-combined:
 - limit/offset: per-kind pagination (default 500, max 1000); response.meta.hasMore tells when to page
 
 When types=["tag"], tag list is returned (substring search on name/description).
-Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.`,
+Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.
+When 'search' is given, response also includes 'similar': up to 3 semantically-related
+note/csv/canvas items (vector search) NOT already in the substring results \u2014 useful when the
+exact word isn't in the title but the meaning matches (e.g. search "\uB3D9\uBB3C" surfaces a "\uAC15\uC544\uC9C0" note).`,
     schema: {
       folderId: external_exports3.string().optional().describe('Folder id, "null" for root-only, omit for all'),
       recursive: external_exports3.boolean().optional().describe("When folderId is set, include all descendants (default: direct children only)"),
@@ -36589,7 +36592,9 @@ Filters (apply where relevant):
 - priority[]: high|medium|low (todo)
 - parentId: 'null' for top-level only, or a parent todo id
 - linkedTo: { type, id } (todo)
-- search: substring on title/description/location
+- search: substring on title/description/location. In 'active' mode, response also adds
+  'similar': up to 3 semantically-related todos (vector search) not already in results \u2014
+  surfaces meaning-matched todos even when the word isn't in the title.
 - resolveLinks: include linkedItem previews
 - pendingOnly: un-fired reminders
 - activeOnly: recurring rules with endDate=null or future (default true)
@@ -36687,26 +36692,8 @@ MCP v2: 'list' action removed. To query links for an entity, use:
       ).describe("Array of link/unlink actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/links/batch", args)
-  },
-  {
-    name: "explore_graph",
-    description: `Traverse the entity-link graph from a seed item up to N hops (BFS).
-Use to discover related context around an item \u2014 e.g. notes/todos/canvases connected to a given note.
-Returns { root, depth, nodes: [{type,id,title,depth}], edges: [{fromType,fromId,toType,toId}] }.
-Pairs well with search: find a seed via search, then explore_graph to gather its neighborhood.`,
-    schema: {
-      type: external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "schedule"]).describe("Seed entity type"),
-      id: external_exports3.string().describe("Seed entity id"),
-      depth: external_exports3.number().int().min(1).max(3).optional().describe("Traversal hops (default 1, max 3)")
-    },
-    handler: ({ type, id, depth }) => {
-      const params = new URLSearchParams();
-      params.set("type", type);
-      params.set("id", id);
-      if (typeof depth === "number") params.set("depth", String(depth));
-      return callTool("GET", `/api/mcp/explore-graph?${params.toString()}`);
-    }
   }
+  // ─── Schedules (calendar events) ──────────────────────────
 ];
 
 // src/mcp-server/tool-definitions/template.tools.ts

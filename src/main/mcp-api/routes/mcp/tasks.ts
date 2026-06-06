@@ -23,6 +23,8 @@ import { recurringRuleService } from '../../../services/recurring-rule'
 import { recurringCompletionService } from '../../../services/recurring-completion'
 import { scheduleRepository } from '../../../repositories/schedule'
 import { historyService } from '../../../services/history'
+import { searchService } from '../../../services/search'
+import { vecEnabled } from '../../../db'
 import type { LinkableEntityType } from '../../../db/schema/entity-link'
 import { resolveActiveWorkspace, assertValidId } from './helpers'
 
@@ -519,7 +521,7 @@ function handleCompletedMode(
 void reminderRepository
 
 export function registerMcpTasksRoutes(router: Router): void {
-  router.addRoute('GET', '/api/mcp/tasks', (_p, _b, query) => {
+  router.addRoute('GET', '/api/mcp/tasks', async (_p, _b, query) => {
     const wsId = resolveActiveWorkspace()
     const types = parseTypesParam(query) ?? Array.from(ALL_TASK_TYPES)
     const mode = parseModeParam(query)
@@ -532,6 +534,32 @@ export function registerMcpTasksRoutes(router: Router): void {
       return handleTodayMode(wsId, types, query, resolveLinks)
     }
     // mode === 'active'
-    return handleActiveMode(wsId, types, query, resolveLinks)
+    const response = handleActiveMode(wsId, types, query, resolveLinks)
+
+    // similar: todo 검색 시 제목엔 없지만 의미상 유사한 할일 top 3 보강 (토큰 절약)
+    const search = (query.get('search') ?? '').trim()
+    if (search && vecEnabled && types.includes('todo')) {
+      const present = new Set<string>()
+      if (Array.isArray(response.todos)) {
+        for (const t of response.todos) present.add((t as { id: string }).id)
+      }
+      try {
+        const res = await searchService.search(wsId, search, {
+          types: ['todo'],
+          mode: 'semantic',
+          limit: 12
+        })
+        const similar: { id: string; title: string }[] = []
+        for (const h of res.results) {
+          if (present.has(h.id)) continue
+          similar.push({ id: h.id, title: h.title })
+          if (similar.length >= 3) break
+        }
+        if (similar.length > 0) response.similar = similar
+      } catch {
+        // 유사 항목 계산 실패는 본응답에 영향 주지 않음
+      }
+    }
+    return response
   })
 }

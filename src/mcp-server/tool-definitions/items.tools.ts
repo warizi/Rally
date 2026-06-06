@@ -61,7 +61,10 @@ All filters are AND-combined:
 - limit/offset: per-kind pagination (default 500, max 1000); response.meta.hasMore tells when to page
 
 When types=["tag"], tag list is returned (substring search on name/description).
-Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.`,
+Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.
+When 'search' is given, response also includes 'similar': up to 3 semantically-related
+note/csv/canvas items (vector search) NOT already in the substring results — useful when the
+exact word isn't in the title but the meaning matches (e.g. search "동물" surfaces a "강아지" note).`,
     schema: {
       folderId: z.string().optional().describe('Folder id, "null" for root-only, omit for all'),
       recursive: z
