@@ -6,6 +6,17 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.15.6',
+    date: '2026-06-07',
+    changes: [
+      {
+        type: 'fix',
+        title: '의미 기반 벡터 검색 적용 오류 수정',
+        description: '의미 기반 벡터 검색이 적용되지 않던 문제를 수정했습니다.'
+      }
+    ]
+  },
+  {
     version: '1.15.5',
     date: '2026-06-07',
     changes: [
