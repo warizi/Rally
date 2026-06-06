@@ -1,5 +1,5 @@
 import path from 'path'
-import { and, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { db, rawSqlite, vecEnabled } from '../db'
 import { notes, csvFiles, canvases, todos } from '../db/schema'
@@ -67,6 +67,9 @@ const MAX_LIMIT = 100
 const EXCERPT_PAD = 50
 // 융합 전 각 검색기가 모을 후보 수
 const CANDIDATE_K = 120
+// 벡터 KNN over-fetch: vec0에 workspace 필터를 못 걸어 KNN 후 격리하므로,
+// 타 워크스페이스가 상위를 점유해도 인-워크스페이스 후보가 충분히 남도록 넉넉히 가져온다.
+const VEC_KNN_FETCH = CANDIDATE_K * 4
 // RRF 상수 (작을수록 상위 랭크에 가중)
 const RRF_K = 60
 // 그래프 확장: 이웃을 끌어올 seed 수 + 이웃 점수 감쇠 계수
@@ -145,7 +148,8 @@ interface EntityMeta {
 function fetchMetaByType(
   type: SearchType,
   ids: string[],
-  folderMap: Map<string, string>
+  folderMap: Map<string, string>,
+  workspaceId: string
 ): Map<string, EntityMeta> {
   const out = new Map<string, EntityMeta>()
   if (ids.length === 0) return out
@@ -161,7 +165,9 @@ function fetchMetaByType(
         updatedAt: notes.updatedAt
       })
       .from(notes)
-      .where(and(inArray(notes.id, ids), isNull(notes.deletedAt)))
+      .where(
+        and(inArray(notes.id, ids), isNull(notes.deletedAt), eq(notes.workspaceId, workspaceId))
+      )
       .all()
     for (const r of rows) {
       out.set(r.id, {
@@ -182,7 +188,13 @@ function fetchMetaByType(
         updatedAt: csvFiles.updatedAt
       })
       .from(csvFiles)
-      .where(and(inArray(csvFiles.id, ids), isNull(csvFiles.deletedAt)))
+      .where(
+        and(
+          inArray(csvFiles.id, ids),
+          isNull(csvFiles.deletedAt),
+          eq(csvFiles.workspaceId, workspaceId)
+        )
+      )
       .all()
     for (const r of rows) {
       out.set(r.id, {
@@ -202,7 +214,13 @@ function fetchMetaByType(
         updatedAt: canvases.updatedAt
       })
       .from(canvases)
-      .where(and(inArray(canvases.id, ids), isNull(canvases.deletedAt)))
+      .where(
+        and(
+          inArray(canvases.id, ids),
+          isNull(canvases.deletedAt),
+          eq(canvases.workspaceId, workspaceId)
+        )
+      )
       .all()
     for (const r of rows) {
       out.set(r.id, {
@@ -222,7 +240,9 @@ function fetchMetaByType(
         updatedAt: todos.updatedAt
       })
       .from(todos)
-      .where(and(inArray(todos.id, ids), isNull(todos.deletedAt)))
+      .where(
+        and(inArray(todos.id, ids), isNull(todos.deletedAt), eq(todos.workspaceId, workspaceId))
+      )
       .all()
     for (const r of rows) {
       out.set(r.id, {
@@ -245,20 +265,32 @@ interface Ref {
   id: string
 }
 
-/** FTS5 키워드 검색 → bm25 오름차순(좋은 순) ref 리스트 */
-function ftsCandidates(query: string, entityTypes: Set<EmbeddableEntityType>): Ref[] {
+/** FTS5 키워드 검색 → bm25 오름차순(좋은 순) ref 리스트. workspace 로 격리. */
+function ftsCandidates(
+  query: string,
+  entityTypes: Set<EmbeddableEntityType>,
+  workspaceId: string
+): Ref[] {
   try {
     // trigram: 따옴표로 감싸 구문(phrase) 검색. 내부 따옴표 이스케이프.
     const matchExpr = `"${query.replace(/"/g, '""')}"`
+    // search_fts 에는 workspace 컬럼이 없어 embedding_meta(EXISTS)로 워크스페이스 격리.
+    // (FTS·embedding_meta 는 processEntity 에서 같은 트랜잭션으로 기록돼 일관)
     const rows = rawSqlite
       .prepare(
         `SELECT entity_type AS type, entity_id AS id, bm25(search_fts) AS score
          FROM search_fts
          WHERE search_fts MATCH ?
+           AND EXISTS (
+             SELECT 1 FROM embedding_meta m
+             WHERE m.entity_type = search_fts.entity_type
+               AND m.entity_id = search_fts.entity_id
+               AND m.workspace_id = ?
+           )
          ORDER BY score
          LIMIT ?`
       )
-      .all(matchExpr, CANDIDATE_K) as { type: string; id: string; score: number }[]
+      .all(matchExpr, workspaceId, CANDIDATE_K) as { type: string; id: string; score: number }[]
     const out: Ref[] = []
     for (const r of rows) {
       const st = ENTITY_TO_SEARCH[r.type as EmbeddableEntityType]
@@ -271,10 +303,11 @@ function ftsCandidates(query: string, entityTypes: Set<EmbeddableEntityType>): R
   }
 }
 
-/** 벡터(의미) 검색 → distance 오름차순(좋은 순) ref 리스트, 엔티티당 최선 1개 */
+/** 벡터(의미) 검색 → distance 오름차순(좋은 순) ref 리스트, 엔티티당 최선 1개. workspace 로 격리. */
 async function vectorCandidates(
   query: string,
-  entityTypes: Set<EmbeddableEntityType>
+  entityTypes: Set<EmbeddableEntityType>,
+  workspaceId: string
 ): Promise<Ref[]> {
   if (!vecEnabled) return []
   let queryVec: number[]
@@ -286,6 +319,8 @@ async function vectorCandidates(
   }
   const buf = Buffer.from(new Float32Array(queryVec).buffer)
   // KNN은 vec0 가상 테이블에 직접 LIMIT을 걸어야 하므로 CTE로 먼저 수행 후 JOIN.
+  // vec0에 workspace 컬럼이 없어 KNN 후 embedding_meta.workspace_id로 격리 →
+  // 타 워크스페이스가 상위를 차지해도 충분한 인-워크스페이스 후보가 남도록 KNN을 over-fetch.
   const rows = rawSqlite
     .prepare(
       `WITH knn AS (
@@ -294,9 +329,10 @@ async function vectorCandidates(
        )
        SELECT k.distance AS distance, m.entity_type AS type, m.entity_id AS id
        FROM knn k JOIN embedding_meta m ON m.rowid = k.rowid
+       WHERE m.workspace_id = ?
        ORDER BY k.distance`
     )
-    .all(buf, CANDIDATE_K) as { distance: number; type: string; id: string }[]
+    .all(buf, VEC_KNN_FETCH, workspaceId) as { distance: number; type: string; id: string }[]
 
   const seen = new Set<string>()
   const out: Ref[] = []
@@ -450,10 +486,10 @@ async function hybridSearch(
 
   const lists: Ref[][] = []
   if (mode === 'keyword' || mode === 'hybrid') {
-    lists.push(ftsCandidates(trimmed, entityTypes))
+    lists.push(ftsCandidates(trimmed, entityTypes, workspaceId))
   }
   if (mode === 'semantic' || mode === 'hybrid') {
-    lists.push(await vectorCandidates(trimmed, entityTypes))
+    lists.push(await vectorCandidates(trimmed, entityTypes, workspaceId))
   }
 
   let scored = rrfFuse(lists)
@@ -473,7 +509,7 @@ async function hybridSearch(
   const folderMap = new Map(folders.map((f) => [f.id, f.relativePath]))
   const metaByType = new Map<SearchType, Map<string, EntityMeta>>()
   for (const [t, ids] of idsByType.entries()) {
-    metaByType.set(t, fetchMetaByType(t, ids, folderMap))
+    metaByType.set(t, fetchMetaByType(t, ids, folderMap, workspaceId))
   }
 
   const perTypeCounts: Record<SearchType, number> = { note: 0, table: 0, canvas: 0, todo: 0 }
