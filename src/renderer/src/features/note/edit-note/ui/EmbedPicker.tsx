@@ -21,6 +21,7 @@ import { useCanvasesByWorkspace } from '@entities/canvas'
 import { useEntitySearchMulti, type SearchType } from '@entities/search'
 import { useDebouncedValue } from '@shared/hooks/use-debounced-value'
 import { PdfIcon } from '@shared/ui/icons/PdfIcon'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { RALLY_EMBED_NODE_NAME, type EmbedDomain } from '../model/note-embed-schema'
 
 // 벡터 검색 지원 SearchType → EmbedDomain (note/csv/canvas만 임베딩 대상)
@@ -79,6 +80,7 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
   // 자체 input state (IME 호환 — ProseMirror 외부에서 한글 입력 가능)
   const [query, setQuery] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
 
   // open=false 로 바뀔 때 query reset — effect 안 setState 대신 derived state 패턴.
   const [prevOpenForQuery, setPrevOpenForQuery] = useState(open)
@@ -157,8 +159,23 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
     setFocusIndex(0)
   }
 
+  // 키보드 이동 시 포커스 항목 자동 스크롤 (헤더가 섞이므로 data-idx 로 조회)
+  useEffect(() => {
+    const el = listRef.current?.querySelector(`[data-idx="${focusIndex}"]`) as HTMLElement | null
+    el?.scrollIntoView?.({ block: 'nearest' })
+  }, [focusIndex])
+
   const [loading, getEditor] = useInstance()
   void loading
+
+  /** 에디터(@ 위치)로 포커스 복귀 — ESC/외부클릭으로 닫을 때 노트 포커스 유지. */
+  function refocusEditor(): void {
+    const editor = getEditor()
+    if (!editor) return
+    editor.action((ctx) => {
+      ctx.get(editorViewCtx).focus()
+    })
+  }
 
   function handleSelect(item: PickerItem): void {
     const editor = getEditor()
@@ -198,6 +215,7 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
     } else if (e.key === 'Escape') {
       e.preventDefault()
       closePicker()
+      refocusEditor()
     }
   }
 
@@ -227,6 +245,7 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
       <button
         key={`${item.domain}:${item.id}`}
         type="button"
+        data-idx={i}
         onClick={() => handleSelect(item)}
         onMouseEnter={() => setFocusIndex(i)}
         className={
@@ -257,32 +276,34 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
         placeholder="검색..."
         className="w-full px-2 py-1 mb-1 text-xs bg-transparent border-b outline-none"
       />
-      <div className="max-h-60 overflow-y-auto">
-        {!grouped ? (
-          results.length === 0 ? (
-            <div className={mutedClass}>결과 없음</div>
+      <ScrollArea className="max-h-60">
+        <div ref={listRef}>
+          {!grouped ? (
+            results.length === 0 ? (
+              <div className={mutedClass}>결과 없음</div>
+            ) : (
+              results.map((item, i) => renderItem(item, i))
+            )
           ) : (
-            results.map((item, i) => renderItem(item, i))
-          )
-        ) : (
-          <>
-            <div className={headerClass}>일반 검색</div>
-            {keyword.length === 0 ? (
-              <div className={mutedClass}>일치하는 제목 없음</div>
-            ) : (
-              keyword.map((item, i) => renderItem(item, i))
-            )}
-            <div className={headerClass}>벡터 검색</div>
-            {semanticLoading && semantic.length === 0 ? (
-              <div className={mutedClass}>검색 중…</div>
-            ) : semantic.length === 0 ? (
-              <div className={mutedClass}>관련 항목 없음</div>
-            ) : (
-              semantic.map((item, j) => renderItem(item, keyword.length + j))
-            )}
-          </>
-        )}
-      </div>
+            <>
+              <div className={headerClass}>일반 검색</div>
+              {keyword.length === 0 ? (
+                <div className={mutedClass}>일치하는 제목 없음</div>
+              ) : (
+                keyword.map((item, i) => renderItem(item, i))
+              )}
+              <div className={headerClass}>벡터 검색</div>
+              {semanticLoading && semantic.length === 0 ? (
+                <div className={mutedClass}>검색 중…</div>
+              ) : semantic.length === 0 ? (
+                <div className={mutedClass}>관련 항목 없음</div>
+              ) : (
+                semantic.map((item, j) => renderItem(item, keyword.length + j))
+              )}
+            </>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   )
 }
