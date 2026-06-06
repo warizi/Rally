@@ -1,10 +1,10 @@
 import crypto from 'crypto'
 import fs from 'fs'
 import path from 'path'
-import { and, eq, inArray } from 'drizzle-orm'
+import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db, rawSqlite, vecEnabled } from '../db'
-import { embeddingMeta } from '../db/schema'
-import type { EmbeddableEntityType } from '../db/schema/embedding'
+import { embeddingMeta, notes, todos, schedules, csvFiles, canvases } from '../db/schema'
+import { EMBEDDABLE_ENTITY_TYPES, type EmbeddableEntityType } from '../db/schema/embedding'
 import { embed } from './embedding-model'
 import { chunkNote, composeShortText } from './embedding-chunk'
 import { EMBEDDING_MODEL } from './embedding-config'
@@ -227,6 +227,90 @@ async function processEntity(type: EmbeddableEntityType, id: string): Promise<vo
   tx()
 }
 
+// ── 백필 (기존 데이터 일회성 인덱싱) ──────────────────────────
+/** 활성(미삭제) 엔티티 ID 목록 — 타입별 base 테이블에서 조회. */
+function activeIds(type: EmbeddableEntityType): string[] {
+  switch (type) {
+    case 'note':
+      return db
+        .select({ id: notes.id })
+        .from(notes)
+        .where(isNull(notes.deletedAt))
+        .all()
+        .map((r) => r.id)
+    case 'todo':
+      return db
+        .select({ id: todos.id })
+        .from(todos)
+        .where(isNull(todos.deletedAt))
+        .all()
+        .map((r) => r.id)
+    case 'schedule':
+      return db
+        .select({ id: schedules.id })
+        .from(schedules)
+        .where(isNull(schedules.deletedAt))
+        .all()
+        .map((r) => r.id)
+    case 'csv':
+      return db
+        .select({ id: csvFiles.id })
+        .from(csvFiles)
+        .where(isNull(csvFiles.deletedAt))
+        .all()
+        .map((r) => r.id)
+    case 'canvas':
+      return db
+        .select({ id: canvases.id })
+        .from(canvases)
+        .where(isNull(canvases.deletedAt))
+        .all()
+        .map((r) => r.id)
+  }
+}
+
+/** 이미 임베딩된 엔티티 ID 집합. */
+function indexedIds(type: EmbeddableEntityType): Set<string> {
+  const rows = db
+    .selectDistinct({ id: embeddingMeta.entityId })
+    .from(embeddingMeta)
+    .where(eq(embeddingMeta.entityType, type))
+    .all()
+  return new Set(rows.map((r) => r.id))
+}
+
+let backfillRunning = false
+
+/**
+ * 임베딩 없는 기존 엔티티를 백그라운드에서 일괄 인덱싱.
+ * - 재개 가능: 이미 인덱싱된 엔티티는 skip (중단돼도 다음 실행에서 이어짐)
+ * - 순차 처리로 CPU 부담 제한 (모델 추론이 무거움)
+ */
+async function backfillAll(): Promise<void> {
+  if (!vecEnabled || backfillRunning) return
+  backfillRunning = true
+  try {
+    let total = 0
+    for (const type of EMBEDDABLE_ENTITY_TYPES) {
+      const indexed = indexedIds(type)
+      const missing = activeIds(type).filter((id) => !indexed.has(id))
+      if (missing.length === 0) continue
+      log.info(`backfill ${type}: ${missing.length} missing`)
+      for (const id of missing) {
+        try {
+          await processEntity(type, id)
+          total++
+        } catch (e) {
+          log.warn(`backfill failed for ${type}:${id}`, e)
+        }
+      }
+    }
+    if (total > 0) log.info(`backfill complete: ${total} entities indexed`)
+  } finally {
+    backfillRunning = false
+  }
+}
+
 // ── 비동기 디바운스 큐 ────────────────────────────────────────
 const timers = new Map<string, NodeJS.Timeout>()
 
@@ -271,5 +355,10 @@ export const embeddingService = {
   /** 동기 처리(백필/테스트용). */
   async syncNow(type: EmbeddableEntityType, id: string): Promise<void> {
     await processEntity(type, id)
+  },
+
+  /** 임베딩 없는 기존 엔티티 백그라운드 일괄 인덱싱 (재개 가능, 부팅 후 fire-and-forget). */
+  async backfillAll(): Promise<void> {
+    await backfillAll()
   }
 }

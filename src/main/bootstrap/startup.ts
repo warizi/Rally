@@ -9,6 +9,7 @@ import { EMBEDDING_DIM } from '../services/embedding-config'
 import { workspaceService } from '../services/workspace'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 import { seedSystemSkills } from '../services/skill'
+import { embeddingService } from '../services/embedding'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
@@ -122,6 +123,7 @@ function migrateLegacyDefaultWorkspacePath(): void {
  * 앱 시작 시 1회 실행되는 DB/워크스페이스 초기화 시퀀스 (순서 유지).
  * 1) 마이그레이션 → 2) 검색 가상 테이블(vec0+FTS5) 보장 → 3) 기본 워크스페이스 보장 →
  * 4) 시스템 skill seed → 5) legacy 기본 경로 이전 → 6) 워크스페이스별 claude 커맨드 보장.
+ * 부팅 완료 후 임베딩 백필을 비차단으로 시작 (UI 로드 우선, 재개 가능).
  */
 export function runStartup(): void {
   runMigrations()
@@ -130,4 +132,11 @@ export function runStartup(): void {
   seedSystemSkills()
   migrateLegacyDefaultWorkspacePath()
   ensureAllWorkspaceCommands()
+
+  // 임베딩 백필: UI 로드를 막지 않도록 지연 후 백그라운드 실행.
+  setTimeout(() => {
+    void embeddingService.backfillAll().catch((e) => {
+      scoped('embedding').warn('backfill failed', e)
+    })
+  }, 5000)
 }
