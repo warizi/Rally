@@ -7,11 +7,11 @@
  *   (embedding_meta.model 로 구버전 식별)
  */
 
-/** transformers.js 모델 ID (로컬, 오프라인, 한국어 양호) */
-export const EMBEDDING_MODEL = 'Xenova/multilingual-e5-small'
+/** transformers.js 모델 ID (로컬, 오프라인, 다국어/한국어 의미 분리도 우수) */
+export const EMBEDDING_MODEL = 'Xenova/bge-m3'
 
-/** 임베딩 차원 — multilingual-e5-small = 384 */
-export const EMBEDDING_DIM = 384
+/** 임베딩 차원 — bge-m3 = 1024 */
+export const EMBEDDING_DIM = 1024
 
 /** sqlite-vec 가상 테이블 이름 */
 export const VEC_TABLE = 'vec_embeddings'

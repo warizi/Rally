@@ -5,7 +5,7 @@ import { is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { scoped } from '../lib/logger'
 import { db, rawSqlite, vecEnabled } from '../db'
-import { EMBEDDING_DIM } from '../services/embedding-config'
+import { EMBEDDING_DIM, EMBEDDING_MODEL } from '../services/embedding-config'
 import { workspaceService } from '../services/workspace'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 import { seedSystemSkills } from '../services/skill'
@@ -42,6 +42,24 @@ function ensureSearchTables(): void {
     scoped('vec').warn('sqlite-vec disabled — skipping vec table creation')
     return
   }
+
+  // 모델/차원 변경 감지: 기존 임베딩이 현재 모델과 다르면 vec 테이블(차원 고정)을 폐기하고
+  // embedding_meta 를 비워 백필이 전체 재임베딩하도록 한다. (FTS는 차원 무관이라 유지)
+  try {
+    const row = rawSqlite.prepare('SELECT model FROM embedding_meta LIMIT 1').get() as
+      | { model: string }
+      | undefined
+    if (row && row.model !== EMBEDDING_MODEL) {
+      scoped('vec').info(
+        `embedding model changed (${row.model} → ${EMBEDDING_MODEL}) — vec 인덱스 재생성 + 재임베딩`
+      )
+      rawSqlite.exec('DROP TABLE IF EXISTS vec_embeddings')
+      rawSqlite.prepare('DELETE FROM embedding_meta').run()
+    }
+  } catch (e) {
+    scoped('vec').warn('model-change check failed', e)
+  }
+
   rawSqlite.exec(
     `CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[${EMBEDDING_DIM}])`
   )

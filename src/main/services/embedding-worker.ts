@@ -14,15 +14,15 @@
  */
 import path from 'path'
 
-const EMBEDDING_MODEL = process.env.EMBED_MODEL || 'Xenova/multilingual-e5-small'
-const EMBEDDING_DIM = Number(process.env.EMBED_DIM || '384')
+const EMBEDDING_MODEL = process.env.EMBED_MODEL || 'Xenova/bge-m3'
+const EMBEDDING_DIM = Number(process.env.EMBED_DIM || '1024')
 // 한 번의 onnxruntime 추론 배치 상한. 큰 배치는 메모리 할당 abort(SIGTRAP)를 유발하므로
-// 청크가 많은 노트도 작은 서브배치로 쪼개 추론한다.
-const SUB_BATCH = 4
+// 작은 서브배치로 쪼개 추론한다. bge-m3는 e5보다 무거워 2로 보수적으로.
+const SUB_BATCH = 2
 
 type FeatureExtractor = (
   texts: string[],
-  opts: { pooling: 'mean'; normalize: boolean }
+  opts: { pooling: 'mean' | 'cls'; normalize: boolean }
 ) => Promise<{ tolist: () => number[][] }>
 
 let extractorPromise: Promise<FeatureExtractor> | null = null
@@ -55,15 +55,16 @@ const parentPort = (
 parentPort.on('message', async (e: { data: EmbedRequest }) => {
   const msg = e.data
   if (!msg || msg.type !== 'embed') return
-  const { id, texts, kind } = msg
+  // bge-m3는 e5와 달리 query/passage 접두사를 쓰지 않음 → 원문 그대로 인코딩.
+  const { id, texts } = msg
   try {
     const extractor = await getExtractor()
-    const prefixed = texts.map((t) => `${kind}: ${t}`)
     // 서브배치로 쪼개 추론 (피크 메모리 제한 → onnxruntime abort 방지)
     const vectors: number[][] = []
-    for (let i = 0; i < prefixed.length; i += SUB_BATCH) {
-      const slice = prefixed.slice(i, i + SUB_BATCH)
-      const output = await extractor(slice, { pooling: 'mean', normalize: true })
+    for (let i = 0; i < texts.length; i += SUB_BATCH) {
+      const slice = texts.slice(i, i + SUB_BATCH)
+      // bge-m3 dense: CLS 풀링 + 정규화
+      const output = await extractor(slice, { pooling: 'cls', normalize: true })
       for (const v of output.tolist()) {
         if (v.length !== EMBEDDING_DIM) {
           throw new Error(`embedding dim mismatch: expected ${EMBEDDING_DIM}, got ${v.length}`)
