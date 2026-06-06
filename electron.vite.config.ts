@@ -12,12 +12,21 @@ export default defineConfig({
   main: {
     build: {
       rollupOptions: {
+        // 임베딩 추론은 별도 utilityProcess(embedding-worker)에서 실행 → 메인 번들과 분리 빌드.
+        input: {
+          index: resolve('src/main/index.ts'),
+          'embedding-worker': resolve('src/main/services/embedding-worker.ts')
+        },
         // native binary (@napi-rs/canvas) 와 그 wrapper(unpdf) 는 vite 가 chunk 로 묶지 않게
         // external 처리해 런타임에 node_modules 에서 직접 로드시킨다.
         // 묶으면 binary 파일/worker fallback resolve 가 깨진다.
         // @xenova/transformers + onnxruntime-node 도 동일 — 네이티브 바이너리/모델 파일
         // 동적 로드가 번들링되면 깨지므로 external 처리.
-        external: ['@napi-rs/canvas', 'unpdf', '@xenova/transformers']
+        external: ['@napi-rs/canvas', 'unpdf', '@xenova/transformers'],
+        output: {
+          // 워커 엔트리가 [name].js 로 떨어지도록 (utilityProcess.fork 경로 안정화)
+          entryFileNames: '[name].js'
+        }
       }
     }
   },
