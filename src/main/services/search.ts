@@ -9,6 +9,7 @@ import { noteService } from './note'
 import { csvFileService } from './csv-file'
 import { canvasService } from './canvas'
 import { todoService } from './todo'
+import { entityLinkService } from './entity-link'
 import { embed } from './embedding-model'
 import { scoped } from '../lib/logger'
 import type { EmbeddableEntityType } from '../db/schema/embedding'
@@ -68,6 +69,12 @@ const EXCERPT_PAD = 50
 const CANDIDATE_K = 120
 // RRF 상수 (작을수록 상위 랭크에 가중)
 const RRF_K = 60
+// 그래프 확장: 이웃을 끌어올 seed 수 + 이웃 점수 감쇠 계수
+const GRAPH_SEED_COUNT = 15
+const GRAPH_DECAY = 0.5
+// 최신성 가중치 + 반감기(일)
+const RECENCY_WEIGHT = 0.15
+const RECENCY_HALFLIFE_DAYS = 30
 
 const VALID_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
 
@@ -300,9 +307,14 @@ async function vectorCandidates(
   return out
 }
 
-/** Reciprocal Rank Fusion — 여러 랭크 리스트를 단일 점수로 융합 */
-function rrfFuse(lists: Ref[][]): Ref[] {
-  const scores = new Map<string, { ref: Ref; score: number }>()
+interface Scored {
+  ref: Ref
+  score: number
+}
+
+/** Reciprocal Rank Fusion — 여러 랭크 리스트를 단일 점수로 융합 (점수 보존, desc 정렬) */
+function rrfFuse(lists: Ref[][]): Scored[] {
+  const scores = new Map<string, Scored>()
   for (const list of lists) {
     list.forEach((ref, rank) => {
       const key = `${ref.type}:${ref.id}`
@@ -311,7 +323,68 @@ function rrfFuse(lists: Ref[][]): Ref[] {
       scores.set(key, entry)
     })
   }
-  return [...scores.values()].sort((a, b) => b.score - a.score).map((e) => e.ref)
+  return [...scores.values()].sort((a, b) => b.score - a.score)
+}
+
+/**
+ * 그래프 확장 — 상위 seed 엔티티의 entity_links 이웃(1홉)을 후보에 추가.
+ * 이웃 점수 = seed 점수 * GRAPH_DECAY. 요청 타입에 해당하는 이웃만 포함.
+ */
+function graphExpand(scored: Scored[], entityTypes: Set<EmbeddableEntityType>): Scored[] {
+  const seeds = scored.slice(0, GRAPH_SEED_COUNT)
+  const byType = new Map<EmbeddableEntityType, { id: string; score: number }[]>()
+  for (const s of seeds) {
+    const et = SEARCH_TO_ENTITY[s.ref.type]
+    const arr = byType.get(et) ?? []
+    arr.push({ id: s.ref.id, score: s.score })
+    byType.set(et, arr)
+  }
+
+  const added = new Map<string, Scored>()
+  for (const [et, items] of byType.entries()) {
+    let linkedMap: Map<string, { entityType: EmbeddableEntityType; entityId: string }[]>
+    try {
+      linkedMap = entityLinkService.getLinkedBatch(
+        et,
+        items.map((i) => i.id)
+      ) as Map<string, { entityType: EmbeddableEntityType; entityId: string }[]>
+    } catch (e) {
+      log.warn('graph expand failed', e)
+      continue
+    }
+    for (const item of items) {
+      const neighbors = linkedMap.get(item.id) ?? []
+      for (const n of neighbors) {
+        if (!entityTypes.has(n.entityType)) continue
+        const st = ENTITY_TO_SEARCH[n.entityType]
+        if (!st) continue
+        const key = `${st}:${n.entityId}`
+        const gScore = item.score * GRAPH_DECAY
+        const ex = added.get(key)
+        if (!ex || ex.score < gScore)
+          added.set(key, { ref: { type: st, id: n.entityId }, score: gScore })
+      }
+    }
+  }
+  return [...added.values()]
+}
+
+/** RRF 결과 + 그래프 이웃을 합산 점수로 병합 */
+function mergeScored(base: Scored[], extra: Scored[]): Scored[] {
+  const map = new Map<string, Scored>()
+  for (const s of [...base, ...extra]) {
+    const key = `${s.ref.type}:${s.ref.id}`
+    const ex = map.get(key)
+    if (ex) ex.score += s.score
+    else map.set(key, { ref: s.ref, score: s.score })
+  }
+  return [...map.values()]
+}
+
+/** 최신성 가중 — 최근 수정일수록 소폭 부스트 (의미 관련성을 뒤집지 않는 수준) */
+function recencyFactor(updatedAt: Date): number {
+  const ageDays = (Date.now() - updatedAt.getTime()) / 86_400_000
+  return 1 + RECENCY_WEIGHT * Math.exp(-Math.max(0, ageDays) / RECENCY_HALFLIFE_DAYS)
 }
 
 export const searchService = {
@@ -376,11 +449,15 @@ async function hybridSearch(
     lists.push(await vectorCandidates(trimmed, entityTypes))
   }
 
-  const fused = rrfFuse(lists)
+  let scored = rrfFuse(lists)
+  // 그래프 확장은 hybrid 모드에서만 (semantic/keyword는 순수 유지)
+  if (mode === 'hybrid') {
+    scored = mergeScored(scored, graphExpand(scored, entityTypes))
+  }
 
   // 타입별 메타 일괄 조회 (활성 엔티티만 → 삭제/휴지통 자동 제외)
   const idsByType = new Map<SearchType, string[]>()
-  for (const ref of fused) {
+  for (const { ref } of scored) {
     const arr = idsByType.get(ref.type) ?? []
     arr.push(ref.id)
     idsByType.set(ref.type, arr)
@@ -394,8 +471,8 @@ async function hybridSearch(
 
   const perTypeCounts: Record<SearchType, number> = { note: 0, table: 0, canvas: 0, todo: 0 }
   const lowerQ = trimmed.toLowerCase()
-  const hits: SearchHit[] = []
-  for (const ref of fused) {
+  const ranked: { hit: SearchHit; finalScore: number }[] = []
+  for (const { ref, score } of scored) {
     const meta = metaByType.get(ref.type)?.get(ref.id)
     if (!meta) continue // 삭제됐거나 워크스페이스 불일치 → 제외
     perTypeCounts[ref.type]++
@@ -423,8 +500,12 @@ async function hybridSearch(
     if (highlight) {
       hit.excerpt = buildExcerpt(meta.preview, trimmed) ?? buildExcerpt(meta.title, trimmed)
     }
-    hits.push(hit)
+    // 최종 점수 = (RRF+그래프) 점수 × 최신성 가중
+    ranked.push({ hit, finalScore: score * recencyFactor(meta.updatedAt) })
   }
+
+  ranked.sort((a, b) => b.finalScore - a.finalScore)
+  const hits = ranked.map((r) => r.hit)
 
   const total = hits.length
   const sliced = hits.slice(offset, offset + limit)
