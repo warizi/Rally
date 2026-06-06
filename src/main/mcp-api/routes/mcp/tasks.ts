@@ -266,11 +266,19 @@ function readSchedules(wsId: string, query: URLSearchParams): unknown {
   }))
 }
 
-function readRecurringRules(wsId: string, _query: URLSearchParams, activeOnly: boolean): unknown {
+function readRecurringRules(wsId: string, query: URLSearchParams, activeOnly: boolean): unknown {
   let rules = recurringRuleService.findByWorkspace(wsId)
   if (activeOnly) {
     const now = new Date()
     rules = rules.filter((r) => r.endDate === null || r.endDate >= now)
+  }
+  const search = (query.get('search') ?? '').trim().toLowerCase()
+  if (search) {
+    rules = rules.filter(
+      (r) =>
+        r.title.toLowerCase().includes(search) ||
+        (r.description ?? '').toLowerCase().includes(search)
+    )
   }
   return rules.map(toRuleSummary)
 }
@@ -333,11 +341,30 @@ function readReminders(wsId: string, query: URLSearchParams): unknown {
     }
     items = reminderService.findByEntity(entityType, entityId)
   } else {
+    // reminder 는 자체 검색 필드가 없어 부모 엔티티(todo/schedule) 매칭으로 search 적용.
+    const search = (query.get('search') ?? '').trim().toLowerCase()
     const todos = todoRepository.findByWorkspaceWithFilters(wsId, { filter: 'all' })
     const schedules = scheduleRepository.findAllByWorkspaceId(wsId)
+    const todoMatch = (t: { title: string; description: string | null }): boolean =>
+      !search ||
+      t.title.toLowerCase().includes(search) ||
+      (t.description ?? '').toLowerCase().includes(search)
+    const schedMatch = (s: {
+      title: string
+      description: string | null
+      location: string | null
+    }): boolean =>
+      !search ||
+      s.title.toLowerCase().includes(search) ||
+      (s.description ?? '').toLowerCase().includes(search) ||
+      (s.location ?? '').toLowerCase().includes(search)
     const collected: ReturnType<typeof reminderService.findByEntity> = []
-    for (const t of todos) collected.push(...reminderService.findByEntity('todo', t.id))
-    for (const s of schedules) collected.push(...reminderService.findByEntity('schedule', s.id))
+    for (const t of todos) {
+      if (todoMatch(t)) collected.push(...reminderService.findByEntity('todo', t.id))
+    }
+    for (const s of schedules) {
+      if (schedMatch(s)) collected.push(...reminderService.findByEntity('schedule', s.id))
+    }
     items = collected
   }
 
