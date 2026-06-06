@@ -9,8 +9,21 @@ export interface EntityOption {
   title: string
 }
 
+export interface LinkSearchResult {
+  /** 일반/벡터 그룹을 나눠 보여줄지 여부 (검색어 있음 + 벡터 지원 도메인) */
+  grouped: boolean
+  /** 일반 검색 — 제목 키워드 매칭 */
+  keyword: EntityOption[]
+  /** 벡터 검색 — 의미 유사 (키워드 결과에 없는 것만) */
+  semantic: EntityOption[]
+  /** 벡터 검색 진행 중 */
+  semanticLoading: boolean
+  /** 키보드 내비게이션용 평면 목록 (keyword 다음 semantic 순) */
+  flat: EntityOption[]
+}
+
 // 벡터/FTS 검색 지원 도메인만 매핑 (table === csv). 나머지(schedule/pdf/image)는
-// 임베딩 대상이 아니라 클라이언트 제목 필터로 폴백.
+// 임베딩 대상이 아니라 일반(제목) 검색만.
 const TO_SEARCH_TYPE: Partial<Record<LinkableEntityType, SearchType>> = {
   note: 'note',
   csv: 'table',
@@ -19,51 +32,60 @@ const TO_SEARCH_TYPE: Partial<Record<LinkableEntityType, SearchType>> = {
 }
 
 /**
- * 링크 팝업의 도메인별 검색.
- * - 지원 도메인 + 입력 안정화(debounce 완료) 시: 하이브리드(벡터+FTS) 랭킹 결과를
- *   해당 도메인 옵션 집합으로 제한해 반환 (의미 검색 포함).
- * - 그 외(미지원 도메인 / 타이핑 중 / 결과 대기): 기존 클라이언트 제목 substring 필터.
+ * 링크 팝업의 도메인별 검색을 "일반(제목 키워드)" + "벡터(의미)" 두 그룹으로 분리해 반환.
+ * - 일반: 제목 substring 매칭 (즉시).
+ * - 벡터: 의미 검색(mode='semantic') 결과 중 일반 결과에 없는 것만, 해당 도메인 옵션집합으로 제한.
+ * - 미지원 도메인/검색어 없음: 일반만 (grouped=false).
  */
 export function useLinkSearch(
   workspaceId: string,
   activeTab: LinkableEntityType,
   query: string,
   optionsByType: Record<LinkableEntityType, EntityOption[]>
-): EntityOption[] {
+): LinkSearchResult {
   const trimmed = query.trim()
   const debounced = useDebouncedValue(trimmed, 200)
   const searchType = TO_SEARCH_TYPE[activeTab]
-  const stable = debounced === trimmed
-  const { data: hits } = useEntitySearch(workspaceId, debounced, searchType)
+  const { data: hits, isFetching } = useEntitySearch(workspaceId, debounced, searchType, 'semantic')
 
   return useMemo(() => {
     const items = optionsByType[activeTab] ?? []
-    if (!trimmed) return items
+
+    // 검색어 없음 → 전체 목록 (그룹 없음)
+    if (!trimmed) {
+      return { grouped: false, keyword: items, semantic: [], semanticLoading: false, flat: items }
+    }
 
     const lower = trimmed.toLowerCase()
-    const clientMatches = items.filter((i) => i.title.toLowerCase().includes(lower))
+    const keyword = items.filter((i) => i.title.toLowerCase().includes(lower))
 
-    // 하이브리드 결과를 쓸 수 없는 경우 → 클라이언트 제목 필터
-    if (!searchType || !stable || !hits) return clientMatches
+    // 벡터 미지원 도메인 → 일반 검색만
+    if (!searchType) {
+      return { grouped: false, keyword, semantic: [], semanticLoading: false, flat: keyword }
+    }
 
-    // 하이브리드 랭킹 순서로 정렬하되, 현재 도메인 옵션(자기 제외/top-level todo 등 반영)에
-    // 존재하는 것만. 이후 제목 매칭 중 누락분을 뒤에 덧붙여 안전망 확보.
+    // 벡터(의미) 결과 — 일반 결과에 이미 있는 건 제외, 도메인 옵션집합으로 제한
+    const keywordIds = new Set(keyword.map((i) => i.id))
     const byId = new Map(items.map((i) => [i.id, i]))
-    const seen = new Set<string>()
-    const ranked: EntityOption[] = []
-    for (const h of hits) {
-      const opt = byId.get(h.id)
-      if (opt && !seen.has(opt.id)) {
-        seen.add(opt.id)
-        ranked.push(opt)
+    const semantic: EntityOption[] = []
+    if (hits) {
+      const seen = new Set<string>()
+      for (const h of hits) {
+        if (keywordIds.has(h.id) || seen.has(h.id)) continue
+        const opt = byId.get(h.id)
+        if (opt) {
+          seen.add(h.id)
+          semantic.push(opt)
+        }
       }
     }
-    for (const c of clientMatches) {
-      if (!seen.has(c.id)) {
-        seen.add(c.id)
-        ranked.push(c)
-      }
+
+    return {
+      grouped: true,
+      keyword,
+      semantic,
+      semanticLoading: isFetching,
+      flat: [...keyword, ...semantic]
     }
-    return ranked
-  }, [optionsByType, activeTab, trimmed, searchType, stable, hits])
+  }, [optionsByType, activeTab, trimmed, searchType, hits, isFetching])
 }

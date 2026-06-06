@@ -252,15 +252,18 @@ describe('LinkEntityPopover', () => {
     expect(screen.getAllByText('B').length).toBeGreaterThan(0)
   })
 
-  it('filtered 비어있음 → "항목이 없습니다" 노출', () => {
+  it('검색어 매칭 없음 → 일반/벡터 그룹 빈 상태 노출 (todo=벡터 지원 도메인)', () => {
     mocks.todos = [{ id: 't1', title: 'Apple', parentId: null }]
     render(
       <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
         <button>trigger</button>
       </LinkEntityPopover>
     )
+    // entityType='note' → 첫 active='todo'(벡터 지원). 검색어 입력 시 일반/벡터 그룹으로 분리.
     fireEvent.change(screen.getByPlaceholderText(/검색/), { target: { value: 'zzz' } })
-    expect(screen.getAllByText('항목이 없습니다').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('일반 검색').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('벡터 검색').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('일치하는 제목 없음').length).toBeGreaterThan(0)
   })
 
   it('자기 자신 (entityType + entityId 매칭) 제외 — entityType ≠ activeTab type 이라도 다른 탭에선 제외', () => {
