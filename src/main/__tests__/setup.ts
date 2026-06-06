@@ -23,6 +23,7 @@ vi.mock('../db', () => ({
 // 정리 중에는 FK를 일시적으로 끄므로 순서 자체로 인한 위반은 발생하지 않지만,
 // 명시적 등록을 통해 "이 테이블도 cleanup 대상"이라는 사실을 코드로 남긴다.
 const TABLES = [
+  'embeddingMeta',
   'itemTags',
   'entityLinks',
   'reminders',
