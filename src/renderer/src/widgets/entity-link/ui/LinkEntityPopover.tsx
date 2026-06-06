@@ -14,6 +14,7 @@ import { useCanvasesByWorkspace } from '@entities/canvas'
 import { useLinkedEntities, useLinkEntity, useUnlinkEntity } from '@entities/entity-link'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
+import { useLinkSearch } from '../model/use-link-search'
 
 interface Props {
   entityType: LinkableEntityType
@@ -95,12 +96,9 @@ export function LinkEntityPopover({
     }
   }, [todos, schedules, notes, pdfs, csvs, images, canvasList, entityType, entityId])
 
-  const filtered = useMemo(() => {
-    const items = optionsByType[activeTab] ?? []
-    const q = search.trim().toLowerCase()
-    if (!q) return items
-    return items.filter((item) => item.title.toLowerCase().includes(q))
-  }, [optionsByType, activeTab, search])
+  // 일반(제목) + 벡터(의미) 두 그룹으로 분리. flat 은 키보드 내비게이션용 평면 목록.
+  const searchResult = useLinkSearch(workspaceId, activeTab, search, optionsByType)
+  const flat = searchResult.flat
 
   const handleToggleLink = useCallback(
     (target: EntityOption): void => {
@@ -135,16 +133,16 @@ export function LinkEntityPopover({
   const listWrapperRef = useRef<HTMLDivElement>(null)
   const listRef = useRef<HTMLDivElement>(null)
 
-  // Reset focus when filtered list or tab changes
+  // Reset focus when flat list or tab changes
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setFocusIndex(-1)
-  }, [filtered.length, activeTab])
+  }, [flat.length, activeTab])
 
-  // Scroll focused item into view
+  // Scroll focused item into view (그룹 헤더가 섞이므로 data-idx 로 조회)
   useEffect(() => {
     if (focusIndex < 0 || !listRef.current) return
-    const el = listRef.current.children[focusIndex] as HTMLElement | undefined
+    const el = listRef.current.querySelector(`[data-idx="${focusIndex}"]`) as HTMLElement | null
     el?.scrollIntoView({ block: 'nearest' })
   }, [focusIndex])
 
@@ -164,13 +162,13 @@ export function LinkEntityPopover({
       // 상하 = list 모드 전환
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault()
-        if (filtered.length === 0) return
-        const initialIdx = e.key === 'ArrowDown' ? 0 : filtered.length - 1
+        if (flat.length === 0) return
+        const initialIdx = e.key === 'ArrowDown' ? 0 : flat.length - 1
         focusListMode(initialIdx)
       }
       // Tab / Enter / Escape / ArrowLeft / ArrowRight: input 기본 동작 유지
     },
-    [filtered.length]
+    [flat.length]
   )
 
   const handleListKeyDown = useCallback(
@@ -205,11 +203,11 @@ export function LinkEntityPopover({
           focusInputMode()
           return
         }
-        if (filtered.length === 0) return
-        setFocusIndex(focusIndex < filtered.length - 1 ? focusIndex + 1 : 0)
+        if (flat.length === 0) return
+        setFocusIndex(focusIndex < flat.length - 1 ? focusIndex + 1 : 0)
         return
       }
-      if (filtered.length === 0) return
+      if (flat.length === 0) return
       if (e.key === 'ArrowUp') {
         e.preventDefault()
         if (focusIndex <= 0) {
@@ -222,14 +220,43 @@ export function LinkEntityPopover({
       }
       if (e.key === 'Enter') {
         e.preventDefault()
-        if (focusIndex >= 0 && focusIndex < filtered.length) {
-          handleToggleLink(filtered[focusIndex])
+        if (focusIndex >= 0 && focusIndex < flat.length) {
+          handleToggleLink(flat[focusIndex])
         }
         return
       }
     },
-    [filtered, focusIndex, handleToggleLink, availableTabs, activeTab]
+    [flat, focusIndex, handleToggleLink, availableTabs, activeTab]
   )
+
+  // flat 인덱스(idx)로 포커스/키보드 내비게이션과 동기화. data-idx 로 스크롤 타겟 식별.
+  const renderItem = (item: EntityOption, idx: number): React.JSX.Element => {
+    const isLinked = linkedSet.has(`${item.type}:${item.id}`)
+    const isFocused = focusIndex === idx
+    return (
+      <button
+        key={`${item.type}:${item.id}`}
+        type="button"
+        data-idx={idx}
+        onClick={() => handleToggleLink(item)}
+        onMouseEnter={() => setFocusIndex(idx)}
+        className={`
+          w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
+          ${isFocused ? (isLinked ? 'bg-destructive/10' : 'bg-accent') : ''}
+          ${!isFocused && isLinked ? 'hover:bg-destructive/10' : ''}
+          ${!isFocused && !isLinked ? 'hover:bg-accent' : ''}
+          cursor-pointer
+        `}
+      >
+        {isLinked && <Check className="size-3 text-primary shrink-0" />}
+        <span className={`truncate ${isLinked ? 'text-muted-foreground' : ''}`}>{item.title}</span>
+      </button>
+    )
+  }
+
+  const groupHeaderClass =
+    'px-2 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground'
+  const groupEmptyClass = 'text-xs text-muted-foreground text-center py-3'
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -304,35 +331,33 @@ export function LinkEntityPopover({
               >
                 <ScrollArea className="h-[200px]">
                   <div ref={tab === activeTab ? listRef : undefined}>
-                    {filtered.length === 0 ? (
-                      <div className="text-xs text-muted-foreground text-center py-4">
-                        항목이 없습니다
-                      </div>
+                    {!searchResult.grouped ? (
+                      flat.length === 0 ? (
+                        <div className="text-xs text-muted-foreground text-center py-4">
+                          항목이 없습니다
+                        </div>
+                      ) : (
+                        flat.map((item, i) => renderItem(item, i))
+                      )
                     ) : (
-                      filtered.map((item, i) => {
-                        const isLinked = linkedSet.has(`${item.type}:${item.id}`)
-                        const isFocused = focusIndex === i
-                        return (
-                          <button
-                            key={item.id}
-                            type="button"
-                            onClick={() => handleToggleLink(item)}
-                            onMouseEnter={() => setFocusIndex(i)}
-                            className={`
-                            w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
-                            ${isFocused ? (isLinked ? 'bg-destructive/10' : 'bg-accent') : ''}
-                            ${!isFocused && isLinked ? 'hover:bg-destructive/10' : ''}
-                            ${!isFocused && !isLinked ? 'hover:bg-accent' : ''}
-                            cursor-pointer
-                          `}
-                          >
-                            {isLinked && <Check className="size-3 text-primary shrink-0" />}
-                            <span className={`truncate ${isLinked ? 'text-muted-foreground' : ''}`}>
-                              {item.title}
-                            </span>
-                          </button>
-                        )
-                      })
+                      <>
+                        <div className={groupHeaderClass}>일반 검색</div>
+                        {searchResult.keyword.length === 0 ? (
+                          <div className={groupEmptyClass}>일치하는 제목 없음</div>
+                        ) : (
+                          searchResult.keyword.map((item, i) => renderItem(item, i))
+                        )}
+                        <div className={groupHeaderClass}>벡터 검색</div>
+                        {searchResult.semanticLoading && searchResult.semantic.length === 0 ? (
+                          <div className={groupEmptyClass}>검색 중…</div>
+                        ) : searchResult.semantic.length === 0 ? (
+                          <div className={groupEmptyClass}>관련 항목 없음</div>
+                        ) : (
+                          searchResult.semantic.map((item, j) =>
+                            renderItem(item, searchResult.keyword.length + j)
+                          )
+                        )}
+                      </>
                     )}
                   </div>
                 </ScrollArea>

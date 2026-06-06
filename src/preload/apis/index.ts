@@ -30,6 +30,8 @@ import { mcpClientApi } from './mcp-client'
 import { terminalApi } from './terminal'
 import { noteStyleTemplateApi } from './note-style-template'
 import { skillApi } from './skill'
+import { searchApi } from './search'
+import { embeddingApi } from './embedding'
 
 export { shellApi } from './shell'
 
@@ -65,5 +67,7 @@ export const api = {
   mcpClient: mcpClientApi,
   terminal: terminalApi,
   noteStyleTemplate: noteStyleTemplateApi,
-  skill: skillApi
+  skill: skillApi,
+  search: searchApi,
+  embedding: embeddingApi
 }

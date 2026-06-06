@@ -23,6 +23,8 @@ import { recurringRuleService } from '../../../services/recurring-rule'
 import { recurringCompletionService } from '../../../services/recurring-completion'
 import { scheduleRepository } from '../../../repositories/schedule'
 import { historyService } from '../../../services/history'
+import { searchService } from '../../../services/search'
+import { vecEnabled } from '../../../db'
 import type { LinkableEntityType } from '../../../db/schema/entity-link'
 import { resolveActiveWorkspace, assertValidId } from './helpers'
 
@@ -264,11 +266,19 @@ function readSchedules(wsId: string, query: URLSearchParams): unknown {
   }))
 }
 
-function readRecurringRules(wsId: string, _query: URLSearchParams, activeOnly: boolean): unknown {
+function readRecurringRules(wsId: string, query: URLSearchParams, activeOnly: boolean): unknown {
   let rules = recurringRuleService.findByWorkspace(wsId)
   if (activeOnly) {
     const now = new Date()
     rules = rules.filter((r) => r.endDate === null || r.endDate >= now)
+  }
+  const search = (query.get('search') ?? '').trim().toLowerCase()
+  if (search) {
+    rules = rules.filter(
+      (r) =>
+        r.title.toLowerCase().includes(search) ||
+        (r.description ?? '').toLowerCase().includes(search)
+    )
   }
   return rules.map(toRuleSummary)
 }
@@ -331,11 +341,30 @@ function readReminders(wsId: string, query: URLSearchParams): unknown {
     }
     items = reminderService.findByEntity(entityType, entityId)
   } else {
+    // reminder 는 자체 검색 필드가 없어 부모 엔티티(todo/schedule) 매칭으로 search 적용.
+    const search = (query.get('search') ?? '').trim().toLowerCase()
     const todos = todoRepository.findByWorkspaceWithFilters(wsId, { filter: 'all' })
     const schedules = scheduleRepository.findAllByWorkspaceId(wsId)
+    const todoMatch = (t: { title: string; description: string | null }): boolean =>
+      !search ||
+      t.title.toLowerCase().includes(search) ||
+      (t.description ?? '').toLowerCase().includes(search)
+    const schedMatch = (s: {
+      title: string
+      description: string | null
+      location: string | null
+    }): boolean =>
+      !search ||
+      s.title.toLowerCase().includes(search) ||
+      (s.description ?? '').toLowerCase().includes(search) ||
+      (s.location ?? '').toLowerCase().includes(search)
     const collected: ReturnType<typeof reminderService.findByEntity> = []
-    for (const t of todos) collected.push(...reminderService.findByEntity('todo', t.id))
-    for (const s of schedules) collected.push(...reminderService.findByEntity('schedule', s.id))
+    for (const t of todos) {
+      if (todoMatch(t)) collected.push(...reminderService.findByEntity('todo', t.id))
+    }
+    for (const s of schedules) {
+      if (schedMatch(s)) collected.push(...reminderService.findByEntity('schedule', s.id))
+    }
     items = collected
   }
 
@@ -519,7 +548,7 @@ function handleCompletedMode(
 void reminderRepository
 
 export function registerMcpTasksRoutes(router: Router): void {
-  router.addRoute('GET', '/api/mcp/tasks', (_p, _b, query) => {
+  router.addRoute('GET', '/api/mcp/tasks', async (_p, _b, query) => {
     const wsId = resolveActiveWorkspace()
     const types = parseTypesParam(query) ?? Array.from(ALL_TASK_TYPES)
     const mode = parseModeParam(query)
@@ -532,6 +561,40 @@ export function registerMcpTasksRoutes(router: Router): void {
       return handleTodayMode(wsId, types, query, resolveLinks)
     }
     // mode === 'active'
-    return handleActiveMode(wsId, types, query, resolveLinks)
+    const response = handleActiveMode(wsId, types, query, resolveLinks)
+
+    // similar: todo 검색 시 제목엔 없지만 의미상 유사한 할일 top 3 보강 (토큰 절약)
+    // 단, todo 한정 필터(parentId/priority/linkedTo/dueWithin)가 걸리면 시맨틱 검색이 그
+    // 필터를 반영 못 해 일반 검색과 불일치 → 그런 경우엔 similar 생략 (일관성 우선).
+    const search = (query.get('search') ?? '').trim()
+    const hasTodoFilter =
+      query.get('parentId') !== null ||
+      query.get('priority') !== null ||
+      query.getAll('priority[]').length > 0 ||
+      query.get('linkedTo[type]') !== null ||
+      query.get('dueWithin') !== null
+    if (search && vecEnabled && types.includes('todo') && !hasTodoFilter) {
+      const present = new Set<string>()
+      if (Array.isArray(response.todos)) {
+        for (const t of response.todos) present.add((t as { id: string }).id)
+      }
+      try {
+        const res = await searchService.search(wsId, search, {
+          types: ['todo'],
+          mode: 'semantic',
+          limit: 12
+        })
+        const similar: { id: string; title: string }[] = []
+        for (const h of res.results) {
+          if (present.has(h.id)) continue
+          similar.push({ id: h.id, title: h.title })
+          if (similar.length >= 3) break
+        }
+        if (similar.length > 0) response.similar = similar
+      } catch {
+        // 유사 항목 계산 실패는 본응답에 영향 주지 않음
+      }
+    }
+    return response
   })
 }

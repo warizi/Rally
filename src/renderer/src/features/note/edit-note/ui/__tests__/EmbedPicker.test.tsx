@@ -66,6 +66,10 @@ vi.mock('@entities/image-file', () => ({
 vi.mock('@entities/canvas', () => ({
   useCanvasesByWorkspace: () => ({ data: mocks.canvases })
 }))
+// 하이브리드 검색 훅 — 결과 없음으로 두면 일반(클라이언트 제목) 검색만 동작
+vi.mock('@entities/search', () => ({
+  useEntitySearchMulti: () => ({ data: undefined, isFetching: false })
+}))
 
 vi.mock('@shared/ui/icons/PdfIcon', () => ({
   PdfIcon: () => null
@@ -190,12 +194,15 @@ describe('EmbedPicker', () => {
     expect(screen.getByText('Click Me')).toBeInTheDocument()
   })
 
-  it('query 매칭 안 됨 → "결과 없음" 노출', () => {
+  it('query 매칭 안 됨 → 일반/벡터 그룹 빈 상태 노출', () => {
     mocks.open = true
     mocks.notes = [{ id: 'n1', title: 'Apple' }]
     render(<EmbedPicker workspaceId="ws" editorId="ed-1" />)
+    // 검색어 입력 시 일반(제목)/벡터(의미) 그룹으로 분리 — 매칭 없으면 각 그룹 빈 상태
     fireEvent.change(screen.getByRole('textbox'), { target: { value: 'zzzz' } })
-    expect(screen.getByText('결과 없음')).toBeInTheDocument()
+    expect(screen.getByText('일반 검색')).toBeInTheDocument()
+    expect(screen.getByText('벡터 검색')).toBeInTheDocument()
+    expect(screen.getByText('일치하는 제목 없음')).toBeInTheDocument()
   })
 
   it('ArrowUp 키 → focusIndex -1 막힘 (0 유지, smoke)', () => {

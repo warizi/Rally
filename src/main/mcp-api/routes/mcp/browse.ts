@@ -26,6 +26,8 @@ import { imageFileService } from '../../../services/image-file'
 import { tagService } from '../../../services/tag'
 import { itemTagService } from '../../../services/item-tag'
 import { entityLinkService } from '../../../services/entity-link'
+import { searchService, type SearchType } from '../../../services/search'
+import { vecEnabled } from '../../../db'
 import { folderRepository } from '../../../repositories/folder'
 import { resolveActiveWorkspace, assertValidId } from './helpers'
 import type {
@@ -59,6 +61,18 @@ const VALID_LINKED_TYPES = new Set<LinkableEntityType>([
 ])
 
 const LINKABLE_BROWSE_TYPES = new Set<BrowseType>(['note', 'csv', 'canvas', 'pdf', 'image'])
+
+// 벡터(의미) 검색 지원 도메인 ↔ SearchType (similar 계산용). table === csv.
+const BROWSE_TO_SEARCH: Partial<Record<BrowseType, SearchType>> = {
+  note: 'note',
+  csv: 'table',
+  canvas: 'canvas'
+}
+const SEARCH_TO_BROWSE: Partial<Record<SearchType, BrowseType>> = {
+  note: 'note',
+  table: 'csv',
+  canvas: 'canvas'
+}
 
 function parseIntParam(raw: string | null, label: string): number | undefined {
   if (raw === null || raw === '') return undefined
@@ -299,7 +313,7 @@ function toFileSummary(row: FileBrowseRow): {
 }
 
 export function registerMcpBrowseRoutes(router: Router): void {
-  router.addRoute('GET', '/api/mcp/browse', (_p, _b, query) => {
+  router.addRoute('GET', '/api/mcp/browse', async (_p, _b, query) => {
     const wsId = resolveActiveWorkspace()
     const ws = workspaceRepository.findById(wsId)
     if (!ws) throw new NotFoundError(`Workspace not found: ${wsId}`)
@@ -452,6 +466,56 @@ export function registerMcpBrowseRoutes(router: Router): void {
       }))
       counts.tags = paged.length
       hasMore.tags = offset + limit < total
+    }
+
+    // ── similar: search 시 의미상 유사한 항목 top 3 (토큰 절약) ──────────
+    // 제목 substring 으로는 안 잡히지만 의미상 관련된 note/csv/canvas 를 보강.
+    // 일반 검색과 동일한 필터(folderId/recursive, tagId, linkedTo, updatedAfter, types)를 적용하고,
+    // 이미 결과에 포함된 항목은 제외. vec 비활성 시 생략(substring 과 중복이라 무의미).
+    if (search && vecEnabled) {
+      const searchTypes = types
+        .map((t) => BROWSE_TO_SEARCH[t])
+        .filter((s): s is SearchType => Boolean(s))
+      if (searchTypes.length > 0) {
+        const present = new Set<string>()
+        for (const key of ['notes', 'tables', 'canvases'] as const) {
+          const arr = response[key]
+          if (Array.isArray(arr)) for (const it of arr) present.add((it as { id: string }).id)
+        }
+        // 폴더 스코프 (note/csv 만 폴더 보유, canvas 는 폴더 무관)
+        const passesFolder = (hitType: SearchType, folderId: string | null): boolean => {
+          if (hitType === 'canvas') return true
+          if (fileScope.folderId === null) return folderId === null
+          if (fileScope.folderIds) return folderId !== null && fileScope.folderIds.has(folderId)
+          return true
+        }
+        try {
+          const res = await searchService.search(wsId, search, {
+            types: searchTypes,
+            mode: 'semantic',
+            limit: 30
+          })
+          const similar: { type: BrowseType; id: string; title: string }[] = []
+          for (const h of res.results) {
+            if (present.has(h.id)) continue
+            const bt = SEARCH_TO_BROWSE[h.type]
+            if (!bt) continue
+            if (!passesFolder(h.type, h.folderId)) continue
+            // tagId / linkedTo restrict (일반 검색과 동일)
+            if (restrictMap) {
+              const allowed = restrictMap.get(bt)
+              if (!allowed || !allowed.has(h.id)) continue
+            }
+            // updatedAfter
+            if (updatedAfter && new Date(h.updatedAt).getTime() < updatedAfter.getTime()) continue
+            similar.push({ type: bt, id: h.id, title: h.title })
+            if (similar.length >= 3) break
+          }
+          if (similar.length > 0) response.similar = similar
+        } catch {
+          // 유사 항목 계산 실패는 browse 본응답에 영향 주지 않음
+        }
+      }
     }
 
     response.meta = {

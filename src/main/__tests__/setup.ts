@@ -13,13 +13,17 @@ export const testDb = drizzle(sqlite, { schema })
 migrate(testDb, { migrationsFolder: './src/main/db/migrations' })
 
 vi.mock('../db', () => ({
-  db: testDb
+  db: testDb,
+  rawSqlite: sqlite,
+  // 테스트에서는 sqlite-vec 미로드 → 임베딩 동기화는 no-op
+  vecEnabled: false
 }))
 
 // 새 테이블 추가 시 반드시 이 배열에 추가. scripts/check-cleanup-completeness.mjs 가 누락을 CI에서 차단.
 // 정리 중에는 FK를 일시적으로 끄므로 순서 자체로 인한 위반은 발생하지 않지만,
 // 명시적 등록을 통해 "이 테이블도 cleanup 대상"이라는 사실을 코드로 남긴다.
 const TABLES = [
+  'embeddingMeta',
   'itemTags',
   'entityLinks',
   'reminders',

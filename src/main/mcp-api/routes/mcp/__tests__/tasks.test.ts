@@ -379,3 +379,88 @@ describe('GET /api/mcp/tasks?mode=completed', () => {
     expect(body.schedules).toEqual([])
   })
 })
+
+describe('GET /api/mcp/tasks — search 필터 (recurring / reminder)', () => {
+  function rule(partial: Partial<RecurringRuleItem>): RecurringRuleItem {
+    return {
+      id: 'r1',
+      workspaceId: WS.id,
+      title: 'rule',
+      description: '',
+      priority: 'medium',
+      recurrenceType: 'daily',
+      daysOfWeek: null,
+      startDate: new Date('2026-01-01T00:00:00Z'),
+      endDate: null,
+      startTime: null,
+      endTime: null,
+      reminderOffsetMs: null,
+      createdAt: new Date('2026-01-01T00:00:00Z'),
+      updatedAt: new Date('2026-01-01T00:00:00Z'),
+      createdBy: 'user',
+      createdById: null,
+      updatedBy: 'user',
+      updatedById: null,
+      ...partial
+    }
+  }
+
+  function reminder(entityId: string): ReturnType<typeof reminderService.findByEntity>[number] {
+    return {
+      id: `rem-${entityId}`,
+      entityType: 'todo',
+      entityId,
+      offsetMs: 600_000,
+      remindAt: new Date('2026-05-01T09:00:00Z'),
+      isFired: false,
+      createdAt: new Date('2026-04-01T00:00:00Z'),
+      updatedAt: new Date('2026-04-01T00:00:00Z')
+    } as unknown as ReturnType<typeof reminderService.findByEntity>[number]
+  }
+
+  it('recurring: search 가 title/description 에 적용된다', async () => {
+    vi.mocked(recurringRuleService.findByWorkspace).mockReturnValue([
+      rule({ id: 'r1', title: 'morning gym' }),
+      rule({ id: 'r2', title: 'weekly sync' })
+    ])
+    const router = setupRouter()
+    const req = makeReq({
+      url: '/api/mcp/tasks?types=recurring&search=gym',
+      headers: { [AUTH_HEADER]: TEST_TOKEN }
+    })
+    const cap = makeRes()
+    await router.handle(req, cap.res)
+
+    expect(cap.getStatusCode()).toBe(200)
+    const body = cap.getJson<{ recurring: { id: string }[] }>()
+    expect(body.recurring).toHaveLength(1)
+    expect(body.recurring[0].id).toBe('r1')
+  })
+
+  it('reminder: search 가 부모 엔티티(todo) 매칭으로 적용된다', async () => {
+    const matchTodo = { ...baseTodo, id: 'tmatchaaaaaa', title: 'morning gym' }
+    const noTodo = { ...baseTodo, id: 'tnoaaaaaaaaaa', title: 'weekly sync' }
+    vi.mocked(todoRepository.findByWorkspaceWithFilters).mockReturnValue([
+      matchTodo,
+      noTodo
+    ] as unknown as ReturnType<typeof todoRepository.findByWorkspaceWithFilters>)
+    vi.mocked(scheduleRepository.findAllByWorkspaceId).mockReturnValue([])
+    vi.mocked(reminderService.findByEntity).mockImplementation((_type, id) =>
+      id === 'tmatchaaaaaa' ? [reminder('tmatchaaaaaa')] : []
+    )
+    const router = setupRouter()
+    const req = makeReq({
+      url: '/api/mcp/tasks?types=reminder&search=gym',
+      headers: { [AUTH_HEADER]: TEST_TOKEN }
+    })
+    const cap = makeRes()
+    await router.handle(req, cap.res)
+
+    expect(cap.getStatusCode()).toBe(200)
+    const body = cap.getJson<{ reminders: { entityId: string }[] }>()
+    expect(body.reminders).toHaveLength(1)
+    expect(body.reminders[0].entityId).toBe('tmatchaaaaaa')
+    // 비매칭 부모는 reminder 조회 자체를 건너뛴다
+    expect(reminderService.findByEntity).not.toHaveBeenCalledWith('todo', 'tnoaaaaaaaaaa')
+  })
+})

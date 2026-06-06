@@ -68,7 +68,10 @@ export function registerMcpContentRoutes(router: Router): void {
     const offset = parseNonNegInt(query.get('offset'), 'offset')
     const limit = parseNonNegInt(query.get('limit'), 'limit')
     const highlight = query.get('highlight') === 'true'
-    return searchService.search(wsId, q, { types, offset, limit, highlight })
+    const rawMode = query.get('mode')
+    const mode =
+      rawMode === 'semantic' || rawMode === 'keyword' || rawMode === 'hybrid' ? rawMode : undefined
+    return searchService.search(wsId, q, { types, offset, limit, highlight, mode })
   })
 
   // ─── GET /api/mcp/content/:id → read_content ──────────────

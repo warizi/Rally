@@ -279,7 +279,12 @@ Filters (apply where relevant):
 - priority[]: high|medium|low (todo)
 - parentId: 'null' for top-level only, or a parent todo id
 - linkedTo: { type, id } (todo)
-- search: substring on title/description/location
+- search: substring filter applied to ALL returned types — todo & schedule (title/description/
+  location), recurring (title/description), and reminders (matched via their parent todo/schedule).
+  In 'active' mode (and only when no
+  parentId/priority/linkedTo/dueWithin filter is set), response also adds 'similar': up to 3
+  semantically-related todos (vector search) not already in results — surfaces meaning-matched
+  todos even when the word isn't in the title.
 - resolveLinks: include linkedItem previews
 - pendingOnly: un-fired reminders
 - activeOnly: recurring rules with endDate=null or future (default true)

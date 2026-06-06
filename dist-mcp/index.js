@@ -35903,7 +35903,10 @@ All filters are AND-combined:
 - limit/offset: per-kind pagination (default 500, max 1000); response.meta.hasMore tells when to page
 
 When types=["tag"], tag list is returned (substring search on name/description).
-Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.`,
+Response groups items by kind: { folders?, notes?, tables?, canvases?, pdfs?, images?, tags? } + meta.
+When 'search' is given, response also includes 'similar': up to 3 semantically-related
+note/csv/canvas items (vector search) NOT already in the substring results \u2014 useful when the
+exact word isn't in the title but the meaning matches (e.g. search "\uB3D9\uBB3C" surfaces a "\uAC15\uC544\uC9C0" note).`,
     schema: {
       folderId: external_exports3.string().optional().describe('Folder id, "null" for root-only, omit for all'),
       recursive: external_exports3.boolean().optional().describe("When folderId is set, include all descendants (default: direct children only)"),
@@ -36106,22 +36109,26 @@ Use ids returned by browse/search.`,
     name: "search",
     description: `Unified search across notes, tables, canvases, and todos.
 - types: subset of ["note", "table", "canvas", "todo"]; defaults to ["note"] (search_notes-compatible)
+- mode: "semantic" (vector/meaning), "keyword" (FTS5/BM25), or "hybrid" (RRF fusion + graph expansion, default).
+  Hybrid recommended for most queries. Semantic finds related notes by meaning even without exact words;
+  keyword is best for exact terms / identifiers. Falls back to substring when the vector index is unavailable.
 - offset/limit: paginate (default limit 50, max 100). Response includes total/hasMore/nextOffset
-- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)
-Title matches rank above content/description matches; ties break by updatedAt desc.`,
+- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)`,
     schema: {
-      query: external_exports3.string().describe("Search query (case-insensitive substring)"),
+      query: external_exports3.string().describe("Search query"),
       types: external_exports3.array(external_exports3.enum(["note", "table", "canvas", "todo"])).optional().describe('Domains to search (default: ["note"])'),
+      mode: external_exports3.enum(["semantic", "keyword", "hybrid"]).optional().describe("Search mode (default: hybrid)"),
       offset: external_exports3.number().int().min(0).optional().describe("Pagination offset (default: 0)"),
       limit: external_exports3.number().int().min(1).max(100).optional().describe("Page size (default: 50, max: 100)"),
       highlight: external_exports3.boolean().optional().describe("Include excerpt around the match (default: false)")
     },
-    handler: ({ query, types, offset, limit, highlight }) => {
+    handler: ({ query, types, mode, offset, limit, highlight }) => {
       const params = new URLSearchParams();
       params.set("q", query);
       if (Array.isArray(types) && types.length > 0) {
         for (const t of types) params.append("types[]", t);
       }
+      if (typeof mode === "string") params.set("mode", mode);
       if (typeof offset === "number") params.set("offset", String(offset));
       if (typeof limit === "number") params.set("limit", String(limit));
       if (highlight) params.set("highlight", "true");
@@ -36585,7 +36592,12 @@ Filters (apply where relevant):
 - priority[]: high|medium|low (todo)
 - parentId: 'null' for top-level only, or a parent todo id
 - linkedTo: { type, id } (todo)
-- search: substring on title/description/location
+- search: substring filter applied to ALL returned types \u2014 todo & schedule (title/description/
+  location), recurring (title/description), and reminders (matched via their parent todo/schedule).
+  In 'active' mode (and only when no
+  parentId/priority/linkedTo/dueWithin filter is set), response also adds 'similar': up to 3
+  semantically-related todos (vector search) not already in results \u2014 surfaces meaning-matched
+  todos even when the word isn't in the title.
 - resolveLinks: include linkedItem previews
 - pendingOnly: un-fired reminders
 - activeOnly: recurring rules with endDate=null or future (default true)

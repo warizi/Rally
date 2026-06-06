@@ -4,16 +4,65 @@ import { existsSync, mkdirSync, renameSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { scoped } from '../lib/logger'
-import { db } from '../db'
+import { db, rawSqlite, vecEnabled } from '../db'
+import { EMBEDDING_DIM, EMBEDDING_MODEL } from '../services/embedding-config'
 import { workspaceService } from '../services/workspace'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 import { seedSystemSkills } from '../services/skill'
+import { embeddingService } from '../services/embedding'
 
 function runMigrations(): void {
   const migrationsFolder = is.dev
     ? join(process.cwd(), 'src/main/db/migrations')
     : join(process.resourcesPath, 'migrations')
   migrate(db, { migrationsFolder })
+}
+
+/**
+ * 검색용 가상 테이블 생성 (vec0 + FTS5). drizzle이 가상 테이블 모듈을 모르므로 런타임 처리.
+ * vecEnabled=false(확장 로드 실패)면 vec0는 건너뛰어 부팅이 깨지지 않는다.
+ * FTS5는 SQLite 내장이라 vec와 무관하게 생성하지만, 인덱스 동기화는 임베딩 훅과 함께 동작한다.
+ */
+function ensureSearchTables(): void {
+  // FTS5 (키워드/BM25). trigram 토크나이저로 한국어 부분 매칭 지원.
+  try {
+    rawSqlite.exec(
+      `CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(
+         text,
+         entity_type UNINDEXED,
+         entity_id UNINDEXED,
+         tokenize='trigram'
+       )`
+    )
+  } catch (e) {
+    scoped('search').warn('FTS5 search_fts creation failed', e)
+  }
+
+  if (!vecEnabled) {
+    scoped('vec').warn('sqlite-vec disabled — skipping vec table creation')
+    return
+  }
+
+  // 모델/차원 변경 감지: 기존 임베딩이 현재 모델과 다르면 vec 테이블(차원 고정)을 폐기하고
+  // embedding_meta 를 비워 백필이 전체 재임베딩하도록 한다. (FTS는 차원 무관이라 유지)
+  try {
+    const row = rawSqlite.prepare('SELECT model FROM embedding_meta LIMIT 1').get() as
+      | { model: string }
+      | undefined
+    if (row && row.model !== EMBEDDING_MODEL) {
+      scoped('vec').info(
+        `embedding model changed (${row.model} → ${EMBEDDING_MODEL}) — vec 인덱스 재생성 + 재임베딩`
+      )
+      rawSqlite.exec('DROP TABLE IF EXISTS vec_embeddings')
+      rawSqlite.prepare('DELETE FROM embedding_meta').run()
+    }
+  } catch (e) {
+    scoped('vec').warn('model-change check failed', e)
+  }
+
+  rawSqlite.exec(
+    `CREATE VIRTUAL TABLE IF NOT EXISTS vec_embeddings USING vec0(embedding float[${EMBEDDING_DIM}])`
+  )
 }
 
 function initializeDatabase(): void {
@@ -90,13 +139,22 @@ function migrateLegacyDefaultWorkspacePath(): void {
 
 /**
  * 앱 시작 시 1회 실행되는 DB/워크스페이스 초기화 시퀀스 (순서 유지).
- * 1) 마이그레이션 → 2) 기본 워크스페이스 보장 → 3) 시스템 skill seed →
- * 4) legacy 기본 경로 이전 → 5) 워크스페이스별 claude 커맨드 보장.
+ * 1) 마이그레이션 → 2) 검색 가상 테이블(vec0+FTS5) 보장 → 3) 기본 워크스페이스 보장 →
+ * 4) 시스템 skill seed → 5) legacy 기본 경로 이전 → 6) 워크스페이스별 claude 커맨드 보장.
+ * 부팅 완료 후 임베딩 백필을 비차단으로 시작 (UI 로드 우선, 재개 가능).
  */
 export function runStartup(): void {
   runMigrations()
+  ensureSearchTables()
   initializeDatabase()
   seedSystemSkills()
   migrateLegacyDefaultWorkspacePath()
   ensureAllWorkspaceCommands()
+
+  // 임베딩 백필: UI 로드를 막지 않도록 지연 후 백그라운드 실행.
+  setTimeout(() => {
+    void embeddingService.backfillAll().catch((e) => {
+      scoped('embedding').warn('backfill failed', e)
+    })
+  }, 5000)
 }

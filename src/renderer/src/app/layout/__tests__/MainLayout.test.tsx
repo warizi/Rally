@@ -82,6 +82,10 @@ vi.mock('@entities/trash', () => ({
   useTrashWatcher: () => mocks.watcherCalls.push('trash')
 }))
 
+vi.mock('@features/embedding-progress', () => ({
+  useEmbeddingProgressWatcher: () => mocks.watcherCalls.push('embedding-progress')
+}))
+
 vi.mock('@widgets/keyboard-control', () => ({
   usePaneNavigation: () => mocks.watcherCalls.push('pane-nav'),
   useTabNavigation: () => mocks.watcherCalls.push('tab-nav'),

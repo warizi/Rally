@@ -27,6 +27,7 @@ import { trashBatches } from './trash-batch'
 import { noteStyleTemplates } from './note-style-template'
 import { customSkills } from './custom-skill'
 import { systemSkills } from './system-skill'
+import { embeddingMeta } from './embedding'
 
 export {
   workspaces,
@@ -57,5 +58,6 @@ export {
   trashBatches,
   noteStyleTemplates,
   customSkills,
-  systemSkills
+  systemSkills,
+  embeddingMeta
 }

@@ -8,6 +8,9 @@ out
 .eslintcache
 *.log*
 
+# 로컬 테스트용 Electron userData (trash/notes/models 등 런타임 데이터 — 추적 안 함)
+.rally-test-userdata/
+
 # typescript incremental build cache (생성 산출물 — 추적 안 함)
 *.tsbuildinfo
 

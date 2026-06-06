@@ -13,6 +13,7 @@ import { useImageFilesByWorkspace } from '@entities/image-file'
 import { useCanvasesByWorkspace } from '@entities/canvas'
 import type { LinkableEntityType } from '@shared/lib/entity-link'
 import { ENTITY_TYPE_LABEL, ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
+import { useLinkSearch } from '../model/use-link-search'
 
 export interface PendingLink {
   type: LinkableEntityType
@@ -79,12 +80,8 @@ export function PendingLinkPicker({
     [todos, schedules, notes, pdfs, csvs, images, canvases]
   )
 
-  const filtered = useMemo(() => {
-    const items = optionsByType[activeTab] ?? []
-    if (!search.trim()) return items
-    const q = search.toLowerCase()
-    return items.filter((item) => item.title.toLowerCase().includes(q))
-  }, [optionsByType, activeTab, search])
+  // 일반(제목) + 벡터(의미) 두 그룹으로 분리
+  const searchResult = useLinkSearch(workspaceId, activeTab, search, optionsByType)
 
   function handleToggle(item: EntityOption): void {
     const key = `${item.type}:${item.id}`
@@ -93,6 +90,28 @@ export function PendingLinkPicker({
     } else {
       onAdd(item)
     }
+  }
+
+  const groupHeaderClass =
+    'px-2 pt-2 pb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground'
+  const groupEmptyClass = 'text-xs text-muted-foreground text-center py-3'
+
+  const renderItem = (item: EntityOption): React.JSX.Element => {
+    const isSelected = selectedSet.has(`${item.type}:${item.id}`)
+    return (
+      <button
+        key={`${item.type}:${item.id}`}
+        type="button"
+        onClick={() => handleToggle(item)}
+        className={`
+          w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
+          ${isSelected ? 'bg-accent' : 'hover:bg-accent cursor-pointer'}
+        `}
+      >
+        {isSelected && <Check className="size-3 text-primary shrink-0" />}
+        <span className="truncate">{item.title}</span>
+      </button>
+    )
   }
 
   return (
@@ -134,31 +153,32 @@ export function PendingLinkPicker({
 
               {availableTabs.map((tab) => (
                 <TabsContent key={tab} value={tab} className="mt-0">
-                  <div className="max-h-48 overflow-y-auto">
-                    {filtered.length === 0 ? (
-                      <div className="text-xs text-muted-foreground text-center py-4">
-                        항목이 없습니다
-                      </div>
+                  <div className="max-h-48 overflow-y-auto space-y-0.5">
+                    {!searchResult.grouped ? (
+                      searchResult.flat.length === 0 ? (
+                        <div className="text-xs text-muted-foreground text-center py-4">
+                          항목이 없습니다
+                        </div>
+                      ) : (
+                        searchResult.flat.map((item) => renderItem(item))
+                      )
                     ) : (
-                      <div className="space-y-0.5">
-                        {filtered.map((item) => {
-                          const isSelected = selectedSet.has(`${item.type}:${item.id}`)
-                          return (
-                            <button
-                              key={item.id}
-                              type="button"
-                              onClick={() => handleToggle(item)}
-                              className={`
-                                w-full flex items-center gap-2 text-xs rounded px-2 py-1.5 text-left
-                                ${isSelected ? 'bg-accent' : 'hover:bg-accent cursor-pointer'}
-                              `}
-                            >
-                              {isSelected && <Check className="size-3 text-primary shrink-0" />}
-                              <span className="truncate">{item.title}</span>
-                            </button>
-                          )
-                        })}
-                      </div>
+                      <>
+                        <div className={groupHeaderClass}>일반 검색</div>
+                        {searchResult.keyword.length === 0 ? (
+                          <div className={groupEmptyClass}>일치하는 제목 없음</div>
+                        ) : (
+                          searchResult.keyword.map((item) => renderItem(item))
+                        )}
+                        <div className={groupHeaderClass}>벡터 검색</div>
+                        {searchResult.semanticLoading && searchResult.semantic.length === 0 ? (
+                          <div className={groupEmptyClass}>검색 중…</div>
+                        ) : searchResult.semantic.length === 0 ? (
+                          <div className={groupEmptyClass}>관련 항목 없음</div>
+                        ) : (
+                          searchResult.semantic.map((item) => renderItem(item))
+                        )}
+                      </>
                     )}
                   </div>
                 </TabsContent>

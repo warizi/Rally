@@ -12,6 +12,7 @@ import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
 import { trashService } from './trash'
+import { embeddingService } from './embedding'
 import { type Actor, USER_ACTOR, toCreatedFields, toUpdatedFields } from './_shared/actor'
 import { toDate } from './_shared/date'
 
@@ -309,6 +310,7 @@ export const csvFileService = {
       ...toCreatedFields(actor)
     })
 
+    embeddingService.enqueue('csv', row.id)
     return toCsvFileNode(row)
   },
 
@@ -375,6 +377,7 @@ export const csvFileService = {
       siblings.map((s) => ({ id: s.id, kind: s.kind }))
     )
 
+    embeddingService.enqueue('csv', newId)
     return toCsvFileNode(csvFileRepository.findById(newId)!)
   },
 
@@ -416,6 +419,7 @@ export const csvFileService = {
       ...toUpdatedFields(actor)
     })!
 
+    embeddingService.enqueue('csv', csvId)
     return toCsvFileNode(updated)
   },
 
@@ -430,6 +434,8 @@ export const csvFileService = {
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
     // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과.
     if (!options.permanent) assertCsvUnlocked(csv)
+
+    embeddingService.remove('csv', csvId)
 
     if (!options.permanent) {
       trashService.softRemove(workspaceId, 'csv', csvId)
@@ -508,6 +514,7 @@ export const csvFileService = {
       updatedAt: new Date(),
       ...toUpdatedFields(actor)
     })
+    embeddingService.enqueue('csv', csvId)
   },
 
   /**
@@ -596,6 +603,7 @@ export const csvFileService = {
       ...toUpdatedFields(actor)
     })!
 
+    embeddingService.enqueue('csv', csvId)
     return toCsvFileNode(updated)
   },
 
