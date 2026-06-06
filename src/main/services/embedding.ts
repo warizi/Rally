@@ -108,7 +108,17 @@ function insertVecRow(rowid: number, vector: number[]): void {
     .run(BigInt(rowid), vecBuffer(vector))
 }
 
-/** 엔티티의 모든 임베딩(vec + meta) 제거. */
+function deleteFtsRows(type: EmbeddableEntityType, id: string): void {
+  rawSqlite.prepare('DELETE FROM search_fts WHERE entity_type = ? AND entity_id = ?').run(type, id)
+}
+
+function insertFtsRow(type: EmbeddableEntityType, id: string, text: string): void {
+  rawSqlite
+    .prepare('INSERT INTO search_fts(text, entity_type, entity_id) VALUES (?, ?, ?)')
+    .run(text, type, id)
+}
+
+/** 엔티티의 모든 임베딩(vec + meta) + FTS 행 제거. */
 function removeEntitySync(type: EmbeddableEntityType, id: string): void {
   const rows = db
     .select({ rowid: embeddingMeta.rowid })
@@ -119,6 +129,7 @@ function removeEntitySync(type: EmbeddableEntityType, id: string): void {
   db.delete(embeddingMeta)
     .where(and(eq(embeddingMeta.entityType, type), eq(embeddingMeta.entityId, id)))
     .run()
+  deleteFtsRows(type, id)
 }
 
 /**
@@ -168,8 +179,15 @@ async function processEntity(type: EmbeddableEntityType, id: string): Promise<vo
         )
       : []
 
+  // FTS는 모델 불필요 — 변경이 있으면 엔티티 전체 텍스트로 항상 재구성.
+  const ftsText = chunks.map((c) => c.text).join('\n')
+
   const now = new Date()
   const tx = rawSqlite.transaction(() => {
+    // FTS 재구성 (엔티티당 1행)
+    deleteFtsRows(type, id)
+    if (ftsText.trim()) insertFtsRow(type, id, ftsText)
+
     // stale 제거
     if (staleRows.length > 0) {
       deleteVecRows(staleRows.map((r) => r.rowid))

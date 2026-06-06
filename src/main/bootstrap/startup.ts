@@ -18,10 +18,25 @@ function runMigrations(): void {
 }
 
 /**
- * sqlite-vec 가상 테이블 생성. drizzle 마이그레이션이 vec0 모듈을 모르므로 런타임에서 처리.
- * vecEnabled=false(확장 로드 실패)면 생성하지 않아 마이그레이션/부팅이 깨지지 않는다.
+ * 검색용 가상 테이블 생성 (vec0 + FTS5). drizzle이 가상 테이블 모듈을 모르므로 런타임 처리.
+ * vecEnabled=false(확장 로드 실패)면 vec0는 건너뛰어 부팅이 깨지지 않는다.
+ * FTS5는 SQLite 내장이라 vec와 무관하게 생성하지만, 인덱스 동기화는 임베딩 훅과 함께 동작한다.
  */
-function ensureVecTable(): void {
+function ensureSearchTables(): void {
+  // FTS5 (키워드/BM25). trigram 토크나이저로 한국어 부분 매칭 지원.
+  try {
+    rawSqlite.exec(
+      `CREATE VIRTUAL TABLE IF NOT EXISTS search_fts USING fts5(
+         text,
+         entity_type UNINDEXED,
+         entity_id UNINDEXED,
+         tokenize='trigram'
+       )`
+    )
+  } catch (e) {
+    scoped('search').warn('FTS5 search_fts creation failed', e)
+  }
+
   if (!vecEnabled) {
     scoped('vec').warn('sqlite-vec disabled — skipping vec table creation')
     return
@@ -105,12 +120,12 @@ function migrateLegacyDefaultWorkspacePath(): void {
 
 /**
  * 앱 시작 시 1회 실행되는 DB/워크스페이스 초기화 시퀀스 (순서 유지).
- * 1) 마이그레이션 → 2) vec0 가상 테이블 보장 → 3) 기본 워크스페이스 보장 →
+ * 1) 마이그레이션 → 2) 검색 가상 테이블(vec0+FTS5) 보장 → 3) 기본 워크스페이스 보장 →
  * 4) 시스템 skill seed → 5) legacy 기본 경로 이전 → 6) 워크스페이스별 claude 커맨드 보장.
  */
 export function runStartup(): void {
   runMigrations()
-  ensureVecTable()
+  ensureSearchTables()
   initializeDatabase()
   seedSystemSkills()
   migrateLegacyDefaultWorkspacePath()
