@@ -76,9 +76,10 @@ const GRAPH_DECAY = 0.5
 const RECENCY_WEIGHT = 0.15
 const RECENCY_HALFLIFE_DAYS = 30
 // 벡터(의미) 검색 유사도 컷오프. 정규화 벡터에서 vec0 distance = sqrt(2 - 2·cos).
-// 0.85 = 실데이터 측정값: 무관 쿼리의 노이즈 바닥(~0.84)과 실제 관련(0.877+)을 가르는 경계.
-// e5는 코사인이 0.83~0.90 좁은 band라 절대 임계가 까다로움 — 실데이터로 튜닝한 값.
-const SIMILARITY_MIN_COSINE = 0.85
+// e5-small은 코사인이 0.78(무관)~0.86(관련) band로 압축돼, 절대 임계로 완벽 분리가 불가
+// (예: '동물'↔'강아지' 0.84 < 무관 쿼리 노이즈 0.84). 한 쿼리 내 무관(~0.78) 제거 목적의
+// 리콜 우선 값으로 0.80 사용. 정밀 분리는 모델 업그레이드(bge-m3) 영역.
+const SIMILARITY_MIN_COSINE = 0.8
 const SIMILARITY_MAX_DISTANCE = Math.sqrt(2 - 2 * SIMILARITY_MIN_COSINE)
 
 const VALID_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
