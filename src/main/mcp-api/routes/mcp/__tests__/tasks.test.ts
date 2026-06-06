@@ -438,9 +438,12 @@ describe('GET /api/mcp/tasks — search 필터 (recurring / reminder)', () => {
   })
 
   it('reminder: search 가 부모 엔티티(todo) 매칭으로 적용된다', async () => {
-    const matchTodo = { ...baseTodo, id: 'tmatchaaaaaa', title: 'morning gym' } as TodoItem
-    const noTodo = { ...baseTodo, id: 'tnoaaaaaaaaaa', title: 'weekly sync' } as TodoItem
-    vi.mocked(todoRepository.findByWorkspaceWithFilters).mockReturnValue([matchTodo, noTodo])
+    const matchTodo = { ...baseTodo, id: 'tmatchaaaaaa', title: 'morning gym' }
+    const noTodo = { ...baseTodo, id: 'tnoaaaaaaaaaa', title: 'weekly sync' }
+    vi.mocked(todoRepository.findByWorkspaceWithFilters).mockReturnValue([
+      matchTodo,
+      noTodo
+    ] as unknown as ReturnType<typeof todoRepository.findByWorkspaceWithFilters>)
     vi.mocked(scheduleRepository.findAllByWorkspaceId).mockReturnValue([])
     vi.mocked(reminderService.findByEntity).mockImplementation((_type, id) =>
       id === 'tmatchaaaaaa' ? [reminder('tmatchaaaaaa')] : []
