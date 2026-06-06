@@ -254,7 +254,7 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
         }
       >
         <Icon className="size-3.5 shrink-0" />
-        <span className="truncate flex-1">{item.title}</span>
+        <span className="truncate flex-1 min-w-0">{item.title}</span>
         <span className="text-[10px] text-muted-foreground shrink-0">{item.domain}</span>
         {isFocus && <Check className="size-3 text-primary shrink-0" />}
       </button>
@@ -276,8 +276,10 @@ export function EmbedPicker({ workspaceId, editorId }: Props): React.JSX.Element
         placeholder="검색..."
         className="w-full px-2 py-1 mb-1 text-xs bg-transparent border-b outline-none"
       />
-      <ScrollArea className="max-h-60">
-        <div ref={listRef}>
+      {/* radix viewport 내부 wrapper 가 display:table 이라 긴 제목 시 콘텐츠가 폭을 넘겨 밀림.
+          [&>div]:!block 으로 block 강제 → w-full 자식이 viewport 폭에 맞춰지고 truncate 동작. */}
+      <ScrollArea viewportClassName="max-h-60 [&>div]:!block">
+        <div ref={listRef} className="w-full">
           {!grouped ? (
             results.length === 0 ? (
               <div className={mutedClass}>결과 없음</div>
