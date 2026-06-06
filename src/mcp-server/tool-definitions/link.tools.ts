@@ -38,6 +38,26 @@ MCP v2: 'list' action removed. To query links for an entity, use:
         .describe('Array of link/unlink actions')
     },
     handler: (args) => callTool('POST', '/api/mcp/links/batch', args)
+  },
+  {
+    name: 'explore_graph',
+    description: `Traverse the entity-link graph from a seed item up to N hops (BFS).
+Use to discover related context around an item — e.g. notes/todos/canvases connected to a given note.
+Returns { root, depth, nodes: [{type,id,title,depth}], edges: [{fromType,fromId,toType,toId}] }.
+Pairs well with search: find a seed via search, then explore_graph to gather its neighborhood.`,
+    schema: {
+      type: z
+        .enum(['note', 'csv', 'canvas', 'todo', 'pdf', 'image', 'schedule'])
+        .describe('Seed entity type'),
+      id: z.string().describe('Seed entity id'),
+      depth: z.number().int().min(1).max(3).optional().describe('Traversal hops (default 1, max 3)')
+    },
+    handler: ({ type, id, depth }) => {
+      const params = new URLSearchParams()
+      params.set('type', type as string)
+      params.set('id', id as string)
+      if (typeof depth === 'number') params.set('depth', String(depth))
+      return callTool('GET', `/api/mcp/explore-graph?${params.toString()}`)
+    }
   }
-  // ─── Schedules (calendar events) ──────────────────────────
 ]

@@ -332,15 +332,21 @@ Use ids returned by browse/search.`,
     name: 'search',
     description: `Unified search across notes, tables, canvases, and todos.
 - types: subset of ["note", "table", "canvas", "todo"]; defaults to ["note"] (search_notes-compatible)
+- mode: "semantic" (vector/meaning), "keyword" (FTS5/BM25), or "hybrid" (RRF fusion + graph expansion, default).
+  Hybrid recommended for most queries. Semantic finds related notes by meaning even without exact words;
+  keyword is best for exact terms / identifiers. Falls back to substring when the vector index is unavailable.
 - offset/limit: paginate (default limit 50, max 100). Response includes total/hasMore/nextOffset
-- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)
-Title matches rank above content/description matches; ties break by updatedAt desc.`,
+- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)`,
     schema: {
-      query: z.string().describe('Search query (case-insensitive substring)'),
+      query: z.string().describe('Search query'),
       types: z
         .array(z.enum(['note', 'table', 'canvas', 'todo']))
         .optional()
         .describe('Domains to search (default: ["note"])'),
+      mode: z
+        .enum(['semantic', 'keyword', 'hybrid'])
+        .optional()
+        .describe('Search mode (default: hybrid)'),
       offset: z.number().int().min(0).optional().describe('Pagination offset (default: 0)'),
       limit: z
         .number()
@@ -354,12 +360,13 @@ Title matches rank above content/description matches; ties break by updatedAt de
         .optional()
         .describe('Include excerpt around the match (default: false)')
     },
-    handler: ({ query, types, offset, limit, highlight }) => {
+    handler: ({ query, types, mode, offset, limit, highlight }) => {
       const params = new URLSearchParams()
       params.set('q', query as string)
       if (Array.isArray(types) && types.length > 0) {
         for (const t of types as string[]) params.append('types[]', t)
       }
+      if (typeof mode === 'string') params.set('mode', mode)
       if (typeof offset === 'number') params.set('offset', String(offset))
       if (typeof limit === 'number') params.set('limit', String(limit))
       if (highlight) params.set('highlight', 'true')

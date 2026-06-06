@@ -36106,22 +36106,26 @@ Use ids returned by browse/search.`,
     name: "search",
     description: `Unified search across notes, tables, canvases, and todos.
 - types: subset of ["note", "table", "canvas", "todo"]; defaults to ["note"] (search_notes-compatible)
+- mode: "semantic" (vector/meaning), "keyword" (FTS5/BM25), or "hybrid" (RRF fusion + graph expansion, default).
+  Hybrid recommended for most queries. Semantic finds related notes by meaning even without exact words;
+  keyword is best for exact terms / identifiers. Falls back to substring when the vector index is unavailable.
 - offset/limit: paginate (default limit 50, max 100). Response includes total/hasMore/nextOffset
-- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)
-Title matches rank above content/description matches; ties break by updatedAt desc.`,
+- highlight: when true, each hit includes an excerpt (~50 chars padding around the match)`,
     schema: {
-      query: external_exports3.string().describe("Search query (case-insensitive substring)"),
+      query: external_exports3.string().describe("Search query"),
       types: external_exports3.array(external_exports3.enum(["note", "table", "canvas", "todo"])).optional().describe('Domains to search (default: ["note"])'),
+      mode: external_exports3.enum(["semantic", "keyword", "hybrid"]).optional().describe("Search mode (default: hybrid)"),
       offset: external_exports3.number().int().min(0).optional().describe("Pagination offset (default: 0)"),
       limit: external_exports3.number().int().min(1).max(100).optional().describe("Page size (default: 50, max: 100)"),
       highlight: external_exports3.boolean().optional().describe("Include excerpt around the match (default: false)")
     },
-    handler: ({ query, types, offset, limit, highlight }) => {
+    handler: ({ query, types, mode, offset, limit, highlight }) => {
       const params = new URLSearchParams();
       params.set("q", query);
       if (Array.isArray(types) && types.length > 0) {
         for (const t of types) params.append("types[]", t);
       }
+      if (typeof mode === "string") params.set("mode", mode);
       if (typeof offset === "number") params.set("offset", String(offset));
       if (typeof limit === "number") params.set("limit", String(limit));
       if (highlight) params.set("highlight", "true");
@@ -36683,8 +36687,26 @@ MCP v2: 'list' action removed. To query links for an entity, use:
       ).describe("Array of link/unlink actions")
     },
     handler: (args) => callTool("POST", "/api/mcp/links/batch", args)
+  },
+  {
+    name: "explore_graph",
+    description: `Traverse the entity-link graph from a seed item up to N hops (BFS).
+Use to discover related context around an item \u2014 e.g. notes/todos/canvases connected to a given note.
+Returns { root, depth, nodes: [{type,id,title,depth}], edges: [{fromType,fromId,toType,toId}] }.
+Pairs well with search: find a seed via search, then explore_graph to gather its neighborhood.`,
+    schema: {
+      type: external_exports3.enum(["note", "csv", "canvas", "todo", "pdf", "image", "schedule"]).describe("Seed entity type"),
+      id: external_exports3.string().describe("Seed entity id"),
+      depth: external_exports3.number().int().min(1).max(3).optional().describe("Traversal hops (default 1, max 3)")
+    },
+    handler: ({ type, id, depth }) => {
+      const params = new URLSearchParams();
+      params.set("type", type);
+      params.set("id", id);
+      if (typeof depth === "number") params.set("depth", String(depth));
+      return callTool("GET", `/api/mcp/explore-graph?${params.toString()}`);
+    }
   }
-  // ─── Schedules (calendar events) ──────────────────────────
 ];
 
 // src/mcp-server/tool-definitions/template.tools.ts

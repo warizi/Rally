@@ -10,7 +10,7 @@
 import { describe, it, expect } from 'vitest'
 import { allTools } from '../index'
 
-const BASELINE_TOOL_COUNT = 17
+const BASELINE_TOOL_COUNT = 18
 
 const V2_TOOLS = [
   // Discovery (3)
@@ -35,7 +35,9 @@ const V2_TOOLS = [
   'manage_tags',
   'manage_trash',
   // Manage workspace (1)
-  'manage_workspace'
+  'manage_workspace',
+  // Graph (1)
+  'explore_graph'
 ] as const
 
 describe('tool-definitions 무결성 (v2 final)', () => {
@@ -102,8 +104,8 @@ describe('tool-definitions 무결성 (v2 final)', () => {
   })
 
   it('남은 도구는 모두 read*/manage* prefix 또는 prominent 단일 단어', () => {
-    // search / browse / read 는 v2 prominent 도구로 짧은 단일 단어 이름 사용
-    const standalone = new Set(['search', 'browse', 'read'])
+    // search / browse / read / explore_graph 는 prominent 단독 도구 (read/manage prefix 예외)
+    const standalone = new Set(['search', 'browse', 'read', 'explore_graph'])
     for (const tool of allTools) {
       const validName =
         standalone.has(tool.name) ||
