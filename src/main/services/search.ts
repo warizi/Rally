@@ -75,6 +75,10 @@ const GRAPH_DECAY = 0.5
 // 최신성 가중치 + 반감기(일)
 const RECENCY_WEIGHT = 0.15
 const RECENCY_HALFLIFE_DAYS = 30
+// 벡터(의미) 검색 유사도 컷오프. 정규화 벡터에서 vec0 distance = sqrt(2 - 2·cos)이므로
+// cos >= 0.80 → distance <= ~0.632. 이보다 먼 항목은 의미 무관으로 보고 제외.
+const SIMILARITY_MIN_COSINE = 0.8
+const SIMILARITY_MAX_DISTANCE = Math.sqrt(2 - 2 * SIMILARITY_MIN_COSINE)
 
 const VALID_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
 
@@ -296,6 +300,8 @@ async function vectorCandidates(
   const seen = new Set<string>()
   const out: Ref[] = []
   for (const r of rows) {
+    // 오름차순 정렬이므로 임계 초과 시 이후 전부 더 멂 → 중단 (유사도 컷오프)
+    if (r.distance > SIMILARITY_MAX_DISTANCE) break
     const et = r.type as EmbeddableEntityType
     const st = ENTITY_TO_SEARCH[et]
     if (!st || !entityTypes.has(et)) continue
