@@ -118,7 +118,7 @@ export function GlobalSearchDialog(): React.JSX.Element {
             {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
             <div
               style={{ height: contentHeight, transition: 'height 300ms ease-out' }}
-              className="overflow-x-hidden overflow-y-auto"
+              className="scrollbar-thin overflow-x-hidden overflow-y-auto"
             >
               <div ref={setContentRef}>
                 {exact.length > 0 && (
