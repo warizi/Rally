@@ -393,17 +393,16 @@ export const noteService = {
     // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과 (이미 사용자가 휴지통에서 의도 확정).
     if (!options.permanent) assertNoteUnlocked(note)
 
-    // 삭제(휴지통/영구 모두) 시 임베딩 인덱스 제거. 복구 시 백필/재편집에서 재인덱싱됨.
-    embeddingService.remove('note', noteId)
-
     if (!options.permanent) {
       // 휴지통 이동 — fs는 trashService가 워크스페이스 밖 .trash로 옮김.
       // .images 참조는 그대로 보존 (복구 시 자동 작동). 영구 삭제 시(purge) 함께 정리.
+      // 임베딩은 soft-delete 시 유지 → 복원 시 재임베딩 불필요, purge 시점에만 제거(일관화).
       trashService.softRemove(workspaceId, 'note', noteId)
       return
     }
 
-    // 영구 삭제 경로
+    // 영구 삭제 경로 — 임베딩 인덱스(meta/vec/fts) 제거
+    embeddingService.remove('note', noteId)
     const absPath = path.join(workspace.path, note.relativePath)
     try {
       const content = fs.readFileSync(absPath, 'utf-8')

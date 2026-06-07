@@ -255,16 +255,17 @@ export const scheduleService = {
     const existing = scheduleRepository.findById(scheduleId)
     if (!existing) throw new NotFoundError('일정을 찾을 수 없습니다')
 
-    embeddingService.remove('schedule', scheduleId)
-
     if (!options.permanent) {
       if (!existing.workspaceId) {
         throw new ValidationError('워크스페이스 정보가 없는 일정은 휴지통으로 보낼 수 없습니다')
       }
+      // 임베딩은 soft-delete 시 유지 → 복원 시 재임베딩 불필요, purge 시점에만 제거(일관화).
       trashService.softRemove(existing.workspaceId, 'schedule', scheduleId)
       return
     }
 
+    // 영구 삭제 경로 — 임베딩 인덱스 제거
+    embeddingService.remove('schedule', scheduleId)
     reminderService.removeByEntity('schedule', scheduleId)
     entityLinkService.removeAllLinks('schedule', scheduleId)
     canvasNodeRepository.deleteByRef('schedule', scheduleId)

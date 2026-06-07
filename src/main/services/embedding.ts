@@ -271,6 +271,55 @@ function activeIds(type: EmbeddableEntityType): string[] {
   }
 }
 
+/**
+ * 행이 존재하는 모든 엔티티 ID (deletedAt 무관 — soft-delete 도 임베딩 유지 대상).
+ * orphan sweep 에서 "행이 아예 없는" 엔티티만 골라내기 위해 사용.
+ */
+function existingIds(type: EmbeddableEntityType): Set<string> {
+  switch (type) {
+    case 'note':
+      return new Set(
+        db
+          .select({ id: notes.id })
+          .from(notes)
+          .all()
+          .map((r) => r.id)
+      )
+    case 'todo':
+      return new Set(
+        db
+          .select({ id: todos.id })
+          .from(todos)
+          .all()
+          .map((r) => r.id)
+      )
+    case 'schedule':
+      return new Set(
+        db
+          .select({ id: schedules.id })
+          .from(schedules)
+          .all()
+          .map((r) => r.id)
+      )
+    case 'csv':
+      return new Set(
+        db
+          .select({ id: csvFiles.id })
+          .from(csvFiles)
+          .all()
+          .map((r) => r.id)
+      )
+    case 'canvas':
+      return new Set(
+        db
+          .select({ id: canvases.id })
+          .from(canvases)
+          .all()
+          .map((r) => r.id)
+      )
+  }
+}
+
 /** 이미 임베딩된 엔티티 ID 집합. */
 function indexedIds(type: EmbeddableEntityType): Set<string> {
   const rows = db
@@ -339,6 +388,29 @@ async function backfillAll(): Promise<void> {
   }
 }
 
+/**
+ * embedding_meta ↔ 실제 엔티티 행 reconcile (orphan sweep).
+ * 행이 아예 없는(=hard-delete 됐으나 임베딩이 누적된) 엔티티의 임베딩(vec/meta/fts)을 제거한다.
+ * soft-delete(deletedAt) 엔티티는 행이 존재하므로 유지 → 복원 시 재임베딩 불필요.
+ * 과거 배치/캐스케이드 삭제에서 임베딩 미제거로 누적된 orphan 방어막.
+ * @returns 제거된 orphan 엔티티 수
+ */
+function sweepOrphans(): number {
+  if (!vecEnabled) return 0
+  let removed = 0
+  for (const type of EMBEDDABLE_ENTITY_TYPES) {
+    const existing = existingIds(type)
+    for (const id of indexedIds(type)) {
+      if (!existing.has(id)) {
+        removeEntitySync(type, id)
+        removed++
+      }
+    }
+  }
+  if (removed > 0) log.info(`orphan sweep: removed ${removed} stale embeddings`)
+  return removed
+}
+
 // ── 비동기 디바운스 큐 ────────────────────────────────────────
 const timers = new Map<string, NodeJS.Timeout>()
 
@@ -388,5 +460,10 @@ export const embeddingService = {
   /** 임베딩 없는 기존 엔티티 백그라운드 일괄 인덱싱 (재개 가능, 부팅 후 fire-and-forget). */
   async backfillAll(): Promise<void> {
     await backfillAll()
+  },
+
+  /** 행이 사라진 엔티티의 stale 임베딩 정리 (부팅/주기 reconcile). 제거 수 반환. */
+  sweepOrphans(): number {
+    return sweepOrphans()
   }
 }

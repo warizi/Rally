@@ -384,15 +384,15 @@ export const todoService = {
     const todo = todoRepository.findById(todoId)
     if (!todo) throw new NotFoundError(`Todo not found: ${todoId}`)
 
-    embeddingService.remove('todo', todoId)
-
     if (!options.permanent) {
       // 휴지통 이동 — entity-link / reminder snapshot은 trashService가 처리
+      // 임베딩은 soft-delete 시 유지 → 복원 시 재임베딩 불필요, purge 시점에만 제거(일관화).
       trashService.softRemove(todo.workspaceId, 'todo', todoId)
       return
     }
 
-    // 영구 삭제 경로 — 기존 동작 유지
+    // 영구 삭제 경로 — 임베딩 인덱스 제거 (본인 + 하위 todo)
+    embeddingService.remove('todo', todoId)
     const subtodoIds = todoRepository.findAllDescendantIds(todoId)
     for (const subId of subtodoIds) embeddingService.remove('todo', subId)
     reminderService.removeByEntities('todo', [todoId, ...subtodoIds])

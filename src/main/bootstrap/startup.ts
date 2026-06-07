@@ -153,6 +153,12 @@ export function runStartup(): void {
 
   // 임베딩 백필: UI 로드를 막지 않도록 지연 후 백그라운드 실행.
   setTimeout(() => {
+    // orphan sweep: 과거 배치/캐스케이드 삭제로 누적된 stale 임베딩 정리 (백필 전에).
+    try {
+      embeddingService.sweepOrphans()
+    } catch (e) {
+      scoped('embedding').warn('orphan sweep failed', e)
+    }
     void embeddingService.backfillAll().catch((e) => {
       scoped('embedding').warn('backfill failed', e)
     })
