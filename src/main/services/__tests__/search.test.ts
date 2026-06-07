@@ -1,4 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { testDb } from '../../__tests__/setup'
+import * as schema from '../../db/schema'
 import { searchService } from '../search'
 import { workspaceRepository } from '../../repositories/workspace'
 import { folderRepository } from '../../repositories/folder'
@@ -127,7 +129,14 @@ describe('searchService.search', () => {
       expect(canvasService.search).toHaveBeenCalledOnce()
       expect(todoService.search).toHaveBeenCalledOnce()
       expect(r.results.map((h) => h.type).sort()).toEqual(['canvas', 'note', 'table', 'todo'])
-      expect(r.meta.perTypeCounts).toEqual({ note: 1, table: 1, canvas: 1, todo: 1 })
+      expect(r.meta.perTypeCounts).toEqual({
+        note: 1,
+        table: 1,
+        canvas: 1,
+        todo: 1,
+        pdf: 0,
+        image: 0
+      })
     })
   })
 
@@ -286,6 +295,100 @@ describe('searchService.search', () => {
         highlight: true
       })
       expect(r.results[0].excerpt).toContain('Plan Diagram')
+    })
+  })
+
+  describe('pdf/image (키워드 전용)', () => {
+    // keywordFileHits 가 testDb 를 직접 조회 → FK 위해 workspace 행을 실제로 삽입.
+    beforeEach(() => {
+      testDb
+        .insert(schema.workspaces)
+        .values({
+          id: 'ws-1',
+          name: 'T',
+          path: '/ws',
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .run()
+    })
+
+    // pdf/image 는 임베딩 비대상 → keywordFileHits 가 testDb 를 직접 조회.
+    function seedFile(
+      table: typeof schema.pdfFiles | typeof schema.imageFiles,
+      over: object
+    ): void {
+      testDb
+        .insert(table)
+        .values({
+          id: 'x',
+          workspaceId: 'ws-1',
+          folderId: null,
+          relativePath: 'x',
+          title: 't',
+          description: '',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...over
+        })
+        .run()
+    }
+
+    it("types:['pdf'] → title/description 매칭 반환", async () => {
+      seedFile(schema.pdfFiles, {
+        id: 'p-title',
+        relativePath: 'plan.pdf',
+        title: 'Plan PDF',
+        description: ''
+      })
+      seedFile(schema.pdfFiles, {
+        id: 'p-desc',
+        relativePath: 'doc.pdf',
+        title: '문서',
+        description: 'a plan inside'
+      })
+      seedFile(schema.pdfFiles, {
+        id: 'p-none',
+        relativePath: 'other.pdf',
+        title: '관계없음',
+        description: '무관'
+      })
+      const r = await searchService.search('ws-1', 'plan', { types: ['pdf'] })
+      const ids = r.results.map((h) => h.id).sort()
+      expect(ids).toEqual(['p-desc', 'p-title'])
+      expect(r.results.every((h) => h.type === 'pdf')).toBe(true)
+      expect(r.results.find((h) => h.id === 'p-title')!.matchType).toBe('title')
+      expect(r.results.find((h) => h.id === 'p-desc')!.matchType).toBe('description')
+      expect(r.meta.perTypeCounts.pdf).toBe(2)
+    })
+
+    it("types:['image'] → 매칭 반환", async () => {
+      seedFile(schema.imageFiles, {
+        id: 'i-1',
+        relativePath: 'plan.png',
+        title: 'Plan Image',
+        description: ''
+      })
+      const r = await searchService.search('ws-1', 'plan', { types: ['image'] })
+      expect(r.results.map((h) => h.id)).toEqual(['i-1'])
+      expect(r.results[0].type).toBe('image')
+    })
+
+    it('semantic 모드(vec 비활성)에서는 pdf/image 미포함 (빈 결과)', async () => {
+      seedFile(schema.pdfFiles, { id: 'p-1', relativePath: 'plan.pdf', title: 'Plan PDF' })
+      const r = await searchService.search('ws-1', 'plan', { types: ['pdf'], mode: 'semantic' })
+      expect(r.results).toEqual([])
+    })
+
+    it('soft-delete 된 pdf 는 제외', async () => {
+      seedFile(schema.pdfFiles, {
+        id: 'p-del',
+        relativePath: 'plan.pdf',
+        title: 'Plan PDF',
+        deletedAt: new Date()
+      })
+      const r = await searchService.search('ws-1', 'plan', { types: ['pdf'] })
+      expect(r.results).toEqual([])
     })
   })
 

@@ -1,6 +1,7 @@
 import { lazy, Suspense, useState } from 'react'
-import { Settings, Terminal } from 'lucide-react'
+import { Search, Settings, Terminal } from 'lucide-react'
 import { useTabStore } from '@/entities/tab-system'
+import { useGlobalSearchStore } from '@/widgets/global-search'
 import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { useUpdateTabSnapshot } from '@/entities/tab-snapshot'
 import type { TabSnapshot } from '@/entities/tab-snapshot'
@@ -42,6 +43,7 @@ function MainSidebar(): React.JSX.Element {
   const currentWorkspaceId = useCurrentWorkspaceStore((state) => state.currentWorkspaceId)
   const terminalIsOpen = useTerminalPanelStore((s) => s.isOpen)
   const toggleTerminal = useTerminalPanelStore((s) => s.toggle)
+  const openGlobalSearch = useGlobalSearchStore((s) => s.setOpen)
 
   // 현재 활성 탭의 pathname 확인
   const activePane = panes[activePaneId]
@@ -78,6 +80,16 @@ function MainSidebar(): React.JSX.Element {
               <SidebarGroupLabel>기능</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
+                  <SidebarMenuItem>
+                    <SidebarMenuButton
+                      className="cursor-pointer"
+                      tooltip="검색 (⌘⇧F)"
+                      onClick={() => openGlobalSearch(true)}
+                    >
+                      <Search />
+                      <span>검색</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                   {sidebar_items.map((item) => (
                     <SidebarMenuItem key={item.pathname}>
                       <SidebarMenuButton

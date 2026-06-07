@@ -1,4 +1,4 @@
-export type SearchType = 'note' | 'table' | 'canvas' | 'todo'
+export type SearchType = 'note' | 'table' | 'canvas' | 'todo' | 'pdf' | 'image'
 
 export type SearchMode = 'semantic' | 'keyword' | 'hybrid'
 
