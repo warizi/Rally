@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
 import {
@@ -77,6 +77,18 @@ export function GlobalSearchDialog(): React.JSX.Element {
   // 디바운스된 검색어 기준 — 타이핑 중간에 "결과 없음" 깜빡임 방지
   const showEmpty = !!debounced.trim() && !isFetching && exact.length === 0 && similar.length === 0
 
+  // 결과 영역의 자연 높이를 측정 → 컨테이너 height 만 애니메이션(콘텐츠는 자연 크기 유지,
+  // 위→아래로 펼쳐짐). framer layout(scale 투영)은 콘텐츠가 중앙에서 퍼지는 왜곡이 있어 사용 안 함.
+  const contentRef = useRef<HTMLDivElement>(null)
+  const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto')
+  useEffect(() => {
+    const el = contentRef.current
+    if (!el) return
+    const ro = new ResizeObserver(() => setContentHeight(el.offsetHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   return (
     <Dialog
       open={open}
@@ -96,38 +108,40 @@ export function GlobalSearchDialog(): React.JSX.Element {
             placeholder="전체 검색 (노트 · 표 · PDF · 이미지 · 캔버스 · 할일)"
           />
           {/* cmdk 자체 스크롤 제거 → 내부 ScrollArea(viewport max-h)가 스크롤.
-              motion.div(layout) 가 결과 개수 변화에 따른 높이 변화를 부드럽게 애니메이션. */}
+              motion.div 는 측정된 콘텐츠 height 만 애니메이션(콘텐츠는 위→아래로 펼쳐짐, 중앙 확산 없음). */}
           <CommandList className="max-h-none overflow-visible">
             <motion.div
-              layout
-              transition={{ type: 'tween', duration: 0.18, ease: 'easeOut' }}
+              animate={{ height: contentHeight }}
+              transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
               className="overflow-hidden"
             >
-              {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
-              <ScrollArea viewportClassName="max-h-[calc(70vh-3rem)]">
-                {exact.length > 0 && (
-                  <CommandGroup heading="일치">
-                    {exact.map((hit) => (
-                      <ResultItem
-                        key={`e:${hit.type}:${hit.id}`}
-                        hit={hit}
-                        onSelect={handleSelect}
-                      />
-                    ))}
-                  </CommandGroup>
-                )}
-                {similar.length > 0 && (
-                  <CommandGroup heading="유사">
-                    {similar.map((hit) => (
-                      <ResultItem
-                        key={`s:${hit.type}:${hit.id}`}
-                        hit={hit}
-                        onSelect={handleSelect}
-                      />
-                    ))}
-                  </CommandGroup>
-                )}
-              </ScrollArea>
+              <div ref={contentRef}>
+                {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
+                <ScrollArea viewportClassName="max-h-[calc(70vh-3rem)]">
+                  {exact.length > 0 && (
+                    <CommandGroup heading="일치">
+                      {exact.map((hit) => (
+                        <ResultItem
+                          key={`e:${hit.type}:${hit.id}`}
+                          hit={hit}
+                          onSelect={handleSelect}
+                        />
+                      ))}
+                    </CommandGroup>
+                  )}
+                  {similar.length > 0 && (
+                    <CommandGroup heading="유사">
+                      {similar.map((hit) => (
+                        <ResultItem
+                          key={`s:${hit.type}:${hit.id}`}
+                          hit={hit}
+                          onSelect={handleSelect}
+                        />
+                      ))}
+                    </CommandGroup>
+                  )}
+                </ScrollArea>
+              </div>
             </motion.div>
           </CommandList>
         </Command>
