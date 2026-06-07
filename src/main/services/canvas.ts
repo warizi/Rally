@@ -156,14 +156,15 @@ export const canvasService = {
     // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과.
     if (!options.permanent) assertCanvasUnlocked(canvas)
 
-    embeddingService.remove('canvas', canvasId)
-
     if (!options.permanent) {
+      // 임베딩은 soft-delete 시 유지 → 복원 시 재임베딩 불필요, purge 시점에만 제거(일관화).
       trashService.softRemove(canvas.workspaceId, 'canvas', canvasId)
       return
     }
 
     // 영구 삭제 — Phase 2: entityLinkService.removeAllLinks('canvas', canvasId) 호출 추가
+    // 임베딩 인덱스 제거
+    embeddingService.remove('canvas', canvasId)
     itemTagService.removeByItem('canvas', canvasId)
     canvasRepository.delete(canvasId)
   },

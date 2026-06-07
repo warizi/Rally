@@ -21,6 +21,8 @@ import { NotFoundError, ValidationError } from '../../lib/errors'
 import { workspaceRepository } from '../../repositories/workspace'
 import { appSettingsRepository } from '../../repositories/app-settings'
 import { withTransaction } from '../../lib/transaction'
+import { type EmbeddableEntityType } from '../../db/schema/embedding'
+import { embeddingService } from '../embedding'
 
 import {
   type TrashRetentionKey,
@@ -30,6 +32,38 @@ import {
   isValidRetention
 } from './types'
 import { broadcastTrashChanged, purgeTrashDir } from './helpers'
+
+/**
+ * 영구삭제 대상 batch 의 임베딩 가능 엔티티(note/todo/schedule/csv/canvas) ID 수집.
+ * hard-delete 전에 호출해야 row 가 살아있어 조회 가능.
+ */
+function collectEmbeddingTargets(batchId: string): { type: EmbeddableEntityType; id: string }[] {
+  const targets: { type: EmbeddableEntityType; id: string }[] = []
+  const collect = (type: EmbeddableEntityType, rows: { id: string }[]): void => {
+    for (const r of rows) targets.push({ type, id: r.id })
+  }
+  collect(
+    'note',
+    db.select({ id: notes.id }).from(notes).where(eq(notes.trashBatchId, batchId)).all()
+  )
+  collect(
+    'todo',
+    db.select({ id: todos.id }).from(todos).where(eq(todos.trashBatchId, batchId)).all()
+  )
+  collect(
+    'schedule',
+    db.select({ id: schedules.id }).from(schedules).where(eq(schedules.trashBatchId, batchId)).all()
+  )
+  collect(
+    'csv',
+    db.select({ id: csvFiles.id }).from(csvFiles).where(eq(csvFiles.trashBatchId, batchId)).all()
+  )
+  collect(
+    'canvas',
+    db.select({ id: canvases.id }).from(canvases).where(eq(canvases.trashBatchId, batchId)).all()
+  )
+  return targets
+}
 
 /**
  * 휴지통 영구 삭제 / 만료 정리.
@@ -46,6 +80,9 @@ export const trashPurger = {
     if (!batch) throw new NotFoundError(`Trash batch not found: ${batchId}`)
     const fsPath = batch.fsTrashPath
     const purgedWorkspaceId = batch.workspaceId
+
+    // hard-delete 전 임베딩 대상 ID 수집 (행이 살아있을 때) — 트랜잭션 성공 후 인덱스 제거
+    const embeddingTargets = collectEmbeddingTargets(batchId)
 
     withTransaction(() => {
       // 자식 row 를 먼저 hard delete (FK 가 cascade 라 부모만 지워도 되지만 명시적으로)
@@ -66,6 +103,10 @@ export const trashPurger = {
 
       db.delete(trashBatches).where(eq(trashBatches.id, batchId)).run()
     })
+
+    // 엔티티 행 hard-delete 성공 후 임베딩 인덱스(vec/meta/fts) 제거.
+    // (embeddingMeta/vec/fts 만 건드리므로 엔티티 행이 이미 사라져도 무방, vec 비활성 시 no-op)
+    for (const t of embeddingTargets) embeddingService.remove(t.type, t.id)
 
     // FS trash 디렉토리 제거 (트랜잭션 외부 — rollback 불가능하므로)
     purgeTrashDir(fsPath)

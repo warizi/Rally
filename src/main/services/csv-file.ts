@@ -435,13 +435,14 @@ export const csvFileService = {
     // soft-delete 만 잠금 차단. permanent 는 휴지통 purge 경로라 통과.
     if (!options.permanent) assertCsvUnlocked(csv)
 
-    embeddingService.remove('csv', csvId)
-
     if (!options.permanent) {
+      // 임베딩은 soft-delete 시 유지 → 복원 시 재임베딩 불필요, purge 시점에만 제거(일관화).
       trashService.softRemove(workspaceId, 'csv', csvId)
       return
     }
 
+    // 영구 삭제 경로 — 임베딩 인덱스 제거
+    embeddingService.remove('csv', csvId)
     const absPath = path.join(workspace.path, csv.relativePath)
     try {
       fs.unlinkSync(absPath)
