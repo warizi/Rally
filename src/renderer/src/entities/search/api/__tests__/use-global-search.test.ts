@@ -74,14 +74,14 @@ describe('useGlobalSearch', () => {
     expect(result.current.data!.similar.map((h) => h.id)).toEqual(['C']) // A 제거됨
   })
 
-  it('상한 일치 50 / 유사 20', async () => {
-    const kw = Array.from({ length: 60 }, (_, i) => hit('note', `k${i}`))
+  it('상한 일치 10 / 유사 10', async () => {
+    const kw = Array.from({ length: 30 }, (_, i) => hit('note', `k${i}`))
     const sem = Array.from({ length: 30 }, (_, i) => hit('todo', `s${i}`))
     mockByMode(kw, sem)
     const { result } = renderHook(() => useGlobalSearch('ws', 'plan'), { wrapper: wrapper() })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
-    expect(result.current.data!.exact).toHaveLength(50)
-    expect(result.current.data!.similar).toHaveLength(20)
+    expect(result.current.data!.exact).toHaveLength(10)
+    expect(result.current.data!.similar).toHaveLength(10)
   })
 
   it('빈 쿼리 → 비활성(호출 없음)', () => {

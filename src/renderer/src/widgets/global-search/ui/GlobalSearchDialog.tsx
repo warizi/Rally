@@ -1,4 +1,5 @@
 import { useState, useCallback } from 'react'
+import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
 import {
   Command,
@@ -8,10 +9,12 @@ import {
   CommandItem,
   CommandEmpty
 } from '@shared/ui/command'
+import { ScrollArea } from '@shared/ui/scroll-area'
 import { useGlobalSearch, type SearchHit } from '@entities/search'
 import { useTabStore } from '@/entities/tab-system'
 import { ENTITY_TYPE_ICON } from '@shared/lib/entity-link'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
+import { useDebouncedValue } from '@shared/hooks/use-debounced-value'
 import { useGlobalSearchStore } from '../model/store'
 import { SEARCH_TO_LINKABLE, hitToTabOptions } from '../lib/hit-to-tab'
 
@@ -50,8 +53,10 @@ export function GlobalSearchDialog(): React.JSX.Element {
   const workspaceId = useCurrentWorkspaceStore((s) => s.currentWorkspaceId)
   const openTab = useTabStore((s) => s.openTab)
   const [query, setQuery] = useState('')
+  // 매 keystroke IPC 호출 방지 — 입력은 즉시 반영, 검색은 200ms 디바운스.
+  const debounced = useDebouncedValue(query, 200)
 
-  const { data, isFetching } = useGlobalSearch(workspaceId, query)
+  const { data, isFetching } = useGlobalSearch(workspaceId, debounced)
   const exact = data?.exact ?? []
   const similar = data?.similar ?? []
 
@@ -69,8 +74,8 @@ export function GlobalSearchDialog(): React.JSX.Element {
     [openTab, close]
   )
 
-  const trimmed = query.trim()
-  const showEmpty = !!trimmed && !isFetching && exact.length === 0 && similar.length === 0
+  // 디바운스된 검색어 기준 — 타이핑 중간에 "결과 없음" 깜빡임 방지
+  const showEmpty = !!debounced.trim() && !isFetching && exact.length === 0 && similar.length === 0
 
   return (
     <Dialog
@@ -83,29 +88,47 @@ export function GlobalSearchDialog(): React.JSX.Element {
         <DialogTitle className="sr-only">전체 검색</DialogTitle>
         <Command
           shouldFilter={false}
-          className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium"
+          className="flex flex-col [&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium"
         >
           <CommandInput
             value={query}
             onValueChange={setQuery}
             placeholder="전체 검색 (노트 · 표 · PDF · 이미지 · 캔버스 · 할일)"
           />
-          <CommandList className="max-h-[60vh]">
-            {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
-            {exact.length > 0 && (
-              <CommandGroup heading="일치">
-                {exact.map((hit) => (
-                  <ResultItem key={`e:${hit.type}:${hit.id}`} hit={hit} onSelect={handleSelect} />
-                ))}
-              </CommandGroup>
-            )}
-            {similar.length > 0 && (
-              <CommandGroup heading="유사">
-                {similar.map((hit) => (
-                  <ResultItem key={`s:${hit.type}:${hit.id}`} hit={hit} onSelect={handleSelect} />
-                ))}
-              </CommandGroup>
-            )}
+          {/* cmdk 자체 스크롤 제거 → 내부 ScrollArea(viewport max-h)가 스크롤.
+              motion.div(layout) 가 결과 개수 변화에 따른 높이 변화를 부드럽게 애니메이션. */}
+          <CommandList className="max-h-none overflow-visible">
+            <motion.div
+              layout
+              transition={{ type: 'tween', duration: 0.18, ease: 'easeOut' }}
+              className="overflow-hidden"
+            >
+              {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
+              <ScrollArea viewportClassName="max-h-[calc(70vh-3rem)]">
+                {exact.length > 0 && (
+                  <CommandGroup heading="일치">
+                    {exact.map((hit) => (
+                      <ResultItem
+                        key={`e:${hit.type}:${hit.id}`}
+                        hit={hit}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </CommandGroup>
+                )}
+                {similar.length > 0 && (
+                  <CommandGroup heading="유사">
+                    {similar.map((hit) => (
+                      <ResultItem
+                        key={`s:${hit.type}:${hit.id}`}
+                        hit={hit}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </CommandGroup>
+                )}
+              </ScrollArea>
+            </motion.div>
           </CommandList>
         </Command>
       </DialogContent>

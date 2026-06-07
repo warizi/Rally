@@ -42,8 +42,8 @@ export function useEntitySearch(
 const GLOBAL_KEYWORD_TYPES: SearchType[] = ['note', 'table', 'canvas', 'todo', 'pdf', 'image']
 /** 시맨틱(유사) 대상 — 임베딩 도메인만 (pdf/image 제외). */
 const GLOBAL_SEMANTIC_TYPES: SearchType[] = ['note', 'table', 'canvas', 'todo']
-const GLOBAL_EXACT_LIMIT = 50
-const GLOBAL_SIMILAR_LIMIT = 20
+const GLOBAL_EXACT_LIMIT = 10
+const GLOBAL_SIMILAR_LIMIT = 10
 
 export interface GlobalSearchResult {
   /** 검색어 포함(키워드) 결과 */
