@@ -158,6 +158,10 @@ export function LinkEntityPopover({
 
   const handleInputKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
+      // IME 조합 중에는 방향키를 가로채지 않는다.
+      // 조합 중 input 을 blur(list 모드 전환)하면 조합 글자가 커밋되며 복제된다("검색" → "검색색").
+      // 조합 중 상하 방향키는 IME(후보 이동 등)에 맡기고, 조합 확정 후 다시 누르면 list 전환된다.
+      if (e.nativeEvent.isComposing) return
       // 좌우 = input cursor 이동 (default 동작 유지)
       // 상하 = list 모드 전환
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
