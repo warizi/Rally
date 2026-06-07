@@ -81,13 +81,16 @@ export function GlobalSearchDialog(): React.JSX.Element {
   // 위→아래로 펼쳐짐). framer layout(scale 투영)은 콘텐츠가 중앙에서 퍼지는 왜곡이 있어 사용 안 함.
   const contentRef = useRef<HTMLDivElement>(null)
   const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto')
+  // open 의존 — 다이얼로그는 닫히면 콘텐츠가 unmount(Radix)되므로, 열릴 때마다 RO 를 (재)부착.
+  // mount 시 1회만 부착하면 닫힌 상태라 contentRef.current 가 null → RO 미부착 → 높이 고정 버그.
   useEffect(() => {
+    if (!open) return
     const el = contentRef.current
     if (!el) return
     const ro = new ResizeObserver(() => setContentHeight(el.offsetHeight))
     ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [open])
 
   return (
     <Dialog
