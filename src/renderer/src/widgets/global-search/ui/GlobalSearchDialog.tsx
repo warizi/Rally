@@ -76,17 +76,21 @@ export function GlobalSearchDialog(): React.JSX.Element {
   // 디바운스된 검색어 기준 — 타이핑 중간에 "결과 없음" 깜빡임 방지
   const showEmpty = !!debounced.trim() && !isFetching && exact.length === 0 && similar.length === 0
 
-  // 결과 영역의 자연 높이를 측정 → 컨테이너 height 만 애니메이션(콘텐츠는 자연 크기 유지,
-  // 위→아래로 펼쳐짐). framer layout(scale 투영)은 콘텐츠가 중앙에서 퍼지는 왜곡이 있어 사용 안 함.
+  // 결과 콘텐츠의 자연 높이를 측정 → ScrollArea Root 높이를 그 값으로 트랜지션(콘텐츠는 자연
+  // 크기 유지, 위→아래로 펼쳐짐). 70vh 초과 시 cap → ScrollArea 내부 스크롤.
   const contentRef = useRef<HTMLDivElement>(null)
-  const [contentHeight, setContentHeight] = useState<number | 'auto'>('auto')
+  const [contentHeight, setContentHeight] = useState<number>()
   // open 의존 — 다이얼로그는 닫히면 콘텐츠가 unmount(Radix)되므로, 열릴 때마다 RO 를 (재)부착.
   // mount 시 1회만 부착하면 닫힌 상태라 contentRef.current 가 null → RO 미부착 → 높이 고정 버그.
   useEffect(() => {
     if (!open) return
     const el = contentRef.current
     if (!el) return
-    const ro = new ResizeObserver(() => setContentHeight(el.offsetHeight))
+    const measure = (): void => {
+      const maxPx = Math.round(window.innerHeight * 0.7)
+      setContentHeight(Math.min(el.scrollHeight, maxPx))
+    }
+    const ro = new ResizeObserver(measure)
     ro.observe(el)
     return () => ro.disconnect()
   }, [open])
@@ -109,44 +113,36 @@ export function GlobalSearchDialog(): React.JSX.Element {
             onValueChange={setQuery}
             placeholder="전체 검색 (노트 · 표 · PDF · 이미지 · 캔버스 · 할일)"
           />
-          {/* cmdk 자체 스크롤 제거 → 내부 ScrollArea(viewport max-h)가 스크롤.
-              바깥 div 는 측정된 px 높이로 CSS height 트랜지션(콘텐츠는 자연 크기로 위→아래 펼쳐짐, 왜곡 없음). */}
+          {/* cmdk 자체 스크롤 제거. ScrollArea Root 높이를 측정값으로 트랜지션 → 다이얼로그가
+              결과량에 따라 부드럽게 상하 리사이즈. 콘텐츠(contentRef)는 자연 크기 유지(왜곡 없음). */}
           <CommandList className="max-h-none overflow-visible">
-            <div
-              style={{
-                height: contentHeight === 'auto' ? undefined : contentHeight,
-                transition: 'height 300ms ease-out'
-              }}
-              className="overflow-hidden"
-            >
+            {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
+            <ScrollArea style={{ height: contentHeight, transition: 'height 300ms ease-out' }}>
               <div ref={contentRef}>
-                {showEmpty && <CommandEmpty>검색 결과가 없습니다.</CommandEmpty>}
-                <ScrollArea viewportClassName="max-h-[calc(70vh-3rem)]">
-                  {exact.length > 0 && (
-                    <CommandGroup heading="일치">
-                      {exact.map((hit) => (
-                        <ResultItem
-                          key={`e:${hit.type}:${hit.id}`}
-                          hit={hit}
-                          onSelect={handleSelect}
-                        />
-                      ))}
-                    </CommandGroup>
-                  )}
-                  {similar.length > 0 && (
-                    <CommandGroup heading="유사">
-                      {similar.map((hit) => (
-                        <ResultItem
-                          key={`s:${hit.type}:${hit.id}`}
-                          hit={hit}
-                          onSelect={handleSelect}
-                        />
-                      ))}
-                    </CommandGroup>
-                  )}
-                </ScrollArea>
+                {exact.length > 0 && (
+                  <CommandGroup heading="일치">
+                    {exact.map((hit) => (
+                      <ResultItem
+                        key={`e:${hit.type}:${hit.id}`}
+                        hit={hit}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </CommandGroup>
+                )}
+                {similar.length > 0 && (
+                  <CommandGroup heading="유사">
+                    {similar.map((hit) => (
+                      <ResultItem
+                        key={`s:${hit.type}:${hit.id}`}
+                        hit={hit}
+                        onSelect={handleSelect}
+                      />
+                    ))}
+                  </CommandGroup>
+                )}
               </div>
-            </div>
+            </ScrollArea>
           </CommandList>
         </Command>
       </DialogContent>
