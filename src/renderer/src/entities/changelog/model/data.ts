@@ -6,6 +6,23 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.16.0',
+    date: '2026-06-07',
+    changes: [
+      {
+        type: 'improvement',
+        title: '테이블(CSV) 에디터 사용성 개선',
+        description: '테이블 에디터 키보드 조작이 개선되었습니다.'
+      },
+      {
+        type: 'feature',
+        title: '전체 검색',
+        description:
+          'Cmd + Shift + F 또는 사이드바의 "검색"으로 전체 검색 다이얼로그를 열 수 있습니다. 노트·표·PDF·이미지·캔버스·할일을 한 번에 검색하며, 검색어를 포함하는 "일치" 결과와 의미가 비슷한 "유사" 결과로 나눠 보여줍니다. 결과를 클릭하면 해당 항목이 탭으로 열립니다. (노트 편집 중에도 단축키로 바로 열 수 있습니다.)'
+      }
+    ]
+  },
+  {
     version: '1.15.6',
     date: '2026-06-07',
     changes: [
