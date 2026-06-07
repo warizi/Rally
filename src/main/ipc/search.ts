@@ -5,7 +5,7 @@ import { searchService } from '../services/search'
 
 const searchOptionsSchema = z
   .object({
-    types: z.array(z.enum(['note', 'table', 'canvas', 'todo'])).optional(),
+    types: z.array(z.enum(['note', 'table', 'canvas', 'todo', 'pdf', 'image'])).optional(),
     offset: z.number().int().nonnegative().optional(),
     limit: z.number().int().positive().max(100).optional(),
     highlight: z.boolean().optional(),

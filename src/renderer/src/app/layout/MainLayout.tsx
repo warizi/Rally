@@ -30,6 +30,7 @@ import {
 } from '@widgets/keyboard-control'
 import { UpdateChecker } from '../providers/update-checker'
 import { TimerAlarmDialog } from '@/widgets/timer'
+import { GlobalSearchDialog, useGlobalSearchHotkey } from '@/widgets/global-search'
 import { useState } from 'react'
 import {
   DndContext,
@@ -144,6 +145,8 @@ function MainLayout(): React.JSX.Element {
   usePaneNavigation()
   useTabNavigation()
   useSnapshotNavigation()
+  // Cmd/Ctrl+Shift+F → 전체 검색 다이얼로그 (에디터 입력 중에도 동작)
+  useGlobalSearchHotkey()
 
   // 드래그 상태 관리
   const [draggingTabId, setDraggingTabId] = useState<string | null>(null)
@@ -191,6 +194,8 @@ function MainLayout(): React.JSX.Element {
       <UpdateChecker />
       {/* 타이머 알람: 루트 레벨 mount → 어느 탭에서든 발동 */}
       <TimerAlarmDialog />
+      {/* 전체 검색 다이얼로그: 루트 레벨 mount → 단축키/사이드바 어디서든 오픈 */}
+      <GlobalSearchDialog />
       {/* 키보드 조작 오버레이 — 활성 모드일 때만 표시 */}
       <PaneNavOverlay />
       <TabNavOverlay />

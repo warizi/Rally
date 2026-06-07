@@ -27,4 +27,12 @@ describe('KeyboardShortcutsSettings', () => {
     expect(screen.getByText(/ctrl \+ shift 를 누른 상태/)).toBeInTheDocument()
     expect(screen.getByText(/cmd \+ opt 를 누른 상태/)).toBeInTheDocument()
   })
+
+  it('전체 검색(cmd+shift+f) 단축키 노출 — 편집 중에도 동작 안내 포함', () => {
+    render(<KeyboardShortcutsSettings />)
+    expect(screen.getByText('검색')).toBeInTheDocument()
+    expect(screen.getByText('전체 검색')).toBeInTheDocument()
+    expect(screen.getByText(/cmd \+ shift \+ f 를 누르면 전체 검색/)).toBeInTheDocument()
+    expect(screen.getByText(/포커스가 있어도 동작/)).toBeInTheDocument()
+  })
 })

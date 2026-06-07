@@ -1,8 +1,8 @@
 import path from 'path'
-import { and, eq, inArray, isNull } from 'drizzle-orm'
+import { and, eq, inArray, isNull, like, or } from 'drizzle-orm'
 import { NotFoundError, ValidationError } from '../lib/errors'
 import { db, rawSqlite, vecEnabled } from '../db'
-import { notes, csvFiles, canvases, todos } from '../db/schema'
+import { notes, csvFiles, canvases, todos, pdfFiles, imageFiles } from '../db/schema'
 import { workspaceRepository } from '../repositories/workspace'
 import { folderRepository } from '../repositories/folder'
 import { noteService } from './note'
@@ -16,7 +16,8 @@ import type { EmbeddableEntityType } from '../db/schema/embedding'
 
 const log = scoped('search')
 
-export type SearchType = 'note' | 'table' | 'canvas' | 'todo'
+export type SearchType = 'note' | 'table' | 'canvas' | 'todo' | 'pdf' | 'image'
+// pdf/image 는 임베딩(벡터/FTS) 비대상 — 키워드(title+description substring) 전용.
 
 export interface SearchOptions {
   /** 검색 도메인. 미지정 시 ['note'] (기존 search_notes 호환) */
@@ -84,10 +85,21 @@ const RECENCY_HALFLIFE_DAYS = 30
 const SIMILARITY_MIN_COSINE = 0.5
 const SIMILARITY_MAX_DISTANCE = Math.sqrt(2 - 2 * SIMILARITY_MIN_COSINE)
 
-const VALID_TYPES: ReadonlySet<SearchType> = new Set(['note', 'table', 'canvas', 'todo'])
+const VALID_TYPES: ReadonlySet<SearchType> = new Set([
+  'note',
+  'table',
+  'canvas',
+  'todo',
+  'pdf',
+  'image'
+])
 
-// SearchType ↔ 임베딩 엔티티 타입 매핑 (table === csv)
-const SEARCH_TO_ENTITY: Record<SearchType, EmbeddableEntityType> = {
+function zeroCounts(): Record<SearchType, number> {
+  return { note: 0, table: 0, canvas: 0, todo: 0, pdf: 0, image: 0 }
+}
+
+// SearchType ↔ 임베딩 엔티티 타입 매핑 (table === csv). pdf/image 는 임베딩 비대상이라 없음.
+const SEARCH_TO_ENTITY: Partial<Record<SearchType, EmbeddableEntityType>> = {
   note: 'note',
   table: 'csv',
   canvas: 'canvas',
@@ -131,7 +143,7 @@ function emptyResult(
       types: opts.types,
       offset: opts.offset,
       limit: opts.limit,
-      perTypeCounts: { note: 0, table: 0, canvas: 0, todo: 0 }
+      perTypeCounts: zeroCounts()
     }
   }
 }
@@ -378,6 +390,7 @@ function graphExpand(scored: Scored[], entityTypes: Set<EmbeddableEntityType>): 
   const byType = new Map<EmbeddableEntityType, { id: string; score: number }[]>()
   for (const s of seeds) {
     const et = SEARCH_TO_ENTITY[s.ref.type]
+    if (!et) continue // pdf/image 등 임베딩 비대상은 그래프 확장 제외
     const arr = byType.get(et) ?? []
     arr.push({ id: s.ref.id, score: s.score })
     byType.set(et, arr)
@@ -461,7 +474,7 @@ export const searchService = {
 
     // vec 비활성이거나 mode=keyword & FTS도 못 쓰는 상황 → 레거시 substring 폴백
     if (!vecEnabled) {
-      return legacySearch(workspaceId, query, trimmed, { types, offset, limit, highlight })
+      return legacySearch(workspaceId, query, trimmed, { types, offset, limit, highlight, mode })
     }
 
     return hybridSearch(workspaceId, trimmed, query, { types, offset, limit, highlight, mode })
@@ -482,7 +495,12 @@ async function hybridSearch(
   }
 ): Promise<SearchResult> {
   const { types, offset, limit, highlight, mode } = opts
-  const entityTypes = new Set<EmbeddableEntityType>(types.map((t) => SEARCH_TO_ENTITY[t]))
+  // 임베딩 대상 타입만 FTS/벡터 후보로 사용 (pdf/image 는 키워드 전용 — 아래 별도 처리)
+  const entityTypes = new Set<EmbeddableEntityType>()
+  for (const t of types) {
+    const et = SEARCH_TO_ENTITY[t]
+    if (et) entityTypes.add(et)
+  }
 
   const lists: Ref[][] = []
   if (mode === 'keyword' || mode === 'hybrid') {
@@ -512,7 +530,7 @@ async function hybridSearch(
     metaByType.set(t, fetchMetaByType(t, ids, folderMap, workspaceId))
   }
 
-  const perTypeCounts: Record<SearchType, number> = { note: 0, table: 0, canvas: 0, todo: 0 }
+  const perTypeCounts: Record<SearchType, number> = zeroCounts()
   const lowerQ = trimmed.toLowerCase()
   const ranked: { hit: SearchHit; finalScore: number }[] = []
   for (const { ref, score } of scored) {
@@ -550,6 +568,13 @@ async function hybridSearch(
   ranked.sort((a, b) => b.finalScore - a.finalScore)
   const hits = ranked.map((r) => r.hit)
 
+  // pdf/image 는 임베딩 비대상 → 키워드(substring) 경로로 별도 검색. semantic 모드에는 미포함.
+  if (mode !== 'semantic') {
+    const fileHits = keywordFileHits(workspaceId, trimmed, types, highlight, folderMap)
+    for (const h of fileHits) perTypeCounts[h.type]++
+    hits.push(...fileHits)
+  }
+
   const total = hits.length
   const sliced = hits.slice(offset, offset + limit)
   return {
@@ -562,19 +587,123 @@ async function hybridSearch(
   }
 }
 
+/** pdf/image 키워드(title+description substring) 검색. 임베딩 비대상이라 FTS/벡터 경로 밖에서 직접 조회. */
+function keywordFileHits(
+  workspaceId: string,
+  trimmed: string,
+  types: SearchType[],
+  highlight: boolean,
+  folderMap: Map<string, string>
+): SearchHit[] {
+  const hits: SearchHit[] = []
+  const pat = `%${trimmed}%`
+  const lowerQ = trimmed.toLowerCase()
+
+  const pushRows = (
+    type: 'pdf' | 'image',
+    rows: {
+      id: string
+      title: string
+      description: string
+      folderId: string | null
+      relativePath: string
+      updatedAt: Date
+    }[]
+  ): void => {
+    for (const r of rows) {
+      const matchType: SearchHit['matchType'] = r.title.toLowerCase().includes(lowerQ)
+        ? 'title'
+        : 'description'
+      const folderPath = r.folderId
+        ? (folderMap.get(r.folderId) ?? extractFolderPath(r.relativePath))
+        : extractFolderPath(r.relativePath)
+      const hit: SearchHit = {
+        type,
+        id: r.id,
+        title: r.title,
+        matchType,
+        folderId: r.folderId,
+        folderPath,
+        updatedAt: r.updatedAt.toISOString(),
+        preview: r.description || null
+      }
+      if (highlight)
+        hit.excerpt = buildExcerpt(r.description, trimmed) ?? buildExcerpt(r.title, trimmed)
+      hits.push(hit)
+    }
+  }
+
+  if (types.includes('pdf')) {
+    pushRows(
+      'pdf',
+      db
+        .select({
+          id: pdfFiles.id,
+          title: pdfFiles.title,
+          description: pdfFiles.description,
+          folderId: pdfFiles.folderId,
+          relativePath: pdfFiles.relativePath,
+          updatedAt: pdfFiles.updatedAt
+        })
+        .from(pdfFiles)
+        .where(
+          and(
+            eq(pdfFiles.workspaceId, workspaceId),
+            isNull(pdfFiles.deletedAt),
+            or(like(pdfFiles.title, pat), like(pdfFiles.description, pat))
+          )
+        )
+        .all()
+    )
+  }
+  if (types.includes('image')) {
+    pushRows(
+      'image',
+      db
+        .select({
+          id: imageFiles.id,
+          title: imageFiles.title,
+          description: imageFiles.description,
+          folderId: imageFiles.folderId,
+          relativePath: imageFiles.relativePath,
+          updatedAt: imageFiles.updatedAt
+        })
+        .from(imageFiles)
+        .where(
+          and(
+            eq(imageFiles.workspaceId, workspaceId),
+            isNull(imageFiles.deletedAt),
+            or(like(imageFiles.title, pat), like(imageFiles.description, pat))
+          )
+        )
+        .all()
+    )
+  }
+  return hits
+}
+
 // ── 레거시 substring 검색 (vec 비활성 폴백, 기존 동작 유지) ─────────
 async function legacySearch(
   workspaceId: string,
   rawQuery: string,
   trimmed: string,
-  opts: { types: SearchType[]; offset: number; limit: number; highlight: boolean }
+  opts: {
+    types: SearchType[]
+    offset: number
+    limit: number
+    highlight: boolean
+    mode: 'semantic' | 'keyword' | 'hybrid'
+  }
 ): Promise<SearchResult> {
-  const { types, offset, limit, highlight } = opts
+  const { types, offset, limit, highlight, mode } = opts
+  // vec 비활성 상태에서 semantic(벡터) 검색은 불가 → 빈 결과 (키워드 결과와 섞이지 않게)
+  if (mode === 'semantic') return emptyResult(rawQuery, { types, offset, limit })
+
   const folders = folderRepository.findByWorkspaceId(workspaceId)
   const folderMap = new Map(folders.map((f) => [f.id, f.relativePath]))
 
   const hits: SearchHit[] = []
-  const perTypeCounts: Record<SearchType, number> = { note: 0, table: 0, canvas: 0, todo: 0 }
+  const perTypeCounts: Record<SearchType, number> = zeroCounts()
 
   if (types.includes('note')) {
     const found = await noteService.search(workspaceId, trimmed)
@@ -660,6 +789,13 @@ async function legacySearch(
       }
       hits.push(hit)
     }
+  }
+
+  // pdf/image — 키워드(title+description substring)
+  const fileHits = keywordFileHits(workspaceId, trimmed, types, highlight, folderMap)
+  for (const h of fileHits) {
+    perTypeCounts[h.type]++
+    hits.push(h)
   }
 
   hits.sort((a, b) => {

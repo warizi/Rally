@@ -1,6 +1,6 @@
 import type { IpcResponse } from './common'
 
-export type SearchType = 'note' | 'table' | 'canvas' | 'todo'
+export type SearchType = 'note' | 'table' | 'canvas' | 'todo' | 'pdf' | 'image'
 
 export interface SearchHit {
   type: SearchType

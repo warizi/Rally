@@ -38,6 +38,17 @@ function Combo({ keys, trigger }: { keys: string[]; trigger?: string }): JSX.Ele
 
 const GROUPS: ShortcutGroup[] = [
   {
+    title: '검색',
+    rows: [
+      {
+        label: '전체 검색',
+        keys: <Combo keys={['⌘', '⇧']} trigger="F" />,
+        description:
+          'cmd + shift + f 를 누르면 전체 검색 다이얼로그가 열립니다. 노트 · 표 · PDF · 이미지 · 캔버스 · 할일을 한 번에 검색하고, 결과를 클릭하면 해당 탭이 열립니다. 입력 필드 / 편집기에 포커스가 있어도 동작합니다.'
+      }
+    ]
+  },
+  {
     title: '탭 레이아웃',
     rows: [
       {
