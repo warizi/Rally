@@ -1,5 +1,4 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
-import { motion } from 'framer-motion'
 import { Dialog, DialogContent, DialogTitle } from '@shared/ui/dialog'
 import {
   Command,
@@ -111,11 +110,13 @@ export function GlobalSearchDialog(): React.JSX.Element {
             placeholder="전체 검색 (노트 · 표 · PDF · 이미지 · 캔버스 · 할일)"
           />
           {/* cmdk 자체 스크롤 제거 → 내부 ScrollArea(viewport max-h)가 스크롤.
-              motion.div 는 측정된 콘텐츠 height 만 애니메이션(콘텐츠는 위→아래로 펼쳐짐, 중앙 확산 없음). */}
+              바깥 div 는 측정된 px 높이로 CSS height 트랜지션(콘텐츠는 자연 크기로 위→아래 펼쳐짐, 왜곡 없음). */}
           <CommandList className="max-h-none overflow-visible">
-            <motion.div
-              animate={{ height: contentHeight }}
-              transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
+            <div
+              style={{
+                height: contentHeight === 'auto' ? undefined : contentHeight,
+                transition: 'height 300ms ease-out'
+              }}
               className="overflow-hidden"
             >
               <div ref={contentRef}>
@@ -145,7 +146,7 @@ export function GlobalSearchDialog(): React.JSX.Element {
                   )}
                 </ScrollArea>
               </div>
-            </motion.div>
+            </div>
           </CommandList>
         </Command>
       </DialogContent>

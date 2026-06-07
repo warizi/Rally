@@ -54,7 +54,7 @@ export interface GlobalSearchResult {
 
 /**
  * 전체 검색 — keyword(6도메인)·semantic(임베딩 4도메인) 2회 호출로 일치/유사 그룹 분리.
- * 유사 그룹은 일치 그룹(type+id)과 중복 제거. 상한 일치 50 / 유사 20.
+ * 유사 그룹은 일치 그룹(type+id)과 중복 제거. 상한 일치 10 / 유사 10.
  */
 export function useGlobalSearch(
   workspaceId: string | null | undefined,
