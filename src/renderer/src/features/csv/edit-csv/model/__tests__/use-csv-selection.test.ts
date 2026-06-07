@@ -98,10 +98,11 @@ describe('handleCellMouseDown', () => {
     expect(result.current.editingCell).toBeNull()
   })
 
-  it('9 — 클릭 시 scrollRef.focus() 호출', () => {
+  it('9 — 클릭 시 scrollRef.focus() 안 함 (포커스는 floating editor 가 담당)', () => {
     const { result } = setup()
     act(() => result.current.handleCellMouseDown(0, 0, mouseEvent()))
-    expect(mockScrollRef.current.focus).toHaveBeenCalled()
+    // body 셀 클릭 시 grid 로 포커스를 뺏지 않는다(이미 active 한 셀 재클릭 시 IME 깨짐 방지)
+    expect(mockScrollRef.current.focus).not.toHaveBeenCalled()
   })
 })
 
@@ -190,12 +191,13 @@ describe('편집 모드', () => {
     expect(result.current.editingCell).toBeNull()
   })
 
-  it('18 — 편집 종료 후 scrollRef.focus() 호출', () => {
+  it('18 — 편집 종료 시 scrollRef.focus() 안 함 (포커스는 floating editor/CsvTable 이 담당)', () => {
     const { result } = setup()
     act(() => result.current.handleCellStartEdit(1, 1))
     vi.clearAllMocks()
     act(() => result.current.handleStopEdit())
-    expect(mockScrollRef.current.focus).toHaveBeenCalled()
+    // body 셀 floating editor 포커스를 뺏지 않도록 hook 은 회수하지 않는다
+    expect(mockScrollRef.current.focus).not.toHaveBeenCalled()
   })
 })
 
