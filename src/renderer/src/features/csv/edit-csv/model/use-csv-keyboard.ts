@@ -174,6 +174,8 @@ export function useCsvKeyboard(
             setLockedActive(nextInRange(base, selectionRange, e.shiftKey ? -1 : 1, 'row'))
             break
           }
+          // Tab→Enter 복귀용 시작 열 기록 (편집 중 Tab=handleCommitAndMove 와 동일하게 nav Tab 도 기록)
+          if (tabStartColRef.current === null && row >= 0) tabStartColRef.current = col
           if (e.shiftKey) {
             if (col > 0) {
               setSelection({ anchor: { row, col: col - 1 }, focus: { row, col: col - 1 } })

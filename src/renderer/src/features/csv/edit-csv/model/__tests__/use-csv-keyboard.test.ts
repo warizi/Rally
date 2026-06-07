@@ -360,6 +360,18 @@ describe('특수 키', () => {
     })
   })
 
+  it('18c — Enter (tabStartCol 기록됨) → 그 열의 다음 행으로 복귀 (Tab→Enter)', () => {
+    const { result, setSelection } = setup({
+      selection: { anchor: { row: 1, col: 3 }, focus: { row: 1, col: 3 } },
+      tabStartCol: 0
+    })
+    result.current.handleKeyDown(createKeyEvent('Enter'))
+    expect(setSelection).toHaveBeenCalledWith({
+      anchor: { row: 2, col: 0 },
+      focus: { row: 2, col: 0 }
+    })
+  })
+
   it('19 — Enter (범위 선택) → 편집 진입 없이 범위 내 순환(setLockedActive)', () => {
     const { result, beginEdit, setLockedActive } = setup({
       isSingleSelection: false,
@@ -407,6 +419,14 @@ describe('Tab 네비게이션', () => {
       anchor: { row: 0, col: 1 },
       focus: { row: 0, col: 1 }
     })
+  })
+
+  it('22b — nav Tab → tabStartCol 기록 (Tab→Enter 복귀용)', () => {
+    const { result, tabStartColRef } = setup({
+      selection: { anchor: { row: 1, col: 2 }, focus: { row: 1, col: 2 } }
+    })
+    result.current.handleKeyDown(createKeyEvent('Tab'))
+    expect(tabStartColRef.current).toBe(2)
   })
 
   it('23 — Tab (마지막 열) → 다음 행 첫 열 이동', () => {
