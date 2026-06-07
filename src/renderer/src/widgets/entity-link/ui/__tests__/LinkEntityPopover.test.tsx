@@ -297,6 +297,21 @@ describe('LinkEntityPopover', () => {
     expect(mocks.linkMutate).toHaveBeenCalledTimes(1)
   })
 
+  it('IME 조합 중 ArrowDown → list 모드 전환 안 함 (input 포커스 유지 → 글자 복제 방지)', () => {
+    mocks.todos = [{ id: 't1', title: 'First Item', parentId: null }]
+    render(
+      <LinkEntityPopover entityType="note" entityId="n1" workspaceId="ws" open>
+        <button>trigger</button>
+      </LinkEntityPopover>
+    )
+    const input = screen.getByPlaceholderText(/검색/) as HTMLInputElement
+    input.focus()
+    expect(document.activeElement).toBe(input)
+    // 조합 중 방향키 → 가로채지 않음 → input 이 계속 포커스 유지
+    fireEvent.keyDown(input, { key: 'ArrowDown', isComposing: true })
+    expect(document.activeElement).toBe(input)
+  })
+
   it('input ArrowDown + filtered.length=0 → 아무 일도 일어나지 않음 (smoke)', () => {
     mocks.todos = []
     render(
