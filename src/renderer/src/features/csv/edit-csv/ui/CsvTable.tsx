@@ -18,11 +18,13 @@ import {
   DEFAULT_COL_WIDTH,
   type CellPos
 } from '../model/types'
+import { computeEnterMove } from '../model/nav'
 import { useCsvSelection } from '../model/use-csv-selection'
 import { useCsvClipboard } from '../model/use-csv-clipboard'
 import { useCsvKeyboard } from '../model/use-csv-keyboard'
 import { useCsvColumnResize } from '../model/use-csv-column-resize'
 import { EditableCell } from './EditableCell'
+import { CsvCellEditor } from './CsvCellEditor'
 import { EditableColumnHeader } from './EditableColumnHeader'
 
 interface Props {
@@ -67,6 +69,8 @@ export function CsvTable({
   const scrollRef = useRef<HTMLDivElement>(null)
   const headerRef = useRef<HTMLDivElement>(null)
   const rowNumRef = useRef<HTMLDivElement>(null)
+  // Tab→Enter 복귀용: 직전 Tab 입력 시작 열. Arrow/마우스/Escape 시 null 로 리셋.
+  const tabStartColRef = useRef<number | null>(null)
 
   // --- Column width ---
   const getColWidth = useCallback(
@@ -75,7 +79,7 @@ export function CsvTable({
   )
 
   // --- Virtualizers ---
-  // eslint-disable-next-line react-hooks/incompatible-library
+
   const rowVirtualizer = useVirtualizer({
     count: data.length,
     getScrollElement: () => scrollRef.current,
@@ -117,10 +121,13 @@ export function CsvTable({
     sel.isSingleSelection,
     sel.editingCell,
     sel.setSelection,
-    sel.setEditingCell,
+    sel.beginEdit,
     clipboard,
     data.length,
     headers.length,
+    sel.lockedActive,
+    sel.setLockedActive,
+    tabStartColRef,
     onUndo,
     onRedo
   )
@@ -132,16 +139,20 @@ export function CsvTable({
     sel.setSelection({ anchor: focusCell, focus: focusCell })
   }, [focusCell]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // --- Commit-and-move 콜백 (EditableCell / EditableColumnHeader 에서 Tab / Shift+Enter 시 호출) ---
-  // 헤더 row = -1, 데이터 row 0..dataLength-1 통합 navigation. Tab 시 열 끝 도달하면 다음 행으로 wrap.
+  // --- Commit-and-move 콜백 ---
+  // source 'tab'  : 열 끝 도달 시 다음/이전 행 wrap + 입력 시작 열 기록 + 마지막행 자동추가
+  // source 'enter': Tab→Enter 복귀(tabStartCol) 적용 후 한 칸 아래 + 마지막행 자동추가
+  // source 'arrow': 방향키 부호 그대로 직접 이동(wrap/자동추가 없음, tab 시퀀스 종료)
   const handleCommitAndMove = useCallback(
-    (dRow: number, dCol: number) => {
+    (dRow: number, dCol: number, source: 'tab' | 'enter' | 'arrow' = 'tab') => {
       if (!sel.selection) return
       const { row, col } = sel.selection.focus
-      let newRow = row
-      let newCol = col
-      if (dCol !== 0) {
-        newCol = col + dCol
+
+      if (source === 'tab') {
+        // 입력 시작 열 기록 (헤더는 제외)
+        if (tabStartColRef.current === null && row >= 0) tabStartColRef.current = col
+        let newCol = col + dCol
+        let newRow = row
         if (newCol >= headers.length) {
           newCol = 0
           newRow = row + 1
@@ -149,16 +160,40 @@ export function CsvTable({
           newCol = headers.length - 1
           newRow = row - 1
         }
+        let maxRow = data.length - 1
+        if (newRow > maxRow && row >= 0) {
+          onAddRowAt(data.length)
+          maxRow = data.length
+        }
+        newRow = Math.max(-1, Math.min(maxRow, newRow))
+        newCol = Math.max(0, Math.min(headers.length - 1, newCol))
+        const next = { row: newRow, col: newCol }
+        sel.setSelection({ anchor: next, focus: next })
+        return
       }
-      if (dRow !== 0) {
-        newRow = row + dRow
+
+      if (source === 'enter') {
+        const target = computeEnterMove({ row, col }, tabStartColRef.current)
+        let maxRow = data.length - 1
+        if (target.row > maxRow && row >= 0) {
+          onAddRowAt(data.length)
+          maxRow = data.length
+        }
+        const newRow = Math.max(-1, Math.min(maxRow, target.row))
+        const newCol = Math.max(0, Math.min(headers.length - 1, target.col))
+        const next = { row: newRow, col: newCol }
+        sel.setSelection({ anchor: next, focus: next })
+        return
       }
-      newRow = Math.max(-1, Math.min(data.length - 1, newRow))
-      newCol = Math.max(0, Math.min(headers.length - 1, newCol))
+
+      // source === 'arrow' → 방향 그대로 이동, tab 시퀀스 종료
+      tabStartColRef.current = null
+      const newRow = Math.max(-1, Math.min(data.length - 1, row + dRow))
+      const newCol = Math.max(0, Math.min(headers.length - 1, col + dCol))
       const next = { row: newRow, col: newCol }
       sel.setSelection({ anchor: next, focus: next })
     },
-    [sel, headers.length, data.length]
+    [sel, headers.length, data.length, onAddRowAt]
   )
 
   // --- 헤더 셀 mousedown: selection 만 (편집 모드 진입은 더블 클릭 / Enter) ---
@@ -168,10 +203,12 @@ export function CsvTable({
   const handleHeaderMouseDown = useCallback(
     (ci: number, e: React.MouseEvent) => {
       if (e.button !== 0) return
+      // preventDefault: 브라우저 기본 focus(scrollRef)를 막아 헤더 floating editor 가 self-focus 하도록.
       e.preventDefault()
+      tabStartColRef.current = null
+      sel.setLockedActive(null)
       sel.setSelection({ anchor: { row: -1, col: ci }, focus: { row: -1, col: ci } })
       sel.setEditingCell(null)
-      scrollRef.current?.focus()
     },
     [sel]
   )
@@ -185,6 +222,31 @@ export function CsvTable({
   )
 
   // --- Computed ---
+  // active 셀 = 범위 순환 중이면 lockedActive, 아니면 selection.focus
+  const activeCell = sel.lockedActive ?? sel.selection?.focus ?? null
+  // 단일 선택된 body 셀이면 floating editor 가 그 위에 뜸 (헤더/범위는 제외)
+  const editorCell = sel.isSingleSelection && activeCell && activeCell.row >= 0 ? activeCell : null
+  // 단일 선택된 헤더 셀(row = -1)이면 헤더 영역에 floating editor 가 뜸
+  const headerEditorCol =
+    sel.isSingleSelection && activeCell && activeCell.row === -1 ? activeCell.col : null
+
+  // col 의 left offset (가변 폭 합산)
+  const getColLeft = useCallback(
+    (col: number) => {
+      let x = 0
+      for (let i = 0; i < col; i++) x += getColWidth(i)
+      return x
+    },
+    [getColWidth]
+  )
+
+  // floating editor(body/header) 가 없을 때(범위/none)만 grid 에 focus 회수
+  useEffect(() => {
+    if (sel.editingCell) return
+    if (sel.selection && !editorCell && headerEditorCol === null) scrollRef.current?.focus()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sel.selection, sel.editingCell, editorCell?.row, editorCell?.col, headerEditorCol])
+
   const colTotalSize = colVirtualizer.getTotalSize()
   const rowTotalSize = rowVirtualizer.getTotalSize()
   const virtualRows = rowVirtualizer.getVirtualItems()
@@ -215,18 +277,19 @@ export function CsvTable({
         </div>
         {/* Scrollable column headers */}
         <div ref={headerRef} className="flex-1 overflow-hidden">
+          {/* onKeyDown/onBlur: 헤더 floating editor 의 네비/blur 를 body 와 동일하게 처리 */}
           <div
             style={{
               width: colTotalSize + ADD_COL_WIDTH,
               height: HEADER_HEIGHT,
               position: 'relative'
             }}
+            onKeyDown={handleKeyDown}
+            onBlur={sel.handleBlur}
           >
             {virtualCols.map((vc) => {
               const ci = vc.index
-              const isHeaderFocus =
-                sel.selection?.focus.row === -1 && sel.selection?.focus.col === ci
-              const isHeaderEditing = sel.editingCell?.row === -1 && sel.editingCell?.col === ci
+              const isHeaderFocus = activeCell?.row === -1 && activeCell?.col === ci
               return (
                 <div
                   key={`h_${ci}`}
@@ -243,12 +306,8 @@ export function CsvTable({
                         <EditableColumnHeader
                           name={headers[ci]}
                           colIndex={ci}
-                          onRename={onRenameColumn}
                           onRemove={onRemoveColumn}
-                          isEditing={isHeaderEditing}
                           onStartEdit={() => handleHeaderStartEdit(ci)}
-                          onStopEdit={sel.handleStopEdit}
-                          onCommitAndMove={handleCommitAndMove}
                         />
                       </div>
                     </ContextMenuTrigger>
@@ -285,6 +344,23 @@ export function CsvTable({
                 <Plus className="size-4" />
               </button>
             </div>
+            {/* active(단일) 헤더 셀 위 floating editor — body 와 동일하게 IME/포커스 유지 */}
+            {headerEditorCol !== null && (
+              <CsvCellEditor
+                cellKey={`h_${headerEditorCol}`}
+                top={0}
+                left={getColLeft(headerEditorCol)}
+                width={getColWidth(headerEditorCol)}
+                height={HEADER_HEIGHT}
+                value={headers[headerEditorCol] ?? ''}
+                onChange={(v) => onRenameColumn(headerEditorCol, v)}
+                isEditing={sel.editingCell?.row === -1 && sel.editingCell?.col === headerEditorCol}
+                initialValue={sel.editSeed}
+                onStartEditing={() => sel.setEditingCell({ row: -1, col: headerEditorCol })}
+                onStopEdit={sel.handleStopEdit}
+                onCommitAndMove={handleCommitAndMove}
+              />
+            )}
           </div>
         </div>
       </div>
@@ -356,9 +432,7 @@ export function CsvTable({
                   virtualCols.map((vc) => {
                     const ri = vr.index
                     const ci = vc.index
-                    const isEditing = sel.editingCell?.row === ri && sel.editingCell?.col === ci
-                    const isFocus =
-                      sel.selection?.focus.row === ri && sel.selection?.focus.col === ci
+                    const isFocus = activeCell?.row === ri && activeCell?.col === ci
                     const isSelected =
                       sel.selectionRange != null &&
                       ri >= sel.selectionRange.startRow &&
@@ -388,7 +462,12 @@ export function CsvTable({
                           height: vr.size
                         }}
                         onMouseDown={(e) => {
+                          // 브라우저 기본 mousedown 이 focusable 조상(scrollRef)으로 포커스를 가져가
+                          // floating editor 의 self-focus 를 이겨 한글 IME 가 깨지는 것 방지.
+                          // (active 셀 재클릭은 editor input=별도 형제라 이 핸들러를 안 타므로 영향 없음)
+                          if (e.button === 0) e.preventDefault()
                           onSearchClear?.()
+                          tabStartColRef.current = null
                           sel.handleCellMouseDown(ri, ci, e)
                         }}
                         onMouseEnter={() => sel.handleCellMouseEnter(ri, ci)}
@@ -406,16 +485,32 @@ export function CsvTable({
                           sel.setEditingCell(null)
                         }}
                       >
-                        <EditableCell
-                          value={data[ri]?.[ci] ?? ''}
-                          onChange={(v) => onUpdateCell(ri, ci, v)}
-                          isEditing={isEditing}
-                          onStopEdit={sel.handleStopEdit}
-                          onCommitAndMove={handleCommitAndMove}
-                        />
+                        <EditableCell value={data[ri]?.[ci] ?? ''} />
                       </div>
                     )
                   })
+                )}
+                {/* active(단일 body) 셀 위 floating editor — 항상 마운트되어 IME/포커스 유지 */}
+                {editorCell && (
+                  <CsvCellEditor
+                    cellKey={`${editorCell.row}_${editorCell.col}`}
+                    top={editorCell.row * ROW_HEIGHT}
+                    left={getColLeft(editorCell.col)}
+                    width={getColWidth(editorCell.col)}
+                    height={ROW_HEIGHT}
+                    value={data[editorCell.row]?.[editorCell.col] ?? ''}
+                    onChange={(v) => onUpdateCell(editorCell.row, editorCell.col, v)}
+                    isEditing={
+                      sel.editingCell?.row === editorCell.row &&
+                      sel.editingCell?.col === editorCell.col
+                    }
+                    initialValue={sel.editSeed}
+                    onStartEditing={() =>
+                      sel.setEditingCell({ row: editorCell.row, col: editorCell.col })
+                    }
+                    onStopEdit={sel.handleStopEdit}
+                    onCommitAndMove={handleCommitAndMove}
+                  />
                 )}
               </div>
             </div>

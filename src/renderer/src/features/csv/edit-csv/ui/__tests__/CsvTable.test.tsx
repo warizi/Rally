@@ -58,8 +58,12 @@ const selectionMocks = vi.hoisted(() => ({
   },
   isSingleSelection: true,
   editingCell: null as null | { row: number; col: number },
+  editSeed: null as string | null,
+  lockedActive: null as null | { row: number; col: number },
+  setLockedActive: vi.fn(),
   setSelection: vi.fn(),
   setEditingCell: vi.fn(),
+  beginEdit: vi.fn(),
   handleStopEdit: vi.fn(),
   handleBlur: vi.fn(),
   handleMouseUp: vi.fn(),
@@ -92,6 +96,10 @@ vi.mock('../../model/use-csv-column-resize', () => ({
 
 vi.mock('../EditableCell', () => ({
   EditableCell: () => <div data-testid="editable-cell" />
+}))
+
+vi.mock('../CsvCellEditor', () => ({
+  CsvCellEditor: () => <input data-testid="cell-editor" />
 }))
 
 vi.mock('../EditableColumnHeader', () => ({

@@ -1,6 +1,7 @@
 import { useCallback } from 'react'
 import type { CellPos, Selection, SelectionRange } from './types'
 import type { UseCsvClipboardReturn } from './use-csv-clipboard'
+import { nextInRange, computeEnterMove } from './nav'
 
 export interface UseCsvKeyboardReturn {
   handleKeyDown: (e: React.KeyboardEvent<HTMLDivElement>) => void
@@ -12,10 +13,13 @@ export function useCsvKeyboard(
   isSingleSelection: boolean,
   editingCell: CellPos | null,
   setSelection: React.Dispatch<React.SetStateAction<Selection | null>>,
-  setEditingCell: React.Dispatch<React.SetStateAction<CellPos | null>>,
+  beginEdit: (row: number, col: number, seed?: string | null) => void,
   clipboard: UseCsvClipboardReturn,
   dataLength: number,
   headersLength: number,
+  lockedActive: CellPos | null,
+  setLockedActive: React.Dispatch<React.SetStateAction<CellPos | null>>,
+  tabStartColRef: React.MutableRefObject<number | null>,
   onUndo: () => void,
   onRedo: () => void
 ): UseCsvKeyboardReturn {
@@ -57,9 +61,27 @@ export function useCsvKeyboard(
         return
       }
 
+      // Type-to-edit: 단일 선택 + printable 문자 → 즉시 편집 진입 + 기존값 교체.
+      // body 셀은 floating CsvCellEditor 가 focus 를 가지고 printable 을 직접 처리(stopPropagation)하므로
+      // 이 경로는 사실상 헤더(scrollRef focus) + fallback 용. 한글 IME 는 각 input 에서 직접 조합된다.
+      if (!mod && !e.altKey && e.key.length === 1 && isSingleSelection) {
+        e.preventDefault()
+        beginEdit(row, col, e.key)
+        return
+      }
+
+      // F2: 내용 유지 편집 진입 (type-to-edit 의 교체와 구분)
+      if (e.key === 'F2') {
+        e.preventDefault()
+        if (isSingleSelection) beginEdit(row, col, null)
+        return
+      }
+
       switch (e.key) {
         case 'ArrowUp': {
           e.preventDefault()
+          tabStartColRef.current = null
+          setLockedActive(null)
           // row = -1 → 헤더. 더 위로는 못 감.
           const newRow = Math.max(-1, row - 1)
           if (e.shiftKey) {
@@ -73,6 +95,8 @@ export function useCsvKeyboard(
         }
         case 'ArrowDown': {
           e.preventDefault()
+          tabStartColRef.current = null
+          setLockedActive(null)
           const newRow = Math.min(dataLength - 1, row + 1)
           if (e.shiftKey) {
             setSelection((prev) =>
@@ -85,6 +109,8 @@ export function useCsvKeyboard(
         }
         case 'ArrowLeft': {
           e.preventDefault()
+          tabStartColRef.current = null
+          setLockedActive(null)
           const newCol = Math.max(0, col - 1)
           if (e.shiftKey) {
             setSelection((prev) =>
@@ -97,6 +123,8 @@ export function useCsvKeyboard(
         }
         case 'ArrowRight': {
           e.preventDefault()
+          tabStartColRef.current = null
+          setLockedActive(null)
           const newCol = Math.min(headersLength - 1, col + 1)
           if (e.shiftKey) {
             setSelection((prev) =>
@@ -107,21 +135,28 @@ export function useCsvKeyboard(
           }
           break
         }
-        case 'Enter':
+        case 'Enter': {
           e.preventDefault()
-          // Shift+Enter → 한 행 아래로 selection 이동 (편집 진입 X).
-          // 헤더(row=-1) 에서는 row+1 = 0 → 첫 데이터 행, 바디 셀은 그 다음 행.
-          if (e.shiftKey) {
-            const newRow = Math.min(dataLength - 1, row + 1)
-            if (newRow !== row) {
-              setSelection({ anchor: { row: newRow, col }, focus: { row: newRow, col } })
-            }
+          // 범위 선택 → 편집 없이 범위 내 순환(열 우선). Shift = 역방향.
+          if (!isSingleSelection && selectionRange) {
+            const base = lockedActive ?? selection.focus
+            setLockedActive(nextInRange(base, selectionRange, e.shiftKey ? -1 : 1, 'col'))
             break
           }
-          if (isSingleSelection) setEditingCell({ row, col })
+          // 단일 선택(비편집) → 아래 셀로 이동 (엑셀식, 편집 진입 X). Tab→Enter 복귀 적용.
+          const target = computeEnterMove(selection.focus, tabStartColRef.current)
+          const newRow = Math.max(-1, Math.min(dataLength - 1, target.row))
+          const newCol = Math.max(0, Math.min(headersLength - 1, target.col))
+          setSelection({
+            anchor: { row: newRow, col: newCol },
+            focus: { row: newRow, col: newCol }
+          })
           break
+        }
         case 'Escape':
           e.preventDefault()
+          tabStartColRef.current = null
+          setLockedActive(null)
           setSelection(null)
           break
         case 'Backspace':
@@ -133,6 +168,14 @@ export function useCsvKeyboard(
         }
         case 'Tab': {
           e.preventDefault()
+          // 범위 선택 → 범위 내 순환(행 우선). Shift = 역방향.
+          if (!isSingleSelection && selectionRange) {
+            const base = lockedActive ?? selection.focus
+            setLockedActive(nextInRange(base, selectionRange, e.shiftKey ? -1 : 1, 'row'))
+            break
+          }
+          // Tab→Enter 복귀용 시작 열 기록 (편집 중 Tab=handleCommitAndMove 와 동일하게 nav Tab 도 기록)
+          if (tabStartColRef.current === null && row >= 0) tabStartColRef.current = col
           if (e.shiftKey) {
             if (col > 0) {
               setSelection({ anchor: { row, col: col - 1 }, focus: { row, col: col - 1 } })
@@ -158,11 +201,14 @@ export function useCsvKeyboard(
       editingCell,
       selectionRange,
       isSingleSelection,
+      beginEdit,
       clipboard,
       dataLength,
       headersLength,
+      lockedActive,
+      setLockedActive,
+      tabStartColRef,
       setSelection,
-      setEditingCell,
       onUndo,
       onRedo
     ]
