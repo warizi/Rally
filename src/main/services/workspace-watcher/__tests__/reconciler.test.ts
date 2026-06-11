@@ -207,4 +207,66 @@ describe('reconcileFileType', () => {
       expect.arrayContaining([expect.objectContaining({ folderId: 'fold-aabbcc' })])
     )
   })
+
+  // ── 특성 테스트 확장 (파일시스템 보완 0A — 계약 C2 관련) ──────────
+
+  it('DB 에 이미 있는 path 는 insert 후보에서 제외 (기존 레코드·ID 보존)', async () => {
+    const cfg = makeConfig()
+    vi.mocked(cfg.readFilesAsync).mockResolvedValue([
+      { relativePath: 'kept.md', name: 'kept.md' },
+      { relativePath: 'fresh.md', name: 'fresh.md' }
+    ])
+    vi.mocked(cfg.repository.findByWorkspaceId).mockReturnValue([
+      { id: 'note-kept', relativePath: 'kept.md', folderId: null }
+    ])
+
+    await reconcileFileType('ws-aabbcc12', '/ws', cfg)
+
+    const inserted = vi.mocked(cfg.repository.createMany).mock.calls[0][0] as Array<{
+      relativePath: string
+    }>
+    expect(inserted.map((r) => r.relativePath)).toEqual(['fresh.md'])
+    // FS 에도 있는 kept.md 는 orphan 으로 분류되지 않는다
+    expect(cleanupOrphansMock).toHaveBeenCalledWith('note', [], expect.any(Function))
+  })
+})
+
+// ── 특성 테스트 확장: fullReconciliation (snapshot 없음 경로) ──────
+
+describe('fullReconciliation (snapshot 없음 경로) — 폴더 동기화 계약', () => {
+  it('FS 폴더 중 DB 에 없는 것만 createMany, deleteOrphans 에는 FS 전체 경로 전달', async () => {
+    existsSyncMock.mockReturnValue(false)
+    readDirAsyncMock.mockResolvedValue([
+      { relativePath: 'kept', name: 'kept' },
+      { relativePath: 'kept/new-sub', name: 'new-sub' }
+    ])
+    folderRepoMocks.findByWorkspaceId.mockReturnValue([
+      { id: 'fold-kept', relativePath: 'kept' }
+    ])
+
+    await syncOfflineChanges('ws-aabbcc12', '/ws/path')
+
+    const inserted = folderRepoMocks.createMany.mock.calls[0][0] as Array<{
+      relativePath: string
+    }>
+    expect(inserted.map((f) => f.relativePath)).toEqual(['kept/new-sub'])
+    expect(folderRepoMocks.deleteOrphans).toHaveBeenCalledWith('ws-aabbcc12', [
+      'kept',
+      'kept/new-sub'
+    ])
+  })
+
+  it('getEventsSince 성공 경로에서는 폴더 reconcile 이 호출되지 않는다 (현 동작 — R-03, P1 에서 개정 예정)', async () => {
+    existsSyncMock.mockReturnValue(true)
+    getEventsSinceMock.mockResolvedValue([])
+    applyEventsMock.mockResolvedValue(undefined)
+    writeSnapshotMock.mockResolvedValue(undefined)
+
+    await syncOfflineChanges('ws-aabbcc12', '/ws/path')
+
+    // 주의: 이 동작은 버그(R-03)의 근원이며 P1 에서 "매 기동 폴더 reconcile" 로
+    // 의도적으로 변경된다. 그때 이 테스트는 기대값을 갱신해야 한다.
+    expect(readDirAsyncMock).not.toHaveBeenCalled()
+    expect(folderRepoMocks.createMany).not.toHaveBeenCalled()
+  })
 })
