@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.16.1',
+    date: '2026-06-11',
+    changes: [
+      {
+        type: 'improvement',
+        title: '파일 탐색기 안정성 개선',
+        description:
+          '파일 탐색기에서 대량의 파일을 이동하거나 삭제할 때 발생하던 간헐적인 오류가 수정되었습니다. 이제 많은 수의 파일과 폴더를 다룰 때도 안정적으로 작동합니다.'
+      }
+    ]
+  },
+  {
     version: '1.16.0',
     date: '2026-06-07',
     changes: [
