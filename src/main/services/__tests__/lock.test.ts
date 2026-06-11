@@ -86,6 +86,8 @@ const LOCKED_CSV = {
   createdById: null,
   updatedBy: 'user' as const,
   updatedById: null,
+  ino: null,
+  dev: null,
   deletedAt: null,
   trashBatchId: null
 }

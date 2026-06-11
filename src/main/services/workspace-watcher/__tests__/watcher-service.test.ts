@@ -20,8 +20,9 @@ const {
   writeSnapshotMock,
   unsubscribeMock,
   sendMock,
+  readdirMock,
   syncOfflineChangesMock,
-  reconcileFileTypeMock,
+  reconcileWorkspaceMock,
   getSnapshotPathMock,
   applyEventsMock,
   isRecentWriteMock
@@ -30,8 +31,9 @@ const {
   writeSnapshotMock: vi.fn(async () => undefined),
   unsubscribeMock: vi.fn(async () => undefined),
   sendMock: vi.fn(),
+  readdirMock: vi.fn(async (): Promise<string[]> => []),
   syncOfflineChangesMock: vi.fn(async () => undefined),
-  reconcileFileTypeMock: vi.fn(async () => undefined),
+  reconcileWorkspaceMock: vi.fn(async () => undefined),
   getSnapshotPathMock: vi.fn(() => '/snap/ws.snapshot'),
   applyEventsMock: vi.fn(),
   isRecentWriteMock: vi.fn((_ws: string, _rel: string) => false)
@@ -41,6 +43,14 @@ vi.mock('@parcel/watcher', () => ({
   subscribe: subscribeMock,
   writeSnapshot: writeSnapshotMock
 }))
+vi.mock('fs', () => ({
+  default: { promises: { readdir: readdirMock } },
+  promises: { readdir: readdirMock }
+}))
+vi.mock('../../../lib/logger', () => ({
+  scoped: () => ({ debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() }),
+  logger: {}
+}))
 vi.mock('electron', () => ({
   BrowserWindow: {
     getAllWindows: () => [{ webContents: { send: sendMock } }]
@@ -48,7 +58,7 @@ vi.mock('electron', () => ({
 }))
 vi.mock('../reconciler', () => ({
   syncOfflineChanges: syncOfflineChangesMock,
-  reconcileFileType: reconcileFileTypeMock,
+  reconcileWorkspace: reconcileWorkspaceMock,
   getSnapshotPath: getSnapshotPathMock
 }))
 vi.mock('../event-processor', () => ({
@@ -97,6 +107,7 @@ beforeEach(() => {
   vi.useFakeTimers()
   isRecentWriteMock.mockReturnValue(false)
   applyEventsMock.mockResolvedValue(emptyApplyResult())
+  readdirMock.mockResolvedValue([]) // 루트 접근 가능 (기본)
 })
 
 afterEach(async () => {
@@ -105,22 +116,22 @@ afterEach(async () => {
 })
 
 describe('start — 초기 동기화 + 브로드캐스트 + subscribe (C1)', () => {
-  it('syncOfflineChanges → reconcileFileType → 각 채널 [] 브로드캐스트 → subscribe 순서', async () => {
+  it('syncOfflineChanges → reconcileWorkspace → 각 채널 [] 브로드캐스트 → subscribe 순서', async () => {
     armSubscribe()
 
     await workspaceWatcher.start(WS, ROOT)
 
     expect(syncOfflineChangesMock).toHaveBeenCalledWith(WS, ROOT)
-    expect(reconcileFileTypeMock).toHaveBeenCalledTimes(1) // config 1개당 1회
+    expect(reconcileWorkspaceMock).toHaveBeenCalledWith(WS, ROOT) // P1: 단일 패스 풀 reconcile (폴더 포함)
     expect(sendMock).toHaveBeenCalledWith('folder:changed', WS, [])
     expect(sendMock).toHaveBeenCalledWith('note:changed', WS, [])
     expect(subscribeMock).toHaveBeenCalledWith(ROOT, expect.any(Function))
     expect(workspaceWatcher.getActiveWorkspaceId()).toBe(WS)
   })
 
-  it('reconcileFileType 실패해도 watcher 는 시작된다 (C7)', async () => {
+  it('reconcileWorkspace 실패해도 watcher 는 시작된다 (C7)', async () => {
     armSubscribe()
-    reconcileFileTypeMock.mockRejectedValue(new Error('scan fail'))
+    reconcileWorkspaceMock.mockRejectedValue(new Error('scan fail'))
 
     await expect(workspaceWatcher.start(WS, ROOT)).resolves.toBeUndefined()
     expect(subscribeMock).toHaveBeenCalled()
@@ -132,6 +143,40 @@ describe('start — 초기 동기화 + 브로드캐스트 + subscribe (C1)', () 
 
     await expect(workspaceWatcher.start(WS, ROOT)).resolves.toBeUndefined()
     expect(workspaceWatcher.getActiveWorkspaceId()).toBeNull()
+  })
+})
+
+// ── 0B: 루트 접근성 선검사 (R-01·R-12) ─────────────────────────
+
+describe('start — 루트 접근 불가 시 reconcile 보류 (0B)', () => {
+  it('readdir 실패(미마운트·권한 거부) → reconcile·브로드캐스트 전체 보류, 삭제 0건', async () => {
+    armSubscribe()
+    readdirMock.mockRejectedValue(new Error('ENOENT: no such file or directory'))
+
+    await expect(workspaceWatcher.start(WS, ROOT)).resolves.toBeUndefined()
+
+    // 빈 스캔 → 전량 삭제로 이어지는 경로 자체를 차단
+    expect(syncOfflineChangesMock).not.toHaveBeenCalled()
+    expect(reconcileWorkspaceMock).not.toHaveBeenCalled()
+    expect(sendMock).not.toHaveBeenCalled()
+    // 구독은 시도한다 — 이후 마운트 복구 시 이벤트 수신 가능
+    expect(subscribeMock).toHaveBeenCalled()
+  })
+
+  it('루트 접근 불가 후 다음 ensureWatching 에서 복구 시 정상 reconcile', async () => {
+    armSubscribe()
+    readdirMock.mockRejectedValueOnce(new Error('ENOENT'))
+    subscribeMock.mockRejectedValueOnce(new Error('ENOENT')) // 미마운트 → 구독도 실패
+
+    await workspaceWatcher.ensureWatching(WS, ROOT)
+    expect(workspaceWatcher.getActiveWorkspaceId()).toBeNull()
+
+    // 볼륨 마운트 복구 — readdir 성공
+    armSubscribe()
+    await workspaceWatcher.ensureWatching(WS, ROOT)
+
+    expect(syncOfflineChangesMock).toHaveBeenCalledWith(WS, ROOT)
+    expect(workspaceWatcher.getActiveWorkspaceId()).toBe(WS)
   })
 })
 

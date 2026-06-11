@@ -16,6 +16,8 @@ export const imageFileRepository = {
       Pick<
         ImageFile,
         | 'relativePath'
+        | 'ino'
+        | 'dev'
         | 'title'
         | 'description'
         | 'preview'

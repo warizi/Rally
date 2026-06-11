@@ -19,10 +19,16 @@ export interface FileRow {
   id: string
   relativePath: string
   folderId: string | null
+  /** 파일시스템 inode (BigInt 문자열) — null 이면 backfill 대상 (P2) */
+  ino?: string | null
+  /** 볼륨 식별자 — ino 와 반드시 쌍으로 비교 */
+  dev?: string | null
 }
 
 export interface FileRepository {
   findByRelativePath(workspaceId: string, relativePath: string): FileRow | undefined
+  /** (dev, ino) 쌍으로 활성 row 조회 — rename/move 확정 매칭 (P3) */
+  findByIdentity(workspaceId: string, ino: string, dev: string): FileRow | undefined
   create(data: Record<string, unknown>): FileRow
   delete(id: string): void
   bulkDeleteByPrefix(workspaceId: string, prefix: string): void
@@ -51,8 +57,12 @@ export interface FileTypeConfig {
   entityType: 'note' | 'csv' | 'pdf' | 'image'
   /** 이벤트 필터 (Image의 .images/ 제외 등) */
   skipFilter?: (relativePath: string) => boolean
-  /** 비동기 fs 스캔 함수 */
-  readFilesAsync: (absBase: string, parentRel: string) => Promise<FileEntry[]>
+  /** 비동기 fs 스캔 함수 — onError 전달 시 부분 실패를 통지받는다 (R-02) */
+  readFilesAsync: (
+    absBase: string,
+    parentRel: string,
+    onError?: (err: unknown) => void
+  ) => Promise<FileEntry[]>
 }
 
 export const fileTypeConfigs: FileTypeConfig[] = [
