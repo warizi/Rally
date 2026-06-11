@@ -16,6 +16,8 @@ export const csvFileRepository = {
       Pick<
         CsvFile,
         | 'relativePath'
+        | 'ino'
+        | 'dev'
         | 'title'
         | 'description'
         | 'preview'

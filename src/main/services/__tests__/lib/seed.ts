@@ -127,6 +127,8 @@ export const seed = {
       createdById: null,
       updatedBy: 'user' as const,
       updatedById: null,
+      ino: null,
+      dev: null,
       deletedAt: null,
       trashBatchId: null
     }
@@ -152,6 +154,8 @@ export const seed = {
       createdById: null,
       updatedBy: 'user' as const,
       updatedById: null,
+      ino: null,
+      dev: null,
       deletedAt: null,
       trashBatchId: null
     }

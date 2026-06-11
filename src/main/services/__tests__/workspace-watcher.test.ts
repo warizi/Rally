@@ -5,12 +5,16 @@ import * as schema from '../../db/schema'
 import { noteRepository } from '../../repositories/note'
 
 // ─── Mock 선언 ───────────────────────────────────────────────
-// fs.promises.stat는 auto-mock 대상이 아니므로 factory로 명시 포함
+// fs.promises.lstat는 auto-mock 대상이 아니므로 factory로 명시 포함
+// (P1/R-09: event-processor 가 stat 대신 lstat 사용)
 vi.mock('fs', () => {
-  const stat = vi.fn()
-  const existsSync = vi.fn().mockReturnValue(false) // snapshot 없음 → fullReconciliation
+  const lstat = vi.fn()
+  const access = vi.fn(async () => {
+    throw new Error('ENOENT') // orphan 가드: 디스크에 없음 → 진짜 삭제로 판정
+  })
+  const existsSync = vi.fn().mockReturnValue(false) // snapshot 없음 → 이벤트 재생 생략
   const mkdirSync = vi.fn()
-  const mod = { existsSync, mkdirSync, promises: { stat } }
+  const mod = { existsSync, mkdirSync, promises: { lstat, access } }
   return { ...mod, default: mod }
 })
 
@@ -39,6 +43,7 @@ vi.mock('../../lib/fs-utils', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../lib/fs-utils')>()
   return {
     ...actual,
+    scanWorkspaceAsync: vi.fn().mockResolvedValue({ folders: [], files: [], errors: [] }),
     readMdFilesRecursiveAsync: vi.fn().mockResolvedValue([]),
     readCsvFilesRecursiveAsync: vi.fn().mockResolvedValue([]),
     readPdfFilesRecursiveAsync: vi.fn().mockResolvedValue([]),
@@ -50,6 +55,7 @@ vi.mock('../../lib/fs-utils', async (importOriginal) => {
 // dynamic import로 mock이 적용된 모듈 로드
 const { workspaceWatcher } = await import('../workspace-watcher')
 const { applyEvents } = await import('../workspace-watcher/event-processor')
+const { reconcileWorkspace } = await import('../workspace-watcher/reconciler')
 const folderModule = await import('../folder')
 const fsUtilsModule = await import('../../lib/fs-utils')
 const { csvFileRepository } = await import('../../repositories/csv-file')
@@ -75,7 +81,7 @@ function insertWorkspace(): void {
     .run()
 }
 
-function insertFolder(id: string, relativePath: string): void {
+function insertFolder(id: string, relativePath: string, ino: string | null = null): void {
   testDb
     .insert(schema.folders)
     .values({
@@ -84,6 +90,8 @@ function insertFolder(id: string, relativePath: string): void {
       relativePath,
       color: null,
       order: 0,
+      ino,
+      dev: ino !== null ? '42' : null,
       createdAt: new Date(),
       updatedAt: new Date()
     })
@@ -123,7 +131,7 @@ const watcher = workspaceWatcher as any
 
 // factory mock의 vi.fn()을 직접 조작하는 헬퍼
 type StatMock = ReturnType<typeof vi.fn>
-const statMock = (): StatMock => fs.promises.stat as unknown as StatMock
+const statMock = (): StatMock => fs.promises.lstat as unknown as StatMock
 
 beforeEach(() => {
   vi.clearAllMocks()
@@ -175,6 +183,8 @@ describe('applyEvents — standalone MD create', () => {
 describe('applyEvents — standalone MD delete', () => {
   it('.md 파일 delete 이벤트 → DB에서 note row가 삭제된다', async () => {
     insertNote('n1', 'to-delete.md')
+    // 진짜 삭제 — 경로가 디스크에서 사라진 상태
+    statMock().mockRejectedValue(new Error('ENOENT'))
     await applyEvents(WS_ID, WS_PATH, [makeEvent('delete', 'to-delete.md')])
 
     expect(noteRepository.findById('n1')).toBeUndefined()
@@ -365,5 +375,154 @@ describe('applyEvents — 폴더 create 시 subtree 재귀 스캔', () => {
     expect(all.map((n) => n.relativePath).sort()).toEqual(['mybox/already.md', 'mybox/new.md'])
     // 기존 record 의 id 유지 확인
     expect(noteRepository.findByRelativePath(WS_ID, 'mybox/already.md')?.id).toBe('n-existing')
+  })
+})
+
+// ─── P3: ino 기반 move 확정 매칭 (실제 DB) ─────────────────────
+describe('applyEvents — P3 ino 확정 매칭 (실제 DB)', () => {
+  it('다중 폴더 동시 이동: 전부 ID 보존 + 내부 파일 경로 일괄 갱신 (증상 2 시나리오)', async () => {
+    insertFolder('f-m1', 'stash/box1', '5001')
+    insertFolder('f-m2', 'stash/box2', '5002')
+    insertNote('n-in1', 'stash/box1/in.md', 'f-m1')
+    insertNote('n-in2', 'stash/box2/in.md', 'f-m2')
+
+    statMock().mockImplementation(async (absPath: string) => ({
+      isFile: () => false,
+      isDirectory: () => true,
+      ino: absPath.endsWith('/box1') ? 5001n : 5002n,
+      dev: 42n
+    }))
+    vi.mocked(folderModule.readDirRecursiveAsync).mockResolvedValue([])
+
+    // 같은 부모의 delete 2 + create 2 — 기존 greedy 였으면 오매칭/스캔 생략 케이스
+    await applyEvents(WS_ID, WS_PATH, [
+      makeEvent('delete', 'stash/box1'),
+      makeEvent('delete', 'stash/box2'),
+      makeEvent('create', 'box1'),
+      makeEvent('create', 'box2')
+    ])
+
+    // 폴더 ID 보존 + 경로 갱신
+    expect(folderRepository.findByRelativePath(WS_ID, 'box1')?.id).toBe('f-m1')
+    expect(folderRepository.findByRelativePath(WS_ID, 'box2')?.id).toBe('f-m2')
+    // 내부 파일도 prefix 일괄 갱신, ID 보존 → 링크·태그가 따라온다
+    expect(noteRepository.findById('n-in1')?.relativePath).toBe('box1/in.md')
+    expect(noteRepository.findById('n-in2')?.relativePath).toBe('box2/in.md')
+    // 옛 경로 row 없음 (신규 생성도 없음)
+    expect(folderRepository.findByRelativePath(WS_ID, 'stash/box1')).toBeUndefined()
+  })
+
+  it('동명 덮어쓰기(replace): row 유지 + ino 갱신 — 링크 파괴 없음', async () => {
+    insertNote('n-swap', 'swap.md')
+
+    statMock().mockResolvedValue({
+      isFile: () => true,
+      isDirectory: () => false,
+      ino: 6001n,
+      dev: 42n
+    })
+
+    await applyEvents(WS_ID, WS_PATH, [
+      makeEvent('delete', 'swap.md'),
+      makeEvent('create', 'swap.md')
+    ])
+
+    const row = noteRepository.findById('n-swap')
+    expect(row).toBeDefined() // 삭제되지 않음
+    expect(row?.relativePath).toBe('swap.md')
+    expect(row?.ino).toBe('6001') // 새 파일의 identity 로 갱신
+  })
+
+  it('시나리오 C 회귀: 폴더 replace 가 delete/create 배치 2개로 분리돼도 노트 row 보존', async () => {
+    // QA 실패 사례 — Finder "바꾸기" 는 휴지통 이동(delete) + 들여오기(create) 두 FS
+    // 작업이라 50ms debounce 를 넘어 배치가 분리될 수 있다. delete 처리 시점에 새
+    // 폴더가 이미 실재하므로 row 를 삭제하면 안 된다.
+    insertFolder('f-rep', 'repfold', '7001')
+    insertNote('n-rep', 'repfold/B.md', 'f-rep')
+
+    // 디스크에는 새 폴더·파일이 이미 자리잡은 상태 (lstat 성공)
+    statMock().mockImplementation(async (absPath: string) =>
+      absPath.endsWith('.md')
+        ? { isFile: () => true, isDirectory: () => false, ino: 7102n, dev: 42n }
+        : { isFile: () => false, isDirectory: () => true, ino: 7101n, dev: 42n }
+    )
+    vi.mocked(folderModule.readDirRecursiveAsync).mockResolvedValue([])
+    vi.mocked(fsUtilsModule.readMdFilesRecursiveAsync).mockResolvedValue([
+      { name: 'B.md', relativePath: 'repfold/B.md' }
+    ])
+
+    // 배치 1: delete 만 도착 — 경로 실재 → 삭제 보류
+    await applyEvents(WS_ID, WS_PATH, [
+      makeEvent('delete', 'repfold'),
+      makeEvent('delete', 'repfold/B.md')
+    ])
+    expect(folderRepository.findById('f-rep')).toBeDefined()
+    expect(noteRepository.findById('n-rep')).toBeDefined()
+
+    // 배치 2: create 도착 — replace 판정, row 유지 + ino 갱신
+    await applyEvents(WS_ID, WS_PATH, [
+      makeEvent('create', 'repfold'),
+      makeEvent('create', 'repfold/B.md')
+    ])
+
+    const folder = folderRepository.findById('f-rep')
+    const note = noteRepository.findById('n-rep')
+    expect(folder?.relativePath).toBe('repfold')
+    expect(folder?.ino).toBe('7101') // 새 폴더의 identity
+    expect(note?.relativePath).toBe('repfold/B.md')
+    expect(note?.ino).toBe('7102') // 새 파일의 identity
+    // 중복 row 없음
+    const dupes = noteRepository
+      .findByWorkspaceId(WS_ID)
+      .filter((n) => n.relativePath === 'repfold/B.md')
+    expect(dupes).toHaveLength(1)
+  })
+})
+
+// ─── P2: reconcileWorkspace identity backfill (실제 DB) ────────
+describe('reconcileWorkspace — ino/dev identity backfill (P2)', () => {
+  it('ino 없는 기존 폴더·노트 row 와 신규 row 모두 identity 가 채워진다 (커버리지 100%)', async () => {
+    insertFolder('f-docs2', 'docs2')
+    insertNote('n-old2', 'docs2/old.md', 'f-docs2')
+
+    vi.mocked(fsUtilsModule.scanWorkspaceAsync).mockResolvedValue({
+      folders: [{ name: 'docs2', relativePath: 'docs2' }],
+      files: [
+        { name: 'old.md', relativePath: 'docs2/old.md' },
+        { name: 'new.md', relativePath: 'docs2/new.md' }
+      ],
+      errors: []
+    })
+    let inoSeq = 1000n
+    statMock().mockImplementation(async () => ({
+      ino: inoSeq++,
+      dev: 42n,
+      isFile: () => true,
+      isDirectory: () => false
+    }))
+
+    await reconcileWorkspace(WS_ID, WS_PATH)
+
+    // 기존 row backfill — ID 보존 + identity 채움
+    const folder = folderRepository.findByRelativePath(WS_ID, 'docs2')
+    expect(folder?.id).toBe('f-docs2')
+    expect(folder?.ino).not.toBeNull()
+    expect(folder?.dev).toBe('42')
+
+    const oldNote = noteRepository.findByRelativePath(WS_ID, 'docs2/old.md')
+    expect(oldNote?.id).toBe('n-old2')
+    expect(oldNote?.ino).not.toBeNull()
+
+    // 신규 row 는 생성 시점부터 identity 보유
+    const newNote = noteRepository.findByRelativePath(WS_ID, 'docs2/new.md')
+    expect(newNote).toBeDefined()
+    expect(newNote?.ino).not.toBeNull()
+    expect(newNote?.dev).toBe('42')
+
+    // 커버리지: docs2 범위의 모든 활성 row 가 ino 보유
+    const rows = noteRepository
+      .findByWorkspaceId(WS_ID)
+      .filter((n) => n.relativePath.startsWith('docs2/'))
+    expect(rows.every((r) => r.ino !== null)).toBe(true)
   })
 })
