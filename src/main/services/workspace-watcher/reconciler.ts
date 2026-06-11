@@ -401,7 +401,14 @@ export async function reconcileWorkspace(
       (f) => config.matchExtension(f.name) && !config.skipFilter?.(f.relativePath)
     )
     try {
-      await reconcileFileTypeEntries(workspaceId, workspacePath, config, entries, scanFailed, rootDev)
+      await reconcileFileTypeEntries(
+        workspaceId,
+        workspacePath,
+        config,
+        entries,
+        scanFailed,
+        rootDev
+      )
     } catch (err) {
       log.warn(`[reconcile:${config.entityType}] 실패 — skip: ${String(err)}`)
     }

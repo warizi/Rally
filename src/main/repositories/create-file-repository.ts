@@ -81,7 +81,12 @@ export function createFileRepository<
         .select()
         .from(table)
         .where(
-          and(eq(table.workspaceId, workspaceId), eq(table.ino, ino), eq(table.dev, dev), NOT_DELETED)
+          and(
+            eq(table.workspaceId, workspaceId),
+            eq(table.ino, ino),
+            eq(table.dev, dev),
+            NOT_DELETED
+          )
         )
         .get() as Row | undefined
     },

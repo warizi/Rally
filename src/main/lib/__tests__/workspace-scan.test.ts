@@ -82,10 +82,11 @@ describe('scanWorkspaceAsync — 동등성', () => {
     expect(scan.errors).toEqual([])
 
     // 규모 검증 — 생성한 개수와 일치
-    expect(scan.files).toHaveLength(NUM_DIRS * (MD_PER_DIR + CSV_PER_DIR + PNG_PER_DIR + TXT_PER_DIR))
+    expect(scan.files).toHaveLength(
+      NUM_DIRS * (MD_PER_DIR + CSV_PER_DIR + PNG_PER_DIR + TXT_PER_DIR)
+    )
 
     // 벤치 로그 (단언 없음 — 수동 관찰용)
-    // eslint-disable-next-line no-console
     console.log(
       `[scan-bench] files=${scan.files.length} dirs=${scan.folders.length} ` +
         `single-pass=${tScan.toFixed(1)}ms legacy-5-pass=${tLegacy.toFixed(1)}ms`

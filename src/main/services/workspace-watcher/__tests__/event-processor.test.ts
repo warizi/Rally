@@ -16,44 +16,47 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import type * as parcelWatcher from '@parcel/watcher'
 
-const { statMock, nanoidMock, folderRepoMocks, entityLinkRepoMocks, readDirAsyncMock, noteRepoMocks, noteReadFilesMock } =
-  vi.hoisted(() => ({
-    statMock: vi.fn(),
-    nanoidMock: vi.fn(() => 'id-new-0001'),
-    folderRepoMocks: {
-      findByRelativePath: vi.fn(),
-      findByIdentity: vi.fn(),
-      findByWorkspaceId: vi.fn((): Array<{ id: string; relativePath: string }> => []),
-      create: vi.fn(),
-      createMany: vi.fn(),
-      bulkUpdatePathPrefix: vi.fn(),
-      bulkDeleteByPrefix: vi.fn(),
-      deleteOrphans: vi.fn()
-    },
-    entityLinkRepoMocks: {
-      removeAllByEntity: vi.fn()
-    },
-    readDirAsyncMock: vi.fn(
-      async (): Promise<Array<{ name: string; relativePath: string }>> => []
+const {
+  statMock,
+  nanoidMock,
+  folderRepoMocks,
+  entityLinkRepoMocks,
+  readDirAsyncMock,
+  noteRepoMocks,
+  noteReadFilesMock
+} = vi.hoisted(() => ({
+  statMock: vi.fn(),
+  nanoidMock: vi.fn(() => 'id-new-0001'),
+  folderRepoMocks: {
+    findByRelativePath: vi.fn(),
+    findByIdentity: vi.fn(),
+    findByWorkspaceId: vi.fn((): Array<{ id: string; relativePath: string }> => []),
+    create: vi.fn(),
+    createMany: vi.fn(),
+    bulkUpdatePathPrefix: vi.fn(),
+    bulkDeleteByPrefix: vi.fn(),
+    deleteOrphans: vi.fn()
+  },
+  entityLinkRepoMocks: {
+    removeAllByEntity: vi.fn()
+  },
+  readDirAsyncMock: vi.fn(async (): Promise<Array<{ name: string; relativePath: string }>> => []),
+  noteRepoMocks: {
+    findByRelativePath: vi.fn(),
+    findByIdentity: vi.fn(),
+    findByWorkspaceId: vi.fn(
+      (): Array<{ id: string; relativePath: string; folderId: string | null }> => []
     ),
-    noteRepoMocks: {
-      findByRelativePath: vi.fn(),
-      findByIdentity: vi.fn(),
-      findByWorkspaceId: vi.fn(
-        (): Array<{ id: string; relativePath: string; folderId: string | null }> => []
-      ),
-      create: vi.fn(),
-      createMany: vi.fn(),
-      update: vi.fn(),
-      delete: vi.fn(),
-      bulkUpdatePathPrefix: vi.fn(),
-      bulkDeleteByPrefix: vi.fn(),
-      deleteOrphans: vi.fn()
-    },
-    noteReadFilesMock: vi.fn(
-      async (): Promise<Array<{ name: string; relativePath: string }>> => []
-    )
-  }))
+    create: vi.fn(),
+    createMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+    bulkUpdatePathPrefix: vi.fn(),
+    bulkDeleteByPrefix: vi.fn(),
+    deleteOrphans: vi.fn()
+  },
+  noteReadFilesMock: vi.fn(async (): Promise<Array<{ name: string; relativePath: string }>> => [])
+}))
 
 // R-09(P1): event-processor 는 lstat 을 사용한다 (symlink 미추적 — 스캔 규칙과 통일)
 vi.mock('fs', () => ({
@@ -173,9 +176,7 @@ describe('applyEvents — 폴더 create (C3)', () => {
     folderRepoMocks.findByRelativePath.mockReturnValue(undefined)
     noteRepoMocks.findByRelativePath.mockReturnValue(undefined)
     readDirAsyncMock.mockResolvedValue([{ name: 'inner', relativePath: 'incoming/inner' }])
-    noteReadFilesMock.mockResolvedValue([
-      { name: 'doc.md', relativePath: 'incoming/inner/doc.md' }
-    ])
+    noteReadFilesMock.mockResolvedValue([{ name: 'doc.md', relativePath: 'incoming/inner/doc.md' }])
 
     const { folderPaths, orphanPaths } = await applyEvents(WS, ROOT, [
       ev('create', `${ROOT}/incoming`)
@@ -229,9 +230,7 @@ describe('applyEvents — 폴더 delete (C3)', () => {
       { id: 'note-2', relativePath: 'kept/b.md', folderId: 'fold-2' }
     ])
 
-    const { folderPaths, orphanPaths } = await applyEvents(WS, ROOT, [
-      ev('delete', `${ROOT}/gone`)
-    ])
+    const { folderPaths, orphanPaths } = await applyEvents(WS, ROOT, [ev('delete', `${ROOT}/gone`)])
 
     expect(entityLinkRepoMocks.removeAllByEntity).toHaveBeenCalledWith('note', 'note-1')
     expect(entityLinkRepoMocks.removeAllByEntity).not.toHaveBeenCalledWith('note', 'note-2')
@@ -258,7 +257,9 @@ describe('applyEvents — 파일 rename (C2)', () => {
   it('같은 폴더 내 rename → 기존 레코드 update (ID 보존), create/delete 아님', async () => {
     statMock.mockResolvedValue(fileStat)
     noteRepoMocks.findByRelativePath.mockImplementation((_ws, rel) =>
-      rel === 'docs/old.md' ? { id: 'note-1', relativePath: 'docs/old.md', folderId: 'fold-1' } : undefined
+      rel === 'docs/old.md'
+        ? { id: 'note-1', relativePath: 'docs/old.md', folderId: 'fold-1' }
+        : undefined
     )
     folderRepoMocks.findByRelativePath.mockReturnValue({ id: 'fold-1', relativePath: 'docs' })
 
@@ -279,7 +280,9 @@ describe('applyEvents — 파일 rename (C2)', () => {
   it('폴더 간 이동(basename 일치) → update로 folderId·relativePath 갱신, ID 보존', async () => {
     statMock.mockResolvedValue(fileStat)
     noteRepoMocks.findByRelativePath.mockImplementation((_ws, rel) =>
-      rel === 'a/memo.md' ? { id: 'note-1', relativePath: 'a/memo.md', folderId: 'fold-a' } : undefined
+      rel === 'a/memo.md'
+        ? { id: 'note-1', relativePath: 'a/memo.md', folderId: 'fold-a' }
+        : undefined
     )
     folderRepoMocks.findByRelativePath.mockImplementation((_ws, rel) =>
       rel === 'b' ? { id: 'fold-b', relativePath: 'b' } : undefined
@@ -464,7 +467,9 @@ describe('applyEvents — P3 ino 확정 매칭', () => {
     statMock.mockResolvedValue({ isFile: () => true, isDirectory: () => false, ino: 2n, dev: 7n })
     noteRepoMocks.findByIdentity.mockReturnValue(undefined) // 새 파일의 ino 는 DB 에 없음
     noteRepoMocks.findByRelativePath.mockImplementation((_ws, rel) =>
-      rel === 'doc.md' ? { id: 'note-1', relativePath: 'doc.md', folderId: null, ino: '1' } : undefined
+      rel === 'doc.md'
+        ? { id: 'note-1', relativePath: 'doc.md', folderId: null, ino: '1' }
+        : undefined
     )
 
     await applyEvents(WS, ROOT, [ev('delete', `${ROOT}/doc.md`), ev('create', `${ROOT}/doc.md`)])
