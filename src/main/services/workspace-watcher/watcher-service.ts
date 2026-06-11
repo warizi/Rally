@@ -1,10 +1,14 @@
 import * as parcelWatcher from '@parcel/watcher'
-import path from 'path'
+import fs from 'fs'
 import { BrowserWindow } from 'electron'
 import { fileTypeConfigs } from './file-type-config'
 import { applyEvents } from './event-processor'
-import { syncOfflineChanges, reconcileFileType, getSnapshotPath } from './reconciler'
+import { syncOfflineChanges, reconcileWorkspace, getSnapshotPath } from './reconciler'
 import { isRecentWrite } from '../../lib/recent-writes'
+import { isHiddenRelPath, toWorkspaceRel } from '../../lib/fs-utils'
+import { scoped } from '../../lib/logger'
+
+const log = scoped('watcher')
 
 class WorkspaceWatcherService {
   private subscription: parcelWatcher.AsyncSubscription | null = null
@@ -27,32 +31,46 @@ class WorkspaceWatcherService {
   }
 
   async start(workspaceId: string, workspacePath: string): Promise<void> {
-    await syncOfflineChanges(workspaceId, workspacePath)
-
-    // 각 파일 타입 초기 동기화 — try/catch: 실패해도 watcher는 정상 시작
-    for (const config of fileTypeConfigs) {
-      try {
-        await reconcileFileType(workspaceId, workspacePath, config)
-      } catch {
-        /* ignore — watcher continues without initial sync */
-      }
+    // R-01·R-12: 워크스페이스 루트 접근성 선검사 — 미마운트 외장 볼륨·TCC 권한 거부
+    // 상태에서 reconcile 이 "빈 스캔 = 전부 삭제됨" 으로 오판해 레코드·링크를
+    // 파괴하는 경로를 차단한다. 접근 불가 시 reconcile 전체를 보류한다.
+    let rootAccessible = true
+    try {
+      await fs.promises.readdir(workspacePath)
+    } catch (err) {
+      rootAccessible = false
+      log.warn(`workspace 루트 접근 불가 — reconcile 보류: ${workspacePath} (${String(err)})`)
     }
 
-    // 초기 동기화 완료 → renderer re-fetch
-    this.pushChanged('folder:changed', workspaceId, [])
-    for (const config of fileTypeConfigs) {
-      this.pushChanged(config.channelName, workspaceId, [])
+    if (rootAccessible) {
+      // 스냅샷 diff 이벤트 재생 (fast-path) → 풀 reconcile (P1: 폴더 포함 매 기동)
+      await syncOfflineChanges(workspaceId, workspacePath)
+      try {
+        await reconcileWorkspace(workspaceId, workspacePath)
+      } catch (err) {
+        log.warn(`reconcileWorkspace 실패 — 초기 동기화 없이 진행: ${String(err)}`)
+      }
+
+      // 초기 동기화 완료 → renderer re-fetch
+      this.pushChanged('folder:changed', workspaceId, [])
+      for (const config of fileTypeConfigs) {
+        this.pushChanged(config.channelName, workspaceId, [])
+      }
     }
 
     try {
       this.subscription = await parcelWatcher.subscribe(workspacePath, (err, events) => {
-        if (err) return
+        if (err) {
+          log.warn(`watcher 이벤트 콜백 오류: ${String(err)}`)
+          return
+        }
         this.handleEvents(workspaceId, workspacePath, events)
       })
       this.activeWorkspaceId = workspaceId
       this.activeWorkspacePath = workspacePath
-    } catch {
+    } catch (err) {
       // workspace 접근 불가 → watcher 없이 진행 (crash 방지)
+      log.warn(`watcher subscribe 실패 — 감시 없이 진행: ${workspacePath} (${String(err)})`)
     }
   }
 
@@ -72,8 +90,8 @@ class WorkspaceWatcherService {
           this.activeWorkspacePath,
           getSnapshotPath(this.activeWorkspaceId!)
         )
-      } catch {
-        /* ignore */
+      } catch (err) {
+        log.warn(`stop 시 writeSnapshot 실패 — 다음 기동은 풀스캔으로 대체됨: ${String(err)}`)
       }
     }
     this.activeWorkspaceId = null
@@ -106,12 +124,13 @@ class WorkspaceWatcherService {
           const changedRelPaths = [
             ...eventsToProcess
               .filter((e) => {
-                if (!config.matchExtension(e.path) || path.basename(e.path).startsWith('.'))
-                  return false
-                const rel = path.relative(workspacePath, e.path).replace(/\\/g, '/')
+                if (!config.matchExtension(e.path)) return false
+                // R-08: leaf basename 만이 아닌 모든 세그먼트의 숨김(.) 여부 검사 — 스캔 규칙과 통일
+                const rel = toWorkspaceRel(workspacePath, e.path)
+                if (isHiddenRelPath(rel)) return false
                 return !config.skipFilter?.(rel)
               })
-              .map((e) => path.relative(workspacePath, e.path).replace(/\\/g, '/')),
+              .map((e) => toWorkspaceRel(workspacePath, e.path)),
             ...(orphanPaths.get(config.entityType) ?? [])
           ]
           // MCP 라우트 같은 main-process 내부 변경은 이미 broadcastChanged 로 broadcast 됐다.
@@ -121,8 +140,10 @@ class WorkspaceWatcherService {
           if (dedupedPaths.length === 0 && changedRelPaths.length > 0) continue
           this.pushChanged(config.channelName, workspaceId, dedupedPaths)
         }
-      } catch {
-        /* applyEvents 실패 시 무시 — watcher 지속 유지 */
+      } catch (err) {
+        // applyEvents 실패 시 throw 전파 없이 watcher 지속 유지 (계약 C7)
+        // 단, 배치가 통째로 유실되므로 반드시 흔적을 남긴다 (R-05)
+        log.error(`이벤트 배치 처리 실패 — 배치 유실: ${String(err)}`)
       }
     }, 50)
   }

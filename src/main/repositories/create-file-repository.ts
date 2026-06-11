@@ -18,6 +18,8 @@ export function createFileRepository<
     workspaceId: SQLiteColumn
     relativePath: SQLiteColumn
     folderId: SQLiteColumn
+    ino: SQLiteColumn
+    dev: SQLiteColumn
     deletedAt: SQLiteColumn
     trashBatchId: SQLiteColumn
   }
@@ -29,6 +31,7 @@ export function createFileRepository<
   findById(id: string): InferSelectModel<T> | undefined
   findByIdIncludingDeleted(id: string): InferSelectModel<T> | undefined
   findByRelativePath(workspaceId: string, relativePath: string): InferSelectModel<T> | undefined
+  findByIdentity(workspaceId: string, ino: string, dev: string): InferSelectModel<T> | undefined
   findByFolderId(workspaceId: string, folderId: string | null): InferSelectModel<T>[]
   create(data: T['$inferInsert']): InferSelectModel<T>
   createMany(items: T['$inferInsert'][]): void
@@ -70,6 +73,22 @@ export function createFileRepository<
 
     findByIdIncludingDeleted(id: string): Row | undefined {
       return db.select().from(table).where(eq(table.id, id)).get() as Row | undefined
+    },
+
+    findByIdentity(workspaceId: string, ino: string, dev: string): Row | undefined {
+      // (dev, ino) 쌍 매칭 — ino 는 볼륨 내에서만 유일하므로 단독 비교 금지 (P3)
+      return db
+        .select()
+        .from(table)
+        .where(
+          and(
+            eq(table.workspaceId, workspaceId),
+            eq(table.ino, ino),
+            eq(table.dev, dev),
+            NOT_DELETED
+          )
+        )
+        .get() as Row | undefined
     },
 
     findByRelativePath(workspaceId: string, relativePath: string): Row | undefined {

@@ -62,6 +62,8 @@ const MOCK_CSV_ROW = {
   createdById: null,
   updatedBy: 'user' as const,
   updatedById: null,
+  ino: null,
+  dev: null,
   deletedAt: null,
   trashBatchId: null
 }
@@ -78,6 +80,8 @@ const MOCK_FOLDER = {
   createdById: null,
   updatedBy: 'user' as const,
   updatedById: null,
+  ino: null,
+  dev: null,
   deletedAt: null,
   trashBatchId: null
 }

@@ -16,6 +16,8 @@ export const pdfFileRepository = {
       Pick<
         PdfFile,
         | 'relativePath'
+        | 'ino'
+        | 'dev'
         | 'title'
         | 'description'
         | 'preview'

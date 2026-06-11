@@ -13,6 +13,10 @@ export const imageFiles = sqliteTable(
       .references(() => workspaces.id, { onDelete: 'cascade' }),
     folderId: text('folder_id').references(() => folders.id, { onDelete: 'set null' }),
     relativePath: text('relative_path').notNull(),
+    /** 파일시스템 inode 번호 (BigInt → 문자열). rename/move identity 추적용 — P2 */
+    ino: text('ino'),
+    /** 볼륨 식별자(st_dev). ino 는 볼륨 내에서만 유일하므로 반드시 쌍으로 비교 */
+    dev: text('dev'),
     title: text('title').notNull(),
     description: text('description').notNull().default(''),
     preview: text('preview').notNull().default(''),
@@ -37,6 +41,8 @@ export const imageFiles = sqliteTable(
     uniqueIndex('uniq_image_files_active_path')
       .on(t.workspaceId, t.relativePath)
       .where(isNull(t.deletedAt)),
+    // 비유니크 — 하드링크·exFAT ino 재사용 가능성 때문에 unique 금지
+    index('idx_image_files_ino').on(t.workspaceId, t.ino),
     index('idx_image_files_deleted').on(t.deletedAt),
     index('idx_image_files_trash_batch').on(t.trashBatchId)
   ]

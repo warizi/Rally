@@ -29,6 +29,22 @@ export const folderRepository = {
     return db.select().from(folders).where(eq(folders.id, id)).get()
   },
 
+  findByIdentity(workspaceId: string, ino: string, dev: string): Folder | undefined {
+    // (dev, ino) 쌍 매칭 — ino 는 볼륨 내에서만 유일하므로 단독 비교 금지 (P3)
+    return db
+      .select()
+      .from(folders)
+      .where(
+        and(
+          eq(folders.workspaceId, workspaceId),
+          eq(folders.ino, ino),
+          eq(folders.dev, dev),
+          NOT_DELETED
+        )
+      )
+      .get()
+  },
+
   findByRelativePath(workspaceId: string, relativePath: string): Folder | undefined {
     return db
       .select()
@@ -64,6 +80,8 @@ export const folderRepository = {
       Pick<
         Folder,
         | 'relativePath'
+        | 'ino'
+        | 'dev'
         | 'color'
         | 'order'
         | 'updatedAt'

@@ -16,6 +16,8 @@ export const noteRepository = {
       Pick<
         Note,
         | 'relativePath'
+        | 'ino'
+        | 'dev'
         | 'title'
         | 'description'
         | 'preview'

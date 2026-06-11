@@ -228,6 +228,21 @@ describe('useFileWatcher', () => {
     expect(mocks.toastInfo).not.toHaveBeenCalled()
   })
 
+  it('빈 배열 수신 시에도 invalidateQueries 는 호출된다 (계약 C1·C6 — 빈 배열=전체 재조회 신호)', () => {
+    const { triggerChange, client } = setup({
+      queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
+    })
+    const invalidateSpy = vi.spyOn(client, 'invalidateQueries')
+    act(() => {
+      triggerChange('ws-1', [], null)
+    })
+    // 워처 기동 직후 [] 브로드캐스트를 받으면 워크스페이스 목록 쿼리를 무효화해
+    // 전체 재조회가 일어나야 한다 — 이 계약이 깨지면 초기 동기화 결과가 화면에 반영되지 않는다.
+    expect(invalidateSpy).toHaveBeenCalledWith({
+      queryKey: ['note', 'workspace', 'ws-1']
+    })
+  })
+
   it('변경 후 외부 dispatchEvent 발생 (CustomEvent 이름 + detail)', () => {
     const eventListener = vi.fn()
     window.addEventListener('note:external-changed', eventListener)

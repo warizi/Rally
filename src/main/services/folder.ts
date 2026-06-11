@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
-import { resolveNameConflict } from '../lib/fs-utils'
+import { resolveNameConflict, toNfc } from '../lib/fs-utils'
 import { normalizePath } from '../lib/path-utils'
 import { folderRepository } from '../repositories/folder'
 import { csvFileRepository } from '../repositories/csv-file'
@@ -40,8 +40,9 @@ export function readDirRecursive(absBase: string, parentRel: string): FsEntry[] 
     if (entry.isSymbolicLink()) continue
     if (!entry.isDirectory()) continue
     if (entry.name.startsWith('.')) continue
-    const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
-    result.push({ name: entry.name, relativePath: rel })
+    const name = toNfc(entry.name)
+    const rel = parentRel ? `${parentRel}/${name}` : name
+    result.push({ name, relativePath: rel })
     result.push(...readDirRecursive(absBase, rel))
   }
   return result
@@ -54,13 +55,16 @@ export function readDirRecursive(absBase: string, parentRel: string): FsEntry[] 
  */
 export async function readDirRecursiveAsync(
   absBase: string,
-  parentRel: string
+  parentRel: string,
+  onError?: (err: unknown) => void
 ): Promise<FsEntry[]> {
   const absDir = parentRel ? path.join(absBase, parentRel) : absBase
   let entries: fs.Dirent[]
   try {
     entries = await fs.promises.readdir(absDir, { withFileTypes: true })
-  } catch {
+  } catch (err) {
+    // onError 전달 시 결과가 불완전함을 호출부가 알 수 있다 — 삭제 판단 금지 (R-02)
+    onError?.(err)
     return []
   }
 
@@ -71,9 +75,10 @@ export async function readDirRecursiveAsync(
     if (entry.isSymbolicLink()) continue
     if (!entry.isDirectory()) continue
     if (entry.name.startsWith('.')) continue
-    const rel = parentRel ? `${parentRel}/${entry.name}` : entry.name
-    result.push({ name: entry.name, relativePath: rel })
-    subdirPromises.push(readDirRecursiveAsync(absBase, rel))
+    const name = toNfc(entry.name)
+    const rel = parentRel ? `${parentRel}/${name}` : name
+    result.push({ name, relativePath: rel })
+    subdirPromises.push(readDirRecursiveAsync(absBase, rel, onError))
   }
 
   const subResults = await Promise.all(subdirPromises)
