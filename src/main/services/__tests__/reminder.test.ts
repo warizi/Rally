@@ -188,7 +188,9 @@ describe('set', () => {
   })
 
   it('schedule allDay: 09:00 보정', () => {
-    const allDayStart = new Date('2026-06-15T00:00:00.000')
+    // 09:00 보정 후에도 미래여야 하므로(set 은 과거 시각 거부) 며칠 뒤 자정 기준으로 잡는다.
+    const allDayStart = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000)
+    allDayStart.setHours(0, 0, 0, 0)
     vi.mocked(scheduleRepository.findById).mockReturnValue({
       ...MOCK_SCHEDULE,
       allDay: true,
