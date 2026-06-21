@@ -1,5 +1,5 @@
 import { lazy, Suspense, useState } from 'react'
-import { Search, Settings, Terminal } from 'lucide-react'
+import { Search, Settings } from 'lucide-react'
 import { useTabStore } from '@/entities/tab-system'
 import { useGlobalSearchStore } from '@/widgets/global-search'
 import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
@@ -9,7 +9,6 @@ import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
 import { sidebar_items, system_sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
-import { useTerminalPanelStore } from '@/features/terminal'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import {
   Sidebar,
@@ -41,8 +40,6 @@ function MainSidebar(): React.JSX.Element {
   const panes = useTabStore((state) => state.panes)
   const activePaneId = useTabStore((state) => state.activePaneId)
   const currentWorkspaceId = useCurrentWorkspaceStore((state) => state.currentWorkspaceId)
-  const terminalIsOpen = useTerminalPanelStore((s) => s.isOpen)
-  const toggleTerminal = useTerminalPanelStore((s) => s.toggle)
   const openGlobalSearch = useGlobalSearchStore((s) => s.setOpen)
 
   // 현재 활성 탭의 pathname 확인
@@ -103,17 +100,6 @@ function MainSidebar(): React.JSX.Element {
                       </SidebarMenuButton>
                     </SidebarMenuItem>
                   ))}
-                  <SidebarMenuItem>
-                    <SidebarMenuButton
-                      className="cursor-pointer"
-                      isActive={terminalIsOpen}
-                      tooltip="터미널"
-                      onClick={toggleTerminal}
-                    >
-                      <Terminal />
-                      <span>터미널</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
