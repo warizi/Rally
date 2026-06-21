@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.16.3',
+    date: '2026-06-22',
+    changes: [
+      {
+        type: 'fix',
+        title: '터미널 기능 비활성화',
+        description:
+          '터미널 기능이 일부 환경에서 정상적으로 작동하지 않던 문제를 해결하기 위해, 터미널 기능을 일시적으로 비활성화했습니다. 향후 업데이트에서 안정적인 터미널 기능을 다시 제공할 예정입니다.'
+      }
+    ]
+  },
+  {
     version: '1.16.1',
     date: '2026-06-11',
     changes: [
