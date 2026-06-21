@@ -31,7 +31,6 @@ vi.mock('@/features/tab-snapshot/manage-tab-snapshot', () => ({
 }))
 
 const openTabMock = vi.fn()
-const toggleTerminalMock = vi.fn()
 const updateSnapshotMock = vi.fn()
 
 vi.mock('@/entities/tab-system', () => ({
@@ -55,11 +54,6 @@ vi.mock('@/shared/store/current-workspace', () => ({
     selector({ currentWorkspaceId: 'ws-1' })
 }))
 
-vi.mock('@/features/terminal', () => ({
-  useTerminalPanelStore: (selector: (s: unknown) => unknown) =>
-    selector({ isOpen: false, toggle: toggleTerminalMock })
-}))
-
 function Wrapper({ children }: { children: ReactNode }): JSX.Element {
   return createElement(SidebarProvider, null, children)
 }
@@ -74,7 +68,6 @@ describe('MainSidebar', () => {
     expect(screen.getByText('기능')).toBeInTheDocument()
     expect(screen.getByText('시스템')).toBeInTheDocument()
     // 항상 표시되는 항목
-    expect(screen.getByText('터미널')).toBeInTheDocument()
     expect(screen.getByText('설정')).toBeInTheDocument()
   })
 
@@ -82,12 +75,6 @@ describe('MainSidebar', () => {
     render(<MainSidebar />, { wrapper: Wrapper })
     expect(screen.getByTestId('workspace-switcher')).toBeInTheDocument()
     expect(screen.getByTestId('tab-snapshot-section')).toBeInTheDocument()
-  })
-
-  it('S3 — 터미널 메뉴 클릭 → toggleTerminal 호출', () => {
-    render(<MainSidebar />, { wrapper: Wrapper })
-    fireEvent.click(screen.getByText('터미널'))
-    expect(toggleTerminalMock).toHaveBeenCalledTimes(1)
   })
 
   it('S4 — 설정 메뉴 클릭 → SettingsDialog 열림', async () => {
@@ -128,7 +115,7 @@ describe('MainSidebar', () => {
       // 대시보드가 sidebar_items 에 없을 수도 있으니, 첫 menu item 으로 fallback
       const buttons = screen
         .getAllByRole('button')
-        .filter((b) => b.textContent && !['터미널', '설정'].includes(b.textContent.trim()))
+        .filter((b) => b.textContent && !['설정'].includes(b.textContent.trim()))
       if (buttons.length > 0) {
         fireEvent.click(buttons[0])
         expect(openTabMock).toHaveBeenCalled()
