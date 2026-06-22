@@ -36,6 +36,7 @@ vi.mock('iconv-lite')
 vi.mock('nanoid', () => ({ nanoid: () => 'mock-id' }))
 vi.mock('../../lib/fs-utils', () => ({
   resolveNameConflict: vi.fn((_dir: string, name: string) => name),
+  toNfc: (s: string) => s.normalize('NFC'),
   readCsvFilesRecursive: vi.fn(() => [])
 }))
 vi.mock('../../lib/leaf-reindex', () => ({

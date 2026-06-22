@@ -37,6 +37,7 @@ vi.mock('fs')
 vi.mock('nanoid', () => ({ nanoid: () => 'mock-id' }))
 vi.mock('../../lib/fs-utils', () => ({
   resolveNameConflict: vi.fn((_dir: string, name: string) => name),
+  toNfc: (s: string) => s.normalize('NFC'),
   readImageFilesRecursive: vi.fn(() => []),
   getImageMimeType: vi.fn((p: string) => {
     if (p.endsWith('.png')) return 'image/png'
@@ -146,6 +147,16 @@ describe('import', () => {
     vi.mocked(getLeafSiblings).mockReturnValue([{ id: 'x', kind: 'image', order: 2 }])
     imageFileService.import('ws-1', null, '/source/photo.png')
     expect(imageFileRepository.create).toHaveBeenCalledWith(expect.objectContaining({ order: 3 }))
+  })
+
+  it('NFD 파일명(macOS 한글) → relativePath 를 NFC 로 저장 (워처 중복 등록 방지)', () => {
+    // macOS 파일 선택창은 한글 파일명을 NFD(자소 분해)로 반환한다.
+    const nfdName = '스크린샷.png'.normalize('NFD')
+    imageFileService.import('ws-1', null, `/source/${nfdName}`)
+    const created = vi.mocked(imageFileRepository.create).mock.calls[0][0]
+    const stored = created.relativePath as string
+    expect(stored).toBe('스크린샷.png'.normalize('NFC'))
+    expect(stored.normalize('NFC')).toBe(stored) // 저장값이 NFC 임을 보장
   })
 
   it('없는 workspaceId → NotFoundError', () => {

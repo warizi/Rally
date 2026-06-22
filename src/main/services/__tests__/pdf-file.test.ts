@@ -32,6 +32,7 @@ vi.mock('fs')
 vi.mock('nanoid', () => ({ nanoid: () => 'mock-id' }))
 vi.mock('../../lib/fs-utils', () => ({
   resolveNameConflict: vi.fn((_dir: string, name: string) => name),
+  toNfc: (s: string) => s.normalize('NFC'),
   readPdfFilesRecursive: vi.fn(() => [])
 }))
 vi.mock('../../lib/leaf-reindex', () => ({
