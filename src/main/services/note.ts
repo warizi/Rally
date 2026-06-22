@@ -5,7 +5,7 @@ import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { noteRepository } from '../repositories/note'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
-import { resolveNameConflict, readMdFilesRecursive } from '../lib/fs-utils'
+import { resolveNameConflict, readMdFilesRecursive, toNfc } from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
@@ -189,8 +189,11 @@ export const noteService = {
     const title = finalFileName.replace(/\.md$/, '')
 
     const destAbs = path.join(parentAbs, finalFileName)
-    const destRel = normalizePath(
-      folderRelPath ? `${folderRelPath}/${finalFileName}` : finalFileName
+    // 워처/reconciler 는 디스크 경로를 NFC 로 통일(R-06)하므로 import 도 NFC 로 저장해야
+    // findByRelativePath 매칭이 되어 워처의 중복 재등록을 막는다. macOS 파일 선택창은
+    // 한글 파일명을 NFD 로 반환하므로 normalizePath 만으로는 NFD 가 그대로 저장된다.
+    const destRel = toNfc(
+      normalizePath(folderRelPath ? `${folderRelPath}/${finalFileName}` : finalFileName)
     )
 
     fs.copyFileSync(sourcePath, destAbs)
