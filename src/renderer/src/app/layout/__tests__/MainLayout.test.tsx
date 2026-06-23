@@ -43,7 +43,8 @@ vi.mock('@features/file-watcher/manage-watchers', () => ({
 }))
 
 vi.mock('@entities/canvas', () => ({
-  useCanvasWatcher: () => mocks.watcherCalls.push('canvas')
+  useCanvasWatcher: () => mocks.watcherCalls.push('canvas'),
+  useCanvasNodeRefSync: () => mocks.watcherCalls.push('canvas-ref-sync')
 }))
 
 vi.mock('@entities/todo', () => ({

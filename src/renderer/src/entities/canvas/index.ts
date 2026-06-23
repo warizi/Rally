@@ -56,3 +56,4 @@ export {
   GROUP_Z_INDEX
 } from './model/converters'
 export { useCanvasWatcher } from './model/use-canvas-watcher'
+export { useCanvasNodeRefSync } from './model/use-canvas-node-ref-sync'
