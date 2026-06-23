@@ -5,7 +5,8 @@ import {
   findNonOverlappingPosition,
   findGroupForNode,
   collectDescendantIds,
-  getContainerId
+  getContainerId,
+  computeMembershipUpdates
 } from '../canvas-layout'
 
 function makeNode(x: number, y: number): Node {
@@ -149,5 +150,31 @@ describe('findGroupForNode — 중첩/제외', () => {
     expect(findGroupForNode(nodes, { x: 150, y: 150 }, new Set(['inner']))).toBe('outer')
     // outer/inner 모두 제외하면 null
     expect(findGroupForNode(nodes, { x: 150, y: 150 }, new Set(['inner', 'outer']))).toBeNull()
+  })
+})
+
+describe('computeMembershipUpdates', () => {
+  it('큰 그룹이 작은 그룹을 감싸면 작은 그룹이 자식이 됨', () => {
+    // big(0,0,500x500) 이 small(100,100,100x100)을 공간상 포함. small.parentId 아직 null.
+    const nodes = [group('big', 0, 0, 500, 500, null), group('small', 100, 100, 100, 100, null)]
+    const updates = computeMembershipUpdates(nodes)
+    expect(updates).toContainEqual({ id: 'small', isGroup: true, containerId: 'big' })
+    // big 은 자기를 감쌀 그룹이 없으니 변경 없음
+    expect(updates.find((u) => u.id === 'big')).toBeUndefined()
+  })
+
+  it('변경 없으면 빈 배열 (이미 올바른 소속)', () => {
+    const nodes = [group('big', 0, 0, 500, 500, null), group('small', 100, 100, 100, 100, 'big')]
+    expect(computeMembershipUpdates(nodes)).toEqual([])
+  })
+
+  it('그룹은 자기 자손으로 편입되지 않음(사이클 방지)', () => {
+    // child 가 parent 안에 있고 parent 가 우연히 child 영역에 겹쳐도 parent 가 child 자식이 되면 안 됨
+    const nodes = [
+      group('parent', 0, 0, 200, 200, null),
+      group('child', 10, 10, 180, 180, 'parent')
+    ]
+    const updates = computeMembershipUpdates(nodes)
+    expect(updates.find((u) => u.id === 'parent')).toBeUndefined()
   })
 })

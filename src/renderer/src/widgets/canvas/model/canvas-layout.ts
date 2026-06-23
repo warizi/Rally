@@ -87,3 +87,35 @@ export function findGroupForNode(
   }
   return best?.id ?? null
 }
+
+export interface MembershipUpdate {
+  id: string
+  isGroup: boolean
+  containerId: string | null
+}
+
+/**
+ * 모든 노드/그룹의 소속을 중심점 기준으로 재판정해, 현재 소속과 달라진 것만 반환한다.
+ * 그룹은 자기/자손 그룹으로 편입되지 않도록 제외(사이클 방지).
+ *
+ * 그룹을 옮기거나 리사이즈하면 그 그룹이 새로 감싸게 된(혹은 벗어난) 노드·그룹의 소속이
+ * 바뀌므로, 드래그된 대상만이 아니라 전체를 재판정해야 한다.
+ */
+export function computeMembershipUpdates(nodes: CanvasFlowNode[]): MembershipUpdate[] {
+  const updates: MembershipUpdate[] = []
+  for (const n of nodes) {
+    const center = {
+      x: n.position.x + n.data.width / 2,
+      y: n.position.y + n.data.height / 2
+    }
+    const exclude =
+      n.type === 'groupNode'
+        ? new Set<string>([n.id, ...collectDescendantIds(nodes, n.id)])
+        : undefined
+    const target = findGroupForNode(nodes, center, exclude)
+    if (target !== getContainerId(n)) {
+      updates.push({ id: n.id, isGroup: n.type === 'groupNode', containerId: target })
+    }
+  }
+  return updates
+}

@@ -19,7 +19,12 @@ import { NodeColorToolbar } from './NodeColorToolbar'
 import { EdgeEditToolbar } from './EdgeEditToolbar'
 import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 import { findNonOverlappingPosition } from '../model/canvas-layout'
-import { findGroupForNode, getContainerId, collectDescendantIds } from '../model/canvas-layout'
+import {
+  findGroupForNode,
+  getContainerId,
+  collectDescendantIds,
+  computeMembershipUpdates
+} from '../model/canvas-layout'
 import { useCanvasClipboard } from '../model/use-canvas-clipboard'
 import type { CanvasNodeType, CanvasFlowNode, CanvasEdge } from '@entities/canvas'
 import type {
@@ -226,18 +231,25 @@ export function CanvasBoardInner({
             moved.filter((m) => m.isGroup).map(({ id, x, y }) => ({ id, x, y }))
           )
         }
-        // 드래그한 그룹이 다른 그룹 안으로 들어갔는지/나왔는지 — 자기·자손 제외하고 판정
-        const sg = all.find((n) => n.id === node.id)
-        if (sg) {
-          const center = {
-            x: sg.position.x + sg.data.width / 2,
-            y: sg.position.y + sg.data.height / 2
-          }
-          const exclude = new Set<string>([sg.id, ...collectDescendantIds(all, sg.id)])
-          const targetParent = findGroupForNode(all, center, exclude)
-          const currentParent = getContainerId(sg)
-          if (targetParent !== currentParent) {
-            setGroupParent(node.id, targetParent)
+        // 그룹을 옮기면 그 그룹이 새로 감싸게 된/벗어난 노드·그룹의 소속이 바뀐다.
+        // 드래그된 그룹 자신뿐 아니라 전체를 재판정해야 "큰 그룹으로 작은 그룹 감싸기"가 동작.
+        const cur = store.getState().nodes
+        const updates = computeMembershipUpdates(cur)
+        if (updates.length > 0) {
+          const map = new Map(updates.map((u) => [u.id, u.containerId]))
+          // 낙관적 store 반영 (노드/그룹 모두 data.groupId)
+          store
+            .getState()
+            .setNodes(
+              cur.map((n) =>
+                map.has(n.id)
+                  ? ({ ...n, data: { ...n.data, groupId: map.get(n.id)! } } as typeof n)
+                  : n
+              )
+            )
+          for (const u of updates) {
+            if (u.isGroup) setGroupParent(u.id, u.containerId)
+            else setNodeGroup(u.id, u.containerId)
           }
         }
         return
