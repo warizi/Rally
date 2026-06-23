@@ -262,12 +262,24 @@ export function registerMcpTagRoutes(router: Router): void {
           const r = results[i]
           if (!r?.success) return []
           const id = r.id
-          const title =
-            action.action === 'create_tag'
-              ? action.name
-              : action.action === 'update_tag'
-                ? (action.name ?? nameById.get(id) ?? '')
-                : (nameById.get(id) ?? '')
+          let title: string
+          if (action.action === 'create_tag') {
+            title = action.name
+          } else if (action.action === 'update_tag') {
+            title = action.name ?? nameById.get(id) ?? ''
+          } else if (action.action === 'delete_tag') {
+            title = nameById.get(id) ?? ''
+          } else {
+            // attach / detach — "태그 → 대상 항목" 으로 표시
+            const tagName = nameById.get(action.tagId) ?? ''
+            let itemTitle = action.itemId
+            try {
+              itemTitle = loadTaggableEntity(action.itemType, action.itemId, wsId).title
+            } catch {
+              // 대상이 이미 사라진 경우(detach 정리) — id 로 폴백
+            }
+            title = `${tagName} → ${itemTitle}`
+          }
           return [
             {
               domain: 'tag' as const,
