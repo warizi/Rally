@@ -6,6 +6,30 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.16.4',
+    date: '2026-06-23',
+    changes: [
+      {
+        type: 'fix',
+        title: 'pdf/이미지 가져오기 시 두개씩 표시되던 문제 수정',
+        description:
+          'pdf/이미지 가져오기 시 두개씩 표시되던 문제를 수정했습니다. 이제 가져온 pdf/이미지 항목이 한 번만 표시됩니다.'
+      },
+      {
+        type: 'improvement',
+        title: '캔버스의 사용성 개선',
+        description:
+          '그룹 노드가 상위 그룹에 포함 될 수 있도록 개선되었습니다. 기타 캔버스 기능 안정성이 향상되었습니다.'
+      },
+      {
+        type: 'improvement',
+        title: '토스트 알림 개선',
+        description:
+          'AI MCP를 통해 변경된 항목을 유형에 따라 다르게 표시하도록 개선되었습니다. 예시) Claude가 노트 "A"를 변경하였습니다. (노트, 표, 캔버스, 할일 등)'
+      }
+    ]
+  },
+  {
     version: '1.16.3',
     date: '2026-06-22',
     changes: [
