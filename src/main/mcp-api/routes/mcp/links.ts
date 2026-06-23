@@ -4,7 +4,36 @@ import { entityLinkService } from '../../../services/entity-link'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
 import { recordGroupedActivity, type McpActivityOperation } from '../../lib/activity'
+import { noteRepository } from '../../../repositories/note'
+import { csvFileRepository } from '../../../repositories/csv-file'
+import { canvasRepository } from '../../../repositories/canvas'
+import { todoRepository } from '../../../repositories/todo'
+import { pdfFileRepository } from '../../../repositories/pdf-file'
+import { imageFileRepository } from '../../../repositories/image-file'
+import { scheduleRepository } from '../../../repositories/schedule'
 import type { LinkAction, ManageLinkResult } from './types'
+
+/** 링크 토스트 표시용 — 엔티티 제목 (타입명 대신) */
+function linkEntityTitle(type: string, id: string): string {
+  switch (type) {
+    case 'note':
+      return noteRepository.findById(id)?.title ?? id
+    case 'csv':
+      return csvFileRepository.findById(id)?.title ?? id
+    case 'canvas':
+      return canvasRepository.findById(id)?.title ?? id
+    case 'todo':
+      return todoRepository.findById(id)?.title ?? id
+    case 'pdf':
+      return pdfFileRepository.findById(id)?.title ?? id
+    case 'image':
+      return imageFileRepository.findById(id)?.title ?? id
+    case 'schedule':
+      return scheduleRepository.findById(id)?.title ?? id
+    default:
+      return id
+  }
+}
 
 export function registerMcpLinkRoutes(router: Router): void {
   router.addRoute<{ actions: LinkAction[] }>(
@@ -91,7 +120,7 @@ export function registerMcpLinkRoutes(router: Router): void {
               item: {
                 type: 'link' as const,
                 id: action.sourceId,
-                title: `${action.sourceType} ↔ ${action.targetType}`
+                title: `${linkEntityTitle(action.sourceType, action.sourceId)} ↔ ${linkEntityTitle(action.targetType, action.targetId)}`
               }
             }
           ]
