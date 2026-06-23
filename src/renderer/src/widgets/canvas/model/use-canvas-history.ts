@@ -1,4 +1,4 @@
-import { useRef, useState, useCallback } from 'react'
+import { useRef, useState, useCallback, useEffect } from 'react'
 import type { MutableRefObject } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query'
@@ -7,6 +7,8 @@ import type { CanvasFlowNode } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
 
 const MAX_HISTORY = 50
+// store 변경이 멎고 이만큼 지나면 자동 스냅샷 (연속 편집/드래그 잔여 변경 coalesce).
+const AUTO_CAPTURE_DEBOUNCE_MS = 250
 
 interface NodeSnapshot {
   id: string
@@ -174,6 +176,10 @@ export function useCanvasHistory(
   const historyIndexRef = useRef(-1)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+  // 마지막으로 history 에 잡힌 snapshot 의 지문 — auto-capture 가 수동 pushHistory 와
+  // 중복 스냅샷을 만들지 않도록 공유한다. (null = 아직 initHistory 전)
+  const lastSigRef = useRef<string | null>(null)
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const updateFlags = useCallback(() => {
     setCanUndo(historyIndexRef.current > 0)
@@ -184,6 +190,7 @@ export function useCanvasHistory(
     const snapshot = captureSnapshot(store)
     historyRef.current = [snapshot]
     historyIndexRef.current = 0
+    lastSigRef.current = JSON.stringify(snapshot)
     updateFlags()
   }, [store, updateFlags])
 
@@ -194,6 +201,7 @@ export function useCanvasHistory(
     if (stack.length > MAX_HISTORY) stack.shift()
     historyRef.current = stack
     historyIndexRef.current = stack.length - 1
+    lastSigRef.current = JSON.stringify(snapshot)
     updateFlags()
   }, [store, updateFlags])
 
@@ -224,21 +232,53 @@ export function useCanvasHistory(
 
   const undo = useCallback(async () => {
     if (historyIndexRef.current <= 0) return
+    // 복원으로 인한 store 변경을 auto-capture 가 새 스냅샷으로 잡지 않도록 선차단.
+    skipHydrationRef.current = true
     historyIndexRef.current -= 1
     const snapshot = historyRef.current[historyIndexRef.current]
     restoreSnapshot(store, snapshot, canvasId)
+    lastSigRef.current = JSON.stringify(snapshot)
     updateFlags()
     await syncToDb(snapshot)
-  }, [store, canvasId, updateFlags, syncToDb])
+  }, [store, canvasId, updateFlags, syncToDb, skipHydrationRef])
 
   const redo = useCallback(async () => {
     if (historyIndexRef.current >= historyRef.current.length - 1) return
+    skipHydrationRef.current = true
     historyIndexRef.current += 1
     const snapshot = historyRef.current[historyIndexRef.current]
     restoreSnapshot(store, snapshot, canvasId)
+    lastSigRef.current = JSON.stringify(snapshot)
     updateFlags()
     await syncToDb(snapshot)
-  }, [store, canvasId, updateFlags, syncToDb])
+  }, [store, canvasId, updateFlags, syncToDb, skipHydrationRef])
+
+  // ── 중앙집중 auto-capture ──
+  // store 변경을 구독해, 의미 있는 변경(노드/엣지/그룹의 위치·data·구조)이 멎으면
+  // 자동으로 스냅샷한다. 색/라벨/내용/엣지 속성 등 개별 편집 지점마다 pushHistory 를
+  // 일일이 배선할 필요 없이 모두 history 에 잡힌다. (selection/dragging 은 지문에서 제외)
+  useEffect(() => {
+    const sig = (): string => JSON.stringify(captureSnapshot(store))
+    const maybeCapture = (): void => {
+      if (skipHydrationRef.current) return // 복원/sync 중
+      if (lastSigRef.current === null) return // initHistory 전
+      if (store.getState().nodes.some((n) => n.dragging)) return // 드래그 중 → 종료 후
+      if (sig() === lastSigRef.current) return // 의미 변경 없음 (예: 선택만 바뀜)
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+      debounceRef.current = setTimeout(() => {
+        debounceRef.current = null
+        if (skipHydrationRef.current) return
+        if (store.getState().nodes.some((n) => n.dragging)) return
+        if (sig() === lastSigRef.current) return
+        pushHistory()
+      }, AUTO_CAPTURE_DEBOUNCE_MS)
+    }
+    const unsubscribe = store.subscribe(maybeCapture)
+    return () => {
+      unsubscribe()
+      if (debounceRef.current) clearTimeout(debounceRef.current)
+    }
+  }, [store, skipHydrationRef, pushHistory])
 
   return { pushHistory, undo, redo, canUndo, canRedo, initHistory }
 }
