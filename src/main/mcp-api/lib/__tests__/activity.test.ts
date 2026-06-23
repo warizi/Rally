@@ -26,7 +26,11 @@ describe('createActivityCollector', () => {
   it('빈 items record 는 버린다', () => {
     const c = createActivityCollector()
     c.record({ domain: 'note', operation: 'create', items: [] })
-    c.record({ domain: 'note', operation: 'create', items: [{ type: 'note', id: 'n1', title: 'A' }] })
+    c.record({
+      domain: 'note',
+      operation: 'create',
+      items: [{ type: 'note', id: 'n1', title: 'A' }]
+    })
     const drained = c.drain()
     expect(drained).toHaveLength(1)
     expect(drained[0].items[0].id).toBe('n1')
@@ -34,7 +38,11 @@ describe('createActivityCollector', () => {
 
   it('drain 은 비우고 반환한다', () => {
     const c = createActivityCollector()
-    c.record({ domain: 'todo', operation: 'create', items: [{ type: 'todo', id: 't1', title: 'T' }] })
+    c.record({
+      domain: 'todo',
+      operation: 'create',
+      items: [{ type: 'todo', id: 't1', title: 'T' }]
+    })
     expect(c.drain()).toHaveLength(1)
     expect(c.drain()).toHaveLength(0)
   })
@@ -43,12 +51,15 @@ describe('createActivityCollector', () => {
 describe('recordGroupedActivity', () => {
   it('(domain, operation) 단위로 묶는다', () => {
     const records: McpActivityRecord[] = []
-    recordGroupedActivity((r) => records.push(r), [
-      { domain: 'note', operation: 'create', item: { type: 'note', id: 'n1', title: 'A' } },
-      { domain: 'note', operation: 'create', item: { type: 'note', id: 'n2', title: 'B' } },
-      { domain: 'note', operation: 'delete', item: { type: 'note', id: 'n3', title: 'C' } },
-      { domain: 'csv', operation: 'create', item: { type: 'csv', id: 'c1', title: 'D' } }
-    ])
+    recordGroupedActivity(
+      (r) => records.push(r),
+      [
+        { domain: 'note', operation: 'create', item: { type: 'note', id: 'n1', title: 'A' } },
+        { domain: 'note', operation: 'create', item: { type: 'note', id: 'n2', title: 'B' } },
+        { domain: 'note', operation: 'delete', item: { type: 'note', id: 'n3', title: 'C' } },
+        { domain: 'csv', operation: 'create', item: { type: 'csv', id: 'c1', title: 'D' } }
+      ]
+    )
     expect(records).toHaveLength(3)
     const noteCreate = records.find((r) => r.domain === 'note' && r.operation === 'create')
     expect(noteCreate?.items.map((i) => i.id)).toEqual(['n1', 'n2'])

@@ -63,7 +63,11 @@ describe('useMcpActivityWatcher', () => {
         workspaceId: 'ws-1',
         actor: { kind: 'ai', id: 'claude-code' },
         records: [
-          { domain: 'note', operation: 'create', items: [{ type: 'note', id: 'n1', title: '메모' }] }
+          {
+            domain: 'note',
+            operation: 'create',
+            items: [{ type: 'note', id: 'n1', title: '메모' }]
+          }
         ]
       })
     })
@@ -102,7 +106,11 @@ describe('useMcpActivityWatcher', () => {
         workspaceId: 'ws-1',
         actor: { kind: 'ai', id: 'ai' },
         records: [
-          { domain: 'schedule', operation: 'update', items: [{ type: 'schedule', id: 's1', title: 'S' }] }
+          {
+            domain: 'schedule',
+            operation: 'update',
+            items: [{ type: 'schedule', id: 's1', title: 'S' }]
+          }
         ]
       })
     })
