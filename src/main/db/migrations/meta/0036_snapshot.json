@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "68439ec3-2e4a-4f93-abcc-c89453c0d28b",
+  "id": "ff9ce06f-6216-4492-8df6-c61ff8b38755",
   "prevId": "6e91975f-737e-43d3-a07a-4ef87df2b4f2",
   "tables": {
     "app_settings": {
@@ -345,19 +345,6 @@
             "id"
           ],
           "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "canvas_groups_parent_id_canvas_groups_id_fk": {
-          "name": "canvas_groups_parent_id_canvas_groups_id_fk",
-          "tableFrom": "canvas_groups",
-          "tableTo": "canvas_groups",
-          "columnsFrom": [
-            "parent_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "canvas_groups_trash_batch_id_trash_batches_id_fk": {

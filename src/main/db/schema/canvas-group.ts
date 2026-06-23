@@ -1,11 +1,4 @@
-import {
-  type AnySQLiteColumn,
-  index,
-  integer,
-  real,
-  sqliteTable,
-  text
-} from 'drizzle-orm/sqlite-core'
+import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 import { canvases } from './canvas'
 import { trashBatches } from './trash-batch'
 
@@ -16,10 +9,10 @@ export const canvasGroups = sqliteTable(
     canvasId: text('canvas_id')
       .notNull()
       .references(() => canvases.id, { onDelete: 'cascade' }),
-    // 중첩 그룹 — 자기참조. 부모 그룹 삭제 시 자식은 고아화(set null). 서비스에서 명시적으로도 끊음.
-    parentId: text('parent_id').references((): AnySQLiteColumn => canvasGroups.id, {
-      onDelete: 'set null'
-    }),
+    // 중첩 그룹 — 부모 그룹 id(자기참조). SQLite 는 ALTER TABLE ADD COLUMN 에 REFERENCES 를
+    // 허용하지 않으므로 선언적 FK 없이 plain text 로 둔다. 부모 삭제 시 자식 고아화는
+    // 서비스(canvasGroupRepository.clearParentId)에서 명시적으로 처리한다.
+    parentId: text('parent_id'),
     label: text('label'),
     x: real('x').notNull(),
     y: real('y').notNull(),
