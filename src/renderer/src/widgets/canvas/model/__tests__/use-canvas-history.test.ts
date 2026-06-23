@@ -5,6 +5,12 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
+import { createElement, type ReactNode } from 'react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+
+const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+const wrapper = ({ children }: { children: ReactNode }): React.JSX.Element =>
+  createElement(QueryClientProvider, { client: qc }, children)
 
 vi.mock('@entities/canvas', () => ({
   toReactFlowNode: (n: Record<string, unknown>) => ({
@@ -62,7 +68,9 @@ describe('useCanvasHistory', () => {
       typeof useCanvasHistory
     >[2]
     const skipRef = { current: false }
-    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef))
+    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef), {
+      wrapper
+    })
     expect(result.current.canUndo).toBe(false)
     expect(result.current.canRedo).toBe(false)
   })
@@ -73,7 +81,9 @@ describe('useCanvasHistory', () => {
       typeof useCanvasHistory
     >[2]
     const skipRef = { current: false }
-    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef))
+    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef), {
+      wrapper
+    })
     act(() => {
       result.current.initHistory()
     })
@@ -87,7 +97,9 @@ describe('useCanvasHistory', () => {
       typeof useCanvasHistory
     >[2]
     const skipRef = { current: false }
-    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef))
+    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef), {
+      wrapper
+    })
     act(() => {
       result.current.initHistory()
       result.current.pushHistory()
@@ -102,7 +114,9 @@ describe('useCanvasHistory', () => {
       typeof useCanvasHistory
     >[2]
     const skipRef = { current: false }
-    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef))
+    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef), {
+      wrapper
+    })
     act(() => {
       result.current.initHistory()
       result.current.pushHistory()
@@ -120,7 +134,9 @@ describe('useCanvasHistory', () => {
       typeof useCanvasHistory
     >[2]
     const skipRef = { current: false }
-    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef))
+    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef), {
+      wrapper
+    })
     await act(async () => {
       await result.current.undo()
     })
@@ -133,7 +149,9 @@ describe('useCanvasHistory', () => {
       typeof useCanvasHistory
     >[2]
     const skipRef = { current: false }
-    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef))
+    const { result } = renderHook(() => useCanvasHistory('c1', store, syncMutation, skipRef), {
+      wrapper
+    })
     act(() => {
       result.current.initHistory()
       result.current.pushHistory()

@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback } from 'react'
 import type { MutableRefObject } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
-import type { UseMutationResult } from '@tanstack/react-query'
+import { useQueryClient, type UseMutationResult } from '@tanstack/react-query'
 import { toReactFlowNode, toReactFlowGroupNode, toReactFlowEdge } from '@entities/canvas'
 import type { CanvasFlowNode } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
@@ -169,6 +169,7 @@ export function useCanvasHistory(
   canRedo: boolean
   initHistory: () => void
 } {
+  const queryClient = useQueryClient()
   const historyRef = useRef<Snapshot[]>([])
   const historyIndexRef = useRef(-1)
   const [canUndo, setCanUndo] = useState(false)
@@ -204,11 +205,21 @@ export function useCanvasHistory(
           canvasId,
           data: { nodes: snapshot.nodes, edges: snapshot.edges, groups: snapshot.groups }
         })
+        // 영속 완료 후, 영속 전 시작돼 진행 중이던 stale refetch 를 취소하고 최신 데이터를
+        // 받아온 뒤 hydration 을 재개한다. 그렇지 않으면 지연 도착한 stale dbEdges 가
+        // 방금 복원한 edge 를 덮어쓴다 (edge redo 미동작의 원인).
+        const keys = [
+          ['canvasNode', 'canvas', canvasId],
+          ['canvasEdge', 'canvas', canvasId],
+          ['canvasGroup', 'canvas', canvasId]
+        ]
+        await Promise.all(keys.map((queryKey) => queryClient.cancelQueries({ queryKey })))
+        await Promise.all(keys.map((queryKey) => queryClient.refetchQueries({ queryKey })))
       } finally {
         skipHydrationRef.current = false
       }
     },
-    [canvasId, syncStateMutation, skipHydrationRef]
+    [canvasId, syncStateMutation, skipHydrationRef, queryClient]
   )
 
   const undo = useCallback(async () => {
