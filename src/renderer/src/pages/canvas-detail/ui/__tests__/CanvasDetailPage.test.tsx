@@ -24,17 +24,27 @@ const mocks = vi.hoisted(() => ({
     updatedAt: Date
   },
   isLoading: false,
+  isError: false,
   updateCanvas: vi.fn(),
-  setTabTitle: vi.fn()
+  setTabTitle: vi.fn(),
+  setTabError: vi.fn()
 }))
 
 vi.mock('@entities/canvas', () => ({
-  useCanvasById: () => ({ data: mocks.canvas, isLoading: mocks.isLoading }),
+  useCanvasById: () => ({
+    data: mocks.canvas,
+    isLoading: mocks.isLoading,
+    isError: mocks.isError
+  }),
   useUpdateCanvas: () => ({ mutate: mocks.updateCanvas })
 }))
 vi.mock('@/entities/tab-system', () => ({
-  useTabStore: (sel: (s: { setTabTitle: typeof mocks.setTabTitle }) => unknown) =>
-    sel({ setTabTitle: mocks.setTabTitle })
+  useTabStore: (
+    sel: (s: {
+      setTabTitle: typeof mocks.setTabTitle
+      setTabError: typeof mocks.setTabError
+    }) => unknown
+  ) => sel({ setTabTitle: mocks.setTabTitle, setTabError: mocks.setTabError })
 }))
 vi.mock('@/widgets/entity-link', () => ({
   LinkedEntityPopoverButton: () => <div data-testid="link-popover" />
@@ -73,8 +83,10 @@ beforeEach(() => {
     updatedAt: new Date('2026-01-02')
   }
   mocks.isLoading = false
+  mocks.isError = false
   mocks.updateCanvas.mockClear()
   mocks.setTabTitle.mockClear()
+  mocks.setTabError.mockClear()
 })
 
 describe('CanvasDetailPage', () => {
@@ -92,6 +104,15 @@ describe('CanvasDetailPage', () => {
     r(<CanvasDetailPage params={{ canvasId: 'cv-1' }} />)
     expect(screen.getByTestId('link-popover')).toBeInTheDocument()
     expect(screen.getByTestId('tag-list')).toBeInTheDocument()
+  })
+
+  it('isError (외부 삭제 등) → "캔버스 불러오기를 실패하였습니다" + CanvasBoard 미렌더 + setTabError', () => {
+    mocks.canvas = null
+    mocks.isError = true
+    r(<CanvasDetailPage tabId="tab-1" params={{ canvasId: 'cv-1' }} />)
+    expect(screen.getByText('캔버스 불러오기를 실패하였습니다.')).toBeInTheDocument()
+    expect(screen.queryByTestId('canvas-board')).not.toBeInTheDocument()
+    expect(mocks.setTabError).toHaveBeenCalledWith('tab-1', true)
   })
 
   it('canvas 데이터 없음 (loading 중) → CanvasBoard 는 여전히 렌더 (canvasId 있으면)', () => {
