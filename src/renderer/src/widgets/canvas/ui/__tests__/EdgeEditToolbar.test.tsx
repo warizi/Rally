@@ -25,7 +25,8 @@ const mocks = vi.hoisted(() => ({
   nodes: [] as Array<{ selected: boolean }>,
   setEdges: vi.fn(),
   deleteElements: vi.fn(),
-  updateMutate: vi.fn()
+  updateMutate: vi.fn(),
+  pushHistory: vi.fn()
 }))
 
 vi.mock('@xyflow/react', () => ({
@@ -51,11 +52,14 @@ beforeEach(() => {
   mocks.setEdges.mockReset()
   mocks.deleteElements.mockReset()
   mocks.updateMutate.mockReset()
+  mocks.pushHistory.mockReset()
 })
 
 describe('EdgeEditToolbar', () => {
   it('엣지 선택 없음 → null', () => {
-    const { container } = render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    const { container } = render(
+      <EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />
+    )
     expect(container.firstChild).toBeNull()
   })
 
@@ -68,7 +72,9 @@ describe('EdgeEditToolbar', () => {
       }
     ]
     mocks.nodes = [{ selected: true }]
-    const { container } = render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    const { container } = render(
+      <EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />
+    )
     expect(container.firstChild).toBeNull()
   })
 
@@ -80,7 +86,7 @@ describe('EdgeEditToolbar', () => {
         data: { edgeStyle: 'solid', arrow: 'end', color: null }
       }
     ]
-    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />)
     expect(screen.getByTitle('실선')).toBeInTheDocument()
     expect(screen.getByTitle('점선')).toBeInTheDocument()
     expect(screen.getByTitle('단방향')).toBeInTheDocument()
@@ -96,11 +102,13 @@ describe('EdgeEditToolbar', () => {
         data: { edgeStyle: 'solid', arrow: 'end', color: null }
       }
     ]
-    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />)
     fireEvent.click(screen.getByTitle('점선'))
     expect(mocks.updateMutate).toHaveBeenCalledWith(
       expect.objectContaining({ edgeId: 'e1', data: { style: 'dashed' } })
     )
+    // 속성 변경이 undo/redo 되도록 history 캡처
+    expect(mocks.pushHistory).toHaveBeenCalled()
   })
 
   it('arrow 버튼 클릭 → updateEdge.mutate', () => {
@@ -111,7 +119,7 @@ describe('EdgeEditToolbar', () => {
         data: { edgeStyle: 'solid', arrow: 'end', color: null }
       }
     ]
-    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />)
     fireEvent.click(screen.getByTitle('양방향'))
     expect(mocks.updateMutate).toHaveBeenCalledWith(
       expect.objectContaining({ edgeId: 'e1', data: { arrow: 'both' } })
@@ -126,7 +134,7 @@ describe('EdgeEditToolbar', () => {
         data: { edgeStyle: 'solid', arrow: 'end', color: null }
       }
     ]
-    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />)
     fireEvent.click(screen.getByTitle('삭제'))
     expect(mocks.deleteElements).toHaveBeenCalledWith({ edges: [{ id: 'e1' }] })
   })
@@ -139,7 +147,7 @@ describe('EdgeEditToolbar', () => {
         data: { edgeStyle: 'solid', arrow: 'end', color: null }
       }
     ]
-    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />)
     fireEvent.click(screen.getByTitle('텍스트 편집'))
     // label input 이 별도 영역에 노출됨 - 그냥 toggle 동작만 확인
   })
@@ -152,7 +160,7 @@ describe('EdgeEditToolbar', () => {
         data: { edgeStyle: 'solid', arrow: 'end', color: '#ff0000' }
       }
     ]
-    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} />)
+    render(<EdgeEditToolbar canvasId="c1" store={fakeStore} pushHistory={mocks.pushHistory} />)
     fireEvent.click(screen.getByTitle('색상 변경'))
     // color picker 가 노출됨 - smoke
   })

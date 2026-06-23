@@ -193,6 +193,7 @@ export function useCanvasData(canvasId: string, tabId?: string) {
     updateNode,
     updateEdge,
     store,
+    pushHistory,
     undo,
     redo,
     canUndo,

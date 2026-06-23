@@ -60,6 +60,7 @@ interface CanvasBoardInnerProps {
   }) => Promise<CanvasEdgeItem>
   store: StoreApi<CanvasFlowState>
   hasSavedViewport: boolean
+  pushHistory: () => void
   undo: () => void
   redo: () => void
   canUndo: boolean
@@ -85,6 +86,7 @@ export function CanvasBoardInner({
   createEdgeAsync,
   store,
   hasSavedViewport,
+  pushHistory,
   undo,
   redo,
   canUndo,
@@ -367,7 +369,7 @@ export function CanvasBoardInner({
       </ReactFlow>
       <NodeColorToolbar store={store} />
       <SelectionToolbar onCopy={handleCopy} onGroupSelection={groupSelectedNodes} />
-      <EdgeEditToolbar canvasId={canvasId} store={store} />
+      <EdgeEditToolbar canvasId={canvasId} store={store} pushHistory={pushHistory} />
       <EntityPickerDialog
         open={entityPickerOpen}
         onOpenChange={setEntityPickerOpen}
