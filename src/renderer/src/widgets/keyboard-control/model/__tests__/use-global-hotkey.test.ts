@@ -72,6 +72,47 @@ describe('useGlobalHotkey', () => {
     expect(onKeyDown).toHaveBeenCalledTimes(3)
   })
 
+  it('소비자가 preventDefault 안 한 키 → stopPropagation 호출 안 함 (다른 단축키 통과)', () => {
+    renderHook(() =>
+      useGlobalHotkey({ modifiers: { meta: true, shift: true }, onKeyDown: () => {} })
+    )
+    const e = new KeyboardEvent('keydown', {
+      key: 'z',
+      code: 'KeyZ',
+      metaKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true
+    })
+    const stopSpy = vi.spyOn(e, 'stopPropagation')
+    act(() => {
+      window.dispatchEvent(e)
+    })
+    expect(stopSpy).not.toHaveBeenCalled()
+  })
+
+  it('소비자가 preventDefault 한 키 → stopPropagation 호출 (component listener 충돌 방지 유지)', () => {
+    renderHook(() =>
+      useGlobalHotkey({
+        modifiers: { meta: true, shift: true },
+        onKeyDown: (ev) => ev.preventDefault()
+      })
+    )
+    const e = new KeyboardEvent('keydown', {
+      key: 's',
+      code: 'KeyS',
+      metaKey: true,
+      shiftKey: true,
+      bubbles: true,
+      cancelable: true
+    })
+    const stopSpy = vi.spyOn(e, 'stopPropagation')
+    act(() => {
+      window.dispatchEvent(e)
+    })
+    expect(stopSpy).toHaveBeenCalled()
+  })
+
   it('shift 해제 시 onDeactivate 호출', () => {
     const onDeactivate = vi.fn()
     renderHook(() => useGlobalHotkey({ modifiers: { shift: true }, onDeactivate }))
