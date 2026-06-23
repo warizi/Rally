@@ -221,16 +221,21 @@ describe('CanvasBoardInner', () => {
   it('Cmd+Z (without Shift) → undo 호출', () => {
     const undo = vi.fn()
     render(<CanvasBoardInner {...baseProps} undo={undo} canUndo={true} />)
-    const evt = new KeyboardEvent('keydown', { key: 'z', metaKey: true })
+    const evt = new KeyboardEvent('keydown', { key: 'z', code: 'KeyZ', metaKey: true })
     document.dispatchEvent(evt)
     expect(undo).toHaveBeenCalled()
   })
 
-  it('Cmd+Shift+Z → redo 호출 (Shift 조합 시 key 는 대문자 "Z")', () => {
+  it('Cmd+Shift+Z → redo 호출 (물리 키 code 로 판정)', () => {
     const redo = vi.fn()
     render(<CanvasBoardInner {...baseProps} redo={redo} canRedo={true} />)
-    // 실제 브라우저는 Shift+Z 에서 e.key 가 'Z'(대문자) — 이 케이스로 회귀 방지
-    const evt = new KeyboardEvent('keydown', { key: 'Z', metaKey: true, shiftKey: true })
+    // 실제 브라우저는 Shift+Z 에서 e.key 가 'Z'(환경별 상이)지만 e.code 는 항상 'KeyZ'
+    const evt = new KeyboardEvent('keydown', {
+      key: 'Z',
+      code: 'KeyZ',
+      metaKey: true,
+      shiftKey: true
+    })
     document.dispatchEvent(evt)
     expect(redo).toHaveBeenCalled()
   })
@@ -251,7 +256,7 @@ describe('CanvasBoardInner', () => {
   it('Cmd+Y → redo 호출 (alternative key)', () => {
     const redo = vi.fn()
     render(<CanvasBoardInner {...baseProps} redo={redo} canRedo={true} />)
-    const evt = new KeyboardEvent('keydown', { key: 'y', metaKey: true })
+    const evt = new KeyboardEvent('keydown', { key: 'y', code: 'KeyY', metaKey: true })
     document.dispatchEvent(evt)
     expect(redo).toHaveBeenCalled()
   })

@@ -295,18 +295,19 @@ export function CanvasBoardInner({
         handlePaste()
       }
 
-      // Shift 조합 시 e.key 는 대문자('Z')가 되므로 toLowerCase 로 비교한다.
-      // (이전엔 redo 의 `e.key === 'z'` 가 Cmd+Shift+Z 에서 'Z' 라 매칭 실패 → redo 미동작)
-      const key = e.key.toLowerCase()
+      // e.key 는 Shift/레이아웃에 따라 변형되므로(Cmd+Shift+Z 가 'Z'/환경별 상이) 물리 키
+      // e.code 로 판정한다 — Shift 와 무관하게 'KeyZ'/'KeyY' 로 일정. (redo 미동작 안정화)
+      const isZ = e.code === 'KeyZ'
+      const isY = e.code === 'KeyY'
 
       // Undo: Cmd+Z (without Shift)
-      if ((e.metaKey || e.ctrlKey) && key === 'z' && !e.shiftKey) {
+      if ((e.metaKey || e.ctrlKey) && isZ && !e.shiftKey) {
         e.preventDefault()
         undo()
       }
 
       // Redo: Cmd+Shift+Z or Cmd+Y
-      if ((e.metaKey || e.ctrlKey) && ((key === 'z' && e.shiftKey) || key === 'y')) {
+      if ((e.metaKey || e.ctrlKey) && ((isZ && e.shiftKey) || isY)) {
         e.preventDefault()
         redo()
       }
