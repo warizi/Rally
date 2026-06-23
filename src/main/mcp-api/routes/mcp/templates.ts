@@ -65,11 +65,13 @@ export function registerMcpTemplateRoutes(router: Router): void {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
 
-      // 동작 전 제목 포착 (delete 후엔 조회 불가)
+      const typeLabel = (t: string): string => (t === 'csv' ? '테이블' : '노트')
+      // 동작 전 제목(+타입) 포착 (delete 후엔 조회 불가)
       const titleById = new Map<string, string>()
       for (const a of body.actions) {
         if (a.action === 'delete' && a.id) {
-          titleById.set(a.id, templateRepository.findById(a.id)?.title ?? '')
+          const row = templateRepository.findById(a.id)
+          titleById.set(a.id, row ? `${row.title} (${typeLabel(row.type)})` : '')
         }
       }
 
@@ -103,7 +105,10 @@ export function registerMcpTemplateRoutes(router: Router): void {
           if (!r?.success) return []
           const operation: McpActivityOperation = action.action === 'create' ? 'create' : 'delete'
           const id = action.action === 'create' ? r.id : action.id
-          const title = action.action === 'create' ? action.title : (titleById.get(action.id) ?? '')
+          const title =
+            action.action === 'create'
+              ? `${action.title} (${typeLabel(action.type)})`
+              : (titleById.get(action.id) ?? '')
           return [
             {
               domain: 'template' as const,
