@@ -321,6 +321,7 @@ export const canvasEdgeUpdateSchema = z.object({
 })
 
 export const canvasGroupCreateSchema = z.object({
+  parentId: idSchema.nullable().optional(),
   label: z.string().max(1000).optional(),
   x: z.number(),
   y: z.number(),
@@ -330,6 +331,7 @@ export const canvasGroupCreateSchema = z.object({
 })
 
 export const canvasGroupUpdateSchema = z.object({
+  parentId: idSchema.nullable().optional(),
   label: z.string().max(1000).nullable().optional(),
   x: z.number().optional(),
   y: z.number().optional(),
