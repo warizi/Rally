@@ -8,7 +8,7 @@ import { renderHook } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   nodes: [] as Array<{ id: string; content?: string }>,
-  edges: [] as Array<{ id: string }>,
+  edges: [] as Array<{ id: string; label?: string }>,
   groups: [] as Array<{ id: string }>,
   nodesLoading: false,
   edgesLoading: false,
@@ -142,6 +142,19 @@ describe('useCanvasHydration', () => {
     expect(hydratedRef.current).toBe(true)
     // setHydrated(true) 호출 → store.hydrated = true
     expect(store.getState().hydrated).toBe(true)
+  })
+
+  it('같은 edge id + data 변경(label) → setEdges 로 merge 반영', () => {
+    mocks.edges = [{ id: 'e1', label: 'A' }]
+    const store = createStore() as Parameters<typeof useCanvasHydration>[1]
+    const hydratedRef = { current: false }
+    const skipRef = { current: false }
+    const { rerender } = renderHook(() => useCanvasHydration('c1', store, hydratedRef, skipRef))
+    expect((store.getState().edges[0] as { label?: string }).label).toBe('A')
+    // 동일 id 인데 label(=화살표/선유형/색 등 시각 속성과 같은 경로)만 변경
+    mocks.edges = [{ id: 'e1', label: 'B' }]
+    rerender()
+    expect((store.getState().edges[0] as { label?: string }).label).toBe('B')
   })
 
   it('initHistory 없음 (undefined) → 에러 없이 마운트 (smoke)', () => {
