@@ -33,7 +33,8 @@ vi.mock('@entities/canvas', () => ({
     data: { label: null, color: null, width: 0, height: 0 },
     zIndex: -1
   }),
-  toReactFlowEdge: (e: { id: string }) => ({ ...e, source: '', target: '' })
+  toReactFlowEdge: (e: { id: string }) => ({ ...e, source: '', target: '' }),
+  assignGroupZIndexByDepth: () => {}
 }))
 
 import { useCanvasHydration } from '../use-canvas-hydration'

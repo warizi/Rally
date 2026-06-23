@@ -7,6 +7,7 @@ import {
   toReactFlowNode,
   toReactFlowGroupNode,
   toReactFlowEdge,
+  assignGroupZIndexByDepth,
   type CanvasNodeItem,
   type CanvasGroupItem
 } from '@entities/canvas'
@@ -18,7 +19,10 @@ import type { CanvasFlowNode, CanvasEdge } from '@entities/canvas'
  * 그룹을 먼저 둬서 렌더 순서상 항상 뒤(아래)에 오도록 한다.
  */
 function buildFlowNodes(nodes: CanvasNodeItem[], groups: CanvasGroupItem[]): CanvasFlowNode[] {
-  return [...groups.map(toReactFlowGroupNode), ...nodes.map(toReactFlowNode)]
+  const groupNodes = groups.map(toReactFlowGroupNode)
+  // 중첩 깊이에 따라 그룹 zIndex 보정 — 자식 그룹이 부모 박스 위에 보이도록.
+  assignGroupZIndexByDepth(groupNodes)
+  return [...groupNodes, ...nodes.map(toReactFlowNode)]
 }
 
 /** DB 데이터가 store 노드와 다른지 비교 (position/selection 제외, data + zIndex만) */

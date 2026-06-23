@@ -8,6 +8,7 @@ import {
   useUpdateCanvasViewport,
   useSyncCanvasState,
   useCreateCanvasGroup,
+  useUpdateCanvasGroup,
   useUpdateCanvasNodePositions,
   type CanvasNodeItem
 } from '@entities/canvas'
@@ -77,6 +78,7 @@ export function useCanvasData(canvasId: string, tabId?: string) {
   const { mutate: updateNode } = useUpdateCanvasNode()
   const { mutate: updateEdge } = useUpdateCanvasEdge()
   const { mutate: createGroup, mutateAsync: createGroupAsync } = useCreateCanvasGroup()
+  const { mutate: updateGroup } = useUpdateCanvasGroup()
   const { mutate: updateNodePositions } = useUpdateCanvasNodePositions()
 
   const saveViewport = useCallback(
@@ -133,9 +135,9 @@ export function useCanvasData(canvasId: string, tabId?: string) {
     [canvasId, createGroup]
   )
 
-  /** 선택된 일반 노드들을 감싸는 그룹 생성 + 멤버 groupId 설정 */
+  /** 선택된 노드/그룹들을 감싸는 새 그룹 생성 + 멤버 소속 설정(그룹도 중첩 가능) */
   const groupSelectedNodes = useCallback(async () => {
-    const selected = store.getState().nodes.filter((n) => n.selected && n.type !== 'groupNode')
+    const selected = store.getState().nodes.filter((n) => n.selected)
     if (selected.length === 0) return
     const PAD = 30
     const minX = Math.min(...selected.map((n) => n.position.x)) - PAD
@@ -147,9 +149,13 @@ export function useCanvasData(canvasId: string, tabId?: string) {
       data: { x: minX, y: minY, width: maxX - minX, height: maxY - minY }
     })
     for (const n of selected) {
-      updateNode({ nodeId: n.id, data: { groupId: group.id }, canvasId })
+      if (n.type === 'groupNode') {
+        updateGroup({ groupId: n.id, data: { parentId: group.id }, canvasId })
+      } else {
+        updateNode({ nodeId: n.id, data: { groupId: group.id }, canvasId })
+      }
     }
-  }, [store, canvasId, createGroupAsync, updateNode])
+  }, [store, canvasId, createGroupAsync, updateNode, updateGroup])
 
   /** 노드의 그룹 소속 변경(드래그 편입/이탈) */
   const setNodeGroup = useCallback(
@@ -159,6 +165,14 @@ export function useCanvasData(canvasId: string, tabId?: string) {
     [canvasId, updateNode]
   )
 
+  /** 그룹의 부모 그룹 소속 변경(중첩 편입/이탈) */
+  const setGroupParent = useCallback(
+    (groupId: string, parentId: string | null) => {
+      updateGroup({ groupId, data: { parentId }, canvasId })
+    },
+    [canvasId, updateGroup]
+  )
+
   /** 멤버 노드 위치 일괄 영속화 (그룹 드래그 종료 시) */
   const persistNodePositions = useCallback(
     (updates: { id: string; x: number; y: number }[]) => {
@@ -166,6 +180,16 @@ export function useCanvasData(canvasId: string, tabId?: string) {
       updateNodePositions({ updates, canvasId })
     },
     [canvasId, updateNodePositions]
+  )
+
+  /** 자식 그룹 위치 영속화 (그룹 드래그 종료 시 — 그룹엔 batch 가 없어 개별 update) */
+  const persistGroupPositions = useCallback(
+    (updates: { id: string; x: number; y: number }[]) => {
+      for (const u of updates) {
+        updateGroup({ groupId: u.id, data: { x: u.x, y: u.y }, canvasId })
+      }
+    },
+    [canvasId, updateGroup]
   )
 
   const hasSavedViewport = !!tabSearchParams?.vx
@@ -186,7 +210,9 @@ export function useCanvasData(canvasId: string, tabId?: string) {
     addGroup,
     groupSelectedNodes,
     setNodeGroup,
+    setGroupParent,
     persistNodePositions,
+    persistGroupPositions,
     createNode,
     createNodeAsync,
     createEdgeAsync,

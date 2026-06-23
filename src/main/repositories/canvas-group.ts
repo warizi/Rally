@@ -58,6 +58,7 @@ export const canvasGroupRepository = {
     data: Partial<
       Pick<
         CanvasGroup,
+        | 'parentId'
         | 'label'
         | 'x'
         | 'y'
@@ -71,6 +72,11 @@ export const canvasGroupRepository = {
     >
   ): CanvasGroup | undefined {
     return db.update(canvasGroups).set(data).where(eq(canvasGroups.id, id)).returning().get()
+  },
+
+  /** 자식 그룹 고아화 — 주어진 부모를 가리키던 그룹들의 parentId 를 null 로. */
+  clearParentId(parentId: string): void {
+    db.update(canvasGroups).set({ parentId: null }).where(eq(canvasGroups.parentId, parentId)).run()
   },
 
   delete(id: string): void {

@@ -40,7 +40,9 @@ export function CanvasBoard({ canvasId, tabId }: CanvasBoardProps): React.JSX.El
         addGroup={canvasData.addGroup}
         groupSelectedNodes={canvasData.groupSelectedNodes}
         setNodeGroup={canvasData.setNodeGroup}
+        setGroupParent={canvasData.setGroupParent}
         persistNodePositions={canvasData.persistNodePositions}
+        persistGroupPositions={canvasData.persistGroupPositions}
         canvasId={canvasId}
         createNodeAsync={canvasData.createNodeAsync}
         createEdgeAsync={canvasData.createEdgeAsync}

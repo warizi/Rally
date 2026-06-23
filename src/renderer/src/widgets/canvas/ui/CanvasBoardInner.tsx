@@ -19,7 +19,7 @@ import { NodeColorToolbar } from './NodeColorToolbar'
 import { EdgeEditToolbar } from './EdgeEditToolbar'
 import { NODE_TYPE_REGISTRY } from '../model/node-type-registry'
 import { findNonOverlappingPosition } from '../model/canvas-layout'
-import { findGroupForNode } from '../model/canvas-layout'
+import { findGroupForNode, getContainerId, collectDescendantIds } from '../model/canvas-layout'
 import { useCanvasClipboard } from '../model/use-canvas-clipboard'
 import type { CanvasNodeType, CanvasFlowNode, CanvasEdge } from '@entities/canvas'
 import type {
@@ -48,7 +48,9 @@ interface CanvasBoardInnerProps {
   addGroup: (x: number, y: number, width?: number, height?: number) => void
   groupSelectedNodes: () => void
   setNodeGroup: (nodeId: string, groupId: string | null) => void
+  setGroupParent: (groupId: string, parentId: string | null) => void
   persistNodePositions: (updates: { id: string; x: number; y: number }[]) => void
+  persistGroupPositions: (updates: { id: string; x: number; y: number }[]) => void
   canvasId: string
   createNodeAsync: (args: {
     canvasId: string
@@ -80,7 +82,9 @@ export function CanvasBoardInner({
   addGroup,
   groupSelectedNodes,
   setNodeGroup,
+  setGroupParent,
   persistNodePositions,
+  persistGroupPositions,
   canvasId,
   createNodeAsync,
   createEdgeAsync,
@@ -103,7 +107,7 @@ export function CanvasBoardInner({
     groupId: string
     startX: number
     startY: number
-    members: { id: string; x: number; y: number }[]
+    members: { id: string; x: number; y: number; isGroup: boolean }[]
   } | null>(null)
 
   const nodeTypes = useMemo(() => NODE_TYPES, [])
@@ -154,7 +158,7 @@ export function CanvasBoardInner({
     addGroup(center.x - 160, center.y - 120)
   }, [getViewportCenter, addGroup])
 
-  // 그룹 드래그 시작 — 그룹/멤버 시작 위치 스냅샷
+  // 그룹 드래그 시작 — 그룹의 전체 자손(자식 노드 + 중첩 그룹과 그 멤버) 시작 위치 스냅샷
   const handleNodeDragStart: OnNodeDrag = useCallback(
     (_event, node) => {
       if (node.type !== 'groupNode') {
@@ -162,14 +166,18 @@ export function CanvasBoardInner({
         return
       }
       const all = store.getState().nodes
-      const members = all.filter(
-        (n) => n.type !== 'groupNode' && 'groupId' in n.data && n.data.groupId === node.id
-      )
+      const descendantIds = collectDescendantIds(all, node.id)
+      const members = all.filter((n) => descendantIds.has(n.id))
       groupDragRef.current = {
         groupId: node.id,
         startX: node.position.x,
         startY: node.position.y,
-        members: members.map((m) => ({ id: m.id, x: m.position.x, y: m.position.y }))
+        members: members.map((m) => ({
+          id: m.id,
+          x: m.position.x,
+          y: m.position.y,
+          isGroup: m.type === 'groupNode'
+        }))
       }
     },
     [store]
@@ -197,20 +205,45 @@ export function CanvasBoardInner({
   // 노드/그룹 드래그 종료
   const handleNodeDragStop: OnNodeDrag = useCallback(
     (_event, node, draggedNodes) => {
-      // 그룹 드래그 종료 → 멤버 최종 위치 영속화
+      const all = store.getState().nodes
+      // 그룹 드래그 종료 → 자손 위치 영속화 + 그룹 자신의 부모(중첩) 재판정
       if (node.type === 'groupNode') {
         const snap = groupDragRef.current
         groupDragRef.current = null
         if (snap && snap.groupId === node.id && snap.members.length > 0) {
           const dx = node.position.x - snap.startX
           const dy = node.position.y - snap.startY
-          persistNodePositions(snap.members.map((m) => ({ id: m.id, x: m.x + dx, y: m.y + dy })))
+          const moved = snap.members.map((m) => ({
+            id: m.id,
+            x: m.x + dx,
+            y: m.y + dy,
+            isGroup: m.isGroup
+          }))
+          persistNodePositions(
+            moved.filter((m) => !m.isGroup).map(({ id, x, y }) => ({ id, x, y }))
+          )
+          persistGroupPositions(
+            moved.filter((m) => m.isGroup).map(({ id, x, y }) => ({ id, x, y }))
+          )
+        }
+        // 드래그한 그룹이 다른 그룹 안으로 들어갔는지/나왔는지 — 자기·자손 제외하고 판정
+        const sg = all.find((n) => n.id === node.id)
+        if (sg) {
+          const center = {
+            x: sg.position.x + sg.data.width / 2,
+            y: sg.position.y + sg.data.height / 2
+          }
+          const exclude = new Set<string>([sg.id, ...collectDescendantIds(all, sg.id)])
+          const targetParent = findGroupForNode(all, center, exclude)
+          const currentParent = getContainerId(sg)
+          if (targetParent !== currentParent) {
+            setGroupParent(node.id, targetParent)
+          }
         }
         return
       }
       // 일반 노드 드래그 종료 → 드래그된 모든 노드의 그룹 편입/이탈 판정
       // (Shift 다중선택 드래그 시 draggedNodes 에 전부 들어옴; 단일 드래그면 [node])
-      const all = store.getState().nodes
       const targets = (draggedNodes?.length ? draggedNodes : [node]).filter(
         (n) => n.type !== 'groupNode'
       )
@@ -222,13 +255,13 @@ export function CanvasBoardInner({
           y: sn.position.y + sn.data.height / 2
         }
         const targetGroupId = findGroupForNode(all, center)
-        const currentGroupId = 'groupId' in sn.data ? (sn.data.groupId ?? null) : null
+        const currentGroupId = getContainerId(sn)
         if (targetGroupId !== currentGroupId) {
           setNodeGroup(dn.id, targetGroupId)
         }
       }
     },
-    [store, setNodeGroup, persistNodePositions]
+    [store, setNodeGroup, setGroupParent, persistNodePositions, persistGroupPositions]
   )
 
   const handleEntitySelect = useCallback(

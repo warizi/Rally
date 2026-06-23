@@ -53,6 +53,7 @@ export interface CanvasNodeItem {
 export interface CanvasGroupItem {
   id: string
   canvasId: string
+  parentId: string | null
   label: string | null
   x: number
   y: number
@@ -101,6 +102,7 @@ export interface UpdateCanvasNodeData {
 }
 
 export interface CreateCanvasGroupData {
+  parentId?: string | null
   label?: string
   x: number
   y: number
@@ -110,6 +112,7 @@ export interface CreateCanvasGroupData {
 }
 
 export interface UpdateCanvasGroupData {
+  parentId?: string | null
   label?: string | null
   x?: number
   y?: number
@@ -190,6 +193,7 @@ export interface SyncCanvasStateData {
   }[]
   groups?: {
     id: string
+    parentId?: string | null
     label: string | null
     x: number
     y: number

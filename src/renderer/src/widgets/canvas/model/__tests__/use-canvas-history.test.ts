@@ -18,7 +18,14 @@ vi.mock('@entities/canvas', () => ({
     position: { x: 0, y: 0 },
     data: { ...n }
   }),
-  toReactFlowEdge: (e: Record<string, unknown>) => ({ ...e, source: '', target: '' })
+  toReactFlowGroupNode: (g: Record<string, unknown>) => ({
+    ...g,
+    type: 'groupNode',
+    position: { x: 0, y: 0 },
+    data: { ...g }
+  }),
+  toReactFlowEdge: (e: Record<string, unknown>) => ({ ...e, source: '', target: '' }),
+  assignGroupZIndexByDepth: () => {}
 }))
 
 import { useCanvasHistory } from '../use-canvas-history'

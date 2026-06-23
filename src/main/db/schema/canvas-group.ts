@@ -1,4 +1,11 @@
-import { index, integer, real, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import {
+  type AnySQLiteColumn,
+  index,
+  integer,
+  real,
+  sqliteTable,
+  text
+} from 'drizzle-orm/sqlite-core'
 import { canvases } from './canvas'
 import { trashBatches } from './trash-batch'
 
@@ -9,6 +16,10 @@ export const canvasGroups = sqliteTable(
     canvasId: text('canvas_id')
       .notNull()
       .references(() => canvases.id, { onDelete: 'cascade' }),
+    // 중첩 그룹 — 자기참조. 부모 그룹 삭제 시 자식은 고아화(set null). 서비스에서 명시적으로도 끊음.
+    parentId: text('parent_id').references((): AnySQLiteColumn => canvasGroups.id, {
+      onDelete: 'set null'
+    }),
     label: text('label'),
     x: real('x').notNull(),
     y: real('y').notNull(),
@@ -24,6 +35,7 @@ export const canvasGroups = sqliteTable(
   },
   (t) => [
     index('idx_canvas_groups_canvas').on(t.canvasId),
+    index('idx_canvas_groups_parent').on(t.parentId),
     index('idx_canvas_groups_deleted').on(t.deletedAt),
     index('idx_canvas_groups_trash_batch').on(t.trashBatchId)
   ]

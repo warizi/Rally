@@ -10,6 +10,8 @@ import type {
 
 /** 그룹 노드는 일반 노드·엣지보다 항상 뒤(아래)에 렌더되도록 음수 zIndex 고정 */
 export const GROUP_Z_INDEX = -1
+/** 중첩 깊이당 zIndex 가산 폭(범위 확보용). 깊을수록 위(0 에 근접)지만 항상 음수 유지. */
+const GROUP_NEST_SPAN = 50
 
 export function toReactFlowNode(item: CanvasNodeItem): CanvasNode {
   if (item.type === 'text') {
@@ -66,14 +68,40 @@ export function toReactFlowGroupNode(item: CanvasGroupItem): GroupNode {
       label: item.label,
       color: item.color,
       width: item.width,
-      height: item.height
+      height: item.height,
+      // 부모 그룹 id — 노드의 groupId 와 동일 의미(소속 그룹). zIndex 는 아래에서 깊이로 보정.
+      groupId: item.parentId
     },
     style: { width: item.width, height: item.height },
-    // 항상 뒤로 — 일반 노드·엣지보다 아래 레이어
+    // 항상 뒤로 — 일반 노드·엣지보다 아래 레이어 (중첩 시 깊을수록 위)
     zIndex: GROUP_Z_INDEX,
     // 그룹 박스는 selectable 하되 드래그로 자식과 함께 이동(인터랙션 레이어에서 처리)
     selectable: true,
     draggable: true
+  }
+}
+
+/**
+ * 그룹 노드들의 zIndex 를 중첩 깊이에 따라 보정한다(in-place).
+ * 깊을수록 위(0 에 근접)지만 항상 음수 → 일반 노드·엣지보다 아래. 부모 그룹 박스 위에
+ * 자식 그룹 박스가 보이도록 한다. 사이클은 seen 으로 방어.
+ */
+export function assignGroupZIndexByDepth(groupNodes: GroupNode[]): void {
+  const byId = new Map(groupNodes.map((g) => [g.id, g]))
+  const depthOf = (g: GroupNode): number => {
+    let depth = 0
+    let cursor: GroupNode | undefined = g
+    const seen = new Set<string>()
+    while (cursor && cursor.data.groupId && byId.has(cursor.data.groupId)) {
+      if (seen.has(cursor.id)) break
+      seen.add(cursor.id)
+      depth += 1
+      cursor = byId.get(cursor.data.groupId)
+    }
+    return depth
+  }
+  for (const g of groupNodes) {
+    g.zIndex = GROUP_Z_INDEX - GROUP_NEST_SPAN + Math.min(depthOf(g), GROUP_NEST_SPAN)
   }
 }
 

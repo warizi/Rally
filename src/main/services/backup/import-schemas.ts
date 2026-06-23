@@ -223,6 +223,7 @@ export const CanvasGroupImport = z
   .object({
     id: z.string(),
     canvasId: z.string(),
+    parentId: z.string().nullable().optional(),
     label: z.string().nullable(),
     color: z.string().nullable(),
     x: z.number(),

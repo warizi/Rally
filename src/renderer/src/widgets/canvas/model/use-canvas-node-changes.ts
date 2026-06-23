@@ -9,7 +9,7 @@ import {
   useRemoveCanvasGroup
 } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
-import { findGroupForNode } from './canvas-layout'
+import { findGroupForNode, getContainerId, collectDescendantIds } from './canvas-layout'
 
 export function useCanvasNodeChanges(
   canvasId: string,
@@ -106,20 +106,26 @@ export function useCanvasNodeChanges(
           })
         )
         const cur = store.getState().nodes
-        const memberUpdates: { id: string; groupId: string | null }[] = []
+        const memberUpdates: { id: string; isGroup: boolean; containerId: string | null }[] = []
         for (const n of cur) {
-          if (n.type === 'groupNode') continue
           const center = {
             x: n.position.x + n.data.width / 2,
             y: n.position.y + n.data.height / 2
           }
-          const target = findGroupForNode(cur, center)
-          const currentG = 'groupId' in n.data ? (n.data.groupId ?? null) : null
-          if (target !== currentG) memberUpdates.push({ id: n.id, groupId: target })
+          // 그룹 자신은 자기/자손 그룹에 편입되지 않도록 제외(사이클 방지)
+          const exclude =
+            n.type === 'groupNode'
+              ? new Set<string>([n.id, ...collectDescendantIds(cur, n.id)])
+              : undefined
+          const target = findGroupForNode(cur, center, exclude)
+          const currentG = getContainerId(n)
+          if (target !== currentG) {
+            memberUpdates.push({ id: n.id, isGroup: n.type === 'groupNode', containerId: target })
+          }
         }
         if (memberUpdates.length > 0) {
-          const map = new Map(memberUpdates.map((u) => [u.id, u.groupId]))
-          // 낙관적 store 반영 (이후 그룹 드래그가 최신 groupId 를 읽도록)
+          const map = new Map(memberUpdates.map((u) => [u.id, u.containerId]))
+          // 낙관적 store 반영 (이후 그룹 드래그가 최신 소속을 읽도록). 노드/그룹 모두 data.groupId.
           store
             .getState()
             .setNodes(
@@ -130,7 +136,11 @@ export function useCanvasNodeChanges(
               )
             )
           for (const u of memberUpdates) {
-            updateNode({ nodeId: u.id, data: { groupId: u.groupId }, canvasId })
+            if (u.isGroup) {
+              updateGroup({ groupId: u.id, data: { parentId: u.containerId }, canvasId })
+            } else {
+              updateNode({ nodeId: u.id, data: { groupId: u.containerId }, canvasId })
+            }
           }
           pushHistory?.()
         }

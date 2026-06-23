@@ -2,8 +2,13 @@ import { useRef, useState, useCallback, useEffect } from 'react'
 import type { MutableRefObject } from 'react'
 import type { StoreApi } from 'zustand/vanilla'
 import { useQueryClient, type UseMutationResult } from '@tanstack/react-query'
-import { toReactFlowNode, toReactFlowGroupNode, toReactFlowEdge } from '@entities/canvas'
-import type { CanvasFlowNode } from '@entities/canvas'
+import {
+  toReactFlowNode,
+  toReactFlowGroupNode,
+  toReactFlowEdge,
+  assignGroupZIndexByDepth
+} from '@entities/canvas'
+import type { CanvasFlowNode, GroupNode } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
 
 const MAX_HISTORY = 50
@@ -38,6 +43,7 @@ interface EdgeSnapshot {
 
 interface GroupSnapshot {
   id: string
+  parentId: string | null
   label: string | null
   x: number
   y: number
@@ -60,6 +66,7 @@ function captureSnapshot(store: StoreApi<CanvasFlowState>): Snapshot {
     if (n.type === 'groupNode') {
       groups.push({
         id: n.id,
+        parentId: 'groupId' in n.data ? (n.data.groupId ?? null) : null,
         label: n.data.label,
         x: n.position.x,
         y: n.position.y,
@@ -109,6 +116,7 @@ function restoreSnapshot(
     toReactFlowGroupNode({
       id: g.id,
       canvasId,
+      parentId: g.parentId,
       label: g.label,
       x: g.x,
       y: g.y,
@@ -119,6 +127,8 @@ function restoreSnapshot(
       updatedAt: new Date()
     })
   )
+  // 중첩 깊이에 맞춰 그룹 zIndex 보정 (자식 그룹이 부모 위에 보이도록)
+  assignGroupZIndexByDepth(groupNodes.filter((n) => n.type === 'groupNode') as GroupNode[])
   const flowNodes: CanvasFlowNode[] = snapshot.nodes.map((n) =>
     toReactFlowNode({
       id: n.id,

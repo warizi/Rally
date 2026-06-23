@@ -33,6 +33,7 @@ vi.mock('@entities/canvas', () => ({
   useUpdateCanvasViewport: () => ({ mutate: mocks.updateViewport }),
   useSyncCanvasState: () => mocks.syncStateMutation,
   useCreateCanvasGroup: () => ({ mutate: vi.fn(), mutateAsync: vi.fn() }),
+  useUpdateCanvasGroup: () => ({ mutate: vi.fn() }),
   useUpdateCanvasNodePositions: () => ({ mutate: vi.fn() })
 }))
 
