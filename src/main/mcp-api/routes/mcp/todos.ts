@@ -6,6 +6,12 @@ import type { LinkableEntityType } from '../../../db/schema/entity-link'
 import { ValidationError } from '../../../lib/errors'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
+import { todoRepository } from '../../../repositories/todo'
+import {
+  recordGroupedActivity,
+  type McpActivityItem,
+  type McpActivityOperation
+} from '../../lib/activity'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 
 const VALID_LINK_TYPES: ReadonlySet<LinkableEntityType> = new Set([
@@ -158,6 +164,8 @@ export function registerMcpTodoRoutes(router: Router): void {
       const wsId = resolveActiveWorkspace()
       const actor = ctx.actor
 
+      const acts: { operation: McpActivityOperation; item: McpActivityItem }[] = []
+
       const results = processBatchActions<TodoAction, ManageTodoResult>(body.actions, (action) => {
         if (action.action === 'create') {
           if (typeof action.parentId === 'string') {
@@ -192,6 +200,10 @@ export function registerMcpTodoRoutes(router: Router): void {
               entityLinkService.link(item.type, item.id, 'todo', result.id, wsId)
             }
           }
+          acts.push({
+            operation: 'create',
+            item: { type: 'todo', id: result.id, title: action.title }
+          })
           return { action: 'create', id: result.id, success: true }
         }
         if (action.action === 'update') {
@@ -235,16 +247,33 @@ export function registerMcpTodoRoutes(router: Router): void {
               entityLinkService.unlink(item.type, item.id, 'todo', action.id, wsId)
             }
           }
+          acts.push({
+            operation: 'update',
+            item: {
+              type: 'todo',
+              id: action.id,
+              title: action.title ?? todoRepository.findById(action.id)?.title ?? action.id
+            }
+          })
           return { action: 'update', id: action.id, success: true }
         }
         // delete
         assertValidId(action.id, 'todo id')
+        const deletedTitle = todoRepository.findById(action.id)?.title ?? action.id
         todoService.remove(action.id)
+        acts.push({
+          operation: 'delete',
+          item: { type: 'todo', id: action.id, title: deletedTitle }
+        })
         return { action: 'delete', id: action.id, success: true }
       })
 
       // broadcast는 트랜잭션 외부에서 — rollback 불가능한 부수효과
       broadcastChanged('todo:changed', wsId, [])
+      recordGroupedActivity(
+        ctx.recordActivity,
+        acts.map((a) => ({ domain: 'todo', operation: a.operation, item: a.item }))
+      )
       return { results }
     }
   )

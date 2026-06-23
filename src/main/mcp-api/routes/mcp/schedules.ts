@@ -4,6 +4,7 @@ import { scheduleService } from '../../../services/schedule'
 import { scheduleRepository } from '../../../repositories/schedule'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
+import { recordGroupedActivity, type McpActivityOperation } from '../../lib/activity'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 import type { ScheduleAction, ManageScheduleResult, ScheduleSummary } from './types'
 
@@ -80,6 +81,14 @@ export function registerMcpScheduleRoutes(router: Router): void {
       const wsId = resolveActiveWorkspace()
       const actor = ctx.actor
 
+      // 동작 전 제목 포착 (delete 후엔 조회 불가)
+      const titleById = new Map<string, string>()
+      for (const a of body.actions) {
+        if (a.action !== 'create' && a.id) {
+          titleById.set(a.id, scheduleRepository.findById(a.id)?.title ?? '')
+        }
+      }
+
       const results = processBatchActions<ScheduleAction, ManageScheduleResult>(
         body.actions,
         (action) => {
@@ -139,6 +148,29 @@ export function registerMcpScheduleRoutes(router: Router): void {
       )
 
       broadcastChanged('schedule:changed', wsId, [])
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          const operation: McpActivityOperation =
+            action.action === 'create' ? 'create' : action.action === 'update' ? 'update' : 'delete'
+          const id = action.action === 'create' ? r.id : action.id
+          const title =
+            action.action === 'create'
+              ? action.title
+              : ((action.action === 'update' ? action.title : undefined) ??
+                titleById.get(action.id) ??
+                '')
+          return [
+            {
+              domain: 'schedule' as const,
+              operation,
+              item: { type: 'schedule' as const, id, title }
+            }
+          ]
+        })
+      )
       return { results }
     }
   )

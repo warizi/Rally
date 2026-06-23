@@ -5,11 +5,7 @@ import { normalizeError } from '../lib/errors'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { workspaceRepository } from '../repositories/workspace'
 import type { Actor } from '../services/_shared/actor'
-import {
-  createActivityCollector,
-  emitMcpActivity,
-  type McpActivityRecord
-} from './lib/activity'
+import { createActivityCollector, emitMcpActivity, type McpActivityRecord } from './lib/activity'
 
 type RouteParams = Record<string, string>
 

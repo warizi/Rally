@@ -6,10 +6,17 @@ import { todoRepository } from '../../../repositories/todo'
 import { scheduleRepository } from '../../../repositories/schedule'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
+import { recordGroupedActivity, type McpActivityOperation } from '../../lib/activity'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 import type { ReminderAction, ManageReminderResult, ReminderSummary } from './types'
 
 const VALID_ENTITY_TYPES = new Set(['todo', 'schedule'])
+
+/** 리마인더가 붙은 대상(todo/schedule)의 제목 — 토스트 표시용 */
+function entityTitle(entityType: string, entityId: string): string {
+  if (entityType === 'todo') return todoRepository.findById(entityId)?.title ?? entityId
+  return scheduleRepository.findById(entityId)?.title ?? entityId
+}
 
 function ownedByWs(entityType: 'todo' | 'schedule', entityId: string, wsId: string): void {
   if (entityType === 'todo') {
@@ -77,9 +84,18 @@ export function registerMcpReminderRoutes(router: Router): void {
   router.addRoute<{ actions: ReminderAction[] }>(
     'POST',
     '/api/mcp/reminders/batch',
-    (_, body): { results: ManageReminderResult[] } => {
+    (_, body, _query, ctx): { results: ManageReminderResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+
+      // 동작 전 대상 제목 포착 (delete 후엔 조회 불가)
+      const titleById = new Map<string, string>()
+      for (const a of body.actions) {
+        if (a.action === 'delete' && a.id) {
+          const rem = reminderRepository.findById(a.id)
+          if (rem) titleById.set(a.id, entityTitle(rem.entityType, rem.entityId))
+        }
+      }
 
       const results = processBatchActions<ReminderAction, ManageReminderResult>(
         body.actions,
@@ -110,6 +126,26 @@ export function registerMcpReminderRoutes(router: Router): void {
       )
 
       broadcastChanged('reminder:changed', wsId, [])
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          const operation: McpActivityOperation = action.action === 'create' ? 'create' : 'delete'
+          const id = action.action === 'create' ? r.id : action.id
+          const title =
+            action.action === 'create'
+              ? entityTitle(action.entityType, action.entityId)
+              : (titleById.get(action.id) ?? '')
+          return [
+            {
+              domain: 'reminder' as const,
+              operation,
+              item: { type: 'reminder' as const, id, title }
+            }
+          ]
+        })
+      )
       return { results }
     }
   )

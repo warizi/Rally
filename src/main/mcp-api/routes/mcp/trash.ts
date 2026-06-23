@@ -67,10 +67,16 @@ export function registerMcpTrashRoutes(router: Router): void {
 
   // ─── POST /api/mcp/trash/:batchId/restore → restore_trash ──
 
-  router.addRoute<null>('POST', '/api/mcp/trash/:batchId/restore', (params) => {
+  router.addRoute<null>('POST', '/api/mcp/trash/:batchId/restore', (params, _body, _query, ctx) => {
     resolveActiveWorkspace()
     assertValidId(params.batchId, 'batchId')
     const result = trashService.restore(params.batchId)
+    const count = Array.isArray(result.restored) ? result.restored.length : 0
+    ctx.recordActivity({
+      domain: 'trash',
+      operation: 'restore',
+      items: [{ type: 'trash', id: params.batchId, title: `${count}개 항목` }]
+    })
     return {
       restored: result.restored,
       conflicts: result.conflicts ?? []
@@ -79,10 +85,15 @@ export function registerMcpTrashRoutes(router: Router): void {
 
   // ─── POST /api/mcp/trash/:batchId/purge → permanent delete single batch ──
 
-  router.addRoute<null>('POST', '/api/mcp/trash/:batchId/purge', (params) => {
+  router.addRoute<null>('POST', '/api/mcp/trash/:batchId/purge', (params, _body, _query, ctx) => {
     resolveActiveWorkspace()
     assertValidId(params.batchId, 'batchId')
     trashService.purge(params.batchId)
+    ctx.recordActivity({
+      domain: 'trash',
+      operation: 'purge',
+      items: [{ type: 'trash', id: params.batchId, title: '항목' }]
+    })
     return { success: true, batchId: params.batchId }
   })
 
@@ -91,7 +102,7 @@ export function registerMcpTrashRoutes(router: Router): void {
   router.addRoute<{ batchId?: string; confirm?: boolean }>(
     'POST',
     '/api/mcp/trash/empty',
-    (_, body) => {
+    (_, body, _query, ctx) => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
       // 전체 비우기는 확인 토큰 필수 (AI/사용자 사고 방지)
@@ -104,6 +115,11 @@ export function registerMcpTrashRoutes(router: Router): void {
       if (body.batchId) {
         assertValidId(body.batchId, 'batchId')
         trashService.purge(body.batchId)
+        ctx.recordActivity({
+          domain: 'trash',
+          operation: 'purge',
+          items: [{ type: 'trash', id: body.batchId, title: '항목' }]
+        })
         return { purgedBatchIds: [body.batchId] }
       }
 
@@ -114,6 +130,13 @@ export function registerMcpTrashRoutes(router: Router): void {
       for (const batch of all.batches) {
         trashService.purge(batch.id)
         purgedBatchIds.push(batch.id)
+      }
+      if (purgedBatchIds.length > 0) {
+        ctx.recordActivity({
+          domain: 'trash',
+          operation: 'empty',
+          items: [{ type: 'trash', id: 'all', title: `${purgedBatchIds.length}개 배치` }]
+        })
       }
       return { purgedBatchIds, hasMore: all.hasMore }
     }

@@ -26,9 +26,17 @@ import { pdfFileRepository } from '../../../repositories/pdf-file'
 import { imageFileRepository } from '../../../repositories/image-file'
 import { folderRepository } from '../../../repositories/folder'
 import { broadcastChanged } from '../../lib/broadcast'
+import type { McpActivityDomain, McpActivityItem, McpActivityOperation } from '../../lib/activity'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 
 type ItemType = 'note' | 'csv' | 'canvas' | 'pdf' | 'image' | 'folder'
+
+/** relativePath 에서 표시용 제목 추출 (폴더는 확장자 유지, 파일은 제거) */
+function titleFromPath(rel: string | undefined, type: ItemType): string {
+  if (!rel) return ''
+  const base = rel.split('/').pop() ?? rel
+  return type === 'folder' ? base : base.replace(/\.[^.]+$/, '')
+}
 
 type ManageItemAction =
   | { action: 'rename'; id: string; newName: string }
@@ -78,6 +86,21 @@ export function registerMcpManageItemsRoutes(router: Router): void {
       let folderTouched = false
       let canvasTouched = false
 
+      // MCP 활동 누산 (도메인 × 동작 단위로 그룹핑해 발행)
+      const acts: {
+        domain: McpActivityDomain
+        operation: McpActivityOperation
+        item: McpActivityItem
+      }[] = []
+      const pushAct = (
+        type: ItemType,
+        operation: McpActivityOperation,
+        id: string,
+        title: string
+      ): void => {
+        acts.push({ domain: type, operation, item: { type, id, title } })
+      }
+
       const results: ManageItemResult[] = body.actions.map((action): ManageItemResult => {
         try {
           if (action.action === 'create_folder') {
@@ -89,11 +112,17 @@ export function registerMcpManageItemsRoutes(router: Router): void {
               actor
             )
             folderTouched = true
+            pushAct('folder', 'create', folder.id, action.name)
             return { action: 'create_folder', id: folder.id, type: 'folder', success: true }
           }
           assertValidId(action.id, 'id')
           const detected = detectType(action.id, wsId)
           if (!detected) throw new NotFoundError(`Item not found in active workspace: ${action.id}`)
+          // 동작 전 표시용 제목 포착 (delete 후엔 조회 불가)
+          const preTitle =
+            detected.type === 'canvas'
+              ? (canvasRepository.findById(action.id)?.title ?? '')
+              : titleFromPath(detected.relativePath, detected.type)
 
           if (action.action === 'update_meta') {
             if (detected.type !== 'pdf' && detected.type !== 'image') {
@@ -110,6 +139,7 @@ export function registerMcpManageItemsRoutes(router: Router): void {
                 { description: action.description },
                 actor
               )
+            pushAct(detected.type, 'update', action.id, preTitle)
             return { action: 'update_meta', id: action.id, type: detected.type, success: true }
           }
 
@@ -150,6 +180,7 @@ export function registerMcpManageItemsRoutes(router: Router): void {
                 break
               }
             }
+            pushAct(detected.type, 'rename', action.id, action.newName)
             return { action: 'rename', id: action.id, type: detected.type, success: true }
           }
 
@@ -190,6 +221,7 @@ export function registerMcpManageItemsRoutes(router: Router): void {
                 break
               }
             }
+            pushAct(detected.type, 'move', action.id, preTitle)
             return { action: 'move', id: action.id, type: detected.type, success: true }
           }
 
@@ -220,6 +252,7 @@ export function registerMcpManageItemsRoutes(router: Router): void {
               folderTouched = true
               break
           }
+          pushAct(detected.type, 'delete', action.id, preTitle)
           return { action: 'delete', id: action.id, type: detected.type, success: true }
         } catch (e) {
           return {
@@ -237,6 +270,19 @@ export function registerMcpManageItemsRoutes(router: Router): void {
       if (imageAffected.length > 0) broadcastChanged('image:changed', wsId, imageAffected, actor)
       if (folderTouched) broadcastChanged('folder:changed', wsId, [], actor)
       if (canvasTouched) broadcastChanged('canvas:changed', wsId, [], actor)
+
+      // (domain, operation) 단위로 묶어 활동 발행
+      const grouped = new Map<string, McpActivityItem[]>()
+      for (const a of acts) {
+        const key = `${a.domain} ${a.operation}`
+        const list = grouped.get(key) ?? []
+        list.push(a.item)
+        grouped.set(key, list)
+      }
+      for (const [key, items] of grouped) {
+        const [domain, operation] = key.split(' ') as [McpActivityDomain, McpActivityOperation]
+        ctx.recordActivity({ domain, operation, items })
+      }
 
       return { results }
     }
