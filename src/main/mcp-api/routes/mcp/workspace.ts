@@ -86,7 +86,7 @@ export function registerMcpWorkspaceRoutes(router: Router): void {
   router.addRoute<{ workspaceId: string }>(
     'POST',
     '/api/mcp/workspace/switch',
-    async (_params, body) => {
+    async (_params, body, _query, ctx) => {
       requireBody(body)
       if (typeof body.workspaceId !== 'string') {
         throw new ValidationError('workspaceId is required')
@@ -102,6 +102,11 @@ export function registerMcpWorkspaceRoutes(router: Router): void {
       if (!alreadyActive) {
         await workspaceWatcher.ensureWatching(ws.id, ws.path)
         broadcastChanged('workspace:active-changed', ws.id, [])
+        ctx.recordActivity({
+          domain: 'workspace',
+          operation: 'switch',
+          items: [{ type: 'workspace', id: ws.id, title: ws.name }]
+        })
       }
 
       return {

@@ -5,6 +5,7 @@ import { folderService } from '../../../services/folder'
 import { NotFoundError, ValidationError } from '../../../lib/errors'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
+import { recordGroupedActivity, type McpActivityOperation } from '../../lib/activity'
 import { requireBody, resolveActiveWorkspace, assertValidId } from './helpers'
 
 /**
@@ -81,6 +82,18 @@ export function registerMcpFolderRoutes(router: Router): void {
       // 1. 사전 validation — invalid id 등 흔한 fail 케이스를 실행 전에 거름 (부분 commit 방지)
       preflightFolderActions(body.actions, wsId)
 
+      // 동작 전 폴더 제목(=경로 basename) 포착 (delete/move 후 변경 대비)
+      const titleByFolderId = new Map<string, string>()
+      for (const a of body.actions) {
+        if (a.action !== 'create' && a.folderId) {
+          const f = folderRepository.findById(a.folderId)
+          titleByFolderId.set(
+            a.folderId,
+            f ? (f.relativePath.split('/').pop() ?? f.relativePath) : ''
+          )
+        }
+      }
+
       const affectedPaths: string[] = []
       let hasFolderChange = false
 
@@ -138,6 +151,36 @@ export function registerMcpFolderRoutes(router: Router): void {
         broadcastChanged('note:changed', wsId, [], actor)
         broadcastChanged('csv:changed', wsId, [], actor)
       }
+
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          if (action.action === 'create') {
+            return [
+              {
+                domain: 'folder' as const,
+                operation: 'create' as McpActivityOperation,
+                item: { type: 'folder' as const, id: r.id, title: action.name }
+              }
+            ]
+          }
+          const operation: McpActivityOperation =
+            action.action === 'rename' ? 'rename' : action.action === 'move' ? 'move' : 'delete'
+          const title =
+            action.action === 'rename'
+              ? action.newName
+              : (titleByFolderId.get(action.folderId) ?? '')
+          return [
+            {
+              domain: 'folder' as const,
+              operation,
+              item: { type: 'folder' as const, id: action.folderId, title }
+            }
+          ]
+        })
+      )
 
       return { results }
     }

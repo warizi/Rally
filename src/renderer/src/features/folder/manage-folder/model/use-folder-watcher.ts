@@ -5,7 +5,6 @@ import { toast } from 'sonner'
 import { isWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { useTabStore } from '@/entities/tab-system'
 import { ROUTES } from '@shared/constants/tab-url'
-import { formatAuthor } from '@shared/lib/format-author'
 
 /** MainLayout에서 호출 — push 이벤트 구독 + React Query invalidation */
 export function useFolderWatcher(): void {
@@ -18,12 +17,15 @@ export function useFolderWatcher(): void {
     }, 2000)
     const unsub = window.api.folder.onChanged((workspaceId, changedRelPaths, actor) => {
       queryClient.invalidateQueries({ queryKey: ['folder', 'tree', workspaceId] })
-      if (readyRef.current && changedRelPaths.length > 0 && !isWorkspaceOwnWrite(workspaceId)) {
+      // 토스트는 진짜 외부 변경(actor 없음)만. MCP(actor 있음)는 mcp:activity 가 담당.
+      if (
+        readyRef.current &&
+        changedRelPaths.length > 0 &&
+        !actor &&
+        !isWorkspaceOwnWrite(workspaceId)
+      ) {
         const names = [...new Set(changedRelPaths.map((p) => p.split('/').pop() ?? p))]
-        const isAi = actor?.kind === 'ai'
-        const title = isAi
-          ? `${formatAuthor('ai', actor?.id ?? null)} 가 폴더를 변경하였습니다`
-          : '외부에서 폴더가 변경되었습니다'
+        const title = '외부에서 폴더가 변경되었습니다'
 
         toast.info(title, {
           description: createElement(

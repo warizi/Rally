@@ -108,6 +108,11 @@ export function registerMcpCanvasRoutes(router: Router): void {
       })
 
       broadcastChanged('canvas:changed', wsId, [])
+      ctx.recordActivity({
+        domain: 'canvas',
+        operation: 'create',
+        items: [{ type: 'canvas', id: canvas.id, title: canvas.title }]
+      })
 
       return {
         canvas: { id: canvas.id, title: canvas.title, description: canvas.description },
@@ -142,6 +147,11 @@ export function registerMcpCanvasRoutes(router: Router): void {
         // 단독 delete — 트랜잭션 불필요 (단일 작업)
         canvasService.remove(params.canvasId)
         broadcastChanged('canvas:changed', wsId, [])
+        ctx.recordActivity({
+          domain: 'canvas',
+          operation: 'delete',
+          items: [{ type: 'canvas', id: params.canvasId, title: targetCanvas.title }]
+        })
         return { results: [{ action: 'delete', success: true }] }
       }
 
@@ -249,6 +259,11 @@ export function registerMcpCanvasRoutes(router: Router): void {
       })
 
       broadcastChanged('canvas:changed', wsId, [])
+      ctx.recordActivity({
+        domain: 'canvas',
+        operation: 'update',
+        items: [{ type: 'canvas', id: params.canvasId, title: targetCanvas.title }]
+      })
       return { results }
     }
   )

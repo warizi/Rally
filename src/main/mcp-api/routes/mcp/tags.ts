@@ -14,6 +14,7 @@ import { folderRepository } from '../../../repositories/folder'
 import { TAGGABLE_ENTITY_TYPES, type TaggableEntityType } from '../../../db/schema/tag'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
+import { recordGroupedActivity, type McpActivityOperation } from '../../lib/activity'
 import {
   requireBody,
   resolveActiveWorkspace,
@@ -21,6 +22,14 @@ import {
   assertValidId
 } from './helpers'
 import type { TagAction, ManageTagResult, TagSummary, TaggedItemSummary } from './types'
+
+const TAG_OP: Record<string, McpActivityOperation> = {
+  create_tag: 'create',
+  update_tag: 'update',
+  delete_tag: 'delete',
+  attach: 'attach',
+  detach: 'detach'
+}
 
 const VALID_TAGGABLE_TYPES = new Set<TaggableEntityType>(TAGGABLE_ENTITY_TYPES)
 
@@ -173,6 +182,13 @@ export function registerMcpTagRoutes(router: Router): void {
       const wsId = resolveActiveWorkspace()
       const actor = ctx.actor
 
+      // 동작 전 태그 이름 포착 (delete 후엔 조회 불가)
+      const nameById = new Map<string, string>()
+      for (const a of body.actions) {
+        const tid = 'tagId' in a ? a.tagId : 'id' in a ? a.id : undefined
+        if (tid) nameById.set(tid, tagRepository.findById(tid)?.name ?? '')
+      }
+
       const results = processBatchActions<TagAction, ManageTagResult>(
         body.actions,
         (action) => {
@@ -240,6 +256,39 @@ export function registerMcpTagRoutes(router: Router): void {
       )
 
       broadcastChanged('tag:changed', wsId, [])
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          const id = r.id
+          let title: string
+          if (action.action === 'create_tag') {
+            title = action.name
+          } else if (action.action === 'update_tag') {
+            title = action.name ?? nameById.get(id) ?? ''
+          } else if (action.action === 'delete_tag') {
+            title = nameById.get(id) ?? ''
+          } else {
+            // attach / detach — "태그 → 대상 항목" 으로 표시
+            const tagName = nameById.get(action.tagId) ?? ''
+            let itemTitle = action.itemId
+            try {
+              itemTitle = loadTaggableEntity(action.itemType, action.itemId, wsId).title
+            } catch {
+              // 대상이 이미 사라진 경우(detach 정리) — id 로 폴백
+            }
+            title = `${tagName} → ${itemTitle}`
+          }
+          return [
+            {
+              domain: 'tag' as const,
+              operation: TAG_OP[action.action],
+              item: { type: 'tag' as const, id, title }
+            }
+          ]
+        })
+      )
       return { results }
     }
   )

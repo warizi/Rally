@@ -4,6 +4,7 @@ import { templateService } from '../../../services/template'
 import { templateRepository } from '../../../repositories/template'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
+import { recordGroupedActivity, type McpActivityOperation } from '../../lib/activity'
 import {
   requireBody,
   resolveActiveWorkspace,
@@ -60,9 +61,19 @@ export function registerMcpTemplateRoutes(router: Router): void {
   router.addRoute<{ actions: TemplateAction[] }>(
     'POST',
     '/api/mcp/templates/batch',
-    (_, body): { results: ManageTemplateResult[] } => {
+    (_, body, _query, ctx): { results: ManageTemplateResult[] } => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
+
+      const typeLabel = (t: string): string => (t === 'csv' ? '테이블' : '노트')
+      // 동작 전 제목(+타입) 포착 (delete 후엔 조회 불가)
+      const titleById = new Map<string, string>()
+      for (const a of body.actions) {
+        if (a.action === 'delete' && a.id) {
+          const row = templateRepository.findById(a.id)
+          titleById.set(a.id, row ? `${row.title} (${typeLabel(row.type)})` : '')
+        }
+      }
 
       const results = processBatchActions<TemplateAction, ManageTemplateResult>(
         body.actions,
@@ -87,6 +98,26 @@ export function registerMcpTemplateRoutes(router: Router): void {
       )
 
       broadcastChanged('template:changed', wsId, [])
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          const operation: McpActivityOperation = action.action === 'create' ? 'create' : 'delete'
+          const id = action.action === 'create' ? r.id : action.id
+          const title =
+            action.action === 'create'
+              ? `${action.title} (${typeLabel(action.type)})`
+              : (titleById.get(action.id) ?? '')
+          return [
+            {
+              domain: 'template' as const,
+              operation,
+              item: { type: 'template' as const, id, title }
+            }
+          ]
+        })
+      )
       return { results }
     }
   )

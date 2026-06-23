@@ -32,6 +32,7 @@ import { noteStyleTemplateApi } from './note-style-template'
 import { skillApi } from './skill'
 import { searchApi } from './search'
 import { embeddingApi } from './embedding'
+import { mcpActivityApi } from './mcp-activity'
 
 export { shellApi } from './shell'
 
@@ -69,5 +70,6 @@ export const api = {
   noteStyleTemplate: noteStyleTemplateApi,
   skill: skillApi,
   search: searchApi,
-  embedding: embeddingApi
+  embedding: embeddingApi,
+  mcpActivity: mcpActivityApi
 }

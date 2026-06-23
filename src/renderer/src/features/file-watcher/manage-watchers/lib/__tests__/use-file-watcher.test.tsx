@@ -109,20 +109,68 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+/** invalidateQueries().then(...) 의 마이크로태스크 체인을 flush */
+async function flush(): Promise<void> {
+  await act(async () => {
+    for (let i = 0; i < 5; i++) await Promise.resolve()
+  })
+}
+
 describe('useFileWatcher', () => {
-  it('readyRef false (2s 이전) → 변경 발생해도 toast 미호출', () => {
-    const { triggerChange } = setup({
+  it('readyRef false (2s 이전) → 변경 발생해도 toast 미호출', async () => {
+    const { triggerChange, client } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
+    })
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
+    act(() => {
+      triggerChange('ws-1', ['a.md'], null)
+    })
+    await flush()
+    expect(mocks.toastInfo).not.toHaveBeenCalled()
+  })
+
+  it('외부 수정 → "외부에서 변경되었습니다" (메시지 통일)', async () => {
+    const { triggerChange, client } = setup({
+      queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
+    })
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
+    act(() => {
+      vi.advanceTimersByTime(2100)
     })
     act(() => {
       triggerChange('ws-1', ['a.md'], null)
     })
-    expect(mocks.toastInfo).not.toHaveBeenCalled()
+    await flush()
+    expect(mocks.toastInfo).toHaveBeenCalledTimes(1)
+    expect(mocks.toastInfo.mock.calls[0][0]).toBe('외부에서 변경되었습니다')
   })
 
-  it('readyRef true + 외부 변경 → toast.info 호출', () => {
-    const { triggerChange } = setup({
+  it('외부 생성(갱신 후 캐시에 새 항목 등장)도 토스트된다', async () => {
+    const { triggerChange, client } = setup({ queryData: [] })
+    // invalidate 가 refetch 로 새 파일을 캐시에 채우는 상황을 모사
+    vi.spyOn(client, 'invalidateQueries').mockImplementation(async () => {
+      client.setQueryData(
+        ['note', 'workspace', 'ws-1'],
+        [{ id: 'n9', relativePath: 'new.md', title: 'New' }]
+      )
+    })
+    act(() => {
+      vi.advanceTimersByTime(2100)
+    })
+    act(() => {
+      triggerChange('ws-1', ['new.md'], null)
+    })
+    await flush()
+    expect(mocks.toastInfo).toHaveBeenCalledTimes(1)
+    expect(mocks.toastInfo.mock.calls[0][0]).toBe('외부에서 변경되었습니다')
+  })
+
+  it('외부 삭제(갱신 후 캐시에서 사라짐)도 토스트된다', async () => {
+    const { triggerChange, client } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
+    })
+    vi.spyOn(client, 'invalidateQueries').mockImplementation(async () => {
+      client.setQueryData(['note', 'workspace', 'ws-1'], [])
     })
     act(() => {
       vi.advanceTimersByTime(2100)
@@ -130,63 +178,73 @@ describe('useFileWatcher', () => {
     act(() => {
       triggerChange('ws-1', ['a.md'], null)
     })
+    await flush()
     expect(mocks.toastInfo).toHaveBeenCalledTimes(1)
-    expect(mocks.toastInfo.mock.calls[0][0]).toBe('외부에서 파일이 변경되었습니다')
+    expect(mocks.toastInfo.mock.calls[0][0]).toBe('외부에서 변경되었습니다')
   })
 
-  it('actor.kind=ai → AI 변경 토스트 메시지', () => {
-    const { triggerChange } = setup({
+  it('actor.kind=ai (MCP) → 워처 토스트 미호출 (mcp:activity 가 담당)', async () => {
+    const { triggerChange, client } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
     })
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
     act(() => {
       vi.advanceTimersByTime(2100)
     })
     act(() => {
       triggerChange('ws-1', ['a.md'], { kind: 'ai', id: 'ai-1' })
     })
-    expect(mocks.toastInfo).toHaveBeenCalledTimes(1)
-    expect(mocks.toastInfo.mock.calls[0][0]).toContain('가 변경하였습니다')
+    await flush()
+    expect(mocks.toastInfo).not.toHaveBeenCalled()
   })
 
-  it('own-write item → 토스트에서 제외', () => {
-    const { triggerChange } = setup({
+  it('own-write item → 토스트에서 제외', async () => {
+    const { triggerChange, client } = setup({
       queryData: [
         { id: 'n1', relativePath: 'a.md', title: 'A' },
         { id: 'n2', relativePath: 'b.md', title: 'B' }
       ],
       isOwnWrite: (id) => id === 'n1'
     })
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
     act(() => {
       vi.advanceTimersByTime(2100)
     })
     act(() => {
       triggerChange('ws-1', ['a.md', 'b.md'], null)
     })
+    await flush()
+    // n1 은 own-write 로 제외, n2 만 → 토스트 1회
     expect(mocks.toastInfo).toHaveBeenCalledTimes(1)
+    expect(mocks.toastInfo.mock.calls[0][0]).toBe('외부에서 변경되었습니다')
   })
 
-  it('workspace own-write → 전체 무시', () => {
-    const { triggerChange } = setup({
+  it('workspace own-write → 전체 무시', async () => {
+    const { triggerChange, client } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }],
       isWorkspaceOwn: true
     })
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
     act(() => {
       vi.advanceTimersByTime(2100)
     })
     act(() => {
       triggerChange('ws-1', ['a.md'], null)
     })
+    await flush()
     expect(mocks.toastInfo).not.toHaveBeenCalled()
   })
 
-  it('items 없음 → toast 호출 안 함', () => {
-    const { triggerChange } = setup()
+  it('items 없음 → toast 호출 안 함', async () => {
+    const { triggerChange, client } = setup()
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
     act(() => {
       vi.advanceTimersByTime(2100)
     })
     act(() => {
       triggerChange('ws-1', ['x.md'], null)
     })
+    await flush()
     expect(mocks.toastInfo).not.toHaveBeenCalled()
   })
 
@@ -215,16 +273,18 @@ describe('useFileWatcher', () => {
     expect(onChanged).toHaveBeenCalled()
   })
 
-  it('changedRelPaths 빈 배열 → toast 호출 안 함', () => {
-    const { triggerChange } = setup({
+  it('changedRelPaths 빈 배열 → toast 호출 안 함', async () => {
+    const { triggerChange, client } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
     })
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
     act(() => {
       vi.advanceTimersByTime(2100)
     })
     act(() => {
       triggerChange('ws-1', [], null)
     })
+    await flush()
     expect(mocks.toastInfo).not.toHaveBeenCalled()
   })
 
@@ -243,13 +303,11 @@ describe('useFileWatcher', () => {
     })
   })
 
-  it('변경 후 외부 dispatchEvent 발생 (CustomEvent 이름 + detail)', () => {
-    const eventListener = vi.fn()
-    window.addEventListener('note:external-changed', eventListener)
+  it('외부 수정 시 content refetch 호출 (열린 에디터 새로고침)', async () => {
     const { triggerChange, client } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
     })
-    // refetchQueries 가 promise 반환 → CustomEvent 발생을 await 대기 위해 mock 으로 변경
+    vi.spyOn(client, 'invalidateQueries').mockResolvedValue(undefined as never)
     vi.spyOn(client, 'refetchQueries').mockResolvedValue(undefined as never)
     act(() => {
       vi.advanceTimersByTime(2100)
@@ -257,10 +315,10 @@ describe('useFileWatcher', () => {
     act(() => {
       triggerChange('ws-1', ['a.md'], null)
     })
-    // refetchQueries 가 한번 호출되어야 한다 (externalItems forEach 안에서).
+    await flush()
+    // 수정된 항목은 content refetch 가 호출돼야 한다 (groups.update 안에서).
     expect(client.refetchQueries).toHaveBeenCalledWith({
       queryKey: ['note', 'content', 'n1']
     })
-    window.removeEventListener('note:external-changed', eventListener)
   })
 })

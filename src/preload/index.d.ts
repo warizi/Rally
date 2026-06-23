@@ -34,6 +34,7 @@ import type { NoteStyleTemplateAPI } from './types/note-style-template'
 import type { SkillAPI } from './types/skill'
 import type { SearchAPI } from './types/search'
 import type { EmbeddingAPI } from './types/embedding'
+import type { McpActivityAPI } from './types/mcp-activity'
 import type { ShellAPI } from './types/shell'
 
 interface API {
@@ -71,6 +72,7 @@ interface API {
   skill: SkillAPI
   search: SearchAPI
   embedding: EmbeddingAPI
+  mcpActivity: McpActivityAPI
 }
 
 declare global {

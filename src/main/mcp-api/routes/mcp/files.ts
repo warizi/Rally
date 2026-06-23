@@ -8,11 +8,24 @@ import { folderRepository } from '../../../repositories/folder'
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
 import {
+  recordGroupedActivity,
+  type McpActivityDomain,
+  type McpActivityItem,
+  type McpActivityOperation
+} from '../../lib/activity'
+import {
   requireBody,
   resolveActiveWorkspace,
   assertOwnedByWorkspace,
   assertValidId
 } from './helpers'
+
+const FILE_OP: Record<string, McpActivityOperation> = {
+  rename: 'rename',
+  move: 'move',
+  update_meta: 'update',
+  delete: 'delete'
+}
 import type { FileAction, ManageFileResult, FileSummary } from './types'
 
 interface FileRow {
@@ -110,6 +123,11 @@ export function registerMcpFileRoutes(router: Router): void {
       const wsId = resolveActiveWorkspace()
       const actor = ctx.actor
       const affected: string[] = []
+      // 동작 전 제목 포착 (delete 후엔 조회 불가)
+      const titleById = new Map<string, string>()
+      for (const a of body.actions) {
+        if (a.id) titleById.set(a.id, pdfFileRepository.findById(a.id)?.title ?? '')
+      }
 
       const results = processBatchActions<FileAction, ManageFileResult>(
         body.actions,
@@ -151,6 +169,17 @@ export function registerMcpFileRoutes(router: Router): void {
       )
 
       if (affected.length > 0) broadcastChanged('pdf:changed', wsId, affected, actor)
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          const title =
+            action.action === 'rename' ? action.newName : (titleById.get(action.id) ?? '')
+          const item: McpActivityItem = { type: 'pdf', id: action.id, title }
+          return [{ domain: 'pdf' as McpActivityDomain, operation: FILE_OP[action.action], item }]
+        })
+      )
       return { results }
     }
   )
@@ -173,6 +202,11 @@ export function registerMcpFileRoutes(router: Router): void {
       const wsId = resolveActiveWorkspace()
       const actor = ctx.actor
       const affected: string[] = []
+      // 동작 전 제목 포착 (delete 후엔 조회 불가)
+      const titleById = new Map<string, string>()
+      for (const a of body.actions) {
+        if (a.id) titleById.set(a.id, imageFileRepository.findById(a.id)?.title ?? '')
+      }
 
       const results = processBatchActions<FileAction, ManageFileResult>(
         body.actions,
@@ -213,6 +247,17 @@ export function registerMcpFileRoutes(router: Router): void {
       )
 
       if (affected.length > 0) broadcastChanged('image:changed', wsId, affected, actor)
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap((action, i) => {
+          const r = results[i]
+          if (!r?.success) return []
+          const title =
+            action.action === 'rename' ? action.newName : (titleById.get(action.id) ?? '')
+          const item: McpActivityItem = { type: 'image', id: action.id, title }
+          return [{ domain: 'image' as McpActivityDomain, operation: FILE_OP[action.action], item }]
+        })
+      )
       return { results }
     }
   )

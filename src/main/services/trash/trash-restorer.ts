@@ -28,7 +28,8 @@ import { csvFileRepository } from '../../repositories/csv-file'
 import { pdfFileRepository } from '../../repositories/pdf-file'
 import { imageFileRepository } from '../../repositories/image-file'
 import { withTransaction } from '../../lib/transaction'
-import { resolveNameConflict } from '../../lib/fs-utils'
+import { resolveNameConflict, toNfc } from '../../lib/fs-utils'
+import { markRecentWrite } from '../../lib/recent-writes'
 
 import { type TrashEntityKind } from './types'
 import { type TrashMetadata, broadcastTrashChanged, moveFromTrash } from './helpers'
@@ -52,6 +53,10 @@ export const trashRestorer = {
     conflicts?: { id: string; reason: string }[]
   } {
     let restoredWorkspaceId: string | null = null
+    // 복원으로 디스크에 다시 생긴 파일/폴더 경로 — OS 워처가 "외부 생성"으로 오인해
+    // 중복 토스트를 띄우지 않도록 recent-writes 트래커에 등록한다.
+    const restoredPaths: string[] = []
+    let restoredFolderPrefix: string | null = null
     const result = withTransaction(() => {
       const batch = db.select().from(trashBatches).where(eq(trashBatches.id, batchId)).get()
       if (!batch) throw new NotFoundError(`Trash batch not found: ${batchId}`)
@@ -100,6 +105,7 @@ export const trashRestorer = {
               }
             }
           }
+          restoredFolderPrefix = finalRel
           if (finalRel !== rootFolder.relativePath) {
             folderRenameOldPrefix = rootFolder.relativePath
             folderRenameNewPrefix = finalRel
@@ -129,6 +135,7 @@ export const trashRestorer = {
 
             const src = path.join(batch.fsTrashPath!, row.relativePath)
             const finalRel = moveFromTrash(src, workspace.path, relativePathForMove)
+            restoredPaths.push(finalRel)
 
             const relPathChanged = finalRel !== row.relativePath
             if (relPathChanged || !parentSafe) {
@@ -285,7 +292,28 @@ export const trashRestorer = {
       return { restored, conflicts: conflicts.length > 0 ? conflicts : undefined }
     })
 
-    if (restoredWorkspaceId) broadcastTrashChanged(restoredWorkspaceId)
+    if (restoredWorkspaceId) {
+      // 폴더 배치면 복원된 하위 파일 경로도 함께 수집 (트랜잭션 후 활성 상태로 조회)
+      if (restoredFolderPrefix) {
+        const wsId = restoredWorkspaceId
+        const prefix = `${restoredFolderPrefix}/`
+        const fileRepos = [
+          noteRepository,
+          csvFileRepository,
+          pdfFileRepository,
+          imageFileRepository
+        ]
+        for (const repo of fileRepos) {
+          for (const row of repo.findByWorkspaceId(wsId)) {
+            if (row.relativePath.startsWith(prefix)) restoredPaths.push(row.relativePath)
+          }
+        }
+        restoredPaths.push(restoredFolderPrefix)
+      }
+      // OS 워처가 복원 파일을 외부 변경으로 오인하지 않도록 표기 (워처 경로는 NFC)
+      for (const p of restoredPaths) markRecentWrite(restoredWorkspaceId, toNfc(p))
+      broadcastTrashChanged(restoredWorkspaceId)
+    }
     return result
   }
 }

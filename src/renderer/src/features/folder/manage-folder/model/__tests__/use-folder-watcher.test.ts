@@ -110,7 +110,7 @@ describe('이벤트 수신 → invalidation', () => {
     expect(toastInfo.mock.calls[0][0]).toBe('외부에서 폴더가 변경되었습니다')
   })
 
-  it('actor.kind=ai → AI 변경 토스트', () => {
+  it('actor.kind=ai (MCP) → 워처 토스트 미호출 (mcp:activity 가 담당)', () => {
     const { wrapper } = createWrapper()
     renderHook(() => useFolderWatcher(), { wrapper })
     act(() => {
@@ -119,8 +119,7 @@ describe('이벤트 수신 → invalidation', () => {
     act(() => {
       capturedCb('ws-1', ['a.md'], { kind: 'ai', id: 'agent-1' })
     })
-    expect(toastInfo).toHaveBeenCalledTimes(1)
-    expect(toastInfo.mock.calls[0][0]).toContain('폴더를 변경하였습니다')
+    expect(toastInfo).not.toHaveBeenCalled()
   })
 
   it('isWorkspaceOwnWrite=true → toast 미호출', () => {

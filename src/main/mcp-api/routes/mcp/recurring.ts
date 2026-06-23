@@ -7,6 +7,12 @@ import { recurringCompletionRepository } from '../../../repositories/recurring-c
 import { processBatchActions } from '../../../lib/batch'
 import { broadcastChanged } from '../../lib/broadcast'
 import {
+  recordGroupedActivity,
+  type McpActivityDomain,
+  type McpActivityItem,
+  type McpActivityOperation
+} from '../../lib/activity'
+import {
   requireBody,
   resolveActiveWorkspace,
   assertOwnedByWorkspace,
@@ -128,6 +134,26 @@ export function registerMcpRecurringRoutes(router: Router): void {
       const wsId = resolveActiveWorkspace()
       const actor = ctx.actor
 
+      // 동작 전 규칙 제목 포착
+      const ruleTitleById = new Map<string, string>()
+      const completionRuleTitle = new Map<string, string>()
+      for (const a of body.actions) {
+        if ((a.action === 'update' || a.action === 'delete') && a.id) {
+          ruleTitleById.set(a.id, recurringRuleRepository.findById(a.id)?.title ?? '')
+        }
+        if (a.action === 'complete' && a.ruleId) {
+          ruleTitleById.set(a.ruleId, recurringRuleRepository.findById(a.ruleId)?.title ?? '')
+        }
+        if (a.action === 'uncomplete' && a.completionId) {
+          const comp = recurringCompletionRepository.findById(a.completionId)
+          const rid = comp?.ruleId
+          completionRuleTitle.set(
+            a.completionId,
+            rid ? (recurringRuleRepository.findById(rid)?.title ?? '') : ''
+          )
+        }
+      }
+
       const results = processBatchActions<RecurringRuleAction, ManageRecurringRuleResult>(
         body.actions,
         (action) => {
@@ -210,6 +236,81 @@ export function registerMcpRecurringRoutes(router: Router): void {
       )
       if (hasRuleChange) broadcastChanged('recurring-rule:changed', wsId, [])
       if (hasCompletionChange) broadcastChanged('recurring-completion:changed', wsId, [])
+
+      recordGroupedActivity(
+        ctx.recordActivity,
+        body.actions.flatMap(
+          (
+            action,
+            i
+          ): {
+            domain: McpActivityDomain
+            operation: McpActivityOperation
+            item: McpActivityItem
+          }[] => {
+            const r = results[i]
+            if (!r?.success) return []
+            switch (action.action) {
+              case 'create':
+                return [
+                  {
+                    domain: 'recurring-rule',
+                    operation: 'create',
+                    item: { type: 'recurring-rule', id: r.id, title: action.title }
+                  }
+                ]
+              case 'update':
+                return [
+                  {
+                    domain: 'recurring-rule',
+                    operation: 'update',
+                    item: {
+                      type: 'recurring-rule',
+                      id: action.id,
+                      title: action.title ?? ruleTitleById.get(action.id) ?? ''
+                    }
+                  }
+                ]
+              case 'complete':
+                return [
+                  {
+                    domain: 'recurring-completion',
+                    operation: 'complete',
+                    item: {
+                      type: 'recurring-completion',
+                      id: r.id,
+                      title: ruleTitleById.get(action.ruleId) ?? ''
+                    }
+                  }
+                ]
+              case 'uncomplete':
+                return [
+                  {
+                    domain: 'recurring-completion',
+                    operation: 'uncomplete',
+                    item: {
+                      type: 'recurring-completion',
+                      id: action.completionId,
+                      title: completionRuleTitle.get(action.completionId) ?? ''
+                    }
+                  }
+                ]
+              default:
+                return [
+                  {
+                    domain: 'recurring-rule',
+                    operation: 'delete',
+                    item: {
+                      type: 'recurring-rule',
+                      id: action.id,
+                      title: ruleTitleById.get(action.id) ?? ''
+                    }
+                  }
+                ]
+            }
+          }
+        )
+      )
       return { results }
     }
   )
@@ -219,7 +320,7 @@ export function registerMcpRecurringRoutes(router: Router): void {
   router.addRoute<{ ruleId: string; date: string }>(
     'POST',
     '/api/mcp/recurring/complete',
-    (_, body) => {
+    (_, body, _query, ctx) => {
       requireBody(body)
       const wsId = resolveActiveWorkspace()
       assertValidId(body.ruleId, 'ruleId')
@@ -228,23 +329,40 @@ export function registerMcpRecurringRoutes(router: Router): void {
       assertOwnedByWorkspace(rule, wsId, `Recurring rule not found: ${body.ruleId}`)
       const completion = recurringCompletionService.complete(body.ruleId, date)
       broadcastChanged('recurring-completion:changed', wsId, [])
+      ctx.recordActivity({
+        domain: 'recurring-completion',
+        operation: 'complete',
+        items: [{ type: 'recurring-completion', id: completion.id, title: rule.title }]
+      })
       return { completion: toCompletionSummary(completion) }
     }
   )
 
   // ─── POST /api/mcp/recurring/uncomplete → uncomplete_recurring ──
 
-  router.addRoute<{ completionId: string }>('POST', '/api/mcp/recurring/uncomplete', (_, body) => {
-    requireBody(body)
-    const wsId = resolveActiveWorkspace()
-    assertValidId(body.completionId, 'completionId')
-    const existing = recurringCompletionRepository.findById(body.completionId)
-    if (!existing) throw new NotFoundError(`Completion not found: ${body.completionId}`)
-    if (existing.workspaceId !== wsId) {
-      throw new NotFoundError(`Completion not found: ${body.completionId}`)
+  router.addRoute<{ completionId: string }>(
+    'POST',
+    '/api/mcp/recurring/uncomplete',
+    (_, body, _query, ctx) => {
+      requireBody(body)
+      const wsId = resolveActiveWorkspace()
+      assertValidId(body.completionId, 'completionId')
+      const existing = recurringCompletionRepository.findById(body.completionId)
+      if (!existing) throw new NotFoundError(`Completion not found: ${body.completionId}`)
+      if (existing.workspaceId !== wsId) {
+        throw new NotFoundError(`Completion not found: ${body.completionId}`)
+      }
+      const ruleTitle = existing.ruleId
+        ? (recurringRuleRepository.findById(existing.ruleId)?.title ?? '')
+        : ''
+      recurringCompletionService.uncomplete(body.completionId)
+      broadcastChanged('recurring-completion:changed', wsId, [])
+      ctx.recordActivity({
+        domain: 'recurring-completion',
+        operation: 'uncomplete',
+        items: [{ type: 'recurring-completion', id: body.completionId, title: ruleTitle }]
+      })
+      return { success: true }
     }
-    recurringCompletionService.uncomplete(body.completionId)
-    broadcastChanged('recurring-completion:changed', wsId, [])
-    return { success: true }
-  })
+  )
 }
