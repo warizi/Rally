@@ -226,10 +226,11 @@ describe('CanvasBoardInner', () => {
     expect(undo).toHaveBeenCalled()
   })
 
-  it('Cmd+Shift+Z → redo 호출', () => {
+  it('Cmd+Shift+Z → redo 호출 (Shift 조합 시 key 는 대문자 "Z")', () => {
     const redo = vi.fn()
     render(<CanvasBoardInner {...baseProps} redo={redo} canRedo={true} />)
-    const evt = new KeyboardEvent('keydown', { key: 'z', metaKey: true, shiftKey: true })
+    // 실제 브라우저는 Shift+Z 에서 e.key 가 'Z'(대문자) — 이 케이스로 회귀 방지
+    const evt = new KeyboardEvent('keydown', { key: 'Z', metaKey: true, shiftKey: true })
     document.dispatchEvent(evt)
     expect(redo).toHaveBeenCalled()
   })
