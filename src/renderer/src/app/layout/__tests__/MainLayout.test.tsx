@@ -86,6 +86,10 @@ vi.mock('@features/embedding-progress', () => ({
   useEmbeddingProgressWatcher: () => mocks.watcherCalls.push('embedding-progress')
 }))
 
+vi.mock('@features/mcp-activity', () => ({
+  useMcpActivityWatcher: () => mocks.watcherCalls.push('mcp-activity')
+}))
+
 vi.mock('@widgets/keyboard-control', () => ({
   usePaneNavigation: () => mocks.watcherCalls.push('pane-nav'),
   useTabNavigation: () => mocks.watcherCalls.push('tab-nav'),
@@ -254,6 +258,7 @@ describe('MainLayout', () => {
     expect(mocks.watcherCalls).toContain('reminder')
     expect(mocks.watcherCalls).toContain('trash')
     expect(mocks.watcherCalls).toContain('template')
+    expect(mocks.watcherCalls).toContain('mcp-activity')
     expect(mocks.watcherCalls).toContain('tree-drag-monitor')
     expect(mocks.watcherCalls).toContain('history-link-to-tab')
   })

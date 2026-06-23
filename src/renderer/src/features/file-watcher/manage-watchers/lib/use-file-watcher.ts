@@ -5,7 +5,6 @@ import { isWorkspaceOwnWrite } from '@shared/lib/workspace-own-write'
 import { useTabStore } from '@/entities/tab-system'
 import type { TabOptions } from '@/entities/tab-system/model/types'
 import { AuthorBadge } from '@shared/ui/author-badge'
-import { formatAuthor } from '@shared/lib/format-author'
 
 interface WatchedItem {
   id: string
@@ -78,11 +77,10 @@ export function useFileWatcher(config: FileWatcherConfig): void {
             !isWorkspaceOwnWrite(workspaceId)
         )
 
-        if (readyRef.current && externalItems.length > 0) {
-          const isAi = actor?.kind === 'ai'
-          const title = isAi
-            ? `${formatAuthor('ai', actor?.id ?? null)} 가 변경하였습니다`
-            : '외부에서 파일이 변경되었습니다'
+        // 토스트는 진짜 외부 편집(actor 없음)만 띄운다.
+        // MCP(actor 있음) 변경은 mcp:activity 전용 토스트가 담당하므로 여기선 invalidate/refetch 만.
+        if (readyRef.current && externalItems.length > 0 && !actor) {
+          const title = '외부에서 파일이 변경되었습니다'
 
           toast.info(title, {
             description: createElement(

@@ -13,6 +13,7 @@ import { csvFileService } from '../../../services/csv-file'
 import { searchService, type SearchType } from '../../../services/search'
 import { ValidationError } from '../../../lib/errors'
 import { broadcastChanged } from '../../lib/broadcast'
+import type { McpActivityItem } from '../../lib/activity'
 import { mcpErrorBody } from '../../lib/mcp-error'
 import { requireBody, resolveActiveWorkspace, resolveItemType, assertValidId } from './helpers'
 
@@ -316,6 +317,21 @@ export function registerMcpContentRoutes(router: Router): void {
 
       if (noteAffected.length > 0) broadcastChanged('note:changed', wsId, noteAffected, actor)
       if (csvAffected.length > 0) broadcastChanged('csv:changed', wsId, csvAffected, actor)
+
+      // MCP 활동 알림 — create/update × note/csv 로 묶어 보고
+      for (const op of ['create', 'update'] as const) {
+        for (const t of ['note', 'table'] as const) {
+          const items: McpActivityItem[] = results
+            .filter((r) => r.success && r.action === op && r.type === t)
+            .map((r) => {
+              const ok = r as Extract<ManageContentResult, { success: true }>
+              return { type: t === 'table' ? 'csv' : 'note', id: ok.id, title: ok.title }
+            })
+          if (items.length > 0) {
+            ctx.recordActivity({ domain: t === 'table' ? 'csv' : 'note', operation: op, items })
+          }
+        }
+      }
       return { results }
     }
   )
@@ -341,6 +357,12 @@ export function registerMcpContentRoutes(router: Router): void {
         }
         const updated =
           type === 'note' ? noteRepository.findById(body.id) : csvFileRepository.findById(body.id)
+        const domain = type === 'note' ? 'note' : 'csv'
+        ctx.recordActivity({
+          domain,
+          operation: 'update',
+          items: [{ type: domain, id: body.id, title: updated!.title }]
+        })
         return {
           type,
           id: body.id,
@@ -369,6 +391,11 @@ export function registerMcpContentRoutes(router: Router): void {
           }
         }
         broadcastChanged('note:changed', wsId, [result.relativePath], actor)
+        ctx.recordActivity({
+          domain: 'note',
+          operation: 'create',
+          items: [{ type: 'note', id: result.id, title: result.title }]
+        })
         return {
           type: 'note',
           id: result.id,
@@ -392,6 +419,11 @@ export function registerMcpContentRoutes(router: Router): void {
         }
       }
       broadcastChanged('csv:changed', wsId, [result.relativePath], actor)
+      ctx.recordActivity({
+        domain: 'csv',
+        operation: 'create',
+        items: [{ type: 'csv', id: result.id, title: result.title }]
+      })
       return {
         type: 'table',
         id: result.id,

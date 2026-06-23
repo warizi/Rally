@@ -134,7 +134,7 @@ describe('useFileWatcher', () => {
     expect(mocks.toastInfo.mock.calls[0][0]).toBe('외부에서 파일이 변경되었습니다')
   })
 
-  it('actor.kind=ai → AI 변경 토스트 메시지', () => {
+  it('actor.kind=ai (MCP) → 워처 토스트 미호출 (mcp:activity 가 담당)', () => {
     const { triggerChange } = setup({
       queryData: [{ id: 'n1', relativePath: 'a.md', title: 'A' }]
     })
@@ -144,8 +144,7 @@ describe('useFileWatcher', () => {
     act(() => {
       triggerChange('ws-1', ['a.md'], { kind: 'ai', id: 'ai-1' })
     })
-    expect(mocks.toastInfo).toHaveBeenCalledTimes(1)
-    expect(mocks.toastInfo.mock.calls[0][0]).toContain('가 변경하였습니다')
+    expect(mocks.toastInfo).not.toHaveBeenCalled()
   })
 
   it('own-write item → 토스트에서 제외', () => {

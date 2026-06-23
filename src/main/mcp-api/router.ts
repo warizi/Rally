@@ -5,6 +5,11 @@ import { normalizeError } from '../lib/errors'
 import { workspaceWatcher } from '../services/workspace-watcher'
 import { workspaceRepository } from '../repositories/workspace'
 import type { Actor } from '../services/_shared/actor'
+import {
+  createActivityCollector,
+  emitMcpActivity,
+  type McpActivityRecord
+} from './lib/activity'
 
 type RouteParams = Record<string, string>
 
@@ -12,6 +17,12 @@ export interface RequestContext {
   actor: Actor
   clientName: string | null
   clientVersion: string | null
+  /**
+   * MCP 활동 보고 — 라우트가 수행한 mutation 을 알린다.
+   * router.handle() 이 요청 성공 후 모인 record 를 mcp:activity 로 한 번에 발행한다.
+   * (읽기 라우트는 호출하지 않으면 된다.)
+   */
+  recordActivity: (record: McpActivityRecord) => void
 }
 
 type RouteHandler = (
@@ -35,13 +46,17 @@ function readHeader(req: http.IncomingMessage, name: string): string | null {
   return trimmed.length > 0 ? trimmed : null
 }
 
-function buildContext(req: http.IncomingMessage): RequestContext {
+function buildContext(
+  req: http.IncomingMessage,
+  recordActivity: (record: McpActivityRecord) => void
+): RequestContext {
   const clientName = readHeader(req, 'x-mcp-client-name')
   const clientVersion = readHeader(req, 'x-mcp-client-version')
   return {
     actor: { kind: 'ai', id: clientName },
     clientName,
-    clientVersion
+    clientVersion,
+    recordActivity
   }
 }
 
@@ -112,10 +127,13 @@ export function createRouter(): RouterInstance {
 
       try {
         const body = method === 'GET' ? null : await parseBody(req)
-        const context = buildContext(req)
+        const collector = createActivityCollector()
+        const context = buildContext(req, collector.record)
         const result = await Promise.resolve(route.handler(params, body, query, context))
 
         const wsId = workspaceWatcher.getActiveWorkspaceId()
+        // 요청이 성공했을 때만 활동을 발행한다 (실패 시 catch 로 빠져 미발행).
+        emitMcpActivity(wsId, context.actor, collector.drain())
         const wsName = wsId ? (workspaceRepository.findById(wsId)?.name ?? null) : null
         const response = { _workspace: { id: wsId, name: wsName }, ...(result as object) }
         res.writeHead(200, { 'Content-Type': 'application/json' })
