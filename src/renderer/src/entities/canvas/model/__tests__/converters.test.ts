@@ -13,6 +13,7 @@ function makeGroupItem(overrides: Partial<CanvasGroupItem> = {}): CanvasGroupIte
   return {
     id: 'group-1',
     canvasId: 'canvas-1',
+    parentId: null,
     label: '그룹',
     x: 10,
     y: 20,

@@ -16,10 +16,8 @@ export function SelectionToolbar({
 
   const selectedNodeCount = useStore((s) => s.nodes.filter((n) => n.selected).length)
   const selectedEdgeCount = useStore((s) => s.edges.filter((e) => e.selected).length)
-  // 그룹으로 묶을 수 있는 일반 노드(그룹 제외) 선택 수
-  const groupableCount = useStore(
-    (s) => s.nodes.filter((n) => n.selected && n.type !== 'groupNode').length
-  )
+  // 그룹으로 묶을 수 있는 선택 수 — 일반 노드 + 그룹(중첩 그룹 지원)
+  const groupableCount = useStore((s) => s.nodes.filter((n) => n.selected).length)
   const totalSelected = selectedNodeCount + selectedEdgeCount
 
   const handleDelete = useCallback(() => {

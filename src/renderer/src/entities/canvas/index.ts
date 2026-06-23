@@ -53,6 +53,8 @@ export {
   toPositionUpdate,
   toCreateCanvasEdgeData,
   parseSide,
-  GROUP_Z_INDEX
+  GROUP_Z_INDEX,
+  assignGroupZIndexByDepth
 } from './model/converters'
 export { useCanvasWatcher } from './model/use-canvas-watcher'
+export { useCanvasNodeRefSync } from './model/use-canvas-node-ref-sync'

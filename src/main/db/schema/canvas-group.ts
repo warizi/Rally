@@ -9,6 +9,10 @@ export const canvasGroups = sqliteTable(
     canvasId: text('canvas_id')
       .notNull()
       .references(() => canvases.id, { onDelete: 'cascade' }),
+    // 중첩 그룹 — 부모 그룹 id(자기참조). SQLite 는 ALTER TABLE ADD COLUMN 에 REFERENCES 를
+    // 허용하지 않으므로 선언적 FK 없이 plain text 로 둔다. 부모 삭제 시 자식 고아화는
+    // 서비스(canvasGroupRepository.clearParentId)에서 명시적으로 처리한다.
+    parentId: text('parent_id'),
     label: text('label'),
     x: real('x').notNull(),
     y: real('y').notNull(),
@@ -24,6 +28,7 @@ export const canvasGroups = sqliteTable(
   },
   (t) => [
     index('idx_canvas_groups_canvas').on(t.canvasId),
+    index('idx_canvas_groups_parent').on(t.parentId),
     index('idx_canvas_groups_deleted').on(t.deletedAt),
     index('idx_canvas_groups_trash_batch').on(t.trashBatchId)
   ]

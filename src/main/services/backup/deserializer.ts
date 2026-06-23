@@ -62,6 +62,24 @@ import {
   TerminalSessionImport
 } from './import-schemas'
 
+/** 중첩 그룹을 부모-먼저 순서로 정렬 (자기참조 parent_id FK 충족). 사이클은 visited 로 방어. */
+function orderGroupsParentFirst<T extends { id: string; parentId?: string | null }>(
+  groups: T[]
+): T[] {
+  const byId = new Map(groups.map((g) => [g.id, g]))
+  const result: T[] = []
+  const visited = new Set<string>()
+  const visit = (g: T): void => {
+    if (visited.has(g.id)) return
+    visited.add(g.id)
+    const parent = g.parentId ? byId.get(g.parentId) : undefined
+    if (parent) visit(parent)
+    result.push(g)
+  }
+  for (const g of groups) visit(g)
+  return result
+}
+
 /**
  * 구버전 백업(4필드 누락)일 때 'user' / null 기본값을 명시 주입.
  * 신버전 백업은 값이 있으면 그대로 보존.
@@ -361,12 +379,16 @@ export const backupDeserializer = {
           }))
         )
 
-        // 10. canvas_groups — 노드(group_id FK)보다 먼저 등록/삽입해야 함
+        // 10. canvas_groups — 노드(group_id FK)보다 먼저 등록/삽입해야 함.
+        // 중첩 그룹은 parent_id 자기참조 FK 가 있어 (a) 모든 그룹 id 를 먼저 등록해
+        // parentId 매핑이 순서와 무관하게 되도록 하고 (b) 부모를 자식보다 먼저 INSERT 한다.
+        for (const g of canvasGroupsJson) mapper.register('canvas-group', g.id)
         batchInsert(
           canvasGroups,
-          canvasGroupsJson.map((g) => ({
-            id: mapper.register('canvas-group', g.id),
+          orderGroupsParentFirst(canvasGroupsJson).map((g) => ({
+            id: mapper.map('canvas-group', g.id),
             canvasId: mapper.map('canvas', g.canvasId),
+            parentId: g.parentId ? mapper.mapOrNull('canvas-group', g.parentId) : null,
             label: g.label,
             color: g.color,
             x: g.x,

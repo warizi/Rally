@@ -83,11 +83,13 @@ const ARROW_OPTIONS: { value: CanvasEdgeArrow; icon: React.ReactNode; label: str
 interface EdgeEditToolbarProps {
   canvasId: string
   store: StoreApi<CanvasFlowState>
+  pushHistory: () => void
 }
 
 function EdgeEditToolbarComponent({
   canvasId,
-  store
+  store,
+  pushHistory
 }: EdgeEditToolbarProps): React.JSX.Element | null {
   const { deleteElements } = useReactFlow()
   const { mutate: updateEdge } = useUpdateCanvasEdge()
@@ -142,10 +144,13 @@ function EdgeEditToolbarComponent({
         .getState()
         .setEdges(storeEdges.map((e) => (e.id === edge.id ? freshEdge : e)) as CanvasEdge[])
 
+      // 변경된 store 상태를 history 에 캡처 → undo/redo 가 속성 변경을 되돌릴 수 있게.
+      pushHistory()
+
       // Persist to DB
       updateEdge({ edgeId: edge.id, data, canvasId })
     },
-    [edge, updateEdge, canvasId, store]
+    [edge, updateEdge, canvasId, store, pushHistory]
   )
 
   const handleLabelSubmit = useCallback(() => {

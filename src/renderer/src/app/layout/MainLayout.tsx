@@ -9,7 +9,7 @@ import {
   usePdfWatcher,
   useImageWatcher
 } from '@features/file-watcher/manage-watchers'
-import { useCanvasWatcher } from '@entities/canvas'
+import { useCanvasWatcher, useCanvasNodeRefSync } from '@entities/canvas'
 import { useTodoWatcher } from '@entities/todo'
 import { useScheduleWatcher } from '@entities/schedule'
 import { useRecurringRuleWatcher } from '@entities/recurring-rule'
@@ -120,6 +120,8 @@ function MainLayout(): React.JSX.Element {
   useImageWatcher()
   // 캔버스 변경 push 이벤트 구독
   useCanvasWatcher()
+  // 캔버스 노드가 참조하는 타 도메인(note/csv/pdf/image/todo/schedule) 변경 시 노드 동기화
+  useCanvasNodeRefSync()
   // todo 변경 push 이벤트 구독
   useTodoWatcher()
   // schedule 변경 push 이벤트 구독 (외부 MCP 클라이언트 동기화)

@@ -9,6 +9,7 @@ import { toDate } from './_shared/date'
 export interface CanvasGroupItem {
   id: string
   canvasId: string
+  parentId: string | null
   label: string | null
   x: number
   y: number
@@ -20,6 +21,7 @@ export interface CanvasGroupItem {
 }
 
 export interface CreateCanvasGroupData {
+  parentId?: string | null
   label?: string
   x: number
   y: number
@@ -29,6 +31,7 @@ export interface CreateCanvasGroupData {
 }
 
 export interface UpdateCanvasGroupData {
+  parentId?: string | null
   label?: string | null
   x?: number
   y?: number
@@ -43,6 +46,7 @@ function toCanvasGroupItem(
   return {
     id: row.id,
     canvasId: row.canvasId,
+    parentId: row.parentId,
     label: row.label,
     x: row.x,
     y: row.y,
@@ -79,6 +83,7 @@ export const canvasGroupService = {
     const row = canvasGroupRepository.create({
       id: nanoid(),
       canvasId,
+      parentId: data.parentId ?? null,
       label: data.label ?? null,
       x: data.x,
       y: data.y,
@@ -96,7 +101,24 @@ export const canvasGroupService = {
     if (!group) throw new NotFoundError(`Canvas group not found: ${groupId}`)
     assertCanvasUnlockedById(group.canvasId)
     assertPositiveSize(data.width, data.height)
+    // 순환 참조 방어 — groupId 를 자기 자신/자손의 자식으로 만들려는 시도 차단.
+    if (data.parentId) {
+      if (data.parentId === groupId) {
+        throw new ValidationError('Group cannot be its own parent')
+      }
+      let cursor = canvasGroupRepository.findById(data.parentId)
+      const guard = new Set<string>()
+      while (cursor) {
+        if (cursor.id === groupId) {
+          throw new ValidationError('Group cannot be nested into its own descendant')
+        }
+        if (!cursor.parentId || guard.has(cursor.id)) break
+        guard.add(cursor.id)
+        cursor = canvasGroupRepository.findById(cursor.parentId)
+      }
+    }
     const updated = canvasGroupRepository.update(groupId, {
+      ...(data.parentId !== undefined ? { parentId: data.parentId } : {}),
       ...(data.label !== undefined ? { label: data.label } : {}),
       ...(data.x !== undefined ? { x: data.x } : {}),
       ...(data.y !== undefined ? { y: data.y } : {}),
@@ -110,7 +132,9 @@ export const canvasGroupService = {
   },
 
   /**
-   * 그룹 삭제. 멤버 노드는 보존하되 groupId만 해제한다(노드 자체는 남는다).
+   * 그룹 삭제(고아화 정책). 멤버 노드와 자식 그룹은 보존하되 소속만 해제한다.
+   * - 멤버 노드: groupId 해제 → 캔버스에 남음
+   * - 자식 그룹: parentId 해제 → 최상위 그룹으로 남음(자식 그룹의 멤버는 그대로)
    * FK ON DELETE SET NULL 을 ALTER TABLE 이 보장하지 못하므로 명시적으로 끊는다.
    */
   remove(groupId: string): void {
@@ -118,6 +142,7 @@ export const canvasGroupService = {
     if (!group) throw new NotFoundError(`Canvas group not found: ${groupId}`)
     assertCanvasUnlockedById(group.canvasId)
     canvasNodeRepository.clearGroupId(groupId)
+    canvasGroupRepository.clearParentId(groupId)
     canvasGroupRepository.delete(groupId)
   }
 }

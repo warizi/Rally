@@ -51,6 +51,7 @@ export interface CanvasNodeItem {
 export interface CanvasGroupItem {
   id: string
   canvasId: string
+  parentId: string | null
   label: string | null
   x: number
   y: number
@@ -99,6 +100,7 @@ export interface UpdateCanvasNodeData {
 }
 
 export interface CreateCanvasGroupData {
+  parentId?: string | null
   label?: string
   x: number
   y: number
@@ -108,6 +110,7 @@ export interface CreateCanvasGroupData {
 }
 
 export interface UpdateCanvasGroupData {
+  parentId?: string | null
   label?: string | null
   x?: number
   y?: number
@@ -173,6 +176,8 @@ export type GroupNodeData = {
   color: string | null
   width: number
   height: number
+  // 중첩 그룹 — 이 그룹을 품은 부모 그룹 id (없으면 최상위). 노드의 groupId 와 대응.
+  groupId: string | null
 }
 
 // ─── ReactFlow Edge Data Types ──────────────────────────

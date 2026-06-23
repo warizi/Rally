@@ -15,6 +15,24 @@ import { imageFileRepository } from '../repositories/image-file'
 import type { CanvasNodeType } from '../db/schema/canvas-node'
 import { toDate } from './_shared/date'
 
+/** 중첩 그룹을 부모-먼저 순서로 정렬 (자기참조 parent_id FK 충족). 사이클은 visited 로 방어. */
+function orderGroupsParentFirst<T extends { id: string; parentId?: string | null }>(
+  groups: T[]
+): T[] {
+  const byId = new Map(groups.map((g) => [g.id, g]))
+  const result: T[] = []
+  const visited = new Set<string>()
+  const visit = (g: T): void => {
+    if (visited.has(g.id)) return
+    visited.add(g.id)
+    const parent = g.parentId ? byId.get(g.parentId) : undefined
+    if (parent) visit(parent)
+    result.push(g)
+  }
+  for (const g of groups) visit(g)
+  return result
+}
+
 export interface CanvasNodeItem {
   id: string
   canvasId: string
@@ -269,6 +287,7 @@ export const canvasNodeService = {
     }[],
     groups: {
       id: string
+      parentId?: string | null
       label: string | null
       x: number
       y: number
@@ -283,11 +302,13 @@ export const canvasNodeService = {
       canvasEdgeRepository.deleteByCanvasId(canvasId)
       canvasNodeRepository.deleteByCanvasId(canvasId)
       canvasGroupRepository.deleteByCanvasId(canvasId)
-      // 그룹을 먼저 생성해야 노드의 group_id FK가 유효
+      // 그룹을 먼저 생성해야 노드의 group_id FK가 유효. 또한 중첩 그룹은 parent_id 자기참조
+      // FK 가 있으므로 부모 그룹이 자식보다 먼저 삽입되도록 위상정렬한다.
       canvasGroupRepository.bulkCreate(
-        groups.map((g) => ({
+        orderGroupsParentFirst(groups).map((g) => ({
           id: g.id,
           canvasId,
+          parentId: g.parentId ?? null,
           label: g.label,
           x: g.x,
           y: g.y,

@@ -10,34 +10,49 @@ import type { EdgeChange, Connection } from '@xyflow/react'
 import type { StoreApi } from 'zustand/vanilla'
 
 const mocks = vi.hoisted(() => ({
-  createEdge: vi.fn(),
+  // createEdge 는 (args, { onSuccess }) 형태 — 생성 성공을 즉시 모사
+  createEdge: vi.fn((_args: unknown, opts?: { onSuccess?: (e: { id: string }) => void }) =>
+    opts?.onSuccess?.({ id: 'new-edge' })
+  ),
   removeEdge: vi.fn(),
-  toCreateCanvasEdgeData: vi.fn((c: Connection) => ({ from: c.source, to: c.target }))
+  toCreateCanvasEdgeData: vi.fn((c: Connection) => ({ from: c.source, to: c.target })),
+  toReactFlowEdge: vi.fn((e: { id: string }) => ({ id: e.id, source: '', target: '' }))
 }))
 
 vi.mock('@entities/canvas', () => ({
   useCreateCanvasEdge: () => ({ mutate: mocks.createEdge }),
   useRemoveCanvasEdge: () => ({ mutate: mocks.removeEdge }),
-  toCreateCanvasEdgeData: mocks.toCreateCanvasEdgeData
+  toCreateCanvasEdgeData: mocks.toCreateCanvasEdgeData,
+  toReactFlowEdge: mocks.toReactFlowEdge
 }))
 
 import { useCanvasEdgeChanges } from '../use-canvas-edge-changes'
 import type { CanvasFlowState } from '../use-canvas-store'
 
-function makeStore(): { store: StoreApi<CanvasFlowState>; applyCalls: EdgeChange[][] } {
+function makeStore(): {
+  store: StoreApi<CanvasFlowState>
+  applyCalls: EdgeChange[][]
+  getEdges: () => Array<{ id: string }>
+} {
   const applyCalls: EdgeChange[][] = []
+  let edges: Array<{ id: string }> = []
   const store = {
     getState: () => ({
-      applyEdgeChanges: (changes: EdgeChange[]) => applyCalls.push(changes)
+      edges,
+      applyEdgeChanges: (changes: EdgeChange[]) => applyCalls.push(changes),
+      setEdges: (e: Array<{ id: string }>) => {
+        edges = e
+      }
     })
   } as unknown as StoreApi<CanvasFlowState>
-  return { store, applyCalls }
+  return { store, applyCalls, getEdges: () => edges }
 }
 
 beforeEach(() => {
   mocks.createEdge.mockClear()
   mocks.removeEdge.mockClear()
   mocks.toCreateCanvasEdgeData.mockClear()
+  mocks.toReactFlowEdge.mockClear()
 })
 
 describe('useCanvasEdgeChanges — onEdgesChange', () => {
@@ -74,8 +89,8 @@ describe('useCanvasEdgeChanges — onEdgesChange', () => {
 })
 
 describe('useCanvasEdgeChanges — onConnect', () => {
-  it('source/target 모두 있음 → createEdge + pushHistory', () => {
-    const { store } = makeStore()
+  it('source/target 모두 있음 → createEdge 후 store 반영 + pushHistory', () => {
+    const { store, getEdges } = makeStore()
     const pushHistory = vi.fn()
     const { result } = renderHook(() => useCanvasEdgeChanges('cv', store, pushHistory))
     act(() =>
@@ -87,10 +102,13 @@ describe('useCanvasEdgeChanges — onConnect', () => {
       } as Connection)
     )
     expect(mocks.toCreateCanvasEdgeData).toHaveBeenCalled()
-    expect(mocks.createEdge).toHaveBeenCalledWith({
-      canvasId: 'cv',
-      data: { from: 'a', to: 'b' }
-    })
+    expect(mocks.createEdge).toHaveBeenCalledWith(
+      { canvasId: 'cv', data: { from: 'a', to: 'b' } },
+      expect.objectContaining({ onSuccess: expect.any(Function) })
+    )
+    // onSuccess 에서 생성된 edge 가 store 에 반영된 뒤 history 캡처
+    expect(getEdges()).toHaveLength(1)
+    expect(getEdges()[0].id).toBe('new-edge')
     expect(pushHistory).toHaveBeenCalled()
   })
 

@@ -83,9 +83,14 @@ export function useGlobalHotkey({
           handlersRef.current.onActivate?.()
         }
         handlersRef.current.onKeyDown?.(event)
-        // 매칭된 이벤트는 다른 component-level listener (예: PanelResizeHandle 의
-        // shift+arrow keyboard resize) 까지 전파되지 않도록 capture 단계에서 차단.
-        event.stopPropagation()
+        // 소비자가 실제로 처리한(preventDefault 한) 키만 전파를 차단한다.
+        // 무조건 차단하면 같은 modifier 조합의 '소비하지 않는' 키까지 삼켜
+        // 다른 단축키(예: 캔버스의 Cmd+Shift+Z redo)가 동작하지 못한다.
+        // 소비한 키 차단의 목적은 component-level listener(예: PanelResizeHandle 의
+        // shift+arrow keyboard resize) 와의 충돌 방지였으므로 그 의도는 유지된다.
+        if (event.defaultPrevented) {
+          event.stopPropagation()
+        }
       } else if (activeRef.current) {
         // 활성 중 modifier 가 어긋난 keydown (e.g., 다른 키 조합) — 해제 처리.
         activeRef.current = false

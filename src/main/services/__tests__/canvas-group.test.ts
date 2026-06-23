@@ -15,6 +15,7 @@ vi.mock('../../repositories/canvas-group', () => ({
     findById: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    clearParentId: vi.fn(),
     delete: vi.fn()
   }
 }))
@@ -30,6 +31,7 @@ const MOCK_CANVAS = { id: 'canvas-1', isLocked: false, title: 'C1' }
 const MOCK_GROUP_ROW = {
   id: 'group-1',
   canvasId: 'canvas-1',
+  parentId: null,
   label: '그룹',
   x: 10,
   y: 20,
@@ -163,6 +165,39 @@ describe('update', () => {
       expect.objectContaining({ label: null })
     )
   })
+
+  it('parentId 변경 — 해당 필드 포함', () => {
+    vi.mocked(canvasGroupRepository.findById).mockImplementation((id) =>
+      id === 'group-1'
+        ? MOCK_GROUP_ROW
+        : id === 'group-2'
+          ? { ...MOCK_GROUP_ROW, id: 'group-2', parentId: null }
+          : undefined
+    )
+    canvasGroupService.update('group-1', { parentId: 'group-2' })
+    expect(canvasGroupRepository.update).toHaveBeenCalledWith(
+      'group-1',
+      expect.objectContaining({ parentId: 'group-2' })
+    )
+  })
+
+  it('자기 자신을 부모로 → ValidationError', () => {
+    expect(() => canvasGroupService.update('group-1', { parentId: 'group-1' })).toThrow(
+      ValidationError
+    )
+  })
+
+  it('순환 참조 — 자손 그룹을 부모로 지정 시 ValidationError', () => {
+    // group-2 는 group-1 의 자식. group-1 의 부모를 group-2 로 만들면 사이클.
+    const g1 = { ...MOCK_GROUP_ROW, id: 'group-1', parentId: null }
+    const g2 = { ...MOCK_GROUP_ROW, id: 'group-2', parentId: 'group-1' }
+    vi.mocked(canvasGroupRepository.findById).mockImplementation((id) =>
+      id === 'group-1' ? g1 : id === 'group-2' ? g2 : undefined
+    )
+    expect(() => canvasGroupService.update('group-1', { parentId: 'group-2' })).toThrow(
+      ValidationError
+    )
+  })
 })
 
 describe('remove', () => {
@@ -171,10 +206,11 @@ describe('remove', () => {
     expect(() => canvasGroupService.remove('bad')).toThrow(NotFoundError)
   })
 
-  it('정상 — 멤버 groupId 해제 후 그룹 삭제', () => {
+  it('정상 — 멤버 groupId 해제 + 자식 그룹 고아화 후 그룹 삭제', () => {
     vi.mocked(canvasGroupRepository.findById).mockReturnValue(MOCK_GROUP_ROW)
     canvasGroupService.remove('group-1')
     expect(canvasNodeRepository.clearGroupId).toHaveBeenCalledWith('group-1')
+    expect(canvasGroupRepository.clearParentId).toHaveBeenCalledWith('group-1')
     expect(canvasGroupRepository.delete).toHaveBeenCalledWith('group-1')
   })
 })

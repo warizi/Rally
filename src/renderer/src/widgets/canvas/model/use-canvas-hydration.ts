@@ -7,18 +7,22 @@ import {
   toReactFlowNode,
   toReactFlowGroupNode,
   toReactFlowEdge,
+  assignGroupZIndexByDepth,
   type CanvasNodeItem,
   type CanvasGroupItem
 } from '@entities/canvas'
 import type { CanvasFlowState } from './use-canvas-store'
-import type { CanvasFlowNode } from '@entities/canvas'
+import type { CanvasFlowNode, CanvasEdge } from '@entities/canvas'
 
 /**
  * 그룹(groupNode)과 일반 노드(text/ref)를 단일 배열로 합친다.
  * 그룹을 먼저 둬서 렌더 순서상 항상 뒤(아래)에 오도록 한다.
  */
 function buildFlowNodes(nodes: CanvasNodeItem[], groups: CanvasGroupItem[]): CanvasFlowNode[] {
-  return [...groups.map(toReactFlowGroupNode), ...nodes.map(toReactFlowNode)]
+  const groupNodes = groups.map(toReactFlowGroupNode)
+  // 중첩 깊이에 따라 그룹 zIndex 보정 — 자식 그룹이 부모 박스 위에 보이도록.
+  assignGroupZIndexByDepth(groupNodes)
+  return [...groupNodes, ...nodes.map(toReactFlowNode)]
 }
 
 /** DB 데이터가 store 노드와 다른지 비교 (position/selection 제외, data + zIndex만) */
@@ -26,6 +30,22 @@ function hasFlowNodeChanged(storeNode: CanvasFlowNode, desired: CanvasFlowNode):
   if (storeNode.type !== desired.type) return true
   if ((storeNode.zIndex ?? 0) !== (desired.zIndex ?? 0)) return true
   return JSON.stringify(storeNode.data) !== JSON.stringify(desired.data)
+}
+
+/** edge 의 시각 속성(label/선유형/화살표/색/연결 등) 지문 — selection 같은 RF 상태는 제외 */
+function edgeFingerprint(e: CanvasEdge): string {
+  return JSON.stringify({
+    source: e.source,
+    target: e.target,
+    sourceHandle: e.sourceHandle ?? null,
+    targetHandle: e.targetHandle ?? null,
+    type: e.type ?? null,
+    label: e.label ?? null,
+    style: e.style ?? null,
+    markerEnd: e.markerEnd ?? null,
+    markerStart: e.markerStart ?? null,
+    data: e.data ?? null
+  })
 }
 
 export function useCanvasHydration(
@@ -80,13 +100,30 @@ export function useCanvasHydration(
     }
   }, [dbNodes, dbGroups, store, hydratedRef, skipHydrationRef])
 
-  // 3) Edge sync — 동일 전략
+  // 3) Edge sync — ID 변경(추가/삭제) 또는 data 변경(label/선유형/화살표/색) 반영
   useEffect(() => {
     if (!hydratedRef.current || skipHydrationRef.current) return
-    const storeIds = new Set(store.getState().edges.map((e) => e.id))
+    const storeEdges = store.getState().edges
+    const storeIds = new Set(storeEdges.map((e) => e.id))
     const dbIds = new Set(dbEdges.map((e) => e.id))
+
+    // ID set changed (structural add/remove) → full replacement
     if (storeIds.size !== dbIds.size || dbEdges.some((e) => !storeIds.has(e.id))) {
       store.getState().setEdges(dbEdges.map(toReactFlowEdge))
+      return
+    }
+
+    // Same IDs → merge visual data changes while preserving selection state
+    const desiredMap = new Map(dbEdges.map((e) => [e.id, toReactFlowEdge(e)]))
+    let dirty = false
+    const merged = storeEdges.map((edge) => {
+      const next = desiredMap.get(edge.id)
+      if (!next || edgeFingerprint(edge) === edgeFingerprint(next)) return edge
+      dirty = true
+      return { ...next, selected: edge.selected } as CanvasEdge
+    })
+    if (dirty) {
+      store.getState().setEdges(merged)
     }
   }, [dbEdges, store, hydratedRef, skipHydrationRef])
 
