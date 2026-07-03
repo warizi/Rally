@@ -8,7 +8,7 @@
  * 가 stale 상태로 들어가 보안-2 토큰 / 새 도메인 분할 등이 반영 안 됨.
  */
 import { describe, it, expect } from 'vitest'
-import { readFileSync } from 'node:fs'
+import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const pkgPath = resolve(process.cwd(), 'package.json')
@@ -44,6 +44,29 @@ describe('electron-builder.yml (배포-2)', () => {
   it('extraResources 에 dist-mcp 포함 (prod 패키지에 들어가야 함)', () => {
     expect(builderYml).toMatch(/from:\s*dist-mcp\b/)
     expect(builderYml).toMatch(/to:\s*dist-mcp\b/)
+  })
+
+  it('extraResources 의 모든 from 경로가 실제 존재한다 (누락 리소스 경고 0건)', () => {
+    // dist-mcp 는 prebuild(build:mcp)가 생성 — 빌드 시점에는 존재하므로 검사에서 제외
+    const BUILD_GENERATED = new Set(['dist-mcp'])
+    const fromPaths = [...builderYml.matchAll(/from:\s*(\S+)/g)].map((m) => m[1])
+    expect(fromPaths.length).toBeGreaterThan(0)
+    for (const p of fromPaths) {
+      if (BUILD_GENERATED.has(p)) continue
+      expect(existsSync(resolve(process.cwd(), p)), `extraResources from 경로 없음: ${p}`).toBe(
+        true
+      )
+    }
+  })
+
+  it('플랫폼별 build 아이콘 리소스가 존재한다', () => {
+    for (const icon of ['build/icon.ico', 'build/icon.icns', 'build/icon.png']) {
+      expect(existsSync(resolve(process.cwd(), icon)), `${icon} 없음`).toBe(true)
+    }
+  })
+
+  it('터미널 삭제 후 resources/bin 이 extraResources 에 남아있지 않다', () => {
+    expect(builderYml).not.toMatch(/resources\/bin/)
   })
 
   it('win target 이 nsis x64 로 고정되어 있다 (arm64 기본 산출물 혼동 방지)', () => {
