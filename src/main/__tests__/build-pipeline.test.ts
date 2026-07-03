@@ -46,3 +46,35 @@ describe('electron-builder.yml (배포-2)', () => {
     expect(builderYml).toMatch(/to:\s*dist-mcp\b/)
   })
 })
+
+/**
+ * Windows 산출물은 Windows runner에서 npm ci 한 dependency tree로 만들어야 한다.
+ * macOS node_modules 재사용 시 darwin native addon이 섞여 Windows에서 시작 크래시.
+ */
+describe('release workflow Windows job (window 배포)', () => {
+  const releaseYml = readFileSync(resolve(process.cwd(), '.github/workflows/release.yml'), 'utf-8')
+  // build-win job 블록만 추출해 검증 (다른 job 의 내용에 오매칭 방지)
+  const winJob = releaseYml.slice(releaseYml.indexOf('build-win:'))
+
+  it('release workflow 에 build-win job 존재', () => {
+    expect(releaseYml).toMatch(/^\s{2}build-win:/m)
+  })
+
+  it('build-win 은 windows-latest runner 에서 실행된다', () => {
+    expect(winJob).toMatch(/runs-on:\s*windows-latest/)
+  })
+
+  it('build-win 은 npm ci 로 fresh install 한다 (--ignore-scripts 금지)', () => {
+    expect(winJob).toMatch(/npm ci/)
+    expect(winJob).not.toMatch(/npm ci[^\n]*--ignore-scripts/)
+  })
+
+  it('build-win 은 x64 를 명시해 빌드한다', () => {
+    expect(winJob).toMatch(/build:win|electron-builder\s+--win/)
+    expect(winJob).toMatch(/--x64/)
+  })
+
+  it('build-win publish step 에 GH_TOKEN 이 주입된다', () => {
+    expect(winJob).toMatch(/GH_TOKEN/)
+  })
+})
