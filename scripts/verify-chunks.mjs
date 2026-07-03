@@ -15,7 +15,6 @@ const ASSETS_DIR = 'out/renderer/assets'
 const EXPECTED_CHUNKS = [
   'xyflow',
   'react-pdf',
-  'xterm',
   'recharts',
   'milkdown',
   'dnd-kit',

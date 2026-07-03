@@ -24,7 +24,6 @@ import type { ReminderAPI } from './types/reminder'
 import type { TagAPI, ItemTagAPI } from './types/tag'
 import type { BackupAPI } from './types/backup'
 import type { AppInfoAPI, McpClientAPI } from './types/app-info'
-import type { TerminalAPI } from './types/terminal'
 import type { RecurringRuleAPI, RecurringCompletionAPI } from './types/recurring'
 import type { TemplateAPI } from './types/template'
 import type { HistoryAPI } from './types/history'
@@ -61,7 +60,6 @@ interface API {
   backup: BackupAPI
   appInfo: AppInfoAPI
   mcpClient: McpClientAPI
-  terminal: TerminalAPI
   recurringRule: RecurringRuleAPI
   recurringCompletion: RecurringCompletionAPI
   template: TemplateAPI

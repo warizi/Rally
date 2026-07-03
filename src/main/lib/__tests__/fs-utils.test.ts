@@ -1,6 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import * as fs from 'fs'
-import { readMdFilesRecursive, readMdFilesRecursiveAsync, resolveNameConflict } from '../fs-utils'
+import {
+  readMdFilesRecursive,
+  readMdFilesRecursiveAsync,
+  resolveNameConflict,
+  sanitizeFileNameSegment,
+  hasFileExtension,
+  getFileTitle
+} from '../fs-utils'
 
 // ─── Mock 선언 (vitest 자동 호이스팅) ─────────────────────────
 // fs.promises.readdir는 auto-mock 대상이 아니므로 factory로 명시 포함
@@ -193,6 +200,31 @@ describe('readMdFilesRecursiveAsync', () => {
   })
 })
 
+// ─── hasFileExtension / getFileTitle (case-insensitive) ───────
+describe('hasFileExtension / getFileTitle', () => {
+  it('대소문자 무시 확장자 매칭', () => {
+    expect(hasFileExtension('NOTE.MD', '.md')).toBe(true)
+    expect(hasFileExtension('note.md', '.md')).toBe(true)
+    expect(hasFileExtension('note.mdx', '.md')).toBe(false)
+    expect(hasFileExtension('/a/b/DATA.CSV', 'csv')).toBe(true)
+    expect(hasFileExtension('문서.PDF', '.pdf')).toBe(true)
+  })
+
+  it('getFileTitle — 확장자 제거, 원본 casing 보존', () => {
+    expect(getFileTitle('NOTE.MD')).toBe('NOTE')
+    expect(getFileTitle('/a/b/문서.PDF')).toBe('문서')
+    expect(getFileTitle('note.md')).toBe('note')
+  })
+})
+
+describe('readMdFilesRecursive — 대문자 확장자', () => {
+  it('UPPER.MD와 lower.md 모두 수집, note.mdx는 제외', () => {
+    setReaddirReturn([makeDirent('UPPER.MD'), makeDirent('lower.md'), makeDirent('note.mdx')])
+    const result = readMdFilesRecursive('/base', '')
+    expect(result.map((e) => e.relativePath).sort()).toEqual(['UPPER.MD', 'lower.md'])
+  })
+})
+
 // ─── resolveNameConflict ──────────────────────────────────────
 describe('resolveNameConflict', () => {
   it('충돌 없으면 입력 이름 그대로 반환한다', () => {
@@ -227,5 +259,76 @@ describe('resolveNameConflict', () => {
         throw new Error('ENOENT')
       }) // 'note (3).md' 없음
     expect(resolveNameConflict('/base', 'note.md')).toBe('note (3).md')
+  })
+
+  it('예약어는 sanitize 후 충돌 suffix가 붙는다 (CON.md → CON_ (1).md)', () => {
+    vi.mocked(fs.accessSync)
+      .mockImplementationOnce(() => {}) // 'CON_.md' 존재 → 충돌
+      .mockImplementationOnce(() => {
+        throw new Error('ENOENT')
+      })
+    expect(resolveNameConflict('/base', 'CON.md')).toBe('CON_ (1).md')
+  })
+
+  it('금지문자 포함 이름도 안전한 파일명으로 반환한다', () => {
+    expect(resolveNameConflict('/base', 'a:b?.md')).toBe('a_b_.md')
+  })
+})
+
+// ─── sanitizeFileNameSegment ──────────────────────────────────
+describe('sanitizeFileNameSegment (Windows 호환)', () => {
+  it('금지문자를 _로 치환하고 연속 _는 축약한다', () => {
+    expect(sanitizeFileNameSegment('a:b?c*.md')).toBe('a_b_c_.md')
+    expect(sanitizeFileNameSegment('a<>|"b.md')).toBe('a_b.md')
+  })
+
+  it('slash/backslash가 하위 경로가 아닌 단일 파일명이 된다', () => {
+    expect(sanitizeFileNameSegment('a/b.md')).toBe('a_b.md')
+    expect(sanitizeFileNameSegment('a\\b.md')).toBe('a_b.md')
+  })
+
+  it('예약어는 대소문자 무시하고 base에 _ suffix를 붙인다', () => {
+    expect(sanitizeFileNameSegment('CON.md')).toBe('CON_.md')
+    expect(sanitizeFileNameSegment('con.md')).toBe('con_.md')
+    expect(sanitizeFileNameSegment('COM1.csv')).toBe('COM1_.csv')
+    expect(sanitizeFileNameSegment('LPT9.pdf')).toBe('LPT9_.pdf')
+    expect(sanitizeFileNameSegment('NUL', { treatAsFolder: true })).toBe('NUL_')
+  })
+
+  it('예약어 부분 일치는 그대로 둔다 (CONSOLE ≠ CON)', () => {
+    expect(sanitizeFileNameSegment('CONSOLE.md')).toBe('CONSOLE.md')
+  })
+
+  it('끝 점/공백을 제거한다', () => {
+    expect(sanitizeFileNameSegment('name.', { treatAsFolder: true })).toBe('name')
+    expect(sanitizeFileNameSegment('name ', { treatAsFolder: true })).toBe('name')
+    expect(sanitizeFileNameSegment('name...', { treatAsFolder: true })).toBe('name')
+    // 파일: 'foo..md' → base 'foo.' → 'foo' + '.md'
+    expect(sanitizeFileNameSegment('foo..md')).toBe('foo.md')
+  })
+
+  it('제어문자를 치환한다', () => {
+    expect(sanitizeFileNameSegment('a' + '\x00' + 'b' + '\x1f' + '.md')).toBe('a_b_.md')
+  })
+
+  it('빈 결과는 fallback을 사용한다', () => {
+    expect(sanitizeFileNameSegment('::::', { treatAsFolder: true })).toBe('untitled')
+    expect(sanitizeFileNameSegment('   ', { fallback: '새 폴더', treatAsFolder: true })).toBe(
+      '새 폴더'
+    )
+  })
+
+  it('base + ext가 255자를 넘지 않도록 자른다', () => {
+    const long = 'a'.repeat(300)
+    const result = sanitizeFileNameSegment(`${long}.md`)
+    expect(result.length).toBeLessThanOrEqual(255)
+    expect(result.endsWith('.md')).toBe(true)
+  })
+
+  it('안전한 이름은 그대로 반환한다 (idempotent)', () => {
+    expect(sanitizeFileNameSegment('일반 노트.md')).toBe('일반 노트.md')
+    expect(sanitizeFileNameSegment(sanitizeFileNameSegment('a:b.md'))).toBe(
+      sanitizeFileNameSegment('a:b.md')
+    )
   })
 })

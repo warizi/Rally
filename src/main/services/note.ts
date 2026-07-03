@@ -5,7 +5,12 @@ import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { noteRepository } from '../repositories/note'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
-import { resolveNameConflict, readMdFilesRecursive, toNfc } from '../lib/fs-utils'
+import {
+  resolveNameConflict,
+  sanitizeFileNameSegment,
+  readMdFilesRecursive,
+  toNfc
+} from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
@@ -119,7 +124,7 @@ export const noteService = {
         noteRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,
           folderId: folder?.id ?? null,
-          title: entry.name.replace(/\.md$/, ''),
+          title: entry.name.replace(/\.md$/i, ''),
           updatedAt: now
         })
         orphanByBasename.delete(entry.name)
@@ -129,7 +134,7 @@ export const noteService = {
           workspaceId,
           folderId: folder?.id ?? null,
           relativePath: entry.relativePath,
-          title: entry.name.replace(/\.md$/, ''),
+          title: entry.name.replace(/\.md$/i, ''),
           description: '',
           preview: '',
           order: 0,
@@ -186,7 +191,7 @@ export const noteService = {
     const parentAbs = folderRelPath ? path.join(workspace.path, folderRelPath) : workspace.path
     const sourceBaseName = path.basename(sourcePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceBaseName)
-    const title = finalFileName.replace(/\.md$/, '')
+    const title = finalFileName.replace(/\.md$/i, '')
 
     const destAbs = path.join(parentAbs, finalFileName)
     // 워처/reconciler 는 디스크 경로를 NFC 로 통일(R-06)하므로 import 도 NFC 로 저장해야
@@ -249,7 +254,7 @@ export const noteService = {
 
     const desiredFileName = (name.trim() || '새로운 노트') + '.md'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.md$/, '')
+    const title = finalFileName.replace(/\.md$/i, '')
 
     const newAbs = path.join(parentAbs, finalFileName)
     const newRel = normalizePath(
@@ -296,7 +301,7 @@ export const noteService = {
 
     const sourceFileName = path.basename(note.relativePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
-    const title = finalFileName.replace(/\.md$/, '')
+    const title = finalFileName.replace(/\.md$/i, '')
 
     const sourceAbs = path.join(workspace.path, note.relativePath)
     const destAbs = path.join(parentAbs, finalFileName)
@@ -358,14 +363,15 @@ export const noteService = {
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
     assertNoteUnlocked(note)
 
-    if (newName.trim() === note.title) return toNoteNode(note)
+    // no-op 판정은 sanitize 이후 기준 — raw 비교면 'foo.' → 'foo (1)' 같은 오동작 발생
+    const desiredFileName = sanitizeFileNameSegment(newName.trim() + '.md')
+    if (desiredFileName === path.basename(note.relativePath)) return toNoteNode(note)
 
     const folderRel = parentRelPath(note.relativePath)
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
-    const desiredFileName = newName.trim() + '.md'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.md$/, '')
+    const title = finalFileName.replace(/\.md$/i, '')
 
     const oldAbs = path.join(workspace.path, note.relativePath)
     const newRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
@@ -508,7 +514,7 @@ export const noteService = {
         ? path.join(workspace.path, targetFolderRel)
         : workspace.path
       const finalFileName = resolveNameConflict(parentAbs, noteFileName)
-      finalTitle = finalFileName.replace(/\.md$/, '')
+      finalTitle = finalFileName.replace(/\.md$/i, '')
       finalRel = normalizePath(
         targetFolderRel ? `${targetFolderRel}/${finalFileName}` : finalFileName
       )

@@ -9,6 +9,7 @@ import { renderHook } from '@testing-library/react'
 
 const { hotkeyCapture } = vi.hoisted(() => ({
   hotkeyCapture: {
+    modifiers: null as null | Record<string, boolean>,
     onKeyDown: null as null | ((e: KeyboardEvent) => void),
     onDeactivate: null as null | (() => void)
   }
@@ -16,15 +17,18 @@ const { hotkeyCapture } = vi.hoisted(() => ({
 
 vi.mock('../use-global-hotkey', () => ({
   useGlobalHotkey: (opts: {
+    modifiers: Record<string, boolean>
     onKeyDown?: (e: KeyboardEvent) => void
     onDeactivate?: () => void
   }) => {
+    hotkeyCapture.modifiers = opts.modifiers
     hotkeyCapture.onKeyDown = opts.onKeyDown ?? null
     hotkeyCapture.onDeactivate = opts.onDeactivate ?? null
   }
 }))
 
 import { useTabStore } from '@/entities/tab-system'
+import { __resetPlatformCacheForTest } from '@shared/lib/platform'
 import { useTabNavStore } from '../tab-nav-store'
 import { useKeyboardModeStore } from '../keyboard-mode-store'
 import { useTabNavigation } from '../use-tab-navigation'
@@ -38,8 +42,25 @@ beforeEach(() => {
   useTabStore.getState().reset()
   useTabNavStore.getState().close()
   useKeyboardModeStore.setState({ mode: null })
+  hotkeyCapture.modifiers = null
   hotkeyCapture.onKeyDown = null
   hotkeyCapture.onDeactivate = null
+  delete (window as unknown as { electron?: unknown }).electron
+  __resetPlatformCacheForTest()
+})
+
+describe('useTabNavigation — OS별 modifier 분기', () => {
+  it('darwin → { meta: true, alt: true }', () => {
+    ;(window as unknown as { electron?: unknown }).electron = { process: { platform: 'darwin' } }
+    renderHook(() => useTabNavigation())
+    expect(hotkeyCapture.modifiers).toEqual({ meta: true, alt: true })
+  })
+
+  it('win32 → { ctrl: true, alt: true }', () => {
+    ;(window as unknown as { electron?: unknown }).electron = { process: { platform: 'win32' } }
+    renderHook(() => useTabNavigation())
+    expect(hotkeyCapture.modifiers).toEqual({ ctrl: true, alt: true })
+  })
 })
 
 describe('useTabNavigation — keydown 활성', () => {

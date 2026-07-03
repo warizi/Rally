@@ -29,8 +29,6 @@ const TABLES = [
   'reminders',
   'tabSnapshots',
   'tabSessions',
-  'terminalSessions',
-  'terminalLayouts',
   'canvasEdges',
   'canvasNodes',
   'canvasGroups',

@@ -38,16 +38,6 @@ vi.mock('../../services/schedule', () => ({
 vi.mock('../../services/canvas-node', () => ({
   canvasNodeService: { updatePositions: vi.fn() }
 }))
-vi.mock('../../services/terminal', () => ({
-  terminalService: { create: vi.fn() }
-}))
-vi.mock('../../repositories/terminal-session', () => ({
-  terminalSessionRepository: { create: vi.fn() }
-}))
-vi.mock('../../repositories/terminal-layout', () => ({
-  terminalLayoutRepository: {}
-}))
-
 import { registerNoteHandlers } from '../note'
 import { registerCsvFileHandlers } from '../csv-file'
 import { registerTodoHandlers } from '../todo'
@@ -55,7 +45,6 @@ import { registerTrashHandlers } from '../trash'
 import { registerReminderHandlers } from '../reminder'
 import { registerScheduleHandlers } from '../schedule'
 import { registerCanvasNodeHandlers } from '../canvas-node'
-import { registerTerminalHandlers } from '../terminal'
 
 import { noteService } from '../../services/note'
 import { csvFileService } from '../../services/csv-file'
@@ -64,7 +53,6 @@ import { trashService } from '../../services/trash'
 import { reminderService } from '../../services/reminder'
 import { scheduleService } from '../../services/schedule'
 import { canvasNodeService } from '../../services/canvas-node'
-import { terminalService } from '../../services/terminal'
 
 const WS = 'ws-aabbcc12'
 
@@ -78,7 +66,6 @@ beforeEach(() => {
   registerReminderHandlers()
   registerScheduleHandlers()
   registerCanvasNodeHandlers()
-  registerTerminalHandlers()
 })
 
 /** 동기 validateIpc 핸들러 호출 결과를 IpcResponse 로 받는다. */
@@ -170,40 +157,5 @@ describe('잘못된 배열/payload shape', () => {
     const res = call('canvasNode:updatePositions', [{ id: 'x', x: 1, y: 2 }])
     expect(res.success).toBe(false)
     expect(canvasNodeService.updatePositions).not.toHaveBeenCalled()
-  })
-})
-
-describe('terminal cols/rows 범위', () => {
-  it('terminal:create → cols 0 거부', () => {
-    const res = call('terminal:create', {
-      workspaceId: WS,
-      cwd: '/tmp',
-      cols: 0,
-      rows: 24
-    })
-    expect(res.success).toBe(false)
-    expect(terminalService.create).not.toHaveBeenCalled()
-  })
-
-  it('terminal:create → rows 과대값 거부', () => {
-    const res = call('terminal:create', {
-      workspaceId: WS,
-      cwd: '/tmp',
-      cols: 80,
-      rows: 999999
-    })
-    expect(res.success).toBe(false)
-    expect(terminalService.create).not.toHaveBeenCalled()
-  })
-
-  it('terminal:create → 정상 입력은 통과(회귀 가드)', () => {
-    const res = call('terminal:create', {
-      workspaceId: WS,
-      cwd: '/tmp',
-      cols: 80,
-      rows: 24
-    })
-    expect(res.success).toBe(true)
-    expect(terminalService.create).toHaveBeenCalled()
   })
 })

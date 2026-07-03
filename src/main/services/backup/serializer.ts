@@ -25,9 +25,7 @@ import {
   reminders,
   recurringRules,
   recurringCompletions,
-  templates,
-  terminalLayouts,
-  terminalSessions
+  templates
 } from '../../db/schema'
 import { workspaceService } from '../workspace'
 
@@ -99,16 +97,6 @@ export const backupSerializer = {
       .select()
       .from(templates)
       .where(eq(templates.workspaceId, workspaceId))
-      .all()
-    const terminalLayoutsData = db
-      .select()
-      .from(terminalLayouts)
-      .where(eq(terminalLayouts.workspaceId, workspaceId))
-      .all()
-    const terminalSessionsData = db
-      .select()
-      .from(terminalSessions)
-      .where(eq(terminalSessions.workspaceId, workspaceId))
       .all()
 
     // Level 2: 부모 ID 기반
@@ -192,9 +180,7 @@ export const backupSerializer = {
           'reminders',
           'recurring-rules',
           'recurring-completions',
-          'templates',
-          'terminal-layouts',
-          'terminal-sessions'
+          'templates'
         ]
       }
       fs.writeFileSync(path.join(tmpDir, 'manifest.json'), JSON.stringify(manifest, null, 2))
@@ -222,9 +208,7 @@ export const backupSerializer = {
         ['reminders.json', serializeForExport(reminderData)],
         ['recurring-rules.json', serializeForExport(recurringRulesData)],
         ['recurring-completions.json', serializeForExport(recurringCompletionsData)],
-        ['templates.json', serializeForExport(templatesData)],
-        ['terminal-layouts.json', serializeForExport(terminalLayoutsData)],
-        ['terminal-sessions.json', serializeForExport(terminalSessionsData)]
+        ['templates.json', serializeForExport(templatesData)]
       ]
       for (const [filename, data] of dataFiles) {
         fs.writeFileSync(path.join(dataDir, filename), JSON.stringify(data, null, 2))

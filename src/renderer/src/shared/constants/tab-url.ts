@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   Network,
   Sheet,
-  Terminal,
   TimerIcon,
   Trash2
 } from 'lucide-react'
@@ -27,7 +26,6 @@ export type TabType =
   | 'calendar'
   | 'canvas'
   | 'canvas-detail'
-  | 'terminal'
   | 'changelog'
   | 'history'
   | 'timer'
@@ -47,7 +45,6 @@ export const TAB_ICON: Record<TabIcon, React.ElementType> = {
   calendar: Calendar,
   canvas: Network,
   'canvas-detail': Network,
-  terminal: Terminal,
   changelog: History,
   history: Clock,
   timer: TimerIcon,
@@ -72,7 +69,6 @@ export const ROUTES = {
   CALENDAR: '/calendar',
   CANVAS: '/canvas',
   CANVAS_DETAIL: '/canvas/:canvasId',
-  TERMINAL: '/terminal',
   CHANGELOG: '/changelog',
   HISTORY: '/history',
   TIMER: '/timer',

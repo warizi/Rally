@@ -9,17 +9,14 @@ files:
   - '!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md}'
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
   - '!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}'
+# .claude/commands·skills 는 git 미추적(.gitignore)이라 CI fresh checkout에 존재하지 않음 —
+# extraResources에서 제거 (누락 경고 원인). 런타임(claude-commands-setup.ts)은 디렉터리
+# 부재 시 빈 목록으로 동작하므로 코드는 유지.
 extraResources:
   - from: src/main/db/migrations
     to: migrations
   - from: dist-mcp
     to: dist-mcp
-  - from: .claude/commands
-    to: .claude/commands
-  - from: .claude/skills
-    to: .claude/skills
-  - from: resources/bin
-    to: bin
 asarUnpack:
   - resources/**
   # sqlite-vec 네이티브 확장(.dylib/.so/.dll)은 asar 내부에서 로드 불가 → 언팩 필수
@@ -30,6 +27,15 @@ asarUnpack:
   - '**/node_modules/onnxruntime-node/**'
 win:
   executableName: rally
+  # Windows 코드 서명: 실기 smoke test 통과 전까지 미서명 임시 수용 (SmartScreen 경고 예상).
+  # 공개 배포 전 OV 인증서(WIN_CSC_LINK/WIN_CSC_KEY_PASSWORD) 또는 Azure Trusted Signing
+  # (win.azureSignOptions) 중 결정 후 release.yml build-win job에 secret 주입.
+  # 1차 Windows 배포는 x64 단일. Apple Silicon에서 bare `electron-builder --win` 실행 시
+  # 기본 arm64 산출물이 생기는 혼동 방지. arm64 추가 시 artifactName에 ${arch} 필요.
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

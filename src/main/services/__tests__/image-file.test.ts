@@ -35,7 +35,8 @@ vi.mock('../entity-link', () => ({
 
 vi.mock('fs')
 vi.mock('nanoid', () => ({ nanoid: () => 'mock-id' }))
-vi.mock('../../lib/fs-utils', () => ({
+vi.mock('../../lib/fs-utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/fs-utils')>()),
   resolveNameConflict: vi.fn((_dir: string, name: string) => name),
   toNfc: (s: string) => s.normalize('NFC'),
   readImageFilesRecursive: vi.fn(() => []),

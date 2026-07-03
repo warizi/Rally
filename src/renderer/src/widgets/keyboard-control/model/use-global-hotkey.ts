@@ -9,7 +9,8 @@
  * 입력 충돌 방지: <input>, <textarea>, [contenteditable] 에 포커스가
  * 있을 때는 비활성 — 기존 편집을 방해하지 않는다.
  *
- * macOS 전용 매핑: `meta` = Cmd, `ctrl` = Control.
+ * modifier 매핑: `meta` = Cmd(mac)/Win키, `ctrl` = Control.
+ * OS별 primary modifier 선택은 호출부가 keyboard-platform helper 로 결정한다.
  */
 import { useEffect, useRef } from 'react'
 import type { HotkeyModifiers } from './types'

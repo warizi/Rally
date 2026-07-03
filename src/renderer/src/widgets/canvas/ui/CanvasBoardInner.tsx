@@ -26,6 +26,7 @@ import {
   computeMembershipUpdates
 } from '../model/canvas-layout'
 import { useCanvasClipboard } from '../model/use-canvas-clipboard'
+import { primarySelectionKeyCode } from '@shared/lib/keyboard-platform'
 import type { CanvasNodeType, CanvasFlowNode, CanvasEdge } from '@entities/canvas'
 import type {
   CanvasNodeItem,
@@ -395,7 +396,7 @@ export function CanvasBoardInner({
         connectionMode={ConnectionMode.Loose}
         panOnDrag
         selectionOnDrag={false}
-        selectionKeyCode="Meta"
+        selectionKeyCode={primarySelectionKeyCode()}
         onlyRenderVisibleElements
         fitView={nodes.length > 0 && !hasSavedViewport}
         deleteKeyCode={['Backspace', 'Delete']}

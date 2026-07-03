@@ -6,9 +6,8 @@
  */
 import { describe, it, expect, vi } from 'vitest'
 
-const { exposeInMainWorldMock, initTerminalListenersMock } = vi.hoisted(() => ({
-  exposeInMainWorldMock: vi.fn(),
-  initTerminalListenersMock: vi.fn()
+const { exposeInMainWorldMock } = vi.hoisted(() => ({
+  exposeInMainWorldMock: vi.fn()
 }))
 
 vi.mock('electron', () => ({
@@ -16,9 +15,6 @@ vi.mock('electron', () => ({
 }))
 vi.mock('@electron-toolkit/preload', () => ({
   electronAPI: { __fake: 'electronAPI' }
-}))
-vi.mock('../lib/terminal-listeners', () => ({
-  initTerminalListeners: initTerminalListenersMock
 }))
 vi.mock('../apis', () => ({
   api: { __fake: 'api' },
@@ -30,10 +26,9 @@ vi.mock('../apis', () => ({
 Object.defineProperty(process, 'contextIsolated', { value: true, configurable: true })
 
 describe('preload/index.ts 부트스트랩', () => {
-  it('import 시 initTerminalListeners + contextBridge.exposeInMainWorld 3회 호출', async () => {
+  it('import 시 contextBridge.exposeInMainWorld 3회 호출', async () => {
     await import('../index')
 
-    expect(initTerminalListenersMock).toHaveBeenCalled()
     // 'electron' / 'api' / 'shell' 3개 노출
     const exposed = exposeInMainWorldMock.mock.calls.map((c) => c[0])
     expect(exposed.sort()).toEqual(['api', 'electron', 'shell'])

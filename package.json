@@ -41,7 +41,8 @@
     "build:size": "npm run build && node scripts/measure-bundle.mjs",
     "security:scan": "electronegativity -i src/main -i src/preload",
     "security:scan:high": "electronegativity -i src/main -i src/preload -s high -x LimitNavigationGlobalCheck",
-    "check:bundle-budget": "node scripts/check-bundle-budget.mjs"
+    "check:bundle-budget": "node scripts/check-bundle-budget.mjs",
+    "check:win-native": "node scripts/check-win-native.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
@@ -64,9 +65,6 @@
     "@types/archiver": "^7.0.0",
     "@types/papaparse": "^5.5.2",
     "@xenova/transformers": "^2.17.2",
-    "@xterm/addon-fit": "^0.11.0",
-    "@xterm/addon-serialize": "^0.14.0",
-    "@xterm/xterm": "^6.0.0",
     "@xyflow/react": "^12.10.1",
     "adm-zip": "^0.5.16",
     "archiver": "^7.0.1",
@@ -86,7 +84,6 @@
     "lucide-react": "^0.575.0",
     "nanoid": "^5.1.6",
     "next-themes": "^0.4.6",
-    "node-pty": "^1.1.0",
     "papaparse": "^5.5.3",
     "radix-ui": "^1.4.3",
     "react-day-picker": "^9.13.2",

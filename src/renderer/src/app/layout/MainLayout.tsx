@@ -43,10 +43,6 @@ import {
   type DragStartEvent
 } from '@dnd-kit/core'
 import { FocusedTabOverlay, PaneLayout } from '@/widgets/tab-system'
-import { TerminalBottomPanel } from '@/widgets/terminal-panel'
-import { ResizablePanelGroup, ResizablePanel, ResizableHandle } from '@shared/ui/resizable'
-import { useTerminalPanelStore } from '@features/terminal'
-import { useTerminalSessionPersistence } from '@features/terminal/model/use-terminal-session-persistence'
 import { PANE_ROUTES } from './model/pane-routes'
 import { TAB_ICON, type TabType } from '@/shared/constants/tab-url'
 import { ENTITY_ICON, ENTITY_ICON_COLOR } from '@shared/constants/entity-icon'
@@ -107,11 +103,6 @@ function DraggingHistoryLinkOverlay({
 function MainLayout(): React.JSX.Element {
   // 세션 영속성 활성화
   useSessionPersistence()
-  // 터미널 세션 영속성 활성화
-  useTerminalSessionPersistence()
-  const isTerminalOpen = useTerminalPanelStore((s) => s.isOpen)
-  const panelSize = useTerminalPanelStore((s) => s.panelSize)
-  const setPanelSize = useTerminalPanelStore((s) => s.setPanelSize)
   // 폴더/노트 변경 push 이벤트 구독
   useFolderWatcher()
   useNoteWatcher()
@@ -220,27 +211,7 @@ function MainLayout(): React.JSX.Element {
           {/* 트리 DnD 상태를 store에 동기화 (각 렌더러는 store 셀렉터로 구독) */}
           <TreeDragMonitor />
           <main className="flex flex-1 overflow-hidden pb-2 px-1">
-            <ResizablePanelGroup
-              orientation="vertical"
-              className="flex-1"
-              onLayoutChanged={(layout) => {
-                if (isTerminalOpen && layout[1] !== undefined) {
-                  setPanelSize(layout[1])
-                }
-              }}
-            >
-              <ResizablePanel defaultSize={isTerminalOpen ? 100 - panelSize : 100} minSize={20}>
-                <PaneLayout routes={PANE_ROUTES} isDragging={isAnyDragging} />
-              </ResizablePanel>
-              {isTerminalOpen && (
-                <>
-                  <ResizableHandle />
-                  <ResizablePanel defaultSize={panelSize} minSize={10}>
-                    <TerminalBottomPanel />
-                  </ResizablePanel>
-                </>
-              )}
-            </ResizablePanelGroup>
+            <PaneLayout routes={PANE_ROUTES} isDragging={isAnyDragging} />
           </main>
           <DragOverlay dropAnimation={null}>
             {draggingTreeNode ? (

@@ -9,7 +9,9 @@ import {
   readCsvFilesRecursiveAsync,
   readPdfFilesRecursiveAsync,
   readImageFilesRecursiveAsync,
-  isImageFile
+  isImageFile,
+  hasFileExtension,
+  getFileTitle
 } from '../../lib/fs-utils'
 import type { FileEntry } from '../../lib/fs-utils'
 
@@ -67,24 +69,25 @@ export interface FileTypeConfig {
 
 export const fileTypeConfigs: FileTypeConfig[] = [
   {
-    matchExtension: (n) => n.endsWith('.md'),
-    extractTitle: (n) => path.basename(n, '.md'),
+    // 대소문자 무시 — Windows의 NOTE.MD 같은 대문자 확장자도 인식
+    matchExtension: (n) => hasFileExtension(n, '.md'),
+    extractTitle: getFileTitle,
     repository: noteRepository,
     channelName: 'note:changed',
     entityType: 'note',
     readFilesAsync: readMdFilesRecursiveAsync
   },
   {
-    matchExtension: (n) => n.endsWith('.csv'),
-    extractTitle: (n) => path.basename(n, '.csv'),
+    matchExtension: (n) => hasFileExtension(n, '.csv'),
+    extractTitle: getFileTitle,
     repository: csvFileRepository,
     channelName: 'csv:changed',
     entityType: 'csv',
     readFilesAsync: readCsvFilesRecursiveAsync
   },
   {
-    matchExtension: (n) => n.endsWith('.pdf'),
-    extractTitle: (n) => path.basename(n, '.pdf'),
+    matchExtension: (n) => hasFileExtension(n, '.pdf'),
+    extractTitle: getFileTitle,
     repository: pdfFileRepository,
     channelName: 'pdf:changed',
     entityType: 'pdf',

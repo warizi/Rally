@@ -7,7 +7,12 @@ import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { csvFileRepository } from '../repositories/csv-file'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
-import { resolveNameConflict, readCsvFilesRecursive, toNfc } from '../lib/fs-utils'
+import {
+  resolveNameConflict,
+  sanitizeFileNameSegment,
+  readCsvFilesRecursive,
+  toNfc
+} from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
@@ -122,7 +127,7 @@ export const csvFileService = {
         csvFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,
           folderId: folder?.id ?? null,
-          title: entry.name.replace(/\.csv$/, ''),
+          title: entry.name.replace(/\.csv$/i, ''),
           updatedAt: now
         })
         orphanByBasename.delete(entry.name)
@@ -132,7 +137,7 @@ export const csvFileService = {
           workspaceId,
           folderId: folder?.id ?? null,
           relativePath: entry.relativePath,
-          title: entry.name.replace(/\.csv$/, ''),
+          title: entry.name.replace(/\.csv$/i, ''),
           description: '',
           preview: '',
           order: 0,
@@ -217,7 +222,7 @@ export const csvFileService = {
     const parentAbs = folderRelPath ? path.join(workspace.path, folderRelPath) : workspace.path
     const sourceBaseName = path.basename(sourcePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceBaseName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const destAbs = path.join(parentAbs, finalFileName)
     // 워처/reconciler 는 디스크 경로를 NFC 로 통일(R-06)하므로 import 도 NFC 로 저장해야
@@ -285,7 +290,7 @@ export const csvFileService = {
 
     const desiredFileName = (name.trim() || '새로운 테이블') + '.csv'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const newAbs = path.join(parentAbs, finalFileName)
     const newRel = normalizePath(
@@ -332,7 +337,7 @@ export const csvFileService = {
 
     const sourceFileName = path.basename(csv.relativePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const sourceAbs = path.join(workspace.path, csv.relativePath)
     const destAbs = path.join(parentAbs, finalFileName)
@@ -400,14 +405,15 @@ export const csvFileService = {
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
     assertCsvUnlocked(csv)
 
-    if (newName.trim() === csv.title) return toCsvFileNode(csv)
+    // no-op 판정은 sanitize 이후 기준 — raw 비교면 'foo.' → 'foo (1)' 같은 오동작 발생
+    const desiredFileName = sanitizeFileNameSegment(newName.trim() + '.csv')
+    if (desiredFileName === path.basename(csv.relativePath)) return toCsvFileNode(csv)
 
     const folderRel = parentRelPath(csv.relativePath)
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
-    const desiredFileName = newName.trim() + '.csv'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const oldAbs = path.join(workspace.path, csv.relativePath)
     const newRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
@@ -556,7 +562,7 @@ export const csvFileService = {
         ? path.join(workspace.path, targetFolderRel)
         : workspace.path
       const finalFileName = resolveNameConflict(parentAbs, csvFileName)
-      finalTitle = finalFileName.replace(/\.csv$/, '')
+      finalTitle = finalFileName.replace(/\.csv$/i, '')
       finalRel = normalizePath(
         targetFolderRel ? `${targetFolderRel}/${finalFileName}` : finalFileName
       )

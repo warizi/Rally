@@ -331,33 +331,6 @@ export const TemplateImport = z
   })
   .passthrough()
 
-export const TerminalLayoutImport = z
-  .object({
-    id: z.string(),
-    layoutJson: z.string(),
-    createdAt: Ts,
-    updatedAt: Ts
-  })
-  .passthrough()
-
-export const TerminalSessionImport = z
-  .object({
-    id: z.string(),
-    layoutId: z.string().nullable(),
-    name: z.string(),
-    cwd: z.string().nullable(),
-    shell: z.string().nullable(),
-    rows: z.number(),
-    cols: z.number(),
-    screenSnapshot: z.string().nullable(),
-    sortOrder: z.number(),
-    // schema 가 integer (no boolean mode) — number 가 정확. 구버전 boolean 도 허용
-    isActive: z.union([z.number(), z.boolean()]),
-    createdAt: Ts,
-    updatedAt: Ts
-  })
-  .passthrough()
-
 // ─── 추론된 타입 export (any 0) ────────────────────
 
 export type FolderImportType = z.infer<typeof FolderImport>
@@ -381,8 +354,6 @@ export type ReminderImportType = z.infer<typeof ReminderImport>
 export type RecurringRuleImportType = z.infer<typeof RecurringRuleImport>
 export type RecurringCompletionImportType = z.infer<typeof RecurringCompletionImport>
 export type TemplateImportType = z.infer<typeof TemplateImport>
-export type TerminalLayoutImportType = z.infer<typeof TerminalLayoutImport>
-export type TerminalSessionImportType = z.infer<typeof TerminalSessionImport>
 
 /**
  * 모든 entity import schema 의 배열 helper.

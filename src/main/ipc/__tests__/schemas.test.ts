@@ -4,12 +4,7 @@
  * 보안-1 Phase 3 — 검증된 입력만 service 까지 도달하도록 보장.
  */
 import { describe, it, expect } from 'vitest'
-import {
-  zipPathSchema,
-  terminalCreateSchema,
-  workspaceNameSchema,
-  workspacePathSchema
-} from '../schemas'
+import { zipPathSchema, workspaceNameSchema, workspacePathSchema } from '../schemas'
 
 describe('zipPathSchema (backup:import / readManifest)', () => {
   it('accepts .zip path', () => {
@@ -25,64 +20,6 @@ describe('zipPathSchema (backup:import / readManifest)', () => {
   it('rejects path traversal', () => {
     expect(() => zipPathSchema.parse('../../etc/passwd.zip')).toThrow(/traversal/)
     expect(() => zipPathSchema.parse('foo/../bar.zip')).toThrow(/traversal/)
-  })
-})
-
-describe('terminalCreateSchema (terminal:create)', () => {
-  const validInput = {
-    workspaceId: 'abcdefghijk1234567890',
-    cwd: '/Users/me/workspace',
-    cols: 80,
-    rows: 24
-  }
-
-  it('accepts minimal valid input', () => {
-    expect(() => terminalCreateSchema.parse(validInput)).not.toThrow()
-  })
-
-  it('accepts all optional fields', () => {
-    expect(() =>
-      terminalCreateSchema.parse({
-        ...validInput,
-        shell: '/bin/zsh',
-        id: 'xyz12345abcdefghijklm',
-        sortOrder: 3
-      })
-    ).not.toThrow()
-  })
-
-  it('rejects path traversal in cwd', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, cwd: '../../../etc' })).toThrow(
-      /traversal/
-    )
-  })
-
-  it('rejects shell with NUL byte (process arg injection 차단)', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, shell: '/bin/zsh\0evil' })).toThrow(
-      /NUL/
-    )
-  })
-
-  it('rejects unreasonably long shell name', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, shell: 'a'.repeat(256) })).toThrow()
-  })
-
-  it('rejects negative or zero cols/rows', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, cols: 0 })).toThrow()
-    expect(() => terminalCreateSchema.parse({ ...validInput, rows: -1 })).toThrow()
-  })
-
-  it('rejects absurd cols/rows (resource exhaustion 차단)', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, cols: 100000 })).toThrow()
-  })
-
-  it('rejects non-integer cols/rows', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, cols: 80.5 })).toThrow()
-  })
-
-  it('rejects invalid workspaceId format', () => {
-    expect(() => terminalCreateSchema.parse({ ...validInput, workspaceId: 'has space' })).toThrow()
-    expect(() => terminalCreateSchema.parse({ ...validInput, workspaceId: 'short' })).toThrow()
   })
 })
 

@@ -34,3 +34,30 @@ jobs:
           CSC_LINK: ${{ secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
         run: npm run build:mac
+
+  # Windows 산출물은 반드시 Windows runner에서 npm ci 한 dependency tree로 패키징한다.
+  # macOS node_modules를 재사용하면 darwin native addon(better-sqlite3 등)이 섞여
+  # Windows 실행 시 DB 초기화 전에 크래시한다.
+  build-win:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      # postinstall의 @electron/rebuild가 Electron ABI에 맞춰 native addon을 빌드하므로
+      # --ignore-scripts를 쓰면 안 된다.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build and publish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run build:win -- --x64 --publish always
+
+      # darwin/linux native addon 혼입 검사. release는 draft라 실패 시 publish 전에 걸러진다.
+      - name: Verify Windows native modules
+        run: npm run check:win-native
