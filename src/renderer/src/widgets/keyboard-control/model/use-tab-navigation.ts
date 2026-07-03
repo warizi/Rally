@@ -1,10 +1,11 @@
 /**
- * 탭 이동 hook — `cmd + opt` (유지) + `]` (다음) / `[` (이전).
+ * 탭 이동 hook — mac `cmd + opt` / win·linux `ctrl + alt` (유지) + `]` (다음) / `[` (이전).
  *
  * 키맵 근거:
  * - macOS 표준 `shift + tab` 은 reverse-focus 라 충돌 위험. 그래서
- *   `cmd + opt` modifier + bracket trigger 로 변경 (브라우저/VSCode 의
- *   `cmd+opt+] / [` 탭 nav 패턴과 일치).
+ *   primary modifier + alt + bracket trigger 로 변경 (브라우저/VSCode 의
+ *   `cmd+opt+] / [` 탭 nav 패턴과 일치). Windows 는 Win키(meta)를 OS가
+ *   가로채므로 ctrl 기반으로 분기.
  * - bracket 키는 `event.code` (BracketRight/BracketLeft) 로 비교 → IME /
  *   대소문자 / 한글 키보드 layout 영향 없음.
  *
@@ -15,6 +16,7 @@
  * - modifier 해제: focusIndex 탭으로 activateTab → close + mode clear
  */
 import { useTabStore } from '@/entities/tab-system'
+import { primaryModifierSpec } from '@shared/lib/keyboard-platform'
 import { useGlobalHotkey } from './use-global-hotkey'
 import { useKeyboardModeStore } from './keyboard-mode-store'
 import { useTabNavStore, type TabNavItem } from './tab-nav-store'
@@ -39,7 +41,7 @@ export function useTabNavigation(): void {
   const clearMode = useKeyboardModeStore((s) => s.clearMode)
 
   useGlobalHotkey({
-    modifiers: { meta: true, alt: true },
+    modifiers: { ...primaryModifierSpec(), alt: true },
     onKeyDown: (e) => {
       let direction: 'next' | 'prev' | null = null
       if (e.code === 'BracketRight') direction = 'next'

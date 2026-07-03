@@ -11,6 +11,7 @@ const mocks = vi.hoisted(() => ({
   workspaceId: 'ws-1' as string | null,
   applyTabSnapshot: vi.fn(),
   hotkey: {
+    modifiers: null as null | Record<string, boolean>,
     onKeyDown: null as null | ((e: KeyboardEvent) => void),
     onDeactivate: null as null | (() => void)
   }
@@ -18,9 +19,11 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('../use-global-hotkey', () => ({
   useGlobalHotkey: (opts: {
+    modifiers: Record<string, boolean>
     onKeyDown?: (e: KeyboardEvent) => void
     onDeactivate?: () => void
   }) => {
+    mocks.hotkey.modifiers = opts.modifiers
     mocks.hotkey.onKeyDown = opts.onKeyDown ?? null
     mocks.hotkey.onDeactivate = opts.onDeactivate ?? null
   }
@@ -36,6 +39,7 @@ vi.mock('@/features/tab-snapshot/manage-tab-snapshot', () => ({
   applyTabSnapshot: (s: unknown) => mocks.applyTabSnapshot(s)
 }))
 
+import { __resetPlatformCacheForTest } from '@shared/lib/platform'
 import { useSnapshotNavStore } from '../snapshot-nav-store'
 import { useKeyboardModeStore } from '../keyboard-mode-store'
 import { useSnapshotNavigation } from '../use-snapshot-navigation'
@@ -50,8 +54,25 @@ beforeEach(() => {
   mocks.applyTabSnapshot.mockClear()
   useSnapshotNavStore.getState().close()
   useKeyboardModeStore.setState({ mode: null })
+  mocks.hotkey.modifiers = null
   mocks.hotkey.onKeyDown = null
   mocks.hotkey.onDeactivate = null
+  delete (window as unknown as { electron?: unknown }).electron
+  __resetPlatformCacheForTest()
+})
+
+describe('useSnapshotNavigation — OS별 modifier 분기', () => {
+  it('darwin → { meta: true, shift: true }', () => {
+    ;(window as unknown as { electron?: unknown }).electron = { process: { platform: 'darwin' } }
+    renderHook(() => useSnapshotNavigation())
+    expect(mocks.hotkey.modifiers).toEqual({ meta: true, shift: true })
+  })
+
+  it('win32 → { ctrl: true, shift: true }', () => {
+    ;(window as unknown as { electron?: unknown }).electron = { process: { platform: 'win32' } }
+    renderHook(() => useSnapshotNavigation())
+    expect(mocks.hotkey.modifiers).toEqual({ ctrl: true, shift: true })
+  })
 })
 
 describe('useSnapshotNavigation', () => {

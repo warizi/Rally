@@ -1,6 +1,7 @@
 import { Type, Plus, Map, Undo2, Redo2, Group } from 'lucide-react'
 import { Button } from '@shared/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@shared/ui/tooltip'
+import { comboLabel, primaryModifierLabel, shiftModifierLabel } from '@shared/lib/keyboard-platform'
 
 interface CanvasToolbarProps {
   onAddText: () => void
@@ -74,7 +75,7 @@ export function CanvasToolbar({
               <Undo2 className="size-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>실행취소 (⌘Z)</TooltipContent>
+          <TooltipContent>실행취소 ({comboLabel(primaryModifierLabel(), 'Z')})</TooltipContent>
         </Tooltip>
 
         <Tooltip>
@@ -89,7 +90,9 @@ export function CanvasToolbar({
               <Redo2 className="size-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent>다시실행 (⌘⇧Z)</TooltipContent>
+          <TooltipContent>
+            다시실행 ({comboLabel(primaryModifierLabel(), shiftModifierLabel(), 'Z')})
+          </TooltipContent>
         </Tooltip>
 
         <div className="w-px h-5 bg-border" />

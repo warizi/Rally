@@ -3,29 +3,34 @@
  *
  * ReactFlow + 자식 컴포넌트들 (CanvasToolbar, SelectionToolbar 등) 마운트 (smoke).
  */
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, afterEach } from 'vitest'
 import { render, screen, act } from '@testing-library/react'
+import { __resetPlatformCacheForTest } from '@shared/lib/platform'
 
 const reactFlowMocks = vi.hoisted(() => ({
   nodes: [] as Array<{ id: string; selected?: boolean }>,
   edges: [] as Array<{ id: string }>,
   viewport: { x: 0, y: 0, zoom: 1 },
   onMoveEnd: undefined as undefined | (() => void),
-  onDoubleClick: undefined as undefined | ((e: React.MouseEvent) => void)
+  onDoubleClick: undefined as undefined | ((e: React.MouseEvent) => void),
+  selectionKeyCode: undefined as undefined | string
 }))
 
 vi.mock('@xyflow/react', () => ({
   ReactFlow: ({
     children,
     onMoveEnd,
-    onDoubleClick
+    onDoubleClick,
+    selectionKeyCode
   }: {
     children?: React.ReactNode
     onMoveEnd?: () => void
     onDoubleClick?: (e: React.MouseEvent) => void
+    selectionKeyCode?: string
   }) => {
     reactFlowMocks.onMoveEnd = onMoveEnd
     reactFlowMocks.onDoubleClick = onDoubleClick
+    reactFlowMocks.selectionKeyCode = selectionKeyCode
     return <div data-testid="react-flow">{children}</div>
   },
   Background: () => <div data-testid="background" />,
@@ -132,6 +137,27 @@ const baseProps = {
   canUndo: false,
   canRedo: false
 } as unknown as Parameters<typeof CanvasBoardInner>[0]
+
+describe('CanvasBoardInner — selectionKeyCode OS 분기', () => {
+  afterEach(() => {
+    delete (window as unknown as { electron?: unknown }).electron
+    __resetPlatformCacheForTest()
+  })
+
+  it('darwin → Meta', () => {
+    ;(window as unknown as { electron?: unknown }).electron = { process: { platform: 'darwin' } }
+    __resetPlatformCacheForTest()
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(reactFlowMocks.selectionKeyCode).toBe('Meta')
+  })
+
+  it('win32 → Control', () => {
+    ;(window as unknown as { electron?: unknown }).electron = { process: { platform: 'win32' } }
+    __resetPlatformCacheForTest()
+    render(<CanvasBoardInner {...baseProps} />)
+    expect(reactFlowMocks.selectionKeyCode).toBe('Control')
+  })
+})
 
 describe('CanvasBoardInner', () => {
   it('ReactFlow + Toolbar 컴포넌트 마운트', () => {

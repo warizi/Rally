@@ -8,6 +8,11 @@ import type { TabSnapshot } from '@/entities/tab-snapshot'
 import { TabSnapshotSection } from '@/features/tab-snapshot/manage-tab-snapshot'
 import { WorkspaceSwitcher } from '@/features/workspace/switch-workspace'
 import { sidebar_items, system_sidebar_items, SidebarItem } from '@/shared/constants/tab-url'
+import {
+  comboLabel,
+  primaryModifierLabel,
+  shiftModifierLabel
+} from '@/shared/lib/keyboard-platform'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import {
@@ -80,7 +85,7 @@ function MainSidebar(): React.JSX.Element {
                   <SidebarMenuItem>
                     <SidebarMenuButton
                       className="cursor-pointer"
-                      tooltip="검색 (⌘⇧F)"
+                      tooltip={`검색 (${comboLabel(primaryModifierLabel(), shiftModifierLabel(), 'F')})`}
                       onClick={() => openGlobalSearch(true)}
                     >
                       <Search />

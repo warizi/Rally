@@ -1,8 +1,9 @@
 /**
- * 탭 스냅샷 전환 hook — `cmd + shift` (유지) + `s` (클릭).
+ * 탭 스냅샷 전환 hook — mac `cmd + shift` / win·linux `ctrl + shift` (유지) + `s` (클릭).
  *
  * 키맵 근거: `s` = snapshot mnemonic. macOS 브라우저 표준 `cmd+shift+t`
- * (닫은 탭 복원) 와 의미 충돌을 피하기 위해 `s` 사용.
+ * (닫은 탭 복원) 와 의미 충돌을 피하기 위해 `s` 사용. Windows 는 Win키(meta)를
+ * OS가 가로채므로 ctrl 기반으로 분기.
  *
  * Lifecycle:
  * - 첫 s keydown: 현재 workspace 의 스냅샷 목록 캡처 → snapshot-nav-store.start
@@ -14,6 +15,7 @@ import { useEffect, useRef } from 'react'
 import { useTabSnapshots, type TabSnapshot } from '@entities/tab-snapshot'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { applyTabSnapshot } from '@/features/tab-snapshot/manage-tab-snapshot'
+import { primaryModifierSpec } from '@shared/lib/keyboard-platform'
 import { useGlobalHotkey } from './use-global-hotkey'
 import { useKeyboardModeStore } from './keyboard-mode-store'
 import { useSnapshotNavStore, type SnapshotNavItem } from './snapshot-nav-store'
@@ -32,7 +34,7 @@ export function useSnapshotNavigation(): void {
   })
 
   useGlobalHotkey({
-    modifiers: { meta: true, shift: true },
+    modifiers: { ...primaryModifierSpec(), shift: true },
     onKeyDown: (e) => {
       // 'KeyS' 으로 비교하면 한글 IME / 대소문자 차이 무시 가능.
       if (e.code !== 'KeyS') return
