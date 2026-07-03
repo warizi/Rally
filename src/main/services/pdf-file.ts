@@ -113,7 +113,7 @@ export const pdfFileService = {
         pdfFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,
           folderId: folder?.id ?? null,
-          title: entry.name.replace(/\.pdf$/, ''),
+          title: entry.name.replace(/\.pdf$/i, ''),
           updatedAt: now
         })
         orphanByBasename.delete(entry.name)
@@ -123,7 +123,7 @@ export const pdfFileService = {
           workspaceId,
           folderId: folder?.id ?? null,
           relativePath: entry.relativePath,
-          title: entry.name.replace(/\.pdf$/, ''),
+          title: entry.name.replace(/\.pdf$/i, ''),
           description: '',
           preview: '',
           order: 0,
@@ -166,7 +166,7 @@ export const pdfFileService = {
     const parentAbs = folderRelPath ? path.join(workspace.path, folderRelPath) : workspace.path
     const sourceBaseName = path.basename(sourcePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceBaseName)
-    const title = finalFileName.replace(/\.pdf$/, '')
+    const title = finalFileName.replace(/\.pdf$/i, '')
 
     const destAbs = path.join(parentAbs, finalFileName)
     // 워처/reconciler 는 디스크 경로를 NFC 로 통일(R-06)하므로 import 도 NFC 로 저장해야
@@ -211,7 +211,7 @@ export const pdfFileService = {
 
     const sourceFileName = path.basename(pdf.relativePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
-    const title = finalFileName.replace(/\.pdf$/, '')
+    const title = finalFileName.replace(/\.pdf$/i, '')
 
     const sourceAbs = path.join(workspace.path, pdf.relativePath)
     const destAbs = path.join(parentAbs, finalFileName)
@@ -269,7 +269,7 @@ export const pdfFileService = {
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.pdf$/, '')
+    const title = finalFileName.replace(/\.pdf$/i, '')
 
     const oldAbs = path.join(workspace.path, pdf.relativePath)
     const newRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
@@ -426,7 +426,7 @@ export const pdfFileService = {
         ? path.join(workspace.path, targetFolderRel)
         : workspace.path
       const finalFileName = resolveNameConflict(parentAbs, pdfFileName)
-      finalTitle = finalFileName.replace(/\.pdf$/, '')
+      finalTitle = finalFileName.replace(/\.pdf$/i, '')
       finalRel = normalizePath(
         targetFolderRel ? `${targetFolderRel}/${finalFileName}` : finalFileName
       )

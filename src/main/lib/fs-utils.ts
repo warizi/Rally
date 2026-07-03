@@ -182,37 +182,56 @@ export async function scanWorkspaceAsync(
   return { folders, files, errors }
 }
 
+// --- 확장자/타이틀 helper (case-insensitive) ---
+
+/**
+ * 확장자 일치 검사 — 대소문자 무시 (Windows의 NOTE.MD, DATA.CSV 대응).
+ * 원본 파일명 casing은 바꾸지 않는다.
+ */
+export function hasFileExtension(filePath: string, ext: string): boolean {
+  const normalizedExt = ext.startsWith('.') ? ext.toLowerCase() : `.${ext.toLowerCase()}`
+  return path.extname(filePath).toLowerCase() === normalizedExt
+}
+
+/** 파일 경로에서 확장자를 제거한 표시용 제목 — 'NOTE.MD' → 'NOTE' */
+export function getFileTitle(filePath: string): string {
+  return path.basename(filePath, path.extname(filePath))
+}
+
 // --- 기존 export 함수 (wrapper) ---
 
 /** onError: 하위 디렉토리 readdir 실패 통지 — 전달 시 결과 불완전 여부를 판단할 수 있다 */
 export type ScanErrorHandler = (err: unknown) => void
 
 export const readMdFilesRecursive = (abs: string, rel: string): MdFileEntry[] =>
-  readFilesRecursive(abs, rel, (n) => n.endsWith('.md'))
+  readFilesRecursive(abs, rel, (n) => hasFileExtension(n, '.md'))
 
 export const readMdFilesRecursiveAsync = (
   abs: string,
   rel: string,
   onError?: ScanErrorHandler
-): Promise<MdFileEntry[]> => readFilesRecursiveAsync(abs, rel, (n) => n.endsWith('.md'), onError)
+): Promise<MdFileEntry[]> =>
+  readFilesRecursiveAsync(abs, rel, (n) => hasFileExtension(n, '.md'), onError)
 
 export const readCsvFilesRecursive = (abs: string, rel: string): CsvFileEntry[] =>
-  readFilesRecursive(abs, rel, (n) => n.endsWith('.csv'))
+  readFilesRecursive(abs, rel, (n) => hasFileExtension(n, '.csv'))
 
 export const readCsvFilesRecursiveAsync = (
   abs: string,
   rel: string,
   onError?: ScanErrorHandler
-): Promise<CsvFileEntry[]> => readFilesRecursiveAsync(abs, rel, (n) => n.endsWith('.csv'), onError)
+): Promise<CsvFileEntry[]> =>
+  readFilesRecursiveAsync(abs, rel, (n) => hasFileExtension(n, '.csv'), onError)
 
 export const readPdfFilesRecursive = (abs: string, rel: string): PdfFileEntry[] =>
-  readFilesRecursive(abs, rel, (n) => n.endsWith('.pdf'))
+  readFilesRecursive(abs, rel, (n) => hasFileExtension(n, '.pdf'))
 
 export const readPdfFilesRecursiveAsync = (
   abs: string,
   rel: string,
   onError?: ScanErrorHandler
-): Promise<PdfFileEntry[]> => readFilesRecursiveAsync(abs, rel, (n) => n.endsWith('.pdf'), onError)
+): Promise<PdfFileEntry[]> =>
+  readFilesRecursiveAsync(abs, rel, (n) => hasFileExtension(n, '.pdf'), onError)
 
 export const readImageFilesRecursive = (abs: string, rel: string): ImageFileEntry[] =>
   readFilesRecursive(abs, rel, isImageFile)

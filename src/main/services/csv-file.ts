@@ -127,7 +127,7 @@ export const csvFileService = {
         csvFileRepository.update(matchedOrphan.id, {
           relativePath: entry.relativePath,
           folderId: folder?.id ?? null,
-          title: entry.name.replace(/\.csv$/, ''),
+          title: entry.name.replace(/\.csv$/i, ''),
           updatedAt: now
         })
         orphanByBasename.delete(entry.name)
@@ -137,7 +137,7 @@ export const csvFileService = {
           workspaceId,
           folderId: folder?.id ?? null,
           relativePath: entry.relativePath,
-          title: entry.name.replace(/\.csv$/, ''),
+          title: entry.name.replace(/\.csv$/i, ''),
           description: '',
           preview: '',
           order: 0,
@@ -222,7 +222,7 @@ export const csvFileService = {
     const parentAbs = folderRelPath ? path.join(workspace.path, folderRelPath) : workspace.path
     const sourceBaseName = path.basename(sourcePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceBaseName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const destAbs = path.join(parentAbs, finalFileName)
     // 워처/reconciler 는 디스크 경로를 NFC 로 통일(R-06)하므로 import 도 NFC 로 저장해야
@@ -290,7 +290,7 @@ export const csvFileService = {
 
     const desiredFileName = (name.trim() || '새로운 테이블') + '.csv'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const newAbs = path.join(parentAbs, finalFileName)
     const newRel = normalizePath(
@@ -337,7 +337,7 @@ export const csvFileService = {
 
     const sourceFileName = path.basename(csv.relativePath)
     const finalFileName = resolveNameConflict(parentAbs, sourceFileName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const sourceAbs = path.join(workspace.path, csv.relativePath)
     const destAbs = path.join(parentAbs, finalFileName)
@@ -413,7 +413,7 @@ export const csvFileService = {
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
-    const title = finalFileName.replace(/\.csv$/, '')
+    const title = finalFileName.replace(/\.csv$/i, '')
 
     const oldAbs = path.join(workspace.path, csv.relativePath)
     const newRel = normalizePath(folderRel ? `${folderRel}/${finalFileName}` : finalFileName)
@@ -562,7 +562,7 @@ export const csvFileService = {
         ? path.join(workspace.path, targetFolderRel)
         : workspace.path
       const finalFileName = resolveNameConflict(parentAbs, csvFileName)
-      finalTitle = finalFileName.replace(/\.csv$/, '')
+      finalTitle = finalFileName.replace(/\.csv$/i, '')
       finalRel = normalizePath(
         targetFolderRel ? `${targetFolderRel}/${finalFileName}` : finalFileName
       )

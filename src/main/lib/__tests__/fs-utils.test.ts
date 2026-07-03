@@ -4,7 +4,9 @@ import {
   readMdFilesRecursive,
   readMdFilesRecursiveAsync,
   resolveNameConflict,
-  sanitizeFileNameSegment
+  sanitizeFileNameSegment,
+  hasFileExtension,
+  getFileTitle
 } from '../fs-utils'
 
 // ─── Mock 선언 (vitest 자동 호이스팅) ─────────────────────────
@@ -195,6 +197,31 @@ describe('readMdFilesRecursiveAsync', () => {
     expect(asyncResult.map((e) => e.relativePath).sort()).toEqual(
       syncResult.map((e) => e.relativePath).sort()
     )
+  })
+})
+
+// ─── hasFileExtension / getFileTitle (case-insensitive) ───────
+describe('hasFileExtension / getFileTitle', () => {
+  it('대소문자 무시 확장자 매칭', () => {
+    expect(hasFileExtension('NOTE.MD', '.md')).toBe(true)
+    expect(hasFileExtension('note.md', '.md')).toBe(true)
+    expect(hasFileExtension('note.mdx', '.md')).toBe(false)
+    expect(hasFileExtension('/a/b/DATA.CSV', 'csv')).toBe(true)
+    expect(hasFileExtension('문서.PDF', '.pdf')).toBe(true)
+  })
+
+  it('getFileTitle — 확장자 제거, 원본 casing 보존', () => {
+    expect(getFileTitle('NOTE.MD')).toBe('NOTE')
+    expect(getFileTitle('/a/b/문서.PDF')).toBe('문서')
+    expect(getFileTitle('note.md')).toBe('note')
+  })
+})
+
+describe('readMdFilesRecursive — 대문자 확장자', () => {
+  it('UPPER.MD와 lower.md 모두 수집, note.mdx는 제외', () => {
+    setReaddirReturn([makeDirent('UPPER.MD'), makeDirent('lower.md'), makeDirent('note.mdx')])
+    const result = readMdFilesRecursive('/base', '')
+    expect(result.map((e) => e.relativePath).sort()).toEqual(['UPPER.MD', 'lower.md'])
   })
 })
 
