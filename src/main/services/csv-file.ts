@@ -7,7 +7,12 @@ import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { csvFileRepository } from '../repositories/csv-file'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
-import { resolveNameConflict, readCsvFilesRecursive, toNfc } from '../lib/fs-utils'
+import {
+  resolveNameConflict,
+  sanitizeFileNameSegment,
+  readCsvFilesRecursive,
+  toNfc
+} from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
@@ -400,12 +405,13 @@ export const csvFileService = {
     if (!csv) throw new NotFoundError(`CSV not found: ${csvId}`)
     assertCsvUnlocked(csv)
 
-    if (newName.trim() === csv.title) return toCsvFileNode(csv)
+    // no-op 판정은 sanitize 이후 기준 — raw 비교면 'foo.' → 'foo (1)' 같은 오동작 발생
+    const desiredFileName = sanitizeFileNameSegment(newName.trim() + '.csv')
+    if (desiredFileName === path.basename(csv.relativePath)) return toCsvFileNode(csv)
 
     const folderRel = parentRelPath(csv.relativePath)
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
-    const desiredFileName = newName.trim() + '.csv'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
     const title = finalFileName.replace(/\.csv$/, '')
 

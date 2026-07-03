@@ -7,6 +7,7 @@ import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
 import {
   resolveNameConflict,
+  sanitizeFileNameSegment,
   readImageFilesRecursive,
   getImageMimeType,
   toNfc
@@ -250,13 +251,14 @@ export const imageFileService = {
     const image = imageFileRepository.findById(imageId)
     if (!image) throw new NotFoundError(`Image not found: ${imageId}`)
 
-    if (newName.trim() === image.title) return toImageFileNode(image)
+    // no-op 판정은 sanitize 이후 기준 — raw 비교면 'foo.' → 'foo (1)' 같은 오동작 발생
+    const ext = path.extname(image.relativePath)
+    const desiredFileName = sanitizeFileNameSegment(newName.trim() + ext)
+    if (desiredFileName === path.basename(image.relativePath)) return toImageFileNode(image)
 
     const folderRel = parentRelPath(image.relativePath)
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
-    const ext = path.extname(image.relativePath)
-    const desiredFileName = newName.trim() + ext
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
     const title = path.basename(finalFileName, ext)
 

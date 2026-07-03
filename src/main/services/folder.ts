@@ -2,7 +2,7 @@ import path from 'path'
 import fs from 'fs'
 import { nanoid } from 'nanoid'
 import { NotFoundError, ValidationError } from '../lib/errors'
-import { resolveNameConflict, toNfc } from '../lib/fs-utils'
+import { resolveNameConflict, sanitizeFileNameSegment, toNfc } from '../lib/fs-utils'
 import { normalizePath } from '../lib/path-utils'
 import { folderRepository } from '../repositories/folder'
 import { csvFileRepository } from '../repositories/csv-file'
@@ -334,8 +334,10 @@ export const folderService = {
     const parentAbs = resolveParentAbsPath(workspace.path, parentRel)
 
     // 같은 이름이면 no-op (resolveNameConflict 호출 전에 먼저 체크)
+    // no-op 판정은 sanitize 이후 기준 — raw 비교면 'foo.' → 'foo (1)' 같은 오동작 발생
     const oldName = oldRel.split('/').at(-1)!
-    if (newName.trim() === oldName) {
+    const desiredName = sanitizeFileNameSegment(newName.trim(), { treatAsFolder: true })
+    if (desiredName === oldName) {
       return {
         id: folder.id,
         name: oldName,
@@ -346,7 +348,7 @@ export const folderService = {
       }
     }
 
-    const finalName = resolveNameConflict(parentAbs, newName.trim(), { treatAsFolder: true })
+    const finalName = resolveNameConflict(parentAbs, desiredName, { treatAsFolder: true })
 
     const oldAbs = path.join(workspace.path, oldRel)
     const newRel = normalizePath(parentRel ? `${parentRel}/${finalName}` : finalName)

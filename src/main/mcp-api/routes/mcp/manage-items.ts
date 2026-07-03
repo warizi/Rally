@@ -112,7 +112,8 @@ export function registerMcpManageItemsRoutes(router: Router): void {
               actor
             )
             folderTouched = true
-            pushAct('folder', 'create', folder.id, action.name)
+            // sanitize/충돌 해결 후 최종 이름 기준으로 기록 (raw name 은 CON 등 unsafe 가능)
+            pushAct('folder', 'create', folder.id, folder.name)
             return { action: 'create_folder', id: folder.id, type: 'folder', success: true }
           }
           assertValidId(action.id, 'id')
@@ -144,17 +145,21 @@ export function registerMcpManageItemsRoutes(router: Router): void {
           }
 
           if (action.action === 'rename') {
+            // activity 에는 sanitize/충돌 해결 후 최종 이름을 기록
+            let finalTitle = action.newName
             switch (detected.type) {
               case 'note': {
                 const old = detected.relativePath!
                 const r = noteService.rename(wsId, action.id, action.newName, actor)
                 noteAffected.push(old, r.relativePath)
+                finalTitle = r.title
                 break
               }
               case 'csv': {
                 const old = detected.relativePath!
                 const r = csvFileService.rename(wsId, action.id, action.newName, actor)
                 csvAffected.push(old, r.relativePath)
+                finalTitle = r.title
                 break
               }
               case 'canvas': {
@@ -166,21 +171,24 @@ export function registerMcpManageItemsRoutes(router: Router): void {
                 const old = detected.relativePath!
                 const r = pdfFileService.rename(wsId, action.id, action.newName, actor)
                 pdfAffected.push(old, r.relativePath)
+                finalTitle = r.title
                 break
               }
               case 'image': {
                 const old = detected.relativePath!
                 const r = imageFileService.rename(wsId, action.id, action.newName, actor)
                 imageAffected.push(old, r.relativePath)
+                finalTitle = r.title
                 break
               }
               case 'folder': {
-                folderService.rename(wsId, action.id, action.newName, actor)
+                const r = folderService.rename(wsId, action.id, action.newName, actor)
                 folderTouched = true
+                finalTitle = r.name
                 break
               }
             }
-            pushAct(detected.type, 'rename', action.id, action.newName)
+            pushAct(detected.type, 'rename', action.id, finalTitle)
             return { action: 'rename', id: action.id, type: detected.type, success: true }
           }
 

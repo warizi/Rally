@@ -5,7 +5,12 @@ import { LockedError, NotFoundError, ValidationError } from '../lib/errors'
 import { noteRepository } from '../repositories/note'
 import { folderRepository } from '../repositories/folder'
 import { workspaceRepository } from '../repositories/workspace'
-import { resolveNameConflict, readMdFilesRecursive, toNfc } from '../lib/fs-utils'
+import {
+  resolveNameConflict,
+  sanitizeFileNameSegment,
+  readMdFilesRecursive,
+  toNfc
+} from '../lib/fs-utils'
 import { normalizePath, parentRelPath } from '../lib/path-utils'
 import { getLeafSiblings, reindexLeafSiblings } from '../lib/leaf-reindex'
 import { cleanupOrphansAndDelete } from '../lib/orphan-cleanup'
@@ -358,12 +363,13 @@ export const noteService = {
     if (!note) throw new NotFoundError(`Note not found: ${noteId}`)
     assertNoteUnlocked(note)
 
-    if (newName.trim() === note.title) return toNoteNode(note)
+    // no-op 판정은 sanitize 이후 기준 — raw 비교면 'foo.' → 'foo (1)' 같은 오동작 발생
+    const desiredFileName = sanitizeFileNameSegment(newName.trim() + '.md')
+    if (desiredFileName === path.basename(note.relativePath)) return toNoteNode(note)
 
     const folderRel = parentRelPath(note.relativePath)
     const parentAbs = folderRel ? path.join(workspace.path, folderRel) : workspace.path
 
-    const desiredFileName = newName.trim() + '.md'
     const finalFileName = resolveNameConflict(parentAbs, desiredFileName)
     const title = finalFileName.replace(/\.md$/, '')
 

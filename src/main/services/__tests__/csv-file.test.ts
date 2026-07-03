@@ -34,7 +34,8 @@ vi.mock('fs')
 vi.mock('chardet')
 vi.mock('iconv-lite')
 vi.mock('nanoid', () => ({ nanoid: () => 'mock-id' }))
-vi.mock('../../lib/fs-utils', () => ({
+vi.mock('../../lib/fs-utils', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../lib/fs-utils')>()),
   resolveNameConflict: vi.fn((_dir: string, name: string) => name),
   toNfc: (s: string) => s.normalize('NFC'),
   readCsvFilesRecursive: vi.fn(() => [])
