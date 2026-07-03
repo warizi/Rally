@@ -86,4 +86,42 @@ describe('release workflow Windows job (window 배포)', () => {
   it('build-win publish step 에 GH_TOKEN 이 주입된다', () => {
     expect(winJob).toMatch(/GH_TOKEN/)
   })
+
+  it('build-win 에 native module 검사 step 이 있다', () => {
+    expect(winJob).toMatch(/check:win-native/)
+  })
+})
+
+/**
+ * Windows 산출물 native module 검사 스크립트 존재/구성 회귀 방지.
+ * 실제 동작 검증은 스크립트 자체가 담당하고, 여기서는 등록 누락만 차단한다.
+ */
+describe('check:win-native 스크립트 (window 배포)', () => {
+  const scriptPath = resolve(process.cwd(), 'scripts/check-win-native.mjs')
+  const scriptSrc = readFileSync(scriptPath, 'utf-8')
+
+  it('package.json 에 check:win-native 스크립트가 등록되어 있다', () => {
+    expect(pkg.scripts['check:win-native']).toBeTruthy()
+    expect(pkg.scripts['check:win-native']).toMatch(/check-win-native\.mjs/)
+  })
+
+  it('금지 대상 기준(.dylib/.so/Mach-O/ELF/node-pty)이 들어 있다', () => {
+    expect(scriptSrc).toMatch(/\.dylib/)
+    expect(scriptSrc).toMatch(/\.so/)
+    expect(scriptSrc).toMatch(/Mach-O/)
+    expect(scriptSrc).toMatch(/ELF/)
+    expect(scriptSrc).toMatch(/node-pty/)
+  })
+
+  it('필수 Windows native 모듈이 positive 검사에 포함되어 있다', () => {
+    for (const mod of [
+      'better-sqlite3',
+      'sqlite-vec',
+      '@parcel/watcher',
+      '@napi-rs/canvas',
+      'onnxruntime-node'
+    ]) {
+      expect(scriptSrc, `${mod} 검사 누락`).toContain(mod)
+    }
+  })
 })

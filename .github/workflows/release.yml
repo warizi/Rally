@@ -57,3 +57,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npm run build:win -- --x64 --publish always
+
+      # darwin/linux native addon 혼입 검사. release는 draft라 실패 시 publish 전에 걸러진다.
+      - name: Verify Windows native modules
+        run: npm run check:win-native

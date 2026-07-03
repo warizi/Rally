@@ -41,7 +41,8 @@
     "build:size": "npm run build && node scripts/measure-bundle.mjs",
     "security:scan": "electronegativity -i src/main -i src/preload",
     "security:scan:high": "electronegativity -i src/main -i src/preload -s high -x LimitNavigationGlobalCheck",
-    "check:bundle-budget": "node scripts/check-bundle-budget.mjs"
+    "check:bundle-budget": "node scripts/check-bundle-budget.mjs",
+    "check:win-native": "node scripts/check-win-native.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.2.0",
