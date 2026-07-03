@@ -20,8 +20,6 @@ import { tags } from './tag'
 import { itemTags } from './item-tag'
 import { recurringRules } from './recurring-rule'
 import { recurringCompletions } from './recurring-completion'
-import { terminalLayouts } from './terminal-layout'
-import { terminalSessions } from './terminal-session'
 import { templates } from './template'
 import { trashBatches } from './trash-batch'
 import { noteStyleTemplates } from './note-style-template'
@@ -52,8 +50,6 @@ export {
   itemTags,
   recurringRules,
   recurringCompletions,
-  terminalLayouts,
-  terminalSessions,
   templates,
   trashBatches,
   noteStyleTemplates,

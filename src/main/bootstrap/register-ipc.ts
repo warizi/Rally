@@ -20,7 +20,6 @@ import { registerNoteImageHandlers } from '../ipc/note-image'
 import { registerReminderHandlers } from '../ipc/reminder'
 import { registerTagHandlers } from '../ipc/tag'
 import { registerItemTagHandlers } from '../ipc/item-tag'
-import { registerTerminalHandlers } from '../ipc/terminal'
 import { registerAppInfoHandlers } from '../ipc/app-info'
 import { registerBackupHandlers } from '../ipc/backup'
 import { registerRecurringRuleHandlers } from '../ipc/recurring-rule'
@@ -64,7 +63,6 @@ export function registerAllIpcHandlers(): void {
   registerReminderHandlers()
   registerTagHandlers()
   registerItemTagHandlers()
-  registerTerminalHandlers()
   registerAppInfoHandlers()
   registerBackupHandlers()
   registerRecurringRuleHandlers()

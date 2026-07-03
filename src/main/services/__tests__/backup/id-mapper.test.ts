@@ -109,9 +109,7 @@ describe('IdMapper', () => {
       'tab-snapshot',
       'recurring-rule',
       'recurring-completion',
-      'template',
-      'terminal-layout',
-      'terminal-session'
+      'template'
     ]
 
     for (const t of types) {

@@ -74,7 +74,6 @@ export default defineConfig({
             if (!id.includes('node_modules')) return undefined
             if (/[\\/]@xyflow[\\/]/.test(id)) return 'xyflow'
             if (/[\\/]react-pdf[\\/]/.test(id)) return 'react-pdf'
-            if (/[\\/]@xterm[\\/]/.test(id)) return 'xterm'
             if (/[\\/]recharts[\\/]/.test(id)) return 'recharts'
             if (/[\\/]@milkdown[\\/]/.test(id)) return 'milkdown'
             if (/[\\/]@dnd-kit[\\/]/.test(id)) return 'dnd-kit'

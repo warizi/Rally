@@ -174,40 +174,6 @@ describe('preload workspace / app-info / mcp-client / settings', () => {
   })
 })
 
-describe('preload terminal api', () => {
-  it('create → terminal:create (single args object)', () => {
-    const args = { workspaceId: 'ws-aabbcc12', cwd: '/tmp', cols: 80, rows: 24 }
-    api.terminal.create(args)
-    expect(invokeMock).toHaveBeenCalledWith('terminal:create', args)
-  })
-
-  it('write → ipcRenderer.send (fire-and-forget)', () => {
-    api.terminal.write({ id: 't1', data: 'ls\n' })
-    expect(sendMock).toHaveBeenCalledWith('terminal:write', { id: 't1', data: 'ls\n' })
-    expect(invokeMock).not.toHaveBeenCalled()
-  })
-
-  it('resize → ipcRenderer.send', () => {
-    api.terminal.resize({ id: 't1', cols: 100, rows: 30 })
-    expect(sendMock).toHaveBeenCalledWith('terminal:resize', { id: 't1', cols: 100, rows: 30 })
-  })
-
-  it('onData → 콜백 등록, unsubscribe → Map 에서 제거', () => {
-    const cb = vi.fn()
-    const off = api.terminal.onData('t1', cb)
-    // off() 호출 후 invoke/send 가 호출되지는 않으므로 Map 상태로만 검증
-    expect(typeof off).toBe('function')
-    off()
-  })
-
-  it('onExit → 콜백 등록 + unsubscribe', () => {
-    const cb = vi.fn()
-    const off = api.terminal.onExit('t1', cb)
-    expect(typeof off).toBe('function')
-    off()
-  })
-})
-
 describe('preload trash / backup / skill / history / onboarding', () => {
   it('trash.list → trash:list', () => {
     api.trash.list('ws-aabbcc12')
@@ -297,7 +263,6 @@ describe('preload api root object', () => {
       'settings',
       'appInfo',
       'mcpClient',
-      'terminal',
       'noteStyleTemplate',
       'skill'
     ]

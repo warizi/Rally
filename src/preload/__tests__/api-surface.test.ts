@@ -46,10 +46,8 @@ describe('preload api-surface', () => {
       'src/preload/apis/pdf.ts',
       'src/preload/apis/image.ts',
       'src/preload/apis/schedule.ts',
-      'src/preload/apis/terminal.ts',
       'src/preload/apis/todo.ts',
       'src/preload/apis/workspace.ts',
-      'src/preload/lib/terminal-listeners.ts',
       'src/preload/lib/on-changed-listener.ts'
     ]
     for (const file of allFiles) {

@@ -298,48 +298,6 @@ describe('preload api — onChanged subscribers', () => {
   }
 })
 
-describe('preload terminal api — invoke + send + listener Map', () => {
-  it('create / destroy / destroyAll / saveSnapshot / getSessions / getLayout / updateSession / saveLayout / closeSession → invoke', () => {
-    api.terminal.create({ workspaceId: 'ws-1', cwd: '/tmp', cols: 80, rows: 24 })
-    api.terminal.destroy('t-1')
-    api.terminal.destroyAll('ws-1')
-    api.terminal.saveSnapshot('t-1', 'x')
-    api.terminal.getSessions('ws-1')
-    api.terminal.getLayout('ws-1')
-    api.terminal.updateSession('t-1', {})
-    api.terminal.saveLayout('ws-1', '{}')
-    api.terminal.closeSession('t-1')
-
-    const channels = invokeMock.mock.calls.map((c) => c[0])
-    expect(channels).toEqual([
-      'terminal:create',
-      'terminal:destroy',
-      'terminal:destroyAll',
-      'terminal:saveSnapshot',
-      'terminal:getSessions',
-      'terminal:getLayout',
-      'terminal:updateSession',
-      'terminal:saveLayout',
-      'terminal:closeSession'
-    ])
-  })
-
-  it('write / resize → ipcRenderer.send (fire-and-forget)', () => {
-    api.terminal.write({ id: 't-1', data: 'x' })
-    api.terminal.resize({ id: 't-1', cols: 100, rows: 30 })
-    expect(sendMock.mock.calls.map((c) => c[0])).toEqual(['terminal:write', 'terminal:resize'])
-  })
-
-  it('onData / onExit → 콜백 등록 + unsubscribe (Map 기반)', () => {
-    const off1 = api.terminal.onData('t-1', vi.fn())
-    const off2 = api.terminal.onExit('t-1', vi.fn())
-    expect(typeof off1).toBe('function')
-    expect(typeof off2).toBe('function')
-    off1()
-    off2()
-  })
-})
-
 describe('preload settings / shell / tab-session / tab-snapshot 동작 sanity', () => {
   it('각 namespace 의 모든 method 가 정의되어 있음', () => {
     for (const ns of ['settings', 'tabSession', 'tabSnapshot', 'onboarding'] as ApiNamespace[]) {

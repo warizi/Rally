@@ -27,7 +27,6 @@ import { entityLinkApi } from './entity-link'
 import { settingsApi } from './settings'
 import { appInfoApi } from './app-info'
 import { mcpClientApi } from './mcp-client'
-import { terminalApi } from './terminal'
 import { noteStyleTemplateApi } from './note-style-template'
 import { skillApi } from './skill'
 import { searchApi } from './search'
@@ -66,7 +65,6 @@ export const api = {
   settings: settingsApi,
   appInfo: appInfoApi,
   mcpClient: mcpClientApi,
-  terminal: terminalApi,
   noteStyleTemplate: noteStyleTemplateApi,
   skill: skillApi,
   search: searchApi,

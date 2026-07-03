@@ -27,8 +27,6 @@ export type BackupEntityType =
   | 'recurring-rule'
   | 'recurring-completion'
   | 'template'
-  | 'terminal-layout'
-  | 'terminal-session'
 
 /**
  * old ID → new ID 매핑 (import 트랜잭션 전용).

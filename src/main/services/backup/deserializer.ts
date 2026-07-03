@@ -26,9 +26,7 @@ import {
   reminders,
   recurringRules,
   recurringCompletions,
-  templates,
-  terminalLayouts,
-  terminalSessions
+  templates
 } from '../../db/schema'
 
 import type { BackupManifest } from './types'
@@ -57,9 +55,7 @@ import {
   ReminderImport,
   RecurringRuleImport,
   RecurringCompletionImport,
-  TemplateImport,
-  TerminalLayoutImport,
-  TerminalSessionImport
+  TemplateImport
 } from './import-schemas'
 
 /** 중첩 그룹을 부모-먼저 순서로 정렬 (자기참조 parent_id FK 충족). 사이클은 visited 로 방어. */
@@ -187,8 +183,8 @@ export const backupDeserializer = {
         RecurringCompletionImport
       )
       const templatesJson = readAndParse('templates.json', TemplateImport)
-      const terminalLayoutsJson = readAndParse('terminal-layouts.json', TerminalLayoutImport)
-      const terminalSessionsJson = readAndParse('terminal-sessions.json', TerminalSessionImport)
+      // terminal-layouts.json / terminal-sessions.json: 터미널 기능 삭제로 import하지 않음.
+      // 과거 백업에 파일이 있어도 읽지 않으므로 자연스럽게 무시된다.
 
       // ID 매퍼
       const mapper = new IdMapper()
@@ -592,38 +588,6 @@ export const backupDeserializer = {
             type: t.type,
             jsonData: t.jsonData,
             createdAt: toDate(t.createdAt)
-          }))
-        )
-
-        // 22. terminal_layouts (워크스페이스당 unique)
-        batchInsert(
-          terminalLayouts,
-          terminalLayoutsJson.map((l) => ({
-            id: mapper.register('terminal-layout', l.id),
-            workspaceId: newWorkspaceId,
-            layoutJson: l.layoutJson,
-            createdAt: toDate(l.createdAt),
-            updatedAt: toDate(l.updatedAt)
-          }))
-        )
-
-        // 23. terminal_sessions (layoutId nullable)
-        batchInsert(
-          terminalSessions,
-          terminalSessionsJson.map((s) => ({
-            id: mapper.register('terminal-session', s.id),
-            workspaceId: newWorkspaceId,
-            layoutId: s.layoutId != null ? mapper.mapOrSkip('terminal-layout', s.layoutId) : null,
-            name: s.name,
-            cwd: s.cwd,
-            shell: s.shell,
-            rows: s.rows,
-            cols: s.cols,
-            screenSnapshot: s.screenSnapshot,
-            sortOrder: s.sortOrder,
-            isActive: s.isActive,
-            createdAt: toDate(s.createdAt),
-            updatedAt: toDate(s.updatedAt)
           }))
         )
       })()

@@ -30,7 +30,6 @@ describe('tab-url', () => {
       'calendar',
       'canvas',
       'canvas-detail',
-      'terminal',
       'changelog',
       'history',
       'timer',

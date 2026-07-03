@@ -2,14 +2,11 @@
  * app/layout/MainLayout.test.tsx
  *
  * MainLayout 마운트 시 모든 watcher hook + UI 자식 컴포넌트 마운트 확인 (smoke).
- * isTerminalOpen 분기 → TerminalBottomPanel + ResizableHandle 노출.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
-  isTerminalOpen: false,
-  panelSize: 30,
   watcherCalls: [] as string[]
 }))
 
@@ -121,33 +118,6 @@ vi.mock('@dnd-kit/core', () => ({
   useSensors: () => []
 }))
 
-vi.mock('@/widgets/terminal-panel', () => ({
-  TerminalBottomPanel: () => <div data-testid="terminal-bottom-panel" />
-}))
-
-vi.mock('@shared/ui/resizable', () => ({
-  ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="panel-group">{children}</div>
-  ),
-  ResizablePanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
-  ResizableHandle: () => <div data-testid="resize-handle" />
-}))
-
-vi.mock('@features/terminal', () => ({
-  useTerminalPanelStore: (
-    sel: (s: { isOpen: boolean; panelSize: number; setPanelSize: (n: number) => void }) => unknown
-  ) =>
-    sel({
-      isOpen: mocks.isTerminalOpen,
-      panelSize: mocks.panelSize,
-      setPanelSize: vi.fn()
-    })
-}))
-
-vi.mock('@features/terminal/model/use-terminal-session-persistence', () => ({
-  useTerminalSessionPersistence: () => mocks.watcherCalls.push('terminal-session')
-}))
-
 vi.mock('../model/pane-routes', () => ({
   PANE_ROUTES: []
 }))
@@ -186,8 +156,6 @@ function r(): ReturnType<typeof render> {
 }
 
 beforeEach(() => {
-  mocks.isTerminalOpen = false
-  mocks.panelSize = 30
   mocks.watcherCalls = []
 })
 
@@ -210,22 +178,7 @@ describe('MainLayout', () => {
     expect(mocks.watcherCalls).toContain('todo')
     expect(mocks.watcherCalls).toContain('schedule')
     expect(mocks.watcherCalls).toContain('session')
-    expect(mocks.watcherCalls).toContain('terminal-session')
     expect(mocks.watcherCalls).toContain('tree-to-tab')
-  })
-
-  it('isTerminalOpen=false → TerminalBottomPanel 미렌더', () => {
-    mocks.isTerminalOpen = false
-    r()
-    expect(screen.queryByTestId('terminal-bottom-panel')).not.toBeInTheDocument()
-    expect(screen.queryByTestId('resize-handle')).not.toBeInTheDocument()
-  })
-
-  it('isTerminalOpen=true → TerminalBottomPanel + ResizableHandle 노출', () => {
-    mocks.isTerminalOpen = true
-    r()
-    expect(screen.getByTestId('terminal-bottom-panel')).toBeInTheDocument()
-    expect(screen.getByTestId('resize-handle')).toBeInTheDocument()
   })
 
   it('DragOverlay 렌더 (활성 드래그 없음)', () => {
@@ -262,13 +215,5 @@ describe('MainLayout', () => {
     expect(mocks.watcherCalls).toContain('mcp-activity')
     expect(mocks.watcherCalls).toContain('tree-drag-monitor')
     expect(mocks.watcherCalls).toContain('history-link-to-tab')
-  })
-
-  it('isTerminalOpen=true + panelSize 변경 → panel-group 노출', () => {
-    mocks.isTerminalOpen = true
-    mocks.panelSize = 50
-    r()
-    expect(screen.getByTestId('panel-group')).toBeInTheDocument()
-    expect(screen.getByTestId('terminal-bottom-panel')).toBeInTheDocument()
   })
 })

@@ -260,6 +260,13 @@
       "when": 1782190793357,
       "tag": "0036_slim_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "6",
+      "when": 1783050575149,
+      "tag": "0037_brave_vin_gonzales",
+      "breakpoints": true
     }
   ]
 }

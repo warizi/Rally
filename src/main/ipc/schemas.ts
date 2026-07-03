@@ -83,22 +83,6 @@ export const todoFilterOptionsSchema = z
   })
   .optional()
 
-/** terminal:create — PTY 생성 인자 (1개 객체). */
-export const terminalCreateSchema = z.object({
-  workspaceId: idSchema,
-  cwd: safePathSchema,
-  // shell 경로/이름 — null/undefined 허용. 너무 길거나 NUL 포함 차단.
-  shell: z
-    .string()
-    .max(255)
-    .refine((s) => !s.includes('\0'), 'shell name must not contain NUL')
-    .optional(),
-  cols: z.number().int().min(1).max(10000),
-  rows: z.number().int().min(1).max(10000),
-  id: idSchema.optional(),
-  sortOrder: z.number().int().nonnegative().optional()
-})
-
 /** workspace:create — 이름 + 경로. */
 export const workspaceNameSchema = z.string().trim().min(1).max(255)
 
@@ -449,7 +433,7 @@ export const skillUpdateSchema = z.object({
 })
 
 /* ================================================================== */
-/* tab-session / tab-snapshot / terminal / trash / history / workspace */
+/* tab-session / tab-snapshot / trash / history / workspace */
 /* ================================================================== */
 
 export const tabSessionUpsertSchema = z.object({
@@ -475,15 +459,6 @@ export const tabSnapshotUpdateSchema = z.object({
   tabsJson: jsonStringSchema.optional(),
   panesJson: jsonStringSchema.optional(),
   layoutJson: jsonStringSchema.optional()
-})
-
-export const terminalUpdateSessionSchema = z.object({
-  name: z.string().max(255).optional(),
-  cwd: safePathSchema.max(4096).optional(),
-  rows: z.number().int().min(1).max(10000).optional(),
-  cols: z.number().int().min(1).max(10000).optional(),
-  screenSnapshot: z.string().max(50_000_000).nullable().optional(),
-  sortOrder: z.number().int().nonnegative().optional()
 })
 
 export const trashListOptionsSchema = z

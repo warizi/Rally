@@ -1,9 +1,6 @@
 import { contextBridge } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { initTerminalListeners } from './lib/terminal-listeners'
 import { api, shellApi } from './apis'
-
-initTerminalListeners()
 
 if (process.contextIsolated) {
   try {

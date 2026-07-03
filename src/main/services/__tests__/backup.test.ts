@@ -151,37 +151,6 @@ function seedAdditionalEntities(
     })
     .run()
 
-  // terminal_layout + session
-  const terminalLayoutId = nanoid()
-  testDb
-    .insert(schema.terminalLayouts)
-    .values({
-      id: terminalLayoutId,
-      workspaceId,
-      layoutJson: JSON.stringify({ type: 'single' }),
-      createdAt: now,
-      updatedAt: now
-    })
-    .run()
-  testDb
-    .insert(schema.terminalSessions)
-    .values({
-      id: nanoid(),
-      workspaceId,
-      layoutId: terminalLayoutId,
-      name: 'main',
-      cwd: '/tmp',
-      shell: '/bin/zsh',
-      rows: 24,
-      cols: 80,
-      screenSnapshot: null,
-      sortOrder: 0,
-      isActive: 1, // integer column (no boolean mode in schema)
-      createdAt: now,
-      updatedAt: now
-    })
-    .run()
-
   // tab_session — tabsJson/panesJson/layoutJson 에 노트 id 포함 (재매핑 검증)
   const tabsJson = JSON.stringify({
     'tab-1': {
