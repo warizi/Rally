@@ -13,6 +13,7 @@ import { createElement } from 'react'
 import type { JSX, ReactNode } from 'react'
 import MainSidebar from '../MainSidebar'
 import { SidebarProvider } from '@shared/ui/sidebar'
+import { __resetPlatformCacheForTest } from '@shared/lib/platform'
 
 // 무거운 child 위젯 / dialog 는 mock — dispatch 가 올바른지만 검증.
 vi.mock('@/features/workspace/switch-workspace', () => ({
@@ -60,6 +61,37 @@ function Wrapper({ children }: { children: ReactNode }): JSX.Element {
 
 beforeEach(() => {
   vi.clearAllMocks()
+  delete (window as unknown as { electron?: unknown }).electron
+  __resetPlatformCacheForTest()
+})
+
+function setPlatform(platform: string): void {
+  ;(window as unknown as { electron?: unknown }).electron = {
+    process: { platform }
+  }
+  __resetPlatformCacheForTest()
+}
+
+describe('MainSidebar — 타이틀바 예약 공간 OS 분기', () => {
+  it('darwin — sidebar container에 !top-9 override + gap에 h-9 drag-region', () => {
+    setPlatform('darwin')
+    const { container } = render(<MainSidebar />, { wrapper: Wrapper })
+    const sidebarContainer = container.querySelector('[data-slot="sidebar-container"]')
+    expect(sidebarContainer?.className).toContain('!top-9')
+    const gap = container.querySelector('[data-slot="sidebar-gap"]')
+    expect(gap?.className).toContain('h-9')
+    expect(gap?.className).toContain('drag-region')
+  })
+
+  it('win32 — !top-9 override 없음 + gap에 h-9/drag-region 없음 (네이티브 프레임)', () => {
+    setPlatform('win32')
+    const { container } = render(<MainSidebar />, { wrapper: Wrapper })
+    const sidebarContainer = container.querySelector('[data-slot="sidebar-container"]')
+    expect(sidebarContainer?.className ?? '').not.toContain('!top-9')
+    const gap = container.querySelector('[data-slot="sidebar-gap"]')
+    expect(gap?.className ?? '').not.toContain('drag-region')
+    expect((gap?.className ?? '').split(/\s+/)).not.toContain('h-9')
+  })
 })
 
 describe('MainSidebar', () => {

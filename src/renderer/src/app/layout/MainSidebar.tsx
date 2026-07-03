@@ -13,6 +13,7 @@ import {
   primaryModifierLabel,
   shiftModifierLabel
 } from '@/shared/lib/keyboard-platform'
+import { isMac } from '@/shared/lib/platform'
 import { useCurrentWorkspaceStore } from '@/shared/store/current-workspace'
 import { ScrollArea } from '@/shared/ui/scroll-area'
 import {
@@ -72,7 +73,12 @@ function MainSidebar(): React.JSX.Element {
 
   return (
     <>
-      <Sidebar collapsible="icon" variant="floating" className="!top-9 !h-[calc(100svh-2.2rem)]">
+      {/* macOS hiddenInset 타이틀바(트래픽라이트) 예약 공간 — Windows/Linux는 네이티브 프레임이라 top 0 */}
+      <Sidebar
+        collapsible="icon"
+        variant="floating"
+        className={isMac() ? '!top-9 !h-[calc(100svh-2.2rem)]' : undefined}
+      >
         <SidebarHeader>
           <WorkspaceSwitcher />
         </SidebarHeader>
