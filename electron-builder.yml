@@ -30,6 +30,12 @@ asarUnpack:
   - '**/node_modules/onnxruntime-node/**'
 win:
   executableName: rally
+  # 1차 Windows 배포는 x64 단일. Apple Silicon에서 bare `electron-builder --win` 실행 시
+  # 기본 arm64 산출물이 생기는 혼동 방지. arm64 추가 시 artifactName에 ${arch} 필요.
+  target:
+    - target: nsis
+      arch:
+        - x64
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}

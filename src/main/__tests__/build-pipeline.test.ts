@@ -45,6 +45,15 @@ describe('electron-builder.yml (배포-2)', () => {
     expect(builderYml).toMatch(/from:\s*dist-mcp\b/)
     expect(builderYml).toMatch(/to:\s*dist-mcp\b/)
   })
+
+  it('win target 이 nsis x64 로 고정되어 있다 (arm64 기본 산출물 혼동 방지)', () => {
+    // win: 섹션만 추출 (다음 top-level 키 전까지)
+    const winSection = builderYml.slice(builderYml.indexOf('\nwin:'), builderYml.indexOf('\nnsis:'))
+    expect(winSection).toMatch(/target:\s*nsis/)
+    expect(winSection).toMatch(/arch:/)
+    expect(winSection).toMatch(/-\s*x64/)
+    expect(winSection).not.toMatch(/-\s*arm64/)
+  })
 })
 
 /**
