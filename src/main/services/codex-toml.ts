@@ -49,13 +49,10 @@ function tomlString(value: string): string {
 function parseTomlString(token: string): string {
   const raw = token.trim()
   if (raw.startsWith('"') && raw.endsWith('"') && raw.length >= 2) {
-    return raw
-      .slice(1, -1)
-      .replace(/\\"/g, '"')
-      .replace(/\\n/g, '\n')
-      .replace(/\\r/g, '\r')
-      .replace(/\\t/g, '\t')
-      .replace(/\\\\/g, '\\')
+    // 단일 패스 언이스케이프 — 순차 replace 는 `\\r` 같은 Windows 경로 조각
+    // (예: "C:\\dev\\rally" 의 `\\` + `r`)을 제어문자로 오변환한다
+    const ESCAPES: Record<string, string> = { '"': '"', '\\': '\\', n: '\n', r: '\r', t: '\t' }
+    return raw.slice(1, -1).replace(/\\(.)/g, (whole, c: string) => ESCAPES[c] ?? whole)
   }
   if (raw.startsWith("'") && raw.endsWith("'") && raw.length >= 2) {
     // 리터럴 문자열 — 이스케이프 없음

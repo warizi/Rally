@@ -1,6 +1,6 @@
 import { app } from 'electron'
 import { join, dirname } from 'path'
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'fs'
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { ensureMcpToken } from '../lib/mcp-token'
 import {
@@ -68,6 +68,29 @@ function buildServerConfig(): Record<string, unknown> {
   }
 }
 
+/**
+ * Windows MSIX(Microsoft Store) 설치판 Claude Desktop 의 가상화 AppData 경로 감지.
+ *
+ * MSIX 패키지 앱은 AppData 가상화(copy-on-write) 로 %APPDATA%\Claude 대신
+ * %LOCALAPPDATA%\Packages\Claude_<hash>\LocalCache\Roaming\Claude 를 읽는다.
+ * 이 경로가 존재하면 %APPDATA% 에 써도 Claude Desktop 이 절대 읽지 않으므로
+ * 반드시 가상화 경로를 사용해야 한다.
+ */
+function findWindowsMsixClaudeDir(home: string): string | null {
+  const localAppData = process.env.LOCALAPPDATA || join(home, 'AppData', 'Local')
+  const packagesDir = join(localAppData, 'Packages')
+  try {
+    for (const name of readdirSync(packagesDir)) {
+      if (!name.startsWith('Claude_')) continue
+      const claudeDir = join(packagesDir, name, 'LocalCache', 'Roaming', 'Claude')
+      if (existsSync(claudeDir)) return claudeDir
+    }
+  } catch {
+    // Packages 디렉터리 없음/접근 불가 → 클래식(NSIS) 설치로 간주
+  }
+  return null
+}
+
 function getConfigPath(client: McpClientId): string {
   const home = app.getPath('home')
   if (client === 'claudeDesktop') {
@@ -75,6 +98,8 @@ function getConfigPath(client: McpClientId): string {
       return join(home, 'Library', 'Application Support', 'Claude', 'claude_desktop_config.json')
     }
     if (process.platform === 'win32') {
+      const msixDir = findWindowsMsixClaudeDir(home)
+      if (msixDir) return join(msixDir, 'claude_desktop_config.json')
       const appData = process.env.APPDATA || join(home, 'AppData', 'Roaming')
       return join(appData, 'Claude', 'claude_desktop_config.json')
     }

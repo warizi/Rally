@@ -66,7 +66,8 @@ describe('S1 — getServerConfig', () => {
     const cfg = mcpClientConfigService.getServerConfig() as Record<string, unknown>
     const args = cfg.args as unknown[]
     expect(args.length).toBe(1)
-    expect((args[0] as string).endsWith('dist-mcp/index.js')).toBe(true)
+    // path.join 은 OS 별 구분자를 쓰므로 (win32: '\\') 플랫폼 무관하게 비교
+    expect((args[0] as string).endsWith(join('dist-mcp', 'index.js'))).toBe(true)
   })
 })
 
@@ -140,6 +141,66 @@ describe('register / unregister 라운드트립', () => {
     mcpClientConfigService.unregister('claudeCode')
     const status = mcpClientConfigService.getStatus().claudeCode
     expect(status.registered).toBe(false)
+  })
+})
+
+describe('claudeDesktop — Windows MSIX 가상화 경로 감지', () => {
+  const originalPlatform = process.platform
+
+  beforeEach(() => {
+    Object.defineProperty(process, 'platform', { value: 'win32' })
+    // 실제 머신의 %LOCALAPPDATA%/%APPDATA% 를 보지 않도록 tmpHome 하위로 고정
+    vi.stubEnv('LOCALAPPDATA', join(tmpHome, 'AppData', 'Local'))
+    vi.stubEnv('APPDATA', join(tmpHome, 'AppData', 'Roaming'))
+  })
+
+  afterEach(() => {
+    Object.defineProperty(process, 'platform', { value: originalPlatform })
+    vi.unstubAllEnvs()
+  })
+
+  function msixClaudeDir(): string {
+    return join(
+      tmpHome,
+      'AppData',
+      'Local',
+      'Packages',
+      'Claude_pzs8sxrjxfjjc',
+      'LocalCache',
+      'Roaming',
+      'Claude'
+    )
+  }
+
+  it('MSIX 패키지 미설치 시 %APPDATA% 클래식 경로 사용', () => {
+    const status = mcpClientConfigService.getStatus().claudeDesktop
+    expect(status.configPath).toBe(
+      join(tmpHome, 'AppData', 'Roaming', 'Claude', 'claude_desktop_config.json')
+    )
+  })
+
+  it('MSIX 가상화 디렉터리 존재 시 LocalCache\\Roaming 경로 사용', () => {
+    mkdirSync(msixClaudeDir(), { recursive: true })
+    const status = mcpClientConfigService.getStatus().claudeDesktop
+    expect(status.configPath).toBe(join(msixClaudeDir(), 'claude_desktop_config.json'))
+  })
+
+  it('MSIX 경로 register 시 기존 preferences 등 다른 키 보존', () => {
+    mkdirSync(msixClaudeDir(), { recursive: true })
+    const configPath = join(msixClaudeDir(), 'claude_desktop_config.json')
+    writeFileSync(
+      configPath,
+      JSON.stringify({ preferences: { sidebarMode: 'task' } }, null, 2),
+      'utf-8'
+    )
+
+    const status = mcpClientConfigService.register('claudeDesktop')
+    expect(status.registered).toBe(true)
+    expect(status.outdated).toBe(false)
+
+    const cfg = JSON.parse(readFileSync(configPath, 'utf-8'))
+    expect(cfg.preferences.sidebarMode).toBe('task')
+    expect(cfg.mcpServers[mcpClientConfigService.getServerKey()].env.ELECTRON_RUN_AS_NODE).toBe('1')
   })
 })
 
