@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.17.1',
+    date: '2026-07-06',
+    changes: [
+      {
+        type: 'fix',
+        title: 'Windows 환경에서 skill 도구 적용 시 오류 수정',
+        description:
+          'Windows 환경에서 skill 도구를 적용할 때 발생하던 오류를 수정했습니다. 이제 Windows 사용자도 skill 도구를 정상적으로 사용할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.17.0',
     date: '2026-07-06',
     changes: [
