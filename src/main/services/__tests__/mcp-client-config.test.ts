@@ -200,9 +200,7 @@ describe('claudeDesktop — Windows MSIX 가상화 경로 감지', () => {
 
     const cfg = JSON.parse(readFileSync(configPath, 'utf-8'))
     expect(cfg.preferences.sidebarMode).toBe('task')
-    expect(cfg.mcpServers[mcpClientConfigService.getServerKey()].env.ELECTRON_RUN_AS_NODE).toBe(
-      '1'
-    )
+    expect(cfg.mcpServers[mcpClientConfigService.getServerKey()].env.ELECTRON_RUN_AS_NODE).toBe('1')
   })
 })
 
