@@ -108,6 +108,47 @@ describe('skill IPC handlers', () => {
     expect(skillSyncService.unapplyStale).toHaveBeenCalledWith('sys-aabbcc')
   })
 
+  // 회귀: 시스템 skill ID 는 'system:rally' 형태(':' 포함)라 nanoid 스키마로는
+  // 'invalid nanoid format' 으로 거부됐다 (스킬 적용/수정/리셋 전부 불가 버그).
+  it("skill:apply → 시스템 ID 'system:rally' 통과", () => {
+    vi.mocked(skillSyncService.apply).mockReturnValue({
+      id: 'system:rally',
+      name: 'rally',
+      applied: { claude: true, codex: false }
+    } as unknown as ReturnType<typeof skillSyncService.apply>)
+
+    const result = getHandler('skill:apply')({}, 'system:rally', 'claude')
+
+    expect(skillSyncService.apply).toHaveBeenCalledWith('system:rally', 'claude')
+    expect(result).toMatchObject({ success: true })
+  })
+
+  it("skill:update / skill:resetSystem → 시스템 ID 'system:rally-plan' 통과", () => {
+    vi.mocked(skillService.update).mockReturnValue({
+      id: 'system:rally-plan',
+      name: 'rally-plan'
+    } as unknown as ReturnType<typeof skillService.update>)
+    vi.mocked(skillService.resetSystem).mockReturnValue({
+      id: 'system:rally-plan',
+      name: 'rally-plan'
+    } as unknown as ReturnType<typeof skillService.resetSystem>)
+
+    const updated = getHandler('skill:update')({}, 'system:rally-plan', { content: 'new' })
+    const reset = getHandler('skill:resetSystem')({}, 'system:rally-plan')
+
+    expect(updated).toMatchObject({ success: true })
+    expect(reset).toMatchObject({ success: true })
+    expect(skillSyncService.unapplyStale).toHaveBeenCalledWith('system:rally-plan')
+  })
+
+  it("skill:apply → 'system:' 뒤 비정상 name (경로 탈출 등) 거부", () => {
+    for (const bad of ['system:../evil', 'system:', 'system:UPPER', 'system:a/b']) {
+      const result = getHandler('skill:apply')({}, bad, 'claude')
+      expect(result).toMatchObject({ success: false })
+      expect(skillSyncService.apply).not.toHaveBeenCalled()
+    }
+  })
+
   it('skill:export → handleAsync (Promise 반환)', async () => {
     vi.mocked(skillExportService.exportWithDialog).mockResolvedValue({
       saved: true,

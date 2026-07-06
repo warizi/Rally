@@ -417,6 +417,17 @@ export const noteStyleTemplateCreateSchema = z.object({
   settingsJson: jsonStringSchema
 })
 
+/**
+ * skill ID — custom 은 nanoid, system 은 `system:<name>` (예: system:rally).
+ * `idSchema`(nanoid 전용) 로 검증하면 시스템 skill 의 적용/수정/리셋이 전부
+ * 'invalid nanoid format' 으로 거부되므로 union 으로 허용한다.
+ * name 부분은 skill-sync.assertSafeName 과 동일 규약 (디렉터리 탈출 방지).
+ */
+export const skillIdSchema = z.union([
+  idSchema,
+  z.string().regex(/^system:[a-z0-9][a-z0-9_-]{0,59}$/, 'invalid system skill id')
+])
+
 export const skillCreateSchema = z.object({
   name: z.string().trim().min(1).max(60),
   description: z.string().max(4000),
