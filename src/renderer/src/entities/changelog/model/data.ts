@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.17.0',
+    date: '2026-07-06',
+    changes: [
+      {
+        type: 'feature',
+        title: 'Window 지원',
+        description:
+          'Rally가 Windows 환경에서도 지원됩니다. 이제 Windows 사용자도 Rally를 설치하고 사용할 수 있습니다.'
+      }
+    ]
+  },
+  {
     version: '1.16.4',
     date: '2026-06-23',
     changes: [
