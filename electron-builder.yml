@@ -37,7 +37,9 @@ win:
       arch:
         - x64
 nsis:
-  artifactName: ${name}-${version}-setup.${ext}
+  # 버전 없는 고정 파일명 — releases/latest/download/rally-setup.exe 가 항상 최신을
+  # 가리키도록 (mac 은 이미 rally.dmg 로 고정). 버전은 latest.yml/릴리스 태그가 담당.
+  artifactName: ${name}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}
   createDesktopShortcut: always
