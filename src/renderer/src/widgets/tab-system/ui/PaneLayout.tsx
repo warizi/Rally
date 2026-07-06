@@ -26,6 +26,8 @@ interface LayoutNodeRendererProps {
   isDragging: boolean
   topLeftPaneId: string | null
   isTopRow: boolean
+  /** 창 우측 가장자리에 접한 노드인지 — win32 캡션 버튼(WCO) 겹침 회피용 */
+  isRightEdge: boolean
 }
 
 // SplitDirection를 react-resizable-panels의 orientation으로 변환
@@ -38,13 +40,15 @@ function SplitContainerRenderer({
   routes,
   isDragging,
   topLeftPaneId,
-  isTopRow
+  isTopRow,
+  isRightEdge
 }: {
   node: SplitNode
   routes: PaneRoute[]
   isDragging: boolean
   topLeftPaneId: string | null
   isTopRow: boolean
+  isRightEdge: boolean
 }): React.ReactElement {
   const updateLayoutSizes = useTabStore((state) => state.updateLayoutSizes)
   const orientation = toOrientation(node.direction)
@@ -95,6 +99,11 @@ function SplitContainerRenderer({
               isDragging={isDragging}
               topLeftPaneId={topLeftPaneId}
               isTopRow={orientation === 'horizontal' ? isTopRow : index === 0 && isTopRow}
+              isRightEdge={
+                orientation === 'horizontal'
+                  ? index === node.children.length - 1 && isRightEdge
+                  : isRightEdge
+              }
             />
           </ResizablePanel>
           {index < node.children.length - 1 && <ResizableHandle />}
@@ -109,7 +118,8 @@ function LayoutNodeRenderer({
   routes,
   isDragging,
   topLeftPaneId,
-  isTopRow
+  isTopRow,
+  isRightEdge
 }: LayoutNodeRendererProps): React.ReactElement {
   if (isPaneNode(node)) {
     return (
@@ -119,6 +129,7 @@ function LayoutNodeRenderer({
         isDragging={isDragging}
         showSidebarTrigger={node.paneId === topLeftPaneId}
         isTopRow={isTopRow}
+        isRightEdge={isRightEdge}
       />
     )
   }
@@ -131,6 +142,7 @@ function LayoutNodeRenderer({
         isDragging={isDragging}
         topLeftPaneId={topLeftPaneId}
         isTopRow={isTopRow}
+        isRightEdge={isRightEdge}
       />
     )
   }
@@ -150,6 +162,7 @@ export function PaneLayout({ routes, isDragging = false }: PaneLayoutProps): Rea
         isDragging={isDragging}
         topLeftPaneId={topLeftPaneId}
         isTopRow={true}
+        isRightEdge={true}
       />
     </div>
   )

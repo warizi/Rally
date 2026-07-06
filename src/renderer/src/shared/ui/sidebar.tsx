@@ -206,7 +206,7 @@ function Sidebar({
           'relative w-(--sidebar-width) bg-none transition-[width] duration-200 ease-linear',
           'group-data-[collapsible=offcanvas]:w-0',
           'group-data-[side=right]:rotate-180',
-          // macOS hiddenInset 타이틀바 drag strip — Windows/Linux 네이티브 프레임에서는 불필요
+          // macOS hiddenInset 타이틀바 drag strip — win32(WCO)는 TabBar 가 drag region 담당
           isMac() && 'h-9 drag-region',
           variant === 'floating' || variant === 'inset'
             ? 'group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]'

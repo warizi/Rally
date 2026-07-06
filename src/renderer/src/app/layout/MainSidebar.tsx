@@ -73,7 +73,7 @@ function MainSidebar(): React.JSX.Element {
 
   return (
     <>
-      {/* macOS hiddenInset 타이틀바(트래픽라이트) 예약 공간 — Windows/Linux는 네이티브 프레임이라 top 0 */}
+      {/* macOS hiddenInset 타이틀바(트래픽라이트) 예약 공간 — win32 는 캡션 버튼이 우상단 오버레이(WCO)라 top 0 */}
       <Sidebar
         collapsible="icon"
         variant="floating"

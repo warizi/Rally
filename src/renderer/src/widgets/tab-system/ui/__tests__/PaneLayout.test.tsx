@@ -22,7 +22,8 @@ const mocks = vi.hoisted(() => ({
   layout: { id: 'root', type: 'pane', paneId: 'p1' } as FakeNode,
   updateLayoutSizes: vi.fn(),
   receivedPaneIds: [] as string[],
-  receivedShowTrigger: [] as boolean[]
+  receivedShowTrigger: [] as boolean[],
+  receivedIsRightEdge: [] as boolean[]
 }))
 
 vi.mock('@/entities/tab-system', () => ({
@@ -39,13 +40,16 @@ vi.mock('@/entities/tab-system/model/types', () => ({
 vi.mock('../PaneContainer', () => ({
   PaneContainer: ({
     paneId,
-    showSidebarTrigger
+    showSidebarTrigger,
+    isRightEdge
   }: {
     paneId: string
     showSidebarTrigger: boolean
+    isRightEdge: boolean
   }) => {
     mocks.receivedPaneIds.push(paneId)
     mocks.receivedShowTrigger.push(showSidebarTrigger)
+    mocks.receivedIsRightEdge.push(isRightEdge)
     return <div data-testid={`pane-${paneId}`} />
   }
 }))
@@ -64,7 +68,12 @@ beforeEach(() => {
   mocks.layout = { id: 'root', type: 'pane', paneId: 'p1' }
   mocks.receivedPaneIds.length = 0
   mocks.receivedShowTrigger.length = 0
+  mocks.receivedIsRightEdge.length = 0
 })
+
+function isRightEdgeOf(paneId: string): boolean {
+  return mocks.receivedIsRightEdge[mocks.receivedPaneIds.indexOf(paneId)]
+}
 
 describe('PaneLayout', () => {
   it('단일 pane 트리 → PaneContainer 1개 + showSidebarTrigger=true (topLeft)', () => {
@@ -166,6 +175,70 @@ describe('PaneLayout', () => {
     }
     render(<PaneLayout routes={[]} />)
     expect(screen.getByTestId('resize-handle')).toBeInTheDocument()
+  })
+
+  // isRightEdge — win32 캡션 버튼(WCO) 겹침 회피용 전파 (isTopRow 와 대칭)
+  it('단일 pane → isRightEdge=true', () => {
+    render(<PaneLayout routes={[]} />)
+    expect(isRightEdgeOf('p1')).toBe(true)
+  })
+
+  it('horizontal split → 우측 pane 만 isRightEdge=true', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'horizontal',
+      sizes: [50, 50],
+      children: [
+        { id: 'a', type: 'pane', paneId: 'pA' },
+        { id: 'b', type: 'pane', paneId: 'pB' }
+      ]
+    }
+    render(<PaneLayout routes={[]} />)
+    expect(isRightEdgeOf('pA')).toBe(false)
+    expect(isRightEdgeOf('pB')).toBe(true)
+  })
+
+  it('vertical split → 위/아래 pane 모두 isRightEdge=true', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'vertical',
+      sizes: [50, 50],
+      children: [
+        { id: 'a', type: 'pane', paneId: 'pA' },
+        { id: 'b', type: 'pane', paneId: 'pB' }
+      ]
+    }
+    render(<PaneLayout routes={[]} />)
+    expect(isRightEdgeOf('pA')).toBe(true)
+    expect(isRightEdgeOf('pB')).toBe(true)
+  })
+
+  it('nested: horizontal 좌측의 vertical split → 모두 isRightEdge=false', () => {
+    mocks.layout = {
+      id: 'r',
+      type: 'split',
+      direction: 'horizontal',
+      sizes: [50, 50],
+      children: [
+        {
+          id: 'left',
+          type: 'split',
+          direction: 'vertical',
+          sizes: [50, 50],
+          children: [
+            { id: 'lt', type: 'pane', paneId: 'pLT' },
+            { id: 'lb', type: 'pane', paneId: 'pLB' }
+          ]
+        },
+        { id: 'right', type: 'pane', paneId: 'pR' }
+      ]
+    }
+    render(<PaneLayout routes={[]} />)
+    expect(isRightEdgeOf('pLT')).toBe(false)
+    expect(isRightEdgeOf('pLB')).toBe(false)
+    expect(isRightEdgeOf('pR')).toBe(true)
   })
 
   it('빈 split (children 없음) → findTopLeftPaneId null fallback (smoke)', () => {

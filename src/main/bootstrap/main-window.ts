@@ -5,6 +5,17 @@ import { is } from '@electron-toolkit/utils'
 import icon from '../../../resources/icon.png?asset'
 import { scoped } from '../lib/logger'
 import { isAllowedExternalUrl, isAllowedAppNavigation } from '../lib/external-url'
+import { TITLEBAR_OVERLAY, normalizeOverlayTheme } from '../lib/titlebar-overlay'
+import { appSettingsRepository } from '../repositories/app-settings'
+
+/** 저장된 앱 테마 기준 win32 titleBarOverlay 옵션 — DB 미가용 시 light 폴백 */
+function getWindowsTitleBarOverlay(): Electron.TitleBarOverlay {
+  try {
+    return TITLEBAR_OVERLAY[normalizeOverlayTheme(appSettingsRepository.get('theme'))]
+  } catch {
+    return TITLEBAR_OVERLAY.light
+  }
+}
 
 /**
  * 메인 BrowserWindow 생성 + 보안/navigation 정책.
@@ -24,6 +35,11 @@ export function createWindow(): void {
     autoHideMenuBar: true,
     ...(process.platform === 'darwin'
       ? { titleBarStyle: 'hiddenInset' as const, trafficLightPosition: { x: 16, y: 10 } }
+      : {}),
+    // win32: 네이티브 타이틀바 제거 + 캡션 버튼만 오버레이(WCO). 드래그는 renderer 의
+    // .drag-region(상단 TabBar)이 담당하고, 스냅 레이아웃/더블클릭 최대화는 OS가 처리.
+    ...(process.platform === 'win32'
+      ? { titleBarStyle: 'hidden' as const, titleBarOverlay: getWindowsTitleBarOverlay() }
       : {}),
     ...(process.platform === 'linux' ? { icon } : {}),
     webPreferences: {

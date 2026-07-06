@@ -154,4 +154,17 @@ describe('TabBar', () => {
     const { container } = render(<TabBar paneId="p1" isDragRegion={false} />)
     expect(container.firstChild).toBeTruthy()
   })
+
+  // win32 WCO 캡션 버튼 겹침 회피 — env(titlebar-area-*) 기반 우측 패딩 클래스
+  it('reserveWindowControls=true → pr-window-controls 클래스 적용', () => {
+    mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
+    const { container } = render(<TabBar paneId="p1" reserveWindowControls={true} />)
+    expect(container.firstChild).toHaveClass('pr-window-controls')
+  })
+
+  it('reserveWindowControls 기본값(false) → pr-window-controls 미적용', () => {
+    mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
+    const { container } = render(<TabBar paneId="p1" />)
+    expect(container.firstChild).not.toHaveClass('pr-window-controls')
+  })
 })
