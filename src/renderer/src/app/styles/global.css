@@ -249,6 +249,16 @@
   app-region: no-drag;
 }
 
+/* win32 WCO 캡션 버튼(최소화/최대화/닫기) 영역 회피.
+   캡션 버튼 폭 = 창 전체 폭 - titlebar-area 폭. env() 미지원 환경에서는 0. */
+.pr-window-controls {
+  padding-right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw));
+}
+
+.right-window-controls {
+  right: calc(100vw - env(titlebar-area-x, 0px) - env(titlebar-area-width, 100vw) + 0.75rem);
+}
+
 .milkdown .ProseMirror table {
   border-collapse: collapse;
   width: 100%;

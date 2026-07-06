@@ -21,12 +21,15 @@ interface TabBarProps {
   paneId: string
   showSidebarTrigger?: boolean
   isDragRegion?: boolean
+  /** win32 WCO 캡션 버튼(최소화/최대화/닫기) 아래 깔리지 않도록 우측 패딩 확보 */
+  reserveWindowControls?: boolean
 }
 
 export function TabBar({
   paneId,
   showSidebarTrigger = false,
-  isDragRegion = true
+  isDragRegion = true,
+  reserveWindowControls = false
 }: TabBarProps): React.ReactElement {
   const pane = useTabStore((state) => state.panes[paneId])
   const tabs = useTabStore((state) => state.tabs)
@@ -62,7 +65,11 @@ export function TabBar({
   return (
     <div
       ref={setNodeRef}
-      className={cn('flex flex-row items-center h-10 w-full pt-0.5', isDragRegion && 'drag-region')}
+      className={cn(
+        'flex flex-row items-center h-10 w-full pt-0.5',
+        isDragRegion && 'drag-region',
+        reserveWindowControls && 'pr-window-controls'
+      )}
     >
       {' '}
       {showSidebarTrigger && (

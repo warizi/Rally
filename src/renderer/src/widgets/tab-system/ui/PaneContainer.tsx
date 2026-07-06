@@ -4,6 +4,7 @@ import { selectFocusedTabId, useTabStore } from '@/entities/tab-system'
 import { TabBar } from './TabBar'
 import { TabDropZone } from './TabDropZone'
 import { cn } from '@/shared/lib/utils'
+import { isWindows } from '@/shared/lib/platform'
 
 interface PaneContainerProps {
   paneId: string
@@ -11,6 +12,8 @@ interface PaneContainerProps {
   isDragging: boolean
   showSidebarTrigger?: boolean
   isTopRow?: boolean
+  /** 창 우측 가장자리 pane 인지 — win32 캡션 버튼(WCO) 겹침 회피용 */
+  isRightEdge?: boolean
 }
 
 export function PaneContainer({
@@ -18,7 +21,8 @@ export function PaneContainer({
   routes,
   isDragging,
   showSidebarTrigger = false,
-  isTopRow = true
+  isTopRow = true,
+  isRightEdge = true
 }: PaneContainerProps): React.ReactElement {
   const pane = useTabStore((state) => state.panes[paneId])
   const tabs = useTabStore((state) => state.tabs)
@@ -48,8 +52,13 @@ export function PaneContainer({
         // isActivePane && 'ring-1 ring-primary ring-inset'
       )}
     >
-      {/* 탭 바 */}
-      <TabBar paneId={paneId} showSidebarTrigger={showSidebarTrigger} isDragRegion={isTopRow} />
+      {/* 탭 바 — 우상단 pane 은 win32 캡션 버튼 영역만큼 우측 패딩 확보 */}
+      <TabBar
+        paneId={paneId}
+        showSidebarTrigger={showSidebarTrigger}
+        isDragRegion={isTopRow}
+        reserveWindowControls={isTopRow && isRightEdge && isWindows()}
+      />
 
       {/* 컨텐츠 영역 — focus 오버레이가 띄운 탭이면 자리만 비워둔다 */}
       {isActiveTabFocused ? (

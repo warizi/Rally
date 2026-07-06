@@ -4,6 +4,8 @@ import { Button } from '@shared/ui/button'
 import { AnimatePresence, motion } from 'framer-motion'
 import { X } from 'lucide-react'
 import { PaneContent } from './PaneContent'
+import { isWindows } from '@/shared/lib/platform'
+import { cn } from '@/shared/lib/utils'
 
 interface FocusedTabOverlayProps {
   routes: PaneRoute[]
@@ -32,7 +34,11 @@ export function FocusedTabOverlay({ routes }: FocusedTabOverlayProps): React.Rea
               size="icon"
               aria-label="화면 전체보기 해제"
               onClick={exitFocusMode}
-              className="no-drag-region absolute right-3 top-1/2 size-8 -translate-y-1/2"
+              className={cn(
+                'no-drag-region absolute top-1/2 size-8 -translate-y-1/2',
+                // win32 는 캡션 버튼(WCO) 왼쪽으로 밀어낸다
+                isWindows() ? 'right-window-controls' : 'right-3'
+              )}
             >
               <X className="size-4" />
             </Button>
