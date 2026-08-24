@@ -14,6 +14,7 @@ import { useOnboardingStore } from '@shared/store/onboarding'
 import { SkillsManager } from '@widgets/skills-manager'
 import { toLogError } from '@shared/lib/logger'
 import { maskServerConfig, hasSecret } from '../lib/mask-mcp-token'
+import { McpConsentDialog } from './McpConsentDialog'
 
 const onError = toLogError('onboarding')
 
@@ -63,6 +64,8 @@ export function CodexSettings(): React.JSX.Element {
   const [copied, setCopied] = useState<string | null>(null)
   // 보안-H2: AISettings 와 동일 규약 — 기본 마스킹, 복사는 원본.
   const [revealToken, setRevealToken] = useState(false)
+  // P-1: 신규 등록 전 고지·동의 (AISettings 와 동일 규약).
+  const [consentOpen, setConsentOpen] = useState(false)
   const [showManual, setShowManual] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -97,7 +100,8 @@ export function CodexSettings(): React.JSX.Element {
     setTimeout(() => setCopied(null), 2000)
   }
 
-  const handleRegister = async (): Promise<void> => {
+  /** 실제 등록 수행 — 동의를 통과했거나 재등록(갱신)인 경우에만 호출된다. */
+  const doRegister = async (): Promise<void> => {
     setBusy(true)
     try {
       await window.api.mcpClient.register('codex')
@@ -105,7 +109,17 @@ export function CodexSettings(): React.JSX.Element {
       useOnboardingStore.getState().markChecklistStep('connect_ai').catch(onError)
     } finally {
       setBusy(false)
+      setConsentOpen(false)
     }
+  }
+
+  /** P-1: 미등록 상태에서만 고지·동의를 받는다. 갱신은 이미 동의한 연동의 유지. */
+  const handleRegister = async (): Promise<void> => {
+    if (!clientStatus?.codex?.registered) {
+      setConsentOpen(true)
+      return
+    }
+    await doRegister()
   }
 
   const handleUnregister = async (): Promise<void> => {
@@ -120,6 +134,14 @@ export function CodexSettings(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
+      <McpConsentDialog
+        open={consentOpen}
+        onOpenChange={setConsentOpen}
+        clientName="Codex"
+        busy={busy}
+        onConfirm={() => void doRegister()}
+      />
+
       <div>
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-sm font-medium">MCP 서버 연결 (Codex)</h3>
@@ -283,7 +305,7 @@ export function CodexSettings(): React.JSX.Element {
               </div>
               {maskable && (
                 <p className="text-[11px] text-muted-foreground">
-                  🔒 <code className="bg-muted px-1 rounded">MCP_AUTH_TOKEN</code>은 기본적으로 가려
+                  <code className="bg-muted px-1 rounded">MCP_AUTH_TOKEN</code>은 기본적으로 가려
                   둡니다. 복사 버튼은 실제 토큰을 복사합니다. 재발급은 설정 &gt; AI 탭에서 할 수
                   있습니다.
                 </p>

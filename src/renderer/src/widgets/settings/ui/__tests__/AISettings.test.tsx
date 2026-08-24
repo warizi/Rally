@@ -130,15 +130,64 @@ describe('AISettings — MCP 클라이언트 카드', () => {
     })
   })
 
-  it('자동 등록 클릭 → register 호출', async () => {
+  // P-1: 신규 등록은 고지·동의를 거친다. 클릭만으로 등록되면 안 된다.
+  it('자동 등록 클릭 → 곧바로 등록되지 않고 고지 다이얼로그가 뜬다', async () => {
+    render(<AISettings />)
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: '자동 등록' }).length).toBe(2)
+    })
+    fireEvent.click(screen.getAllByRole('button', { name: '자동 등록' })[0])
+
+    await waitFor(() => {
+      expect(screen.getByText(/이 워크스페이스를 연결할까요\?/)).toBeInTheDocument()
+    })
+    expect(mocks.register).not.toHaveBeenCalled()
+  })
+
+  it('고지 다이얼로그에서 확인 → register 호출', async () => {
     render(<AISettings />)
     await waitFor(() => {
       expect(screen.getAllByRole('button', { name: '자동 등록' }).length).toBe(2)
     })
     fireEvent.click(screen.getAllByRole('button', { name: '자동 등록' })[0])
     await waitFor(() => {
+      expect(screen.getByText(/이 워크스페이스를 연결할까요\?/)).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: /확인했습니다, 연결/ }))
+    await waitFor(() => {
       expect(mocks.register).toHaveBeenCalled()
     })
+  })
+
+  it('고지 다이얼로그에서 취소 → register 미호출', async () => {
+    render(<AISettings />)
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: '자동 등록' }).length).toBe(2)
+    })
+    fireEvent.click(screen.getAllByRole('button', { name: '자동 등록' })[0])
+    await waitFor(() => {
+      expect(screen.getByText(/이 워크스페이스를 연결할까요\?/)).toBeInTheDocument()
+    })
+
+    fireEvent.click(screen.getByRole('button', { name: '취소' }))
+    expect(mocks.register).not.toHaveBeenCalled()
+  })
+
+  // 갱신(재등록)은 이미 동의한 연동의 유지 — 다시 묻지 않는다.
+  it('outdated 갱신 클릭 → 고지 없이 바로 register', async () => {
+    mocks.getStatus.mockResolvedValue(
+      makeStatus({ registered: true, outdated: true }, { registered: true, outdated: true })
+    )
+    render(<AISettings />)
+    await waitFor(() => {
+      expect(screen.getAllByRole('button', { name: '갱신' }).length).toBeGreaterThan(0)
+    })
+    fireEvent.click(screen.getAllByRole('button', { name: '갱신' })[0])
+    await waitFor(() => {
+      expect(mocks.register).toHaveBeenCalled()
+    })
+    expect(screen.queryByText(/이 워크스페이스를 연결할까요\?/)).not.toBeInTheDocument()
   })
 
   it('등록됨 → 제거 버튼', async () => {
