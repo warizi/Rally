@@ -1,8 +1,9 @@
 import { app } from 'electron'
 import { join, dirname } from 'path'
-import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
+import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { ensureMcpToken } from '../lib/mcp-token'
+import { scoped } from '../lib/logger'
 import {
   readEntry as readCodexEntry,
   removeEntry as removeCodexEntry,
@@ -38,6 +39,8 @@ type ConfigFormat = 'json' | 'toml'
 function getConfigFormat(client: McpClientId): ConfigFormat {
   return client === 'codex' ? 'toml' : 'json'
 }
+
+const log = scoped('mcp-client-config')
 
 const SERVER_KEY = is.dev ? 'rally-dev' : 'rally'
 
@@ -177,9 +180,38 @@ function readConfig(configPath: string): ConfigShape {
   }
 }
 
+/**
+ * 보안-H2: MCP 설정 파일을 소유자 전용(0600)으로 제한한다.
+ *
+ * 이 파일들에는 `MCP_AUTH_TOKEN` 이 평문으로 들어간다 — 워크스페이스 전체
+ * 읽기/쓰기가 가능한 마스터 키다. 원본 `userData/.mcp-token` 은 0600 을 지키는데
+ * 복사본이 umask 기본값(보통 0644, 타 사용자 읽기 가능)으로 남으면 방어가 새어버린다.
+ *
+ * `writeFileSync(..., { mode })` 를 쓰지 않는 이유: mode 는 파일을 **생성할 때만**
+ * 적용된다. `~/.claude.json` 처럼 이미 존재하는 파일은 기존 권한을 그대로 유지하므로
+ * 옵션만으로는 no-op 이다. 따라서 쓰기 후 chmod 로 강제한다 (mcp-token.ts 와 동일 규약).
+ *
+ * Windows 는 chmodSync 가 사실상 no-op 이고 사용자 프로필 디렉터리가 이미 격리되어
+ * 있으므로 건너뛴다.
+ */
+function restrictToOwner(filePath: string): void {
+  if (process.platform === 'win32') return
+  try {
+    chmodSync(filePath, 0o600)
+  } catch (err) {
+    log.warn(`failed to chmod 0600: ${filePath} (${String(err)})`)
+  }
+}
+
+/** 설정 파일을 0600 으로 쓴다. 부모 디렉터리도 함께 보장. */
+function writeSecureFile(filePath: string, contents: string): void {
+  mkdirSync(dirname(filePath), { recursive: true })
+  writeFileSync(filePath, contents, 'utf-8')
+  restrictToOwner(filePath)
+}
+
 function writeConfig(configPath: string, config: ConfigShape): void {
-  mkdirSync(dirname(configPath), { recursive: true })
-  writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8')
+  writeSecureFile(configPath, JSON.stringify(config, null, 2))
 }
 
 function inspectStatus(client: McpClientId): McpClientStatus {
@@ -241,8 +273,7 @@ export const mcpClientConfigService = {
       // 기존 config.toml 의 사용자 설정(주석·포맷)을 보존하며 rally 블록만 교체.
       const current = existsSync(configPath) ? safeReadText(configPath) : ''
       const next = upsertCodexEntry(current, SERVER_KEY, toEntry(buildServerConfig()))
-      mkdirSync(dirname(configPath), { recursive: true })
-      writeFileSync(configPath, next, 'utf-8')
+      writeSecureFile(configPath, next)
       return inspectStatus(client)
     }
 
@@ -263,7 +294,7 @@ export const mcpClientConfigService = {
     if (getConfigFormat(client) === 'toml') {
       const current = safeReadText(configPath)
       const next = removeCodexEntry(current, SERVER_KEY)
-      if (next !== current) writeFileSync(configPath, next, 'utf-8')
+      if (next !== current) writeSecureFile(configPath, next)
       return inspectStatus(client)
     }
 

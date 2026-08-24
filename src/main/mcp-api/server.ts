@@ -23,6 +23,15 @@ export function startMcpApiServer(): void {
   if (process.platform !== 'win32') {
     const dir = path.dirname(socketPath)
     fs.mkdirSync(dir, { recursive: true })
+    // 보안-L1: ~/.rally 를 소유자 전용(0700)으로. 소켓 자체가 0600 이라 실질 위험은
+    // 낮지만, 이 디렉터리에 다른 런타임 파일이 늘어날 수 있어 방어를 한 겹 더 둔다.
+    // mkdirSync 의 mode 옵션은 "생성할 때만" 적용돼 기존 0755 디렉터리에는 no-op 이므로
+    // chmod 로 강제한다.
+    try {
+      fs.chmodSync(dir, 0o700)
+    } catch (err) {
+      log.warn(`failed to chmod socket dir: ${err}`)
+    }
   }
 
   try {
