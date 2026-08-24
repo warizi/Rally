@@ -6,6 +6,18 @@ import type { ChangelogEntry } from './types'
 
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    version: '1.17.2',
+    date: '2026-08-25',
+    changes: [
+      {
+        type: 'improvement',
+        title: '보안 강화 — 앱 실행 환경 및 핵심 구성 요소 최신화',
+        description:
+          '앱 실행 환경과 데이터 저장·자동 업데이트를 담당하는 핵심 구성 요소를 최신 버전으로 올려 알려진 보안 취약점을 해소했습니다. 함께 적용된 최신 렌더링 엔진으로 화면 표시와 전반적인 반응 속도도 개선됩니다. 기존 노트·할 일·설정 등 모든 데이터는 그대로 유지됩니다.'
+      }
+    ]
+  },
+  {
     version: '1.17.1',
     date: '2026-07-06',
     changes: [

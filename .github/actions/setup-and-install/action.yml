@@ -8,7 +8,10 @@ inputs:
   node-version:
     description: Node.js version
     required: false
-    default: '20'
+    # 22 하한: better-sqlite3 13(>=22) · @electron/rebuild 4(>=22.12) · @electron/get 5(>=22.12)
+    # · concurrently 10(>=22). Node 20 에서는 npm rebuild 가 실패해 테스트 워커가 전부
+    # import 단계에서 죽는다 (PR #352 에서 확인).
+    default: '22'
 
 runs:
   using: composite
