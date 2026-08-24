@@ -17,6 +17,7 @@ import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { SkillsManager } from '@widgets/skills-manager'
 import { toLogError } from '@shared/lib/logger'
 import { maskServerConfig, hasSecret } from '../lib/mask-mcp-token'
+import { McpConsentDialog } from './McpConsentDialog'
 
 const onError = toLogError('onboarding')
 
@@ -68,6 +69,8 @@ export function AISettings(): React.JSX.Element {
   const [revealToken, setRevealToken] = useState(false)
   const [rotating, setRotating] = useState(false)
   const [rotateMsg, setRotateMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
+  // P-1: 신규 등록 전 고지·동의. 확인 대기 중인 클라이언트를 담는다.
+  const [consentFor, setConsentFor] = useState<McpClientId | null>(null)
 
   const refreshStatus = async (): Promise<void> => {
     const res = await window.api.mcpClient.getStatus()
@@ -146,7 +149,8 @@ export function AISettings(): React.JSX.Element {
     setTimeout(() => setCopied(null), 2000)
   }
 
-  const handleRegister = async (client: McpClientId): Promise<void> => {
+  /** 실제 등록 수행 — 동의 절차를 통과했거나 재등록(갱신)인 경우에만 호출된다. */
+  const doRegister = async (client: McpClientId): Promise<void> => {
     setBusy(client)
     try {
       await window.api.mcpClient.register(client)
@@ -154,7 +158,20 @@ export function AISettings(): React.JSX.Element {
       useOnboardingStore.getState().markChecklistStep('connect_ai').catch(onError)
     } finally {
       setBusy(null)
+      setConsentFor(null)
     }
+  }
+
+  /**
+   * P-1: 아직 등록되지 않은 클라이언트는 고지·동의를 먼저 받는다.
+   * 경로 갱신(재등록)은 이미 동의한 연동의 유지이므로 다시 묻지 않는다.
+   */
+  const handleRegister = async (client: McpClientId): Promise<void> => {
+    if (!clientStatus?.[client]?.registered) {
+      setConsentFor(client)
+      return
+    }
+    await doRegister(client)
   }
 
   const handleUnregister = async (client: McpClientId): Promise<void> => {
@@ -253,6 +270,18 @@ export function AISettings(): React.JSX.Element {
 
   return (
     <div className="space-y-6">
+      <McpConsentDialog
+        open={consentFor !== null}
+        onOpenChange={(next) => {
+          if (!next) setConsentFor(null)
+        }}
+        clientName={consentFor ? CLIENT_LABELS[consentFor].name : ''}
+        busy={busy !== null}
+        onConfirm={() => {
+          if (consentFor) void doRegister(consentFor)
+        }}
+      />
+
       <div>
         <div className="flex items-center gap-2 mb-1">
           <h3 className="text-sm font-medium">MCP 서버 연결</h3>
@@ -400,7 +429,7 @@ export function AISettings(): React.JSX.Element {
               </div>
               {maskable && (
                 <p className="text-[11px] text-muted-foreground">
-                  🔒 <code className="bg-muted px-1 rounded">MCP_AUTH_TOKEN</code>은 워크스페이스
+                  <code className="bg-muted px-1 rounded">MCP_AUTH_TOKEN</code>은 워크스페이스
                   전체를 읽고 쓸 수 있는 키라 기본적으로 가려 둡니다. 복사 버튼은 가려진 값이 아니라
                   실제 토큰을 복사합니다.
                 </p>
