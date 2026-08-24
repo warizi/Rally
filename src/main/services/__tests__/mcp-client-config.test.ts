@@ -5,7 +5,16 @@
  * node 의존성 제거. inspectStatus 의 outdated 감지 로직 회귀 차단.
  */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, rmSync, writeFileSync, existsSync, readFileSync, mkdirSync } from 'node:fs'
+import {
+  mkdtempSync,
+  rmSync,
+  writeFileSync,
+  existsSync,
+  readFileSync,
+  mkdirSync,
+  statSync,
+  chmodSync
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
@@ -276,5 +285,53 @@ describe('codex — TOML config.toml 라운드트립', () => {
     const status = mcpClientConfigService.getStatus().codex
     expect(status.registered).toBe(false)
     expect(readFileSync(configPath(), 'utf-8')).toContain('[mcp_servers.context7]')
+  })
+})
+
+/**
+ * 보안-H2 — MCP 설정 파일 권한 회귀 차단.
+ *
+ * 설정 파일에는 MCP_AUTH_TOKEN 이 평문으로 들어간다 (워크스페이스 전체 읽기/쓰기 가능한
+ * 마스터 키). umask 기본값(0644)으로 남으면 같은 머신의 다른 사용자가 읽을 수 있다.
+ *
+ * 핵심은 "이미 존재하는 파일"도 0600 으로 조여지는가 — writeFileSync 의 mode 옵션은
+ * 파일 생성 시에만 적용되므로 옵션만으로는 이 케이스를 못 막는다.
+ */
+describe.skipIf(process.platform === 'win32')('S-SEC — 설정 파일 권한 0600', () => {
+  const modeOf = (p: string): string => (statSync(p).mode & 0o777).toString(8)
+
+  it('claudeCode: 새로 생성한 ~/.claude.json 이 0600', () => {
+    const { configPath } = mcpClientConfigService.register('claudeCode')
+    expect(existsSync(configPath)).toBe(true)
+    expect(modeOf(configPath)).toBe('600')
+  })
+
+  it('claudeCode: 이미 0644 로 존재하던 파일도 0600 으로 조여진다', () => {
+    const configPath = join(tmpHome, '.claude.json')
+    writeFileSync(configPath, JSON.stringify({ projects: { a: 1 } }), 'utf-8')
+    chmodSync(configPath, 0o644)
+    expect(modeOf(configPath)).toBe('644')
+
+    mcpClientConfigService.register('claudeCode')
+    expect(modeOf(configPath)).toBe('600')
+  })
+
+  it('codex: TOML 설정도 0600 (등록/해제 양쪽)', () => {
+    const configPath = join(tmpHome, '.codex', 'config.toml')
+    mkdirSync(join(tmpHome, '.codex'), { recursive: true })
+    writeFileSync(configPath, '# user config\n', 'utf-8')
+    chmodSync(configPath, 0o644)
+
+    mcpClientConfigService.register('codex')
+    expect(modeOf(configPath)).toBe('600')
+
+    chmodSync(configPath, 0o644)
+    mcpClientConfigService.unregister('codex')
+    expect(modeOf(configPath)).toBe('600')
+  })
+
+  it('토큰이 실제로 기록되는 파일이 맞는지 (테스트가 헛돌지 않게)', () => {
+    const { configPath } = mcpClientConfigService.register('claudeCode')
+    expect(readFileSync(configPath, 'utf-8')).toContain(FAKE_TOKEN)
   })
 })
