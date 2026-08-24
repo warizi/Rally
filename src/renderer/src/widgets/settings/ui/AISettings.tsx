@@ -6,13 +6,17 @@ import {
   ChevronDownIcon,
   CircleCheckIcon,
   CircleAlertIcon,
-  CircleIcon
+  CircleIcon,
+  EyeIcon,
+  EyeOffIcon,
+  RotateCwIcon
 } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { OnboardingTipIcon } from '@shared/ui/onboarding-tip'
 import { SkillsManager } from '@widgets/skills-manager'
 import { toLogError } from '@shared/lib/logger'
+import { maskServerConfig, hasSecret } from '../lib/mask-mcp-token'
 
 const onError = toLogError('onboarding')
 
@@ -60,6 +64,10 @@ export function AISettings(): React.JSX.Element {
   const [serverConfig, setServerConfig] = useState<Record<string, unknown> | null>(null)
   const [showManual, setShowManual] = useState(false)
   const [busy, setBusy] = useState<McpClientId | null>(null)
+  // 보안-H2: 토큰은 기본 마스킹. 사용자가 명시적으로 '표시'를 눌렀을 때만 원본 노출.
+  const [revealToken, setRevealToken] = useState(false)
+  const [rotating, setRotating] = useState(false)
+  const [rotateMsg, setRotateMsg] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
 
   const refreshStatus = async (): Promise<void> => {
     const res = await window.api.mcpClient.getStatus()
@@ -83,18 +91,54 @@ export function AISettings(): React.JSX.Element {
     refreshStatus()
   }, [])
 
-  const mcpConfig = JSON.stringify(
-    {
-      mcpServers: {
-        [serverKey]: serverConfig ?? {
-          command: 'node',
-          args: [mcpServerPath]
-        }
+  const fallbackConfig = { command: 'node', args: [mcpServerPath] }
+  const buildConfigJson = (cfg: Record<string, unknown> | null): string =>
+    JSON.stringify({ mcpServers: { [serverKey]: cfg ?? fallbackConfig } }, null, 2)
+
+  // 화면에는 마스킹본, 복사 버튼에는 원본 — 마스킹된 값을 붙여넣으면 동작하지 않는다.
+  const mcpConfigDisplay = buildConfigJson(maskServerConfig(serverConfig, revealToken))
+  const mcpConfigRaw = buildConfigJson(serverConfig)
+  const maskable = hasSecret(serverConfig)
+
+  /**
+   * 보안-H2: 토큰 재발급. 구 토큰은 즉시 무효화되고 등록된 클라이언트 설정이 자동 갱신된다.
+   * 이미 떠 있는 MCP 서버 프로세스는 spawn 시점 env 의 구 토큰을 들고 있어 클라이언트를
+   * 재시작하기 전까지 401 을 받는다 — 그 사실을 결과 메시지로 알린다.
+   */
+  const handleRotateToken = async (): Promise<void> => {
+    setRotating(true)
+    setRotateMsg(null)
+    try {
+      const res = await window.api.mcpClient.rotateToken()
+      if (!res.success || !res.data) {
+        setRotateMsg({ tone: 'error', text: '토큰 재발급에 실패했습니다.' })
+        return
       }
-    },
-    null,
-    2
-  )
+      const { status, reRegistered, failed } = res.data
+      setClientStatus(status)
+      await refreshStatus()
+      setRevealToken(false)
+
+      if (failed.length > 0) {
+        setRotateMsg({
+          tone: 'error',
+          text: `토큰은 재발급했지만 ${failed.length}개 클라이언트 설정 갱신에 실패했습니다 (${failed
+            .map((f) => f.client)
+            .join(', ')}). 해당 클라이언트에서 "갱신"을 눌러 주세요.`
+        })
+        return
+      }
+      setRotateMsg({
+        tone: 'ok',
+        text:
+          reRegistered.length > 0
+            ? `재발급 완료 — ${reRegistered.length}개 클라이언트 설정을 갱신했습니다. 실행 중인 Claude·Codex는 재시작해야 새 토큰이 적용됩니다.`
+            : '재발급 완료 — 등록된 클라이언트가 없어 갱신할 설정은 없습니다.'
+      })
+    } finally {
+      setRotating(false)
+    }
+  }
 
   const handleCopy = async (text: string, key: string): Promise<void> => {
     await navigator.clipboard.writeText(text)
@@ -247,6 +291,36 @@ export function AISettings(): React.JSX.Element {
         </p>
       </div>
 
+      <div className="border-t pt-4 space-y-2">
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <h4 className="text-sm font-medium">인증 토큰 재발급</h4>
+            <p className="text-xs text-muted-foreground mt-1">
+              토큰이 노출됐다고 판단되면 재발급하세요. 기존 토큰은 즉시 무효화되고, 등록된
+              클라이언트 설정은 새 토큰으로 자동 갱신됩니다.{' '}
+              <strong>실행 중인 Claude·Codex는 재시작해야 적용됩니다.</strong>
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            disabled={rotating}
+            onClick={handleRotateToken}
+          >
+            <RotateCwIcon className={`size-3.5 mr-1 ${rotating ? 'animate-spin' : ''}`} />
+            {rotating ? '재발급 중…' : '재발급'}
+          </Button>
+        </div>
+        {rotateMsg && (
+          <p
+            className={`text-xs ${rotateMsg.tone === 'ok' ? 'text-emerald-600' : 'text-destructive'}`}
+          >
+            {rotateMsg.text}
+          </p>
+        )}
+      </div>
+
       <div className="border-t pt-4">
         <button
           type="button"
@@ -289,22 +363,48 @@ export function AISettings(): React.JSX.Element {
                 rally 항목만 추가하면 됩니다.
               </p>
               <div className="relative">
-                <pre className="text-xs bg-muted px-3 py-3 pr-10 rounded-md whitespace-pre-wrap break-all select-all">
-                  {mcpConfig}
+                <pre className="text-xs bg-muted px-3 py-3 pr-20 rounded-md whitespace-pre-wrap break-all select-all">
+                  {mcpConfigDisplay}
                 </pre>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute top-2 right-2 size-7"
-                  onClick={() => handleCopy(mcpConfig, 'config')}
-                >
-                  {copied === 'config' ? (
-                    <CheckIcon className="size-3" />
-                  ) : (
-                    <CopyIcon className="size-3" />
+                <div className="absolute top-2 right-2 flex gap-1">
+                  {maskable && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-7"
+                      aria-label={revealToken ? '토큰 숨기기' : '토큰 표시'}
+                      title={revealToken ? '토큰 숨기기' : '토큰 표시'}
+                      onClick={() => setRevealToken((v) => !v)}
+                    >
+                      {revealToken ? (
+                        <EyeOffIcon className="size-3" />
+                      ) : (
+                        <EyeIcon className="size-3" />
+                      )}
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-7"
+                    aria-label="설정 JSON 복사"
+                    onClick={() => handleCopy(mcpConfigRaw, 'config')}
+                  >
+                    {copied === 'config' ? (
+                      <CheckIcon className="size-3" />
+                    ) : (
+                      <CopyIcon className="size-3" />
+                    )}
+                  </Button>
+                </div>
               </div>
+              {maskable && (
+                <p className="text-[11px] text-muted-foreground">
+                  🔒 <code className="bg-muted px-1 rounded">MCP_AUTH_TOKEN</code>은 워크스페이스
+                  전체를 읽고 쓸 수 있는 키라 기본적으로 가려 둡니다. 복사 버튼은 가려진 값이 아니라
+                  실제 토큰을 복사합니다.
+                </p>
+              )}
             </div>
           </div>
         )}
