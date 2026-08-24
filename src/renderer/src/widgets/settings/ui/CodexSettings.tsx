@@ -5,12 +5,15 @@ import {
   ChevronDownIcon,
   CircleCheckIcon,
   CircleAlertIcon,
-  CircleIcon
+  CircleIcon,
+  EyeIcon,
+  EyeOffIcon
 } from 'lucide-react'
 import { Button } from '@/shared/ui/button'
 import { useOnboardingStore } from '@shared/store/onboarding'
 import { SkillsManager } from '@widgets/skills-manager'
 import { toLogError } from '@shared/lib/logger'
+import { maskServerConfig, hasSecret } from '../lib/mask-mcp-token'
 
 const onError = toLogError('onboarding')
 
@@ -58,6 +61,8 @@ export function CodexSettings(): React.JSX.Element {
   const [serverKey, setServerKey] = useState<string>('rally')
   const [serverConfig, setServerConfig] = useState<Record<string, unknown> | null>(null)
   const [copied, setCopied] = useState<string | null>(null)
+  // 보안-H2: AISettings 와 동일 규약 — 기본 마스킹, 복사는 원본.
+  const [revealToken, setRevealToken] = useState(false)
   const [showManual, setShowManual] = useState(false)
   const [busy, setBusy] = useState(false)
 
@@ -78,7 +83,13 @@ export function CodexSettings(): React.JSX.Element {
   }, [])
 
   const status = clientStatus?.codex
-  const tomlSnippet = buildCodexTomlSnippet(serverKey, serverConfig, mcpServerPath)
+  const tomlSnippetDisplay = buildCodexTomlSnippet(
+    serverKey,
+    maskServerConfig(serverConfig, revealToken),
+    mcpServerPath
+  )
+  const tomlSnippetRaw = buildCodexTomlSnippet(serverKey, serverConfig, mcpServerPath)
+  const maskable = hasSecret(serverConfig)
 
   const handleCopy = async (text: string, key: string): Promise<void> => {
     await navigator.clipboard.writeText(text)
@@ -235,22 +246,48 @@ export function CodexSettings(): React.JSX.Element {
                 추가하세요. 기존 다른 설정은 그대로 두고 이 블록만 붙여넣으면 됩니다.
               </p>
               <div className="relative">
-                <pre className="text-xs bg-muted px-3 py-3 pr-10 rounded-md whitespace-pre-wrap break-all select-all">
-                  {tomlSnippet}
+                <pre className="text-xs bg-muted px-3 py-3 pr-20 rounded-md whitespace-pre-wrap break-all select-all">
+                  {tomlSnippetDisplay}
                 </pre>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute top-2 right-2 size-7"
-                  onClick={() => handleCopy(tomlSnippet, 'config')}
-                >
-                  {copied === 'config' ? (
-                    <CheckIcon className="size-3" />
-                  ) : (
-                    <CopyIcon className="size-3" />
+                <div className="absolute top-2 right-2 flex gap-1">
+                  {maskable && (
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      className="size-7"
+                      aria-label={revealToken ? '토큰 숨기기' : '토큰 표시'}
+                      title={revealToken ? '토큰 숨기기' : '토큰 표시'}
+                      onClick={() => setRevealToken((v) => !v)}
+                    >
+                      {revealToken ? (
+                        <EyeOffIcon className="size-3" />
+                      ) : (
+                        <EyeIcon className="size-3" />
+                      )}
+                    </Button>
                   )}
-                </Button>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="size-7"
+                    aria-label="config.toml 스니펫 복사"
+                    onClick={() => handleCopy(tomlSnippetRaw, 'config')}
+                  >
+                    {copied === 'config' ? (
+                      <CheckIcon className="size-3" />
+                    ) : (
+                      <CopyIcon className="size-3" />
+                    )}
+                  </Button>
+                </div>
               </div>
+              {maskable && (
+                <p className="text-[11px] text-muted-foreground">
+                  🔒 <code className="bg-muted px-1 rounded">MCP_AUTH_TOKEN</code>은 기본적으로 가려
+                  둡니다. 복사 버튼은 실제 토큰을 복사합니다. 재발급은 설정 &gt; AI 탭에서 할 수
+                  있습니다.
+                </p>
+              )}
             </div>
           </div>
         )}

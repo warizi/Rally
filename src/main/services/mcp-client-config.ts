@@ -2,7 +2,7 @@ import { app } from 'electron'
 import { join, dirname } from 'path'
 import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
-import { ensureMcpToken } from '../lib/mcp-token'
+import { ensureMcpToken, rotateMcpToken } from '../lib/mcp-token'
 import { scoped } from '../lib/logger'
 import {
   readEntry as readCodexEntry,
@@ -31,6 +31,15 @@ export interface McpClientStatusMap {
   claudeDesktop: McpClientStatus
   claudeCode: McpClientStatus
   codex: McpClientStatus
+}
+
+/** 토큰 재발급 결과 — 갱신 성공/실패를 삼키지 않고 호출 측에 그대로 보고한다. */
+export interface McpRotateResult {
+  status: McpClientStatusMap
+  /** 새 토큰으로 설정을 다시 쓴 클라이언트 */
+  reRegistered: McpClientId[]
+  /** 갱신에 실패한 클라이언트 — 구 토큰이 남아 있으므로 사용자가 수동 조치해야 한다 */
+  failed: { client: McpClientId; error: string }[]
 }
 
 /** 클라이언트별 설정 파일 포맷 — Claude 는 JSON, Codex 는 TOML */
@@ -261,6 +270,45 @@ export const mcpClientConfigService = {
       claudeCode: inspectStatus('claudeCode'),
       codex: inspectStatus('codex')
     }
+  },
+
+  /**
+   * 보안-H2: MCP 인증 토큰을 재발급하고, 이미 등록된 클라이언트 설정을 새 토큰으로 갱신한다.
+   *
+   * 토큰이 유출됐다고 판단될 때 사용자가 스스로 무효화할 수 있는 유일한 경로다.
+   * (그 전까지 rotateMcpToken() 은 구현·테스트만 있고 호출부가 없는 dead code 였다.)
+   *
+   * 순서가 중요하다 — 먼저 회전해 구 토큰을 즉시 무효화하고, 그 다음 등록 클라이언트를
+   * 새 토큰으로 다시 쓴다. 반대로 하면 갱신 도중 구 토큰이 계속 유효한 창이 생긴다.
+   *
+   * ⚠️ 이미 떠 있는 MCP 서버 프로세스는 spawn 시점의 env 에 구 토큰을 들고 있으므로
+   * 클라이언트를 재시작하기 전까지 401 을 받는다. 호출 측(UI)이 이를 안내해야 한다.
+   *
+   * 개별 클라이언트 갱신 실패는 전체를 중단시키지 않되 삼키지도 않는다 — failed 로 보고한다.
+   */
+  rotateToken(): McpRotateResult {
+    const before = this.getStatus()
+    const targets = (Object.keys(before) as McpClientId[]).filter(
+      (c) => before[c].supported && before[c].registered
+    )
+
+    rotateMcpToken()
+    log.info(`token rotated; re-registering ${targets.length} client(s)`)
+
+    const reRegistered: McpClientId[] = []
+    const failed: { client: McpClientId; error: string }[] = []
+    for (const client of targets) {
+      try {
+        this.register(client)
+        reRegistered.push(client)
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err)
+        log.warn(`re-register failed after rotation: ${client} (${error})`)
+        failed.push({ client, error })
+      }
+    }
+
+    return { status: this.getStatus(), reRegistered, failed }
   },
 
   register(client: McpClientId): McpClientStatus {

@@ -9,7 +9,8 @@ import { mcpClientIdSchema } from './schemas'
 import {
   mcpClientConfigService,
   type McpClientStatus,
-  type McpClientStatusMap
+  type McpClientStatusMap,
+  type McpRotateResult
 } from '../services/mcp-client-config'
 
 export interface CommandFile {
@@ -107,6 +108,15 @@ export function registerAppInfoHandlers(): void {
     validateIpc(
       [mcpClientIdSchema],
       (client): McpClientStatus => mcpClientConfigService.unregister(client)
+    )
+  )
+
+  // 보안-H2: 토큰 재발급 + 등록된 클라이언트 설정 자동 갱신.
+  // 인자 없음 — 렌더러가 토큰 값을 다루지 않도록 main 이 전부 처리한다.
+  ipcMain.handle(
+    'mcpClient:rotateToken',
+    validateNoArgs(
+      (): IpcResponse<McpRotateResult> => handle(() => mcpClientConfigService.rotateToken())
     )
   )
 }

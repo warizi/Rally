@@ -19,8 +19,13 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
 // 토큰 모듈 모킹 — 실제 디스크 캐시 무관하게 고정값
+// 토큰 모듈 모킹 — 회전 가능한 홀더로 두어 rotateToken 계약을 검증할 수 있게 한다.
 vi.mock('../../lib/mcp-token', () => ({
-  ensureMcpToken: () => FAKE_TOKEN
+  ensureMcpToken: () => ROTATABLE_TOKEN.current,
+  rotateMcpToken: () => {
+    ROTATABLE_TOKEN.current = String(++rotateCount).repeat(64).slice(0, 64)
+    return ROTATABLE_TOKEN.current
+  }
 }))
 
 // Electron app 모킹 — 테스트 환경에서 실제 binary 경로 대신 fake 사용
@@ -40,6 +45,9 @@ vi.mock('@electron-toolkit/utils', () => ({
 }))
 
 const FAKE_TOKEN = 'a'.repeat(64)
+/** 현재 유효 토큰 — rotateMcpToken 모킹이 이 값을 바꾼다. */
+const ROTATABLE_TOKEN = { current: FAKE_TOKEN }
+let rotateCount = 0
 const FAKE_ELECTRON_BINARY = '/Applications/Rally.app/Contents/MacOS/Rally'
 let tmpHome: string
 
@@ -47,6 +55,8 @@ import { mcpClientConfigService } from '../mcp-client-config'
 
 beforeEach(() => {
   tmpHome = mkdtempSync(join(tmpdir(), 'rally-mcp-cfg-'))
+  ROTATABLE_TOKEN.current = FAKE_TOKEN
+  rotateCount = 0
 })
 
 afterEach(() => {
@@ -333,5 +343,71 @@ describe.skipIf(process.platform === 'win32')('S-SEC — 설정 파일 권한 06
   it('토큰이 실제로 기록되는 파일이 맞는지 (테스트가 헛돌지 않게)', () => {
     const { configPath } = mcpClientConfigService.register('claudeCode')
     expect(readFileSync(configPath, 'utf-8')).toContain(FAKE_TOKEN)
+  })
+})
+
+/**
+ * 보안-H2 — 토큰 재발급(rotateToken) 회귀 차단.
+ *
+ * rotateMcpToken() 은 그 전까지 호출부가 없는 dead code 였다. 유출을 인지해도 사용자가
+ * 무효화할 수단이 없다는 뜻이었으므로, "재발급이 실제로 구 토큰을 무효화하고 등록된
+ * 클라이언트를 새 토큰으로 갱신하는가"가 핵심 계약이다.
+ */
+describe('S-ROT — 토큰 재발급', () => {
+  const tokenIn = (client: 'claudeCode' | 'codex'): string => {
+    const p =
+      client === 'claudeCode'
+        ? join(tmpHome, '.claude.json')
+        : join(tmpHome, '.codex', 'config.toml')
+    return readFileSync(p, 'utf-8')
+  }
+
+  it('등록된 클라이언트가 새 토큰으로 갱신된다', () => {
+    mcpClientConfigService.register('claudeCode')
+    expect(tokenIn('claudeCode')).toContain(ROTATABLE_TOKEN.current)
+
+    const before = ROTATABLE_TOKEN.current
+    const res = mcpClientConfigService.rotateToken()
+
+    expect(ROTATABLE_TOKEN.current).not.toBe(before)
+    expect(res.reRegistered).toContain('claudeCode')
+    expect(res.failed).toEqual([])
+    // 새 토큰으로 교체되고 구 토큰은 파일에서 사라진다
+    expect(tokenIn('claudeCode')).toContain(ROTATABLE_TOKEN.current)
+    expect(tokenIn('claudeCode')).not.toContain(before)
+  })
+
+  it('TOML 클라이언트도 갱신된다', () => {
+    mcpClientConfigService.register('codex')
+    const before = ROTATABLE_TOKEN.current
+
+    const res = mcpClientConfigService.rotateToken()
+
+    expect(res.reRegistered).toContain('codex')
+    expect(tokenIn('codex')).toContain(ROTATABLE_TOKEN.current)
+    expect(tokenIn('codex')).not.toContain(before)
+  })
+
+  it('미등록 클라이언트는 갱신 대상이 아니다 (없던 설정을 만들지 않는다)', () => {
+    const res = mcpClientConfigService.rotateToken()
+    expect(res.reRegistered).toEqual([])
+    expect(existsSync(join(tmpHome, '.claude.json'))).toBe(false)
+    expect(existsSync(join(tmpHome, '.codex', 'config.toml'))).toBe(false)
+  })
+
+  it('갱신된 설정 파일은 0600 을 유지한다', () => {
+    if (process.platform === 'win32') return
+    mcpClientConfigService.register('claudeCode')
+    chmodSync(join(tmpHome, '.claude.json'), 0o644)
+
+    mcpClientConfigService.rotateToken()
+    expect((statSync(join(tmpHome, '.claude.json')).mode & 0o777).toString(8)).toBe('600')
+  })
+
+  it('재발급 후 status 는 outdated=false (새 토큰 기준으로 다시 판정)', () => {
+    mcpClientConfigService.register('claudeCode')
+    const res = mcpClientConfigService.rotateToken()
+    expect(res.status.claudeCode.registered).toBe(true)
+    expect(res.status.claudeCode.outdated).toBe(false)
   })
 })
