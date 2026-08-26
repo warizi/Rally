@@ -13,7 +13,8 @@ import {
   readFileSync,
   mkdirSync,
   statSync,
-  chmodSync
+  chmodSync,
+  readdirSync
 } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
@@ -409,5 +410,102 @@ describe('S-ROT — 토큰 재발급', () => {
     const res = mcpClientConfigService.rotateToken()
     expect(res.status.claudeCode.registered).toBe(true)
     expect(res.status.claudeCode.outdated).toBe(false)
+  })
+})
+
+/**
+ * M-2 — 파괴적 덮어쓰기 차단 회귀 테스트.
+ *
+ * ~/.claude.json 과 ~/.codex/config.toml 은 Rally 것이 아니다. 사용자의 프로젝트 이력·
+ * 다른 MCP 서버 목록·주석이 들어 있다. 읽기에 실패했는데 "빈 값"으로 간주하고 쓰면
+ * 그 전부를 rally 블록만 남기고 날린다.
+ *
+ * 핵심 계약: **읽지 못하면 쓰지 않는다.**
+ */
+describe('S-SAFE — 파괴적 덮어쓰기 차단', () => {
+  it('손상된 JSON 이면 throw 하고 원본을 보존한다', () => {
+    const configPath = join(tmpHome, '.claude.json')
+    const corrupted = '{ "projects": { "a": 1 },,, 깨진 파일'
+    writeFileSync(configPath, corrupted, 'utf-8')
+
+    expect(() => mcpClientConfigService.register('claudeCode')).toThrow(/올바른 JSON/)
+    expect(readFileSync(configPath, 'utf-8')).toBe(corrupted)
+  })
+
+  it('unregister 도 손상된 JSON 을 덮어쓰지 않는다', () => {
+    const configPath = join(tmpHome, '.claude.json')
+    const corrupted = '{{{ not json'
+    writeFileSync(configPath, corrupted, 'utf-8')
+
+    expect(() => mcpClientConfigService.unregister('claudeCode')).toThrow(/올바른 JSON/)
+    expect(readFileSync(configPath, 'utf-8')).toBe(corrupted)
+  })
+
+  it('읽을 수 없는 파일(권한 없음)이면 throw 하고 원본을 보존한다', () => {
+    if (process.platform === 'win32') return
+    const configPath = join(tmpHome, '.claude.json')
+    const original = JSON.stringify({ projects: { a: 1 } })
+    writeFileSync(configPath, original, 'utf-8')
+    chmodSync(configPath, 0o000)
+
+    try {
+      expect(() => mcpClientConfigService.register('claudeCode')).toThrow(/읽을 수 없어/)
+      chmodSync(configPath, 0o600)
+      expect(readFileSync(configPath, 'utf-8')).toBe(original)
+    } finally {
+      chmodSync(configPath, 0o600)
+    }
+  })
+
+  it('읽을 수 없는 TOML 도 덮어쓰지 않는다', () => {
+    if (process.platform === 'win32') return
+    const configPath = join(tmpHome, '.codex', 'config.toml')
+    mkdirSync(join(tmpHome, '.codex'), { recursive: true })
+    const original = '# 사용자 설정\n[other.server]\ncommand = "x"\n'
+    writeFileSync(configPath, original, 'utf-8')
+    chmodSync(configPath, 0o000)
+
+    try {
+      expect(() => mcpClientConfigService.register('codex')).toThrow(/읽을 수 없어/)
+      chmodSync(configPath, 0o600)
+      expect(readFileSync(configPath, 'utf-8')).toBe(original)
+    } finally {
+      chmodSync(configPath, 0o600)
+    }
+  })
+
+  it('정상 파일이면 기존 설정을 보존하며 rally 만 추가한다', () => {
+    const configPath = join(tmpHome, '.claude.json')
+    writeFileSync(
+      configPath,
+      JSON.stringify({
+        projects: { myProject: { x: 1 } },
+        mcpServers: { other: { command: 'y' } }
+      }),
+      'utf-8'
+    )
+
+    mcpClientConfigService.register('claudeCode')
+
+    const after = JSON.parse(readFileSync(configPath, 'utf-8'))
+    expect(after.projects.myProject.x).toBe(1)
+    expect(after.mcpServers.other.command).toBe('y')
+    expect(after.mcpServers['rally-dev']).toBeDefined()
+  })
+
+  it('쓰기 전 .bak 백업을 남긴다', () => {
+    const configPath = join(tmpHome, '.claude.json')
+    const original = JSON.stringify({ projects: { a: 1 } })
+    writeFileSync(configPath, original, 'utf-8')
+
+    mcpClientConfigService.register('claudeCode')
+
+    expect(readFileSync(`${configPath}.bak`, 'utf-8')).toBe(original)
+  })
+
+  it('임시 파일을 남기지 않는다 (원자적 교체 후 정리)', () => {
+    mcpClientConfigService.register('claudeCode')
+    const leftovers = readdirSync(tmpHome).filter((f) => f.endsWith('.tmp'))
+    expect(leftovers).toEqual([])
   })
 })
