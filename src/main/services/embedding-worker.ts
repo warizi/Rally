@@ -16,6 +16,7 @@ import path from 'path'
 
 const EMBEDDING_MODEL = process.env.EMBED_MODEL || 'Xenova/bge-m3'
 const EMBEDDING_DIM = Number(process.env.EMBED_DIM || '1024')
+const EMBEDDING_DTYPE = (process.env.EMBED_DTYPE || 'q8') as 'q8'
 // 한 번의 onnxruntime 추론 배치 상한. 큰 배치는 메모리 할당 abort(SIGTRAP)를 유발하므로
 // 작은 서브배치로 쪼개 추론한다. bge-m3는 e5보다 무거워 2로 보수적으로.
 const SUB_BATCH = 2
@@ -30,7 +31,7 @@ let extractorPromise: Promise<FeatureExtractor> | null = null
 async function getExtractor(): Promise<FeatureExtractor> {
   if (extractorPromise) return extractorPromise
   extractorPromise = (async () => {
-    const { pipeline, env } = await import('@xenova/transformers')
+    const { pipeline, env } = await import('@huggingface/transformers')
     // 자체 호스팅: 모델은 main이 GitHub Release에서 받아 userData/models 에 둠 → 로컬만 로드.
     const dir = process.env.EMBED_CACHE_DIR
     if (dir) {
@@ -39,7 +40,12 @@ async function getExtractor(): Promise<FeatureExtractor> {
     }
     env.allowLocalModels = true
     env.allowRemoteModels = false // HuggingFace 폴백 차단 (외부 요청 0)
-    return (await pipeline('feature-extraction', EMBEDDING_MODEL)) as unknown as FeatureExtractor
+    // transformers.js v3+ 는 dtype 으로 onnx 파일을 고른다. 'q8' → onnx/model_quantized.onnx
+    // (배포 중인 bge-m3.zip 의 파일명 그대로라 모델 재패키징 불필요).
+    // 지정하지 않으면 fp32 로 간주해 onnx/model.onnx 를 찾다가 실패한다.
+    return (await pipeline('feature-extraction', EMBEDDING_MODEL, {
+      dtype: EMBEDDING_DTYPE
+    })) as unknown as FeatureExtractor
   })()
   return extractorPromise
 }

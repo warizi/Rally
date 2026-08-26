@@ -1,7 +1,7 @@
 import { app, utilityProcess, type UtilityProcess } from 'electron'
 import path from 'path'
 import { scoped } from '../lib/logger'
-import { EMBEDDING_MODEL, EMBEDDING_DIM } from './embedding-config'
+import { EMBEDDING_MODEL, EMBEDDING_DIM, EMBEDDING_DTYPE } from './embedding-config'
 import { ensureModel } from './model-bootstrap'
 
 const log = scoped('embedding-model')
@@ -28,6 +28,7 @@ function ensureChild(): UtilityProcess {
       ...process.env,
       EMBED_MODEL: EMBEDDING_MODEL,
       EMBED_DIM: String(EMBEDDING_DIM),
+      EMBED_DTYPE: EMBEDDING_DTYPE,
       EMBED_CACHE_DIR: path.join(app.getPath('userData'), 'models')
     }
   })
