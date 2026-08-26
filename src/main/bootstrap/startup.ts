@@ -5,7 +5,7 @@ import { is } from '@electron-toolkit/utils'
 import { migrate } from 'drizzle-orm/better-sqlite3/migrator'
 import { scoped } from '../lib/logger'
 import { db, rawSqlite, vecEnabled } from '../db'
-import { EMBEDDING_DIM, EMBEDDING_MODEL } from '../services/embedding-config'
+import { EMBEDDING_DIM, EMBEDDING_REVISION } from '../services/embedding-config'
 import { workspaceService } from '../services/workspace'
 import { ensureClaudeCommands } from '../services/claude-commands-setup'
 import { seedSystemSkills } from '../services/skill'
@@ -49,9 +49,9 @@ function ensureSearchTables(): void {
     const row = rawSqlite.prepare('SELECT model FROM embedding_meta LIMIT 1').get() as
       | { model: string }
       | undefined
-    if (row && row.model !== EMBEDDING_MODEL) {
+    if (row && row.model !== EMBEDDING_REVISION) {
       scoped('vec').info(
-        `embedding model changed (${row.model} → ${EMBEDDING_MODEL}) — vec 인덱스 재생성 + 재임베딩`
+        `embedding model changed (${row.model} → ${EMBEDDING_REVISION}) — vec 인덱스 재생성 + 재임베딩`
       )
       rawSqlite.exec('DROP TABLE IF EXISTS vec_embeddings')
       rawSqlite.prepare('DELETE FROM embedding_meta').run()

@@ -9,7 +9,7 @@ import { embed } from './embedding-model'
 import { ensureModel } from './model-bootstrap'
 import { emitEmbeddingProgress } from '../lib/embedding-progress'
 import { chunkNote, composeShortText } from './embedding-chunk'
-import { EMBEDDING_MODEL } from './embedding-config'
+import { EMBEDDING_REVISION } from './embedding-config'
 import { scoped } from '../lib/logger'
 import { workspaceRepository } from '../repositories/workspace'
 import { noteRepository } from '../repositories/note'
@@ -163,7 +163,7 @@ async function processEntity(type: EmbeddableEntityType, id: string): Promise<vo
   for (const chunk of chunks) {
     const h = hashText(chunk.text)
     const prev = existingByIndex.get(chunk.index)
-    if (prev && prev.contentHash === h && prev.model === EMBEDDING_MODEL) continue
+    if (prev && prev.contentHash === h && prev.model === EMBEDDING_REVISION) continue
     const rowid = prev ? prev.rowid : rowidCursor++
     toEmbed.push({ chunk, hash: h, rowid })
   }
@@ -216,12 +216,17 @@ async function processEntity(type: EmbeddableEntityType, id: string): Promise<vo
           chunkIndex: item.chunk.index,
           rowid: item.rowid,
           contentHash: item.hash,
-          model: EMBEDDING_MODEL,
+          model: EMBEDDING_REVISION,
           updatedAt: now
         })
         .onConflictDoUpdate({
           target: embeddingMeta.id,
-          set: { rowid: item.rowid, contentHash: item.hash, model: EMBEDDING_MODEL, updatedAt: now }
+          set: {
+            rowid: item.rowid,
+            contentHash: item.hash,
+            model: EMBEDDING_REVISION,
+            updatedAt: now
+          }
         })
         .run()
     })
