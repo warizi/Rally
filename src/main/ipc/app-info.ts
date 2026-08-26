@@ -1,9 +1,10 @@
-import { app, ipcMain } from 'electron'
+import { app, ipcMain, shell } from 'electron'
 import { join } from 'path'
 import { existsSync, readFileSync, readdirSync } from 'fs'
 import { is } from '@electron-toolkit/utils'
 import type { IpcResponse } from '../lib/ipc-response'
 import { handle } from '../lib/handle'
+import { logger } from '../lib/logger'
 import { validateIpc, validateNoArgs } from '../lib/ipc-validate'
 import { mcpClientIdSchema } from './schemas'
 import {
@@ -108,6 +109,25 @@ export function registerAppInfoHandlers(): void {
     validateIpc(
       [mcpClientIdSchema],
       (client): McpClientStatus => mcpClientConfigService.unregister(client)
+    )
+  )
+
+  /**
+   * M-5/M-7: 오류 화면에서 "로그 열기". 크래시 리포팅이 없으므로 사용자가 로그를 직접
+   * 찾아 첨부할 수 있어야 한다.
+   *
+   * 경로는 electron-log 가 관리하는 앱 로그 파일에서 가져온다 — 렌더러 입력을 받지 않는다.
+   * showItemInFolder 로 파일을 선택된 상태로 띄워, 사용자가 어느 파일인지 헷갈리지 않게 한다.
+   */
+  ipcMain.handle(
+    'appInfo:openLogFolder',
+    validateNoArgs(
+      (): IpcResponse<string> =>
+        handle(() => {
+          const logPath = logger.transports.file.getFile().path
+          shell.showItemInFolder(logPath)
+          return logPath
+        })
     )
   )
 

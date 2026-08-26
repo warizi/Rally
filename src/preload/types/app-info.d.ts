@@ -11,6 +11,8 @@ export interface AppInfoAPI {
   getMcpServerPath: () => Promise<IpcResponse<string>>
   getCommandFiles: () => Promise<IpcResponse<CommandFile[]>>
   getSkillFiles: () => Promise<IpcResponse<CommandFile[]>>
+  /** M-5: 오류 화면에서 로그 파일 위치 열기. 반환값은 연 로그 파일 경로. */
+  openLogFolder: () => Promise<IpcResponse<string>>
 }
 
 export type McpClientId = 'claudeDesktop' | 'claudeCode' | 'codex'

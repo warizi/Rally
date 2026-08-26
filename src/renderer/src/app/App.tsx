@@ -12,21 +12,30 @@ import { OnboardingInitializer } from './providers/onboarding-initializer'
 import { OnboardingStepWatcher } from './providers/onboarding-step-watcher'
 import { NoteStyleRuntime } from './providers/note-style-runtime'
 import { WelcomeModalContainer } from '@widgets/onboarding'
+import { ErrorBoundary } from '@shared/ui/error-boundary'
+import { AppErrorFallback } from '@shared/ui/error-fallback'
 
 function App(): React.JSX.Element {
   return (
-    <QueryClientProviderWrapper>
-      <TooltipProvider>
-        <WorkspaceInitializer />
-        <ThemeInitializer />
-        <OnboardingInitializer />
-        <OnboardingStepWatcher />
-        <NoteStyleRuntime />
-        <RouterProvider router={DefaultRouter} />
-        <WelcomeModalContainer />
-        <Toaster />
-      </TooltipProvider>
-    </QueryClientProviderWrapper>
+    // M-5: 탭 경계(PaneContent)가 놓친 오류 — 레이아웃·사이드바·프로바이더 렌더 실패 —
+    // 를 잡는 최후 경계. 여기까지 오면 화면 전체가 날아간 상황이다.
+    <ErrorBoundary
+      label="app"
+      fallback={(error, reset) => <AppErrorFallback error={error} reset={reset} />}
+    >
+      <QueryClientProviderWrapper>
+        <TooltipProvider>
+          <WorkspaceInitializer />
+          <ThemeInitializer />
+          <OnboardingInitializer />
+          <OnboardingStepWatcher />
+          <NoteStyleRuntime />
+          <RouterProvider router={DefaultRouter} />
+          <WelcomeModalContainer />
+          <Toaster />
+        </TooltipProvider>
+      </QueryClientProviderWrapper>
+    </ErrorBoundary>
   )
 }
 
