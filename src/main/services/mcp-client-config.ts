@@ -1,9 +1,20 @@
 import { app } from 'electron'
 import { join, dirname } from 'path'
-import { chmodSync, existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'fs'
+import {
+  chmodSync,
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync
+} from 'fs'
 import { is } from '@electron-toolkit/utils'
 import { ensureMcpToken, rotateMcpToken } from '../lib/mcp-token'
 import { scoped } from '../lib/logger'
+import { PermissionError, ValidationError } from '../lib/errors'
 import {
   readEntry as readCodexEntry,
   removeEntry as removeCodexEntry,
@@ -165,6 +176,22 @@ function isEntryOutdated(entry: {
   )
 }
 
+/* ------------------------------------------------------------------ */
+/* 읽기 — 조회용(관대)과 쓰기 전용(엄격)을 분리한다                      */
+/*                                                                      */
+/* M-2: 이 파일들은 Rally 것이 아니다. ~/.claude.json 에는 사용자의 프로젝트  */
+/* 이력·다른 MCP 서버 목록·설정이 전부 들어 있고, ~/.codex/config.toml 에도   */
+/* 사용자의 주석과 설정이 들어 있다.                                      */
+/*                                                                      */
+/* 읽기에 실패했는데 "빈 값"으로 간주하고 쓰면, 우리가 rally 블록만 얹은      */
+/* 파일로 원본을 통째로 교체하게 된다 — 복구 불가능한 파괴다. 그래서 쓰기     */
+/* 경로에서는 절대 빈 값으로 대체하지 않고 throw 한다.                      */
+/*                                                                      */
+/* 반면 상태 조회(inspectStatus)는 화면 표시용이라 실패해도 앱이 멈추면 안    */
+/* 되므로 관대한 쪽을 쓴다.                                              */
+/* ------------------------------------------------------------------ */
+
+/** 조회용 — 실패를 "내용 없음"으로 흡수한다. 쓰기 경로에서 쓰지 말 것. */
 function safeReadText(path: string): string {
   try {
     return readFileSync(path, 'utf-8')
@@ -173,11 +200,29 @@ function safeReadText(path: string): string {
   }
 }
 
+/**
+ * 쓰기 전용 — 파일이 있는데 읽지 못하면 throw.
+ * 파일이 없을 때만 '' (신규 생성)이 정당하다.
+ */
+function readTextForWrite(filePath: string): string {
+  if (!existsSync(filePath)) return ''
+  try {
+    return readFileSync(filePath, 'utf-8')
+  } catch (err) {
+    const code = (err as NodeJS.ErrnoException).code
+    throw new PermissionError(
+      `설정 파일을 읽을 수 없어 안전하게 수정할 수 없습니다 (${code ?? 'unknown'}): ${filePath}\n` +
+        `파일 권한을 확인하거나, 해당 파일을 사용 중인 프로그램을 종료한 뒤 다시 시도해 주세요.`
+    )
+  }
+}
+
 interface ConfigShape {
   mcpServers?: Record<string, Record<string, unknown>>
   [key: string]: unknown
 }
 
+/** 조회용 — 손상된 파일도 빈 설정으로 취급해 상태 화면이 죽지 않게 한다. */
 function readConfig(configPath: string): ConfigShape {
   if (!existsSync(configPath)) return {}
   try {
@@ -186,6 +231,24 @@ function readConfig(configPath: string): ConfigShape {
     return JSON.parse(raw) as ConfigShape
   } catch {
     return {}
+  }
+}
+
+/**
+ * 쓰기 전용 — 읽기 실패는 PermissionError, JSON 파싱 실패는 ValidationError.
+ * 어느 쪽이든 호출 측이 파일을 덮어쓰지 못하게 막는 것이 목적이다.
+ */
+function readConfigForWrite(configPath: string): ConfigShape {
+  const raw = readTextForWrite(configPath)
+  if (!raw.trim()) return {}
+  try {
+    return JSON.parse(raw) as ConfigShape
+  } catch (err) {
+    throw new ValidationError(
+      `설정 파일이 올바른 JSON 이 아니어서 안전하게 수정할 수 없습니다: ${configPath}\n` +
+        `그대로 진행하면 기존 설정이 사라지므로 중단했습니다. 파일을 고친 뒤 다시 시도해 주세요.\n` +
+        `(원인: ${err instanceof Error ? err.message : String(err)})`
+    )
   }
 }
 
@@ -212,11 +275,45 @@ function restrictToOwner(filePath: string): void {
   }
 }
 
-/** 설정 파일을 0600 으로 쓴다. 부모 디렉터리도 함께 보장. */
+/**
+ * 설정 파일을 0600 으로, **원자적으로** 쓴다.
+ *
+ * M-2: 기존 구현은 대상 파일에 직접 writeFileSync 했다. 쓰기 도중 크래시하면
+ * 사용자의 설정 파일이 잘린 채 남는다. temp 에 완성한 뒤 rename 으로 교체하면
+ * 파일은 항상 "이전 내용" 아니면 "새 내용" 둘 중 하나다.
+ *
+ * 권한도 rename 전에 temp 에 적용한다 — 대상 경로에 0644 로 잠깐 존재하는
+ * 창(window)을 없애기 위함.
+ *
+ * 교체 직전 원본을 `.bak` 으로 남긴다. throw 로 막지 못한 경우까지 대비한 마지막 그물.
+ */
 function writeSecureFile(filePath: string, contents: string): void {
   mkdirSync(dirname(filePath), { recursive: true })
-  writeFileSync(filePath, contents, 'utf-8')
-  restrictToOwner(filePath)
+
+  if (existsSync(filePath)) {
+    try {
+      copyFileSync(filePath, `${filePath}.bak`)
+      restrictToOwner(`${filePath}.bak`)
+    } catch (err) {
+      // 백업 실패가 등록 자체를 막을 이유는 없다. 다만 조용히 넘기지는 않는다.
+      log.warn(`failed to back up before write: ${filePath} (${String(err)})`)
+    }
+  }
+
+  // rename 은 같은 파일시스템 안에서만 원자적이므로 temp 를 같은 디렉터리에 만든다.
+  const tmpPath = `${filePath}.${process.pid}.tmp`
+  try {
+    writeFileSync(tmpPath, contents, 'utf-8')
+    restrictToOwner(tmpPath)
+    renameSync(tmpPath, filePath)
+  } catch (err) {
+    try {
+      rmSync(tmpPath, { force: true })
+    } catch {
+      // temp 정리 실패는 무시 — 원본은 이미 보존돼 있다
+    }
+    throw err
+  }
 }
 
 function writeConfig(configPath: string, config: ConfigShape): void {
@@ -319,13 +416,15 @@ export const mcpClientConfigService = {
 
     if (getConfigFormat(client) === 'toml') {
       // 기존 config.toml 의 사용자 설정(주석·포맷)을 보존하며 rally 블록만 교체.
-      const current = existsSync(configPath) ? safeReadText(configPath) : ''
+      // M-2: 읽기 실패를 '' 로 흡수하면 사용자의 config.toml 을 rally 블록만 남기고 날린다.
+      const current = readTextForWrite(configPath)
       const next = upsertCodexEntry(current, SERVER_KEY, toEntry(buildServerConfig()))
       writeSecureFile(configPath, next)
       return inspectStatus(client)
     }
 
-    const config = readConfig(configPath)
+    // M-2: 파싱 실패를 {} 로 흡수하면 사용자의 프로젝트 이력·다른 MCP 서버 설정이 전부 사라진다.
+    const config = readConfigForWrite(configPath)
     if (!config.mcpServers) config.mcpServers = {}
     config.mcpServers[SERVER_KEY] = buildServerConfig()
     writeConfig(configPath, config)
@@ -340,13 +439,13 @@ export const mcpClientConfigService = {
     if (!existsSync(configPath)) return inspectStatus(client)
 
     if (getConfigFormat(client) === 'toml') {
-      const current = safeReadText(configPath)
+      const current = readTextForWrite(configPath)
       const next = removeCodexEntry(current, SERVER_KEY)
       if (next !== current) writeSecureFile(configPath, next)
       return inspectStatus(client)
     }
 
-    const config = readConfig(configPath)
+    const config = readConfigForWrite(configPath)
     if (config.mcpServers && SERVER_KEY in config.mcpServers) {
       delete config.mcpServers[SERVER_KEY]
       writeConfig(configPath, config)
