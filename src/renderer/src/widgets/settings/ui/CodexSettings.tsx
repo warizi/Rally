@@ -69,20 +69,22 @@ export function CodexSettings(): React.JSX.Element {
   const [showManual, setShowManual] = useState(false)
   const [busy, setBusy] = useState(false)
 
-  const refreshStatus = async (): Promise<void> => {
-    const res = await window.api.mcpClient.getStatus()
+  const applyStatus = (res: Awaited<ReturnType<typeof window.api.mcpClient.getStatus>>): void => {
     if (res.success && res.data) {
       setClientStatus(res.data.status)
       setServerKey(res.data.serverKey)
       setServerConfig(res.data.serverConfig)
     }
   }
+  const refreshStatus = async (): Promise<void> => {
+    applyStatus(await window.api.mcpClient.getStatus())
+  }
 
   useEffect(() => {
     window.api.appInfo.getMcpServerPath().then((res) => {
       if (res.success && res.data) setMcpServerPath(res.data)
     })
-    refreshStatus()
+    window.api.mcpClient.getStatus().then(applyStatus)
   }, [])
 
   const status = clientStatus?.codex

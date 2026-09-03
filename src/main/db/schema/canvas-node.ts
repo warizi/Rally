@@ -5,14 +5,7 @@ import { canvasGroups } from './canvas-group'
 import { trashBatches } from './trash-batch'
 
 export type CanvasNodeType =
-  | 'text'
-  | 'todo'
-  | 'note'
-  | 'schedule'
-  | 'csv'
-  | 'pdf'
-  | 'image'
-  | 'canvas'
+  'text' | 'todo' | 'note' | 'schedule' | 'csv' | 'pdf' | 'image' | 'canvas'
 export const CANVAS_NODE_TYPES: CanvasNodeType[] = [
   'text',
   'todo',

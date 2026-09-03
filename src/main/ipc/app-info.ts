@@ -43,40 +43,37 @@ export function registerAppInfoHandlers(): void {
 
   ipcMain.handle(
     'appInfo:getMcpServerPath',
-    validateNoArgs(
-      (): IpcResponse<string> =>
-        handle(() => {
-          if (is.dev) {
-            return join(process.cwd(), 'dist-mcp', 'index.js')
-          }
-          return join(process.resourcesPath, 'dist-mcp', 'index.js')
-        })
+    validateNoArgs((): IpcResponse<string> =>
+      handle(() => {
+        if (is.dev) {
+          return join(process.cwd(), 'dist-mcp', 'index.js')
+        }
+        return join(process.resourcesPath, 'dist-mcp', 'index.js')
+      })
     )
   )
 
   ipcMain.handle(
     'appInfo:getCommandFiles',
-    validateNoArgs(
-      (): IpcResponse<CommandFile[]> =>
-        handle(() => {
-          const commandsDir = is.dev
-            ? join(process.cwd(), '.claude', 'commands')
-            : join(process.resourcesPath, '.claude', 'commands')
-          return readMdFiles(commandsDir)
-        })
+    validateNoArgs((): IpcResponse<CommandFile[]> =>
+      handle(() => {
+        const commandsDir = is.dev
+          ? join(process.cwd(), '.claude', 'commands')
+          : join(process.resourcesPath, '.claude', 'commands')
+        return readMdFiles(commandsDir)
+      })
     )
   )
 
   ipcMain.handle(
     'appInfo:getSkillFiles',
-    validateNoArgs(
-      (): IpcResponse<CommandFile[]> =>
-        handle(() => {
-          const skillsDir = is.dev
-            ? join(process.cwd(), '.claude', 'skills')
-            : join(process.resourcesPath, '.claude', 'skills')
-          return readMdFiles(skillsDir)
-        })
+    validateNoArgs((): IpcResponse<CommandFile[]> =>
+      handle(() => {
+        const skillsDir = is.dev
+          ? join(process.cwd(), '.claude', 'skills')
+          : join(process.resourcesPath, '.claude', 'skills')
+        return readMdFiles(skillsDir)
+      })
     )
   )
 
@@ -98,17 +95,15 @@ export function registerAppInfoHandlers(): void {
 
   ipcMain.handle(
     'mcpClient:register',
-    validateIpc(
-      [mcpClientIdSchema],
-      (client): McpClientStatus => mcpClientConfigService.register(client)
+    validateIpc([mcpClientIdSchema], (client): McpClientStatus =>
+      mcpClientConfigService.register(client)
     )
   )
 
   ipcMain.handle(
     'mcpClient:unregister',
-    validateIpc(
-      [mcpClientIdSchema],
-      (client): McpClientStatus => mcpClientConfigService.unregister(client)
+    validateIpc([mcpClientIdSchema], (client): McpClientStatus =>
+      mcpClientConfigService.unregister(client)
     )
   )
 
@@ -121,13 +116,12 @@ export function registerAppInfoHandlers(): void {
    */
   ipcMain.handle(
     'appInfo:openLogFolder',
-    validateNoArgs(
-      (): IpcResponse<string> =>
-        handle(() => {
-          const logPath = logger.transports.file.getFile().path
-          shell.showItemInFolder(logPath)
-          return logPath
-        })
+    validateNoArgs((): IpcResponse<string> =>
+      handle(() => {
+        const logPath = logger.transports.file.getFile().path
+        shell.showItemInFolder(logPath)
+        return logPath
+      })
     )
   )
 
@@ -135,8 +129,8 @@ export function registerAppInfoHandlers(): void {
   // 인자 없음 — 렌더러가 토큰 값을 다루지 않도록 main 이 전부 처리한다.
   ipcMain.handle(
     'mcpClient:rotateToken',
-    validateNoArgs(
-      (): IpcResponse<McpRotateResult> => handle(() => mcpClientConfigService.rotateToken())
+    validateNoArgs((): IpcResponse<McpRotateResult> =>
+      handle(() => mcpClientConfigService.rotateToken())
     )
   )
 }

@@ -16,8 +16,7 @@ const mocks = vi.hoisted(() => ({
   updateEdge: vi.fn(),
   updateViewport: vi.fn(),
   canvasData: { viewportX: 100, viewportY: 200, viewportZoom: 1.5 } as
-    | { viewportX: number; viewportY: number; viewportZoom: number }
-    | undefined,
+    { viewportX: number; viewportY: number; viewportZoom: number } | undefined,
   tabSearchParams: undefined as Record<string, string> | undefined,
   navigateTab: vi.fn(),
   syncStateMutation: { mutateAsync: vi.fn() },

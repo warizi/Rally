@@ -46,7 +46,6 @@ export function useNoteExternalSync(
       return
     }
     // 외부 변경 → remount (initialContent가 이미 최신이므로 override 불필요)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOverrideContent(null)
     setEditorKey((k) => k + 1)
   }, [initialContent, lastSentRef])
