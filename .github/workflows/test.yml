@@ -15,7 +15,7 @@ jobs:
   lint-and-typecheck:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       # lint 는 develop 기준 0 errors / 0 warnings (품질 개선 완료, PR #311).
       # 신규 회귀를 차단하기 위해 --max-warnings 0 으로 경고도 실패 처리하는 차단 게이트.
@@ -28,7 +28,7 @@ jobs:
   fsd-boundary-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       - name: Verify no boundary violations
         run: |
@@ -45,7 +45,7 @@ jobs:
   cleanup-completeness:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       - name: Verify all schema tables in cleanup helper
         run: npm run check:cleanup
@@ -53,7 +53,7 @@ jobs:
   security-scan:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       # 신규 HIGH severity Electron security finding 을 차단하는 게이트.
       # electronegativity 는 finding 이 있어도 exit 0 이라, 출력을 파싱해 HIGH 발견 시 fail.
@@ -75,8 +75,8 @@ jobs:
   dependency-audit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
       # npm audit 은 package-lock.json 만으로 동작한다 — node_modules 설치 불필요.
@@ -92,7 +92,7 @@ jobs:
   bundle-chunks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       # 성능-1: manualChunks 설정이 잘못되어 vendor 라이브러리가 다시 메인
       # 청크로 합쳐지면 회귀로 차단.
@@ -109,13 +109,13 @@ jobs:
   test-node:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       - name: Run main process tests with coverage
         run: npm run test:coverage:node
       - name: Upload coverage (node)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-node
           path: coverage/node/
@@ -131,7 +131,7 @@ jobs:
         shard: [1, 2, 3, 4]
     name: test-web (shard ${{ matrix.shard }}/4)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       - name: Run renderer tests (shard ${{ matrix.shard }}/4)
         run: npm run test:web -- --shard ${{ matrix.shard }}/4
@@ -148,13 +148,13 @@ jobs:
     env:
       VITEST_SKIP_THRESHOLDS: '1'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       - name: Run renderer coverage (shard ${{ matrix.shard }}/4)
         run: npm run test:coverage:web:shard -- --shard ${{ matrix.shard }}/4
       - name: Upload coverage blob (shard ${{ matrix.shard }})
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-web-blob-${{ matrix.shard }}
           # .vitest-reports 는 dot 디렉토리라 upload-artifact 기본 제외 → 명시적으로 포함.
@@ -169,10 +169,10 @@ jobs:
     needs: coverage-web
     if: always()
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
       - name: Download coverage blobs
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: coverage-web-blob-*
           path: .vitest-reports/
@@ -181,7 +181,7 @@ jobs:
         run: npm run test:coverage:web:merge
       - name: Upload coverage (web)
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-web
           path: coverage/web/
@@ -194,14 +194,14 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: coverage-node
           path: coverage/node/
         continue-on-error: true
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: coverage-web
           path: coverage/web/
@@ -217,7 +217,7 @@ jobs:
           cat coverage-comment.md >> $GITHUB_STEP_SUMMARY
       - name: Post sticky PR comment
         if: github.event_name == 'pull_request'
-        uses: marocchino/sticky-pull-request-comment@v2
+        uses: marocchino/sticky-pull-request-comment@v3
         with:
           header: coverage-summary
           path: coverage-comment.md
