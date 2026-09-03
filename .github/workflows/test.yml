@@ -30,17 +30,20 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: ./.github/actions/setup-and-install
+      # ESLint JSON 출력에서 `boundaries/*` 룰의 메시지 수를 센다. 텍스트 grep 은 stderr 의 플러그인
+      # 폐기 경고(룰 이름이 문구에 포함)까지 세어 오탐했고, 룰 이름이 바뀌면 조용히 0 이 되는 문제가 있었다.
       - name: Verify no boundary violations
         run: |
-          set -o pipefail
-          npx eslint . --no-warn-ignored > /tmp/lint.txt 2>&1 || true
-          count=$(grep -c 'boundaries/element-types' /tmp/lint.txt || true)
-          echo "FSD boundary violations: $count"
-          if [ "$count" != "0" ]; then
-            echo "::error::FSD boundary violations detected"
-            grep -B 1 'boundaries/element-types' /tmp/lint.txt | sed 's/^/  /'
-            exit 1
-          fi
+          npx eslint . --no-warn-ignored -f json -o /tmp/lint.json || true
+          node -e '
+            const r = require("/tmp/lint.json")
+            const hits = []
+            for (const f of r) for (const m of f.messages)
+              if (m.ruleId && m.ruleId.startsWith("boundaries/")) hits.push(`${f.filePath}:${m.line} ${m.ruleId} ${m.message}`)
+            console.log(`FSD boundary violations: ${hits.length}`)
+            for (const h of hits) console.log(`  ${h}`)
+            if (hits.length) { console.log("::error::FSD boundary violations detected"); process.exit(1) }
+          '
 
   cleanup-completeness:
     runs-on: ubuntu-latest
