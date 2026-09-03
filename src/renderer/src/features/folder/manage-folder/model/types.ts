@@ -66,8 +66,4 @@ export interface ImageTreeNode extends AuthorMeta {
 }
 
 export type WorkspaceTreeNode =
-  | FolderTreeNode
-  | NoteTreeNode
-  | CsvTreeNode
-  | PdfTreeNode
-  | ImageTreeNode
+  FolderTreeNode | NoteTreeNode | CsvTreeNode | PdfTreeNode | ImageTreeNode

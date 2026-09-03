@@ -55,8 +55,7 @@ function findEntityIncludingDeleted(
       return todoRepository.findByIdIncludingDeleted(id)
     case 'schedule':
       return scheduleRepository.findByIdIncludingDeleted(id) as
-        | { workspaceId: string; title: string }
-        | undefined
+        { workspaceId: string; title: string } | undefined
     case 'note':
       return noteRepository.findByIdIncludingDeleted(id)
     case 'pdf':

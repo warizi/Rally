@@ -181,8 +181,7 @@ describe('csv-file queries', () => {
     })
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
     const cached = qc.getQueryData(['csv', 'content', 'csv-1']) as
-      | { content: string; encoding: string; columnWidths: string | null }
-      | undefined
+      { content: string; encoding: string; columnWidths: string | null } | undefined
     expect(cached?.columnWidths).toBe('[100,200]')
   })
 

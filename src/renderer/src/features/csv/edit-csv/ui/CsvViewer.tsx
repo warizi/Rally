@@ -132,7 +132,6 @@ export function CsvViewer({
     }
     // 외부 변경 → 에디터 리셋 + remount
     reset(initialContent)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setKey((k) => k + 1)
   }, [initialContent, reset, lastWrittenRef])
 

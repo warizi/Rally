@@ -44,12 +44,4 @@ export const trashBatches = sqliteTable(
 )
 
 export type TrashBatchEntityKind =
-  | 'folder'
-  | 'note'
-  | 'csv'
-  | 'pdf'
-  | 'image'
-  | 'canvas'
-  | 'todo'
-  | 'schedule'
-  | 'recurring_rule'
+  'folder' | 'note' | 'csv' | 'pdf' | 'image' | 'canvas' | 'todo' | 'schedule' | 'recurring_rule'

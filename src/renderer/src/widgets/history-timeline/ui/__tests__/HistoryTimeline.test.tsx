@@ -8,8 +8,7 @@ import { render, screen } from '@testing-library/react'
 
 const mocks = vi.hoisted(() => ({
   data: undefined as
-    | undefined
-    | { pages: Array<{ days: Array<{ date: string; todos: unknown[] }> }> },
+    undefined | { pages: Array<{ days: Array<{ date: string; todos: unknown[] }> }> },
   hasNextPage: false,
   isFetchingNextPage: false,
   isLoading: false,

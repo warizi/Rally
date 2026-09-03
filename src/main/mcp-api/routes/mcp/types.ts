@@ -109,10 +109,7 @@ export interface DeleteFolderAction {
 }
 
 export type FolderAction =
-  | CreateFolderAction
-  | RenameFolderAction
-  | MoveFolderAction
-  | DeleteFolderAction
+  CreateFolderAction | RenameFolderAction | MoveFolderAction | DeleteFolderAction
 
 // ─── Canvases ───────────────────────────────────────────────
 
@@ -648,11 +645,7 @@ export interface DetachTagAction {
 }
 
 export type TagAction =
-  | CreateTagAction
-  | UpdateTagAction
-  | DeleteTagAction
-  | AttachTagAction
-  | DetachTagAction
+  CreateTagAction | UpdateTagAction | DeleteTagAction | AttachTagAction | DetachTagAction
 
 export interface ManageTagResult {
   action: string
