@@ -83,14 +83,12 @@ jobs:
         with:
           node-version: '22'
       # npm audit 은 package-lock.json 만으로 동작한다 — node_modules 설치 불필요.
-      # prod(--omit=dev) 는 high 이상에서 차단. 예외는 .audit-allowlist.json 에
-      # 사유 + 추가일 + 만료일(최대 180일)을 함께 적어야만 통과한다 (scripts/audit-gate.mjs).
-      - name: npm audit gate (prod, high+, blocking)
+      # prod + dev 전부 high 이상에서 차단. devDependencies 도 빌드 툴체인이라 빌드 무결성에 영향이 있고,
+      # 2026-09-03 에 dev 잔여(tar/esbuild/handlebars)를 전부 해소해 0 건이 된 뒤 report-only 에서 승격했다.
+      # 전진 경로 없는 항목이 다시 들어오면 .audit-allowlist.json 에 사유 + 추가일 + 만료일(최대 180일)을
+      # 적어야만 통과한다 (scripts/audit-gate.mjs).
+      - name: npm audit gate (prod + dev, high+, blocking)
         run: npm run audit:gate
-      # devDependencies 는 빌드 툴체인이라 런타임에 안 들어가지만 빌드 무결성에는 영향이 있다.
-      # 차단하지 않고 annotation 으로만 노출 — major 전진 경로가 없는 항목(electronegativity 등)이 남아 있다.
-      - name: npm audit report (prod + dev, warning only)
-        run: npm run audit:gate:dev
 
   bundle-chunks:
     runs-on: ubuntu-latest
