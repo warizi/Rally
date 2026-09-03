@@ -6,6 +6,12 @@ import eslintPluginReactHooks from 'eslint-plugin-react-hooks'
 import eslintPluginReactRefresh from 'eslint-plugin-react-refresh'
 import boundaries from 'eslint-plugin-boundaries'
 
+/** `from` 레이어가 `allowTo` 레이어들만 import 할 수 있다는 boundaries/dependencies 정책 하나. */
+const fsdPolicy = (from, allowTo) => ({
+  from: { element: { type: from } },
+  allow: allowTo.map((type) => ({ to: { element: { type } } }))
+})
+
 export default defineConfig(
   {
     ignores: [
@@ -30,23 +36,20 @@ export default defineConfig(
           project: ['./tsconfig.web.json', './tsconfig.node.json']
         }
       },
+      // eslint-plugin-boundaries v7 문법. `mode: 'folder'` 는 v7 기본값이라 제거했다 (명시하면 폐기 경고).
+      // pattern 은 `**` 가 아니라 `*` 로 슬라이스 하나를 잡고 capture 로 이름을 뽑는다 — `**` 로 바꾸면
+      // 하위 폴더마다 별도 element 로 잡혀 같은 슬라이스 내부 import 가 위반으로 오탐된다.
       'boundaries/elements': [
-        { type: 'app', pattern: 'src/renderer/src/app', mode: 'folder' },
-        { type: 'pages', pattern: 'src/renderer/src/pages/*', mode: 'folder' },
-        { type: 'widgets', pattern: 'src/renderer/src/widgets/*', mode: 'folder' },
+        { type: 'app', pattern: 'src/renderer/src/app' },
+        { type: 'pages', pattern: 'src/renderer/src/pages/*' },
+        { type: 'widgets', pattern: 'src/renderer/src/widgets/*' },
         {
           type: 'features',
           pattern: 'src/renderer/src/features/*/*',
-          mode: 'folder',
           capture: ['domain', 'action']
         },
-        {
-          type: 'entities',
-          pattern: 'src/renderer/src/entities/*',
-          mode: 'folder',
-          capture: ['domain']
-        },
-        { type: 'shared', pattern: 'src/renderer/src/shared', mode: 'folder' }
+        { type: 'entities', pattern: 'src/renderer/src/entities/*', capture: ['domain'] },
+        { type: 'shared', pattern: 'src/renderer/src/shared' }
       ]
     }
   },
@@ -77,17 +80,19 @@ export default defineConfig(
           ignoreRestSiblings: true
         }
       ],
-      'boundaries/element-types': [
+      // FSD 레이어 규칙: 각 레이어는 자기보다 아래 레이어만 import 할 수 있다 (widgets 는 widgets 끼리 허용).
+      // v7: `element-types` → `dependencies`, `rules` → `policies`, 문자열 selector → entity selector.
+      'boundaries/dependencies': [
         'error',
         {
           default: 'disallow',
-          rules: [
-            { from: 'app', allow: ['pages', 'widgets', 'features', 'entities', 'shared'] },
-            { from: 'pages', allow: ['widgets', 'features', 'entities', 'shared'] },
-            { from: 'widgets', allow: ['widgets', 'features', 'entities', 'shared'] },
-            { from: 'features', allow: ['entities', 'shared'] },
-            { from: 'entities', allow: ['shared'] },
-            { from: 'shared', allow: [] }
+          policies: [
+            fsdPolicy('app', ['pages', 'widgets', 'features', 'entities', 'shared']),
+            fsdPolicy('pages', ['widgets', 'features', 'entities', 'shared']),
+            fsdPolicy('widgets', ['widgets', 'features', 'entities', 'shared']),
+            fsdPolicy('features', ['entities', 'shared']),
+            fsdPolicy('entities', ['shared']),
+            fsdPolicy('shared', [])
           ]
         }
       ]

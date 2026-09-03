@@ -21,7 +21,7 @@ Rally의 품질 기준을 **수치와 자동 게이트**로 명문화한 문서.
 | Bundle budget        | 메인 청크 gzip ≤ **430KB**, 전체 gzip ≤ **2.15MB**                                            | `scripts/check-bundle-budget.mjs`                                  |
 | 청크 분리            | xyflow/react-pdf/xterm/recharts/milkdown/dnd-kit/framer-motion/**codemirror**/**prosemirror** | `scripts/verify-chunks.mjs`                                        |
 | Electron security    | HIGH severity finding **0**                                                                   | `security:scan:high` 출력 파싱 (`LimitNavigationGlobalCheck` 제외) |
-| FSD boundary         | `boundaries/element-types` 위반 0                                                             | `eslint-plugin-boundaries` grep                                    |
+| FSD boundary         | `boundaries/dependencies` 위반 0                                                              | `eslint-plugin-boundaries` grep                                    |
 | Cleanup completeness | 신규 테이블 cleanup 등록 누락 0                                                               | `scripts/check-cleanup-completeness.mjs`                           |
 | IPC contract drift   | 선언↔런타임 네임스페이스 일치                                                                 | `api-contract-drift.test.ts`                                       |
 | Window security      | sandbox/contextIsolation/navigation 정책 소스 스캔                                            | `window-security.test.ts`                                          |
