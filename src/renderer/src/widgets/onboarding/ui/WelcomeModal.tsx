@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react'
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@shared/ui/dialog'
 import { Button } from '@shared/ui/button'
@@ -24,20 +24,19 @@ export function WelcomeModal({ onCreateSample }: Props): React.JSX.Element | nul
   const dismissWelcome = useOnboardingStore((s) => s.dismissWelcome)
   const { isEmpty, isLoading: isLoadingEmptiness } = useWorkspaceIsEmpty(workspaceId)
 
-  const [open, setOpen] = useState(false)
+  // 열림 여부는 store/query 상태에서 파생한다 — effect 로 setState 하지 않는다
+  // (react-hooks/set-state-in-effect). 닫기는 로컬 플래그로 즉시 반영하고,
+  // dismissWelcome() 이 완료되면 welcomeDismissed 가 true 가 되어 파생값도 닫힘으로 수렴한다.
+  const [closedLocally, setClosedLocally] = useState(false)
   const [slide, setSlide] = useState(0)
   const [busy, setBusy] = useState(false)
 
-  useEffect(() => {
-    if (!hydrated || isLoadingEmptiness) return
-    if (welcomeDismissed) return
-    if (!workspaceId) return
-    if (!isEmpty) return
-    setOpen(true)
-  }, [hydrated, welcomeDismissed, workspaceId, isEmpty, isLoadingEmptiness])
+  const shouldOpen =
+    hydrated && !isLoadingEmptiness && !welcomeDismissed && !!workspaceId && isEmpty === true
+  const open = shouldOpen && !closedLocally
 
   const handleClose = useCallback(async (): Promise<void> => {
-    setOpen(false)
+    setClosedLocally(true)
     await dismissWelcome()
   }, [dismissWelcome])
 
@@ -49,7 +48,7 @@ export function WelcomeModal({ onCreateSample }: Props): React.JSX.Element | nul
     try {
       setBusy(true)
       await onCreateSample()
-      setOpen(false)
+      setClosedLocally(true)
       await dismissWelcome()
     } finally {
       setBusy(false)

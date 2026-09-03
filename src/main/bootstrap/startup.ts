@@ -47,8 +47,7 @@ function ensureSearchTables(): void {
   // embedding_meta 를 비워 백필이 전체 재임베딩하도록 한다. (FTS는 차원 무관이라 유지)
   try {
     const row = rawSqlite.prepare('SELECT model FROM embedding_meta LIMIT 1').get() as
-      | { model: string }
-      | undefined
+      { model: string } | undefined
     if (row && row.model !== EMBEDDING_REVISION) {
       scoped('vec').info(
         `embedding model changed (${row.model} → ${EMBEDDING_REVISION}) — vec 인덱스 재생성 + 재임베딩`

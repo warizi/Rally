@@ -72,13 +72,15 @@ export function AISettings(): React.JSX.Element {
   // P-1: 신규 등록 전 고지·동의. 확인 대기 중인 클라이언트를 담는다.
   const [consentFor, setConsentFor] = useState<McpClientId | null>(null)
 
-  const refreshStatus = async (): Promise<void> => {
-    const res = await window.api.mcpClient.getStatus()
+  const applyStatus = (res: Awaited<ReturnType<typeof window.api.mcpClient.getStatus>>): void => {
     if (res.success && res.data) {
       setClientStatus(res.data.status)
       setServerKey(res.data.serverKey)
       setServerConfig(res.data.serverConfig)
     }
+  }
+  const refreshStatus = async (): Promise<void> => {
+    applyStatus(await window.api.mcpClient.getStatus())
   }
 
   useEffect(() => {
@@ -91,7 +93,7 @@ export function AISettings(): React.JSX.Element {
     window.api.appInfo.getSkillFiles().then((res) => {
       if (res.success && res.data) setSkillFiles(res.data)
     })
-    refreshStatus()
+    window.api.mcpClient.getStatus().then(applyStatus)
   }, [])
 
   const fallbackConfig = { command: 'node', args: [mcpServerPath] }

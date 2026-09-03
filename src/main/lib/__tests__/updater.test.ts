@@ -96,8 +96,7 @@ describe('setupAutoUpdater', () => {
     isObj.dev = false
     setupAutoUpdater()
     const errHandler = autoUpdaterMock.on.mock.calls.find((c) => c[0] === 'error')?.[1] as
-      | ((err: Error) => void)
-      | undefined
+      ((err: Error) => void) | undefined
 
     expect(() => errHandler!(new Error('boom'))).not.toThrow()
   })

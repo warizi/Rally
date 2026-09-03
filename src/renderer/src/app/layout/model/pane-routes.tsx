@@ -1,3 +1,6 @@
+/* eslint-disable react-refresh/only-export-components --
+ * 라우트 테이블. lazy 컴포넌트를 조립해 PANE_ROUTES(비컴포넌트)로 내보내는 설정 파일이라
+ * Fast Refresh 대상이 아니다 — 이 파일이 바뀌면 full reload 가 맞다. (react-refresh 0.5+) */
 import { lazy, type ComponentType } from 'react'
 import { ROUTES } from '@/shared/constants/tab-url'
 
