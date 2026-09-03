@@ -26,7 +26,7 @@ function makeMockDoc(pages: string[]): {
   numPages: number
   getPage: (n: number) => Promise<MockPage>
   cleanup: () => Promise<void>
-  destroy: () => Promise<void>
+  loadingTask: { destroy: () => Promise<void> }
 } {
   return {
     numPages: pages.length,
@@ -40,7 +40,7 @@ function makeMockDoc(pages: string[]): {
       }
     }),
     cleanup: vi.fn(async () => undefined),
-    destroy: vi.fn(async () => undefined)
+    loadingTask: { destroy: vi.fn(async () => undefined) }
   }
 }
 
@@ -78,13 +78,13 @@ describe('extractPdfText', () => {
     expect(result.truncated).toBe(true)
   })
 
-  it('doc.destroy/cleanup 항상 호출', async () => {
+  it('doc.loadingTask.destroy/cleanup 항상 호출', async () => {
     const doc = makeMockDoc(['x'])
     mockGetDocumentProxy.mockResolvedValue(doc)
 
     await extractPdfText(Buffer.from([0]))
     expect(doc.cleanup).toHaveBeenCalled()
-    expect(doc.destroy).toHaveBeenCalled()
+    expect(doc.loadingTask.destroy).toHaveBeenCalled()
   })
 
   it('TextMarkedContent (str 없음) 항목 무시', async () => {
@@ -97,7 +97,7 @@ describe('extractPdfText', () => {
         cleanup: vi.fn()
       })),
       cleanup: vi.fn(async () => undefined),
-      destroy: vi.fn(async () => undefined)
+      loadingTask: { destroy: vi.fn(async () => undefined) }
     }
     mockGetDocumentProxy.mockResolvedValue(doc)
 
@@ -113,7 +113,7 @@ describe('getPdfPageCount', () => {
 
     const count = await getPdfPageCount(Buffer.from([0]))
     expect(count).toBe(4)
-    expect(doc.destroy).toHaveBeenCalled()
+    expect(doc.loadingTask.destroy).toHaveBeenCalled()
   })
 })
 
@@ -165,13 +165,13 @@ describe('renderPdfPagesAsImages', () => {
     )
   })
 
-  it('doc.destroy/cleanup 항상 호출 (렌더 실패 시에도)', async () => {
+  it('doc.loadingTask.destroy/cleanup 항상 호출 (렌더 실패 시에도)', async () => {
     const doc = makeMockDoc(['p1'])
     mockGetDocumentProxy.mockResolvedValue(doc)
     mockRenderPageAsImage.mockRejectedValue(new Error('render fail'))
 
     await expect(renderPdfPagesAsImages(Buffer.from([0]))).rejects.toThrow('render fail')
     expect(doc.cleanup).toHaveBeenCalled()
-    expect(doc.destroy).toHaveBeenCalled()
+    expect(doc.loadingTask.destroy).toHaveBeenCalled()
   })
 })

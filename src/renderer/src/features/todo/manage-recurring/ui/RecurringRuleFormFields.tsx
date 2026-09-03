@@ -1,4 +1,5 @@
 import type { Control } from 'react-hook-form'
+import type { RecurringRuleFormValues } from '../model/recurring-rule-form'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@shared/ui/form'
 import { Input } from '@shared/ui/input'
 import { Textarea } from '@shared/ui/textarea'
@@ -9,8 +10,7 @@ import { TimePickerButton } from '@shared/ui/time-picker-button'
 import { RECURRENCE_TYPE_LABELS, DAY_LABELS, REMINDER_OPTIONS } from '../model/recurring-rule-form'
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>
+  control: Control<RecurringRuleFormValues>
 }
 
 export function RecurringRuleFormFields({ control }: Props): React.JSX.Element {
