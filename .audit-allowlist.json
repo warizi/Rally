@@ -1,0 +1,4 @@
+{
+  "$schema-note": "scripts/audit-gate.mjs 가 읽는 npm audit 예외 목록. 항목마다 package · reason(10자 이상) · addedAt · expires(YYYY-MM-DD, addedAt 기준 최대 180일) 필수. advisory(GHSA-…) 를 주면 그 advisory 에만 한정. 만료되면 예외가 무효화되어 게이트가 다시 실패한다.",
+  "entries": []
+}
