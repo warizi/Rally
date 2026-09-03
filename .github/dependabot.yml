@@ -1,0 +1,71 @@
+# Dependabot — 게이트(dependency-audit)가 막기 전에 PR 로 먼저 올라오게 한다.
+# 게이트만 있으면 "막혔다"만 알고, Dependabot 이 있으면 "이렇게 고치면 된다"까지 온다.
+#
+# 운영 규칙
+# - security 업데이트는 schedule 과 무관하게 즉시 올라온다 (Dependabot 기본 동작).
+# - npm 은 주간, 그룹으로 묶어 PR 수를 억제한다. 그룹 PR 하나가 CI(test.yml) 전체를 통과해야 머지.
+# - 네이티브/ABI 연쇄가 있는 모듈은 자동 PR 에서 제외한다 — 아래 ignore 참조.
+#   · electron: major 마다 better-sqlite3 상한을 건드린다 (bs3 12.x → Electron 40 천장, 41+ 는 bs3 13).
+#     Electron major 는 수동 사이클로만 올린다.
+#   · better-sqlite3 / onnxruntime-node / sharp: @electron/rebuild ABI 재정렬이 필요하고,
+#     onnxruntime-node·sharp 는 package.json overrides 로 HF 고정을 넘겨 놓은 상태라
+#     자동 bump 가 overrides 와 어긋날 수 있다. major/minor 는 수동, patch 만 허용.
+#   · @huggingface/transformers: 신버전이 sharp/onnxruntime-node 고정을 올려주면 overrides 를
+#     걷어내야 한다 — 자동 PR 을 받되 overrides 재검토를 함께 한다 (ignore 하지 않음).
+
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '09:00'
+      timezone: Asia/Seoul
+    target-branch: develop
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+    commit-message:
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+    groups:
+      # 런타임 의존성 minor/patch 를 한 PR 로
+      prod-minor-patch:
+        dependency-type: production
+        update-types:
+          - minor
+          - patch
+      # 빌드/테스트 툴체인 minor/patch 를 한 PR 로
+      dev-minor-patch:
+        dependency-type: development
+        update-types:
+          - minor
+          - patch
+      # major 는 그룹 밖 — 개별 PR 로 하나씩 검토
+    ignore:
+      # Electron major 는 bs3 상한과 얽혀 있어 수동 사이클로만 올린다
+      - dependency-name: electron
+        update-types: ['version-update:semver-major']
+      # 네이티브 모듈 — ABI 재정렬 + overrides 정합성 때문에 patch 만 자동
+      - dependency-name: better-sqlite3
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: onnxruntime-node
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: sharp
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    target-branch: develop
+    open-pull-requests-limit: 3
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: 'chore(ci)'
+    groups:
+      actions:
+        patterns: ['*']
