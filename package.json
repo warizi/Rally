@@ -10,7 +10,14 @@
   },
   "overrides": {
     "sharp": "^0.35.4",
-    "onnxruntime-node": "1.29.0"
+    "onnxruntime-node": "1.29.0",
+    "@mapbox/node-pre-gyp": "^2.0.3",
+    "@esbuild-kit/core-utils": {
+      "esbuild": "^0.25.12"
+    },
+    "tsup": {
+      "esbuild": "^0.28.1"
+    }
   },
   "scripts": {
     "format": "prettier --write .",
