@@ -87,7 +87,7 @@
     "electron-log": "^5.4.4",
     "electron-updater": "^6.8.9",
     "embla-carousel-react": "^8.6.0",
-    "framer-motion": "^12.34.3",
+    "framer-motion": "^13.1.1",
     "iconv-lite": "^0.7.2",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.575.0",
