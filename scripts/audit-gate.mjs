@@ -9,8 +9,8 @@
  *
  * 사용:
  *   node scripts/audit-gate.mjs                    # prod(--omit=dev) · high 이상 차단
- *   node scripts/audit-gate.mjs --include-dev      # devDependencies 포함
- *   node scripts/audit-gate.mjs --report-only      # 출력만, exit 0 (dev 경고용)
+ *   node scripts/audit-gate.mjs --include-dev      # devDependencies 포함 — CI 게이트(npm run audit:gate)가 이 모드
+ *   node scripts/audit-gate.mjs --report-only      # 출력만, exit 0
  *   node scripts/audit-gate.mjs --threshold=moderate
  *   node scripts/audit-gate.mjs --input=audit.json --allowlist=allow.json   # 테스트/재현용
  *

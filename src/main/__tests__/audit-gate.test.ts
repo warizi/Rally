@@ -217,16 +217,21 @@ describe('audit-gate — 리포지토리 배선', () => {
     'utf-8'
   )
 
-  it('package.json 에 audit:gate / audit:gate:dev 스크립트 존재', () => {
+  it('package.json 의 audit:gate 는 dev 까지 포함하고 report-only 가 아니다', () => {
     expect(pkg.scripts['audit:gate']).toMatch(/audit-gate\.mjs/)
-    expect(pkg.scripts['audit:gate:dev']).toMatch(/--include-dev/)
-    expect(pkg.scripts['audit:gate:dev']).toMatch(/--report-only/)
+    expect(pkg.scripts['audit:gate']).toMatch(/--include-dev/)
+    expect(pkg.scripts['audit:gate']).not.toMatch(/--report-only/)
+    // prod 만 따로 볼 때 쓰는 보조 스크립트 — 게이트가 아니다
+    expect(pkg.scripts['audit:gate:prod']).toMatch(/audit-gate\.mjs/)
+    expect(pkg.scripts['audit:gate:prod']).not.toMatch(/--include-dev/)
   })
 
-  it('test.yml 의 dependency-audit job 이 prod 게이트를 차단 모드로 실행한다', () => {
+  it('test.yml 의 dependency-audit job 이 prod + dev 게이트를 차단 모드로 실행한다', () => {
     expect(workflow).toMatch(/^\s{2}dependency-audit:$/m)
     expect(workflow).toMatch(/run: npm run audit:gate$/m)
-    expect(workflow).toMatch(/run: npm run audit:gate:dev$/m)
+    // report-only 단계가 남아 있으면 승격이 되돌아간 것
+    expect(workflow).not.toMatch(/run: .*--report-only/)
+    expect(workflow).not.toMatch(/audit:gate:dev/)
   })
 
   it('.audit-allowlist.json 이 파싱 가능하고 entries 배열을 가진다', () => {
