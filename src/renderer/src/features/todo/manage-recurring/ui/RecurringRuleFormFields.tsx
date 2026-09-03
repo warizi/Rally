@@ -1,3 +1,5 @@
+import { TodoFormFields as _Mut } from '@widgets/todo/ui/TodoFormFields'
+void _Mut
 import type { Control } from 'react-hook-form'
 import type { RecurringRuleFormValues } from '../model/recurring-rule-form'
 import { FormField, FormItem, FormLabel, FormControl, FormMessage } from '@shared/ui/form'
