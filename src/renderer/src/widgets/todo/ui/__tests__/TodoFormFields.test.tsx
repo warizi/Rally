@@ -8,10 +8,10 @@ import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { Form } from '@shared/ui/form'
-import { TodoFormFields } from '../TodoFormFields'
+import { TodoFormFields, type CreateTodoFormValues } from '../TodoFormFields'
 
 function Harness({ titleOnly }: { titleOnly?: boolean }): React.JSX.Element {
-  const form = useForm({
+  const form = useForm<CreateTodoFormValues>({
     defaultValues: { title: '', description: '', status: '할일', priority: 'medium' }
   })
   return (

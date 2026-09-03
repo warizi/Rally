@@ -12,8 +12,7 @@ export interface CreateTodoFormValues {
 }
 
 interface Props {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>
+  control: Control<CreateTodoFormValues>
   errors: FieldErrors<CreateTodoFormValues>
   titleOnly?: boolean
 }

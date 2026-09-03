@@ -8,25 +8,15 @@ import { render, screen } from '@testing-library/react'
 import { useForm, FormProvider } from 'react-hook-form'
 import { Form } from '@shared/ui/form'
 import { RecurringRuleFormFields } from '../RecurringRuleFormFields'
+import { DEFAULT_FORM_VALUES, type RecurringRuleFormValues } from '../../model/recurring-rule-form'
 
 function Harness({
   recurrenceType = 'daily'
 }: {
   recurrenceType?: 'daily' | 'weekday' | 'weekend' | 'custom'
 }): React.JSX.Element {
-  const form = useForm({
-    defaultValues: {
-      title: '',
-      description: '',
-      priority: 'medium',
-      recurrenceType,
-      daysOfWeek: [],
-      startDate: '2026-01-01',
-      endDate: null,
-      startTime: null,
-      endTime: null,
-      reminderOffsetMs: null
-    }
+  const form = useForm<RecurringRuleFormValues>({
+    defaultValues: { ...DEFAULT_FORM_VALUES, recurrenceType }
   })
   return (
     <FormProvider {...form}>
