@@ -78,7 +78,8 @@ export async function renderPdfPagesAsImages(
     }
   } finally {
     await doc.cleanup()
-    await doc.destroy()
+    // pdfjs 5.4+ (unpdf 1.8): PDFDocumentProxy.destroy() 제거 — loadingTask 로 파괴한다.
+    await doc.loadingTask.destroy()
   }
 
   return { pageCount, images, truncated: pageCount > limit }
@@ -91,7 +92,7 @@ export async function getPdfPageCount(data: Buffer | Uint8Array): Promise<number
     return doc.numPages
   } finally {
     await doc.cleanup()
-    await doc.destroy()
+    await doc.loadingTask.destroy()
   }
 }
 
@@ -133,7 +134,7 @@ export async function extractPdfText(
     }
   } finally {
     await doc.cleanup()
-    await doc.destroy()
+    await doc.loadingTask.destroy()
   }
 
   return { pageCount, text: text.trim(), truncated }
