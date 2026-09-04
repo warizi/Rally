@@ -73,9 +73,7 @@ function TabHeader({
           {collapsed ? <ChevronDown className="size-4" /> : <ChevronUp className="size-4" />}
         </button>
       </TooltipTrigger>
-      <TooltipContent side="top">
-        {collapsed ? '헤더 펼치기' : '헤더 접기'}
-      </TooltipContent>
+      <TooltipContent side="top">{collapsed ? '헤더 펼치기' : '헤더 접기'}</TooltipContent>
     </Tooltip>
   )
 
@@ -85,9 +83,12 @@ function TabHeader({
         <div className={cn('flex items-center', !collapsed && 'gap-3 mb-2')}>
           {CollapseToggle}
           {!collapsed && (
-            <div className="flex items-center gap-3 flex-1">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
               {Icon && (
-                <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />
+                <Icon
+                  className="size-8 shrink-0"
+                  style={iconColor ? { color: iconColor } : undefined}
+                />
               )}
               <input
                 ref={titleRef}
@@ -117,9 +118,11 @@ function TabHeader({
             </div>
           )}
           {collapsed && (
-            <span className="ml-1 text-xs text-muted-foreground/60 truncate mr-4">{localTitle}</span>
+            <span className="ml-1 text-xs text-muted-foreground/60 truncate mr-4">
+              {localTitle}
+            </span>
           )}
-          {buttons && <div className="ml-auto">{buttons}</div>}
+          {buttons && <div className="ml-auto shrink-0">{buttons}</div>}
         </div>
         {!collapsed && (
           <>
@@ -151,18 +154,25 @@ function TabHeader({
     <div className={cn('w-full', !collapsed && 'pb-2')}>
       <div className={cn('flex items-center', !collapsed && 'gap-3 mb-2')}>
         {CollapseToggle}
+        {/* pane 최소 폭(≈250px 콘텐츠)에서 제목이 줄바꿈되지 않도록 — 제목 그룹은 줄어들 수 있게(min-w-0),
+            제목은 한 줄 말줄임(truncate, 전체는 title 툴팁), 버튼은 줄어들지 않게(shrink-0). */}
         {!collapsed && (
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             {Icon && (
-              <Icon className="size-8" style={iconColor ? { color: iconColor } : undefined} />
+              <Icon
+                className="size-8 shrink-0"
+                style={iconColor ? { color: iconColor } : undefined}
+              />
             )}
-            <h1 className="text-2xl font-bold">{title}</h1>
+            <h1 className="text-2xl font-bold truncate" title={title}>
+              {title}
+            </h1>
           </div>
         )}
         {collapsed && title && (
           <span className="ml-1 text-xs text-muted-foreground/60 truncate mr-4">{title}</span>
         )}
-        {buttons && <div className="ml-auto">{buttons}</div>}
+        {buttons && <div className="ml-auto shrink-0">{buttons}</div>}
       </div>
       {!collapsed && (
         <>

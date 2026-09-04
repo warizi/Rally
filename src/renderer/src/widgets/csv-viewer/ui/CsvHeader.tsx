@@ -87,8 +87,9 @@ export function CsvHeader({ workspaceId, csvId, tabId, encoding }: CsvHeaderProp
       description={csv?.description ?? ''}
       buttons={
         <div className="flex items-center gap-1">
+          {/* 인코딩 배지는 정보성 — pane 최소 폭(400px 미만)에서는 제목 공간을 위해 숨긴다 */}
           {encoding && (
-            <span className="text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
+            <span className="hidden @[400px]:inline-block text-xs text-muted-foreground px-2 py-1 bg-muted rounded">
               {encoding}
             </span>
           )}

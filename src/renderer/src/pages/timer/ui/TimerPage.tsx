@@ -49,9 +49,11 @@ function TimerPage(): React.JSX.Element {
               size="sm"
               onClick={() => setSettingsOpen(true)}
               disabled={!canOpenSettings}
+              title="시간 설정"
             >
-              <Settings className="size-4 mr-1.5" />
-              시간 설정
+              {/* pane 최소 폭에서는 제목 공간이 부족해 400px 미만은 아이콘만 */}
+              <Settings className="size-4 @[400px]:mr-1.5" />
+              <span className="hidden @[400px]:inline">시간 설정</span>
             </Button>
           }
         />
