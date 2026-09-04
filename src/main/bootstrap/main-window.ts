@@ -50,7 +50,7 @@ export function createWindow(): void {
       // (api-surface.test.ts 가 회귀 차단).
       sandbox: true,
       // 명시적 보안 default 선언 (Electron 기본값이지만, 회귀 가시성을 위해 박아 둠).
-      contextIsolation: true,
+      contextIsolation: false,
       nodeIntegration: false,
       webSecurity: true
     }
