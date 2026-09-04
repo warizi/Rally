@@ -68,6 +68,11 @@ const MAX_LIMIT = 100
 const EXCERPT_PAD = 50
 // 융합 전 각 검색기가 모을 후보 수
 const CANDIDATE_K = 120
+// FTS over-fetch: search_fts 에 workspace 컬럼이 없어 조회 후 메타 단계(fetchMetaByType)에서
+// 격리하므로, 타 워크스페이스 행이 상위를 점유해도 인-워크스페이스 후보가 충분히 남도록 넉넉히.
+const FTS_FETCH = CANDIDATE_K * 4
+// FTS5 trigram 토크나이저는 3자 미만 질의를 MATCH 로 찾지 못한다 → 그 미만은 LIKE 로 대체.
+const TRIGRAM_MIN_LENGTH = 3
 // 벡터 KNN over-fetch: vec0에 workspace 필터를 못 걸어 KNN 후 격리하므로,
 // 타 워크스페이스가 상위를 점유해도 인-워크스페이스 후보가 충분히 남도록 넉넉히 가져온다.
 const VEC_KNN_FETCH = CANDIDATE_K * 4
@@ -277,32 +282,42 @@ interface Ref {
   id: string
 }
 
-/** FTS5 키워드 검색 → bm25 오름차순(좋은 순) ref 리스트. workspace 로 격리. */
-function ftsCandidates(
-  query: string,
-  entityTypes: Set<EmbeddableEntityType>,
-  workspaceId: string
-): Ref[] {
+/**
+ * FTS5 키워드 검색 → bm25 오름차순(좋은 순) ref 리스트.
+ *
+ * 워크스페이스 격리는 여기서 하지 않고 메타 단계(fetchMetaByType 의 workspaceId 조건)에 맡긴다.
+ * 이전에는 embedding_meta EXISTS 로 격리했는데, 그러면 키워드 검색이 임베딩 완료 여부에 종속된다 —
+ * 모델 교체 후 재임베딩 중이거나 모델을 못 받은 환경에서는 FTS 행이 있어도 결과가 비었다.
+ *
+ * trigram 은 3자 미만 질의를 MATCH 로 못 찾으므로 그 미만은 LIKE substring 으로 대체한다
+ * (순위 없음 → rowid 순). 한국어 2음절 검색어가 흔해 이 경로가 실제로 자주 탄다.
+ */
+function ftsCandidates(query: string, entityTypes: Set<EmbeddableEntityType>): Ref[] {
   try {
-    // trigram: 따옴표로 감싸 구문(phrase) 검색. 내부 따옴표 이스케이프.
-    const matchExpr = `"${query.replace(/"/g, '""')}"`
-    // search_fts 에는 workspace 컬럼이 없어 embedding_meta(EXISTS)로 워크스페이스 격리.
-    // (FTS·embedding_meta 는 processEntity 에서 같은 트랜잭션으로 기록돼 일관)
-    const rows = rawSqlite
-      .prepare(
-        `SELECT entity_type AS type, entity_id AS id, bm25(search_fts) AS score
-         FROM search_fts
-         WHERE search_fts MATCH ?
-           AND EXISTS (
-             SELECT 1 FROM embedding_meta m
-             WHERE m.entity_type = search_fts.entity_type
-               AND m.entity_id = search_fts.entity_id
-               AND m.workspace_id = ?
-           )
-         ORDER BY score
-         LIMIT ?`
-      )
-      .all(matchExpr, workspaceId, CANDIDATE_K) as { type: string; id: string; score: number }[]
+    let rows: { type: string; id: string }[]
+    if ([...query].length < TRIGRAM_MIN_LENGTH) {
+      const pat = `%${query.replace(/[\\%_]/g, (c) => `\\${c}`)}%`
+      rows = rawSqlite
+        .prepare(
+          `SELECT entity_type AS type, entity_id AS id
+           FROM search_fts
+           WHERE text LIKE ? ESCAPE '\\'
+           LIMIT ?`
+        )
+        .all(pat, FTS_FETCH) as { type: string; id: string }[]
+    } else {
+      // trigram: 따옴표로 감싸 구문(phrase) 검색. 내부 따옴표 이스케이프.
+      const matchExpr = `"${query.replace(/"/g, '""')}"`
+      rows = rawSqlite
+        .prepare(
+          `SELECT entity_type AS type, entity_id AS id, bm25(search_fts) AS score
+           FROM search_fts
+           WHERE search_fts MATCH ?
+           ORDER BY score
+           LIMIT ?`
+        )
+        .all(matchExpr, FTS_FETCH) as { type: string; id: string }[]
+    }
     const out: Ref[] = []
     for (const r of rows) {
       const st = ENTITY_TO_SEARCH[r.type as EmbeddableEntityType]
@@ -504,7 +519,7 @@ async function hybridSearch(
 
   const lists: Ref[][] = []
   if (mode === 'keyword' || mode === 'hybrid') {
-    lists.push(ftsCandidates(trimmed, entityTypes, workspaceId))
+    lists.push(ftsCandidates(trimmed, entityTypes))
   }
   if (mode === 'semantic' || mode === 'hybrid') {
     lists.push(await vectorCandidates(trimmed, entityTypes, workspaceId))
@@ -565,15 +580,29 @@ async function hybridSearch(
     ranked.push({ hit, finalScore: score * recencyFactor(meta.updatedAt) })
   }
 
-  ranked.sort((a, b) => b.finalScore - a.finalScore)
-  const hits = ranked.map((r) => r.hit)
-
   // pdf/image 는 임베딩 비대상 → 키워드(substring) 경로로 별도 검색. semantic 모드에는 미포함.
+  // FTS/벡터 점수가 없으므로 finalScore 0 — 아래 정렬 규칙에서 제목 일치면 앞으로 온다.
   if (mode !== 'semantic') {
-    const fileHits = keywordFileHits(workspaceId, trimmed, types, highlight, folderMap)
-    for (const h of fileHits) perTypeCounts[h.type]++
-    hits.push(...fileHits)
+    for (const hit of keywordFileHits(workspaceId, trimmed, types, highlight, folderMap)) {
+      perTypeCounts[hit.type]++
+      ranked.push({ hit, finalScore: 0 })
+    }
   }
+
+  if (mode === 'keyword') {
+    // 키워드 모드: 제목 일치 → 점수 → 최신순. 예전엔 점수만으로 정렬한 뒤 pdf/image 를 뒤에 붙여서,
+    // 제목이 정확히 일치하는 파일이 본문 매칭 노트들에 밀려 상위 N 절단 밖으로 나갔다.
+    ranked.sort((a, b) => {
+      const at = a.hit.matchType === 'title' ? 0 : 1
+      const bt = b.hit.matchType === 'title' ? 0 : 1
+      if (at !== bt) return at - bt
+      if (a.finalScore !== b.finalScore) return b.finalScore - a.finalScore
+      return b.hit.updatedAt.localeCompare(a.hit.updatedAt)
+    })
+  } else {
+    ranked.sort((a, b) => b.finalScore - a.finalScore)
+  }
+  const hits = ranked.map((r) => r.hit)
 
   const total = hits.length
   const sliced = hits.slice(offset, offset + limit)
