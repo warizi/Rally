@@ -29,6 +29,20 @@ jobs:
       - name: Build MCP server
         run: npm run build:mcp
 
+      # electron-builder 는 draft 가 없으면 업로드 태스크마다 경쟁적으로 draft 를 만들어 자산이 여러
+      # draft 로 갈라진다 (v1.17.2 에서 두 번 재현 — build-win 직렬화만으로는 부족). 빌드 전에 draft 를
+      # 하나 만들어 두면 electron-builder 는 "existingType=draft" 로 그 draft 에만 올린다.
+      - name: Pre-create draft release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          tag="${GITHUB_REF_NAME}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "release $tag already exists — skip"
+          else
+            gh release create "$tag" --draft --title "${tag#v}" --notes "" --target "$GITHUB_SHA"
+          fi
+
       - name: Build and publish
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
