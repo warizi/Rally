@@ -7,8 +7,20 @@ import type { ChangelogEntry } from './types'
 export const CHANGELOG: ChangelogEntry[] = [
   {
     version: '1.17.2',
-    date: '2026-08-25',
+    date: '2026-09-04',
     changes: [
+      {
+        type: 'fix',
+        title: '전체 검색에서 일치 결과가 비거나 파일이 누락되던 문제 수정',
+        description:
+          '전체 검색의 "일치" 결과가 검색 색인 갱신 중에 비어 보이거나, 두 글자 검색어를 찾지 못하거나, 제목이 정확히 일치하는 PDF·이미지가 목록 뒤로 밀려 보이지 않던 문제를 수정했습니다. 이제 제목이 일치하는 항목이 먼저 표시되고, 짧은 검색어도 정상적으로 검색됩니다.'
+      },
+      {
+        type: 'fix',
+        title: '알림(토스트) 왼쪽 가장자리가 잘려 보이던 문제 수정',
+        description:
+          '알림이 여러 개 쌓일 때 쓰이는 스크롤 영역 때문에 알림 상자의 왼쪽 테두리가 8px 잘려 보이던 문제를 수정했습니다.'
+      },
       {
         type: 'improvement',
         title: '보안 강화 — 앱 실행 환경 및 핵심 구성 요소 최신화',
