@@ -80,10 +80,13 @@ export function TabBar({
           )}
         />
       )}
+      {/* 탭 뷰포트 전체를 하나의 no-drag 로 둔다. 탭마다 no-drag 를 주면 Chromium 이 스크롤로 밀려나
+          보이지 않는 탭의 사각형까지 드래그 영역에서 빼 버려, 탭이 조금만 많아도 TabBar 전체가
+          non-drag 가 되고 탭 위 3px 만 남았다 (2026-09 "앱 상단 드래그 영역 없어짐"). */}
       <ScrollArea
         viewportRef={viewportRef}
         onWheel={handleWheel}
-        className={cn('h-10 rounded-lg pb-1', isOver && 'bg-primary/20')}
+        className={cn('h-10 rounded-lg pb-1 no-drag-region', isOver && 'bg-primary/20')}
         style={{ flex: 1, minWidth: 0 }}
       >
         <div className="inline-flex items-center h-9 pr-1">
@@ -107,6 +110,10 @@ export function TabBar({
         </div>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
+      {/* 창 드래그 gutter — 탭 수·스크롤과 무관하게 항상 남는 drag 영역 (부모 TabBar 의 drag 상속) */}
+      {isDragRegion && (
+        <div data-testid="tabbar-drag-gutter" aria-hidden className="h-10 w-12 shrink-0" />
+      )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button className="shrink-0 flex items-center justify-center size-8 ml-1.5 bg-none rounded-lg text-foreground hover:text-foreground no-drag-region">

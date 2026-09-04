@@ -70,7 +70,11 @@ vi.mock('@/entities/tab-system', () => ({
 }))
 
 vi.mock('@/shared/ui/scroll-area', () => ({
-  ScrollArea: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ScrollArea: ({ children, className }: { children: React.ReactNode; className?: string }) => (
+    <div data-testid="tab-viewport" className={className}>
+      {children}
+    </div>
+  ),
   ScrollBar: () => null
 }))
 
@@ -166,5 +170,32 @@ describe('TabBar', () => {
     mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
     const { container } = render(<TabBar paneId="p1" />)
     expect(container.firstChild).not.toHaveClass('pr-window-controls')
+  })
+
+  // 창 드래그 영역 — Chromium 은 drag 사각형에서 no-drag 사각형을 "보이는지와 무관하게" 뺀다.
+  // 탭마다 no-drag 를 주면 스크롤로 밀려난 탭까지 빠져 TabBar 가 통째로 non-drag 가 됐다
+  // (2026-09 "앱 상단 드래그 영역 없어짐"). 뷰포트 하나만 no-drag + 고정 gutter 가 정답.
+  describe('창 드래그 영역', () => {
+    it('탭 뷰포트(ScrollArea) 가 no-drag 를 담당한다', () => {
+      mocks.panes = { p1: { activeTabId: 't1', tabIds: ['t1'] } }
+      render(<TabBar paneId="p1" />)
+      expect(screen.getByTestId('tab-viewport')).toHaveClass('no-drag-region')
+    })
+
+    it('isDragRegion(기본 true) 이면 탭 수와 무관한 drag gutter 가 있다', () => {
+      mocks.panes = { p1: { activeTabId: 't1', tabIds: ['t1', 't2'] } }
+      const { container } = render(<TabBar paneId="p1" />)
+      expect(container.firstChild).toHaveClass('drag-region')
+      const gutter = screen.getByTestId('tabbar-drag-gutter')
+      expect(gutter).not.toHaveClass('no-drag-region')
+      expect(gutter.className).toMatch(/\bw-12\b/)
+    })
+
+    it('isDragRegion=false 면 drag-region 도 gutter 도 없다 (아래 행 pane)', () => {
+      mocks.panes = { p1: { activeTabId: null, tabIds: [] } }
+      const { container } = render(<TabBar paneId="p1" isDragRegion={false} />)
+      expect(container.firstChild).not.toHaveClass('drag-region')
+      expect(screen.queryByTestId('tabbar-drag-gutter')).toBeNull()
+    })
   })
 })

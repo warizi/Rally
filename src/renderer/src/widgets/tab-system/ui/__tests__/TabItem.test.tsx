@@ -111,6 +111,15 @@ describe('TabItem', () => {
     expect(toggle).toHaveBeenCalled()
   })
 
+  // 탭 자체에 no-drag 를 주면 스크롤로 밀려난 탭의 사각형까지 창 드래그 영역에서 빠진다 —
+  // no-drag 는 TabBar 의 탭 뷰포트가 담당한다. 되살아나면 TabBar 가 통째로 non-drag 가 된다.
+  it('탭 루트에 no-drag-region 을 직접 붙이지 않는다', () => {
+    const { container } = render(
+      <TabItem tab={makeTab()} isActive={false} onActivate={vi.fn()} onClose={vi.fn()} />
+    )
+    expect(container.querySelector('.no-drag-region')).toBeNull()
+  })
+
   it('우클릭 → onContextMenu 호출', () => {
     const onContextMenu = vi.fn()
     render(
