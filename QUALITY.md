@@ -12,19 +12,19 @@ Rally의 품질 기준을 **수치와 자동 게이트**로 명문화한 문서.
 
 모든 항목은 `.github/workflows/test.yml`에서 PR마다 **차단(blocking) 게이트**로 실행된다.
 
-| 게이트               | 기준                                                                                          | 구현                                                               |
-| -------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| Lint                 | error 0 / **warning 0**                                                                       | `npm run lint -- --max-warnings 0`                                 |
-| Typecheck            | node + web 통과                                                                               | `npm run typecheck`                                                |
-| Node coverage        | lines 80 / functions 75 / branches 70 / statements 78                                         | `vitest.config.node.mts` (bootstrap·index 제외)                    |
-| Web coverage         | lines 75 (merge job)                                                                          | `vitest.config.web.mts`                                            |
-| Bundle budget        | 메인 청크 gzip ≤ **430KB**, 전체 gzip ≤ **2.15MB**                                            | `scripts/check-bundle-budget.mjs`                                  |
-| 청크 분리            | xyflow/react-pdf/xterm/recharts/milkdown/dnd-kit/framer-motion/**codemirror**/**prosemirror** | `scripts/verify-chunks.mjs`                                        |
-| Electron security    | HIGH severity finding **0**                                                                   | `security:scan:high` 출력 파싱 (`LimitNavigationGlobalCheck` 제외) |
-| FSD boundary         | `boundaries/dependencies` 위반 0                                                              | `eslint-plugin-boundaries` grep                                    |
-| Cleanup completeness | 신규 테이블 cleanup 등록 누락 0                                                               | `scripts/check-cleanup-completeness.mjs`                           |
-| IPC contract drift   | 선언↔런타임 네임스페이스 일치                                                                 | `api-contract-drift.test.ts`                                       |
-| Window security      | sandbox/contextIsolation/navigation 정책 소스 스캔                                            | `window-security.test.ts`                                          |
+| 게이트               | 기준                                                                                          | 구현                                                                 |
+| -------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| Lint                 | error 0 / **warning 0**                                                                       | `npm run lint -- --max-warnings 0`                                   |
+| Typecheck            | node + web 통과                                                                               | `npm run typecheck`                                                  |
+| Node coverage        | lines 80 / functions 75 / branches 70 / statements 78                                         | `vitest.config.node.mts` (bootstrap·index 제외)                      |
+| Web coverage         | lines 75 (merge job)                                                                          | `vitest.config.web.mts`                                              |
+| Bundle budget        | 메인 청크 gzip ≤ **430KB**, 전체 gzip ≤ **2.15MB**                                            | `scripts/check-bundle-budget.mjs`                                    |
+| 청크 분리            | xyflow/react-pdf/xterm/recharts/milkdown/dnd-kit/framer-motion/**codemirror**/**prosemirror** | `scripts/verify-chunks.mjs`                                          |
+| Electron security    | HIGH severity finding **0**                                                                   | `security:gate` (runner API, `LimitNavigation{Global,Js}Check` 제외) |
+| FSD boundary         | `boundaries/dependencies` 위반 0                                                              | `eslint-plugin-boundaries` grep                                      |
+| Cleanup completeness | 신규 테이블 cleanup 등록 누락 0                                                               | `scripts/check-cleanup-completeness.mjs`                             |
+| IPC contract drift   | 선언↔런타임 네임스페이스 일치                                                                 | `api-contract-drift.test.ts`                                         |
+| Window security      | sandbox/contextIsolation/navigation 정책 소스 스캔                                            | `window-security.test.ts`                                            |
 
 ---
 
@@ -33,7 +33,7 @@ Rally의 품질 기준을 **수치와 자동 게이트**로 명문화한 문서.
 | 축                  | 확인 항목                                                                                                 | 근거/게이트                                                                         |
 | ------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | Architecture        | FSD 경계, main/preload/renderer 분리, bootstrap 책임 분리                                                 | boundary check, `src/main/bootstrap/*`, `src/preload/types/*`                       |
-| Security            | sandbox·contextIsolation, navigation allowlist(will-navigate), IPC zod 검증(100%), external URL allowlist | window-security.test, ipc-validation-coverage.test, security:scan:high              |
+| Security            | sandbox·contextIsolation, navigation allowlist(will-navigate), IPC zod 검증(100%), external URL allowlist | window-security.test, ipc-validation-coverage.test, security:gate                   |
 | Testability         | 단위/통합 커버리지 threshold, 로그 noise 통제, 회귀 정적 테스트                                           | coverage gate, logger.test, drift/coverage 정적 테스트                              |
 | Performance         | bundle budget, route/다이얼로그 lazy, 가상화, 렌더 회귀 보호                                              | check-bundle-budget, lazy SettingsDialog, FolderTree 가상화, TodoListItem memo test |
 | Maintainability     | 파일/타입 surface 크기, bootstrap 책임 분리                                                               | index.d.ts 78줄, index.ts 41줄                                                      |
@@ -64,7 +64,7 @@ Rally의 품질 기준을 **수치와 자동 게이트**로 명문화한 문서.
 
 ## 4. 남은 tradeoff / 의도적 보류
 
-- **electronegativity free** `LIMIT_NAVIGATION_GLOBAL_CHECK` false positive — `security:scan:high`에서 `-x`로 제외. 실제 navigation 통제는 `window-security.test`가 소스 스캔으로 강제.
+- **electronegativity free** `LIMIT_NAVIGATION_GLOBAL_CHECK` false positive + `LIMIT_NAVIGATION_JS_CHECK`(내비게이션 제한 핸들러 자체에 붙는 TENTATIVE 수동 검토) — `security:gate`에서 제외. 실제 navigation 통제는 `window-security.test`가 소스 스캔으로 강제.
 - **pdfjs-dist** "legacy build" 경고(web 테스트, jsdom 환경 감지) — 코드 결함 아님, 라이브러리 한계로 추적.
 - **잔여 act 경고**는 0이나, 일부는 RTL waitFor/act 래핑으로 해소했고 라이브러리 내부 비동기는 추적 대상.
 - **Preload DTO 중복** — main DB row 타입과 분리(WorkspaceDTO 등)하며 의도적 중복 허용(결합 축소 우선).
@@ -83,7 +83,7 @@ npm run typecheck
 npm run test          # main(node)
 npm run test:web      # renderer
 npm run build:size && node scripts/check-bundle-budget.mjs
-npm run security:scan:high
+npm run security:gate
 npm run check:cleanup
 ```
 
