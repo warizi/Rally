@@ -128,8 +128,10 @@ export function CanvasListPage({ tabId }: Props): React.JSX.Element {
                 title="노드 끌어다 놓기"
                 description="캔버스 내에서 텍스트 노드를 끌어다 놓고, 노드 가장자리끼리 연결하세요."
               />
-              <Button size="sm" onClick={() => setDialogOpen(true)}>
-                <Plus className="size-4 mr-1" />새 캔버스
+              {/* pane 최소 폭에서는 제목 공간이 부족해 400px 미만은 아이콘만 (캘린더 헤더와 같은 기준) */}
+              <Button size="sm" onClick={() => setDialogOpen(true)} title="새 캔버스">
+                <Plus className="size-4 @[400px]:mr-1" />
+                <span className="hidden @[400px]:inline">새 캔버스</span>
               </Button>
             </div>
           }

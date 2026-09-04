@@ -116,6 +116,14 @@ describe('CanvasListPage', () => {
     )
   })
 
+  // pane 최소 폭에서 제목 공간 확보 — 400px 미만은 아이콘만 (라벨은 컨테이너 쿼리로 숨김)
+  it('"새 캔버스" 라벨은 @[400px] 미만에서 숨겨지고 버튼은 title 로 접근 가능', () => {
+    r(<CanvasListPage />)
+    const btn = screen.getByRole('button', { name: /새 캔버스/ })
+    expect(btn).toHaveAttribute('title', '새 캔버스')
+    expect(screen.getByText('새 캔버스')).toHaveClass('hidden', '@[400px]:inline')
+  })
+
   it('"새 캔버스" 버튼 클릭 → CreateCanvasDialog 노출', () => {
     r(<CanvasListPage />)
     fireEvent.click(screen.getByRole('button', { name: /새 캔버스/ }))
