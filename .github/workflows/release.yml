@@ -10,7 +10,11 @@ permissions:
 
 jobs:
   build-mac:
-    runs-on: macos-latest
+    # macos-latest(= macOS 26) 의 2026-08-31 이미지부터 electron-builder 26.x 의 임시 키체인 처리가 깨진다
+    # (security set-key-partition-list 에 .p12 비밀번호를 넘겨 SecKeychainUnlock 실패 —
+    # electron-userland/electron-builder#10066, 수정 #10101/#10172 는 2026-09-04 기준 미배포).
+    # 수정이 포함된 electron-builder 로 올린 뒤 macos-latest 로 되돌릴 것.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v7
 
