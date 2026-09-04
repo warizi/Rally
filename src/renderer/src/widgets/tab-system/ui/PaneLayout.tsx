@@ -5,6 +5,7 @@ import { isPaneNode, isSplitContainerNode } from '@/entities/tab-system/model/ty
 import { PaneRoute } from '@/shared/lib/pane-route'
 import { useTabStore } from '@/entities/tab-system'
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/shared/ui/resizable'
+import { axisOfOrientation, computeMinSizePx } from '../model/pane-min-size'
 
 /** 레이아웃 트리에서 가장 좌상단(첫 번째) pane의 ID를 반환 */
 function findTopLeftPaneId(node: LayoutNode): string | null {
@@ -90,7 +91,9 @@ function SplitContainerRenderer({
           <ResizablePanel
             id={child.id}
             defaultSize={node.sizes[index]}
-            minSize="300px"
+            // 하위 트리가 필요로 하는 최소 크기 — 일률 300px 를 주면 안쪽이 가로 분할된 열도
+            // pane 하나 기준까지 줄어들어 내부 pane 이 min-w 아래로 눌린다.
+            minSize={`${computeMinSizePx(child, axisOfOrientation(orientation))}px`}
             className="w-full"
           >
             <LayoutNodeRenderer
