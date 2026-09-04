@@ -81,8 +81,9 @@ export function TabItem({
           isActive && 'bg-background opacity-100',
           isPaneActive && isActive && 'opacity-100 border border-primary/50',
           isDragging && 'opacity-50 z-50',
-          !isActive && 'bg-none',
-          'no-drag-region'
+          !isActive && 'bg-none'
+          // no-drag 는 TabBar 의 탭 뷰포트(ScrollArea)가 담당 — 탭마다 주면 스크롤로 밀려난 탭의
+          // 사각형까지 드래그 영역에서 빠져 TabBar 가 통째로 non-drag 가 된다.
         )}
       >
         {/* 아이콘 */}
