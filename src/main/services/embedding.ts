@@ -121,6 +121,49 @@ function insertFtsRow(type: EmbeddableEntityType, id: string, text: string): voi
 }
 
 /** 엔티티의 모든 임베딩(vec + meta) + FTS 행 제거. */
+/** FTS 행만 재구성 (임베딩 없이). 모델이 없어도 키워드 검색이 동작하게 하는 경로. */
+function writeFtsOnly(type: EmbeddableEntityType, id: string, ftsText: string): void {
+  rawSqlite.transaction(() => {
+    deleteFtsRows(type, id)
+    if (ftsText.trim()) insertFtsRow(type, id, ftsText)
+  })()
+}
+
+/** search_fts 에 행이 있는 엔티티 ID 집합 (FTS-only 백필의 skip 기준). */
+function ftsIndexedIds(type: EmbeddableEntityType): Set<string> {
+  try {
+    const rows = rawSqlite
+      .prepare('SELECT DISTINCT entity_id AS id FROM search_fts WHERE entity_type = ?')
+      .all(type) as { id: string }[]
+    return new Set(rows.map((r) => r.id))
+  } catch {
+    return new Set()
+  }
+}
+
+/**
+ * 모델 없이 FTS 만 채우는 백필. ensureModel 실패 시 임베딩 백필 대신 실행해
+ * 키워드 검색만이라도 전체 엔티티를 덮는다. 임베딩은 다음 부팅에서 모델이 준비되면 채워진다.
+ */
+function backfillFtsOnly(): number {
+  let done = 0
+  for (const type of EMBEDDABLE_ENTITY_TYPES) {
+    const indexed = ftsIndexedIds(type)
+    for (const id of activeIds(type)) {
+      if (indexed.has(id)) continue
+      try {
+        const resolved = resolveEntity(type, id)
+        if (!resolved) continue
+        writeFtsOnly(type, id, resolved.chunks.map((c) => c.text).join('\n'))
+        done++
+      } catch (e) {
+        log.warn(`fts-only backfill failed for ${type}:${id}`, e)
+      }
+    }
+  }
+  return done
+}
+
 function removeEntitySync(type: EmbeddableEntityType, id: string): void {
   const rows = db
     .select({ rowid: embeddingMeta.rowid })
@@ -173,16 +216,23 @@ async function processEntity(type: EmbeddableEntityType, id: string): Promise<vo
 
   if (toEmbed.length === 0 && staleRows.length === 0) return
 
-  const vectors =
-    toEmbed.length > 0
-      ? await embed(
-          toEmbed.map((t) => t.chunk.text),
-          'passage'
-        )
-      : []
-
   // FTS는 모델 불필요 — 변경이 있으면 엔티티 전체 텍스트로 항상 재구성.
   const ftsText = chunks.map((c) => c.text).join('\n')
+
+  let vectors: number[][] = []
+  if (toEmbed.length > 0) {
+    try {
+      vectors = await embed(
+        toEmbed.map((t) => t.chunk.text),
+        'passage'
+      )
+    } catch (e) {
+      // 임베딩이 실패해도 키워드 검색은 살아야 한다 — FTS 만 갱신하고 실패는 전파.
+      // (모델 다운로드 실패/워커 크래시 환경에서 새 노트가 키워드 검색에서도 사라지던 문제)
+      writeFtsOnly(type, id, ftsText)
+      throw e
+    }
+  }
 
   const now = new Date()
   const tx = rawSqlite.transaction(() => {
@@ -350,7 +400,9 @@ async function backfillAll(): Promise<void> {
     try {
       await ensureModel()
     } catch (e) {
-      log.warn('embedding model unavailable — skipping backfill', e)
+      log.warn('embedding model unavailable — falling back to FTS-only backfill', e)
+      const n = backfillFtsOnly()
+      if (n > 0) log.info(`fts-only backfill: ${n} entities indexed for keyword search`)
       return
     }
     // 1) 계획: 전체 missing 수 파악 (진행률 분모)
