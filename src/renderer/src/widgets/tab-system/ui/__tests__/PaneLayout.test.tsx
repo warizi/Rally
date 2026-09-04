@@ -23,7 +23,8 @@ const mocks = vi.hoisted(() => ({
   updateLayoutSizes: vi.fn(),
   receivedPaneIds: [] as string[],
   receivedShowTrigger: [] as boolean[],
-  receivedIsRightEdge: [] as boolean[]
+  receivedIsRightEdge: [] as boolean[],
+  receivedMinSize: {} as Record<string, string | undefined>
 }))
 
 vi.mock('@/entities/tab-system', () => ({
@@ -58,7 +59,18 @@ vi.mock('@/shared/ui/resizable', () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="panel-group">{children}</div>
   ),
-  ResizablePanel: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ResizablePanel: ({
+    children,
+    id,
+    minSize
+  }: {
+    children: React.ReactNode
+    id: string
+    minSize?: string
+  }) => {
+    mocks.receivedMinSize[id] = minSize
+    return <div>{children}</div>
+  },
   ResizableHandle: () => <div data-testid="resize-handle" />
 }))
 
@@ -69,6 +81,7 @@ beforeEach(() => {
   mocks.receivedPaneIds.length = 0
   mocks.receivedShowTrigger.length = 0
   mocks.receivedIsRightEdge.length = 0
+  mocks.receivedMinSize = {}
 })
 
 function isRightEdgeOf(paneId: string): boolean {
@@ -252,5 +265,47 @@ describe('PaneLayout', () => {
     // 빈 children 으로 렌더 시도 → 에러 없이 panel-group 만 나옴
     render(<PaneLayout routes={[]} />)
     expect(screen.getByTestId('panel-group')).toBeInTheDocument()
+  })
+
+  // 최소 크기는 하위 트리 합산 — 일률 300px 이면 안쪽이 가로 분할된 열이 pane 하나 기준까지 줄어든다
+  describe('minSize 는 하위 트리 기준으로 합산된다', () => {
+    it('좌측(상단(좌, 우) 하단) 우측 → 좌측 열 601px, 우측 300px, 안쪽 pane 300px', () => {
+      mocks.layout = {
+        id: 'root',
+        type: 'split',
+        direction: 'horizontal',
+        sizes: [50, 50],
+        children: [
+          {
+            id: 'left',
+            type: 'split',
+            direction: 'vertical',
+            sizes: [50, 50],
+            children: [
+              {
+                id: 'top',
+                type: 'split',
+                direction: 'horizontal',
+                sizes: [50, 50],
+                children: [
+                  { id: 'a', type: 'pane', paneId: 'a' },
+                  { id: 'b', type: 'pane', paneId: 'b' }
+                ]
+              },
+              { id: 'bottom', type: 'pane', paneId: 'bottom' }
+            ]
+          },
+          { id: 'right', type: 'pane', paneId: 'right' }
+        ]
+      }
+      render(<PaneLayout routes={[]} />)
+      expect(mocks.receivedMinSize.left).toBe('601px')
+      expect(mocks.receivedMinSize.right).toBe('300px')
+      expect(mocks.receivedMinSize.a).toBe('300px')
+      expect(mocks.receivedMinSize.b).toBe('300px')
+      // 좌측 열 안의 세로 분할: top/bottom 은 height 축 → 각각 300px
+      expect(mocks.receivedMinSize.top).toBe('300px')
+      expect(mocks.receivedMinSize.bottom).toBe('300px')
+    })
   })
 })
