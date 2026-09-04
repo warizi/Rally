@@ -19,8 +19,10 @@
  * 필수 조건 (positive): 아래 모듈의 Windows native binary 존재 + PE(MZ) magic
  *   - better-sqlite3, sqlite-vec, @parcel/watcher, @napi-rs/canvas, onnxruntime-node
  *
- * allowlist: onnxruntime-node/bin/napi-v3/{darwin,linux}/** — 한 패키지에 멀티플랫폼
- * 바이너리를 동봉하는 구조라 오탐. win32/x64 바이너리 존재는 positive 검사가 보장한다.
+ * allowlist (한 패키지에 멀티플랫폼 바이너리를 동봉하는 구조라 오탐 — win32 바이너리 존재는
+ * positive 검사가 보장한다):
+ *   - onnxruntime-node/bin/napi-v<N>/{darwin,linux}/ 하위  (1.14 는 napi-v3, 1.29 는 napi-v6)
+ *   - better-sqlite3/prebuilds/{darwin,linux}*.node           (13.x 부터 전 플랫폼 prebuild 동봉)
  */
 import { readdirSync, existsSync, openSync, readSync, closeSync } from 'fs'
 import path from 'path'
@@ -35,8 +37,11 @@ if (!existsSync(target)) {
 
 const NATIVE_EXTS = new Set(['.node', '.dll', '.dylib', '.so'])
 
-// onnxruntime-node는 멀티플랫폼 바이너리 동봉 구조 — darwin/linux 하위만 허용
-const ALLOWLIST = [/onnxruntime-node[\\/]bin[\\/]napi-v3[\\/](darwin|linux)[\\/]/]
+// 멀티플랫폼 바이너리 동봉 패키지 — darwin/linux 하위만 허용 (버전마다 napi 디렉터리가 바뀐다)
+const ALLOWLIST = [
+  /onnxruntime-node[\\/]bin[\\/]napi-v\d+[\\/](darwin|linux)[\\/]/,
+  /better-sqlite3[\\/]prebuilds[\\/](darwin|linux)[^\\/]*\.node$/
+]
 
 // 플랫폼별 패키지 디렉터리 패턴 (sqlite-vec-darwin-arm64, @parcel/watcher-linux-x64-glibc 등)
 const FORBIDDEN_PKG_DIR = /node_modules[\\/](@[^\\/]+[\\/])?[^\\/]*(darwin|linux)-[^\\/]*[\\/]/
@@ -111,7 +116,9 @@ for (const { name, pattern } of REQUIRED) {
   if (pe.length === 0) {
     violations.push(
       `필수 모듈 ${name}: Windows(PE) native binary 없음` +
-        (matches.length > 0 ? ` (발견: ${matches.map((m) => `${m.rel}=${m.format}`).join(', ')})` : '')
+        (matches.length > 0
+          ? ` (발견: ${matches.map((m) => `${m.rel}=${m.format}`).join(', ')})`
+          : '')
     )
   } else {
     positives.push(`${name}: PE (${pe.length}개)`)
