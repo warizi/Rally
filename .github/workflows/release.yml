@@ -40,6 +40,9 @@ jobs:
   # Windows 실행 시 DB 초기화 전에 크래시한다.
   build-win:
     runs-on: windows-latest
+    # mac 과 동시에 publish 하면 electron-builder 가 각자 draft release 를 만들어 v1.17.2 처럼 draft 가
+    # 둘로 갈라진다(자산 분산). mac 이 먼저 draft 를 만든 뒤 win 이 거기에 올리도록 직렬화.
+    needs: build-mac
     steps:
       - uses: actions/checkout@v7
 
