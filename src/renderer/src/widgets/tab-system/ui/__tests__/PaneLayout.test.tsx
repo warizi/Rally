@@ -24,7 +24,8 @@ const mocks = vi.hoisted(() => ({
   receivedPaneIds: [] as string[],
   receivedShowTrigger: [] as boolean[],
   receivedIsRightEdge: [] as boolean[],
-  receivedMinSize: {} as Record<string, string | undefined>
+  receivedMinSize: {} as Record<string, string | undefined>,
+  rootFontPx: 16
 }))
 
 vi.mock('@/entities/tab-system', () => ({
@@ -55,6 +56,10 @@ vi.mock('../PaneContainer', () => ({
   }
 }))
 
+vi.mock('../../model/use-root-font-size', () => ({
+  useRootFontSizePx: () => mocks.rootFontPx
+}))
+
 vi.mock('@/shared/ui/resizable', () => ({
   ResizablePanelGroup: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="panel-group">{children}</div>
@@ -82,6 +87,7 @@ beforeEach(() => {
   mocks.receivedShowTrigger.length = 0
   mocks.receivedIsRightEdge.length = 0
   mocks.receivedMinSize = {}
+  mocks.rootFontPx = 16
 })
 
 function isRightEdgeOf(paneId: string): boolean {
@@ -306,6 +312,23 @@ describe('PaneLayout', () => {
       // 좌측 열 안의 세로 분할: top/bottom 은 height 축 → 각각 300px
       expect(mocks.receivedMinSize.top).toBe('300px')
       expect(mocks.receivedMinSize.bottom).toBe('300px')
+    })
+
+    it('글자 크기 설정(루트 17px)이면 pane 최소도 18.75rem 기준 318.75px 로 따라간다', () => {
+      mocks.rootFontPx = 17
+      mocks.layout = {
+        id: 'root',
+        type: 'split',
+        direction: 'horizontal',
+        sizes: [50, 50],
+        children: [
+          { id: 'a', type: 'pane', paneId: 'a' },
+          { id: 'b', type: 'pane', paneId: 'b' }
+        ]
+      }
+      render(<PaneLayout routes={[]} />)
+      expect(mocks.receivedMinSize.a).toBe('318.75px')
+      expect(mocks.receivedMinSize.b).toBe('318.75px')
     })
   })
 })
