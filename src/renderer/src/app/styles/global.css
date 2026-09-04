@@ -795,14 +795,22 @@ html.dark .milkdown .ProseMirror .milkdown-code-block {
 /* sonner Toaster — 스택이 viewport 를 초과하면 스크롤 가능하게.
    sonner 는 항상 expand 상태에서 모든 toast 를 stack 으로 렌더 (visibleToasts 초과분 포함).
    기본 stack 은 viewport bottom 에 고정 + 누적되며, 화면을 넘으면 사라져 보였음.
-   max-height + overflow-y:auto 로 스크롤 가능한 영역으로 전환. */
+   max-height + overflow-y:auto 로 스크롤 가능한 영역으로 전환.
+
+   폭 보정: ::-webkit-scrollbar 를 스타일링하면 overlay 스크롤바가 꺼져 scrollbar-gutter 가
+   실제로 8px 를 차지한다. 토스트는 --width(356px) 고정인데 토스터 안쪽 폭이 348px 로 줄어
+   토스트가 왼쪽으로 8px 밀리고 그만큼 잘렸다 (overflow-y:auto 는 x 축도 clip).
+   토스터 폭에 스크롤바 폭을 더해 안쪽 폭을 --width 로 되돌린다. 스크롤바 폭은
+   --toaster-scrollbar 하나로만 정의한다 — 두 값이 어긋나면 잘림이 재발한다. */
 [data-sonner-toaster][data-expanded='true'] {
+  --toaster-scrollbar: 8px;
+  width: calc(var(--width) + var(--toaster-scrollbar));
   max-height: calc(100vh - 32px);
   overflow-y: auto;
   scrollbar-gutter: stable;
 }
 [data-sonner-toaster][data-expanded='true']::-webkit-scrollbar {
-  width: 8px;
+  width: var(--toaster-scrollbar);
   background: transparent;
 }
 [data-sonner-toaster][data-expanded='true']::-webkit-scrollbar-thumb {
